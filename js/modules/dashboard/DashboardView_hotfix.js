@@ -12,7 +12,13 @@
     }
 
     window.SomosPadelNewsEngine = {
-        templates: [
+        get templates() {
+            if (window.NewsCatalog && Array.isArray(window.NewsCatalog.articles) && window.NewsCatalog.articles.length > 0) {
+                return window.NewsCatalog.articles;
+            }
+            return this._defaultTemplates || [];
+        },
+        _defaultTemplates: [
             {
                 title: "La Teoría del Centro: el Secreto de los Pros",
                 category: "💡 CONSEJOS",
@@ -144,116 +150,6 @@
                 snippet: "Cantar la posición de los rivales y coordinar coberturas de pista salva sets.",
                 contentTemplate: "Cantar la posición de los rivales cuando tu compañero va a golpear un globo de espaldas es vital. Utiliza comandos cortos como: 'Vienen', 'Atrás' o 'Centro'. <br><br><strong>{PLAYER1}</strong> destaca: <em>'Mi juego mejoró muchísimo cuando aprendí a hablarle a mi compañero entre puntos'</em>. Su compañero <strong>{PLAYER2}</strong> concluye: <em>'Una pareja coordinada que se comunica bien puede ganarle a dos individualistas de mayor nivel'</em>.",
                 readTime: "3 min"
-            },
-            {
-                title: "Cómo remontar un Match Point en contra en el punto de oro",
-                category: "🧠 MENTAL",
-                catColor: "#38bdf8",
-                imageUrl: "img/blog_player_victory.png",
-                emoji: "🎯",
-                imgGrad: "linear-gradient(135deg, #7dd3fc 0%, #0ea5e9 100%)",
-                snippet: "Ante un punto de partido en contra, la calma y el juego central son tus mejores armas.",
-                contentTemplate: "Ante un punto de partido en contra, la clave es no precipitarse ni jugar con prisa. Fuerza un punto largo y deja que la presión pase a la pareja rival. <br><br><strong>{PLAYER1}</strong> recuerda: <em>'Estábamos 40-0 abajo en el set definitivo y decidimos asegurar la bola por el centro. Forzamos su error y remontamos'</em>. Su compañero <strong>{PLAYER2}</strong> añade que mantener una respiración pausada entre puntos reduce el estrés competitivo.",
-                readTime: "3 min"
-            },
-            {
-                title: "La Ley de la Concentración: Mantenerse enfocado",
-                category: "🧠 MENTAL",
-                catColor: "#38bdf8",
-                imageUrl: "img/blog_action_smash.png",
-                emoji: "🧠",
-                imgGrad: "linear-gradient(135deg, #c084fc 0%, #3b82f6 100%)",
-                snippet: "El pádel es un deporte de rachas. Evita frustrarte por fallos simples y concéntrate.",
-                contentTemplate: "El pádel es un juego de rachas psicológicas. Evita frustrarte por fallos fáciles y mantén el foco en la siguiente bola. <br><br><strong>{PLAYER1}</strong> nos comparte su técnica: <em>'Hago rebotar la pelota tres veces antes del saque para forzarme a concentrarme'</em>. Su compañero <strong>{PLAYER2}</strong> recomienda no discutir tácticas complejas durante el set si hay tensión, sino apoyarse mutuamente con gestos positivos.",
-                readTime: "2 min"
-            },
-            {
-                title: "La Chiquita Decisiva: El golpe táctico avanzado",
-                category: "🏫 CLINIC",
-                catColor: "#ec4899",
-                imageUrl: "img/pista_padel_azul.png",
-                emoji: "🎾",
-                imgGrad: "linear-gradient(135deg, #f472b6 0%, #ec4899 100%)",
-                snippet: "Cómo y cuándo jugar una bola lenta a los pies del rival para ganar la red.",
-                contentTemplate: "La chiquita consiste en golpear una bola lenta a los pies de los rivales que están en la red para obligarles a volear por debajo del nivel de la red. <br><br><strong>{PLAYER1}</strong> nos cuenta: <em>'Si colocas una chiquita al pie, puedes subir rápidamente con tu pareja a bloquear su volea forzada'</em>. Su compañero <strong>{PLAYER2}</strong> advierte que jugarla con demasiada velocidad la convierte en un tiro cómodo para el rival.",
-                readTime: "2 min"
-            },
-            {
-                title: "Bandeja vs. Víbora: Diferencias y cuándo usar cada golpe",
-                category: "🏫 CLINIC",
-                catColor: "#ec4899",
-                imageUrl: "img/blog_action_smash.png",
-                emoji: "🐍",
-                imgGrad: "linear-gradient(135deg, #f472b6 0%, #be185d 100%)",
-                snippet: "Aprende a diferenciar el armado y el efecto de los dos golpes aéreos por excelencia.",
-                contentTemplate: "La bandeja busca mantener la posición de la red con un golpe seguro y cortado. La víbora es más agresiva, con efecto lateral-cortado para definir o desestabilizar. <br><br><strong>{PLAYER1}</strong> explica: <em>'Uso la bandeja para bolas muy altas, y la víbora cuando la bola queda más cómoda a mi derecha'</em>. Su compañero <strong>{PLAYER2}</strong> añade que la víbora requiere transferir más el peso del cuerpo hacia adelante e impactar a la altura de la sien.",
-                readTime: "2 min"
-            },
-            {
-                title: "El Remate por 3 y por 4: Cómo definir el punto",
-                category: "📡 REGLAMENTO",
-                catColor: "#0ea5e9",
-                imageUrl: "img/blog_action_smash.png",
-                emoji: "💥",
-                imgGrad: "linear-gradient(135deg, #38bdf8 0%, #1d4ed8 100%)",
-                snippet: "Reglas de recuperación fuera de pista tras un remate liftado de los contrarios.",
-                contentTemplate: "Un remate 'por 3' hace que la bola salga por el lateral de la pista. Los rivales pueden salir a recuperarla si hay espacio de juego autorizado. Un remate 'por 4' sale por el fondo, siendo punto directo. <br><br><strong>{PLAYER1}</strong> opina: <em>'Para sacar la bola por 3 necesitas golpear con efecto liftado e impacto alto'</em>. Su compañero <strong>{PLAYER2}</strong> destaca que el jugador defensor no puede tocar la red ni invadir el campo contrario al recuperar.",
-                readTime: "2 min"
-            },
-            {
-                title: "ELO y Matchmaking: La ciencia detrás de SomosPadel",
-                category: "📡 REGLAMENTO",
-                catColor: "#0ea5e9",
-                imageUrl: "img/blog_court_night.png",
-                emoji: "📊",
-                imgGrad: "linear-gradient(135deg, #93c5fd 0%, #1e40af 100%)",
-                snippet: "Te explicamos cómo nuestro algoritmo equilibra las pistas según tus partidos.",
-                contentTemplate: "Nuestro sistema recalcula los puntos tras cada set disputado en americanas usando un algoritmo ELO adaptado. Si vences a parejas de mayor nivel, sumas más puntos de ranking. <br><br><strong>{PLAYER1}</strong> nos decía: <em>'Es genial ver cómo se equilibra el nivel de la americana ronda a ronda'</em>. Su compañero <strong>{PLAYER2}</strong> añade que jugar partidos oficiales asegura una clasificación más ajustada a la realidad de tu nivel.",
-                readTime: "2 min"
-            },
-            {
-                title: "Cómo elegir el peso ideal de tu pala de pádel",
-                category: "👟 MATERIAL",
-                catColor: "#fb923c",
-                imageUrl: "img/blog_racket_ball.png",
-                emoji: "⚖️",
-                imgGrad: "linear-gradient(135deg, #fde047 0%, #ca8a04 100%)",
-                snippet: "Manejabilidad vs. Potencia: encuentra el gramaje ideal según tu complexión física.",
-                contentTemplate: "Una pala ligera (menos de 360g) ofrece manejabilidad y rapidez de red, ideal para jugadores amateurs. Una pala pesada (más de 370g) da más potencia pero fatiga el brazo. <br><br><strong>{PLAYER1}</strong> aconseja: <em>'Empezar con una pala ligera te ayuda a pulir la técnica sin sobrecargar tu codo'</em>. Su compañero <strong>{PLAYER2}</strong> añade que el balance (puño o cabeza) influye tanto como el peso en la sensación de ligereza.",
-                readTime: "2 min"
-            },
-            {
-                title: "Táctica: Cómo defender el rebote de pared de fondo",
-                category: "💡 CONSEJOS",
-                catColor: "#f59e0b",
-                imageUrl: "img/blog_court_night.png",
-                emoji: "🎾",
-                imgGrad: "linear-gradient(135deg, #fdba74 0%, #f97316 100%)",
-                snippet: "Claves de posicionamiento y lectura del rebote para bolas profundas del rival.",
-                contentTemplate: "La pared de fondo suele ser difícil al principio. La clave es acompañar la bola en su rebote: colócate siempre por detrás de la bola, flexiona bien las rodillas y mantén la pala baja. <br><br><strong>{PLAYER1}</strong> comparte su truco: <em>'Si dejas pasar la bola con calma y esperas al rebote, tienes mucho más tiempo del que crees para armar el golpe'</em>. Su compañero <strong>{PLAYER2}</strong> destaca mantener el cuerpo erguido en el impacto final.",
-                readTime: "2 min"
-            },
-            {
-                title: "Cómo preparar tu Americana: Guía del jugador perfecto",
-                category: "🏆 TORNEOS",
-                catColor: "#facc15",
-                imageUrl: "img/blog_court_night.png",
-                emoji: "🏆",
-                imgGrad: "linear-gradient(135deg, #fde047 0%, #f59e0b 100%)",
-                snippet: "Consejos para llegar en el mejor estado físico y mental a tu próxima americana.",
-                contentTemplate: "Las americanas son el formato de torneo más popular del pádel amateur. Para rendir al máximo nivel, hay que prepararse física y tácticamente los días previos. <br><br><strong>{PLAYER1}</strong> nos revela su ritual: <em>'La noche antes duermo 8 horas y preparo el bolso con todo para no salir con estrés de casa'</em>. Su compañero <strong>{PLAYER2}</strong> añade que llegar 30 minutos antes del inicio permite hacer un buen calentamiento y conocer las pistas del torneo.",
-                readTime: "3 min"
-            },
-            {
-                title: "Ranking ELO: Cómo subir de nivel en SomosPadel BCN",
-                category: "📈 RANKING",
-                catColor: "#34d399",
-                imageUrl: "img/blog_player_victory.png",
-                emoji: "📈",
-                imgGrad: "linear-gradient(135deg, #6ee7b7 0%, #059669 100%)",
-                snippet: "Estrategias para mejorar tu posición en el ranking y conseguir más puntos por set.",
-                contentTemplate: "El sistema de ranking de SomosPadel BCN premia la consistencia y la dificultad de los rivales. Ganar un set a una pareja de mayor nivel suma más puntos que vencer a parejas de nivel menor. <br><br><strong>{PLAYER1}</strong> comparte su filosofía: <em>'Prefiero jugar contra los mejores y perder por poco que ganar fácil — aprendo más y sumo mejor'</em>. Su compañero <strong>{PLAYER2}</strong> destaca que la regularidad es clave: <em>'Jugar todas las semanas, aunque sea una americana pequeña, te mantiene activo en el ranking y evita penalizaciones de inactividad'</em>.",
-                readTime: "2 min"
             }
         ],
 
@@ -525,31 +421,35 @@
         },
 
         getDeterministicFallbackPosts() {
+            if (window.NewsCatalog && typeof window.NewsCatalog.getFullCatalog === 'function') {
+                return window.NewsCatalog.getFullCatalog();
+            }
             const today = new Date();
             const posts = [];
-            for (let i = 0; i < 4; i++) {
+            const tList = this.templates;
+            for (let i = 0; i < Math.min(12, tList.length); i++) {
                 const targetDate = new Date(today);
                 targetDate.setDate(today.getDate() - i);
-                const daySeed = targetDate.getDate() + targetDate.getMonth() * 31 + targetDate.getFullYear();
-                const templateIdx = daySeed % this.templates.length;
-                const template = this.templates[templateIdx];
+                const daySeed = targetDate.getDate() + targetDate.getMonth() * 31 + targetDate.getFullYear() + i;
+                const templateIdx = daySeed % tList.length;
+                const template = tList[templateIdx];
                 
                 let dateStr = "Hoy";
                 if (i === 1) dateStr = "Ayer";
                 else if (i > 1) dateStr = `Hace ${i} días`;
                 
-                const fallbackPlayers = ["Alejandro Coscolín", "Bernat Pecharromán", "Alberto Javier Martín", "Jordi Díaz", "Carlos Jiménez", "Jordi Díaz"];
+                const fallbackPlayers = ["Alejandro Coscolín", "Bernat Pecharromán", "Alberto Javier Martín", "Jordi Díaz", "Carlos Jiménez", "Abraham Rosell", "Silvia Serrano", "Toni Millan"];
                 const p1 = fallbackPlayers[daySeed % fallbackPlayers.length];
                 const p2 = fallbackPlayers[(daySeed + 2) % fallbackPlayers.length];
                 
                 const title = template.title;
                 const snippet = template.snippet;
-                const content = template.contentTemplate
+                const content = (template.contentTemplate || template.content || '')
                     .replace(/{PLAYER1}/g, p1)
                     .replace(/{PLAYER2}/g, p2);
 
                 posts.push({
-                    id: `auto-post-${targetDate.getFullYear()}-${targetDate.getMonth() + 1}-${targetDate.getDate()}`,
+                    id: `auto-post-${targetDate.getFullYear()}-${targetDate.getMonth() + 1}-${targetDate.getDate()}-${i}`,
                     title: title,
                     category: template.category,
                     catColor: template.catColor,
@@ -560,7 +460,7 @@
                     readTime: template.readTime,
                     emoji: template.emoji || '📰',
                     imgGrad: template.imgGrad || 'linear-gradient(135deg, #1e293b, #0f172a)',
-                    timestamp: targetDate.getTime()
+                    timestamp: targetDate.getTime() - (i * 86400000)
                 });
             }
             return posts;
@@ -570,6 +470,9 @@
     class DashboardView {
         constructor() {
             this.matchUnsub = null;
+            this._isRendering = false;
+            this._lastRenderTime = 0;
+            this._userSyncDebounce = null;
 
             // Global Navigation Helper for News
             window.dashNavigate = (route, source = 'news') => {
@@ -669,10 +572,25 @@
             // USER SYNC MOTOR: Ensure widgets refresh when user data arrives
             if (window.Store) {
                 this.unsubUser = window.Store.subscribe('currentUser', (user) => {
-                    if (user && window.Router && window.Router.currentRoute === 'dashboard') {
-                        console.log("👤 [DashboardView] User synced, refreshing live content...");
-                        this.buildContext(user).then(context => this.loadLiveWidgetContent(context));
+                    if (!user || !window.Router || window.Router.currentRoute !== 'dashboard') return;
+
+                    const now = Date.now();
+                    // Evitar doble ejecución en login si render() está activo o terminó hace menos de 500ms
+                    if (this._isRendering || (now - (this._lastRenderTime || 0) < 500)) {
+                        console.log("⚡ [DashboardView] Skipping currentUser subscription sync: render already in progress or recent (<500ms)");
+                        return;
                     }
+
+                    clearTimeout(this._userSyncDebounce);
+                    this._userSyncDebounce = setTimeout(() => {
+                        const currentNow = Date.now();
+                        if (this._isRendering || (currentNow - (this._lastRenderTime || 0) < 500)) return;
+
+                        console.log("👤 [DashboardView] User synced, refreshing live content...");
+                        this.buildContext(user).then(context => this.loadLiveWidgetContent(context)).catch(err => {
+                            console.warn("[DashboardView] Error in synced user context refresh:", err);
+                        });
+                    }, 300);
                 });
             }
 
@@ -683,16 +601,20 @@
             const container = document.getElementById('content-area');
             if (!container) return;
 
-            // Invalida variables temporales de eventos comunitarios
-            window._ccEventsFetchedRecently = false;
-            delete window._lastEventsData;
+            this._isRendering = true;
+            this._lastRenderTime = Date.now();
 
-            // 1. Get Real User Data
-            const user = window.Store ? window.Store.getState('currentUser') : null;
-            const userLevel = user ? (user.level || "3.5") : "3.5";
+            try {
+                // Invalida variables temporales de eventos comunitarios
+                window._ccEventsFetchedRecently = false;
+                delete window._lastEventsData;
 
-            // Soft Refresh if elements already exist in the DOM (prevents flickering and keeps WebGL/Three.js context alive)
-            const isAlreadyRendered = document.getElementById('hero-card-root') !== null;
+                // 1. Get Real User Data
+                const user = window.Store ? window.Store.getState('currentUser') : null;
+                const userLevel = user ? (user.level || "3.5") : "3.5";
+
+                // Soft Refresh if elements already exist in the DOM (prevents flickering and keeps WebGL/Three.js context alive)
+                const isAlreadyRendered = document.getElementById('hero-card-root') !== null;
             if (isAlreadyRendered) {
                 console.log("⚡ [DashboardView] Already rendered, performing soft refresh...");
                 try {
@@ -700,7 +622,7 @@
                     const lvlEl = document.getElementById('user-level-val');
                     if (lvlEl) lvlEl.innerText = userLevel;
                     const rnkEl = document.getElementById('user-ranking-val');
-                    if (rnkEl) rnkEl.innerText = `#${user ? (user.ranking_pos || '—') : '—'}`;
+                    if (rnkEl) rnkEl.innerText = `#${user ? (user.ranking_pos || user.rank || '—') : '—'}`;
                     const mtcEl = document.getElementById('user-matches-val');
                     if (mtcEl) mtcEl.innerText = user ? (user.total_matches || '0') : '0';
 
@@ -794,6 +716,10 @@
                     const blogRoot = document.getElementById('blog-news-widget-root');
                     if (blogRoot) {
                         blogRoot.innerHTML = this.renderBlogWidget();
+                    }
+                    const promoRoot = document.getElementById('dashboard-organizers-promo-root');
+                    if (promoRoot) {
+                        promoRoot.innerHTML = this.renderClubOrganizersPromo();
                     }
 
                     // Refresh Stories & Open Matches
@@ -1120,6 +1046,11 @@
                         <!-- Content loaded via JS -->
                     </div>
 
+                    <!-- 3.6 ESPACIO CLUBES & ORGANIZADORES (HIPER LLAMATIVO) -->
+                    <div id="dashboard-organizers-promo-root" style="margin: 0 15px 16px !important; animation: floatUp 0.8s ease-out forwards;">
+                        <!-- Content loaded via JS -->
+                    </div>
+
                     <!-- 🏆 RANKING SPOTLIGHT -->
                     <div id="ranking-spotlight-root" style="margin:0 15px 16px; animation:floatUp 0.8s ease-out forwards;">
                         <style>
@@ -1282,6 +1213,17 @@
 
             // 4. ASYNC LOADING OF DATA-DEPENDENT COMPONENTS
             try {
+                // INSTANT PAINT (0ms): Pintar HeroCard y ActionGrid inmediatamente con el contexto inicial rápido/persistido
+                const fastContext = this.getFastInitialContext(user);
+                const heroRoot = document.getElementById('hero-card-root');
+                if (heroRoot && window.HeroCard) {
+                    heroRoot.innerHTML = window.HeroCard.render(fastContext);
+                }
+                const actionGridRoot = document.getElementById('action-grid-root');
+                if (actionGridRoot && window.ActionGrid) {
+                    actionGridRoot.innerHTML = window.ActionGrid.render(fastContext);
+                }
+
                 // Build context (Might take time)
                 const context = await this.buildContext(user);
 
@@ -1461,6 +1403,12 @@
                     blogRoot.innerHTML = this.renderBlogWidget();
                 }
 
+                // Load Organizers Promo Widget
+                const promoRoot = document.getElementById('dashboard-organizers-promo-root');
+                if (promoRoot) {
+                    promoRoot.innerHTML = this.renderClubOrganizersPromo();
+                }
+
                 // Deep-linking para noticias compartidas (?post=ID)
                 const urlParams = new URLSearchParams(window.location.search);
                 const sharePostId = urlParams.get('post');
@@ -1521,8 +1469,13 @@
             } catch (e) {
                 console.error("Error rendering Tactical3DWidget:", e);
             }
-
+        } catch (renderError) {
+            console.error("❌ [DashboardView] Fatal render error:", renderError);
+        } finally {
+            this._isRendering = false;
+            this._lastRenderTime = Date.now();
         }
+    }
 
         initHeaderTickerSync() {
             // REDUNDANT: Handled by core/SmartTicker.js
@@ -1854,6 +1807,141 @@
             }, 2400);
         }
 
+        renderClubOrganizersPromo() {
+            return `
+                <div class="dashboard-organizer-card" style="
+                    background: linear-gradient(135deg, rgba(8, 14, 28, 0.98) 0%, rgba(15, 23, 42, 0.98) 50%, rgba(3, 7, 18, 0.98) 100%);
+                    border: 1.5px solid rgba(204, 255, 0, 0.45);
+                    border-radius: 26px;
+                    padding: 22px 24px;
+                    position: relative;
+                    overflow: hidden;
+                    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.85), 0 0 35px -5px rgba(204, 255, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+                    backdrop-filter: blur(20px);
+                    font-family: 'Outfit', sans-serif;
+                ">
+                    <!-- Laser Gradient Line on Top -->
+                    <div style="position: absolute; top: 0; left: 0; right: 0; height: 3.5px; background: linear-gradient(90deg, #CCFF00, #38bdf8, #a855f7, #CCFF00); background-size: 200% 100%; animation: neonLaserFlow 4s linear infinite; border-radius: 26px 26px 0 0;"></div>
+
+                    <!-- Ambient Glow Orbs -->
+                    <div style="position: absolute; top: -45px; left: -45px; width: 170px; height: 170px; background: radial-gradient(circle, rgba(204, 255, 0, 0.25) 0%, transparent 70%); filter: blur(30px); pointer-events: none;"></div>
+                    <div style="position: absolute; bottom: -45px; right: -45px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(56, 189, 248, 0.22) 0%, transparent 70%); filter: blur(35px); pointer-events: none;"></div>
+                    
+                    <!-- Decorative Background Watermark -->
+                    <i class="fas fa-trophy" style="position: absolute; right: -15px; bottom: -20px; font-size: 8.5rem; color: #CCFF00; opacity: 0.05; transform: rotate(-12deg); pointer-events: none; z-index: 1;"></i>
+
+                    <div style="position: relative; z-index: 2;">
+                        <!-- Top Header: High-Impact Badge + Glowing Trophy Emblem -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 12px;">
+                            <div style="display: inline-flex; align-items: center; gap: 7px; background: linear-gradient(135deg, rgba(204, 255, 0, 0.18) 0%, rgba(56, 189, 248, 0.12) 100%); border: 1.5px solid rgba(204, 255, 0, 0.55); padding: 5px 14px; border-radius: 999px; box-shadow: 0 0 18px rgba(204, 255, 0, 0.35);">
+                                <i class="fas fa-crown" style="color: #CCFF00; font-size: 0.75rem; filter: drop-shadow(0 0 4px #CCFF00);"></i>
+                                <span style="color: #CCFF00; font-size: 0.68rem; font-weight: 1000; text-transform: uppercase; letter-spacing: 0.9px;">ESPACIO CLUBES & ORGANIZADORES</span>
+                            </div>
+
+                            <div style="width: 48px; height: 48px; border-radius: 16px; background: linear-gradient(135deg, rgba(204, 255, 0, 0.22) 0%, rgba(56, 189, 248, 0.16) 100%); border: 2px solid #CCFF00; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 0 25px rgba(204, 255, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.4); animation: emblemFloat 3s ease-in-out infinite alternate;">
+                                <i class="fas fa-trophy" style="color: #CCFF00; font-size: 1.45rem; filter: drop-shadow(0 2px 8px rgba(204, 255, 0, 0.8));"></i>
+                            </div>
+                        </div>
+
+                        <!-- Headline -->
+                        <h3 style="margin: 0 0 8px; color: #ffffff; font-size: 1.32rem; font-weight: 1000; line-height: 1.25; letter-spacing: -0.4px;">
+                            ¿Organizas Americanas en <span style="background: linear-gradient(90deg, #CCFF00 0%, #38bdf8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 0 25px rgba(204,255,0,0.5);">Barcelona</span>?
+                        </h3>
+
+                        <!-- Subtitle -->
+                        <p style="margin: 0 0 14px; color: #cbd5e1; font-size: 0.82rem; line-height: 1.55; font-weight: 500;">
+                            Publica tus torneos aquí, atrae a nuestra comunidad y gestiona en directo con la <strong style="color: #CCFF00; font-weight: 950; text-shadow: 0 0 8px rgba(204,255,0,0.4);">Torre de Control digital</strong>.
+                        </p>
+
+                        <!-- Key Benefits Micro-Chips -->
+                        <div style="display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 16px;">
+                            <span style="background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 10px; padding: 4px 10px; font-size: 0.68rem; font-weight: 900; color: #e2e8f0; display: inline-flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-users" style="color: #38bdf8; font-size: 0.7rem;"></i> +1.500 Jugadores
+                            </span>
+                            <span style="background: rgba(204, 255, 0, 0.1); border: 1px solid rgba(204, 255, 0, 0.35); border-radius: 10px; padding: 4px 10px; font-size: 0.68rem; font-weight: 900; color: #e2e8f0; display: inline-flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-tv" style="color: #CCFF00; font-size: 0.7rem;"></i> Marcador en Vivo
+                            </span>
+                            <span style="background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 10px; padding: 4px 10px; font-size: 0.68rem; font-weight: 900; color: #e2e8f0; display: inline-flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-bolt" style="color: #fbbf24; font-size: 0.7rem;"></i> Sin Coste Fijo
+                            </span>
+                            <span style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 10px; padding: 4px 10px; font-size: 0.68rem; font-weight: 900; color: #e2e8f0; display: inline-flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-rocket" style="color: #c084fc; font-size: 0.7rem;"></i> Llenado Automático
+                            </span>
+                        </div>
+                        
+                        <!-- Actions Grid -->
+                        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                            <a href="https://wa.me/34649219350?text=¡Hola%20Alex!%20Soy%20organizador/club%20de%20pádel%20y%20me%20gustaría%20publicar%20mis%20americanas%20en%20SomosPadel%20BCN." 
+                               target="_blank" 
+                               rel="noopener noreferrer" 
+                               style="
+                                   background: #CCFF00;
+                                   color: #050b14;
+                                   padding: 12px 20px;
+                                   border-radius: 16px;
+                                   font-weight: 1000;
+                                   font-size: 0.82rem;
+                                   text-decoration: none;
+                                   display: inline-flex;
+                                   align-items: center;
+                                   justify-content: center;
+                                   gap: 8px;
+                                   box-shadow: 0 6px 22px rgba(204, 255, 0, 0.45);
+                                   letter-spacing: 0.3px;
+                                   transition: all 0.25s ease;
+                                   flex: 1;
+                                   min-width: 175px;
+                               "
+                               onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 26px rgba(204, 255, 0, 0.65)';"
+                               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 22px rgba(204, 255, 0, 0.45)';"
+                               onmousedown="this.style.transform='scale(0.97)';">
+                                <i class="fab fa-whatsapp" style="font-size: 1.15rem; color: #050b14;"></i>
+                                <span>PUBLICAR MI EVENTO</span>
+                            </a>
+                            <button onclick="window.renderClubBenefitsModal ? window.renderClubBenefitsModal() : (window.EventsController && window.EventsController.renderClubBenefitsModal())" 
+                                    style="
+                                        background: rgba(56, 189, 248, 0.12);
+                                        border: 1.5px solid rgba(56, 189, 248, 0.35);
+                                        color: #ffffff;
+                                        padding: 12px 18px;
+                                        border-radius: 16px;
+                                        font-weight: 950;
+                                        font-size: 0.82rem;
+                                        cursor: pointer;
+                                        display: inline-flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        gap: 8px;
+                                        backdrop-filter: blur(10px);
+                                        letter-spacing: 0.3px;
+                                        transition: all 0.25s ease;
+                                        flex: 1;
+                                        min-width: 155px;
+                                        font-family: 'Outfit', sans-serif;
+                                    "
+                                    onmouseover="this.style.background='rgba(56, 189, 248, 0.22)'; this.style.borderColor='#38bdf8'; this.style.transform='translateY(-2px)';"
+                                    onmouseout="this.style.background='rgba(56, 189, 248, 0.12)'; this.style.borderColor='rgba(56, 189, 248, 0.35)'; this.style.transform='translateY(0)';"
+                                    onmousedown="this.style.transform='scale(0.97)';">
+                                <i class="fas fa-info-circle" style="color: #38bdf8; font-size: 0.95rem;"></i>
+                                <span>VENTAJAS CLUBES</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <style>
+                    @keyframes neonLaserFlow {
+                        0% { background-position: 0% 50%; }
+                        100% { background-position: 200% 50%; }
+                    }
+                    @keyframes emblemFloat {
+                        0% { transform: translateY(0) rotate(0deg); }
+                        100% { transform: translateY(-4px) rotate(3deg); }
+                    }
+                </style>
+            `;
+        }
+
         renderBlogWidget() {
             // Fetch async, inject into shell
             setTimeout(async () => {
@@ -1873,20 +1961,22 @@
                     const snapshot = await db.collection('blog_posts').orderBy('timestamp', 'desc').get();
                     let posts = [];
                     if (!snapshot.empty) {
-                        posts = snapshot.docs.map(doc => {
-                            const data = doc.data();
-                            return {
-                                id: doc.id,
-                                ...data
-                            };
+                        posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    }
+
+                    // Enriquecer con el catálogo masivo NewsCatalog para tener un abanico 100x mayor sin repetición
+                    if (window.NewsCatalog && typeof window.NewsCatalog.getFullCatalog === 'function') {
+                        const catalogPosts = window.NewsCatalog.getFullCatalog();
+                        const existingTitles = new Set(posts.map(p => (p.title || '').trim().toLowerCase()));
+                        catalogPosts.forEach(catPost => {
+                            const t = (catPost.title || '').trim().toLowerCase();
+                            if (!existingTitles.has(t)) {
+                                posts.push(catPost);
+                                existingTitles.add(t);
+                            }
                         });
-                    } else {
-                        // Usar fallback determinista autónomo en lugar de posts estáticos fijos
-                        posts = window.SomosPadelNewsEngine ? window.SomosPadelNewsEngine.getDeterministicFallbackPosts() : [
-                            { id: 'torneo-primavera', category: '🏆 TORNEOS', catColor: '#CCFF00', title: 'Gran Torneo de Primavera 2026', snippet: '¡Inscripciones abiertas! 120 plazas, Welcome Pack premium y barbacoa final.', content: 'Llega el evento más esperado del año. El 15 de Junio celebraremos el Gran Torneo de Primavera con categorías masculina, femenina y mixta. ¡Reserva tu plaza!', date: 'Hoy', readTime: '2 min', imageUrl: 'img/blog_action_smash.png' },
-                            { id: 'ranking-actualizado', category: '📊 RANKING', catColor: '#38bdf8', title: 'Ranking Actualizado: Top 5 de la Temporada', snippet: 'El ranking se ha recalculado. ¿Has subido posiciones esta semana?', content: 'Consulta tu posición actualizada en la sección Ranking. Nuevos puntos asignados tras la última jornada.', date: 'Ayer', readTime: '2 min', imageUrl: 'img/blog_court_night.png' },
-                            { id: 'tactica-centro', category: '💡 CONSEJOS', catColor: '#f59e0b', title: 'Táctica: Jugar al Centro de la Pista', snippet: 'Jugar al medio reduce los ángulos del rival y genera dudas en la pareja contraria.', content: 'El centro de la pista es la clave táctica más potente del pádel. Al tirar al centro reduces ángulos y generas confusión.', date: 'Hace 3 días', readTime: '3 min', imageUrl: 'img/blog_racket_ball.png' }
-                        ];
+                    } else if (posts.length === 0) {
+                        posts = window.SomosPadelNewsEngine ? window.SomosPadelNewsEngine.getDeterministicFallbackPosts() : [];
                     }
 
                     // Guardar en caché local para filtrado instantáneo
@@ -2131,72 +2221,25 @@
 
             const visiblePosts = filtered.slice(0, 4);
 
-            // Deduplicación inteligente de imágenes 100% de pádel para evitar fotos no deportivas
-            const postImagesMap = (() => {
-                const pool = [
-                    'img/blog_action_smash.png', 
-                    'img/blog_court_night.png', 
-                    'img/blog_racket_ball.png', 
-                    'img/blog_ball_glass.png', 
-                    'img/blog_player_victory.png', 
-                    'img/blog_club_lounge.png',
-                    'img/pista_padel_azul.png'
-                ];
-                const assigned = {};
-                const used = new Set();
-                
-                // 1. Asignar imageUrls explícitas sólo si son locales de pádel (evitar Unsplash genérico de ciclismo/gym)
-                visiblePosts.forEach(post => {
-                    if (post.imageUrl && !post.imageUrl.includes('unsplash.com')) {
-                        assigned[post.id] = post.imageUrl;
-                        used.add(post.imageUrl);
-                    }
-                });
-                
-                // 2. Asignar preferred de pádel según palabras clave del contenido
-                visiblePosts.forEach(post => {
-                    if (assigned[post.id]) return;
-                    const title = (post.title || '').toLowerCase();
-                    const content = (post.content || '').toLowerCase();
-                    const cat = (post.category || '').toLowerCase();
-                    let preferred = null;
-
-                    if (title.includes('match point') || title.includes('victoria') || title.includes('oro') || title.includes('comunicaci')) {
-                        preferred = 'img/blog_player_victory.png';
-                    } else if (title.includes('remate') || title.includes('víbora') || title.includes('vibora') || title.includes('bandeja') || title.includes('smash') || title.includes('red')) {
-                        preferred = 'img/blog_action_smash.png';
-                    } else if (title.includes('torneo') || title.includes('americana') || title.includes('evento') || title.includes('ranking') || title.includes('elo')) {
-                        preferred = 'img/blog_court_night.png';
-                    } else if (title.includes('pala') || title.includes('material') || title.includes('eva') || title.includes('epicondilitis') || title.includes('codo') || title.includes('táctica') || title.includes('tactica')) {
-                        preferred = 'img/blog_racket_ball.png';
-                    } else if (title.includes('hidrataci') || title.includes('nutrici') || title.includes('cortado') || title.includes('bola') || title.includes('pelota')) {
-                        preferred = 'img/blog_ball_glass.png';
-                    } else if (title.includes('fair play') || title.includes('comunidad') || title.includes('club') || title.includes('lounge')) {
-                        preferred = 'img/blog_club_lounge.png';
-                    } else if (title.includes('chiquita') || title.includes('globo') || title.includes('pista')) {
-                        preferred = 'img/pista_padel_azul.png';
-                    }
-
-                    if (preferred && !used.has(preferred)) {
-                        assigned[post.id] = preferred;
-                        used.add(preferred);
-                    }
-                });
-                
-                // 3. Asignar imágenes libres del pool de pádel
-                visiblePosts.forEach((post, idx) => {
-                    if (assigned[post.id]) return;
-                    const available = pool.find(img => !used.has(img));
-                    if (available) {
-                        assigned[post.id] = available;
-                        used.add(available);
-                    } else {
-                        assigned[post.id] = pool[idx % pool.length];
-                    }
-                });
-                
-                return assigned;
-            })();
+            // Deduplicación inteligente de imágenes mediante la Fototeca Curada HD de NewsCatalog (sin repetir fotos)
+            const postImagesMap = window.NewsCatalog 
+                ? window.NewsCatalog.assignUniquePhotos(visiblePosts)
+                : (() => {
+                    const pool = [
+                        'img/blog_action_smash.png', 
+                        'img/blog_court_night.png', 
+                        'img/blog_racket_ball.png', 
+                        'img/blog_ball_glass.png', 
+                        'img/blog_player_victory.png', 
+                        'img/blog_club_lounge.png',
+                        'img/pista_padel_azul.png'
+                    ];
+                    const assigned = {};
+                    visiblePosts.forEach((post, idx) => {
+                        assigned[post.id] = post.imageUrl || pool[idx % pool.length];
+                    });
+                    return assigned;
+                })();
 
             // Guardar mapeo de imágenes en la instancia para que openBlogPost pueda leerlo
             this.currentImagesMap = { ...this.currentImagesMap, ...postImagesMap };
@@ -2365,7 +2408,18 @@
                     console.warn("Fallo al leer histórico de Firestore, usando fallbacks:", dbErr);
                 }
 
-                if (posts.length === 0) {
+                // Enriquecer el histórico con todo el catálogo masivo sin repetición de títulos
+                if (window.NewsCatalog && typeof window.NewsCatalog.getFullCatalog === 'function') {
+                    const catalogPosts = window.NewsCatalog.getFullCatalog();
+                    const existingTitles = new Set(posts.map(p => (p.title || '').trim().toLowerCase()));
+                    catalogPosts.forEach(catPost => {
+                        const t = (catPost.title || '').trim().toLowerCase();
+                        if (!existingTitles.has(t)) {
+                            posts.push(catPost);
+                            existingTitles.add(t);
+                        }
+                    });
+                } else if (posts.length === 0) {
                     posts = window.SomosPadelNewsEngine ? window.SomosPadelNewsEngine.getDeterministicFallbackPosts() : [];
                 }
 
@@ -2398,17 +2452,15 @@
                                 </div>`;
                     }
 
-                    const pool = [
-                        'img/blog_action_smash.png', 
-                        'img/blog_court_night.png', 
-                        'img/blog_racket_ball.png', 
-                        'img/blog_ball_glass.png', 
-                        'img/blog_player_victory.png', 
-                        'img/blog_club_lounge.png'
-                    ];
+                    // Fototeca deduplicada HD: cada fila tendrá una foto distinta y de altísima calidad
+                    const rowImagesMap = window.NewsCatalog 
+                        ? window.NewsCatalog.assignUniquePhotos(filtered)
+                        : {};
+
+                    this.currentImagesMap = { ...this.currentImagesMap, ...rowImagesMap };
 
                     return filtered.map((post, idx) => {
-                        const img = (post.imageUrl && !post.imageUrl.includes('unsplash.com')) ? post.imageUrl : pool[idx % pool.length];
+                        const img = rowImagesMap[post.id] || post.imageUrl || 'img/blog_action_smash.png';
                         const catClean = (post.category || 'REVISTA').replace(/^[^\s]+\s/, '');
                         return `
                             <div onclick="document.getElementById('blog-history-modal').remove(); window.DashboardView.openBlogPost('${post.id}')"
@@ -2794,25 +2846,22 @@
                     post = fallbackPosts[postId];
                 }
 
+                // Buscar en catálogo masivo si no estaba en Firestore ni en los básicos
+                if (!post && window.NewsCatalog && typeof window.NewsCatalog.getFullCatalog === 'function') {
+                    const allCat = window.NewsCatalog.getFullCatalog();
+                    post = allCat.find(p => p.id === postId || p.id.includes(postId));
+                }
+
                 if (!post) return;
 
-                // Resolver la mejor imagen de fondo para la cabecera (Unsplash dinámico o pool local)
-                let articleImg = post.imageUrl;
-                if (!articleImg && this.currentImagesMap && this.currentImagesMap[postId]) {
-                    articleImg = this.currentImagesMap[postId];
+                // Resolver la mejor imagen de fondo para la cabecera (Fototeca Curada HD o pool local)
+                let articleImg = (this.currentImagesMap && this.currentImagesMap[postId]) || post.imageUrl;
+                if (!articleImg && window.NewsCatalog) {
+                    const assigned = window.NewsCatalog.assignUniquePhotos([post]);
+                    articleImg = assigned[post.id];
                 }
                 if (!articleImg) {
-                    const title = (post.title || '').toLowerCase();
-                    const category = (post.category || '').toLowerCase();
-                    if (title.includes('torneo') || title.includes('americana') || category.includes('torneo')) {
-                        articleImg = 'img/blog_action_smash.png';
-                    } else if (title.includes('ranking') || category.includes('ranking')) {
-                        articleImg = 'img/blog_court_night.png';
-                    } else if (title.includes('consejo') || title.includes('táctica') || category.includes('consejo')) {
-                        articleImg = 'img/blog_racket_ball.png';
-                    } else {
-                        articleImg = 'img/blog_ball_glass.png';
-                    }
+                    articleImg = 'img/pista_padel_azul.png';
                 }
 
                 const modal = document.createElement('div');
@@ -3550,67 +3599,126 @@
         }
 
         /**
-         * Real data context builder for the Hero Card
+         * Retorna de inmediato (síncrono, 0ms) el mejor contexto inicial disponible
+         * combinando el perfil del usuario actual y el último contexto persistido en Storage.
+         * Permite que la UI del Dashboard y la HeroCard se pinten en el milisegundo 0.
+         * @param {Object} user - Usuario actual
+         * @returns {Object} Contexto inicial completo y seguro
+         */
+        getFastInitialContext(user) {
+            const userId = user ? (user.uid || user.id || 'anonymous') : 'anonymous';
+            const cacheKey = `sp_last_dashboard_context_${userId}`;
+
+            let cached = null;
+            try {
+                const stored = localStorage.getItem(cacheKey) || sessionStorage.getItem(cacheKey);
+                if (stored) {
+                    cached = JSON.parse(stored);
+                }
+            } catch (e) {
+                console.warn("[DashboardView] Error parsing cached dashboard context:", e);
+            }
+
+            if (!cached && window._lastDashboardContext) {
+                cached = window._lastDashboardContext;
+            }
+
+            const initial = {
+                status: cached?.status || 'EMPTY',
+                eventName: cached?.eventName || null,
+                eventDate: cached?.eventDate || null,
+                eventTime: cached?.eventTime || null,
+                court: cached?.court || null,
+                opponents: cached?.opponents || null,
+                partner: cached?.partner || null,
+                eventDateRaw: cached?.eventDateRaw || null,
+                hasMatchToday: !!cached?.hasMatchToday,
+                hasOpenTournament: !!cached?.hasOpenTournament,
+                hasRecentVictory: !!cached?.hasRecentVictory,
+                hasMatchThisWeek: !!cached?.hasMatchThisWeek,
+                activeTournaments: cached?.activeTournaments || 0,
+                upcomingMatches: cached?.upcomingMatches || 0,
+                myEvents: cached?.myEvents || [],
+                scoreA: cached?.scoreA || null,
+                scoreB: cached?.scoreB || null,
+                pointsEarned: cached?.pointsEarned || 0,
+                newRank: user?.ranking_pos ? String(user.ranking_pos) : (user?.rank ? String(user.rank) : (cached?.newRank || '-')),
+                myRank: user?.ranking_pos || user?.rank || cached?.myRank || '-',
+                rankStatus: user?.trend || cached?.rankStatus || 'stable',
+                confirmed: !!cached?.confirmed,
+                matchId: cached?.matchId || null,
+                matchType: cached?.matchType || null,
+                round: cached?.round || null,
+                tournamentName: cached?.tournamentName || null,
+                tournamentDate: cached?.tournamentDate || null,
+                tournamentTime: cached?.tournamentTime || null,
+                tournamentId: cached?.tournamentId || null,
+                maxPlayers: cached?.maxPlayers || 16,
+                currentPlayers: cached?.currentPlayers || 0,
+                matchDay: cached?.matchDay || null,
+                matchTime: cached?.matchTime || null,
+                activeTournament: cached?.activeTournament || null
+            };
+
+            window._lastDashboardContext = initial;
+            return initial;
+        }
+
+        /**
+         * Real data context builder for the Hero Card (Optimizado y No Bloqueante)
          * @param {Object} user - The current logged in user
          */
         async buildContext(user) {
-            const context = {
-                status: 'EMPTY',
-                eventName: null,
-                eventDate: null,
-                eventTime: null,
-                court: null,
-                opponents: null,
-                partner: null,
-                eventDateRaw: null,
-                hasMatchToday: false,
-                hasOpenTournament: false,
-                hasRecentVictory: false,
-                hasMatchThisWeek: false,
-                activeTournaments: 0,
-                upcomingMatches: 0,
-                myEvents: [],
-                scoreA: null,
-                scoreB: null,
-                pointsEarned: 0,
-                newRank: '-',
-                confirmed: false,
-                matchId: null,
-                matchType: null
-            };
-
-
+            // Inicializar inmediatamente con el contexto rápido (0ms)
+            const context = this.getFastInitialContext(user);
 
             if (!user) return context;
 
             try {
-                // 1. Get All Events & User Stats (Real-time or Cached)
-                const [allEvents, rankedPlayers] = await Promise.all([
-                    window.AmericanaService ? window.AmericanaService.getAllActiveEvents() : [],
-                    window.RankingController ? window.RankingController.calculateSilently() : []
-                ]);
-
                 const userId = user.uid || user.id;
 
-                // 2. Real Rank Calculation
-                if (rankedPlayers.length > 0) {
-                    const myRankIndex = rankedPlayers.findIndex(p => p.id === userId);
-                    context.newRank = myRankIndex !== -1 ? (myRankIndex + 1).toString() : '-';
+                // 1. OBTENER EVENTOS ACTIVOS (Única llamada optimizada a AmericanaService)
+                const allEvents = window.AmericanaService ? await window.AmericanaService.getAllActiveEvents() : [];
+
+                // 2. OBTENCIÓN RÁPIDA DE RANKING (Sin bloquear descarga global de Firestore)
+                // Usamos user.ranking_pos o user.rank directamente si está disponible
+                const directRank = user.ranking_pos || user.rank || null;
+                if (directRank) {
+                    context.newRank = String(directRank);
+                    context.myRank = directRank;
+                    context.rankStatus = user.trend || 'stable';
                 }
 
-                // 3. Victory Detection (Last 24h)
-                const winningMatch = await this.checkRecentVictory(user);
-                context.hasRecentVictory = !!winningMatch;
-                if (winningMatch) {
-                    const isTeamA = (winningMatch.team_a_ids || []).includes(userId);
-                    context.scoreA = isTeamA ? winningMatch.score_a : winningMatch.score_b;
-                    context.scoreB = isTeamA ? winningMatch.score_b : winningMatch.score_a;
-                    context.opponents = isTeamA ? winningMatch.team_b_names : winningMatch.team_a_names;
+                // Si RankingController ya tiene datos en caché en memoria, los aprovechamos síncronamente
+                const cachedRanking = window.RankingController?._cachedRanking;
+                if (cachedRanking && Array.isArray(cachedRanking) && cachedRanking.length > 0) {
+                    const myRankIndex = cachedRanking.findIndex(p => p.id === userId);
+                    if (myRankIndex !== -1) {
+                        context.newRank = (myRankIndex + 1).toString();
+                        context.myRank = myRankIndex + 1;
+                        if (cachedRanking[myRankIndex].trend) {
+                            context.rankStatus = cachedRanking[myRankIndex].trend;
+                        }
+                    }
+                } else if (window.RankingController?.calculateSilently) {
+                    // Desacoplado: si no hay caché en memoria, no bloqueamos buildContext.
+                    // Se ejecuta de fondo y actualiza badges suavemente al terminar.
+                    window.RankingController.calculateSilently().then(freshRanking => {
+                        if (freshRanking && Array.isArray(freshRanking) && freshRanking.length > 0) {
+                            const myRankIndex = freshRanking.findIndex(p => p.id === userId);
+                            if (myRankIndex !== -1) {
+                                const rankStr = (myRankIndex + 1).toString();
+                                const rnkEl = document.getElementById('user-ranking-val');
+                                if (rnkEl) rnkEl.innerText = `#${rankStr}`;
+                                const heroBadge = document.querySelector('.hero-ranking-badge');
+                                if (heroBadge) heroBadge.innerText = `#${rankStr}`;
+                            }
+                        }
+                    }).catch(err => console.warn("[DashboardView] calculateSilently background sync warning:", err));
                 }
 
-                // 4. Inscriptions & Waitlist Monitor
+                // 3. FILTRADO DE TORNEOS Y PARTICIPACIÓN DEL USUARIO (Reutilizando allEvents)
                 const openEvents = allEvents.filter(a => ['open', 'upcoming', 'scheduled'].includes(a.status));
-                context.activeTournaments = openEvents.length;
                 context.hasOpenTournament = openEvents.length > 0;
 
                 // Populate first available tournament for HeroCard display
@@ -3626,33 +3734,22 @@
                     context.currentPlayers = pList.length;
                 }
 
-                // 5. STATS & ARCHIVE (Calculated silently in background)
-                if (rankedPlayers && rankedPlayers.length > 0) {
-                    const me = rankedPlayers.find(p => p.id === userId);
-                    if (me) {
-                        context.myRank = me.rank;
-                        context.rankStatus = me.trend || 'stable';
-                    }
-                }
+                // Acción y QuickStats: torneos activos (REUTILIZANDO allEvents, sin segunda llamada a getAllActiveEvents)
+                const activeTournamentsList = allEvents.filter(e => {
+                    const title = (e.name || e.title || '').toLowerCase();
+                    const isEnt = e.type === 'entreno' || title.includes('entreno') || title.includes('pozo') || title.includes('clase');
+                    return !isEnt && e.status !== 'finished';
+                });
+                context.activeTournaments = activeTournamentsList.length;
 
-                // 2026 UPDATE: Fetch active tournaments for ActionGrid badge
-                if (window.AmericanaService) {
-                    const activeEvents = await window.AmericanaService.getAllActiveEvents();
-                    context.activeTournaments = activeEvents.filter(e => {
-                        const title = (e.name || e.title || '').toLowerCase();
-                        const isEnt = e.type === 'entreno' || title.includes('entreno') || title.includes('pozo') || title.includes('clase');
-                        return !isEnt && e.status !== 'finished';
-                    }).length;
+                // Specific active tournament for QuickStats (if user is in one)
+                context.activeTournament = allEvents.find(e => {
+                    const title = (e.name || e.title || '').toLowerCase();
+                    const isEnt = e.type === 'entreno' || title.includes('entreno') || title.includes('pozo') || title.includes('clase');
+                    return !isEnt && e.status !== 'finished' && (e.players || []).some(p => (p.id || p.uid || p) === userId);
+                });
 
-                    // Specific active tournament for QuickStats (if user is in one)
-                    context.activeTournament = activeEvents.find(e => {
-                        const title = (e.name || e.title || '').toLowerCase();
-                        const isEnt = e.type === 'entreno' || title.includes('entreno') || title.includes('pozo') || title.includes('clase');
-                        return !isEnt && e.status !== 'finished' && (e.players || []).some(p => p.id === userId);
-                    });
-                }
-
-                // 5. User's specific participation (re-ordered)
+                // Participación del usuario
                 context.myEvents = allEvents.filter(a => {
                     const players = a.players || a.registeredPlayers || [];
                     return players.some(p => (p.uid || p.id || p) === userId);
@@ -3661,19 +3758,36 @@
                 context.upcomingMatches = context.myEvents.filter(e => e.status !== 'finished').length;
                 context.hasMatchThisWeek = context.upcomingMatches > 0;
 
-                // 6. DEEP DIVE: Current/Next Match Details
+                // Evento activo actual del usuario
                 const myActiveEvent = context.myEvents.find(e => !['finished', 'closed', 'cancelled'].includes(e.status));
 
+                // 4. PARALELIZACIÓN CON Promise.allSettled:
+                // checkRecentVictory Y fetchMatchDetails se disparan concurrentemente
+                const victoryPromise = this.checkRecentVictory(user);
+                const matchPromise = myActiveEvent 
+                    ? this.fetchMatchDetails(userId, myActiveEvent.id, myActiveEvent.type, myActiveEvent.status)
+                    : Promise.resolve(null);
+
+                const [victorySettled, matchSettled] = await Promise.allSettled([victoryPromise, matchPromise]);
+                const winningMatch = victorySettled.status === 'fulfilled' ? victorySettled.value : null;
+                const matchData = matchSettled.status === 'fulfilled' ? matchSettled.value : null;
+
+                // 5. PROCESAR RESULTADO DE VICTORIA (Últimas 24h)
+                context.hasRecentVictory = !!winningMatch;
+                if (winningMatch) {
+                    const isTeamA = (winningMatch.team_a_ids || []).includes(userId);
+                    context.scoreA = isTeamA ? winningMatch.score_a : winningMatch.score_b;
+                    context.scoreB = isTeamA ? winningMatch.score_b : winningMatch.score_a;
+                    context.opponents = isTeamA ? winningMatch.team_b_names : winningMatch.team_a_names;
+                }
+
+                // 6. DETALLES DEL PARTIDO / ESTADO
                 if (myActiveEvent) {
                     const isTodayMatch = this.isToday(myActiveEvent.date);
                     const isLive = myActiveEvent.status === 'live' || myActiveEvent.status === 'in_progress' || myActiveEvent.status === 'pairing';
 
-                    // FETCH REAL MATCH DATA (Court, Partner, Opponents)
-                    // Intentamos obtener detalles independientemente de si es hoy, por si el admin ya generó cruces
-                    const matchData = await this.fetchMatchDetails(userId, myActiveEvent.id, myActiveEvent.type, myActiveEvent.status);
-                    
                     if (matchData) {
-                        context.hasMatchToday = true; // Lo marcamos como "Today" para que HeroCard use renderUpcomingMatch
+                        context.hasMatchToday = true; // HeroCard renderUpcomingMatch
                         context.status = isLive ? 'LIVE_MATCH' : 'UPCOMING_EVENT';
                         context.eventName = myActiveEvent.name;
                         context.matchTime = myActiveEvent.time || '18:00';
@@ -3705,16 +3819,25 @@
                     }
                 } else if (context.hasRecentVictory) {
                     context.status = 'VICTORY';
-                    context.pointsEarned = 15; // Mock for now, should calculate
+                    context.pointsEarned = 15;
                 } else if (context.hasOpenTournament) {
                     context.status = 'EMPTY';
+                }
+
+                // 7. PERSISTENCIA EN STORAGE (localStorage & sessionStorage)
+                try {
+                    const cacheKey = `sp_last_dashboard_context_${userId}`;
+                    const jsonStr = JSON.stringify(context);
+                    localStorage.setItem(cacheKey, jsonStr);
+                    sessionStorage.setItem(cacheKey, jsonStr);
+                    window._lastDashboardContext = context;
+                } catch (saveErr) {
+                    console.warn("[DashboardView] Error saving dashboard context to storage:", saveErr);
                 }
 
             } catch (err) {
                 console.error("❌ [DashboardView] Error building user context:", err);
             }
-
-
 
             return context;
         }
@@ -4010,12 +4133,14 @@
             const mvpRoot = document.getElementById('mvp-spotlight-container');
             if (!root) return;
 
-            try {
-                // Obtenemos los datos del Ranking real
-                const players = await (window.RankingController ? window.RankingController.calculateSilently() : []);
-                
-                // --- 1. MVP SPOTLIGHT (Top 1) ---
-                if (mvpRoot) {
+            const paint = (players) => {
+                const currentRoot = document.getElementById('trending-players-list');
+                const currentMvpRoot = document.getElementById('mvp-spotlight-container');
+                if (!currentRoot) return;
+
+                try {
+                    // --- 1. MVP SPOTLIGHT (Top 1) ---
+                    if (currentMvpRoot) {
                     let mvp = (players && players.length > 0) ? players[0] : null;
                     if (!mvp) {
                         const currentUser = window.Store ? window.Store.getState('currentUser') : null;
@@ -4383,9 +4508,29 @@
                     `;
                 }).join('');
 
-            } catch (err) {
-                console.error("Error rendering trending players:", err);
-                if (root) root.innerHTML = "⚠️ Error sync";
+                } catch (err) {
+                    console.error("Error rendering trending players:", err);
+                    if (root) root.innerHTML = "⚠️ Error sync";
+                }
+            };
+
+            // 1. Render inicial inmediato (0ms) con ranking en memoria o fallback
+            const cachedRanking = window.RankingController?._cachedRanking;
+            if (cachedRanking && Array.isArray(cachedRanking) && cachedRanking.length > 0) {
+                paint(cachedRanking);
+            } else {
+                paint([]);
+            }
+
+            // 2. Ejecutar calculateSilently de fondo sin bloquear para actualizar el DOM con suavidad
+            if (window.RankingController?.calculateSilently) {
+                window.RankingController.calculateSilently().then(freshPlayers => {
+                    if (freshPlayers && Array.isArray(freshPlayers) && freshPlayers.length > 0) {
+                        paint(freshPlayers);
+                    }
+                }).catch(err => {
+                    console.warn("[DashboardView] Error updating trending players in background:", err);
+                });
             }
         }
 
@@ -4394,8 +4539,11 @@
             if (!root) return;
 
             try {
-                // 1. Get ranking players
-                const players = await (window.RankingController ? window.RankingController.calculateSilently() : []);
+                // 1. Get ranking players (Usa caché en memoria si existe para no bloquear)
+                let players = window.RankingController?._cachedRanking;
+                if (!players || players.length === 0) {
+                    players = await (window.RankingController ? window.RankingController.calculateSilently() : []);
+                }
                 if (!players || players.length === 0) {
                     root.innerHTML = `<div style="padding:20px; color:#94a3b8; font-size:0.7rem; text-align:center;">Cargando enfrentamiento...</div>`;
                     return;

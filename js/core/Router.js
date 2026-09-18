@@ -253,6 +253,12 @@
                 { name: 'TournamentController', routes: ['tournaments'] }
             ];
 
+            // Asegurar que el polling de EventsController se detiene al navegar a cualquier otra sección (ranking, perfil, etc.)
+            const eventsRoutes = ['events', 'americanas', 'finished_americanas', 'agenda_americanas', 'help_americanas', 'finished', 'agenda', 'results', 'entrenos', 'partidas_abiertas'];
+            if (!eventsRoutes.includes(newRoute) && window.EventsController && typeof window.EventsController.stopAutoRefreshPolling === 'function') {
+                window.EventsController.stopAutoRefreshPolling();
+            }
+
             controllersToCleanup.forEach(ctrl => {
                 if (ctrl.routes.includes(this.currentRoute) && !ctrl.routes.includes(newRoute)) {
                     // Mantener el servicio de fondo de EventsController activo para transiciones instantáneas

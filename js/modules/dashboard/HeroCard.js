@@ -273,52 +273,161 @@
         }
 
         /**
-         * Vista previa de la semana
+         * Vista previa de la semana (Ultra compacta, visual e interactiva)
          */
         static renderWeekPreview(ctx) {
+            const matchesCount = ctx.upcomingMatches || 1;
+            const matchTitle = ctx.tournamentName || ctx.eventName || 'Evento de Pádel';
+            const timeStr = ctx.matchTime || '18:00';
+            const dayStr = ctx.matchDay || 'Próximo';
+            
+            // Extraer formato corto de día (ej: "Dom 20/9" o fecha limpia)
+            let shortDay = dayStr;
+            if (dayStr.toLowerCase().includes('próximo:')) {
+                shortDay = dayStr.split(':')[1]?.trim() || dayStr;
+            }
+
             return `
-                <div class="hero-card fade-in" style="
-                    background: #ffffff;
-                    border-left: 5px solid #3b82f6;
-                    border-radius: 24px;
-                    padding: 28px;
-                    margin: 0;
+                <div class="hero-card-week-compact fade-in" style="
+                    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+                    border: 1px solid rgba(59, 130, 246, 0.22);
+                    border-left: 4px solid #3b82f6;
+                    border-radius: 18px;
+                    padding: 12px 14px;
+                    margin: 0 0 14px 0;
                     width: 100%;
                     box-sizing: border-box;
-                    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+                    box-shadow: 0 8px 24px -4px rgba(59, 130, 246, 0.10), 0 2px 6px rgba(0,0,0,0.03);
+                    position: relative;
+                    overflow: hidden;
+                    font-family: 'Outfit', 'Inter', -apple-system, sans-serif;
                 ">
-                    <div style="font-size: 0.7rem; font-weight: 900; color: #3b82f6; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px;">
-                        📅 ESTA SEMANA
-                    </div>
-                    <div style="font-size: 1.6rem; font-weight: 950; color: #0a192f; margin-bottom: 20px; letter-spacing: -0.5px;">
-                        Tienes ${ctx.upcomingMatches} ${ctx.upcomingMatches === 1 ? 'partido' : 'partidos'}
-                    </div>
-                    
-                    <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 18px; border-radius: 16px; margin-bottom: 20px;">
-                        <div style="font-size: 0.9rem; font-weight: 800; color: #0a192f; margin-bottom: 6px;">
-                            Próximo: ${ctx.matchDay}
+                    <!-- Glow de fondo estético -->
+                    <div style="position: absolute; top: -30px; right: -30px; width: 100px; height: 100px; background: radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+
+                    <!-- Fila 1: Header Compacto con Badges -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; position: relative; z-index: 2;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="
+                                background: #eff6ff;
+                                color: #1d4ed8;
+                                border: 1px solid #bfdbfe;
+                                font-size: 0.62rem;
+                                font-weight: 850;
+                                padding: 2px 8px;
+                                border-radius: 7px;
+                                letter-spacing: 0.6px;
+                                text-transform: uppercase;
+                                display: inline-flex;
+                                align-items: center;
+                                gap: 4px;
+                            ">
+                                <span style="font-size: 0.70rem;">📅</span> ESTA SEMANA
+                            </span>
                         </div>
-                        <div style="font-size: 0.8rem; color: #94a3b8; font-weight: 600;">
-                            A las ${ctx.matchTime} • ${ctx.tournamentName || ctx.eventName || 'Evento de Pádel'}
+                        <div style="
+                            background: rgba(59, 130, 246, 0.10);
+                            color: #2563eb;
+                            border: 1px solid rgba(59, 130, 246, 0.22);
+                            font-size: 0.65rem;
+                            font-weight: 900;
+                            padding: 2px 8px;
+                            border-radius: 7px;
+                            letter-spacing: 0.4px;
+                        ">
+                            ⚡ ${matchesCount} ${matchesCount === 1 ? 'PARTIDO' : 'PARTIDOS'}
                         </div>
                     </div>
 
-                    <button onclick="Router.navigate('agenda')" style="
-                        background: transparent;
-                        border: 2px solid rgba(59,130,246,0.3);
-                        color: #3b82f6;
-                        padding: 16px;
-                        border-radius: 14px;
-                        font-weight: 900;
-                        font-size: 0.85rem;
-                        cursor: pointer;
-                        width: 100%;
-                        text-transform: uppercase;
-                        letter-spacing: 1px;
-                        transition: all 0.2s;
-                    " onmouseover="this.style.background='rgba(59,130,246,0.1)'" onmouseout="this.style.background='transparent'">
-                        VER AGENDA COMPLETA
-                    </button>
+                    <!-- Fila 2: Ticket Interactivo de Partido (Click directo a Agenda) -->
+                    <div 
+                        onclick="window.PlayerView?.haptic?.(15); Router.navigate('agenda');"
+                        title="Toca para ver la agenda y detalles del partido"
+                        style="
+                            display: grid;
+                            grid-template-columns: auto 1fr auto;
+                            align-items: center;
+                            gap: 10px;
+                            background: #ffffff;
+                            border: 1px solid #e2e8f0;
+                            border-radius: 13px;
+                            padding: 8px 10px;
+                            cursor: pointer;
+                            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+                            position: relative;
+                            z-index: 2;
+                        "
+                        onmouseover="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 4px 14px rgba(59,130,246,0.18)'; this.style.transform='translateY(-1px)';"
+                        onmouseout="this.style.borderColor='#e2e8f0'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.03)'; this.style.transform='none';"
+                    >
+                        <!-- Badge Ticket Fecha / Hora -->
+                        <div style="
+                            background: linear-gradient(135deg, #090e1a 0%, #1e293b 100%);
+                            border: 1px solid rgba(59, 130, 246, 0.35);
+                            border-radius: 9px;
+                            padding: 4px 8px;
+                            text-align: center;
+                            min-width: 52px;
+                            box-sizing: border-box;
+                        ">
+                            <div style="font-size: 0.58rem; font-weight: 900; color: #CCFF00; text-transform: uppercase; letter-spacing: 0.4px; line-height: 1;">
+                                ${shortDay}
+                            </div>
+                            <div style="font-size: 0.90rem; font-weight: 950; color: #ffffff; line-height: 1.1; margin-top: 2px;">
+                                ${timeStr}
+                            </div>
+                        </div>
+
+                        <!-- Detalles del Partido -->
+                        <div style="min-width: 0; display: flex; flex-direction: column; justify-content: center;">
+                            <div style="
+                                font-size: 0.84rem;
+                                font-weight: 900;
+                                color: #0f172a;
+                                white-space: nowrap;
+                                overflow: hidden;
+                                text-overflow: ellipsis;
+                                line-height: 1.25;
+                            ">
+                                ${matchTitle}
+                            </div>
+                            <div style="
+                                font-size: 0.70rem;
+                                color: #64748b;
+                                font-weight: 600;
+                                margin-top: 2px;
+                                display: flex;
+                                align-items: center;
+                                gap: 4px;
+                                white-space: nowrap;
+                                overflow: hidden;
+                                text-overflow: ellipsis;
+                            ">
+                                <span style="color: #2563eb; font-weight: 750;">● Próximo</span>
+                                <span>•</span>
+                                <span>Ver convocatoria & pista</span>
+                            </div>
+                        </div>
+
+                        <!-- Botón Acción Directa -->
+                        <div style="
+                            width: 32px;
+                            height: 32px;
+                            background: #3b82f6;
+                            color: #ffffff;
+                            border-radius: 9px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 0.75rem;
+                            box-shadow: 0 3px 9px rgba(59, 130, 246, 0.35);
+                            transition: transform 0.2s, background 0.2s;
+                            flex-shrink: 0;
+                        ">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </div>
                 </div>
             `;
         }

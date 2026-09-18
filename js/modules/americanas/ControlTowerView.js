@@ -143,6 +143,26 @@
                 if (doc.exists) {
                     this.currentAmericanaDoc = { id: doc.id, ...doc.data(), isEntreno };
 
+                    // 🔒 Verificación de Acceso a Americana Privada con Contraseña
+                    if (this.currentAmericanaDoc.is_private === true || this.currentAmericanaDoc.is_private === 'true') {
+                        let isUnlocked = false;
+                        if (window.EventsController?.isAmericanaUnlocked) {
+                            isUnlocked = window.EventsController.isAmericanaUnlocked(this.currentAmericanaDoc);
+                        } else {
+                            const user = (window.Store ? window.Store.getState('currentUser') : null) || JSON.parse(localStorage.getItem('currentUser') || localStorage.getItem('adminUser') || 'null');
+                            const isAdmin = user && (['admin', 'super_admin', 'admin_player'].includes(user.role));
+                            const isSavedUnlocked = (localStorage.getItem('unlocked_americana_' + eventId) === 'true');
+                            const noPin = !this.currentAmericanaDoc.access_pin || !String(this.currentAmericanaDoc.access_pin).trim();
+                            isUnlocked = isAdmin || isSavedUnlocked || noPin;
+                        }
+
+                        if (!isUnlocked) {
+                            console.warn("🔒 [ControlTowerView] Acceso restringido a Americana Privada:", eventId);
+                            this.renderPrivateLockScreen(this.currentAmericanaDoc);
+                            return;
+                        }
+                    }
+
                     // UX Improvement: Check status explicitly
                     if (this.currentAmericanaDoc.status === 'finished') {
                         this.activeTab = 'results'; // Show matches grid first, even if finished
@@ -3913,6 +3933,132 @@
             }, () => {
                 this.goToRound(currentRound);
             });
+        }
+
+        // ==========================================
+        // 🔒 PANTALLA DE ACCESO RESTRINGIDO A LA TORRE DE CONTROL
+        // ==========================================
+        renderPrivateLockScreen(doc) {
+            const container = document.getElementById('live-feed-content') || document.getElementById('content-area') || document.getElementById('app-root') || document.body;
+            if (!container) return;
+
+            container.innerHTML = `
+                <div style="
+                    min-height: 80vh;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 24px 16px;
+                    font-family: 'Outfit', sans-serif;
+                ">
+                    <div style="
+                        width: 100%;
+                        max-width: 420px;
+                        background: #090e18;
+                        border: 1.5px solid rgba(239, 68, 68, 0.45);
+                        border-radius: 26px;
+                        padding: 32px 24px;
+                        box-shadow: 0 25px 60px rgba(0,0,0,0.9), 0 0 35px rgba(239, 68, 68, 0.25);
+                        text-align: center;
+                        box-sizing: border-box;
+                    ">
+                        <div style="width: 76px; height: 76px; margin: 0 auto 16px; border-radius: 22px; background: rgba(239, 68, 68, 0.12); border: 2px solid rgba(239, 68, 68, 0.4); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 25px rgba(239, 68, 68, 0.3);">
+                            <i class="fas fa-lock" style="font-size: 2.3rem; color: #f87171;"></i>
+                        </div>
+
+                        <div style="display: inline-block; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); padding: 4px 12px; border-radius: 8px; font-size: 0.68rem; font-weight: 950; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 10px;">
+                            🔒 TORRE DE CONTROL Y MARCADOR PRIVADO
+                        </div>
+
+                        <h2 style="color: #ffffff; font-size: 1.35rem; font-weight: 950; margin: 0 0 8px 0; text-transform: uppercase;">
+                            ${doc.name || 'Americana Privada'}
+                        </h2>
+
+                        <p style="color: #94a3b8; font-size: 0.82rem; line-height: 1.45; margin: 0 0 22px 0;">
+                            Esta americana es de acceso privado. Introduce la clave proporcionada por el organizador para ver los marcadores de pista, cruces y resultados en vivo.
+                        </p>
+
+                        <form id="ct-private-pin-form" onsubmit="event.preventDefault(); window.ControlTowerView.submitPrivateUnlock('${doc.id}');" style="display: flex; flex-direction: column; gap: 14px;">
+                            <input type="password" id="ct-private-pin-input" 
+                                   placeholder="Introduce la contraseña..." 
+                                   autocomplete="off"
+                                   style="
+                                       width: 100%;
+                                       padding: 14px 16px;
+                                       background: rgba(15, 23, 42, 0.85);
+                                       border: 1.5px solid rgba(255, 255, 255, 0.15);
+                                       border-radius: 14px;
+                                       color: #ffffff;
+                                       font-size: 1.05rem;
+                                       font-weight: 900;
+                                       letter-spacing: 2px;
+                                       text-align: center;
+                                       box-sizing: border-box;
+                                       outline: none;
+                                   ">
+
+                            <div id="ct-private-error" style="display: none; color: #f87171; font-size: 0.75rem; font-weight: 800;">
+                                <i class="fas fa-exclamation-circle"></i> Contraseña incorrecta. Pide la clave al organizador.
+                            </div>
+
+                            <button type="submit" style="
+                                width: 100%;
+                                padding: 14px;
+                                background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+                                color: #ffffff;
+                                border: none;
+                                border-radius: 14px;
+                                font-size: 0.92rem;
+                                font-weight: 950;
+                                cursor: pointer;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                gap: 8px;
+                                box-shadow: 0 4px 18px rgba(239, 68, 68, 0.45);
+                            ">
+                                <i class="fas fa-unlock"></i>
+                                <span>DESBLOQUEAR Y VER PARTIDOS</span>
+                            </button>
+
+                            <button type="button" onclick="window.Router ? window.Router.navigate('americanas') : window.history.back()" style="
+                                background: none;
+                                border: none;
+                                color: #64748b;
+                                font-size: 0.78rem;
+                                font-weight: 800;
+                                cursor: pointer;
+                                margin-top: 4px;
+                            ">
+                                ← Volver al listado de Americanas
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            `;
+            const pinInp = document.getElementById('ct-private-pin-input');
+            if (pinInp) pinInp.focus();
+        }
+
+        submitPrivateUnlock(docId) {
+            const input = document.getElementById('ct-private-pin-input');
+            const errEl = document.getElementById('ct-private-error');
+            const entered = (input?.value || '').trim();
+            const expected = String(this.currentAmericanaDoc?.access_pin || this.currentAmericanaDoc?.access_password || '').trim();
+
+            if (entered && entered.toLowerCase() === expected.toLowerCase()) {
+                localStorage.setItem(`unlocked_americana_${docId}`, 'true');
+                if (window.NotificationService) {
+                    window.NotificationService.show("🔓 ¡Acceso concedido! Cargando partidos...", "success");
+                }
+                this.load(docId, this.currentAmericanaDoc?.isEntreno ? 'entreno' : 'americana');
+            } else {
+                if (errEl) errEl.style.display = 'block';
+                if (input) {
+                    input.style.borderColor = '#ef4444';
+                    input.select();
+                }
+            }
         }
     } // End of ControlTowerView class
 

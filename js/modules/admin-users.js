@@ -161,7 +161,7 @@ window.AdminViews.users = async function () {
                         ${isPending ? '⏳ PENDIENTE' : (u.status === 'active' ? '🟢 ACTIVO' : '🚫 BLOQUEADO')}
                      </span>
                 </td>
-                <td data-col="acciones" style="text-align: right; width: 140px;">
+                <td data-col="acciones" style="text-align: right; width: 165px;">
                     <div style="display: flex; gap: 5px; justify-content: flex-end; align-items: center; white-space: nowrap; flex-wrap: nowrap;">
                         ${canManageUsers ? `
                             ${isPending ? `
@@ -174,6 +174,9 @@ window.AdminViews.users = async function () {
                             </button>
                             <button class="btn-outline-pro" style="padding: 0; width: 28px; height: 28px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #475569; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onclick='openEditUserModal(${JSON.stringify(u).replace(/'/g, "&#39;")})' title="Editar Jugador">
                                 <i class="fas fa-edit" style="font-size: 0.75rem;"></i>
+                            </button>
+                            <button class="btn-outline-pro btn-duplicate-user" style="padding: 0; width: 28px; height: 28px; border-radius: 8px; border: 1px solid #bae6fd; background: #f0f9ff; color: #0284c7; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 3px rgba(2,132,199,0.12);" onclick="window.openDuplicateUserModal('${u.id}')" title="Duplicar Jugador">
+                                <i class="fas fa-clone" style="font-size: 0.75rem;"></i>
                             </button>
                             <button class="btn-outline-pro" style="padding: 0; width: 28px; height: 28px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.05); color: #ef4444; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 3px rgba(239,68,68,0.05);" onclick="deleteUser('${u.id}', event)" title="Eliminar Jugador">
                                 <i class="fas fa-trash-alt" style="font-size: 0.75rem;"></i>
@@ -305,7 +308,7 @@ window.AdminViews.users = async function () {
                         <th data-col="genero" onclick="window.sortUsersByColumn('gender')" style="width: 10%; min-width: 90px; text-align: left; user-select: none;" class="sortable-header">GÉNERO</th>
                         <th data-col="partidos" onclick="window.sortUsersByColumn('matches')" style="width: 7%; min-width: 70px; text-align: center; user-select: none;" class="sortable-header">PARTIDOS</th>
                         <th data-col="estado" onclick="window.sortUsersByColumn('status')" style="width: 10%; min-width: 100px; text-align: left; user-select: none;" class="sortable-header">ESTADO</th>
-                        <th data-col="acciones" style="width: 15%; min-width: 130px; text-align: right; user-select: none;">ACCIONES</th>
+                        <th data-col="acciones" style="width: 15%; min-width: 165px; text-align: right; user-select: none;">ACCIONES</th>
                     </tr>
                 </thead>
                 <tbody id="users-tbody"></tbody>
@@ -1131,6 +1134,183 @@ window.AdminViews.users = async function () {
 
     window.closeAdminModal = () => {
         document.getElementById('admin-user-modal').classList.add('hidden');
+    };
+
+    // ==========================================
+    // DUPLICATE PLAYER LOGIC (QUICK CLONE)
+    // ==========================================
+    window.currentSourceUserToDuplicate = null;
+
+    window.openDuplicateUserModal = (userOrId) => {
+        let user = userOrId;
+        if (typeof userOrId === 'string') {
+            user = (window.allUsersCache || []).find(u => u.id === userOrId) || null;
+        }
+        if (!user) {
+            console.warn("⚠️ [DuplicateUser] Jugador base no encontrado:", userOrId);
+            return;
+        }
+
+        window.currentSourceUserToDuplicate = user;
+
+        const nameEl = document.getElementById('dup-source-name');
+        const badgesEl = document.getElementById('dup-source-badges');
+        const newNameInput = document.getElementById('dup-user-name');
+        const newPhoneInput = document.getElementById('dup-user-phone');
+        const levelInput = document.getElementById('dup-user-level');
+        const genderSelect = document.getElementById('dup-user-gender');
+        const roleSelect = document.getElementById('dup-user-role');
+
+        if (nameEl) nameEl.textContent = user.name || 'Sin nombre';
+
+        if (badgesEl) {
+            const teamText = Array.isArray(user.team_somospadel) && user.team_somospadel.length > 0
+                ? user.team_somospadel.join(', ')
+                : (user.team_somospadel || 'Sin equipo');
+            
+            const lvl = user.level || user.self_rate_level || 3.5;
+            const genderText = user.gender === 'chica' ? '👩 Chica' : '👦 Chico';
+            const roleText = user.role || 'player';
+
+            badgesEl.innerHTML = `
+                <span style="background: #e0f2fe; color: #0369a1; font-weight: 800; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; border: 1px solid #bae6fd;">⭐ Nivel ${lvl}</span>
+                <span style="background: #f1f5f9; color: #475569; font-weight: 700; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; border: 1px solid #e2e8f0;">${genderText}</span>
+                <span style="background: #fdf4ff; color: #9333ea; font-weight: 700; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; border: 1px solid #f5d0fe;">🏷️ ${roleText}</span>
+                <span style="background: #ecfdf5; color: #059669; font-weight: 700; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; border: 1px solid #a7f3d0;">👥 ${teamText}</span>
+            `;
+        }
+
+        if (newNameInput) {
+            newNameInput.value = '';
+            setTimeout(() => newNameInput.focus(), 120);
+        }
+        if (newPhoneInput) newPhoneInput.value = '';
+        if (levelInput) levelInput.value = user.level || user.self_rate_level || 3.5;
+        if (genderSelect) genderSelect.value = user.gender || 'chico';
+        if (roleSelect) roleSelect.value = user.role || 'player_somospadel';
+
+        const modal = document.getElementById('admin-duplicate-user-modal');
+        if (modal) modal.classList.remove('hidden');
+    };
+
+    window.closeDuplicateUserModal = () => {
+        window.currentSourceUserToDuplicate = null;
+        const modal = document.getElementById('admin-duplicate-user-modal');
+        if (modal) modal.classList.add('hidden');
+    };
+
+    window.handleDuplicateUserSubmit = async (e) => {
+        if (e) e.preventDefault();
+        const baseUser = window.currentSourceUserToDuplicate;
+        if (!baseUser) {
+            window.closeDuplicateUserModal();
+            return;
+        }
+
+        const btn = document.getElementById('dup-submit-btn');
+        const originalHtml = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Duplicando...';
+            btn.disabled = true;
+        }
+
+        try {
+            const nameInput = document.getElementById('dup-user-name');
+            const phoneInput = document.getElementById('dup-user-phone');
+            const levelInput = document.getElementById('dup-user-level');
+            const genderSelect = document.getElementById('dup-user-gender');
+            const roleSelect = document.getElementById('dup-user-role');
+
+            const newName = (nameInput ? nameInput.value : '').trim();
+            let newPhone = (phoneInput ? phoneInput.value : '').trim().replace(/\D/g, '');
+
+            if (!newName || newName.split(/\s+/).filter(Boolean).length < 2) {
+                throw new Error("Por favor introduce nombre y apellidos para el nuevo jugador.");
+            }
+            if (newPhone.length !== 9 && newPhone !== 'NOA') {
+                throw new Error("El teléfono debe contener exactamente 9 dígitos numéricos.");
+            }
+
+            // Comprobar si el teléfono ya existe en el sistema
+            if (window.allUsersCache && Array.isArray(window.allUsersCache)) {
+                const existing = window.allUsersCache.find(u => {
+                    const p = (u.phone || '').toString().replace(/\D/g, '');
+                    return p && p === newPhone;
+                });
+                if (existing) {
+                    const proceed = await window.PremiumModal.confirm({
+                        title: "⚠️ TELÉFONO YA EXISTENTE",
+                        message: `El número ${newPhone} ya está asignado al jugador "${existing.name}". ¿Deseas registrar este duplicado con el mismo número de todos modos?`,
+                        confirmText: "SÍ, REGISTRAR",
+                        cancelText: "MODIFICAR TELÉFONO"
+                    });
+                    if (!proceed) {
+                        if (btn) {
+                            btn.innerHTML = originalHtml;
+                            btn.disabled = false;
+                        }
+                        return;
+                    }
+                }
+            }
+
+            let rawLevel = levelInput ? levelInput.value : '3.5';
+            if (typeof rawLevel === 'string') rawLevel = rawLevel.replace(',', '.');
+            let submittedLevel = parseFloat(rawLevel);
+            if (isNaN(submittedLevel)) submittedLevel = parseFloat(baseUser.level || baseUser.self_rate_level || 3.5);
+
+            const clonedUserData = {
+                name: newName,
+                phone: newPhone,
+                level: submittedLevel,
+                self_rate_level: submittedLevel,
+                gender: genderSelect ? genderSelect.value : (baseUser.gender || 'chico'),
+                membership: baseUser.membership || 'externo',
+                role: roleSelect ? roleSelect.value : (baseUser.role || 'player_somospadel'),
+                status: 'active',
+                matches_played: 0,
+                side_preference: baseUser.side_preference || 'INDIFF',
+                play_style: baseUser.play_style || 'ESTRATEGIA',
+                team_somospadel: baseUser.team_somospadel
+                    ? (Array.isArray(baseUser.team_somospadel) ? [...baseUser.team_somospadel] : baseUser.team_somospadel)
+                    : null
+            };
+
+            // Guardar en Firestore a través de FirebaseDB.players.create
+            await FirebaseDB.players.create(clonedUserData);
+
+            // Refrescar caché y tabla
+            const freshUsers = await FirebaseDB.players.getAll(true);
+            window.allUsersCache = freshUsers;
+            window.filteredUsers = [...freshUsers];
+            window._allPlayersCache = freshUsers;
+
+            if (typeof window.multiFilterUsers === 'function') {
+                window.multiFilterUsers();
+            } else if (typeof window.renderUserRows === 'function') {
+                window.renderUserRows(window.filteredUsers);
+            }
+
+            window.closeDuplicateUserModal();
+
+            window.PremiumModal.alert({
+                title: "🎉 JUGADOR DUPLICADO",
+                message: `¡"${newName}" se ha creado con éxito clonando los atributos de "${baseUser.name}"!`
+            });
+
+        } catch (err) {
+            console.error("Error duplicando jugador:", err);
+            window.PremiumModal.alert({
+                title: "❌ ERROR AL DUPLICAR",
+                message: err.message || "No se pudo duplicar el jugador.",
+                type: 'error'
+            });
+        } finally {
+            if (btn) {
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            }
+        }
     };
 
     // NEW: DELETE USER FUNCTION

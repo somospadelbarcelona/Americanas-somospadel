@@ -1644,6 +1644,96 @@
         </div>
     </div>
 
+    <!-- Duplicate User Modal -->
+    <div id="admin-duplicate-user-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width: 520px; width: 95%; max-height: 92vh; overflow-y: auto; border-radius: 16px; padding: 0; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35); border: 1px solid rgba(2, 132, 199, 0.2);">
+            <div class="modal-header" style="background: linear-gradient(135deg, #0284c7, #0369a1); padding: 18px 24px; color: white; display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 1.15rem;">
+                        <i class="fas fa-clone"></i>
+                    </div>
+                    <div>
+                        <h2 style="margin: 0; font-size: 1.15rem; font-weight: 850; letter-spacing: 0.3px; color: white;">Duplicar Jugador</h2>
+                        <span style="font-size: 0.75rem; opacity: 0.9;">Crea un nuevo perfil heredando los datos técnicos</span>
+                    </div>
+                </div>
+                <button class="close-modal-btn" onclick="closeDuplicateUserModal()" style="color: white; opacity: 0.85; font-size: 1.4rem; background: none; border: none; cursor: pointer;">&times;</button>
+            </div>
+            
+            <form id="admin-duplicate-user-form" class="pro-form" style="padding: 22px 24px; display: flex; flex-direction: column; gap: 16px;" onsubmit="handleDuplicateUserSubmit(event)">
+                <!-- Target / Source Preview Card -->
+                <div id="dup-source-summary" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 16px;">
+                    <div style="font-size: 0.7rem; font-weight: 800; color: #0284c7; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: flex; align-items: center; gap: 5px;">
+                        <i class="fas fa-copy"></i> Plantilla base a duplicar:
+                    </div>
+                    <div id="dup-source-name" style="font-weight: 850; font-size: 1.05rem; color: #0f172a;">-</div>
+                    <div id="dup-source-badges" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px;">
+                        <!-- Badges injected dynamically -->
+                    </div>
+                </div>
+
+                <div style="font-size: 0.78rem; color: #166534; line-height: 1.4; background: #f0fdf4; border: 1px solid #bbf7d0; border-left: 4px solid #22c55e; padding: 10px 12px; border-radius: 8px;">
+                    💡 <strong>Fácil y rápido:</strong> Solo escribe el <strong>nuevo nombre</strong> y el <strong>teléfono</strong>. Nivel, género, equipos, rol y estilo se clonarán automáticamente.
+                </div>
+
+                <!-- Fields to change -->
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label style="font-weight: 800; font-size: 0.78rem; color: #0f172a; display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+                        <i class="fas fa-user-plus" style="color: #0284c7;"></i> NUEVO NOMBRE Y APELLIDOS <span style="color: #ef4444;">*</span>
+                    </label>
+                    <input type="text" id="dup-user-name" class="pro-input" placeholder="Ej: Marc Soler" required autocomplete="off" style="font-size: 0.95rem; font-weight: 600; padding: 10px 14px; border: 1.5px solid #cbd5e1; border-radius: 8px;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label style="font-weight: 800; font-size: 0.78rem; color: #0f172a; display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+                        <i class="fas fa-phone" style="color: #0284c7;"></i> NUEVO TELÉFONO (9 DÍGITOS) <span style="color: #ef4444;">*</span>
+                    </label>
+                    <input type="tel" id="dup-user-phone" class="pro-input" placeholder="Ej: 612345678" required autocomplete="off" style="font-size: 0.95rem; font-weight: 600; padding: 10px 14px; border: 1.5px solid #cbd5e1; border-radius: 8px;">
+                </div>
+
+                <!-- Optional inheritance adjustments -->
+                <div style="border-top: 1px dashed #cbd5e1; padding-top: 12px; margin-top: 2px;">
+                    <div style="font-size: 0.72rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                        <i class="fas fa-sliders-h"></i> Ajustes heredados (modificar solo si difiere):
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 8px;">
+                        <div>
+                            <label style="font-size: 0.68rem; font-weight: 700; color: #64748b; display: block; margin-bottom: 4px;">NIVEL</label>
+                            <input type="text" id="dup-user-level" class="pro-input" style="padding: 6px 8px; font-size: 0.85rem; border-radius: 6px;" placeholder="3.5">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.68rem; font-weight: 700; color: #64748b; display: block; margin-bottom: 4px;">GÉNERO</label>
+                            <select id="dup-user-gender" class="pro-input" style="padding: 6px 8px; font-size: 0.85rem; border-radius: 6px;">
+                                <option value="chico">CHICO</option>
+                                <option value="chica">CHICA</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size: 0.68rem; font-weight: 700; color: #64748b; display: block; margin-bottom: 4px;">ROL</label>
+                            <select id="dup-user-role" class="pro-input" style="padding: 6px 8px; font-size: 0.85rem; border-radius: 6px;">
+                                <option value="player_somospadel">SOMOSPADEL 🎾</option>
+                                <option value="player_americanas">AMERICANAS 🏆</option>
+                                <option value="player">EXTERNO 👤</option>
+                                <option value="captain">CAPITÁN 🧢</option>
+                                <option value="admin_player">ADMIN+JUG 🎖️</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action buttons -->
+                <div style="display: flex; gap: 10px; margin-top: 8px;">
+                    <button type="button" class="btn-outline-pro" onclick="closeDuplicateUserModal()" style="flex: 1; height: 44px; font-weight: 700; border-radius: 10px; border: 1px solid #cbd5e1; color: #64748b; cursor: pointer; background: white;">
+                        CANCELAR
+                    </button>
+                    <button type="submit" id="dup-submit-btn" class="btn-primary-pro" style="flex: 2; height: 44px; font-weight: 850; border-radius: 10px; background: linear-gradient(135deg, #0284c7, #0369a1); color: white; border: none; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35); display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: all 0.2s;">
+                        <i class="fas fa-clone"></i> <span>DUPLICAR JUGADOR</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 
 
     <!-- Edit Entreno Modal (Redesigned for better usability) -->
@@ -1985,6 +2075,30 @@
                                 <i class="fas fa-user-tie" style="color: #CCFF00;"></i> ORGANIZADOR DE LA AMERICANA
                             </label>
                             <input type="text" name="organizer" id="edit-americana-organizer-input" class="pro-input" placeholder="Ej: Alex / SomosPadel / Club Pádel" style="width: 100%; font-size: 0.85rem; border-radius: 10px;">
+                        </div>
+
+                        <!-- PRIVACIDAD & ACCESO EXCLUSIVO -->
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; margin-bottom: 15px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label style="font-weight: 800; font-size: 0.75rem; color: #f87171; text-transform: uppercase;">
+                                        <i class="fas fa-user-lock"></i> PRIVACIDAD
+                                    </label>
+                                    <select name="is_private" id="edit-americana-is-private" class="pro-input" onchange="const pg = document.getElementById('edit-americana-pin-group'); if (pg) pg.style.display = (this.value === 'true' ? 'block' : 'none');">
+                                        <option value="false">🌐 PÚBLICA (Abierta a todos)</option>
+                                        <option value="true">🔒 PRIVADA (Con contraseña)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" id="edit-americana-pin-group" style="margin-bottom: 0; display: none;">
+                                    <label style="font-weight: 800; font-size: 0.75rem; color: #CCFF00; text-transform: uppercase;">
+                                        <i class="fas fa-key"></i> CLAVE / PIN DE ACCESO
+                                    </label>
+                                    <input type="text" name="access_pin" id="edit-americana-pin-input" class="pro-input" placeholder="Ej: 1234 o PADELCLUB" style="font-weight: 900; letter-spacing: 1px;">
+                                </div>
+                            </div>
+                            <div style="font-size: 0.68rem; color: #94a3b8; margin-top: 6px; line-height: 1.3;">
+                                <i class="fas fa-info-circle" style="color: #38bdf8;"></i> Si es privada, solo los jugadores que tengan la clave podrán entrar a ver partidos, resultados y apuntarse.
+                            </div>
                         </div>
 
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 15px;">
@@ -2352,8 +2466,8 @@
             <script src="js/modules/admin/AdminNotifications.js?v=1.0"></script>
 
             <script src="js/utils/RoleService.js?v=PLAYER_AMERICANAS_v1"></script>
-            <script src="js/modules/admin-users.js?v=1.1"></script>
-            <script src="js/modules/admin-americanas.js?v=5042_ORGANIZER"></script>
+            <script src="js/modules/admin-users.js?v=DUPLICATE_USER_v2"></script>
+            <script src="js/modules/admin-americanas.js?v=5043_PRIVATE_AMERICANA"></script>
             <script src="js/modules/admin-matches.js"></script>
             <script src="js/modules/admin-results.js"></script>
 

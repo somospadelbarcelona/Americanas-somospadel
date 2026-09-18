@@ -217,6 +217,30 @@ window.AdminViews.americanas_create = async function () {
                         <input type="text" name="organizer" id="create-organizer-input" class="pro-input" placeholder="Ej: Alex / SomosPadel / Club Pádel" style="width: 100%; font-size: 0.85rem; border-radius: 10px;">
                     </div>
 
+                    <!-- PRIVACIDAD & ACCESO EXCLUSIVO -->
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; margin-bottom: 15px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label style="font-weight: 800; font-size: 0.75rem; color: #f87171; text-transform: uppercase;">
+                                    <i class="fas fa-user-lock"></i> PRIVACIDAD
+                                </label>
+                                <select name="is_private" id="create-americana-is-private" class="pro-input" onchange="const pg = document.getElementById('create-americana-pin-group'); if (pg) pg.style.display = (this.value === 'true' ? 'block' : 'none');">
+                                    <option value="false" selected>🌐 PÚBLICA (Abierta a todos)</option>
+                                    <option value="true">🔒 PRIVADA (Con contraseña)</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="create-americana-pin-group" style="margin-bottom: 0; display: none;">
+                                <label style="font-weight: 800; font-size: 0.75rem; color: #CCFF00; text-transform: uppercase;">
+                                    <i class="fas fa-key"></i> CLAVE / PIN DE ACCESO
+                                </label>
+                                <input type="text" name="access_pin" id="create-americana-pin-input" class="pro-input" placeholder="Ej: 1234 o PADELCLUB" style="font-weight: 900; letter-spacing: 1px;">
+                            </div>
+                        </div>
+                        <div style="font-size: 0.68rem; color: #94a3b8; margin-top: 6px; line-height: 1.3;">
+                            <i class="fas fa-info-circle" style="color: #38bdf8;"></i> Si es privada, solo los jugadores que tengan la clave podrán ver partidos, resultados y apuntarse.
+                        </div>
+                    </div>
+
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 15px;">
                         <div class="form-group">
                             <label>FECHA</label>
@@ -500,6 +524,13 @@ function renderAmericanaCard(e) {
         </div>
     ` : '';
 
+    const isPrivate = e.is_private === true || e.is_private === 'true';
+    const privateBadge = isPrivate ? `
+        <div style="background: rgba(239, 68, 68, 0.12); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.35); border-radius: 6px; padding: 2px 8px; font-size: 0.65rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; margin-top: 3px;" title="Americana Privada protegida con Contraseña">
+            <i class="fas fa-lock"></i> PRIVADA ${e.access_pin ? `(Clave: <strong>${e.access_pin}</strong>)` : ''}
+        </div>
+    ` : '';
+
     return `
         <div class="glass-card-enterprise americana-card-item" 
              data-month="${month}" 
@@ -518,6 +549,7 @@ function renderAmericanaCard(e) {
                     <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
                         ${clubBadge}
                         ${organizerBadge}
+                        ${privateBadge}
                     </div>
                     <div style="display: flex; gap: 0.8rem; font-size: 0.75rem; color: #333333; flex-wrap: wrap; align-items: center; margin-top: 4px;">
                          <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-calendar-alt" style="color: #60A5FA;"></i> <span style="color:#333; font-weight: 600;">${formatDate(e.date)}</span></span>
@@ -892,8 +924,10 @@ function setupCreateAmericanaForm() {
             if (!data.name) throw new Error("El nombre es obligatorio");
             if (!data.date) throw new Error("La fecha es obligatoria");
 
-            // Normalización booleana
+            // Normalización booleana y privacidad
             data.is_external = (data.is_external === 'true');
+            data.is_private = (data.is_private === 'true');
+            data.access_pin = (data.access_pin || '').trim();
             data.max_players = (parseInt(data.max_courts) || 4) * 4;
 
             await EventService.createEvent('americana', data);
@@ -1029,6 +1063,17 @@ window.openEditAmericanaModal = async (americana) => {
         orgInput.value = americana.organizer || '';
     }
 
+    // Prefill Privacidad y Clave de Acceso
+    const isPrivate = (americana.is_private === true || americana.is_private === 'true');
+    const privateSelect = form.querySelector('[name=is_private]');
+    if (privateSelect) privateSelect.value = String(isPrivate);
+
+    const pinInput = form.querySelector('[name=access_pin]');
+    if (pinInput) pinInput.value = americana.access_pin || '';
+
+    const pinGroup = document.getElementById('edit-americana-pin-group');
+    if (pinGroup) pinGroup.style.display = isPrivate ? 'block' : 'none';
+
     // Setup Sede Combobox & Sync Sede
     if (window.setupSedeCombobox) {
         window.setupSedeCombobox('edit-americana-location-input', { clubInputId: 'edit-americana-club-input' });
@@ -1118,8 +1163,10 @@ window.openEditAmericanaModal = async (americana) => {
         const id = data.id;
         delete data.id;
 
-        // Normalización booleana y sincronización de pistas
+        // Normalización booleana y sincronización de pistas y privacidad
         data.is_external = (data.is_external === 'true');
+        data.is_private = (data.is_private === 'true');
+        data.access_pin = (data.access_pin || '').trim();
         if (data.max_courts || data.courts) {
             const courts = parseInt(data.max_courts || data.courts) || 4;
             data.max_courts = courts;

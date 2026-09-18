@@ -126,6 +126,12 @@
                 const freshRanking = await this.calculateSilently();
 
                 // 3. Update UI
+                // Only render if user is still on the ranking route
+                if (window.Router && window.Router.currentRoute !== 'ranking') {
+                    console.log("⚡ [Ranking] Usuario ya no está en ranking, abortando actualización de UI.");
+                    return;
+                }
+
                 // Always render fresh data to ensure we are not stuck with old/empty cache
                 console.log("🔄 [Ranking] Updating UI with fresh data.");
                 render(freshRanking);

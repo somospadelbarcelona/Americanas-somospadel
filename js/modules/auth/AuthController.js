@@ -105,8 +105,8 @@
 
                             if (authModal) {
                                 if (scanner) {
-                                    scanner.style.display = 'block'; // láser para barrido final
-                                    scanner.style.animation = 'scanLineSweep 0.8s ease-in-out infinite';
+                                    scanner.style.display = 'block';
+                                    scanner.style.animation = 'scanLineSweep 0.2s ease-in-out infinite';
                                 }
                                 authModal.classList.add('dematerialize');
                                 if (appShell) appShell.classList.remove('hidden');
@@ -118,7 +118,7 @@
                                     if (!window.Router) {
                                         window.location.reload();
                                     }
-                                }, 800);
+                                }, 180);
                             } else {
                                 if (appShell) appShell.classList.remove('hidden');
                                 if (!window.Router) {

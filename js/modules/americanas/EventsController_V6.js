@@ -149,14 +149,25 @@
             this.state.bgInitialized = false;
         }
 
+        isCurrentRouteActive() {
+            if (!window.Router || !window.Router.currentRoute) return true;
+            const eventsRoutes = [
+                'events', 'americanas', 'finished_americanas', 'agenda_americanas',
+                'help_americanas', 'finished', 'agenda', 'results', 'entrenos', 'partidas_abiertas'
+            ];
+            return eventsRoutes.includes(window.Router.currentRoute);
+        }
+
         onDataUpdate() {
             // Check if we have received at least one update for each main collection
             if (this.state.americanas && this.state.entrenos) {
                 this.state.loading = false;
-                if (this.state.viewInitialized) {
+                if (this.state.viewInitialized && this.isCurrentRouteActive()) {
                     if (this._onDataUpdateDebounce) clearTimeout(this._onDataUpdateDebounce);
                     this._onDataUpdateDebounce = setTimeout(() => {
-                        this.render();
+                        if (this.isCurrentRouteActive()) {
+                            this.render();
+                        }
                     }, 50); // 50ms batch window
                 }
             }
@@ -214,7 +225,7 @@
                 this._visibilityBound = true;
                 document.addEventListener('visibilitychange', () => {
                     if (document.visibilityState === 'visible') {
-                        if (this.state.viewInitialized && (this.state.activeTab === 'events' || this.state.activeTab === 'entrenos')) {
+                        if (this.isCurrentRouteActive() && this.state.viewInitialized && (this.state.activeTab === 'events' || this.state.activeTab === 'entrenos')) {
                             console.log("👁️ [EventsController] App en primer plano: refresco automático");
                             this.refreshInstantly(null, true);
                         }
@@ -578,6 +589,10 @@
         }
 
         async render() {
+            if (!this.isCurrentRouteActive()) {
+                console.log(`🛡️ [EventsController] Bloqueando render: la ruta activa es '${window.Router?.currentRoute}', no pertenece a Americanas/Entrenos.`);
+                return;
+            }
             const container = document.getElementById('content-area');
             if (!container) return;
 
@@ -1093,6 +1108,27 @@
             document.getElementById('close-club-action').onclick = close;
         }
 
+        toggleOrganizerBanner() {
+            const banner = document.getElementById('organizer-collapsible-banner');
+            const label = document.getElementById('organizer-banner-toggle-label');
+            const arrow = document.getElementById('organizer-banner-toggle-arrow');
+            const btn = document.getElementById('btn-toggle-organizer-banner');
+            if (!banner) return;
+
+            const isHidden = banner.style.display === 'none' || banner.style.display === '';
+            if (isHidden) {
+                banner.style.display = 'block';
+                if (label) label.textContent = 'Ocultar';
+                if (arrow) arrow.style.transform = 'rotate(180deg)';
+                if (btn) btn.setAttribute('aria-expanded', 'true');
+            } else {
+                banner.style.display = 'none';
+                if (label) label.textContent = 'Mostrar';
+                if (arrow) arrow.style.transform = 'rotate(0deg)';
+                if (btn) btn.setAttribute('aria-expanded', 'false');
+            }
+        }
+
         renderEventsList(onlyMine, onlyEntrenos = false, showBothTypes = false) {
             let events = this.getAllSortedEvents();
             const { month, category } = this.state.filters;
@@ -1144,115 +1180,169 @@
 
             const isAmericanasSection = this.state.activeTab === 'events';
             const organizerBannerHtml = isAmericanasSection ? `
-                <div class="organizer-promo-banner" style="
-                    background: linear-gradient(135deg, rgba(11, 17, 32, 0.96) 0%, rgba(15, 23, 42, 0.98) 50%, rgba(3, 7, 18, 0.96) 100%);
-                    border: 1px solid rgba(204, 255, 0, 0.28);
-                    border-radius: 22px;
-                    padding: 18px 20px;
-                    margin-bottom: 20px;
-                    position: relative;
-                    overflow: hidden;
-                    box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.75), 0 0 25px -5px rgba(204, 255, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-                    backdrop-filter: blur(16px);
-                ">
-                    <!-- Ambient Glow Orbs -->
-                    <div style="position: absolute; top: -35px; left: -35px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(204, 255, 0, 0.18) 0%, transparent 70%); filter: blur(25px); pointer-events: none;"></div>
-                    <div style="position: absolute; bottom: -35px; right: -35px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%); filter: blur(30px); pointer-events: none;"></div>
-                    
-                    <!-- Decorative Background Watermark -->
-                    <i class="fas fa-trophy" style="position: absolute; right: -12px; bottom: -18px; font-size: 7.5rem; color: #CCFF00; opacity: 0.04; transform: rotate(-12deg); pointer-events: none; z-index: 1;"></i>
-
-                    <div style="position: relative; z-index: 2;">
-                        <!-- Top Header: Badge + Glowing Trophy Emblem -->
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px;">
-                            <div style="display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, rgba(204, 255, 0, 0.14) 0%, rgba(56, 189, 248, 0.08) 100%); border: 1px solid rgba(204, 255, 0, 0.35); padding: 4px 11px; border-radius: 999px; box-shadow: 0 2px 8px rgba(0,0,0,0.25);">
-                                <i class="fas fa-crown" style="color: #CCFF00; font-size: 0.68rem;"></i>
-                                <span style="color: #CCFF00; font-size: 0.64rem; font-weight: 950; text-transform: uppercase; letter-spacing: 0.8px;">ESPACIO CLUBES & ORGANIZADORES</span>
-                            </div>
-
-                            <div style="width: 44px; height: 44px; border-radius: 14px; background: linear-gradient(135deg, rgba(204, 255, 0, 0.18) 0%, rgba(56, 189, 248, 0.12) 100%); border: 1.5px solid rgba(204, 255, 0, 0.4); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.25);">
-                                <i class="fas fa-trophy" style="color: #CCFF00; font-size: 1.25rem; filter: drop-shadow(0 2px 6px rgba(204, 255, 0, 0.45));"></i>
+                <div class="organizer-promo-wrapper" style="margin-bottom: 16px;">
+                    <!-- Botón disparador para mostrar/ocultar el espacio de clubes -->
+                    <button id="btn-toggle-organizer-banner" 
+                            onclick="window.EventsController.toggleOrganizerBanner()" 
+                            aria-expanded="false"
+                            style="
+                                width: 100%;
+                                background: linear-gradient(135deg, rgba(15, 23, 42, 0.94) 0%, rgba(30, 41, 59, 0.94) 100%);
+                                border: 1.5px solid rgba(204, 255, 0, 0.35);
+                                color: #ffffff;
+                                padding: 11px 16px;
+                                border-radius: 18px;
+                                font-family: 'Outfit', sans-serif;
+                                font-weight: 850;
+                                font-size: 0.78rem;
+                                display: flex;
+                                align-items: center;
+                                justify-content: space-between;
+                                cursor: pointer;
+                                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+                                transition: all 0.25s ease;
+                            "
+                            onmouseover="this.style.borderColor='#CCFF00'; this.style.transform='translateY(-1px)';"
+                            onmouseout="this.style.borderColor='rgba(204, 255, 0, 0.35)'; this.style.transform='translateY(0)';"
+                    >
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 10px; background: rgba(204, 255, 0, 0.15); color: #CCFF00; font-size: 0.85rem; box-shadow: 0 0 10px rgba(204,255,0,0.25);">
+                                <i class="fas fa-crown"></i>
+                            </span>
+                            <div style="text-align: left;">
+                                <div style="color: #ffffff; font-size: 0.82rem; font-weight: 950; letter-spacing: -0.2px;">
+                                    ¿Organizas Americanas? <span style="color: #CCFF00;">Espacio Clubes</span>
+                                </div>
+                                <div style="color: #94a3b8; font-size: 0.62rem; font-weight: 700;">Publica tus torneos en SomosPadel Barcelona</div>
                             </div>
                         </div>
-
-                        <!-- Headline -->
-                        <h3 style="margin: 0 0 6px; color: #ffffff; font-size: 1.15rem; font-weight: 950; line-height: 1.25; letter-spacing: -0.4px;">
-                            ¿Organizas Americanas en <span style="background: linear-gradient(90deg, #CCFF00, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Barcelona</span>?
-                        </h3>
-
-                        <!-- Subtitle -->
-                        <p style="margin: 0 0 12px; color: #cbd5e1; font-size: 0.78rem; line-height: 1.5; font-weight: 500;">
-                            Publica tus torneos aquí, atrae a nuestra comunidad y gestiona en directo con la <strong style="color: #CCFF00; font-weight: 900;">Torre de Control digital</strong>.
-                        </p>
-
-                        <!-- Key Benefits Micro-Chips -->
-                        <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px;">
-                            <span style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 3px 8px; font-size: 0.65rem; font-weight: 800; color: #e2e8f0; display: inline-flex; align-items: center; gap: 4px;">
-                                <i class="fas fa-users" style="color: #38bdf8; font-size: 0.65rem;"></i> +1.500 Jugadores
-                            </span>
-                            <span style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 3px 8px; font-size: 0.65rem; font-weight: 800; color: #e2e8f0; display: inline-flex; align-items: center; gap: 4px;">
-                                <i class="fas fa-tv" style="color: #CCFF00; font-size: 0.65rem;"></i> Marcador en Vivo
-                            </span>
-                            <span style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 3px 8px; font-size: 0.65rem; font-weight: 800; color: #e2e8f0; display: inline-flex; align-items: center; gap: 4px;">
-                                <i class="fas fa-bolt" style="color: #fbbf24; font-size: 0.65rem;"></i> Sin Coste Fijo
-                            </span>
+                        <div id="organizer-banner-toggle-badge" style="font-size: 0.68rem; color: #CCFF00; display: flex; align-items: center; gap: 5px; background: rgba(204, 255, 0, 0.1); padding: 5px 11px; border-radius: 20px; border: 1px solid rgba(204, 255, 0, 0.25); flex-shrink: 0; font-weight: 850;">
+                            <span id="organizer-banner-toggle-label">Mostrar</span>
+                            <i id="organizer-banner-toggle-arrow" class="fas fa-chevron-down" style="font-size: 0.62rem; transition: transform 0.3s ease;"></i>
                         </div>
-                        
-                        <!-- Actions Grid -->
-                        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-                            <a href="https://wa.me/34649219350?text=¡Hola%20Alex!%20Soy%20organizador/club%20de%20pádel%20y%20me%20gustaría%20publicar%20mis%20americanas%20en%20SomosPadel%20BCN." 
-                               target="_blank" 
-                               rel="noopener noreferrer" 
-                               style="
-                                   background: #CCFF00;
-                                   color: #050b14;
-                                   padding: 10px 18px;
-                                   border-radius: 14px;
-                                   font-weight: 950;
-                                   font-size: 0.78rem;
-                                   text-decoration: none;
-                                   display: inline-flex;
-                                   align-items: center;
-                                   justify-content: center;
-                                   gap: 7px;
-                                   box-shadow: 0 4px 16px rgba(204, 255, 0, 0.4);
-                                   letter-spacing: 0.3px;
-                                   transition: all 0.2s ease;
-                                   flex: 1;
-                                   min-width: 170px;
-                               "
-                               onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(204, 255, 0, 0.55)';"
-                               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 16px rgba(204, 255, 0, 0.4)';"
-                               onmousedown="this.style.transform='scale(0.97)';">
-                                <i class="fab fa-whatsapp" style="font-size: 1.05rem; color: #050b14;"></i>
-                                <span>PUBLICAR MI EVENTO</span>
-                            </a>
-                            <button onclick="window.EventsController.renderClubBenefitsModal()" 
-                                    style="
-                                        background: rgba(255, 255, 255, 0.08);
-                                        border: 1px solid rgba(255, 255, 255, 0.16);
-                                        color: #ffffff;
-                                        padding: 10px 16px;
-                                        border-radius: 14px;
-                                        font-weight: 900;
-                                        font-size: 0.78rem;
-                                        cursor: pointer;
-                                        display: inline-flex;
-                                        align-items: center;
-                                        justify-content: center;
-                                        gap: 7px;
-                                        backdrop-filter: blur(10px);
-                                        letter-spacing: 0.3px;
-                                        transition: all 0.2s ease;
-                                        flex: 1;
-                                        min-width: 150px;
-                                    "
-                                    onmouseover="this.style.background='rgba(255, 255, 255, 0.14)'; this.style.borderColor='rgba(56, 189, 248, 0.5)';"
-                                    onmouseout="this.style.background='rgba(255, 255, 255, 0.08)'; this.style.borderColor='rgba(255, 255, 255, 0.16)';"
-                                    onmousedown="this.style.transform='scale(0.97)';">
-                                <i class="fas fa-info-circle" style="color: #38bdf8; font-size: 0.9rem;"></i>
-                                <span>VENTAJAS CLUBES</span>
-                            </button>
+                    </button>
+
+                    <!-- Contenedor desplegable (oculto por defecto) -->
+                    <div id="organizer-collapsible-banner" style="display: none; margin-top: 10px; animation: bannerSlideDown 0.35s cubic-bezier(0.16, 1, 0.3, 1);">
+                        <div class="organizer-promo-banner" style="
+                            background: linear-gradient(135deg, rgba(11, 17, 32, 0.98) 0%, rgba(15, 23, 42, 0.98) 50%, rgba(3, 7, 18, 0.98) 100%);
+                            border: 1px solid rgba(204, 255, 0, 0.32);
+                            border-radius: 22px;
+                            padding: 18px 20px;
+                            position: relative;
+                            overflow: hidden;
+                            box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.75), 0 0 25px -5px rgba(204, 255, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+                            backdrop-filter: blur(16px);
+                        ">
+                            <!-- Ambient Glow Orbs -->
+                            <div style="position: absolute; top: -35px; left: -35px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(204, 255, 0, 0.18) 0%, transparent 70%); filter: blur(25px); pointer-events: none;"></div>
+                            <div style="position: absolute; bottom: -35px; right: -35px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%); filter: blur(30px); pointer-events: none;"></div>
+                            
+                            <!-- Decorative Background Watermark -->
+                            <i class="fas fa-trophy" style="position: absolute; right: -12px; bottom: -18px; font-size: 7.5rem; color: #CCFF00; opacity: 0.04; transform: rotate(-12deg); pointer-events: none; z-index: 1;"></i>
+
+                            <div style="position: relative; z-index: 2;">
+                                <!-- Top Header: Badge + Glowing Trophy Emblem + Close Button -->
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px;">
+                                    <div style="display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, rgba(204, 255, 0, 0.14) 0%, rgba(56, 189, 248, 0.08) 100%); border: 1px solid rgba(204, 255, 0, 0.35); padding: 4px 11px; border-radius: 999px; box-shadow: 0 2px 8px rgba(0,0,0,0.25);">
+                                        <i class="fas fa-crown" style="color: #CCFF00; font-size: 0.68rem;"></i>
+                                        <span style="color: #CCFF00; font-size: 0.64rem; font-weight: 950; text-transform: uppercase; letter-spacing: 0.8px;">ESPACIO CLUBES & ORGANIZADORES</span>
+                                    </div>
+
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, rgba(204, 255, 0, 0.18) 0%, rgba(56, 189, 248, 0.12) 100%); border: 1.5px solid rgba(204, 255, 0, 0.4); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);">
+                                            <i class="fas fa-trophy" style="color: #CCFF00; font-size: 1.15rem; filter: drop-shadow(0 2px 6px rgba(204, 255, 0, 0.45));"></i>
+                                        </div>
+                                        <button onclick="window.EventsController.toggleOrganizerBanner()" 
+                                                style="width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16); color: #94a3b8; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;" 
+                                                title="Ocultar espacio clubes"
+                                                onmouseover="this.style.background='rgba(255,255,255,0.18)'; this.style.color='#ffffff';"
+                                                onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.color='#94a3b8';">
+                                            <i class="fas fa-times" style="font-size: 0.75rem;"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Headline -->
+                                <h3 style="margin: 0 0 6px; color: #ffffff; font-size: 1.15rem; font-weight: 950; line-height: 1.25; letter-spacing: -0.4px;">
+                                    ¿Organizas Americanas en <span style="background: linear-gradient(90deg, #CCFF00, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Barcelona</span>?
+                                </h3>
+
+                                <!-- Subtitle -->
+                                <p style="margin: 0 0 12px; color: #cbd5e1; font-size: 0.78rem; line-height: 1.5; font-weight: 500;">
+                                    Publica tus torneos aquí, atrae a nuestra comunidad y gestiona en directo con la <strong style="color: #CCFF00; font-weight: 900;">Torre de Control digital</strong>.
+                                </p>
+
+                                <!-- Key Benefits Micro-Chips -->
+                                <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px;">
+                                    <span style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 3px 8px; font-size: 0.65rem; font-weight: 800; color: #e2e8f0; display: inline-flex; align-items: center; gap: 4px;">
+                                        <i class="fas fa-users" style="color: #38bdf8; font-size: 0.65rem;"></i> +1.500 Jugadores
+                                    </span>
+                                    <span style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 3px 8px; font-size: 0.65rem; font-weight: 800; color: #e2e8f0; display: inline-flex; align-items: center; gap: 4px;">
+                                        <i class="fas fa-tv" style="color: #CCFF00; font-size: 0.65rem;"></i> Marcador en Vivo
+                                    </span>
+                                    <span style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 3px 8px; font-size: 0.65rem; font-weight: 800; color: #e2e8f0; display: inline-flex; align-items: center; gap: 4px;">
+                                        <i class="fas fa-bolt" style="color: #fbbf24; font-size: 0.65rem;"></i> Sin Coste Fijo
+                                    </span>
+                                </div>
+                                
+                                <!-- Actions Grid -->
+                                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                    <a href="https://wa.me/34649219350?text=¡Hola%20Alex!%20Soy%20organizador/club%20de%20pádel%20y%20me%20gustaría%20publicar%20mis%20americanas%20en%20SomosPadel%20BCN." 
+                                       target="_blank" 
+                                       rel="noopener noreferrer" 
+                                       style="
+                                           background: #CCFF00;
+                                           color: #050b14;
+                                           padding: 9px 14px;
+                                           border-radius: 12px;
+                                           font-weight: 950;
+                                           font-size: 0.74rem;
+                                           text-decoration: none;
+                                           display: inline-flex;
+                                           align-items: center;
+                                           justify-content: center;
+                                           gap: 6px;
+                                           box-shadow: 0 4px 14px rgba(204, 255, 0, 0.35);
+                                           letter-spacing: 0.3px;
+                                           transition: all 0.2s ease;
+                                           flex: 1 1 140px;
+                                           min-width: 125px;
+                                       "
+                                       onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(204, 255, 0, 0.55)';"
+                                       onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 14px rgba(204, 255, 0, 0.4)';"
+                                       onmousedown="this.style.transform='scale(0.97)';">
+                                        <i class="fab fa-whatsapp" style="font-size: 0.95rem; color: #050b14;"></i>
+                                        <span>PUBLICAR MI EVENTO</span>
+                                    </a>
+                                    <button onclick="window.EventsController.renderClubBenefitsModal()" 
+                                            style="
+                                                background: rgba(255, 255, 255, 0.08);
+                                                border: 1px solid rgba(255, 255, 255, 0.16);
+                                                color: #ffffff;
+                                                padding: 9px 14px;
+                                                border-radius: 12px;
+                                                font-weight: 900;
+                                                font-size: 0.74rem;
+                                                cursor: pointer;
+                                                display: inline-flex;
+                                                align-items: center;
+                                                justify-content: center;
+                                                gap: 6px;
+                                                backdrop-filter: blur(10px);
+                                                letter-spacing: 0.3px;
+                                                transition: all 0.2s ease;
+                                                flex: 1 1 140px;
+                                                min-width: 125px;
+                                            "
+                                            onmouseover="this.style.background='rgba(255, 255, 255, 0.14)'; this.style.borderColor='rgba(56, 189, 248, 0.5)';"
+                                            onmouseout="this.style.background='rgba(255, 255, 255, 0.08)'; this.style.borderColor='rgba(255, 255, 255, 0.16)';"
+                                            onmousedown="this.style.transform='scale(0.97)';">
+                                        <i class="fas fa-info-circle" style="color: #38bdf8; font-size: 0.85rem;"></i>
+                                        <span>VENTAJAS CLUBES</span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1264,7 +1354,10 @@
             return `
                 <div style="min-height: 80vh; padding-top: 5px;">
                     <style>
-                        
+                        @keyframes bannerSlideDown {
+                            from { opacity: 0; transform: translateY(-8px); }
+                            to { opacity: 1; transform: translateY(0); }
+                        }
                         @keyframes status-breathe {
                             0% { box-shadow: 0 0 8px rgba(255,45,85,0.4); }
                             50% { box-shadow: 0 0 16px rgba(255,45,85,0.8); }
@@ -1419,7 +1512,8 @@
             if (!uid) return `<div style="text-align:center; padding:80px 20px; color:#888;"><i class="fas fa-lock" style="font-size:3rem; margin-bottom:15px; opacity:0.1;"></i><br><h3 style="color:#64748b;">ACCESO RESTRINGIDO</h3><p style="font-size:0.85rem;">Inicia sesión para ver tu agenda.</p></div>`;
 
             const todayStr = this.getTodayStr();
-            const myEvents = this.getAllSortedEvents().filter(e => {
+            const allSorted = this.getAllSortedEvents();
+            const myEvents = allSorted.filter(e => {
                 if (typeFilter) {
                     const isType = typeFilter === 'americana' 
                         ? (e.type === 'americana' || (!e.type && !e.name?.toUpperCase().includes('ENTRENO')))
@@ -1432,59 +1526,147 @@
                 return players.some(p => p.uid === uid || p.id === uid);
             });
 
+            // Eventos con plazas abiertas recomendados si la agenda está libre
+            const availableEvents = allSorted.filter(e => {
+                if (!['open', 'upcoming', 'scheduled'].includes(e.status)) return false;
+                if (e.normDate < todayStr) return false;
+                const players = e.players || e.registeredPlayers || [];
+                return !players.some(p => p.uid === uid || p.id === uid);
+            }).slice(0, 3);
+
             return `
-                <div style="padding: 25px 20px; background: linear-gradient(180deg, #f8fafc 0%, #edf2f7 100%); min-height: 80vh; font-family: 'Outfit', sans-serif;">
-                    <div style="margin-bottom: 30px; position: relative;">
-                        <span style="background: rgba(204, 255, 0, 0.15); color: #84cc16; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 900; letter-spacing: 0.5px; border: 1px solid rgba(132, 204, 22, 0.2);">PRÓXIMOS RETOS</span>
-                        <h2 style="font-size: 2.2rem; font-weight: 950; color: #0f172a; margin: 12px 0 5px;">Mi <span style="color: #84cc16;">Agenda</span></h2>
-                        <div style="width: 50px; height: 4px; background: #CCFF00; border-radius: 10px;"></div>
+                <div style="padding: 18px 16px 130px; background: linear-gradient(180deg, #f8fafc 0%, #edf2f7 100%); min-height: 85vh; font-family: 'Outfit', sans-serif;">
+                    
+                    <!-- Header Dinámico y Compacto -->
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; flex-wrap: wrap; gap: 8px;">
+                        <div>
+                            <span style="background: rgba(204, 255, 0, 0.18); color: #4d7c0f; padding: 4px 10px; border-radius: 8px; font-size: 0.66rem; font-weight: 900; letter-spacing: 0.6px; border: 1px solid rgba(132, 204, 22, 0.35); text-transform: uppercase; display: inline-flex; align-items: center; gap: 4px;">
+                                <span>🎯</span> PRÓXIMOS RETOS
+                            </span>
+                            <h2 style="font-size: 1.85rem; font-weight: 950; color: #0f172a; margin: 6px 0 2px; letter-spacing: -0.5px; line-height: 1.15;">
+                                Mi <span style="color: #65a30d;">Agenda</span>
+                            </h2>
+                            <div style="width: 42px; height: 3px; background: #CCFF00; border-radius: 6px; margin-top: 4px;"></div>
+                        </div>
+                        <span style="background: ${myEvents.length > 0 ? 'rgba(34,197,94,0.12)' : 'rgba(241,245,249,0.9)'}; color: ${myEvents.length > 0 ? '#15803d' : '#64748b'}; border: 1px solid ${myEvents.length > 0 ? 'rgba(34,197,94,0.3)' : '#cbd5e1'}; padding: 4px 10px; border-radius: 10px; font-size: 0.68rem; font-weight: 900; letter-spacing: 0.4px;">
+                            ${myEvents.length > 0 ? `🟢 ${myEvents.length} ${myEvents.length === 1 ? 'CONVOCATORIA' : 'CONVOCATORIAS'}` : '⚪ 0 PARTIDOS'}
+                        </span>
                     </div>
 
                     ${myEvents.length === 0 ? `
-                        <div style="text-align:center; padding: 80px 30px; background: white; border-radius: 32px; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px rgba(0,0,0,0.03);">
-                            <div style="width: 80px; height: 80px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 25px;">
-                                <i class="fas fa-calendar-times" style="font-size: 2rem; color: #cbd5e1;"></i>
+                        <!-- Tarjeta de Estado Vacío Evolucionada Pro -->
+                        <div style="background: #ffffff; border-radius: 24px; border: 1.5px solid #e2e8f0; padding: 22px 18px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); text-align: center; position: relative; overflow: hidden;">
+                            <!-- Glows sutiles decorativos -->
+                            <div style="position: absolute; top: -35px; right: -35px; width: 130px; height: 130px; background: radial-gradient(circle, rgba(204,255,0,0.22) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+                            <div style="position: absolute; bottom: -35px; left: -35px; width: 130px; height: 130px; background: radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+
+                            <div style="position: relative; z-index: 2;">
+                                <!-- Icono Deportivo con Aura Neón -->
+                                <div style="width: 66px; height: 66px; background: linear-gradient(135deg, #090e1a 0%, #1e293b 100%); border: 2px solid #CCFF00; box-shadow: 0 0 20px rgba(204,255,0,0.35); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;">
+                                    <span style="font-size: 1.85rem; line-height: 1;">🎾</span>
+                                </div>
+                                
+                                <span style="background: rgba(204, 255, 0, 0.18); color: #4d7c0f; border: 1px solid rgba(204, 255, 0, 0.4); font-size: 0.64rem; font-weight: 900; padding: 3px 9px; border-radius: 8px; letter-spacing: 0.5px; text-transform: uppercase;">
+                                    AGENDA DESPEJADA
+                                </span>
+
+                                <h3 style="color: #0f172a; font-weight: 950; font-size: 1.25rem; margin: 8px 0 4px; letter-spacing: -0.3px;">TU PALA ESTÁ EN DESCANSO</h3>
+                                <p style="color: #64748b; font-size: 0.78rem; line-height: 1.4; margin: 0 auto 16px; max-width: 310px;">
+                                    No tienes partidos asignados. Reserva tu plaza en los eventos abiertos y sigue sumando puntos al ranking oficial.
+                                </p>
+
+                                <!-- Grid de Acciones Principales (Dual CTA) -->
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: ${availableEvents.length > 0 ? '16px' : '4px'};">
+                                    <button onclick="window.PlayerView?.haptic?.(15); window.EventsController.setTab('events');" style="background: #CCFF00; color: #000000; border: none; padding: 12px 10px; border-radius: 12px; font-weight: 950; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(204,255,0,0.35); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='none'">
+                                        <span>🏆</span> AMERICANAS
+                                    </button>
+                                    <button onclick="window.PlayerView?.haptic?.(15); window.EventsController.setTab('entrenos');" style="background: #0f172a; color: #ffffff; border: 1px solid rgba(255,255,255,0.12); padding: 12px 10px; border-radius: 12px; font-weight: 950; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(15,23,42,0.2); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='none'">
+                                        <span>🎯</span> ENTRENOS & POZOS
+                                    </button>
+                                </div>
+
+                                <!-- Sugerencias de eventos con plazas abiertas -->
+                                ${availableEvents.length > 0 ? `
+                                    <div style="border-top: 1px dashed #e2e8f0; padding-top: 14px; text-align: left;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                            <span style="font-size: 0.66rem; font-weight: 900; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 4px;">
+                                                <span style="color: #eab308;">⚡</span> PLAZAS ABIERTAS RECOMENDADAS
+                                            </span>
+                                            <span style="font-size: 0.62rem; color: #65a30d; font-weight: 800;">INSCRIPCIÓN ACTIVA</span>
+                                        </div>
+
+                                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                                            ${availableEvents.map(evt => {
+                                                const times = this._parseDate(evt.date);
+                                                const d = times ? times.start : new Date();
+                                                const dateBadge = `${d.getDate()}/${d.getMonth()+1}`;
+                                                const maxCourts = parseInt(evt.max_courts || evt.courts || 0);
+                                                const maxP = maxCourts > 0 ? (maxCourts * 4) : parseInt(evt.max_players || evt.maxPlayers || 16);
+                                                const regP = (evt.players || evt.registeredPlayers || []).length;
+                                                const spotsLeft = Math.max(0, maxP - regP);
+                                                const isEntreno = evt.type === 'entreno' || (evt.name || '').toUpperCase().includes('ENTRENO');
+
+                                                return `
+                                                    <div onclick="window.PlayerView?.haptic?.(15); window.EventsController.openLiveEvent('${evt.id}', '${evt.type || (isEntreno ? 'entreno' : 'americana')}');" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 8px 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#3b82f6'; this.style.background='#f0fdf4';" onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc';">
+                                                        <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
+                                                            <div style="background: #0f172a; color: #CCFF00; padding: 3px 6px; border-radius: 7px; font-size: 0.64rem; font-weight: 900; text-align: center; line-height: 1.1; flex-shrink: 0;">
+                                                                <div>${dateBadge}</div>
+                                                                <div style="font-size: 0.58rem; color: #fff; opacity: 0.85;">${evt.time || '18:00'}</div>
+                                                            </div>
+                                                            <div style="min-width: 0;">
+                                                                <div style="font-size: 0.80rem; font-weight: 900; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${evt.name}</div>
+                                                                <div style="font-size: 0.66rem; color: #64748b; font-weight: 600;">${isEntreno ? 'Entreno (Pozo)' : 'Americana'} • <span style="color: ${spotsLeft <= 4 ? '#ef4444' : '#15803d'}; font-weight: 800;">${spotsLeft} plazas libres</span></div>
+                                                            </div>
+                                                        </div>
+                                                        <span style="background: #0f172a; color: #CCFF00; font-size: 0.62rem; font-weight: 900; padding: 5px 8px; border-radius: 7px; flex-shrink: 0; display: inline-flex; align-items: center; gap: 2px;">
+                                                            VER ➜
+                                                        </span>
+                                                    </div>
+                                                `;
+                                            }).join('')}
+                                        </div>
+                                    </div>
+                                ` : ''}
                             </div>
-                            <h3 style="color: #1e293b; font-weight: 900; font-size: 1.4rem; margin-bottom: 10px;">SIN PLANES</h3>
-                            <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 30px;">¡No te quedes fuera! Apúntate a un evento y empieza a sumar puntos.</p>
-                            <button onclick="window.EventsController.setTab('events')" style="background: #0f172a; color: white; border: none; padding: 16px 32px; border-radius: 18px; font-weight: 800; cursor: pointer; transition: transform 0.2s;">BUSCAR AMERICANAS</button>
                         </div>
                     ` : `
                         <div style="padding-bottom: 120px; display: flex; flex-direction: column; gap: 0px; position: relative;">
-                            <!-- Vertical Line -->
+                            <!-- Línea vertical del Timeline -->
                             <div style="position: absolute; left: 30px; top: 10px; bottom: 40px; width: 2px; background: linear-gradient(to bottom, #CCFF00, #e2e8f0); z-index: 1;"></div>
                             
                             ${myEvents.map((evt, idx) => {
-                const times = this._parseDate(evt.date);
-                const d = times ? times.start : new Date();
-                const isLive = evt.status === 'live';
+                                const times = this._parseDate(evt.date);
+                                const d = times ? times.start : new Date();
+                                const isLive = evt.status === 'live';
 
-                return `
-                                <div style="display: flex; gap: 20px; margin-bottom: 30px; position: relative; z-index: 2;">
-                                    <div style="min-width: 62px; height: 62px; background: ${isLive ? '#CCFF00' : 'white'}; border: 3px solid ${isLive ? '#CCFF00' : '#e2e8f0'}; border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 8px 15px rgba(0,0,0,0.08); transition: transform 0.3s ease;">
-                                        <span style="font-size: 0.65rem; font-weight: 900; color: ${isLive ? '#000' : '#94a3b8'};">${d.toLocaleDateString('es-ES', { month: 'short' }).toUpperCase()}</span>
-                                        <span style="font-size: 1.4rem; font-weight: 950; color: ${isLive ? '#000' : '#0f172a'}; line-height: 1;">${d.getDate()}</span>
-                                    </div>
-                                    <div style="flex: 1; background: white; border-radius: 26px; padding: 22px; border: 1px solid ${isLive ? '#CCFF00' : '#e2e8f0'}; box-shadow: 0 10px 25px rgba(0,0,0,0.03); position: relative; overflow: hidden;">
-                                        ${isLive ? `<div style="position: absolute; top: 0; right: 0; background: #FF2D55; color: white; padding: 4px 12px; font-size: 0.6rem; font-weight: 900; border-bottom-left-radius: 12px; animation: pulse 2s infinite;">LIVE NOW</div>` : ''}
-                                        
-                                        <div style="font-size: 0.65rem; font-weight: 800; color: #84cc16; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px;">${evt.type === 'entreno' ? 'Entreno Pro' : 'Americana'}</div>
-                                        <h3 style="margin: 0; font-size: 1.15rem; color: #0f172a; font-weight: 900; line-height: 1.2;">${evt.name}</h3>
-                                        
-                                        <div style="display: flex; gap: 15px; margin: 15px 0 20px; color: #64748b; font-size: 0.8rem; font-weight: 600;">
-                                            <span><i class="far fa-clock" style="color: #CCFF00; margin-right: 5px;"></i> ${evt.time}</span>
-                                            <span><i class="fas fa-map-marker-alt" style="color: #64748b; margin-right: 5px;"></i> SomosPadel BCN</span>
+                                return `
+                                    <div style="display: flex; gap: 14px; margin-bottom: 22px; position: relative; z-index: 2;">
+                                        <div style="min-width: 58px; height: 58px; background: ${isLive ? '#CCFF00' : 'white'}; border: 2.5px solid ${isLive ? '#CCFF00' : '#e2e8f0'}; border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 6px 14px rgba(0,0,0,0.06); flex-shrink: 0;">
+                                            <span style="font-size: 0.62rem; font-weight: 900; color: ${isLive ? '#000' : '#94a3b8'}; text-transform: uppercase;">${d.toLocaleDateString('es-ES', { month: 'short' })}</span>
+                                            <span style="font-size: 1.3rem; font-weight: 950; color: ${isLive ? '#000' : '#0f172a'}; line-height: 1;">${d.getDate()}</span>
                                         </div>
-                                        
-                                        <button onclick="window.EventsController.openLiveEvent('${evt.id}', '${evt.type || 'americana'}');" 
-                                                style="width: 100%; padding: 14px; background: ${isLive ? '#CCFF00' : '#0f172a'}; color: ${isLive ? '#000' : '#fff'}; border: none; border-radius: 16px; font-weight: 900; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.2s; box-shadow: ${isLive ? '0 5px 15px rgba(204,255,0,0.3)' : 'none'};">
-                                            ${isLive ? '<i class="fas fa-play"></i> ENTRAR EN PISTA' : 'GESTIONAR MI PLAZA'}
-                                        </button>
+                                        <div style="flex: 1; min-width: 0; background: white; border-radius: 20px; padding: 16px 18px; border: 1.5px solid ${isLive ? '#CCFF00' : '#e2e8f0'}; box-shadow: 0 8px 20px rgba(0,0,0,0.03); position: relative; overflow: hidden;">
+                                            ${isLive ? `<div style="position: absolute; top: 0; right: 0; background: #FF2D55; color: white; padding: 3px 10px; font-size: 0.58rem; font-weight: 900; border-bottom-left-radius: 10px; animation: pulse 2s infinite;">LIVE NOW</div>` : ''}
+                                            
+                                            <div style="font-size: 0.62rem; font-weight: 800; color: #84cc16; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.8px;">${evt.type === 'entreno' ? 'Entreno Pro' : 'Americana'}</div>
+                                            <h3 style="margin: 0; font-size: 1.05rem; color: #0f172a; font-weight: 900; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${evt.name}</h3>
+                                            
+                                            <div style="display: flex; gap: 12px; margin: 10px 0 14px; color: #64748b; font-size: 0.76rem; font-weight: 600;">
+                                                <span><i class="far fa-clock" style="color: #65a30d; margin-right: 4px;"></i> ${evt.time || '18:00'}</span>
+                                                <span><i class="fas fa-map-marker-alt" style="color: #94a3b8; margin-right: 4px;"></i> SomosPadel BCN</span>
+                                            </div>
+                                            
+                                            <button onclick="window.PlayerView?.haptic?.(15); window.EventsController.openLiveEvent('${evt.id}', '${evt.type || 'americana'}');" 
+                                                    style="width: 100%; padding: 11px; background: ${isLive ? '#CCFF00' : '#0f172a'}; color: ${isLive ? '#000' : '#fff'}; border: none; border-radius: 12px; font-weight: 900; font-size: 0.80rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; box-shadow: ${isLive ? '0 4px 12px rgba(204,255,0,0.3)' : 'none'};">
+                                                ${isLive ? '<i class="fas fa-play"></i> ENTRAR EN PISTA' : 'GESTIONAR MI PLAZA ➜'}
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>`;
-            }).join('')}
+                                `;
+                            }).join('')}
+                            
                             <!-- GEOLOCALIZACIÓN RADAR -->
-                            <div id="geo-radar-root" style="width: 100%; max-width: 500px; margin: 20px auto 100px; animation: floatUp 0.8s ease-out forwards;">
+                            <div id="geo-radar-root" style="width: 100%; max-width: 500px; margin: 15px auto 40px; animation: floatUp 0.8s ease-out forwards;">
                                 <!-- Cargado vía JS -->
                             </div>
                         </div>
@@ -1820,6 +2002,10 @@
             if (isEventMale && !isChico && !isAdmin) { isGenderMismatch = true; mismatchCase = 'male'; }
             if (isEventFemale && !isChica && !isAdmin) { isGenderMismatch = true; mismatchCase = 'female'; }
 
+            // Comprobación de Privacidad (Americana Privada con Contraseña)
+            const isEventPrivate = (evt.is_private === true || evt.is_private === 'true');
+            const isEventUnlocked = this.isAmericanaUnlocked(evt);
+
             // Button Logic
             let cardAction = `window.EventsController.openLiveEvent('${evt.id}', '${evt.type || 'americana'}')`;
             let fabAction = cardAction, btnLabel = 'ENTRAR', btnIcon = 'fa-play', btnColor = '#CCFF00';
@@ -1857,6 +2043,15 @@
             } else if (isJoined) {
                 btnLabel = 'DENTRO'; btnIcon = 'fa-check'; btnColor = '#fff';
                 fabAction = `window.EventsController.leaveEvent('${evt.id}', '${evt.type || 'americana'}')`;
+            }
+
+            // Si es privada y no está desbloqueada por el usuario (y no es admin) -> Bloqueo con contraseña
+            if (isEventPrivate && !isEventUnlocked) {
+                btnLabel = 'CLAVE ACCESO 🔒';
+                btnIcon = 'fa-key';
+                btnColor = '#ef4444';
+                cardAction = `window.EventsController.promptPrivatePassword('${evt.id}', '${evt.type || 'americana'}', 'view')`;
+                fabAction = `window.EventsController.promptPrivatePassword('${evt.id}', '${evt.type || 'americana'}', 'join')`;
             }
 
             // Calculate progress for plazas bar
@@ -1911,7 +2106,7 @@
             let levelBadgeHtml = '';
             let levelFeedbackHtml = '';
             if (rawEventLevel) {
-                levelBadgeHtml = `<span style="background: rgba(255,255,255,0.08); color: #fff; padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); font-size: 0.6rem; font-weight: 700; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-graduation-cap"></i> NIVEL ${rawEventLevel}</span>`;
+                levelBadgeHtml = `<span style="background: rgba(255,255,255,0.08); color: #fff; padding: 2.5px 7px; border-radius: 7px; border: 1px solid rgba(255,255,255,0.08); font-size: 0.6rem; font-weight: 800; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-graduation-cap" style="font-size: 0.55rem;"></i> NIVEL ${rawEventLevel}</span>`;
                 
                 const userLevelVal = user ? (user.level || user.self_rate_level) : null;
                 if (userLevelVal) {
@@ -1922,20 +2117,20 @@
 
                     if (minLvl !== null && maxLvl !== null && !isNaN(minLvl) && !isNaN(maxLvl)) {
                         if (userLvl >= minLvl - 0.25 && userLvl <= maxLvl + 0.25) {
-                            levelFeedbackHtml = `<span style="background: linear-gradient(135deg, rgba(234, 179, 8, 0.3) 0%, rgba(202, 138, 4, 0.2) 100%); color: #facc15; border: 1.5px solid rgba(250, 204, 21, 0.5); padding: 4px 10px; border-radius: 8px; font-size: 0.62rem; font-weight: 950; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 4px 14px rgba(234, 179, 8, 0.3); animation: pulse 2.2s infinite;"><i class="fas fa-star" style="color: #facc15;"></i> ¡IDEAL PARA TI!</span>`;
+                            levelFeedbackHtml = `<span style="background: linear-gradient(135deg, rgba(234, 179, 8, 0.25) 0%, rgba(202, 138, 4, 0.18) 100%); color: #facc15; border: 1px solid rgba(250, 204, 21, 0.45); padding: 2.5px 7px; border-radius: 7px; font-size: 0.6rem; font-weight: 950; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 3px; box-shadow: 0 2px 8px rgba(234, 179, 8, 0.25); animation: pulse 2.2s infinite;"><i class="fas fa-star" style="color: #facc15; font-size: 0.55rem;"></i> ¡IDEAL!</span>`;
                         } else if (userLvl > maxLvl + 0.25) {
-                            levelFeedbackHtml = `<span style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-angle-double-up"></i> NIVEL CÓMODO</span>`;
+                            levelFeedbackHtml = `<span style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); padding: 2.5px 7px; border-radius: 7px; font-size: 0.58rem; font-weight: 850; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 3px;"><i class="fas fa-angle-double-up" style="font-size: 0.55rem;"></i> CÓMODO</span>`;
                         } else {
-                            levelFeedbackHtml = `<span style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-exclamation-triangle"></i> EXIGENTE</span>`;
+                            levelFeedbackHtml = `<span style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); padding: 2.5px 7px; border-radius: 7px; font-size: 0.58rem; font-weight: 850; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 3px;"><i class="fas fa-exclamation-triangle" style="font-size: 0.55rem;"></i> EXIGENTE</span>`;
                         }
                     } else if (!isNaN(singleLvl)) {
                         const diff = Math.abs(userLvl - singleLvl);
                         if (diff <= 0.35) {
-                            levelFeedbackHtml = `<span style="background: linear-gradient(135deg, rgba(234, 179, 8, 0.3) 0%, rgba(202, 138, 4, 0.2) 100%); color: #facc15; border: 1.5px solid rgba(250, 204, 21, 0.5); padding: 4px 10px; border-radius: 8px; font-size: 0.62rem; font-weight: 950; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 4px 14px rgba(234, 179, 8, 0.3); animation: pulse 2.2s infinite;"><i class="fas fa-star" style="color: #facc15;"></i> ¡IDEAL PARA TI!</span>`;
+                            levelFeedbackHtml = `<span style="background: linear-gradient(135deg, rgba(234, 179, 8, 0.25) 0%, rgba(202, 138, 4, 0.18) 100%); color: #facc15; border: 1px solid rgba(250, 204, 21, 0.45); padding: 2.5px 7px; border-radius: 7px; font-size: 0.6rem; font-weight: 950; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 3px; box-shadow: 0 2px 8px rgba(234, 179, 8, 0.25); animation: pulse 2.2s infinite;"><i class="fas fa-star" style="color: #facc15; font-size: 0.55rem;"></i> ¡IDEAL!</span>`;
                         } else if (userLvl > singleLvl) {
-                            levelFeedbackHtml = `<span style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-angle-double-up"></i> NIVEL CÓMODO</span>`;
+                            levelFeedbackHtml = `<span style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); padding: 2.5px 7px; border-radius: 7px; font-size: 0.58rem; font-weight: 850; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 3px;"><i class="fas fa-angle-double-up" style="font-size: 0.55rem;"></i> CÓMODO</span>`;
                         } else {
-                            levelFeedbackHtml = `<span style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-exclamation-triangle"></i> EXIGENTE</span>`;
+                            levelFeedbackHtml = `<span style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); padding: 2.5px 7px; border-radius: 7px; font-size: 0.58rem; font-weight: 850; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 3px;"><i class="fas fa-exclamation-triangle" style="font-size: 0.55rem;"></i> EXIGENTE</span>`;
                         }
                     }
                 }
@@ -1947,25 +2142,25 @@
                 const photo = p.photoURL || p.photo_url || p.photo;
                 const initial = (p.name || 'J').charAt(0).toUpperCase();
                 if (photo) {
-                    return `<img src="${photo}" alt="Jugador" style="width:22px; height:22px; border-radius:50%; border:2px solid #141414; margin-left:${idx === 0 ? '0' : '-8px'}; object-fit:cover; display:inline-block; vertical-align:middle; box-shadow:0 2px 5px rgba(0,0,0,0.5);">`;
+                    return `<img src="${photo}" alt="Jugador" style="width:20px; height:20px; border-radius:50%; border:1.5px solid #141414; margin-left:${idx === 0 ? '0' : '-6px'}; object-fit:cover; display:inline-block; vertical-align:middle; box-shadow:0 2px 4px rgba(0,0,0,0.4);">`;
                 }
-                return `<span style="width:22px; height:22px; border-radius:50%; border:2px solid #141414; margin-left:${idx === 0 ? '0' : '-8px'}; background:#1e293b; color:#CCFF00; font-size:0.55rem; font-weight:950; display:inline-flex; align-items:center; justify-content:center; vertical-align:middle; box-shadow:0 2px 5px rgba(0,0,0,0.5);">${initial}</span>`;
+                return `<span style="width:20px; height:20px; border-radius:50%; border:1.5px solid #141414; margin-left:${idx === 0 ? '0' : '-6px'}; background:#1e293b; color:#CCFF00; font-size:0.52rem; font-weight:950; display:inline-flex; align-items:center; justify-content:center; vertical-align:middle; box-shadow:0 2px 4px rgba(0,0,0,0.4);">${initial}</span>`;
             }).join('');
-            const avatarStackHtml = playersList.length > 0 ? `<div style="display:inline-flex; align-items:center; margin-right:6px;">${previewAvatars}</div>` : '';
+            const avatarStackHtml = playersList.length > 0 ? `<div style="display:inline-flex; align-items:center; margin-right:4px; flex-shrink:0;">${previewAvatars}</div>` : '';
 
             // Indicador de urgencia si quedan 2 o menos plazas
             const remainingSpots = maxPlayers - playerCount;
             let urgencyHtml = '';
             if (!isFull && remainingSpots <= 2 && remainingSpots > 0) {
-                urgencyHtml = `<span style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); padding: 2px 8px; border-radius: 6px; font-size: 0.58rem; font-weight: 950; letter-spacing: 0.5px; animation: pulse 1.5s infinite;">¡ÚLTIMAS ${remainingSpots}!</span>`;
+                urgencyHtml = `<span style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); padding: 2px 6px; border-radius: 6px; font-size: 0.55rem; font-weight: 950; letter-spacing: 0.4px; animation: pulse 1.5s infinite;">¡ÚLTIMAS ${remainingSpots}!</span>`;
             }
 
             return `
                 <div id="event-card-${evt.id}" class="${cardClass}" onclick="${cardAction}" style="
                     background: ${cardBg};
-                    border-radius: 24px;
+                    border-radius: 20px;
                     overflow: hidden;
-                    margin-bottom: 14px;
+                    margin-bottom: 12px;
                     border: ${cardBorder};
                     box-shadow: ${cardGlow};
                     font-family: 'Outfit', sans-serif;
@@ -1973,298 +2168,283 @@
                     transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease;
                 ">
                     <!-- ACCENT STRIPE -->
-                    <div style="height: 4px; background: ${themeColor}; opacity: 0.95;"></div>
+                    <div style="height: 3.5px; background: ${themeColor}; opacity: 0.95;"></div>
 
                     <div style="display: flex; flex-direction: column;">
                         
                         <!-- IMAGE AREA -->
                         <div onclick="event.stopPropagation(); window.EventsController.openPosterModal('${(evt.image_url || 'img/padel-event.jpg').replace(/'/g, "\\'")}', '${(evt.name || '').replace(/'/g, "\\'")}', '${(evt.sede || evt.location || '').replace(/'/g, "\\'")}')" 
                              title="Toca para ver el Cartel Oficial"
-                             style="height: 130px; background: url('${(evt.image_url || 'img/padel-event.jpg').replace(/ /g, '%20')}') no-repeat center/cover; position: relative; cursor: pointer;">
+                             style="height: 136px; background: url('${(evt.image_url || 'img/padel-event.jpg').replace(/ /g, '%20')}') no-repeat center/cover; position: relative; cursor: pointer;">
                             <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(10,14,26,0.3) 0%, rgba(10,14,26,0.85) 75%, ${catFadeBottom} 100%);"></div>
                             
-                            <!-- FLOATING BADGES -->
-                            <div style="position: absolute; top: 12px; left: 12px; display: flex; align-items: center; gap: 8px;">
-                                <div style="background: rgba(15, 23, 42, 0.85); width: 50px; height: 52px; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.12); backdrop-filter: blur(12px); box-shadow: 0 4px 15px rgba(0,0,0,0.4);">
-                                    <span style="font-size: 0.55rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">${dayName}</span>
-                                    <span style="font-size: 1.35rem; font-weight: 950; color: #fff; line-height: 1;">${dayNum}</span>
-                                </div>
-                                ${evt.normDate === this.getTodayStr() ? `
-                                    <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; padding: 5px 10px; border-radius: 10px; font-size: 0.65rem; font-weight: 950; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4); animation: pulse 1.8s infinite;">
-                                        <i class="fas fa-fire"></i> ¡HOY!
-                                    </span>
-                                ` : ''}
-                            </div>
-
-                            <div style="position: absolute; top: 12px; right: 12px; display: flex; align-items: center; gap: 6px; z-index: 10;">
-                                <!-- Botón Cartel Oficial -->
-                                <button onclick="event.stopPropagation(); window.EventsController.openPosterModal('${(evt.image_url || 'img/padel-event.jpg').replace(/'/g, "\\'")}', '${(evt.name || '').replace(/'/g, "\\'")}', '${(evt.sede || evt.location || '').replace(/'/g, "\\'")}')" 
-                                        title="Ver Cartel Oficial" 
-                                        aria-label="Ver cartel del evento"
-                                        style="
-                                            background: rgba(15, 23, 42, 0.88);
-                                            height: 38px;
-                                            padding: 0 12px;
-                                            border-radius: 12px;
-                                            border: 1.5px solid rgba(204, 255, 0, 0.5);
-                                            color: #CCFF00;
-                                            display: flex;
-                                            align-items: center;
-                                            gap: 6px;
-                                            cursor: pointer;
-                                            backdrop-filter: blur(12px);
-                                            box-shadow: 0 4px 15px rgba(0,0,0,0.4), 0 0 12px rgba(204,255,0,0.18);
-                                            font-size: 0.72rem;
-                                            font-weight: 950;
-                                            letter-spacing: 0.6px;
-                                            transition: transform 0.2s, box-shadow 0.2s;
-                                        "
-                                        onmouseover="this.style.transform='scale(1.06)';"
-                                        onmouseout="this.style.transform='scale(1)';"
-                                        onmousedown="this.style.transform='scale(0.94)';">
-                                    <i class="fas fa-file-image" style="font-size: 0.85rem; color: #CCFF00;"></i>
-                                    <span>CARTEL</span>
-                                </button>
-
-                                <!-- Botón Compartir WhatsApp Pro -->
-                                <button onclick="event.stopPropagation(); window.EventsController.shareEvent('${evt.id}', '${evt.type || 'americana'}')" 
-                                        title="Compartir por WhatsApp" 
-                                        aria-label="Compartir evento por WhatsApp"
-                                        style="background: rgba(15, 23, 42, 0.85); width: 36px; height: 36px; border-radius: 11px; border: 1px solid rgba(34, 197, 94, 0.35); color: #22c55e; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(12px); box-shadow: 0 4px 15px rgba(0,0,0,0.4); transition: transform 0.2s;"
-                                        onmouseover="this.style.transform='scale(1.08)';"
-                                        onmouseout="this.style.transform='scale(1)';"
-                                        onmousedown="this.style.transform='scale(0.92)';">
-                                    <i class="fab fa-whatsapp" style="font-size: 1.12rem;"></i>
-                                </button>
-
-                                <!-- Botón Compartir Instagram Stories Pro -->
-                                <button onclick="event.stopPropagation(); window.EventsController.shareInstagram('${evt.id}', '${evt.type || 'americana'}')" 
-                                        title="Compartir en Instagram Stories" 
-                                        aria-label="Compartir en Instagram"
-                                        style="background: rgba(15, 23, 42, 0.85); width: 36px; height: 36px; border-radius: 11px; border: 1px solid rgba(225, 48, 108, 0.45); color: #E1306C; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(12px); box-shadow: 0 4px 15px rgba(0,0,0,0.4); transition: transform 0.2s;"
-                                        onmouseover="this.style.transform='scale(1.08)'; this.style.borderColor='rgba(253, 29, 29, 0.8)';"
-                                        onmouseout="this.style.transform='scale(1)'; this.style.borderColor='rgba(225, 48, 108, 0.45)';"
-                                        onmousedown="this.style.transform='scale(0.92)';">
-                                    <i class="fab fa-instagram" style="font-size: 1.15rem; background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
-                                </button>
-                                
-                                <!-- Dual Price Badge: Socio & No Socio -->
-                                <div style="background: rgba(15, 23, 42, 0.88); border-radius: 12px; padding: 5px 9px; border: 1px solid rgba(255,255,255,0.14); color: #fff; display: flex; align-items: center; gap: 7px; backdrop-filter: blur(12px); box-shadow: 0 4px 15px rgba(0,0,0,0.4); flex-shrink: 0;">
-                                    <div style="display: flex; flex-direction: column; align-items: center; line-height: 1;">
-                                        <span style="font-size: 0.48rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.4px;">SOCIO</span>
-                                        <span style="font-size: 0.82rem; font-weight: 950; color: #CCFF00; margin-top: 2px;">${numSoc}€</span>
+                            <!-- TOP BAR OVER IMAGE: DATE (LEFT) & DUAL PRICE (RIGHT) -->
+                            <div style="position: absolute; top: 10px; left: 10px; right: 10px; display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; z-index: 10; pointer-events: none;">
+                                <!-- Left: Date & Status -->
+                                <div style="display: flex; align-items: center; gap: 6px; pointer-events: auto;">
+                                    <div style="background: rgba(15, 23, 42, 0.88); width: 44px; height: 46px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.12); backdrop-filter: blur(12px); box-shadow: 0 4px 15px rgba(0,0,0,0.4);">
+                                        <span style="font-size: 0.52rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">${dayName}</span>
+                                        <span style="font-size: 1.25rem; font-weight: 950; color: #fff; line-height: 1;">${dayNum}</span>
                                     </div>
-                                    <div style="width: 1px; height: 18px; background: rgba(255,255,255,0.18);"></div>
+                                    ${evt.normDate === this.getTodayStr() ? `
+                                        <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; padding: 4px 8px; border-radius: 8px; font-size: 0.6rem; font-weight: 950; display: inline-flex; align-items: center; gap: 3px; box-shadow: 0 3px 10px rgba(245, 158, 11, 0.4); animation: pulse 1.8s infinite;">
+                                            <i class="fas fa-fire"></i> ¡HOY!
+                                        </span>
+                                    ` : ''}
+                                    ${isEventPrivate && !isEventUnlocked ? `
+                                        <span style="background: rgba(239, 68, 68, 0.92); color: #fff; padding: 4px 8px; border-radius: 8px; font-size: 0.6rem; font-weight: 950; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 3px 10px rgba(239, 68, 68, 0.5);">
+                                            <i class="fas fa-lock"></i> PRIVADA
+                                        </span>
+                                    ` : ''}
+                                </div>
+
+                                <!-- Right: Dual Price Badge -->
+                                <div style="background: rgba(15, 23, 42, 0.88); border-radius: 11px; padding: 4px 8px; border: 1px solid rgba(255,255,255,0.14); color: #fff; display: flex; align-items: center; gap: 6px; backdrop-filter: blur(12px); box-shadow: 0 4px 15px rgba(0,0,0,0.4); flex-shrink: 0; pointer-events: auto;">
                                     <div style="display: flex; flex-direction: column; align-items: center; line-height: 1;">
-                                        <span style="font-size: 0.48rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.4px;">NO SOCIO</span>
-                                        <span style="font-size: 0.82rem; font-weight: 950; color: #ffffff; margin-top: 2px;">${numExt}€</span>
+                                        <span style="font-size: 0.46rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.3px;">SOCIO</span>
+                                        <span style="font-size: 0.78rem; font-weight: 950; color: #CCFF00; margin-top: 2px;">${numSoc}€</span>
+                                    </div>
+                                    <div style="width: 1px; height: 16px; background: rgba(255,255,255,0.18);"></div>
+                                    <div style="display: flex; flex-direction: column; align-items: center; line-height: 1;">
+                                        <span style="font-size: 0.46rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.3px;">NO SOCIO</span>
+                                        <span style="font-size: 0.78rem; font-weight: 950; color: #ffffff; margin-top: 2px;">${numExt}€</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- ESSENTIAL MODALITY & COURTS PILLS (SINGLE LINE - ZERO CLUTTER) -->
-                            <div style="position: absolute; bottom: 10px; left: 12px; right: 12px; display: flex; align-items: center; gap: 6px; z-index: 5; white-space: nowrap; overflow: hidden;">
-                                ${isEntreno ? `
-                                    <span style="background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%); color: #fff; padding: 4px 9px; border-radius: 8px; font-size: 0.62rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 2px 8px rgba(139, 92, 246, 0.4); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-user-ninja"></i> ENTRENO</span>
-                                ` : ''}
-                                ${isTwister ? 
-                                    `<span style="background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%); color: #fff; padding: 4px 9px; border-radius: 8px; font-size: 0.62rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 2px 8px rgba(6, 182, 212, 0.3); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-wind"></i> TWISTER</span>` :
-                                    `<span style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: #fff; padding: 4px 9px; border-radius: 8px; font-size: 0.62rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 2px 8px rgba(236, 72, 153, 0.3); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-lock"></i> PAREJA FIJA</span>`
-                                }
-                                <span style="background: rgba(15, 23, 42, 0.8); color: #fff; padding: 4px 9px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); font-size: 0.62rem; font-weight: 850; backdrop-filter: blur(8px); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-table-tennis" style="color: #CCFF00; font-size: 0.58rem;"></i> ${maxCourts} PISTAS</span>
+                            <!-- BOTTOM BAR OVER IMAGE: FORMAT & COURTS (LEFT) + QUICK ACTIONS (RIGHT) -->
+                            <div style="position: absolute; bottom: 8px; left: 10px; right: 10px; display: flex; align-items: center; justify-content: space-between; gap: 6px; z-index: 10; pointer-events: none;">
+                                <!-- Left: Format & Courts -->
+                                <div style="display: flex; align-items: center; gap: 5px; flex-wrap: nowrap; overflow: hidden; pointer-events: auto;">
+                                    ${isEntreno ? `
+                                        <span style="background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%); color: #fff; padding: 3.5px 7px; border-radius: 7px; font-size: 0.58rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 2px 6px rgba(139, 92, 246, 0.4); display: inline-flex; align-items: center; gap: 3px;"><i class="fas fa-user-ninja"></i> ENTRENO</span>
+                                    ` : ''}
+                                    ${isTwister ? 
+                                        `<span style="background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%); color: #fff; padding: 3.5px 7px; border-radius: 7px; font-size: 0.58rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 2px 6px rgba(6, 182, 212, 0.3); display: inline-flex; align-items: center; gap: 3px;"><i class="fas fa-wind"></i> TWISTER</span>` :
+                                        `<span style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: #fff; padding: 3.5px 7px; border-radius: 7px; font-size: 0.58rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 2px 6px rgba(236, 72, 153, 0.3); display: inline-flex; align-items: center; gap: 3px;"><i class="fas fa-lock"></i> PAREJA FIJA</span>`
+                                    }
+                                    <span style="background: rgba(15, 23, 42, 0.85); color: #fff; padding: 3.5px 7px; border-radius: 7px; border: 1px solid rgba(255,255,255,0.12); font-size: 0.58rem; font-weight: 850; backdrop-filter: blur(8px); display: inline-flex; align-items: center; gap: 3px;"><i class="fas fa-table-tennis" style="color: #CCFF00; font-size: 0.55rem;"></i> ${maxCourts} PISTAS</span>
+                                </div>
+
+                                <!-- Right: Quick Actions (Cartel, WhatsApp, Instagram) -->
+                                <div style="display: flex; align-items: center; gap: 5px; flex-shrink: 0; pointer-events: auto;">
+                                    <!-- Botón Cartel Oficial -->
+                                    <button onclick="event.stopPropagation(); window.EventsController.openPosterModal('${(evt.image_url || 'img/padel-event.jpg').replace(/'/g, "\\'")}', '${(evt.name || '').replace(/'/g, "\\'")}', '${(evt.sede || evt.location || '').replace(/'/g, "\\'")}')" 
+                                            title="Ver Cartel Oficial" 
+                                            aria-label="Ver cartel del evento"
+                                            style="
+                                                background: rgba(15, 23, 42, 0.88);
+                                                height: 30px;
+                                                padding: 0 8px;
+                                                border-radius: 9px;
+                                                border: 1.2px solid rgba(204, 255, 0, 0.5);
+                                                color: #CCFF00;
+                                                display: flex;
+                                                align-items: center;
+                                                gap: 4px;
+                                                cursor: pointer;
+                                                backdrop-filter: blur(10px);
+                                                box-shadow: 0 3px 10px rgba(0,0,0,0.35);
+                                                font-size: 0.65rem;
+                                                font-weight: 950;
+                                                letter-spacing: 0.4px;
+                                                transition: transform 0.15s;
+                                            "
+                                            onmouseover="this.style.transform='scale(1.05)';"
+                                            onmouseout="this.style.transform='scale(1)';"
+                                            onmousedown="this.style.transform='scale(0.95)';">
+                                        <i class="fas fa-file-image" style="font-size: 0.72rem; color: #CCFF00;"></i>
+                                        <span>CARTEL</span>
+                                    </button>
+
+                                    <!-- Botón Compartir WhatsApp Pro -->
+                                    <button onclick="event.stopPropagation(); window.EventsController.shareEvent('${evt.id}', '${evt.type || 'americana'}')" 
+                                            title="Compartir por WhatsApp" 
+                                            aria-label="Compartir evento por WhatsApp"
+                                            style="background: rgba(15, 23, 42, 0.85); width: 30px; height: 30px; border-radius: 9px; border: 1px solid rgba(34, 197, 94, 0.35); color: #22c55e; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(10px); box-shadow: 0 3px 10px rgba(0,0,0,0.35); transition: transform 0.15s;"
+                                            onmouseover="this.style.transform='scale(1.08)';"
+                                            onmouseout="this.style.transform='scale(1)';"
+                                            onmousedown="this.style.transform='scale(0.92)';">
+                                        <i class="fab fa-whatsapp" style="font-size: 0.95rem;"></i>
+                                    </button>
+
+                                    <!-- Botón Compartir Instagram Stories Pro -->
+                                    <button onclick="event.stopPropagation(); window.EventsController.shareInstagram('${evt.id}', '${evt.type || 'americana'}')" 
+                                            title="Compartir en Instagram Stories" 
+                                            aria-label="Compartir en Instagram"
+                                            style="background: rgba(15, 23, 42, 0.85); width: 30px; height: 30px; border-radius: 9px; border: 1px solid rgba(225, 48, 108, 0.45); color: #E1306C; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(10px); box-shadow: 0 3px 10px rgba(0,0,0,0.35); transition: transform 0.15s;"
+                                            onmouseover="this.style.transform='scale(1.08)';"
+                                            onmouseout="this.style.transform='scale(1)';"
+                                            onmousedown="this.style.transform='scale(0.92)';">
+                                        <i class="fab fa-instagram" style="font-size: 0.95rem; background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
                         <!-- CONTENT AREA -->
-                        <div style="padding: 14px 16px 14px;">
-                            <!-- METADATA BADGES STRIP (Organized & Clean) -->
-                            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 8px;">
+                        <div style="padding: 12px 13px 13px;">
+                            <!-- METADATA BADGES STRIP (Organized & Clean, Single Row Wrap) -->
+                            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-bottom: 7px;">
                                 ${(evt.is_external || evt.external || evt.organizer_type === 'external' || evt.origin === 'external' || evt.club) ? `
-                                    <span style="background: rgba(14, 165, 233, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.35); padding: 3px 8px; border-radius: 8px; font-size: 0.62rem; font-weight: 900; display: inline-flex; align-items: center; gap: 4px;">
-                                        <i class="fas fa-building-columns"></i> ${evt.club || 'CLUB ASOCIADO'}
-                                    </span>
-                                    <span style="background: rgba(14, 165, 233, 0.18); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.35); padding: 3px 7px; border-radius: 8px; font-size: 0.58rem; font-weight: 900; display: inline-flex; align-items: center; gap: 3px;">
-                                        <i class="fas fa-check-circle"></i> VERIFICADO
+                                    <span style="background: rgba(14, 165, 233, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); padding: 2.5px 7px; border-radius: 7px; font-size: 0.6rem; font-weight: 850; display: inline-flex; align-items: center; gap: 4px;">
+                                        <i class="fas fa-building-columns" style="font-size: 0.55rem;"></i> ${evt.club || 'CLUB ASOCIADO'} <i class="fas fa-check-circle" style="color: #38bdf8; font-size: 0.58rem; margin-left: 1px;" title="Verificado"></i>
                                     </span>
                                 ` : `
-                                    <span style="background: rgba(204,255,0,0.12); color: #CCFF00; border: 1px solid rgba(204,255,0,0.35); padding: 3px 8px; border-radius: 8px; font-size: 0.62rem; font-weight: 950; text-transform: uppercase; display: inline-flex; align-items: center; gap: 4px;">
-                                        <i class="fas fa-certificate"></i> SOMOSPADEL BCN
+                                    <span style="background: rgba(204,255,0,0.12); color: #CCFF00; border: 1px solid rgba(204,255,0,0.3); padding: 2.5px 7px; border-radius: 7px; font-size: 0.6rem; font-weight: 900; text-transform: uppercase; display: inline-flex; align-items: center; gap: 4px;">
+                                        <i class="fas fa-certificate" style="font-size: 0.55rem;"></i> SOMOSPADEL BCN
                                     </span>
                                 `}
                                 ${levelBadgeHtml}
                                 ${levelFeedbackHtml}
                                 ${evt.organizer ? `
-                                    <span style="background: rgba(204,255,0,0.14); color: #CCFF00; border: 1px solid rgba(204,255,0,0.35); padding: 3px 8px; border-radius: 8px; font-size: 0.62rem; font-weight: 900; display: inline-flex; align-items: center; gap: 4px;">
-                                        <i class="fas fa-user-tie"></i> Organiza: ${evt.organizer}
+                                    <span style="background: rgba(204,255,0,0.12); color: #CCFF00; border: 1px solid rgba(204,255,0,0.3); padding: 2.5px 7px; border-radius: 7px; font-size: 0.6rem; font-weight: 850; display: inline-flex; align-items: center; gap: 4px;">
+                                        <i class="fas fa-user-tie" style="font-size: 0.55rem;"></i> ${evt.organizer}
+                                    </span>
+                                ` : ''}
+                                ${isEventPrivate ? `
+                                    <span style="background: ${isEventUnlocked ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.2)'}; color: ${isEventUnlocked ? '#4ade80' : '#f87171'}; border: 1px solid ${isEventUnlocked ? 'rgba(34, 197, 94, 0.4)' : 'rgba(239, 68, 68, 0.5)'}; padding: 2.5px 7px; border-radius: 7px; font-size: 0.58rem; font-weight: 900; display: inline-flex; align-items: center; gap: 3px;">
+                                        <i class="fas ${isEventUnlocked ? 'fa-unlock' : 'fa-lock'}" style="font-size: 0.55rem;"></i> ${isEventUnlocked ? 'Desbloqueada' : 'Clave requerida'}
                                     </span>
                                 ` : ''}
                             </div>
 
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; gap: 8px;">
-                                <h3 style="margin: 0; font-size: 1.22rem; font-weight: 950; color: #fff; line-height: 1.15; letter-spacing: -0.4px; text-transform: uppercase; flex: 1;">${evt.name}</h3>
-                                ${evt.description && evt.description.trim() ? `
-                                    <button onclick="event.stopPropagation(); window.EventsController.openDescriptionModal('${evt.id}', '${evt.type || 'americana'}')"
-                                            title="Ver descripción y notas para jugadores"
-                                            aria-label="Ver descripción"
-                                            style="
-                                                background: rgba(56, 189, 248, 0.12);
-                                                border: 1.5px solid rgba(56, 189, 248, 0.4);
-                                                color: #38bdf8;
-                                                padding: 6px 12px;
-                                                border-radius: 12px;
-                                                font-size: 0.72rem;
-                                                font-weight: 950;
-                                                display: inline-flex;
-                                                align-items: center;
-                                                gap: 6px;
-                                                cursor: pointer;
-                                                flex-shrink: 0;
-                                                box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-                                                transition: transform 0.2s, background 0.2s;
-                                            "
-                                            onmouseover="this.style.transform='scale(1.05)'; this.style.background='rgba(56, 189, 248, 0.2)';"
-                                            onmouseout="this.style.transform='scale(1)'; this.style.background='rgba(56, 189, 248, 0.12)';"
-                                            onmousedown="this.style.transform='scale(0.95)';">
-                                        <i class="fas fa-info-circle" style="font-size: 0.82rem; color: #38bdf8;"></i>
-                                        <span>INFO</span>
-                                    </button>
-                                ` : ''}
-                            </div>
+                            <!-- EVENT TITLE (Full Width, Uncluttered) -->
+                            <h3 style="margin: 0 0 7px 0; font-size: 1.15rem; font-weight: 950; color: #fff; line-height: 1.2; letter-spacing: -0.3px; text-transform: uppercase; word-break: break-word;">${evt.name}</h3>
 
+                            <!-- DESCRIPTION TEASER NOTICE (Single clean gateway to description modal) -->
                             ${evt.description && evt.description.trim() ? `
                                 <div onclick="event.stopPropagation(); window.EventsController.openDescriptionModal('${evt.id}', '${evt.type || 'americana'}')" 
                                      title="Toca para leer el aviso completo"
                                      style="
-                                        background: linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(37, 99, 235, 0.06) 100%);
-                                        border: 1px solid rgba(56, 189, 248, 0.25);
-                                        border-left: 3.5px solid #38bdf8;
-                                        border-radius: 12px;
-                                        padding: 8px 12px;
-                                        margin-bottom: 12px;
+                                        background: linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(37, 99, 235, 0.04) 100%);
+                                        border: 1px solid rgba(56, 189, 248, 0.22);
+                                        border-left: 3px solid #38bdf8;
+                                        border-radius: 10px;
+                                        padding: 6px 10px;
+                                        margin-bottom: 9px;
                                         cursor: pointer;
                                         display: flex;
                                         align-items: center;
                                         justify-content: space-between;
                                         gap: 8px;
-                                        transition: transform 0.15s, background 0.15s;
+                                        transition: background 0.15s;
                                      "
-                                     onmouseover="this.style.background='rgba(56, 189, 248, 0.16)';"
-                                     onmouseout="this.style.background='linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(37, 99, 235, 0.06) 100%)';">
-                                    <div style="display: flex; align-items: center; gap: 8px; overflow: hidden; min-width: 0;">
-                                        <i class="fas fa-bullhorn" style="color: #38bdf8; font-size: 0.85rem; flex-shrink: 0;"></i>
-                                        <span style="font-size: 0.74rem; color: #f1f5f9; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                     onmouseover="this.style.background='rgba(56, 189, 248, 0.14)';"
+                                     onmouseout="this.style.background='linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(37, 99, 235, 0.04) 100%)';">
+                                    <div style="display: flex; align-items: center; gap: 7px; overflow: hidden; min-width: 0;">
+                                        <i class="fas fa-bullhorn" style="color: #38bdf8; font-size: 0.78rem; flex-shrink: 0;"></i>
+                                        <span style="font-size: 0.72rem; color: #e2e8f0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                             ${evt.description.replace(/\n/g, ' ')}
                                         </span>
                                     </div>
-                                    <span style="font-size: 0.62rem; font-weight: 950; color: #38bdf8; text-transform: uppercase; white-space: nowrap; flex-shrink: 0; display: inline-flex; align-items: center; gap: 3px;">
-                                        LEER <i class="fas fa-chevron-right" style="font-size: 0.6rem;"></i>
+                                    <span style="font-size: 0.6rem; font-weight: 950; color: #38bdf8; text-transform: uppercase; white-space: nowrap; flex-shrink: 0; display: inline-flex; align-items: center; gap: 3px;">
+                                        LEER <i class="fas fa-chevron-right" style="font-size: 0.55rem;"></i>
                                     </span>
                                 </div>
                             ` : ''}
                             
-                            <!-- 💎 2 ESSENTIAL PILLS -->
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                            <!-- 💎 2 ESSENTIAL PILLS (TIME & CATEGORY) -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 9px;">
                                 <!-- Time Tile -->
-                                <div class="${tileClass}" style="background: rgba(255,255,255,0.06); border-radius: 14px; padding: 8px 10px; display: flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
-                                    <div style="width: 26px; height: 26px; background: ${timeIconBg}; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                        <i class="far fa-clock" style="color: ${timeIconColor}; font-size: 0.8rem;"></i>
+                                <div class="${tileClass}" style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 7px 9px; display: flex; align-items: center; gap: 7px; border: 1px solid rgba(255,255,255,0.07); box-shadow: 0 2px 8px rgba(0,0,0,0.2); min-width: 0;">
+                                    <div style="width: 24px; height: 24px; background: ${timeIconBg}; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <i class="far fa-clock" style="color: ${timeIconColor}; font-size: 0.75rem;"></i>
                                     </div>
-                                    <span style="font-weight: 900; font-size: 0.82rem; color: #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${timeLabel}</span>
+                                    <span style="font-weight: 900; font-size: 0.78rem; color: #f1f5f9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${timeLabel}</span>
                                 </div>
                                 <!-- Category Tile -->
-                                <div class="${tileClass}" style="background: rgba(255,255,255,0.06); border-radius: 14px; padding: 8px 10px; display: flex; align-items: center; gap: 8px; border: 1.5px solid ${categoryColor}45; box-shadow: 0 2px 10px ${categoryColor}20;">
-                                    <div style="width: 26px; height: 26px; background: ${categoryColor}25; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                        <i class="fas ${categoryIcon}" style="color: ${categoryColor}; font-size: 0.82rem;"></i>
+                                <div class="${tileClass}" style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 7px 9px; display: flex; align-items: center; gap: 7px; border: 1.2px solid ${categoryColor}40; box-shadow: 0 2px 8px ${categoryColor}15; min-width: 0;">
+                                    <div style="width: 24px; height: 24px; background: ${categoryColor}25; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <i class="fas ${categoryIcon}" style="color: ${categoryColor}; font-size: 0.78rem;"></i>
                                     </div>
-                                    <span style="font-weight: 950; font-size: 0.82rem; color: ${categoryColor}; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.4px;">${categoryLabel}</span>
+                                    <span style="font-weight: 950; font-size: 0.78rem; color: ${categoryColor}; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.3px;">${categoryLabel}</span>
                                 </div>
                             </div>
 
                             <!-- CAPACITY & BUBBLE STACK (INTERACTIVE) -->
-                            <div class="${tileClass}" onclick="event.stopPropagation(); window.EventsController.showInscritosModal('${evt.id}', '${evt.type || 'americana'}')" style="background: rgba(255,255,255,0.06); border-radius: 16px; padding: 10px 12px; border: 1px solid rgba(255,255,255,0.08); cursor: pointer; position: relative; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.2); margin-bottom: 10px;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; position: relative;">
-                                    <div style="display: flex; align-items: center; gap: 6px;">
+                            <div class="${tileClass}" onclick="event.stopPropagation(); ${(isEventPrivate && !isEventUnlocked) ? `window.EventsController.promptPrivatePassword('${evt.id}', '${evt.type || 'americana'}', 'inscritos')` : `window.EventsController.showInscritosModal('${evt.id}', '${evt.type || 'americana'}')`}" style="background: rgba(255,255,255,0.05); border-radius: 14px; padding: 8px 10px; border: 1px solid rgba(255,255,255,0.07); cursor: pointer; position: relative; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.2); margin-bottom: 9px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; position: relative; gap: 6px;">
+                                    <div style="display: flex; align-items: center; gap: 5px; min-width: 0; overflow: hidden;">
                                         ${avatarStackHtml}
-                                        <i id="event-players-icon-${evt.id}" class="fas fa-users" style="color: ${capacityIconColor}; font-size: 0.85rem; margin-left: 2px;"></i>
-                                        <span id="event-players-label-${evt.id}" style="font-weight: 950; font-size: 0.9rem; color: #fff;">${playerCount} / ${maxPlayers} Plazas</span>
+                                        <i id="event-players-icon-${evt.id}" class="fas fa-users" style="color: ${capacityIconColor}; font-size: 0.8rem; margin-left: 1px; flex-shrink: 0;"></i>
+                                        <span id="event-players-label-${evt.id}" style="font-weight: 950; font-size: 0.82rem; color: #fff; white-space: nowrap;">${playerCount} / ${maxPlayers} Plazas</span>
                                     </div>
-                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                    <div style="display: flex; align-items: center; gap: 5px; flex-shrink: 0;">
                                         ${urgencyHtml}
-                                        <span id="event-status-capacity-${evt.id}" style="font-size: 0.65rem; font-weight: 950; color: ${isFull ? '#FF3B30' : categoryColor}; text-transform: uppercase; letter-spacing: 0.5px;">${isFull ? 'COMPLETO' : 'DISPONIBLE'}</span>
+                                        <span id="event-status-capacity-${evt.id}" style="font-size: 0.62rem; font-weight: 950; color: ${isFull ? '#FF3B30' : categoryColor}; text-transform: uppercase; letter-spacing: 0.4px;">${isFull ? 'COMPLETO' : 'DISPONIBLE'}</span>
                                     </div>
                                 </div>
-                                <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.06); border-radius: 10px; overflow: hidden;">
+                                <div style="width: 100%; height: 5px; background: rgba(255,255,255,0.06); border-radius: 10px; overflow: hidden;">
                                     <div id="event-progress-bar-${evt.id}" style="width: ${progress}%; height: 100%; background: ${progressColor}; box-shadow: 0 0 10px ${progressColor}55; transition: width 0.3s ease;"></div>
                                 </div>
                                 <div id="event-waitlist-label-${evt.id}">
-                                    ${waitlist.length > 0 ? `<div style="margin-top: 5px; font-size: 0.65rem; font-weight: 900; color: #eab308; text-transform: uppercase;">+${waitlist.length} EN ESPERA</div>` : ''}
+                                    ${waitlist.length > 0 ? `<div style="margin-top: 4px; font-size: 0.62rem; font-weight: 900; color: #eab308; text-transform: uppercase;">+${waitlist.length} EN ESPERA</div>` : ''}
                                 </div>
                             </div>
 
                             <!-- 📍 LOCATION & UNIFIED PRIMARY ACTION CTA -->
-                            <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 2px; gap: 8px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 1px; gap: 8px;">
                                 <!-- Sede Oficial Box con GPS / Indicaciones directas -->
                                 <div class="${tileClass}" onclick="event.stopPropagation(); window.EventsController.openDirections('${(evt.sede || evt.location || 'Barcelona Pádel el Prat').replace(/'/g, "\\'")}')" 
                                      title="Navegar por GPS al club (Google Maps / Apple Maps)"
-                                     style="display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.06); padding: 8px 10px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.08); flex: 1; min-width: 0; cursor: pointer;"
+                                     style="display: flex; align-items: center; gap: 7px; background: rgba(255,255,255,0.05); padding: 7px 9px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.07); flex: 1; min-width: 0; cursor: pointer;"
                                      onmouseover="this.style.borderColor='#38bdf8';"
-                                     onmouseout="this.style.borderColor='rgba(255,255,255,0.08)';">
-                                    <div style="width: 28px; height: 28px; background: ${locIconBg}; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                        <i class="fas fa-location-arrow" style="color: ${locIconColor}; font-size: 0.85rem;"></i>
+                                     onmouseout="this.style.borderColor='rgba(255,255,255,0.07)';">
+                                    <div style="width: 26px; height: 26px; background: ${locIconBg}; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <i class="fas fa-location-arrow" style="color: ${locIconColor}; font-size: 0.78rem;"></i>
                                     </div>
-                                    <div style="display: flex; flex-direction: column; min-width: 0;">
-                                        <div style="display: flex; align-items: center; gap: 4px;">
-                                            <span style="font-size: 0.52rem; font-weight: 800; color: #888; text-transform: uppercase; letter-spacing: 0.5px;">${(evt.is_external || evt.external || evt.organizer_type === 'external' || evt.origin === 'external') ? 'Club Organizador' : 'Sede Oficial'}</span>
-                                            <span style="font-size: 0.52rem; font-weight: 950; color: #38bdf8; text-transform: uppercase;">GPS ↗</span>
+                                    <div style="display: flex; flex-direction: column; min-width: 0; overflow: hidden;">
+                                        <div style="display: flex; align-items: center; gap: 3px;">
+                                            <span style="font-size: 0.5rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.4px;">${(evt.is_external || evt.external || evt.organizer_type === 'external' || evt.origin === 'external') ? 'Club' : 'Sede Oficial'}</span>
+                                            <span style="font-size: 0.5rem; font-weight: 950; color: #38bdf8; text-transform: uppercase;">GPS ↗</span>
                                         </div>
-                                        <span style="font-size: 0.82rem; font-weight: 950; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${evt.sede || evt.location || 'Bcn Pádel'}</span>
+                                        <span style="font-size: 0.78rem; font-weight: 900; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${evt.sede || evt.location || 'Bcn Pádel'}</span>
                                     </div>
                                 </div>
 
                                 <!-- ⚡ PRIMARY PRO ACTION BUTTON (Unifies FAB & Status Badge) -->
                                 <div style="position: relative; flex-shrink: 0;">
-                                    ${isLive ? `<div style="position: absolute; inset: -3px; border-radius: 16px; background: #FF2D55; opacity: 0.5; animation: status-breathe 1.2s ease-in-out infinite; filter: blur(5px);"></div>` : ''}
-                                    ${!isLive && !isCancelled && !isFinished && !isJoined ? `<div style="position: absolute; inset: -2px; border-radius: 16px; background: ${categoryColor}; opacity: 0.25; animation: status-breathe 2.2s ease-in-out infinite; filter: blur(4px);"></div>` : ''}
+                                    ${isLive ? `<div style="position: absolute; inset: -3px; border-radius: 14px; background: #FF2D55; opacity: 0.5; animation: status-breathe 1.2s ease-in-out infinite; filter: blur(4px);"></div>` : ''}
+                                    ${!isLive && !isCancelled && !isFinished && !isJoined ? `<div style="position: absolute; inset: -2px; border-radius: 14px; background: ${categoryColor}; opacity: 0.25; animation: status-breathe 2.2s ease-in-out infinite; filter: blur(3px);"></div>` : ''}
                                     
                                     ${(() => {
-                                        // Definir contraste perfecto para el botón de acción principal (APUNTARME / DENTRO / LIVE / ESPERA)
                                         let ctaBg = '#CCFF00';
                                         let ctaTextColor = '#000000';
-                                        let ctaShadow = '0 6px 18px rgba(204, 255, 0, 0.45)';
+                                        let ctaShadow = '0 4px 14px rgba(204, 255, 0, 0.4)';
 
                                         if (isLive) {
                                             ctaBg = '#FF2D55';
                                             ctaTextColor = '#ffffff';
-                                            ctaShadow = '0 6px 18px rgba(255, 45, 85, 0.5)';
+                                            ctaShadow = '0 4px 14px rgba(255, 45, 85, 0.5)';
                                         } else if (isCancelled) {
                                             ctaBg = '#ef4444';
                                             ctaTextColor = '#ffffff';
-                                            ctaShadow = '0 6px 18px rgba(239, 68, 68, 0.4)';
+                                            ctaShadow = '0 4px 14px rgba(239, 68, 68, 0.4)';
                                         } else if (isFinished || evt.status === 'finished') {
                                             ctaBg = '#475569';
                                             ctaTextColor = '#ffffff';
-                                            ctaShadow = '0 6px 18px rgba(0, 0, 0, 0.3)';
+                                            ctaShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
                                         } else if (isJoined) {
                                             ctaBg = '#00E36D';
                                             ctaTextColor = '#000000';
-                                            ctaShadow = '0 6px 18px rgba(0, 227, 109, 0.4)';
+                                            ctaShadow = '0 4px 14px rgba(0, 227, 109, 0.4)';
                                         } else if (isWaitlistPending) {
                                             ctaBg = '#CCFF00';
                                             ctaTextColor = '#000000';
-                                            ctaShadow = '0 6px 18px rgba(204, 255, 0, 0.45)';
+                                            ctaShadow = '0 4px 14px rgba(204, 255, 0, 0.4)';
                                         } else if (isInWaitlist) {
                                             ctaBg = '#334155';
                                             ctaTextColor = '#ffffff';
-                                            ctaShadow = '0 6px 18px rgba(0, 0, 0, 0.4)';
+                                            ctaShadow = '0 4px 12px rgba(0, 0, 0, 0.4)';
                                         } else if (isFull && !isJoined) {
                                             ctaBg = '#eab308';
                                             ctaTextColor = '#000000';
-                                            ctaShadow = '0 6px 18px rgba(234, 179, 8, 0.4)';
+                                            ctaShadow = '0 4px 14px rgba(234, 179, 8, 0.4)';
                                         } else {
-                                            // !isJoined && !isFull -> 'APUNTARME'
                                             ctaBg = '#CCFF00';
                                             ctaTextColor = '#000000';
-                                            ctaShadow = '0 6px 18px rgba(204, 255, 0, 0.45)';
+                                            ctaShadow = '0 4px 14px rgba(204, 255, 0, 0.4)';
                                         }
 
                                         return `
@@ -2275,16 +2455,16 @@
                                                         position: relative;
                                                         background: ${ctaBg} !important;
                                                         color: ${ctaTextColor} !important;
-                                                        padding: 10px 18px;
-                                                        border-radius: 14px;
-                                                        font-size: 0.78rem;
+                                                        padding: 9px 15px;
+                                                        border-radius: 12px;
+                                                        font-size: 0.75rem;
                                                         font-weight: 950;
                                                         font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
                                                         text-transform: uppercase;
-                                                        letter-spacing: 0.6px;
+                                                        letter-spacing: 0.5px;
                                                         display: flex;
                                                         align-items: center;
-                                                        gap: 7px;
+                                                        gap: 6px;
                                                         border: none;
                                                         cursor: pointer;
                                                         box-shadow: ${ctaShadow};
@@ -2294,8 +2474,8 @@
                                                     onmouseover="this.style.transform='scale(1.04)';"
                                                     onmouseout="this.style.transform='scale(1)';"
                                                     onmousedown="this.style.transform='scale(0.95)';">
-                                                <i id="event-fab-icon-${evt.id}" class="fas ${btnIcon}" style="font-size: 0.85rem; color: ${ctaTextColor} !important; font-weight: 900;"></i>
-                                                <span id="event-fab-label-${evt.id}" style="color: ${ctaTextColor} !important; font-weight: 950; letter-spacing: 0.6px;">${btnLabel}</span>
+                                                <i id="event-fab-icon-${evt.id}" class="fas ${btnIcon}" style="font-size: 0.8rem; color: ${ctaTextColor} !important; font-weight: 900;"></i>
+                                                <span id="event-fab-label-${evt.id}" style="color: ${ctaTextColor} !important; font-weight: 950; letter-spacing: 0.5px;">${btnLabel}</span>
                                             </button>
                                         `;
                                     })()}
@@ -2924,84 +3104,127 @@
                         </div>
                     </div>
 
-                    <!-- BOTONES DE ACCIÓN PARA INSTAGRAM -->
-                    <div style="display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 360px; margin-top: 14px;">
-                        <!-- Botón 1: Compartir en Instagram (Web Share API con archivo o descarga directa) -->
-                        <button id="btn-share-ig-action" 
-                                onclick="window.EventsController.executeInstagramShare(window._lastInstagramEvent)" 
+                    <!-- BOTONES DE ACCIÓN PARA INSTAGRAM (MODO AVANZADO DIRECTO) -->
+                    <div style="display: flex; flex-direction: column; gap: 9px; width: 100%; max-width: 360px; margin-top: 14px;">
+                        <!-- Botón Principal 1: Abrir directo en App Instagram Stories -->
+                        <button id="btn-direct-ig-action" 
+                                onclick="window.EventsController.launchDirectInstagram(window._lastInstagramEvent)" 
                                 style="
                                     width: 100%;
-                                    padding: 12px;
+                                    padding: 13px 14px;
                                     background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
                                     color: #ffffff;
                                     border: none;
                                     border-radius: 14px;
                                     font-weight: 950;
-                                    font-size: 0.85rem;
+                                    font-size: 0.88rem;
+                                    cursor: pointer;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    gap: 9px;
+                                    box-shadow: 0 6px 22px rgba(225,48,108,0.5);
+                                    transition: transform 0.15s, box-shadow 0.15s;
+                                "
+                                onmouseover="this.style.transform='scale(1.02)';"
+                                onmouseout="this.style.transform='scale(1)';"
+                                onmousedown="this.style.transform='scale(0.98)';">
+                            <i class="fab fa-instagram" style="font-size: 1.25rem;"></i>
+                            <span>⚡ ABRIR EN APP INSTAGRAM</span>
+                        </button>
+
+                        <!-- Botón 2: Compartir mediante Menú del Sistema -->
+                        <button id="btn-share-ig-action" 
+                                onclick="window.EventsController.executeInstagramShare(window._lastInstagramEvent)" 
+                                style="
+                                    width: 100%;
+                                    padding: 10px 14px;
+                                    background: rgba(255,255,255,0.08);
+                                    border: 1px solid rgba(225,48,108,0.4);
+                                    color: #ffffff;
+                                    border-radius: 13px;
+                                    font-weight: 900;
+                                    font-size: 0.8rem;
                                     cursor: pointer;
                                     display: flex;
                                     align-items: center;
                                     justify-content: center;
                                     gap: 8px;
-                                    box-shadow: 0 4px 16px rgba(225,48,108,0.4);
-                                    transition: transform 0.15s;
+                                    backdrop-filter: blur(8px);
+                                    transition: transform 0.15s, background 0.15s;
                                 "
-                                onmouseover="this.style.transform='scale(1.02)';"
-                                onmouseout="this.style.transform='scale(1)';"
+                                onmouseover="this.style.background='rgba(225,48,108,0.18)';"
+                                onmouseout="this.style.background='rgba(255,255,255,0.08)';"
                                 onmousedown="this.style.transform='scale(0.98)';">
-                            <i class="fab fa-instagram" style="font-size: 1.1rem;"></i>
-                            <span>COMPARTIR EN INSTAGRAM STORIES</span>
+                            <i class="fas fa-share-nodes" style="color: #E1306C; font-size: 0.95rem;"></i>
+                            <span>📲 Menú Compartir del Móvil</span>
                         </button>
 
                         <div style="display: flex; gap: 8px; width: 100%;">
-                            <!-- Botón 2: Descargar Flyer HD -->
+                            <!-- Botón 3: Guardar en Galería -->
                             <button onclick="window.EventsController.downloadInstagramStory(window._lastInstagramEvent)" 
                                     style="
                                         flex: 1;
-                                        padding: 10px;
-                                        background: rgba(255,255,255,0.08);
-                                        border: 1px solid rgba(255,255,255,0.2);
+                                        padding: 9px;
+                                        background: rgba(255,255,255,0.05);
+                                        border: 1px solid rgba(255,255,255,0.15);
                                         color: #ffffff;
-                                        border-radius: 12px;
-                                        font-weight: 900;
-                                        font-size: 0.75rem;
+                                        border-radius: 11px;
+                                        font-weight: 850;
+                                        font-size: 0.73rem;
                                         cursor: pointer;
                                         display: flex;
                                         align-items: center;
                                         justify-content: center;
                                         gap: 6px;
                                     ">
-                                <i class="fas fa-download"></i> Descargar HD
+                                <i class="fas fa-download" style="color: #38bdf8;"></i> Guardar Foto
                             </button>
 
-                            <!-- Botón 3: Copiar Texto -->
+                            <!-- Botón 4: Copiar Texto -->
                             <button onclick="window.EventsController.copyInstagramCaption(window._lastInstagramEvent)" 
                                     style="
                                         flex: 1;
-                                        padding: 10px;
-                                        background: rgba(255,255,255,0.08);
-                                        border: 1px solid rgba(255,255,255,0.2);
+                                        padding: 9px;
+                                        background: rgba(255,255,255,0.05);
+                                        border: 1px solid rgba(255,255,255,0.15);
                                         color: #ffffff;
-                                        border-radius: 12px;
-                                        font-weight: 900;
-                                        font-size: 0.75rem;
+                                        border-radius: 11px;
+                                        font-weight: 850;
+                                        font-size: 0.73rem;
                                         cursor: pointer;
                                         display: flex;
                                         align-items: center;
                                         justify-content: center;
                                         gap: 6px;
                                     ">
-                                <i class="fas fa-copy"></i> Copiar Texto
+                                <i class="fas fa-copy" style="color: #CCFF00;"></i> Copiar Texto
                             </button>
+                        </div>
+
+                        <!-- Micro-Guía de Asistencia Pro -->
+                        <div style="background: rgba(225,48,108,0.08); border: 1px dashed rgba(225,48,108,0.35); border-radius: 12px; padding: 8px 10px; display: flex; align-items: center; gap: 8px; margin-top: 2px;">
+                            <i class="fas fa-bolt" style="color: #E1306C; font-size: 0.95rem; flex-shrink: 0;"></i>
+                            <div style="font-size: 0.65rem; color: #cbd5e1; line-height: 1.25;">
+                                <strong>Modo Automático:</strong> Abre la cámara de Instagram Stories con la foto copiada y guardada en tu galería para publicar al instante.
+                            </div>
                         </div>
                     </div>
                 </div>
             `;
 
             window._lastInstagramEvent = evt;
+            this._cachedStoryCanvas = null;
+            this._cachedStoryBlob = null;
+            this._cachedStoryEventId = null;
+
             overlay.style.display = 'flex';
             requestAnimationFrame(() => {
                 overlay.style.opacity = '1';
+                // Pre-render silencioso en background para que el click sea 100% instantáneo
+                setTimeout(() => {
+                    this._getOrRenderStoryCanvas(evt).catch(() => {});
+                }, 120);
             });
         }
 
@@ -3015,29 +3238,126 @@
             }
         }
 
+        async _getOrRenderStoryCanvas(evt) {
+            if (this._cachedStoryCanvas && this._cachedStoryBlob && this._cachedStoryEventId === evt.id) {
+                return { canvas: this._cachedStoryCanvas, blob: this._cachedStoryBlob };
+            }
+            const cardEl = document.getElementById('instagram-story-capture-card');
+            if (!cardEl) return { canvas: null, blob: null };
+
+            await this._ensureHtml2Canvas();
+            if (typeof html2canvas === 'undefined') throw new Error("html2canvas no disponible");
+
+            const canvas = await html2canvas(cardEl, {
+                scale: 2.5,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#060b14',
+                logging: false
+            });
+
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+            this._cachedStoryCanvas = canvas;
+            this._cachedStoryBlob = blob;
+            this._cachedStoryEventId = evt.id;
+
+            return { canvas, blob };
+        }
+
+        async launchDirectInstagram(evt) {
+            if (!evt) return;
+            const directBtn = document.getElementById('btn-direct-ig-action');
+            const originalHtml = directBtn ? directBtn.innerHTML : '';
+            if (directBtn) {
+                directBtn.disabled = true;
+                directBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Abriendo Instagram Stories...';
+            }
+
+            try {
+                const { canvas, blob } = await this._getOrRenderStoryCanvas(evt);
+                if (!canvas || !blob) throw new Error("No se pudo renderizar la Story");
+
+                // 1. Guardar/Descargar copia en el dispositivo para que aparezca como foto #1 en la galería de Instagram
+                await this.downloadInstagramStory(evt, canvas, false);
+
+                // 2. Intentar copiar imagen binaria al portapapeles para sticker automático en Stories
+                const captionText = `🎾 ¡NUEVA CONVOCATORIA EN SOMOSPADEL BARCELONA! 🎾\n\n🏆 ${evt.name}\n📅 Fecha: ${evt.date}\n⏰ Horario: ${evt.time || '19:30'}\n📍 Sede: ${evt.sede || evt.location || 'SomosPadel BCN'}\n👥 Plazas: ${evt.players ? evt.players.length : 0} inscritos\n💰 Tarifa: ${evt.price_members || 10}€ socios / ${evt.price_external || 10}€ no socios\n\n📲 ¡Reserva tu plaza en el link de la bio @somospadelbcn!\n\n#SomosPadel #PadelBarcelona #AmericanasPadel #PadelAddict`;
+
+                if (navigator.clipboard) {
+                    try {
+                        if (window.ClipboardItem) {
+                            await navigator.clipboard.write([
+                                new ClipboardItem({ 'image/png': blob })
+                            ]);
+                        } else if (navigator.clipboard.writeText) {
+                            await navigator.clipboard.writeText(captionText);
+                        }
+                    } catch (clipErr) {
+                        console.warn("ClipboardItem write:", clipErr);
+                        try {
+                            if (navigator.clipboard.writeText) await navigator.clipboard.writeText(captionText);
+                        } catch (e) {}
+                    }
+                }
+
+                if (window.NotificationService) {
+                    window.NotificationService.show("🚀 ¡Abriendo Instagram Stories! Imagen guardada y lista en tu galería.", "success");
+                }
+
+                // 3. Deep link nativo a la cámara de Instagram Stories
+                const ua = navigator.userAgent || navigator.vendor || window.opera || '';
+                const isAndroid = /android/i.test(ua);
+                const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+
+                if (isAndroid) {
+                    // Intent nativo directo a la cámara de Stories de Instagram
+                    const intentUrl = 'intent://story-camera#Intent;package=com.instagram.android;scheme=instagram;end;';
+                    window.location.href = intentUrl;
+                    setTimeout(() => {
+                        window.location.href = 'instagram://story-camera';
+                    }, 500);
+                    setTimeout(() => {
+                        window.location.href = 'https://www.instagram.com/';
+                    }, 1600);
+                } else if (isIOS) {
+                    // Esquema directo en iOS
+                    window.location.href = 'instagram-stories://share?source_application=somospadel';
+                    setTimeout(() => {
+                        window.location.href = 'instagram://story-camera';
+                    }, 500);
+                    setTimeout(() => {
+                        window.location.href = 'https://www.instagram.com/';
+                    }, 1600);
+                } else {
+                    // Desktop: abre Instagram Web
+                    window.open('https://www.instagram.com/', '_blank');
+                }
+
+            } catch (err) {
+                console.error("Error en launchDirectInstagram:", err);
+                if (window.NotificationService) {
+                    window.NotificationService.show("Usa 'Guardar Foto' para subirla manualmente a Stories.", "warning");
+                }
+            } finally {
+                if (directBtn) {
+                    directBtn.disabled = false;
+                    directBtn.innerHTML = originalHtml;
+                }
+            }
+        }
+
         async executeInstagramShare(evt) {
             if (!evt) return;
-            const cardEl = document.getElementById('instagram-story-capture-card');
-            if (!cardEl) return;
-
             const shareBtn = document.getElementById('btn-share-ig-action');
             const originalHtml = shareBtn ? shareBtn.innerHTML : '';
             if (shareBtn) {
                 shareBtn.disabled = true;
-                shareBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando Story...';
+                shareBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparando Menú...';
             }
 
             try {
-                await this._ensureHtml2Canvas();
-                if (typeof html2canvas === 'undefined') throw new Error("html2canvas no disponible");
-
-                const canvas = await html2canvas(cardEl, {
-                    scale: 2.5,
-                    useCORS: true,
-                    allowTaint: true,
-                    backgroundColor: '#060b14',
-                    logging: false
-                });
+                const { canvas, blob } = await this._getOrRenderStoryCanvas(evt);
+                if (!canvas || !blob) throw new Error("No se pudo obtener el gráfico");
 
                 const captionText = `🎾 ¡NUEVA CONVOCATORIA EN SOMOSPADEL BARCELONA! 🎾\n\n🏆 ${evt.name}\n📅 Fecha: ${evt.date}\n⏰ Horario: ${evt.time || '19:30'}\n📍 Sede: ${evt.sede || evt.location || 'SomosPadel BCN'}\n👥 Plazas: ${evt.players ? evt.players.length : 0} inscritos\n💰 Tarifa: ${evt.price_members || 10}€ socios / ${evt.price_external || 10}€ no socios\n\n📲 ¡Reserva tu plaza en el link de la bio @somospadelbcn!\n\n#SomosPadel #PadelBarcelona #AmericanasPadel #PadelAddict`;
 
@@ -3047,77 +3367,53 @@
                     }
                 } catch (e) {}
 
-                canvas.toBlob(async (blob) => {
-                    if (!blob) {
-                        this.downloadInstagramStory(evt, canvas);
-                        if (shareBtn) { shareBtn.disabled = false; shareBtn.innerHTML = originalHtml; }
-                        return;
-                    }
+                const fileName = `somospadel_story_${(evt.name || 'evento').replace(/\s+/g, '_').toLowerCase()}.png`;
+                const file = new File([blob], fileName, { type: 'image/png' });
 
-                    const fileName = `somospadel_story_${(evt.name || 'evento').replace(/\s+/g, '_').toLowerCase()}.png`;
-                    const file = new File([blob], fileName, { type: 'image/png' });
-
-                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                        try {
-                            await navigator.share({
-                                title: `SomosPadel: ${evt.name}`,
-                                text: captionText,
-                                files: [file]
-                            });
-                            if (window.NotificationService) {
-                                window.NotificationService.show("¡Abriendo Instagram!", "success");
-                            }
-                            if (shareBtn) { shareBtn.disabled = false; shareBtn.innerHTML = originalHtml; }
-                            return;
-                        } catch (shareErr) {
-                            if (shareErr.name === 'AbortError') {
-                                if (shareBtn) { shareBtn.disabled = false; shareBtn.innerHTML = originalHtml; }
-                                return;
-                            }
-                            console.warn("Native file share fallback:", shareErr);
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    try {
+                        await navigator.share({
+                            title: `SomosPadel: ${evt.name}`,
+                            text: captionText,
+                            files: [file]
+                        });
+                        if (window.NotificationService) {
+                            window.NotificationService.show("¡Compartido con éxito!", "success");
                         }
+                        return;
+                    } catch (shareErr) {
+                        if (shareErr.name === 'AbortError') return;
+                        console.warn("Native file share fallback:", shareErr);
                     }
+                }
 
-                    this.downloadInstagramStory(evt, canvas);
-                    window.open('https://www.instagram.com/', '_blank');
-
-                    if (window.NotificationService) {
-                        window.NotificationService.show("📸 ¡Imagen descargada y texto copiado! Ya puedes subirla a Stories.", "success");
-                    } else {
-                        alert("📸 ¡Imagen descargada y texto copiado al portapapeles! Ya puedes publicarla en tus Stories de Instagram.");
-                    }
-
-                    if (shareBtn) {
-                        shareBtn.disabled = false;
-                        shareBtn.innerHTML = originalHtml;
-                    }
-                }, 'image/png');
+                // Fallback si navigator.share no está disponible
+                this.downloadInstagramStory(evt, canvas, false);
+                window.open('https://www.instagram.com/', '_blank');
+                if (window.NotificationService) {
+                    window.NotificationService.show("📸 Flyer guardado y texto copiado. Abriendo Instagram.", "success");
+                }
 
             } catch (err) {
-                console.error("Error generando Story:", err);
+                console.error("Error en executeInstagramShare:", err);
+                alert("No se pudo abrir el menú nativo. Usa 'Guardar Foto'.");
+            } finally {
                 if (shareBtn) {
                     shareBtn.disabled = false;
                     shareBtn.innerHTML = originalHtml;
                 }
-                alert("No se pudo generar la imagen automáticamente. Prueba con el botón Descargar HD.");
             }
         }
 
-        async downloadInstagramStory(evt, existingCanvas = null) {
+        async downloadInstagramStory(evt, existingCanvas = null, showToast = true) {
             try {
                 let canvas = existingCanvas;
                 if (!canvas) {
-                    const cardEl = document.getElementById('instagram-story-capture-card');
-                    if (!cardEl) return;
-                    await this._ensureHtml2Canvas();
-                    canvas = await html2canvas(cardEl, {
-                        scale: 2.5,
-                        useCORS: true,
-                        allowTaint: true,
-                        backgroundColor: '#060b14',
-                        logging: false
-                    });
+                    const res = await this._getOrRenderStoryCanvas(evt);
+                    canvas = res.canvas;
                 }
+                if (!canvas) return;
+
                 const link = document.createElement('a');
                 link.download = `somospadel_story_${(evt.name || 'evento').replace(/\s+/g, '_').toLowerCase()}.png`;
                 link.href = canvas.toDataURL('image/png');
@@ -3125,7 +3421,7 @@
                 link.click();
                 document.body.removeChild(link);
 
-                if (window.NotificationService) {
+                if (showToast && window.NotificationService) {
                     window.NotificationService.show("📥 ¡Imagen HD descargada en tu dispositivo!", "success");
                 }
             } catch (e) {
@@ -3147,6 +3443,260 @@
                 }
             } catch (e) {
                 console.warn("Clipboard error:", e);
+            }
+        }
+
+        // ==========================================
+        // 🔒 GESTIÓN DE AMERICANAS PRIVADAS CON PIN
+        // ==========================================
+        isAmericanaUnlocked(evt) {
+            if (!evt) return true;
+            const isPrivate = (evt.is_private === true || evt.is_private === 'true');
+            if (!isPrivate) return true;
+
+            // 1. Administrador siempre tiene acceso
+            const user = this.state.currentUser;
+            if (user && (user.role === 'admin' || user.role === 'super_admin' || user.role === 'admin_player')) {
+                return true;
+            }
+
+            // 2. Si el jugador ya está inscrito en la convocatoria
+            const players = evt.players || evt.registeredPlayers || [];
+            if (user && players.some(p => (p.id === user.id || p.uid === user.id || p.name === user.name))) {
+                return true;
+            }
+
+            // 3. Si el jugador ya introdujo la contraseña en este dispositivo
+            const unlockKey = `unlocked_americana_${evt.id}`;
+            if (localStorage.getItem(unlockKey) === 'true') {
+                return true;
+            }
+
+            // 4. Si la americana no tiene clave configurada
+            if (!evt.access_pin || !String(evt.access_pin).trim()) {
+                return true;
+            }
+
+            return false;
+        }
+
+        promptPrivatePassword(id, type = 'americana', action = 'view') {
+            const events = type === 'entreno' ? this.state.entrenos : this.state.americanas;
+            const evt = events.find(e => e.id === id);
+            if (!evt) return;
+
+            if (this.isAmericanaUnlocked(evt)) {
+                this._executeUnlockedAction(id, type, action);
+                return;
+            }
+
+            let overlay = document.getElementById('sp-private-americana-modal');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'sp-private-americana-modal';
+                overlay.style.cssText = `
+                    position: fixed;
+                    inset: 0;
+                    background: rgba(4, 7, 15, 0.94);
+                    backdrop-filter: blur(16px);
+                    -webkit-backdrop-filter: blur(16px);
+                    z-index: 99999999;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 16px;
+                    box-sizing: border-box;
+                    opacity: 0;
+                    transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+                    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+                `;
+                document.body.appendChild(overlay);
+
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) this.closePrivatePasswordModal();
+                });
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && overlay.style.display !== 'none') {
+                        this.closePrivatePasswordModal();
+                    }
+                });
+            }
+
+            overlay.innerHTML = `
+                <div style="
+                    position: relative;
+                    width: 100%;
+                    max-width: 390px;
+                    background: #090e18;
+                    border: 1.5px solid rgba(239, 68, 68, 0.45);
+                    border-radius: 26px;
+                    padding: 24px 20px 22px;
+                    box-shadow: 0 25px 60px rgba(0,0,0,0.95), 0 0 35px rgba(239, 68, 68, 0.25);
+                    box-sizing: border-box;
+                    text-align: center;
+                    margin: auto;
+                ">
+                    <!-- Botón Cerrar -->
+                    <button type="button" onclick="window.EventsController.closePrivatePasswordModal()" 
+                            aria-label="Cerrar"
+                            style="position: absolute; top: -12px; right: -12px; width: 36px; height: 36px; border-radius: 50%; background: #0f172a; color: #ffffff; border: 2px solid #ef4444; font-size: 1rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.6);">
+                        ✕
+                    </button>
+
+                    <!-- Icono Candado Neón -->
+                    <div style="width: 68px; height: 68px; margin: 0 auto 14px; border-radius: 20px; background: rgba(239, 68, 68, 0.12); border: 2px solid rgba(239, 68, 68, 0.4); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 25px rgba(239, 68, 68, 0.3);">
+                        <i class="fas fa-lock" style="font-size: 2rem; color: #f87171;"></i>
+                    </div>
+
+                    <!-- Títulos -->
+                    <div style="display: inline-block; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); padding: 3px 10px; border-radius: 8px; font-size: 0.65rem; font-weight: 950; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;">
+                        🔒 AMERICANA PRIVADA
+                    </div>
+                    
+                    <h3 style="color: #ffffff; font-size: 1.2rem; font-weight: 950; margin: 0 0 6px 0; text-transform: uppercase; letter-spacing: -0.3px;">
+                        ${evt.name || 'Americana Exclusiva'}
+                    </h3>
+                    
+                    <p style="color: #94a3b8; font-size: 0.78rem; line-height: 1.4; margin: 0 0 18px 0;">
+                        Esta convocatoria está reservada para un grupo privado. Introduce la clave de acceso facilitada por el organizador para entrar a ver los partidos, resultados y participar.
+                    </p>
+
+                    <!-- Formulario de Clave -->
+                    <form onsubmit="event.preventDefault(); window.EventsController.verifyPrivatePassword('${evt.id}', '${evt.type || 'americana'}', '${action}');" style="display: flex; flex-direction: column; gap: 12px;">
+                        <div style="position: relative; width: 100%;">
+                            <input type="password" id="sp-private-pin-input" 
+                                   placeholder="Introduce la contraseña..." 
+                                   autocomplete="off"
+                                   style="
+                                       width: 100%;
+                                       padding: 13px 44px 13px 16px;
+                                       background: rgba(15, 23, 42, 0.85);
+                                       border: 1.5px solid rgba(255, 255, 255, 0.15);
+                                       border-radius: 14px;
+                                       color: #ffffff;
+                                       font-size: 1rem;
+                                       font-weight: 900;
+                                       letter-spacing: 2px;
+                                       text-align: center;
+                                       box-sizing: border-box;
+                                       outline: none;
+                                       transition: border-color 0.2s, box-shadow 0.2s;
+                                   "
+                                   onfocus="this.style.borderColor='#f87171'; this.style.boxShadow='0 0 15px rgba(239, 68, 68, 0.3)';"
+                                   onblur="this.style.borderColor='rgba(255, 255, 255, 0.15)'; this.style.boxShadow='none';">
+                            
+                            <button type="button" onclick="window.EventsController.togglePinVisibility()" 
+                                    aria-label="Ver contraseña"
+                                    style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #94a3b8; font-size: 1rem; cursor: pointer; padding: 4px;">
+                                <i id="sp-pin-eye-icon" class="fas fa-eye"></i>
+                            </button>
+                        </div>
+
+                        <div id="sp-private-error-msg" style="display: none; color: #f87171; font-size: 0.72rem; font-weight: 800;">
+                            <i class="fas fa-exclamation-circle"></i> Contraseña incorrecta. Pide la clave al organizador.
+                        </div>
+
+                        <button type="submit" id="sp-btn-unlock-private" style="
+                            width: 100%;
+                            padding: 13px;
+                            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+                            color: #ffffff;
+                            border: none;
+                            border-radius: 14px;
+                            font-size: 0.88rem;
+                            font-weight: 950;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 8px;
+                            box-shadow: 0 4px 18px rgba(239, 68, 68, 0.45);
+                            transition: transform 0.15s, box-shadow 0.15s;
+                        "
+                        onmouseover="this.style.transform='scale(1.02)';"
+                        onmouseout="this.style.transform='scale(1)';"
+                        onmousedown="this.style.transform='scale(0.98)';">
+                            <i class="fas fa-unlock"></i>
+                            <span>DESBLOQUEAR Y ENTRAR</span>
+                        </button>
+                    </form>
+                </div>
+            `;
+
+            overlay.style.display = 'flex';
+            requestAnimationFrame(() => {
+                overlay.style.opacity = '1';
+                const pinInput = document.getElementById('sp-private-pin-input');
+                if (pinInput) pinInput.focus();
+            });
+        }
+
+        togglePinVisibility() {
+            const input = document.getElementById('sp-private-pin-input');
+            const icon = document.getElementById('sp-pin-eye-icon');
+            if (!input || !icon) return;
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fas fa-eye';
+            }
+        }
+
+        closePrivatePasswordModal() {
+            const overlay = document.getElementById('sp-private-americana-modal');
+            if (overlay) {
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                }, 250);
+            }
+        }
+
+        verifyPrivatePassword(id, type = 'americana', action = 'view') {
+            const events = type === 'entreno' ? this.state.entrenos : this.state.americanas;
+            const evt = events.find(e => e.id === id);
+            if (!evt) return;
+
+            const input = document.getElementById('sp-private-pin-input');
+            const errorEl = document.getElementById('sp-private-error-msg');
+            const enteredPin = (input?.value || '').trim();
+            const expectedPin = String(evt.access_pin || evt.access_password || '').trim();
+
+            if (enteredPin && (enteredPin.toLowerCase() === expectedPin.toLowerCase())) {
+                localStorage.setItem(`unlocked_americana_${id}`, 'true');
+                if (window.navigator?.vibrate) window.navigator.vibrate([30, 50, 30]);
+
+                if (window.NotificationService) {
+                    window.NotificationService.show("🔓 ¡Americana Desbloqueada con éxito!", "success");
+                }
+
+                this.closePrivatePasswordModal();
+                this._executeUnlockedAction(id, type, action);
+
+                // Re-renderizamos para reflejar el estado desbloqueado
+                setTimeout(() => this.render(), 100);
+            } else {
+                if (window.navigator?.vibrate) window.navigator.vibrate(100);
+                if (errorEl) errorEl.style.display = 'block';
+                if (input) {
+                    input.style.borderColor = '#ef4444';
+                    input.select();
+                }
+            }
+        }
+
+        _executeUnlockedAction(id, type, action) {
+            if (action === 'join') {
+                this.joinEvent(id, type);
+            } else if (action === 'inscritos') {
+                this.showInscritosModal(id, type);
+            } else if (action === 'results') {
+                if (window.openResultsView) window.openResultsView(id, type);
+            } else {
+                this.openLiveEvent(id, type);
             }
         }
 
@@ -3316,6 +3866,13 @@
         }
 
         async openLiveEvent(id, type = 'americana', action = null) {
+            const events = type === 'entreno' ? this.state.entrenos : this.state.americanas;
+            const evt = events?.find(e => e.id === id);
+            if (evt && !this.isAmericanaUnlocked(evt)) {
+                this.promptPrivatePassword(id, type, 'view');
+                return;
+            }
+
             if (!window.ControlTowerView && window.ControlTowerViewClass) {
                 window.ControlTowerView = new window.ControlTowerViewClass();
             }
@@ -3365,6 +3922,11 @@
                 const events = type === 'entreno' ? this.state.entrenos : this.state.americanas;
                 const evt = events.find(e => e.id === id);
                 if (!evt) return;
+
+                if (!this.isAmericanaUnlocked(evt)) {
+                    this.promptPrivatePassword(id, type, 'join');
+                    return;
+                }
 
                 const mode = (evt.pair_mode || evt.format || '').toLowerCase();
                 const isFixed = mode === 'fixed' || (evt.name || '').toUpperCase().includes('FIJA');
@@ -3520,6 +4082,14 @@
                     });
                     return;
                 }
+
+                const events = type === 'entreno' ? this.state.entrenos : this.state.americanas;
+                const evt = events?.find(e => e.id === id);
+                if (evt && !this.isAmericanaUnlocked(evt)) {
+                    this.promptPrivatePassword(id, type, 'join');
+                    return;
+                }
+
                 const confirmed = await window.PremiumModal.confirm({
                     title: "⏳ LISTA DE ESPERA",
                     message: "El evento está lleno. ¿Quieres entrar en lista de espera? Te avisaremos si queda una plaza libre.",
@@ -3613,6 +4183,11 @@
             const localEvents = type === 'entreno' ? this.state.entrenos : this.state.americanas;
             let evt = localEvents.find(e => e.id === id);
             if (!evt) return;
+
+            if (!this.isAmericanaUnlocked(evt)) {
+                this.promptPrivatePassword(id, type, 'inscritos');
+                return;
+            }
 
             let modal = document.getElementById('inscritos-modal');
             if (!modal) {
@@ -5568,6 +6143,18 @@
                     fabAction = `window.EventsController.leaveEvent('${evt.id}', '${evt.type || 'americana'}')`;
                 }
 
+                // Comprobación de Privacidad (Americana Privada con Contraseña)
+                const isEventPrivate = (evt.is_private === true || evt.is_private === 'true');
+                const isEventUnlocked = this.isAmericanaUnlocked(evt);
+
+                if (isEventPrivate && !isEventUnlocked) {
+                    btnLabel = 'CLAVE ACCESO 🔒';
+                    btnIcon = 'fa-key';
+                    btnColor = '#ef4444';
+                    cardAction = `window.EventsController.promptPrivatePassword('${evt.id}', '${evt.type || 'americana'}', 'view')`;
+                    fabAction = `window.EventsController.promptPrivatePassword('${evt.id}', '${evt.type || 'americana'}', 'join')`;
+                }
+
                 card.setAttribute('onclick', cardAction);
 
                 const fab = document.getElementById(`event-fab-${evt.id}`);
@@ -5578,7 +6165,11 @@
                 let ctaTextColor = '#000000';
                 let ctaShadow = '0 6px 18px rgba(204, 255, 0, 0.45)';
 
-                if (isLive) {
+                if (isEventPrivate && !isEventUnlocked) {
+                    ctaBg = '#ef4444';
+                    ctaTextColor = '#ffffff';
+                    ctaShadow = '0 6px 18px rgba(239, 68, 68, 0.45)';
+                } else if (isLive) {
                     ctaBg = '#FF2D55';
                     ctaTextColor = '#ffffff';
                     ctaShadow = '0 6px 18px rgba(255, 45, 85, 0.5)';
@@ -5702,6 +6293,7 @@
         }
 
         async refreshInstantly(btnEl = null, silent = false) {
+            if (!this.isCurrentRouteActive()) return;
             if (this._isRefreshing) return;
             this._isRefreshing = true;
 
@@ -5818,6 +6410,10 @@
 
             // Polling en segundo plano cada 6.5 segundos
             this._pollingInterval = setInterval(async () => {
+                if (!this.isCurrentRouteActive()) {
+                    this.stopAutoRefreshPolling();
+                    return;
+                }
                 if (!this.state.viewInitialized) return;
                 if (this.state.activeTab !== 'events' && this.state.activeTab !== 'entrenos') return;
                 if (document.hidden) return; // Si la app no está en pantalla, no gastar lecturas
@@ -5846,4 +6442,5 @@
     }
 
     window.EventsController = new EventsController();
+    window.renderClubBenefitsModal = () => window.EventsController?.renderClubBenefitsModal();
 })();
