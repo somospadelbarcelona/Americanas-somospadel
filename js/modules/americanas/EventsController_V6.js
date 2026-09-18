@@ -1145,51 +1145,114 @@
             const isAmericanasSection = this.state.activeTab === 'events';
             const organizerBannerHtml = isAmericanasSection ? `
                 <div class="organizer-promo-banner" style="
-                    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 100%);
-                    border: 1.5px solid rgba(204, 255, 0, 0.35);
-                    border-radius: 20px;
-                    padding: 16px 18px;
-                    margin-bottom: 18px;
+                    background: linear-gradient(135deg, rgba(11, 17, 32, 0.96) 0%, rgba(15, 23, 42, 0.98) 50%, rgba(3, 7, 18, 0.96) 100%);
+                    border: 1px solid rgba(204, 255, 0, 0.28);
+                    border-radius: 22px;
+                    padding: 18px 20px;
+                    margin-bottom: 20px;
                     position: relative;
                     overflow: hidden;
-                    box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(204,255,0,0.05);
+                    box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.75), 0 0 25px -5px rgba(204, 255, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+                    backdrop-filter: blur(16px);
                 ">
-                    <!-- Glow decoration -->
-                    <div style="position: absolute; top: -30px; right: -30px; width: 120px; height: 120px; background: radial-gradient(circle, rgba(204,255,0,0.2) 0%, transparent 70%); pointer-events: none;"></div>
+                    <!-- Ambient Glow Orbs -->
+                    <div style="position: absolute; top: -35px; left: -35px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(204, 255, 0, 0.18) 0%, transparent 70%); filter: blur(25px); pointer-events: none;"></div>
+                    <div style="position: absolute; bottom: -35px; right: -35px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%); filter: blur(30px); pointer-events: none;"></div>
                     
-                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; position: relative; z-index: 2;">
-                        <div style="flex: 1; min-width: 0;">
-                            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(204, 255, 0, 0.15); border: 1px solid rgba(204, 255, 0, 0.4); padding: 3px 10px; border-radius: 20px; margin-bottom: 8px;">
-                                <i class="fas fa-crown" style="color: #CCFF00; font-size: 0.65rem;"></i>
-                                <span style="color: #CCFF00; font-size: 0.62rem; font-weight: 950; text-transform: uppercase; letter-spacing: 0.5px;">Espacio Clubes & Organizadores</span>
+                    <!-- Decorative Background Watermark -->
+                    <i class="fas fa-trophy" style="position: absolute; right: -12px; bottom: -18px; font-size: 7.5rem; color: #CCFF00; opacity: 0.04; transform: rotate(-12deg); pointer-events: none; z-index: 1;"></i>
+
+                    <div style="position: relative; z-index: 2;">
+                        <!-- Top Header: Badge + Glowing Trophy Emblem -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px;">
+                            <div style="display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, rgba(204, 255, 0, 0.14) 0%, rgba(56, 189, 248, 0.08) 100%); border: 1px solid rgba(204, 255, 0, 0.35); padding: 4px 11px; border-radius: 999px; box-shadow: 0 2px 8px rgba(0,0,0,0.25);">
+                                <i class="fas fa-crown" style="color: #CCFF00; font-size: 0.68rem;"></i>
+                                <span style="color: #CCFF00; font-size: 0.64rem; font-weight: 950; text-transform: uppercase; letter-spacing: 0.8px;">ESPACIO CLUBES & ORGANIZADORES</span>
                             </div>
-                            <h3 style="margin: 0; color: #ffffff; font-size: 1.02rem; font-weight: 950; line-height: 1.25; letter-spacing: -0.3px;">
-                                ¿Organizas Americanas en Barcelona?
-                            </h3>
-                            <p style="margin: 5px 0 12px; color: #cbd5e1; font-size: 0.74rem; line-height: 1.4; font-weight: 500;">
-                                Publica tus torneos aquí, llena tus pistas con nuestra comunidad y gestiona con la <strong style="color: #CCFF00;">Torre de Control digital</strong> en vivo.
-                            </p>
-                            
-                            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                                <a href="https://wa.me/34649219350?text=¡Hola%20Alex!%20Soy%20organizador/club%20de%20pádel%20y%20me%20gustaría%20publicar%20mis%20americanas%20en%20SomosPadel%20BCN." 
-                                   target="_blank" 
-                                   rel="noopener noreferrer" 
-                                   style="background: #CCFF00; color: #000; padding: 8px 16px; border-radius: 12px; font-weight: 950; font-size: 0.75rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(204, 255, 0, 0.35); transition: transform 0.2s;"
-                                   onmouseover="this.style.transform='scale(1.03)';"
-                                   onmouseout="this.style.transform='scale(1)';"
-                                   onmousedown="this.style.transform='scale(0.96)';">
-                                    <i class="fab fa-whatsapp" style="font-size: 0.95rem;"></i> PUBLICAR MI EVENTO
-                                </a>
-                                <button onclick="window.EventsController.renderClubBenefitsModal()" 
-                                        style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); color: #ffffff; padding: 8px 14px; border-radius: 12px; font-weight: 800; font-size: 0.75rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s;"
-                                        onmouseover="this.style.background='rgba(255, 255, 255, 0.15)';"
-                                        onmouseout="this.style.background='rgba(255, 255, 255, 0.08)';">
-                                    <i class="fas fa-info-circle" style="color: #38bdf8;"></i> VENTAJAS CLUBES
-                                </button>
+
+                            <div style="width: 44px; height: 44px; border-radius: 14px; background: linear-gradient(135deg, rgba(204, 255, 0, 0.18) 0%, rgba(56, 189, 248, 0.12) 100%); border: 1.5px solid rgba(204, 255, 0, 0.4); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.25);">
+                                <i class="fas fa-trophy" style="color: #CCFF00; font-size: 1.25rem; filter: drop-shadow(0 2px 6px rgba(204, 255, 0, 0.45));"></i>
                             </div>
                         </div>
-                        <div style="width: 44px; height: 44px; background: rgba(204,255,0,0.1); border: 1.5px solid rgba(204,255,0,0.3); border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                            <i class="fas fa-trophy" style="color: #CCFF00; font-size: 1.25rem;"></i>
+
+                        <!-- Headline -->
+                        <h3 style="margin: 0 0 6px; color: #ffffff; font-size: 1.15rem; font-weight: 950; line-height: 1.25; letter-spacing: -0.4px;">
+                            ¿Organizas Americanas en <span style="background: linear-gradient(90deg, #CCFF00, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Barcelona</span>?
+                        </h3>
+
+                        <!-- Subtitle -->
+                        <p style="margin: 0 0 12px; color: #cbd5e1; font-size: 0.78rem; line-height: 1.5; font-weight: 500;">
+                            Publica tus torneos aquí, atrae a nuestra comunidad y gestiona en directo con la <strong style="color: #CCFF00; font-weight: 900;">Torre de Control digital</strong>.
+                        </p>
+
+                        <!-- Key Benefits Micro-Chips -->
+                        <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px;">
+                            <span style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 3px 8px; font-size: 0.65rem; font-weight: 800; color: #e2e8f0; display: inline-flex; align-items: center; gap: 4px;">
+                                <i class="fas fa-users" style="color: #38bdf8; font-size: 0.65rem;"></i> +1.500 Jugadores
+                            </span>
+                            <span style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 3px 8px; font-size: 0.65rem; font-weight: 800; color: #e2e8f0; display: inline-flex; align-items: center; gap: 4px;">
+                                <i class="fas fa-tv" style="color: #CCFF00; font-size: 0.65rem;"></i> Marcador en Vivo
+                            </span>
+                            <span style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 3px 8px; font-size: 0.65rem; font-weight: 800; color: #e2e8f0; display: inline-flex; align-items: center; gap: 4px;">
+                                <i class="fas fa-bolt" style="color: #fbbf24; font-size: 0.65rem;"></i> Sin Coste Fijo
+                            </span>
+                        </div>
+                        
+                        <!-- Actions Grid -->
+                        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                            <a href="https://wa.me/34649219350?text=¡Hola%20Alex!%20Soy%20organizador/club%20de%20pádel%20y%20me%20gustaría%20publicar%20mis%20americanas%20en%20SomosPadel%20BCN." 
+                               target="_blank" 
+                               rel="noopener noreferrer" 
+                               style="
+                                   background: #CCFF00;
+                                   color: #050b14;
+                                   padding: 10px 18px;
+                                   border-radius: 14px;
+                                   font-weight: 950;
+                                   font-size: 0.78rem;
+                                   text-decoration: none;
+                                   display: inline-flex;
+                                   align-items: center;
+                                   justify-content: center;
+                                   gap: 7px;
+                                   box-shadow: 0 4px 16px rgba(204, 255, 0, 0.4);
+                                   letter-spacing: 0.3px;
+                                   transition: all 0.2s ease;
+                                   flex: 1;
+                                   min-width: 170px;
+                               "
+                               onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(204, 255, 0, 0.55)';"
+                               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 16px rgba(204, 255, 0, 0.4)';"
+                               onmousedown="this.style.transform='scale(0.97)';">
+                                <i class="fab fa-whatsapp" style="font-size: 1.05rem; color: #050b14;"></i>
+                                <span>PUBLICAR MI EVENTO</span>
+                            </a>
+                            <button onclick="window.EventsController.renderClubBenefitsModal()" 
+                                    style="
+                                        background: rgba(255, 255, 255, 0.08);
+                                        border: 1px solid rgba(255, 255, 255, 0.16);
+                                        color: #ffffff;
+                                        padding: 10px 16px;
+                                        border-radius: 14px;
+                                        font-weight: 900;
+                                        font-size: 0.78rem;
+                                        cursor: pointer;
+                                        display: inline-flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        gap: 7px;
+                                        backdrop-filter: blur(10px);
+                                        letter-spacing: 0.3px;
+                                        transition: all 0.2s ease;
+                                        flex: 1;
+                                        min-width: 150px;
+                                    "
+                                    onmouseover="this.style.background='rgba(255, 255, 255, 0.14)'; this.style.borderColor='rgba(56, 189, 248, 0.5)';"
+                                    onmouseout="this.style.background='rgba(255, 255, 255, 0.08)'; this.style.borderColor='rgba(255, 255, 255, 0.16)';"
+                                    onmousedown="this.style.transform='scale(0.97)';">
+                                <i class="fas fa-info-circle" style="color: #38bdf8; font-size: 0.9rem;"></i>
+                                <span>VENTAJAS CLUBES</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -1954,7 +2017,7 @@
                                         onmouseover="this.style.transform='scale(1.06)';"
                                         onmouseout="this.style.transform='scale(1)';"
                                         onmousedown="this.style.transform='scale(0.94)';">
-                                    <i class="fas fa-image" style="font-size: 0.85rem; color: #CCFF00;"></i>
+                                    <i class="fas fa-file-image" style="font-size: 0.85rem; color: #CCFF00;"></i>
                                     <span>CARTEL</span>
                                 </button>
 
@@ -2404,7 +2467,7 @@
                     <!-- Header del Lightbox -->
                     <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 2px;">
                         <span style="background: #CCFF00; color: #000; font-size: 0.65rem; font-weight: 950; padding: 4px 10px; border-radius: 8px; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 5px;">
-                            <i class="fas fa-image"></i> CARTEL OFICIAL
+                            <i class="fas fa-file-image"></i> CARTEL OFICIAL
                         </span>
                         <span style="font-size: 0.72rem; color: #94a3b8; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 58%;">
                             <i class="fas fa-map-marker-alt" style="color: #38bdf8;"></i> ${finalClub}
