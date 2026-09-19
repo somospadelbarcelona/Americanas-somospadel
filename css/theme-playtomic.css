@@ -3779,6 +3779,8 @@ body {
     justify-content: flex-start;
 }
 
+/* Legacy nav-item neutralized to avoid collision with modern bottom-nav dock */
+/*
 .nav-item {
     display: flex;
     flex-direction: column;
@@ -3786,32 +3788,28 @@ body {
     justify-content: center;
     gap: 4px;
     color: #64748b;
-    /* Inactive Color */
     font-size: 0.7rem;
     font-weight: 700;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     width: 60px;
     height: 60px;
 }
-
 .nav-item i {
     font-size: 1.4rem;
     padding: 8px;
     border-radius: 12px;
     transition: all 0.2s;
 }
-
 .nav-item.active {
     color: white;
 }
-
 .nav-item.active i {
     background: rgba(204, 255, 0, 0.15);
-    /* Neon glow bg */
     color: var(--brand-neon);
     transform: translateY(-4px);
     box-shadow: 0 4px 12px rgba(204, 255, 0, 0.3);
 }
+*/
 
 /* Hide Burger Stuff */
 .burger-trigger,
@@ -4324,11 +4322,20 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .drawer-top-brand img {
-    height: 26px;
-    width: auto;
+    height: 34px !important;
+    width: 34px !important;
+    max-height: 34px !important;
+    max-width: 34px !important;
+    object-fit: cover !important;
+    border-radius: 10px !important;
+    flex-shrink: 0 !important;
+    display: block !important;
     filter: drop-shadow(0 0 6px rgba(204, 255, 0, 0.35));
 }
 
@@ -4336,6 +4343,8 @@ body {
     display: flex;
     flex-direction: column;
     line-height: 1.1;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .drawer-top-brand-title {
@@ -4343,6 +4352,9 @@ body {
     font-weight: 900;
     letter-spacing: 0.4px;
     color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .drawer-top-brand-badge {
@@ -4351,6 +4363,7 @@ body {
     color: #CCFF00;
     letter-spacing: 1.2px;
     text-transform: uppercase;
+    white-space: nowrap;
 }
 
 .drawer-top-actions {

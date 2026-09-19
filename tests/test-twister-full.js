@@ -1,5 +1,4 @@
-
-const { RotatingPozoLogic } = require('./js/rotating-pozo-logic.js');
+const { RotatingPozoLogic } = require('../js/rotating-pozo-logic.js');
 
 // Mock players
 const players = [

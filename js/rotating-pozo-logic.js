@@ -18,7 +18,8 @@ const RotatingPozoLogic = {
         console.log(`📈 Calculando Ascensos/Descensos individuales (${category})...`);
 
         // Initialize/Reset deduplication guard for this ranking cycle
-        window._processedCourtsInRanking = new Set();
+        const _env = typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : {});
+        _env._processedCourtsInRanking = new Set();
 
         // 1. Identificar jugadores y su estado actual
         const playerMap = {};
@@ -40,11 +41,11 @@ const RotatingPozoLogic = {
                     // --- 🛡️ DEDUPLICATION GUARD ---
                     const courtNum = parseInt(m.court || 0);
                     const dedupKey = `R${m.round}_C${courtNum}`;
-                    if (window._processedCourtsInRanking?.has(dedupKey)) {
+                    if (_env._processedCourtsInRanking?.has(dedupKey)) {
                         console.warn(`🛑 Skipping duplicate result for ${dedupKey} to prevent player jump glitches.`);
                         return;
                     }
-                    window._processedCourtsInRanking.add(dedupKey);
+                    _env._processedCourtsInRanking.add(dedupKey);
 
                     const sA = parseInt(m.score_a || 0);
                     const sB = parseInt(m.score_b || 0);

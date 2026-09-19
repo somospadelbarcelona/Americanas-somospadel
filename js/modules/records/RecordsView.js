@@ -58,26 +58,37 @@
                     <div style="padding: 40px 20px 25px; max-width: 760px; margin: 0 auto; position: relative; z-index: 2;">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 16px;">
                             <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); padding: 5px 14px; border-radius: 999px;">
-                                <span style="font-size: 0.95rem;">👑</span>
+                                <span style="font-size: 0.95rem;">🏆</span>
                                 <span style="font-size: 0.65rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: #b45309;">
-                                    TEMPORADA 2026 • LEYENDAS OFICIALES
+                                    TEMPORADA 2026 • CUADRO DE HONOR Y RÉCORDS
                                 </span>
                             </div>
 
-                            <button onclick="window.RecordsView.shareHallOfFame()" 
-                                style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); color: white; border: none; padding: 9px 16px; border-radius: 14px; font-weight: 900; font-size: 0.72rem; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 6px 18px rgba(37, 211, 102, 0.3); cursor: pointer; transition: all 0.2s;"
-                                onmouseover="this.style.transform='translateY(-2px)'"
-                                onmouseout="this.style.transform='translateY(0)'">
-                                <i class="fab fa-whatsapp" style="font-size: 1.05rem;"></i>
-                                <span>COMPARTIR</span>
-                            </button>
+                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                <button onclick="window.RecordsView.downloadHallOfFameFlyer(this)" 
+                                    id="btn-download-hof-flyer"
+                                    style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #f8fafc; border: 1.5px solid #cbd5e1; padding: 9px 15px; border-radius: 14px; font-weight: 900; font-size: 0.72rem; display: inline-flex; align-items: center; gap: 7px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08); cursor: pointer; transition: all 0.2s;"
+                                    onmouseover="this.style.transform='translateY(-2px)'"
+                                    onmouseout="this.style.transform='translateY(0)'">
+                                    <i class="fas fa-file-download" style="color: #f59e0b; font-size: 0.95rem;"></i>
+                                    <span>DESCARGAR FLYER</span>
+                                </button>
+
+                                <button onclick="window.RecordsView.shareHallOfFame()" 
+                                    style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); color: white; border: none; padding: 9px 16px; border-radius: 14px; font-weight: 900; font-size: 0.72rem; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 6px 18px rgba(37, 211, 102, 0.3); cursor: pointer; transition: all 0.2s;"
+                                    onmouseover="this.style.transform='translateY(-2px)'"
+                                    onmouseout="this.style.transform='translateY(0)'">
+                                    <i class="fab fa-whatsapp" style="font-size: 1.05rem;"></i>
+                                    <span>COMPARTIR</span>
+                                </button>
+                            </div>
                         </div>
 
                         <h1 class="hof-main-title">
-                            SALÓN DE LA FAMA
+                            RÉCORDS TEMPORADA
                         </h1>
                         <p style="color: #64748b; margin: 8px 0 0; font-size: 0.88rem; font-weight: 500; line-height: 1.5; max-width: 540px;">
-                            Las marcas históricas, reyes de la pista central y récords de mayor impacto registrados en la historia de SomosPadel BCN.
+                            Líderes de liga, MVP SummaPadel y las mejores marcas oficiales registradas por los equipos y jugadores de SomosPadel Barcelona.
                         </p>
 
                         <!-- HERO MVP CARD (Si existe un jugador con más récords vigentes) -->
@@ -692,10 +703,275 @@
                 window.open(url, '_blank');
             }
         }
+
+        downloadHallOfFameFlyer(btnEl) {
+            const btn = btnEl || document.getElementById('btn-download-hof-flyer');
+            const originalHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> GENERANDO FLYER...';
+            }
+
+            try {
+                const records = window.RecordsController ? window.RecordsController.getRecords() : null;
+                const summary = window.RecordsController ? window.RecordsController.getSummary() : null;
+                if (!records) throw new Error('No hay récords disponibles para generar el flyer');
+
+                const recList = Object.values(records);
+                const mvp = summary && summary.mvp ? summary.mvp : (records.alpha ? records.alpha.player : null);
+
+                // --- CANVAS 2D NATIVO ULTRA RÁPIDO (1080 x 1420 px) ---
+                const canvas = document.createElement('canvas');
+                canvas.width = 1080;
+                canvas.height = 1420;
+                const ctx = canvas.getContext('2d');
+
+                // 1. Fondo Oscuro Gradiente
+                const bgGrad = ctx.createLinearGradient(0, 0, 0, 1420);
+                bgGrad.addColorStop(0, '#090d16');
+                bgGrad.addColorStop(0.5, '#111827');
+                bgGrad.addColorStop(1, '#060911');
+                ctx.fillStyle = bgGrad;
+                ctx.fillRect(0, 0, 1080, 1420);
+
+                // 2. Luces y resplandores
+                const glow1 = ctx.createRadialGradient(900, 120, 20, 900, 120, 480);
+                glow1.addColorStop(0, 'rgba(245, 158, 11, 0.28)');
+                glow1.addColorStop(1, 'rgba(245, 158, 11, 0)');
+                ctx.fillStyle = glow1;
+                ctx.fillRect(0, 0, 1080, 1420);
+
+                const glow2 = ctx.createRadialGradient(150, 1300, 20, 150, 1300, 450);
+                glow2.addColorStop(0, 'rgba(16, 185, 129, 0.22)');
+                glow2.addColorStop(1, 'rgba(16, 185, 129, 0)');
+                ctx.fillStyle = glow2;
+                ctx.fillRect(0, 0, 1080, 1420);
+
+                // Marco
+                ctx.strokeStyle = 'rgba(245, 158, 11, 0.45)';
+                ctx.lineWidth = 4;
+                ctx.strokeRect(30, 30, 1020, 1360);
+
+                // 3. Header
+                ctx.fillStyle = '#f59e0b';
+                ctx.beginPath();
+                ctx.arc(105, 108, 38, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#090d16';
+                ctx.font = '900 30px Arial, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('SP', 105, 119);
+
+                ctx.textAlign = 'left';
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '900 38px Arial, sans-serif';
+                ctx.fillText('SOMOSPADEL ', 165, 106);
+
+                ctx.fillStyle = '#f59e0b';
+                ctx.fillText('BCN', 450, 106);
+
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '800 16px Arial, sans-serif';
+                ctx.fillText('RÉCORDS OFICIALES DE LA TEMPORADA • SUMMAPADEL', 165, 132);
+
+                // Badge Honor
+                ctx.fillStyle = 'rgba(245, 158, 11, 0.18)';
+                ctx.strokeStyle = '#f59e0b';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                if (ctx.roundRect) ctx.roundRect(740, 80, 270, 50, [25]);
+                else ctx.rect(740, 80, 270, 50);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = '#fbbf24';
+                ctx.font = '900 16px Arial, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('👑 CUADRO DE HONOR', 875, 112);
+
+                // Separador
+                ctx.strokeStyle = 'rgba(245, 158, 11, 0.3)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(60, 170);
+                ctx.lineTo(1020, 170);
+                ctx.stroke();
+
+                // 4. Hero MVP Box
+                if (mvp) {
+                    const heroY = 195;
+                    ctx.fillStyle = 'rgba(245, 158, 11, 0.12)';
+                    ctx.strokeStyle = '#f59e0b';
+                    ctx.lineWidth = 2.5;
+                    ctx.beginPath();
+                    if (ctx.roundRect) ctx.roundRect(60, heroY, 960, 130, [20]);
+                    else ctx.rect(60, heroY, 960, 130);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Avatar placeholder
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.beginPath();
+                    ctx.arc(125, heroY + 65, 42, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = '#090d16';
+                    ctx.font = '900 28px Arial, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText((mvp.name || 'SP').substring(0, 2).toUpperCase(), 125, heroY + 75);
+
+                    ctx.textAlign = 'left';
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.font = '900 16px Arial, sans-serif';
+                    ctx.fillText('LÍDER DEL SALÓN SUMMAPADEL', 190, heroY + 45);
+
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '900 36px Arial, sans-serif';
+                    ctx.fillText(mvp.name || 'Campeón', 190, heroY + 86);
+
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.font = '700 17px Arial, sans-serif';
+                    ctx.fillText('Máximo puntuador oficial de los equipos de SomosPadel BCN', 190, heroY + 112);
+
+                    // Badge Score Derecha
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.beginPath();
+                    if (ctx.roundRect) ctx.roundRect(830, heroY + 38, 160, 54, [16]);
+                    else ctx.rect(830, heroY + 38, 160, 54);
+                    ctx.fill();
+
+                    ctx.fillStyle = '#000000';
+                    ctx.font = '900 20px Arial, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(summary?.mvp?.titles || 'MVP', 910, heroY + 73);
+                }
+
+                // 5. Cuadrícula de 10 Récords Oficiales (2 columnas x 5 filas)
+                const startY = mvp ? 350 : 210;
+                const colW = 465;
+                const rowH = 160;
+                const gapX = 30;
+                const gapY = 20;
+
+                recList.slice(0, 10).forEach((r, idx) => {
+                    const col = idx % 2;
+                    const row = Math.floor(idx / 2);
+                    const rx = 60 + (col * (colW + gapX));
+                    const ry = startY + (row * (rowH + gapY));
+                    const rColor = r.color || '#f59e0b';
+
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    if (ctx.roundRect) ctx.roundRect(rx, ry, colW, rowH, [18]);
+                    else ctx.rect(rx, ry, colW, rowH);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Borde lateral izquierdo de color
+                    ctx.fillStyle = rColor;
+                    ctx.beginPath();
+                    if (ctx.roundRect) ctx.roundRect(rx, ry, 8, rowH, [18, 0, 0, 18]);
+                    else ctx.fillRect(rx, ry, 8, rowH);
+                    ctx.fill();
+
+                    // Título de categoría
+                    ctx.textAlign = 'left';
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.font = '900 15px Arial, sans-serif';
+                    ctx.fillText((r.title || 'RÉCORD').toUpperCase(), rx + 24, ry + 36);
+
+                    // Nombre Ganador
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '900 24px Arial, sans-serif';
+                    let safeName = r.name || 'Vacante';
+                    if (safeName.length > 22) safeName = safeName.substring(0, 20) + '...';
+                    ctx.fillText(safeName, rx + 24, ry + 76);
+
+                    // Descripción corta
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.font = '500 14px Arial, sans-serif';
+                    let shortDesc = r.desc || '';
+                    if (shortDesc.length > 36) shortDesc = shortDesc.substring(0, 34) + '...';
+                    ctx.fillText(shortDesc, rx + 24, ry + 104);
+
+                    // Píldora de Marca / Puntos
+                    ctx.fillStyle = rColor + '25';
+                    ctx.strokeStyle = rColor + '60';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    if (ctx.roundRect) ctx.roundRect(rx + 24, ry + 118, 230, 32, [12]);
+                    else ctx.rect(rx + 24, ry + 118, 230, 32);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    ctx.fillStyle = rColor;
+                    ctx.font = '900 14px Arial, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(r.count || r.value || '', rx + 139, ry + 139);
+                });
+
+                // 6. Footer
+                const fY = 1290;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(60, fY);
+                ctx.lineTo(1020, fY);
+                ctx.stroke();
+
+                ctx.textAlign = 'left';
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '700 18px Arial, sans-serif';
+                ctx.fillText('Estadísticas oficiales compiladas de la Liga SummaPadel', 60, fY + 45);
+
+                ctx.textAlign = 'right';
+                ctx.fillStyle = '#f59e0b';
+                ctx.font = '900 18px Arial, sans-serif';
+                ctx.fillText('somospadelbarcelona.github.io/Americanas-somospadel', 1020, fY + 45);
+
+                const dataUrl = canvas.toDataURL('image/png', 1.0);
+
+                // Descarga directa
+                const link = document.createElement('a');
+                link.download = `SomosPadel_Records_Temporada_2026.png`;
+                link.href = dataUrl;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                // Mostrar previsualización interactiva
+                if (typeof window.showFlyerPreviewModal === 'function') {
+                    window.showFlyerPreviewModal(dataUrl, 'Récords de la Temporada 2026');
+                }
+
+                if (btn) {
+                    btn.innerHTML = '<i class="fas fa-check"></i> ¡LISTO!';
+                    btn.style.background = '#10b981';
+                    btn.style.color = '#ffffff';
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.style.background = '';
+                        btn.style.color = '';
+                        btn.innerHTML = originalHtml;
+                    }, 2000);
+                }
+            } catch (err) {
+                console.error("Error al generar flyer de récords:", err);
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+                alert("No se pudo generar el flyer. Error: " + err.message);
+            }
+        }
     }
 
     window.RecordsView = new RecordsView();
     window.RecordsView.shareHallOfFame = window.RecordsView.shareHallOfFame.bind(window.RecordsView);
+    window.RecordsView.downloadHallOfFameFlyer = window.RecordsView.downloadHallOfFameFlyer.bind(window.RecordsView);
     window.RecordsView.shareSingleRecord = window.RecordsView.shareSingleRecord.bind(window.RecordsView);
     window.RecordsView.setFilter = window.RecordsView.setFilter.bind(window.RecordsView);
     window.RecordsView.toggleCard = window.RecordsView.toggleCard.bind(window.RecordsView);

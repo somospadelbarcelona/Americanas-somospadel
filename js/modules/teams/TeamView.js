@@ -10,6 +10,7 @@
             this.searchQuery = '';
             this.lastTeams = [];
             this.chartsData = {}; // Para guardar la evolución de puntos
+            this.activeMyTeamIndex = 0; // Índice de equipo activo para pestaña 'Mi Equipo'
         }
 
         getMatchResult(match) {
@@ -437,6 +438,11 @@
 
             this.initCategoryScroll();
             this.scrollToActiveCategory();
+
+            // 🌟 Asegurar que el submenú superior de Comunidad siempre aparezca en Equipos
+            if (window.Router && typeof window.Router.attachCommunitySubmenu === 'function') {
+                window.Router.attachCommunitySubmenu('teams');
+            }
         }
 
         renderTeamCard(team) {
@@ -2877,6 +2883,662 @@
                 alert("Restricción del navegador. Se procederá a la descarga del cromo.");
                 this.downloadShareImage(teamId, tabName, btnId);
             }
+        }
+
+        // =========================================================================
+        // 🛡️ MÓDULO EXCLUSIVO: 3. MI EQUIPO (VISTA ULTRA-PERSONALIZADA Y PROFUNDA)
+        // =========================================================================
+
+        renderMyTeam(teams) {
+            if (teams && teams.length > 0) {
+                this.lastTeams = teams;
+            } else if (!this.lastTeams || this.lastTeams.length === 0) {
+                this.lastTeams = window.ClubTeamsData || [];
+            }
+            const allTeams = this.lastTeams;
+            this.container = document.getElementById('content-area');
+            if (!this.container) return;
+
+            // 1. Identificar usuario activo
+            const currentUser = window.Store?.getState('currentUser') || (() => {
+                try { return JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) { return {}; }
+            })();
+            const rawName = (currentUser.name || currentUser.displayName || currentUser.fullName || '').trim();
+            const cleanName = rawName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+            // 2. Equipos guardados explícitamente en el dispositivo
+            let savedTeamIds = [];
+            try {
+                const rawSaved = localStorage.getItem('myTeams_somospadel');
+                if (rawSaved) {
+                    const parsed = JSON.parse(rawSaved);
+                    if (Array.isArray(parsed)) savedTeamIds = parsed;
+                }
+            } catch(e) {}
+            const favTeamId = localStorage.getItem('favTeam_somospadel');
+            if (favTeamId && !savedTeamIds.includes(favTeamId)) {
+                savedTeamIds.push(favTeamId);
+            }
+
+            // 3. Buscar coincidencias en rosters o capitanías de los equipos del club
+            let userTeams = [];
+            allTeams.forEach(team => {
+                let isMember = false;
+                let rosterMatch = null;
+
+                if (savedTeamIds.includes(team.id)) {
+                    isMember = true;
+                }
+
+                if (cleanName && team.roster && Array.isArray(team.roster)) {
+                    for (const player of team.roster) {
+                        const pName = (typeof player === 'string' ? player : (player.name || '')).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+                        if (pName && (pName === cleanName || pName.includes(cleanName) || cleanName.includes(pName))) {
+                            isMember = true;
+                            rosterMatch = player;
+                            break;
+                        }
+                    }
+                }
+
+                if (cleanName) {
+                    const cap = (team.captain || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    const sub = (team.subcaptain || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    if (cap.includes(cleanName) || cleanName.includes(cap) || sub.includes(cleanName) || cleanName.includes(sub)) {
+                        isMember = true;
+                    }
+                }
+
+                if (isMember && !userTeams.some(t => t.id === team.id)) {
+                    userTeams.push({
+                        ...team,
+                        _userRosterData: rosterMatch
+                    });
+                }
+            });
+
+            // Si hay más de 2 equipos detectados, limitamos a un máximo de 2 equipos (requisito de usuario)
+            if (userTeams.length > 2) {
+                userTeams = userTeams.slice(0, 2);
+            }
+
+            // CASO 0: No detectado en ningún equipo aún -> Selector amigable de vinculación
+            if (userTeams.length === 0) {
+                this.renderMyTeamOnboarding(allTeams, rawName);
+                return;
+            }
+
+            // CASO 1 o 2: Mostrar única y exclusivamente su(s) equipo(s)
+            if (this.activeMyTeamIndex >= userTeams.length) {
+                this.activeMyTeamIndex = 0;
+            }
+            const activeTeam = userTeams[this.activeMyTeamIndex];
+
+            this.renderMyTeamDetail(userTeams, activeTeam, rawName);
+        }
+
+        renderMyTeamOnboarding(allTeams, rawName) {
+            this.container.innerHTML = `
+                <div class="my-team-container animate-fade-in" style="padding: 24px 16px 120px; max-width: 800px; margin: 0 auto; font-family: 'Outfit', sans-serif;">
+                    
+                    <div style="background: linear-gradient(145deg, #0b1329 0%, #0f172a 100%); border-radius: 28px; border: 1.5px solid rgba(255, 94, 0, 0.35); padding: 32px 22px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5); position: relative; overflow: hidden;">
+                        
+                        <div style="width: 80px; height: 80px; margin: 0 auto 16px; background: rgba(255, 94, 0, 0.15); border: 2px solid #ff5e00; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 25px rgba(255, 94, 0, 0.3);">
+                            <i class="fas fa-users-cog" style="font-size: 2.2rem; color: #ff5e00;"></i>
+                        </div>
+
+                        <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255, 94, 0, 0.12); border: 1px solid rgba(255, 94, 0, 0.3); padding: 4px 12px; border-radius: 20px; margin-bottom: 12px;">
+                            <span style="width: 6px; height: 6px; border-radius: 50%; background: #ff5e00;"></span>
+                            <span style="font-size: 0.65rem; color: #ff8c42; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">SECCIÓN 3. MI EQUIPO</span>
+                        </div>
+
+                        <h2 style="color: #ffffff; font-weight: 950; font-size: 1.8rem; margin: 0 0 10px; letter-spacing: -0.5px;">
+                            ¡Hola, ${rawName || 'Jugador/a'}! 👋
+                        </h2>
+                        
+                        <p style="color: #94a3b8; font-size: 0.88rem; line-height: 1.6; max-width: 540px; margin: 0 auto 24px;">
+                            En esta pestaña verás <strong>únicamente tu equipo</strong> (o los 2 equipos si juegas en varias categorías). Elige a continuación tu equipo oficial para vincularlo a tu perfil y profundizar en tus estadísticas, convocatorias y clasificación.
+                        </p>
+
+                        <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 20px; text-align: left; margin-bottom: 24px;">
+                            
+                            <!-- Selector 1: Equipo Principal -->
+                            <label style="display: block; font-size: 0.75rem; font-weight: 900; color: #ff8c42; text-transform: uppercase; margin-bottom: 8px;">
+                                1. Tu Equipo Principal *
+                            </label>
+                            <select id="select-my-team-1" style="width: 100%; background: #1e293b; color: #ffffff; border: 1.5px solid rgba(255,255,255,0.15); padding: 13px 14px; border-radius: 14px; font-weight: 800; font-size: 0.85rem; outline: none; margin-bottom: 16px;">
+                                ${allTeams.map(t => `<option value="${t.id}">${t.name} (${t.category} • ${t.division || ''})</option>`).join('')}
+                            </select>
+
+                            <!-- Selector 2: Segundo Equipo Opcional -->
+                            <label style="display: block; font-size: 0.75rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px;">
+                                2. Segundo Equipo (Opcional, si juegas en 2 categorías ej. Mixto)
+                            </label>
+                            <select id="select-my-team-2" style="width: 100%; background: #1e293b; color: #cbd5e1; border: 1px solid rgba(255,255,255,0.1); padding: 13px 14px; border-radius: 14px; font-weight: 700; font-size: 0.85rem; outline: none;">
+                                <option value="none">-- Solo juego en 1 equipo --</option>
+                                ${allTeams.map(t => `<option value="${t.id}">${t.name} (${t.category} • ${t.division || ''})</option>`).join('')}
+                            </select>
+
+                        </div>
+
+                        <button onclick="window.TeamView.saveAndSetMyTeams(document.getElementById('select-my-team-1').value, document.getElementById('select-my-team-2').value)"
+                                style="width: 100%; max-width: 400px; background: linear-gradient(135deg, #ff5e00 0%, #ff8c42 100%); color: #ffffff; border: none; padding: 15px 24px; border-radius: 16px; font-weight: 950; font-size: 0.95rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 8px 25px rgba(255, 94, 0, 0.45); transition: all 0.2s;"
+                                onmouseover="this.style.transform='translateY(-2px)'"
+                                onmouseout="this.style.transform='translateY(0)'">
+                            <i class="fas fa-check-circle"></i> VINCULAR Y ACCEDER A MI EQUIPO
+                        </button>
+
+                    </div>
+
+                </div>
+            `;
+        }
+
+        renderMyTeamDetail(userTeams, activeTeam, rawName) {
+            const cleanUserName = (rawName || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+
+            // Buscar ficha del jugador en el roster del equipo activo
+            const roster = activeTeam.roster || [];
+            const sortedRoster = [...roster].sort((a, b) => (b.pts || 0) - (a.pts || 0));
+            
+            let userRosterIndex = -1;
+            let userRosterData = null;
+            if (cleanUserName) {
+                userRosterIndex = sortedRoster.findIndex(p => {
+                    const pName = (typeof p === 'string' ? p : (p.name || '')).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+                    return pName && (pName === cleanUserName || pName.includes(cleanUserName) || cleanUserName.includes(pName));
+                });
+                if (userRosterIndex !== -1) {
+                    userRosterData = sortedRoster[userRosterIndex];
+                }
+            }
+
+            const userPts = userRosterData ? (userRosterData.pts || 0) : '--';
+            const userRankText = userRosterIndex !== -1 ? `#${userRosterIndex + 1} del equipo` : 'Titular oficial';
+
+            // Próximo partido
+            const nextMatch = (activeTeam.schedule || []).find(m => m.status !== 'completed' && m.opponent !== 'BYE' && !m.opponent.includes('BYE')) || activeTeam.nextMatch || {};
+            const isHome = nextMatch.isHome;
+            const address = nextMatch.venue ? (window.TeamConvocatoriaService?.getClubAddress(nextMatch.venue) || nextMatch.venue) : 'Sede por confirmar';
+
+            // Estado de disponibilidad del jugador para este partido
+            const jNum = nextMatch.j || 1;
+            const convoKey = `somospadel_convo_${activeTeam.id}_j${jNum}`;
+            let convoData = null;
+            try {
+                convoData = JSON.parse(localStorage.getItem(convoKey) || '{}');
+            } catch(e) {}
+            
+            const playerResponse = convoData?.responses?.[rawName] || null;
+            const userStatus = playerResponse?.status || null; // 'available', 'unavailable'
+
+            // Conteo de confirmados
+            const responsesMap = convoData?.responses || {};
+            const confirmedNames = Object.keys(responsesMap).filter(k => responsesMap[k]?.status === 'available');
+            const confirmedCount = confirmedNames.length;
+            const targetCount = 6; // 3 parejas requeridas
+
+            // Color temático de categoría
+            const catLower = (activeTeam.category || '').toLowerCase();
+            const catTheme = catLower.includes('fem') ? '#ec4899' : (catLower.includes('mix') ? '#10b981' : '#38bdf8');
+
+            this.container.innerHTML = `
+                <div class="my-team-container animate-fade-in" style="padding: 20px 16px 120px; max-width: 1000px; margin: 0 auto; font-family: 'Outfit', sans-serif;">
+                    
+                    <!-- 🛡️ BARRA SUPERIOR: SELECTOR SI JUEGA EN 2 EQUIPOS + BOTÓN CAMBIAR -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;">
+                        
+                        <!-- Si tiene 2 equipos: selector en pestañas exclusivas -->
+                        ${userTeams.length > 1 ? `
+                            <div style="display: flex; gap: 8px; background: rgba(15, 23, 42, 0.9); padding: 4px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.08); flex-grow: 1; max-width: 600px;">
+                                ${userTeams.map((t, idx) => {
+                                    const isActive = idx === this.activeMyTeamIndex;
+                                    const bg = isActive ? 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)' : 'transparent';
+                                    const col = isActive ? '#ffffff' : '#94a3b8';
+                                    const shadow = isActive ? 'box-shadow: 0 4px 14px rgba(14,165,233,0.4);' : '';
+                                    return `
+                                        <button onclick="window.TeamView.switchMyTeamActive(${idx})" 
+                                                style="flex: 1; padding: 10px 12px; border: none; border-radius: 12px; font-weight: 900; font-size: 0.76rem; cursor: pointer; transition: all 0.2s; background: ${bg}; color: ${col}; ${shadow} text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                            🎾 ${t.name} (${t.category})
+                                        </button>
+                                    `;
+                                }).join('')}
+                            </div>
+                        ` : `
+                            <div style="display: inline-flex; align-items: center; gap: 7px; background: rgba(14, 165, 233, 0.12); border: 1px solid rgba(14, 165, 233, 0.35); padding: 6px 14px; border-radius: 20px;">
+                                <span style="width: 7px; height: 7px; border-radius: 50%; background: #0ea5e9; box-shadow: 0 0 10px #0ea5e9;"></span>
+                                <span style="font-size: 0.68rem; color: #38bdf8; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">TU EQUIPO OFICIAL DE LIGA</span>
+                            </div>
+                        `}
+
+                        <!-- Botón para reelegir o gestionar equipo -->
+                        <button onclick="window.TeamView.openChangeMyTeamsModal()" 
+                                style="background: rgba(255,255,255,0.06); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.12); padding: 7px 12px; border-radius: 12px; font-size: 0.72rem; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;"
+                                onmouseover="this.style.background='rgba(255,255,255,0.12)'"
+                                onmouseout="this.style.background='rgba(255,255,255,0.06)'">
+                            <i class="fas fa-sliders-h" style="color: #38bdf8;"></i> Cambiar / Añadir Equipo
+                        </button>
+                    </div>
+
+                    <!-- 🏆 HERO CARD PRO EXCLUSIVO DEL EQUIPO -->
+                    <div style="margin-bottom: 22px; background: linear-gradient(140deg, #0b1329 0%, #0f172a 65%, #1e1b4b 100%); border-radius: 26px; border: 1.5px solid rgba(255, 255, 255, 0.08); padding: 24px 20px; position: relative; overflow: hidden; box-shadow: 0 16px 40px rgba(0,0,0,0.5);">
+                        <!-- Accent Bar -->
+                        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, ${catTheme}, #ccff00, #38bdf8);"></div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; position: relative; z-index: 2;">
+                            <div>
+                                <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(204, 255, 0, 0.12); border: 1px solid rgba(204, 255, 0, 0.3); padding: 3px 10px; border-radius: 16px; margin-bottom: 8px;">
+                                    <span style="font-size: 0.64rem; color: #ccff00; font-weight: 900; letter-spacing: 0.8px; text-transform: uppercase;">
+                                        ${activeTeam.category} • ${activeTeam.division || '3ª División'}
+                                    </span>
+                                </div>
+                                <h1 style="color: #ffffff; font-weight: 950; font-size: 2rem; margin: 0 0 6px; letter-spacing: -0.5px; line-height: 1.1;">
+                                    ${activeTeam.name}
+                                </h1>
+                                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 0.78rem; color: #94a3b8;">
+                                    <span><i class="fas fa-layer-group" style="color: #38bdf8;"></i> Grupo: <strong style="color: #f1f5f9;">${activeTeam.group || 'Oficial SummaPadel'}</strong></span>
+                                    <span>•</span>
+                                    <span><i class="fas fa-crown" style="color: #f59e0b;"></i> Cap: <strong style="color: #f1f5f9;">${activeTeam.captain || 'Por definir'}</strong></span>
+                                </div>
+                            </div>
+                            <img src="${activeTeam.logo || 'img/logo_somospadel.png'}" 
+                                 style="width: 64px; height: 64px; object-fit: contain; filter: drop-shadow(0 6px 16px rgba(0,0,0,0.6)); flex-shrink: 0;">
+                        </div>
+
+                        <!-- 4 MARCADORES PRO DEL EQUIPO -->
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 20px;">
+                            <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 10px 4px; text-align: center;">
+                                <div style="font-size: 0.55rem; color: #94a3b8; font-weight: 800; text-transform: uppercase;">Posición</div>
+                                <div style="font-size: 1.3rem; font-weight: 950; color: #ccff00;">${activeTeam.ranking ? `${activeTeam.ranking}º` : '1º'}</div>
+                            </div>
+                            <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 10px 4px; text-align: center;">
+                                <div style="font-size: 0.55rem; color: #94a3b8; font-weight: 800; text-transform: uppercase;">Puntos Liga</div>
+                                <div style="font-size: 1.3rem; font-weight: 950; color: #ffffff;">${activeTeam.points || 0}</div>
+                            </div>
+                            <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 10px 4px; text-align: center;">
+                                <div style="font-size: 0.55rem; color: #94a3b8; font-weight: 800; text-transform: uppercase;">Victorias</div>
+                                <div style="font-size: 1.3rem; font-weight: 950; color: #38bdf8;">${activeTeam.stats?.pg || 0}<span style="font-size: 0.75rem; color: #64748b;">/${activeTeam.stats?.pj || 0}</span></div>
+                            </div>
+                            <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 10px 4px; text-align: center;">
+                                <div style="font-size: 0.55rem; color: #94a3b8; font-weight: 800; text-transform: uppercase;">Dif. Sets</div>
+                                <div style="font-size: 1.3rem; font-weight: 950; color: #a78bfa;">${(activeTeam.stats?.df >= 0 ? '+' : '') + (activeTeam.stats?.df || 0)}</div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- 🌟 TARJETA 1: TU FICHA PERSONAL DENTRO DEL EQUIPO -->
+                    <div style="background: linear-gradient(135deg, rgba(14, 165, 233, 0.12) 0%, rgba(2, 132, 199, 0.04) 100%); border: 1.5px solid rgba(14, 165, 233, 0.35); border-radius: 22px; padding: 18px 20px; margin-bottom: 22px; display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <div style="width: 52px; height: 52px; border-radius: 50%; background: #0ea5e9; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: 950; box-shadow: 0 4px 15px rgba(14, 165, 233, 0.4);">
+                                ${(rawName || 'J').charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                                <div style="font-size: 0.65rem; color: #38bdf8; font-weight: 900; text-transform: uppercase; letter-spacing: 0.8px;">TU PERFIL EN EL EQUIPO</div>
+                                <div style="font-size: 1.15rem; font-weight: 950; color: #ffffff;">${rawName || 'Jugador SomosPadel'}</div>
+                                <div style="font-size: 0.75rem; color: #94a3b8;">${userRankText} • Plantilla Oficial 2026</div>
+                            </div>
+                        </div>
+                        <div style="text-align: right; background: rgba(0,0,0,0.25); padding: 8px 14px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.08);">
+                            <div style="font-size: 0.6rem; color: #94a3b8; font-weight: 800; text-transform: uppercase;">Puntos SummaPadel</div>
+                            <div style="font-size: 1.35rem; font-weight: 950; color: #ccff00;">${userPts} <span style="font-size: 0.7rem; color: #94a3b8;">PTS</span></div>
+                        </div>
+                    </div>
+
+                    <!-- 📅 TARJETA 2: PRÓXIMA JORNADA & CONVOCATORIA INTERACTIVA (RSVP) -->
+                    <div style="background: #0f172a; border: 1.5px solid rgba(255,255,255,0.08); border-radius: 24px; padding: 22px; margin-bottom: 22px; box-shadow: 0 10px 30px rgba(0,0,0,0.35);">
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="background: rgba(204, 255, 0, 0.16); color: #ccff00; border: 1px solid rgba(204, 255, 0, 0.4); font-size: 0.65rem; font-weight: 900; padding: 3px 9px; border-radius: 12px; text-transform: uppercase;">
+                                    JORNADA ${jNum}
+                                </span>
+                                <span style="font-size: 0.72rem; color: ${isHome ? '#34d399' : '#38bdf8'}; font-weight: 800;">
+                                    ${isHome ? '🏠 JUGAMOS EN CASA' : '🚗 JUGAMOS FUERA'}
+                                </span>
+                            </div>
+                            ${nextMatch.venue ? `
+                                <a href="https://maps.google.com/?q=${encodeURIComponent(address)}" target="_blank" 
+                                   style="font-size: 0.7rem; color: #38bdf8; text-decoration: none; font-weight: 800; display: inline-flex; align-items: center; gap: 4px;">
+                                    <i class="fas fa-map-marker-alt"></i> Cómo llegar
+                                </a>
+                            ` : ''}
+                        </div>
+
+                        <!-- Detalle del partido -->
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 18px; padding: 16px; margin-bottom: 18px;">
+                            <div style="font-size: 0.65rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-bottom: 4px;">Rival oficial</div>
+                            <div style="font-size: 1.3rem; font-weight: 950; color: #ffffff; margin-bottom: 10px;">
+                                🆚 ${nextMatch.opponent || 'Por definir'}
+                            </div>
+                            <div style="display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.8rem; color: #cbd5e1;">
+                                <div><i class="far fa-calendar-alt" style="color: #ccff00;"></i> <strong>${nextMatch.date || 'Fecha pendiente'}</strong></div>
+                                <div><i class="far fa-clock" style="color: #38bdf8;"></i> <strong>${nextMatch.time || 'Hora pendiente'}</strong></div>
+                                <div><i class="fas fa-building" style="color: #a78bfa;"></i> <strong>${nextMatch.venue || 'Sede oficial'}</strong></div>
+                            </div>
+                        </div>
+
+                        <!-- MÓDULO INTERACTIVO RSVP DEL JUGADOR -->
+                        <div style="background: linear-gradient(135deg, rgba(255, 94, 0, 0.1) 0%, rgba(255, 94, 0, 0.02) 100%); border: 1.5px solid rgba(255, 94, 0, 0.3); border-radius: 18px; padding: 18px; margin-bottom: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                                <div>
+                                    <div style="font-size: 0.82rem; font-weight: 900; color: #ffffff;">¿Juegas esta jornada con tu equipo?</div>
+                                    <div style="font-size: 0.72rem; color: #94a3b8;">Confirma tu disponibilidad para que el capitán cierre la alineación</div>
+                                </div>
+                                ${userStatus ? `
+                                    <div style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 12px; font-size: 0.72rem; font-weight: 900; background: ${userStatus === 'available' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}; color: ${userStatus === 'available' ? '#34d399' : '#f87171'}; border: 1px solid ${userStatus === 'available' ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)'};">
+                                        <i class="fas ${userStatus === 'available' ? 'fa-check-circle' : 'fa-times-circle'}"></i>
+                                        ${userStatus === 'available' ? '¡VOY A JUGAR!' : 'NO PUEDO'}
+                                    </div>
+                                ` : ''}
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <button onclick="window.TeamView.quickRsvpMyTeam('${activeTeam.id}', '${jNum}', 'available')"
+                                        style="background: ${userStatus === 'available' ? '#10b981' : 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.35) 100%)'}; 
+                                               color: #ffffff; border: 1.5px solid #10b981; padding: 12px 14px; border-radius: 14px; font-weight: 900; font-size: 0.82rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25); transition: all 0.2s;">
+                                    <i class="fas fa-check"></i> VOY A JUGAR
+                                </button>
+                                <button onclick="window.TeamView.quickRsvpMyTeam('${activeTeam.id}', '${jNum}', 'unavailable')"
+                                        style="background: ${userStatus === 'unavailable' ? '#ef4444' : 'rgba(239, 68, 68, 0.15)'}; 
+                                               color: ${userStatus === 'unavailable' ? '#ffffff' : '#fca5a5'}; border: 1.5px solid rgba(239, 68, 68, 0.4); padding: 12px 14px; border-radius: 14px; font-weight: 900; font-size: 0.82rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;">
+                                    <i class="fas fa-times"></i> NO PUEDO IR
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- ESTADO DE LA PLANTILLA: CONFIRMADOS DE LA JORNADA -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; margin-bottom: 8px;">
+                            <span style="color: #94a3b8; font-weight: 800;">Convocatoria de tu equipo:</span>
+                            <span style="color: #ccff00; font-weight: 900;">${confirmedCount} de ${targetCount} jugadores necesarios</span>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.06); height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 12px;">
+                            <div style="background: linear-gradient(90deg, #10b981, #ccff00); height: 100%; width: ${Math.min(100, Math.round((confirmedCount / targetCount) * 100))}%; transition: width 0.4s ease;"></div>
+                        </div>
+
+                        <!-- Botón para compartir convocatoria por WhatsApp -->
+                        <button onclick="window.TeamView.shareMyTeamConvocatoria('${activeTeam.id}', '${jNum}')"
+                                style="width: 100%; background: #25D366; color: #ffffff; border: none; padding: 12px 16px; border-radius: 14px; font-weight: 900; font-size: 0.78rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);">
+                            <i class="fab fa-whatsapp" style="font-size: 1rem;"></i> COMPARTIR CONVOCATORIA EN WHATSAPP DEL EQUIPO
+                        </button>
+
+                    </div>
+
+                    <!-- 📊 TARJETA 3: CLASIFICACIÓN COMPLETA DEL GRUPO (SummaPadel) -->
+                    <div style="background: #0f172a; border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; padding: 22px; margin-bottom: 22px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <div>
+                                <h3 style="color: #ffffff; font-size: 1.05rem; font-weight: 950; margin: 0;">
+                                    CLASIFICACIÓN OFICIAL DEL GRUPO
+                                </h3>
+                                <div style="font-size: 0.72rem; color: #94a3b8;">${activeTeam.group || 'Liga Oficial'}</div>
+                            </div>
+                            <span style="font-size: 0.65rem; color: #38bdf8; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); padding: 3px 8px; border-radius: 10px; font-weight: 800;">
+                                SUMMAPADEL
+                            </span>
+                        </div>
+
+                        <div style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.75rem; text-align: left;">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); color: #64748b;">
+                                        <th style="padding: 8px 6px;">#</th>
+                                        <th style="padding: 8px 6px;">EQUIPO</th>
+                                        <th style="padding: 8px 6px; text-align: center;">PJ</th>
+                                        <th style="padding: 8px 6px; text-align: center;">PG</th>
+                                        <th style="padding: 8px 6px; text-align: center;">PP</th>
+                                        <th style="padding: 8px 6px; text-align: right;">PTS</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${(activeTeam.groupStandings && activeTeam.groupStandings.length > 0 ? activeTeam.groupStandings : [
+                                        { pos: 1, team: activeTeam.name, pj: activeTeam.stats?.pj || 3, pg: activeTeam.stats?.pg || 3, pp: activeTeam.stats?.pp || 0, pts: activeTeam.points || 6, isCurrent: true }
+                                    ]).map(row => {
+                                        const isMyTeamRow = row.isCurrent || (row.team && (row.team.toLowerCase().includes(activeTeam.name.toLowerCase()) || activeTeam.name.toLowerCase().includes(row.team.toLowerCase())));
+                                        const bg = isMyTeamRow ? 'rgba(204, 255, 0, 0.12)' : 'transparent';
+                                        const border = isMyTeamRow ? '1px solid rgba(204, 255, 0, 0.3)' : '1px solid rgba(255,255,255,0.03)';
+                                        return `
+                                            <tr style="background: ${bg}; border-bottom: ${border}; font-weight: ${isMyTeamRow ? '900' : '600'};">
+                                                <td style="padding: 10px 6px; color: ${row.pos <= 2 ? '#ccff00' : '#94a3b8'};">${row.pos || '-'}</td>
+                                                <td style="padding: 10px 6px; color: ${isMyTeamRow ? '#ccff00' : '#f1f5f9'};">
+                                                    ${row.team}
+                                                    ${isMyTeamRow ? '<span style="background: #ccff00; color: #000; font-size: 0.55rem; padding: 2px 5px; border-radius: 6px; margin-left: 6px; font-weight: 950;">TU EQUIPO</span>' : ''}
+                                                </td>
+                                                <td style="padding: 10px 6px; text-align: center; color: #cbd5e1;">${row.pj !== undefined ? row.pj : '-'}</td>
+                                                <td style="padding: 10px 6px; text-align: center; color: #34d399;">${row.pg !== undefined ? row.pg : '-'}</td>
+                                                <td style="padding: 10px 6px; text-align: center; color: #f87171;">${row.pp !== undefined ? row.pp : '-'}</td>
+                                                <td style="padding: 10px 6px; text-align: right; color: ${isMyTeamRow ? '#ccff00' : '#ffffff'}; font-weight: 950; font-size: 0.85rem;">${row.pts !== undefined ? row.pts : '-'}</td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 👥 TARJETA 4: PLANTILLA COMPLETA DE COMPAÑEROS (ROSTER OFICIAL) -->
+                    <div style="background: #0f172a; border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; padding: 22px; margin-bottom: 22px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <div>
+                                <h3 style="color: #ffffff; font-size: 1.05rem; font-weight: 950; margin: 0;">
+                                    PLANTILLA OFICIAL Y PUNTOS (${sortedRoster.length})
+                                </h3>
+                                <div style="font-size: 0.72rem; color: #94a3b8;">Ordenados por puntos oficiales SummaPadel</div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            ${sortedRoster.map((player, idx) => {
+                                const pName = typeof player === 'string' ? player : (player.name || 'Jugador');
+                                const pts = typeof player === 'string' ? 0 : (player.pts || 0);
+                                const isMe = cleanUserName && pName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(cleanUserName);
+                                const isCap = activeTeam.captain && activeTeam.captain.toLowerCase().includes(pName.toLowerCase());
+                                const isSub = activeTeam.subcaptain && activeTeam.subcaptain.toLowerCase().includes(pName.toLowerCase());
+
+                                const bg = isMe ? 'linear-gradient(135deg, rgba(204, 255, 0, 0.15) 0%, rgba(14, 165, 233, 0.15) 100%)' : 'rgba(255,255,255,0.03)';
+                                const border = isMe ? '1.5px solid #ccff00' : '1px solid rgba(255,255,255,0.06)';
+
+                                return `
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: ${bg}; border: ${border}; border-radius: 14px;">
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <span style="font-size: 0.72rem; font-weight: 900; color: ${idx < 3 ? '#ccff00' : '#64748b'}; width: 22px;">#${idx + 1}</span>
+                                            <div>
+                                                <div style="font-size: 0.82rem; font-weight: 900; color: ${isMe ? '#ccff00' : '#ffffff'};">
+                                                    ${pName} ${isMe ? '<span style="background: #ccff00; color: #000; font-size: 0.55rem; padding: 2px 6px; border-radius: 8px; margin-left: 6px; font-weight: 950;">TÚ</span>' : ''}
+                                                </div>
+                                                ${isCap ? '<span style="font-size: 0.6rem; color: #f59e0b; font-weight: 800;"><i class="fas fa-crown"></i> Capitán</span>' : ''}
+                                                ${isSub ? '<span style="font-size: 0.6rem; color: #38bdf8; font-weight: 800;"><i class="fas fa-star"></i> Subcapitán</span>' : ''}
+                                            </div>
+                                        </div>
+                                        <div style="font-size: 0.9rem; font-weight: 950; color: #ffffff;">
+                                            ${pts.toFixed(1)} <span style="font-size: 0.62rem; color: #94a3b8;">PTS</span>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+
+                    <!-- 📅 TARJETA 5: CALENDARIO COMPLETO DE JORNADAS -->
+                    <div style="background: #0f172a; border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; padding: 22px; margin-bottom: 22px;">
+                        <h3 style="color: #ffffff; font-size: 1.05rem; font-weight: 950; margin: 0 0 14px;">
+                            CALENDARIO COMPLETO DE LA LIGA (${(activeTeam.schedule || []).length} JORNADAS)
+                        </h3>
+
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            ${(activeTeam.schedule || []).map(m => {
+                                const isCompleted = m.status === 'completed';
+                                const hasResult = isCompleted && m.score && m.score !== 'Pendiente';
+                                const res = this.getMatchResult(m);
+                                const statusColor = res.isWin ? '#10b981' : (res.isLoss ? '#ef4444' : '#94a3b8');
+
+                                return `
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; flex-wrap: wrap; gap: 8px;">
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <span style="font-size: 0.68rem; font-weight: 900; background: rgba(255,255,255,0.08); padding: 3px 7px; border-radius: 8px; color: #cbd5e1;">J${m.j}</span>
+                                            <div>
+                                                <div style="font-size: 0.8rem; font-weight: 900; color: #ffffff;">vs ${m.opponent}</div>
+                                                <div style="font-size: 0.68rem; color: #94a3b8;">${m.date} • ${m.time} • ${m.venue}</div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            ${hasResult ? `
+                                                <span style="font-size: 0.75rem; font-weight: 900; background: ${res.isWin ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}; color: ${statusColor}; border: 1px solid ${statusColor}; padding: 3px 8px; border-radius: 8px;">
+                                                    ${m.score} (${res.isWin ? 'W' : 'L'})
+                                                </span>
+                                            ` : `
+                                                <span style="font-size: 0.68rem; color: #94a3b8; background: rgba(255,255,255,0.05); padding: 3px 8px; border-radius: 8px;">
+                                                    ${m.score || 'Pendiente'}
+                                                </span>
+                                            `}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+
+                    <!-- 🛠️ TARJETA 6: HERRAMIENTAS Y ACCIONES DE EQUIPO -->
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 24px;">
+                        <button onclick="window.TeamController?.showTeamDetail('${activeTeam.id}', 'tactica')"
+                                style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.25) 100%); color: #34d399; border: 1.5px solid #10b981; padding: 14px; border-radius: 16px; font-weight: 900; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <i class="fas fa-clipboard-list" style="font-size: 1rem;"></i> PIZARRA TÁCTICA
+                        </button>
+                        <button onclick="window.TeamController?.showTeamDetail('${activeTeam.id}', 'liderazgo')"
+                                style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.25) 100%); color: #fbbf24; border: 1.5px solid #f59e0b; padding: 14px; border-radius: 16px; font-weight: 900; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <i class="fas fa-chart-line" style="font-size: 1rem;"></i> ESTADÍSTICAS PRO
+                        </button>
+                    </div>
+
+                </div>
+            `;
+        }
+
+        switchMyTeamActive(index) {
+            this.activeMyTeamIndex = index;
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(20);
+            this.renderMyTeam(this.lastTeams);
+        }
+
+        saveAndSetMyTeams(primaryId, secondaryId) {
+            const selected = [primaryId];
+            if (secondaryId && secondaryId !== 'none' && secondaryId !== primaryId) {
+                selected.push(secondaryId);
+            }
+            localStorage.setItem('myTeams_somospadel', JSON.stringify(selected));
+            if (primaryId) {
+                localStorage.setItem('favTeam_somospadel', primaryId);
+            }
+            this.activeMyTeamIndex = 0;
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(25);
+            if (window.PremiumModal && typeof window.PremiumModal.toast === 'function') {
+                window.PremiumModal.toast('✅ Equipo vinculado correctamente', 'success');
+            }
+            this.renderMyTeam(this.lastTeams);
+        }
+
+        openChangeMyTeamsModal() {
+            const allTeams = this.lastTeams && this.lastTeams.length > 0 ? this.lastTeams : (window.ClubTeamsData || []);
+            
+            let savedTeamIds = [];
+            try {
+                const raw = localStorage.getItem('myTeams_somospadel');
+                if (raw) savedTeamIds = JSON.parse(raw);
+            } catch(e) {}
+            const currentFav = savedTeamIds[0] || localStorage.getItem('favTeam_somospadel') || (allTeams[0] ? allTeams[0].id : '');
+            const currentSec = savedTeamIds[1] || 'none';
+
+            const modalHtml = `
+                <div style="text-align: left; padding: 6px;">
+                    <p style="font-size: 0.85rem; color: #475569; margin-bottom: 16px; line-height: 1.5;">
+                        Selecciona tu equipo principal y, si compites en una segunda categoría (ej. Mixta), selecciona también tu segundo equipo:
+                    </p>
+                    <label style="display: block; font-size: 0.72rem; font-weight: 800; color: #0f172a; margin-bottom: 6px; text-transform: uppercase;">
+                        1. Equipo Principal
+                    </label>
+                    <select id="modal-edit-team-1" style="width: 100%; padding: 10px; border-radius: 12px; border: 1.5px solid #cbd5e1; font-weight: 700; margin-bottom: 14px; font-size: 0.82rem;">
+                        ${allTeams.map(t => `<option value="${t.id}" ${t.id === currentFav ? 'selected' : ''}>${t.name} (${t.category})</option>`).join('')}
+                    </select>
+
+                    <label style="display: block; font-size: 0.72rem; font-weight: 800; color: #0f172a; margin-bottom: 6px; text-transform: uppercase;">
+                        2. Segundo Equipo (Opcional)
+                    </label>
+                    <select id="modal-edit-team-2" style="width: 100%; padding: 10px; border-radius: 12px; border: 1.5px solid #cbd5e1; font-weight: 700; margin-bottom: 18px; font-size: 0.82rem;">
+                        <option value="none" ${currentSec === 'none' ? 'selected' : ''}>-- Solo 1 equipo --</option>
+                        ${allTeams.map(t => `<option value="${t.id}" ${t.id === currentSec ? 'selected' : ''}>${t.name} (${t.category})</option>`).join('')}
+                    </select>
+                </div>
+            `;
+
+            window.PremiumModal.confirm({
+                title: '⚙️ CONFIGURAR MI EQUIPO',
+                message: modalHtml,
+                confirmText: 'GUARDAR CAMBIOS',
+                cancelText: 'CANCELAR',
+                onConfirm: () => {
+                    const t1 = document.getElementById('modal-edit-team-1')?.value;
+                    const t2 = document.getElementById('modal-edit-team-2')?.value;
+                    if (t1) {
+                        this.saveAndSetMyTeams(t1, t2);
+                    }
+                }
+            });
+        }
+
+        async quickRsvpMyTeam(teamId, jNum, status) {
+            const currentUser = window.Store?.getState('currentUser') || (() => {
+                try { return JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) { return {}; }
+            })();
+            const playerName = (currentUser.name || currentUser.displayName || currentUser.fullName || 'Jugador').trim();
+
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(30);
+
+            try {
+                if (window.TeamConvocatoriaService && typeof window.TeamConvocatoriaService.submitPlayerResponse === 'function') {
+                    await window.TeamConvocatoriaService.submitPlayerResponse(teamId, jNum, playerName, status, '');
+                } else {
+                    const key = `somospadel_convo_${teamId}_j${jNum}`;
+                    let data = {};
+                    try { data = JSON.parse(localStorage.getItem(key) || '{}'); } catch(e){}
+                    data.responses = data.responses || {};
+                    data.responses[playerName] = { status: status, updatedAt: new Date().toISOString() };
+                    localStorage.setItem(key, JSON.stringify(data));
+                }
+
+                if (window.PremiumModal && typeof window.PremiumModal.toast === 'function') {
+                    const msg = status === 'available' ? '✅ ¡Confirmado! Asistirás a la jornada' : '❌ Has indicado que no puedes jugar';
+                    window.PremiumModal.toast(msg, status === 'available' ? 'success' : 'info');
+                }
+
+                this.renderMyTeam(this.lastTeams);
+            } catch (err) {
+                console.error("Error al registrar disponibilidad:", err);
+                alert("Error al guardar: " + err.message);
+            }
+        }
+
+        shareMyTeamConvocatoria(teamId, jNum) {
+            const team = (this.lastTeams || []).find(t => t.id === teamId);
+            if (!team) return;
+
+            const match = (team.schedule || []).find(m => String(m.j) === String(jNum)) || {};
+            const key = `somospadel_convo_${teamId}_j${jNum}`;
+            let convoData = {};
+            try { convoData = JSON.parse(localStorage.getItem(key) || '{}'); } catch(e){}
+            const responses = convoData.responses || {};
+            const confirmed = Object.keys(responses).filter(k => responses[k]?.status === 'available');
+
+            const text = `🎾 *SOMOS PÁDEL BARCELONA • CONVOCATORIA OFICIAL* 🎾\n\n` +
+                         `🛡️ *${team.name}*\n` +
+                         `📅 *Jornada ${jNum}:* vs ${match.opponent || 'Rival'}\n` +
+                         `🗓️ *Fecha:* ${match.date || 'Por definir'} - ${match.time || 'Hora'}\n` +
+                         `📍 *Sede:* ${match.venue || 'Club'}\n\n` +
+                         `👥 *Jugadores Confirmados (${confirmed.length}/6):*\n` +
+                         (confirmed.length > 0 ? confirmed.map(n => `✅ ${n}`).join('\n') : '⏳ Esperando confirmaciones...') +
+                         `\n\n📲 *Confirma tu asistencia en la app oficial de SomosPadel*`;
+
+            const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+            window.open(url, '_blank');
         }
     }
 

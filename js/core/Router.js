@@ -17,14 +17,19 @@
                 'live': () => this.executeControllerInit('ControlTowerView', 'live', (c) => c.handleLiveRoute()),
                 'live-entreno': () => this.executeControllerInit('EntrenoLiveView', 'live-entreno', (c) => c.handleRoute()),
                 'ranking': () => this.executeControllerInit('RankingController', 'ranking'),
-                'equipos': () => this.executeControllerInit('TeamController', 'equipos'),
-                'teams': () => this.executeControllerInit('TeamController', 'teams'),
-                'tournaments': () => this.executeControllerInit('TournamentController', 'tournaments'),
+                'comunidad': () => this.handleCommunityRoute('teams'),
+                'community': () => this.handleCommunityRoute('teams'),
+                'equipos': () => this.handleCommunityRoute('teams'),
+                'teams': () => this.handleCommunityRoute('teams'),
+                'tournaments': () => this.handleCommunityRoute('tournaments'),
                 'agenda': () => this.handleControllerTab('EventsController', 'agenda'),
                 'results': () => this.handleControllerTab('EventsController', 'results'),
-                'entrenos': () => this.handleControllerTab('EventsController', 'entrenos'),
-                'partidas_abiertas': () => this.handleControllerTab('EventsController', 'entrenos'),
-                'records': () => this.executeControllerInit('RecordsController', 'records')
+                'entrenos': () => this.handleCommunityRoute('entrenos'),
+                'partidas_abiertas': () => this.handleCommunityRoute('entrenos'),
+                'my_team': () => this.handleCommunityRoute('my_team'),
+                'records': () => this.handleCommunityRoute('records'),
+                'inscriptions': () => this.handleCommunityRoute('inscriptions'),
+                'inscripciones': () => this.handleCommunityRoute('inscriptions')
             };
 
             // Determinar la ruta inicial desde el hash de la URL o parámetros de consulta (Deep Linking)
@@ -155,7 +160,91 @@
             }
         }
 
+        handleCommunityRoute(subTab = 'teams') {
+            window.activeCommunitySubTab = subTab;
+
+            const onDone = () => {
+                this.attachCommunitySubmenu(subTab);
+            };
+
+            if (subTab === 'teams') {
+                this.executeControllerInit('TeamController', 'teams', (c) => {
+                    c.init();
+                    setTimeout(onDone, 60);
+                    setTimeout(onDone, 200);
+                });
+            } else if (subTab === 'entrenos') {
+                this.handleControllerTab('EventsController', 'entrenos');
+                setTimeout(onDone, 80);
+                setTimeout(onDone, 250);
+            } else if (subTab === 'my_team') {
+                this.executeControllerInit('TeamController', 'my_team', (c) => {
+                    if (typeof c.renderMyTeam === 'function') {
+                        c.renderMyTeam();
+                    } else if (window.TeamView && typeof window.TeamView.renderMyTeam === 'function') {
+                        window.TeamView.renderMyTeam(c.teams || window.ClubTeamsData || []);
+                    }
+                    setTimeout(onDone, 60);
+                    setTimeout(onDone, 200);
+                });
+            } else if (subTab === 'records') {
+                this.executeControllerInit('RecordsController', 'records', (c) => {
+                    c.init();
+                    setTimeout(onDone, 60);
+                    setTimeout(onDone, 200);
+                });
+            } else if (subTab === 'inscriptions' || subTab === 'inscripciones') {
+                // 🔒 BLOQUEADO — En breves estará disponible para la nueva temporada
+                setTimeout(() => {
+                    if (typeof window.showInscriptionsComingSoon === 'function') {
+                        window.showInscriptionsComingSoon();
+                    }
+                }, 50);
+                // Volver a comunidad/equipos en lugar de cargar inscripciones
+                this.navigate('comunidad', false, true);
+                setTimeout(onDone, 60);
+            } else if (subTab === 'tournaments') {
+                this.executeControllerInit('TournamentController', 'tournaments', (c) => {
+                    c.init();
+                    setTimeout(onDone, 60);
+                    setTimeout(onDone, 200);
+                });
+            }
+        }
+
+        attachCommunitySubmenu(activeSubTab) {
+            const content = document.getElementById('content-area');
+            if (!content) return;
+
+            // Determinar la subpestaña canónica activa (entrenos, teams, my_team, inscriptions, records)
+            let currentTab = activeSubTab || window.activeCommunitySubTab || 'teams';
+            if (['comunidad', 'community', 'equipos', 'teams'].includes(currentTab)) {
+                currentTab = 'teams';
+            } else if (['entrenos', 'partidas_abiertas'].includes(currentTab)) {
+                currentTab = 'entrenos';
+            } else if (['my_team'].includes(currentTab)) {
+                currentTab = 'my_team';
+            } else if (['records'].includes(currentTab)) {
+                currentTab = 'records';
+            } else if (['inscriptions', 'inscripciones'].includes(currentTab)) {
+                currentTab = 'inscriptions';
+            }
+
+            if (window.SubnavManager) {
+                window.SubnavManager.renderCommunity(currentTab);
+            }
+
+            const existing = document.getElementById('community-hub-bar');
+            if (existing) {
+                existing.remove();
+            }
+        }
+
         navigate(route, isBack = false, force = false) {
+            if (typeof window.closeCommunityMenu === 'function') {
+                window.closeCommunityMenu();
+            }
+
             // === ROLE ACCESS GUARD: JUGADOR AMERICANAS ===
             const currentUser = window.Store?.getState('currentUser') || 
                 (() => {
@@ -169,8 +258,8 @@
 
             if (isAmericanasOnly) {
                 const blockedRoutes = [
-                    'entrenos', 'partidas_abiertas', 'live-entreno', 
-                    'agenda', 'results', 'equipos', 'teams'
+                    'comunidad', 'community', 'entrenos', 'partidas_abiertas', 'live-entreno', 
+                    'agenda', 'results', 'equipos', 'teams', 'tournaments'
                 ];
                 if (blockedRoutes.includes(route)) {
                     console.warn(`[Router] Acceso restringido para JUGADOR AMERICANAS a la ruta: ${route}`);
@@ -241,6 +330,15 @@
         cleanupPreviousRoute(newRoute) {
             if (this.currentRoute && this.currentRoute === newRoute) return;
 
+            const isCommunity = ['comunidad', 'community', 'equipos', 'teams', 'entrenos', 'partidas_abiertas', 'tournaments', 'my_team', 'records', 'inscriptions', 'inscripciones'].includes(newRoute);
+            const isAmericanas = ['events', 'americanas', 'finished_americanas', 'agenda_americanas', 'help_americanas'].includes(newRoute);
+
+            if (!isCommunity && !isAmericanas) {
+                if (window.SubnavManager) window.SubnavManager.hide();
+                const comBar = document.getElementById('community-hub-bar');
+                if (comBar) comBar.remove();
+            }
+
             const controllersToCleanup = [
                 { name: 'DashboardView', routes: ['dashboard'] },
                 { name: 'DashboardController', routes: ['dashboard'] },
@@ -250,7 +348,7 @@
                 { name: 'PlayerController', routes: ['profile'] },
                 { name: 'RecordsController', routes: ['records'] },
                 { name: 'RankingController', routes: ['ranking'] },
-                { name: 'TeamController', routes: ['teams', 'equipos'] },
+                { name: 'TeamController', routes: ['teams', 'equipos', 'comunidad', 'community', 'my_team'] },
                 { name: 'TournamentController', routes: ['tournaments'] }
             ];
 
@@ -299,10 +397,8 @@
                 let effectiveRoute = route;
                 if (['events', 'americanas', 'finished_americanas', 'agenda_americanas', 'help_americanas'].includes(route)) {
                     effectiveRoute = 'americanas';
-                } else if (['entrenos', 'agenda', 'help', 'finished', 'partidas_abiertas'].includes(route)) {
-                    effectiveRoute = 'entrenos';
-                } else if (['equipos', 'teams'].includes(route)) {
-                    effectiveRoute = 'teams';
+                } else if (['comunidad', 'community', 'entrenos', 'agenda', 'help', 'finished', 'partidas_abiertas', 'equipos', 'teams', 'tournaments', 'my_team', 'records', 'inscriptions', 'inscripciones'].includes(route)) {
+                    effectiveRoute = 'community';
                 }
                 const isActive = navRoute === effectiveRoute;
                 btn.classList.toggle('active', isActive);

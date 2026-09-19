@@ -461,8 +461,8 @@ window.WhatsAppService = {
         if (!records) return;
         const E = this.E;
 
-        let msg = E.TROPHY + " *SALÓN DE LA FAMA - SOMOSPADEL BCN* " + E.TROPHY + "\n";
-        msg += "*TEMPORADA 2026*\n";
+        let msg = E.TROPHY + " *RÉCORDS DE LA TEMPORADA - SOMOSPADEL BCN* " + E.TROPHY + "\n";
+        msg += "*LIGA SUMMAPADEL 2026*\n";
         msg += "--------------------------\n\n";
 
         const items = [
@@ -481,8 +481,10 @@ window.WhatsAppService = {
         items.forEach(item => {
             if (item.r && item.r.name !== 'VACANTE') {
                 const icon = item.r.icon || "🏆";
-                msg += icon + " *" + item.t + "*\n";
-                msg += "👑 " + item.r.name + " (" + item.r.value + ")\n\n";
+                const title = item.r.title || item.t;
+                const metric = item.r.count || item.r.value || "";
+                msg += icon + " *" + title.toUpperCase() + "*\n";
+                msg += "👑 " + item.r.name + (metric ? " (" + metric + ")" : "") + "\n\n";
             }
         });
 

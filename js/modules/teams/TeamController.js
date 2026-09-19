@@ -549,77 +549,50 @@
                         `}
                     </div>
 
-                    <!-- STEP 2: Choose Availability (3 Big Buttons) -->
-                    <div style="margin-bottom: 18px;">
-                        <div style="font-size: 0.72rem; font-weight: 900; color: #0f172a; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">
+                    <!-- STEP 2: Choose Availability (2 Options: Puedo ir / No puedo ir) -->
+                    <div style="margin-bottom: 20px;">
+                        <div style="font-size: 0.72rem; font-weight: 900; color: #0f172a; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 0.5px;">
                             <i class="fas fa-check-circle" style="color: #38b000; margin-right: 4px;"></i> 2. Indica tu disponibilidad:
                         </div>
 
-                        <div style="display: flex; flex-direction: column; gap: 10px;">
-                            <!-- OPTION 1: Available -->
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <!-- OPTION 1: Available (Puedo ir) -->
                             <div id="rsvp-opt-available" onclick="window.TeamController.selectRsvpStatusOption('available')" 
-                                 style="border: 2px solid #e2e8f0; border-radius: 18px; padding: 14px 16px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all 0.2s ease; background: #ffffff;">
-                                <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(56,176,0,0.1); color: #38b000; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">
+                                 style="border: 2px solid #e2e8f0; border-radius: 18px; padding: 16px 18px; cursor: pointer; display: flex; align-items: center; gap: 14px; transition: all 0.2s ease; background: #ffffff;">
+                                <div style="width: 42px; height: 42px; border-radius: 50%; background: rgba(56,176,0,0.1); color: #38b000; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0;">
                                     🟢
                                 </div>
                                 <div style="flex: 1;">
-                                    <div style="font-size: 0.88rem; font-weight: 950; color: #15803d; line-height: 1.2;">
-                                        ¡ESTOY DISPONIBLE!
+                                    <div style="font-size: 0.95rem; font-weight: 950; color: #15803d; line-height: 1.2;">
+                                        ¡PUEDO IR!
                                     </div>
-                                    <div style="font-size: 0.65rem; color: #64748b; font-weight: 700; margin-top: 2px;">
-                                        Cuenta conmigo para jugar (100% titular)
+                                    <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; margin-top: 2px;">
+                                        Cuenta conmigo para jugar este partido
                                     </div>
                                 </div>
-                                <i id="rsvp-check-available" class="fas fa-check-circle" style="color: #38b000; font-size: 1.2rem; display: none;"></i>
+                                <i id="rsvp-check-available" class="fas fa-check-circle" style="color: #38b000; font-size: 1.3rem; display: none;"></i>
                             </div>
 
-                            <!-- OPTION 2: Conditional -->
-                            <div id="rsvp-opt-conditional" onclick="window.TeamController.selectRsvpStatusOption('conditional')" 
-                                 style="border: 2px solid #e2e8f0; border-radius: 18px; padding: 14px 16px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all 0.2s ease; background: #ffffff;">
-                                <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(245,158,11,0.1); color: #d97706; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">
-                                    🟡
-                                </div>
-                                <div style="flex: 1;">
-                                    <div style="font-size: 0.88rem; font-weight: 950; color: #b45309; line-height: 1.2;">
-                                        CON RESTRICCIÓN HORARIA
-                                    </div>
-                                    <div style="font-size: 0.65rem; color: #64748b; font-weight: 700; margin-top: 2px;">
-                                        Puedo jugar con limitaciones de hora o logística
-                                    </div>
-                                </div>
-                                <i id="rsvp-check-conditional" class="fas fa-check-circle" style="color: #d97706; font-size: 1.2rem; display: none;"></i>
-                            </div>
-
-                            <!-- OPTION 3: Unavailable -->
+                            <!-- OPTION 2: Unavailable (No puedo ir) -->
                             <div id="rsvp-opt-unavailable" onclick="window.TeamController.selectRsvpStatusOption('unavailable')" 
-                                 style="border: 2px solid #e2e8f0; border-radius: 18px; padding: 14px 16px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all 0.2s ease; background: #ffffff;">
-                                <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(239,68,68,0.1); color: #dc2626; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">
+                                 style="border: 2px solid #e2e8f0; border-radius: 18px; padding: 16px 18px; cursor: pointer; display: flex; align-items: center; gap: 14px; transition: all 0.2s ease; background: #ffffff;">
+                                <div style="width: 42px; height: 42px; border-radius: 50%; background: rgba(239,68,68,0.1); color: #dc2626; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0;">
                                     🔴
                                 </div>
                                 <div style="flex: 1;">
-                                    <div style="font-size: 0.88rem; font-weight: 950; color: #b91c1c; line-height: 1.2;">
-                                        NO PUEDO / BAJA
+                                    <div style="font-size: 0.95rem; font-weight: 950; color: #b91c1c; line-height: 1.2;">
+                                        NO PUEDO IR
                                     </div>
-                                    <div style="font-size: 0.65rem; color: #64748b; font-weight: 700; margin-top: 2px;">
+                                    <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; margin-top: 2px;">
                                         No estaré disponible para esta jornada
                                     </div>
                                 </div>
-                                <i id="rsvp-check-unavailable" class="fas fa-check-circle" style="color: #dc2626; font-size: 1.2rem; display: none;"></i>
+                                <i id="rsvp-check-unavailable" class="fas fa-check-circle" style="color: #dc2626; font-size: 1.3rem; display: none;"></i>
                             </div>
                         </div>
                     </div>
 
-                    <!-- STEP 3: Conditional Note Input Box -->
-                    <div id="rsvp-note-box" style="display: none; margin-bottom: 20px;">
-                        <label for="rsvp-modal-note-input" style="display: block; font-size: 0.68rem; font-weight: 800; color: #b45309; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px;">
-                            <i class="fas fa-clock" style="margin-right: 4px;"></i> Detalle de restricción o nota para el capitán:
-                        </label>
-                        <input type="text" id="rsvp-modal-note-input" placeholder="Ej: Puedo a partir de las 18h / Llego justo de viaje / Si falta uno juego" 
-                               maxlength="80"
-                               style="width: 100%; padding: 12px 14px; border-radius: 14px; border: 2px solid #f59e0b; font-family: 'Outfit', sans-serif; font-size: 0.8rem; font-weight: 700; color: #0f172a; outline: none; background: #fffbeb; box-sizing: border-box;">
-                    </div>
-
-                    <!-- STEP 4: Confirm Availability Button -->
+                    <!-- STEP 3: Confirm Availability Button -->
                     <button id="rsvp-confirm-submit-btn" onclick="window.TeamController.confirmPlayerRsvp('${team.id}', '${jNum}')" 
                             style="width: 100%; padding: 16px; border-radius: 18px; border: none; background: linear-gradient(135deg, #38b000 0%, #70e000 100%); color: white; font-family: 'Outfit', sans-serif; font-size: 0.95rem; font-weight: 950; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 10px 25px rgba(56,176,0,0.3); transition: transform 0.2s, box-shadow 0.2s;"
                             onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 12px 28px rgba(56,176,0,0.38)';"
@@ -661,10 +634,9 @@
             if (window.PlayerView?.haptic) window.PlayerView.haptic(15);
             this.currentSelectedRsvpStatus = status;
 
-            const opts = ['available', 'conditional', 'unavailable'];
+            const opts = ['available', 'unavailable'];
             const styles = {
                 available: { border: '#38b000', bg: 'rgba(56,176,0,0.06)', shadow: '0 4px 12px rgba(56,176,0,0.15)' },
-                conditional: { border: '#f59e0b', bg: 'rgba(245,158,11,0.06)', shadow: '0 4px 12px rgba(245,158,11,0.15)' },
                 unavailable: { border: '#ef4444', bg: 'rgba(239,68,68,0.06)', shadow: '0 4px 12px rgba(239,68,68,0.15)' }
             };
 
@@ -687,20 +659,6 @@
                     if (check) check.style.display = 'none';
                 }
             });
-
-            // Mostrar/Ocultar campo de notas
-            const noteBox = document.getElementById('rsvp-note-box');
-            const noteInput = document.getElementById('rsvp-modal-note-input');
-            if (noteBox) {
-                if (status === 'conditional') {
-                    noteBox.style.display = 'block';
-                    if (noteInput && !noteInput.value) {
-                        setTimeout(() => noteInput.focus(), 150);
-                    }
-                } else {
-                    noteBox.style.display = 'none';
-                }
-            }
         }
 
         onRsvpPlayerSelected(teamId, jornada, playerName) {
@@ -729,13 +687,12 @@
             const notice = document.getElementById('rsvp-player-already-notice');
 
             if (existing) {
-                this.selectRsvpStatusOption(existing.status);
-                const noteInput = document.getElementById('rsvp-modal-note-input');
-                if (noteInput && existing.note) {
-                    noteInput.value = existing.note;
+                if (existing.status === 'available' || existing.status === 'unavailable') {
+                    this.selectRsvpStatusOption(existing.status);
                 }
+                const label = existing.status === 'available' ? 'PUEDO IR 🟢' : (existing.status === 'unavailable' ? 'NO PUEDO IR 🔴' : existing.status.toUpperCase());
                 if (notice) {
-                    notice.textContent = `ℹ️ Ya habías respondido: "${existing.status.toUpperCase()}". Puedes modificar tu respuesta ahora.`;
+                    notice.textContent = `ℹ️ Ya habías registrado: "${label}". Puedes modificar tu respuesta ahora.`;
                     notice.style.display = 'block';
                 }
             } else {
@@ -771,7 +728,7 @@
                 if (window.PremiumModal?.alert) {
                     window.PremiumModal.alert({
                         title: 'SELECCIONA UNA OPCIÓN',
-                        message: 'Por favor, elige si estás Disponible 🟢, con Restricción 🟡 o Baja 🔴.',
+                        message: 'Por favor, elige si puedes ir 🟢 o no puedes ir 🔴.',
                         type: 'warning'
                     });
                 }
@@ -801,9 +758,8 @@
                 const card = document.querySelector('#rsvp-player-modal-overlay .pm-card');
                 if (card) {
                     const statusLabels = {
-                        available: { text: 'DISPONIBLE 🟢', color: '#16a34a' },
-                        conditional: { text: 'CON RESTRICCIÓN HORARIA 🟡', color: '#d97706' },
-                        unavailable: { text: 'NO PUEDO / BAJA 🔴', color: '#dc2626' }
+                        available: { text: 'PUEDO IR 🟢', color: '#16a34a' },
+                        unavailable: { text: 'NO PUEDO IR 🔴', color: '#dc2626' }
                     };
                     const sel = statusLabels[this.currentSelectedRsvpStatus] || statusLabels.available;
 
@@ -884,6 +840,25 @@
         render() {
             if (window.TeamView) {
                 window.TeamView.render(this.teams);
+            }
+        }
+
+        renderMyTeam() {
+            if (this.teams && this.teams.length > 0) {
+                if (window.TeamView) {
+                    window.TeamView.renderMyTeam(this.teams);
+                }
+            } else if (window.ClubTeamsData && window.ClubTeamsData.length > 0) {
+                this.teams = window.ClubTeamsData;
+                if (window.TeamView) {
+                    window.TeamView.renderMyTeam(this.teams);
+                }
+            } else {
+                this.init().then(() => {
+                    if (window.TeamView) {
+                        window.TeamView.renderMyTeam(this.teams);
+                    }
+                });
             }
         }
 
@@ -1460,22 +1435,18 @@
                                             <div style="font-size: 0.7rem; color: #64748b; text-align: center; padding: 8px;">Cargando detalles del partido...</div>
                                         </div>
 
-                                        <!-- 📊 4 KPI RESUMEN CARDS -->
-                                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px;">
+                                        <!-- 📊 3 KPI RESUMEN CARDS -->
+                                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px;">
                                             <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 14px; padding: 10px 4px; text-align: center;">
-                                                <div style="font-size: 0.52rem; color: #15803d; font-weight: 900; text-transform: uppercase;">🟢 Disponibles</div>
+                                                <div style="font-size: 0.55rem; color: #15803d; font-weight: 900; text-transform: uppercase;">🟢 Pueden Ir</div>
                                                 <div id="convo-kpi-available-${team.id}" style="font-size: 1.4rem; color: #16a34a; font-weight: 950; line-height: 1.1; margin-top: 2px;">0</div>
                                             </div>
-                                            <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 14px; padding: 10px 4px; text-align: center;">
-                                                <div style="font-size: 0.52rem; color: #b45309; font-weight: 900; text-transform: uppercase;">🟡 Restricción</div>
-                                                <div id="convo-kpi-conditional-${team.id}" style="font-size: 1.4rem; color: #d97706; font-weight: 950; line-height: 1.1; margin-top: 2px;">0</div>
-                                            </div>
                                             <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 14px; padding: 10px 4px; text-align: center;">
-                                                <div style="font-size: 0.52rem; color: #b91c1c; font-weight: 900; text-transform: uppercase;">🔴 Bajas</div>
+                                                <div style="font-size: 0.55rem; color: #b91c1c; font-weight: 900; text-transform: uppercase;">🔴 No Pueden</div>
                                                 <div id="convo-kpi-unavailable-${team.id}" style="font-size: 1.4rem; color: #dc2626; font-weight: 950; line-height: 1.1; margin-top: 2px;">0</div>
                                             </div>
                                             <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 10px 4px; text-align: center;">
-                                                <div style="font-size: 0.52rem; color: #64748b; font-weight: 900; text-transform: uppercase;">⚪ Pendientes</div>
+                                                <div style="font-size: 0.55rem; color: #64748b; font-weight: 900; text-transform: uppercase;">⚪ Pendientes</div>
                                                 <div id="convo-kpi-pending-${team.id}" style="font-size: 1.4rem; color: #64748b; font-weight: 950; line-height: 1.1; margin-top: 2px;">0</div>
                                             </div>
                                         </div>
@@ -1505,7 +1476,7 @@
                                                 <i class="fas fa-users" style="color: #0ea5e9; margin-right: 4px;"></i> Respuestas del Roster (${roster.length} jugadores):
                                             </div>
                                             <div style="font-size: 0.52rem; color: #94a3b8; font-weight: 700;">
-                                                Pulsa 🟢 / 🟡 / 🔴 / ⚪ para cambiar manualmente
+                                                Pulsa 🟢 / 🔴 / ⚪ para cambiar manualmente
                                             </div>
                                         </div>
 
@@ -3156,17 +3127,17 @@
                         badgeBg = 'rgba(16, 185, 129, 0.12)';
                         badgeCol = '#16a34a';
                         badgeBorder = 'rgba(16, 185, 129, 0.3)';
-                        badgeLabel = '🟢 Disponible';
-                    } else if (status === 'conditional') {
-                        badgeBg = 'rgba(245, 158, 11, 0.12)';
-                        badgeCol = '#d97706';
-                        badgeBorder = 'rgba(245, 158, 11, 0.3)';
-                        badgeLabel = '🟡 Restricción';
+                        badgeLabel = '🟢 Puede ir';
                     } else if (status === 'unavailable') {
                         badgeBg = 'rgba(239, 68, 68, 0.12)';
                         badgeCol = '#dc2626';
                         badgeBorder = 'rgba(239, 68, 68, 0.3)';
-                        badgeLabel = '🔴 Baja';
+                        badgeLabel = '🔴 No puede ir';
+                    } else if (status === 'conditional') {
+                        badgeBg = 'rgba(245, 158, 11, 0.12)';
+                        badgeCol = '#d97706';
+                        badgeBorder = 'rgba(245, 158, 11, 0.3)';
+                        badgeLabel = '🟡 Condicional';
                     }
 
                     return `
@@ -3188,15 +3159,11 @@
 
                                     <!-- Botones de cambio rápido para capitán -->
                                     <div style="display: flex; gap: 2px; background: #f8fafc; padding: 2px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                                        <button title="Marcar Disponible" onclick="window.TeamController.setPlayerStatusManual('${teamId}', '${player.name}', 'available')" 
+                                        <button title="Marcar Puede Ir" onclick="window.TeamController.setPlayerStatusManual('${teamId}', '${player.name}', 'available')" 
                                                 style="background: ${status === 'available' ? 'rgba(16,185,129,0.25)' : 'transparent'}; border: none; border-radius: 6px; padding: 2px 4px; cursor: pointer; font-size: 0.65rem; line-height: 1;">
                                             🟢
                                         </button>
-                                        <button title="Marcar Condicional / Duda" onclick="window.TeamController.setPlayerStatusManual('${teamId}', '${player.name}', 'conditional')" 
-                                                style="background: ${status === 'conditional' ? 'rgba(245,158,11,0.25)' : 'transparent'}; border: none; border-radius: 6px; padding: 2px 4px; cursor: pointer; font-size: 0.65rem; line-height: 1;">
-                                            🟡
-                                        </button>
-                                        <button title="Marcar Baja" onclick="window.TeamController.setPlayerStatusManual('${teamId}', '${player.name}', 'unavailable')" 
+                                        <button title="Marcar No Puede Ir" onclick="window.TeamController.setPlayerStatusManual('${teamId}', '${player.name}', 'unavailable')" 
                                                 style="background: ${status === 'unavailable' ? 'rgba(239,68,68,0.25)' : 'transparent'}; border: none; border-radius: 6px; padding: 2px 4px; cursor: pointer; font-size: 0.65rem; line-height: 1;">
                                             🔴
                                         </button>

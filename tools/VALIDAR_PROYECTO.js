@@ -3,7 +3,7 @@ const path = require('path');
 
 console.log("🔍 [PROYECTO AMERICANAS] - INICIANDO AUDITORÍA TÉCNICA...\n");
 
-const baseDir = __dirname;
+const baseDir = path.resolve(__dirname, '..');
 let errors = 0;
 let warnings = 0;
 

@@ -85,7 +85,7 @@
                 <button class="ai-action-btn" onclick="window.loadAdminView('events')">CONFIGURAR AHORA</button>`;
             } else if (cmd.includes('ranking') || cmd.includes('quién va ganando')) {
                 response.action = 'SHOW_RANKING';
-                response.message = 'Analizando los puntos de la comunidad... Aquí tienes el <b>Ranking TOP 10</b>.<br><br><button class="ai-action-btn" onclick="window.loadAdminView('ranking')">VER RANKING COMPLETO</button>';
+                response.message = 'Analizando los puntos de la comunidad... Aquí tienes el <b>Ranking TOP 10</b>.<br><br><button class="ai-action-btn" onclick="window.loadAdminView(\'ranking\')">VER RANKING COMPLETO</button>';
             } else if (cmd.includes('baja') || cmd.includes('cancela')) {
                 response.action = 'PREDICT_DROPOUT';
                 response.message = 'Iniciando análisis de probabilidad de asistencia... Detecto 2 posibles bajas por historial de sábados. ¿Quieres avisar a los suplentes?<br><br><button class="ai-action-btn">AVISAR SUPLENTES</button>';

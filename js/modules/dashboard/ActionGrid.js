@@ -103,6 +103,22 @@
                     iconBg: 'rgba(234, 179, 8, 0.12)'
                 },
                 {
+                    id: 'community',
+                    icon: '👥',
+                    title: 'Comunidad',
+                    badge: 'CLUB',
+                    badgeText: 'Equipos & Entrenos',
+                    badgeBg: '#ff5e00',
+                    badgeColor: '#ffffff',
+                    badgeGlow: 'rgba(255, 94, 0, 0.4)',
+                    cardBorder: '1px solid #e2e8f0',
+                    cardBg: '#ffffff',
+                    cardGlow: '0 4px 14px rgba(0,0,0,0.03)',
+                    route: 'comunidad',
+                    color: '#ff5e00',
+                    iconBg: 'rgba(255, 94, 0, 0.12)'
+                },
+                {
                     id: 'profile',
                     icon: '👤',
                     title: 'Mi Perfil',

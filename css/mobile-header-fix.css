@@ -163,10 +163,10 @@
     right: 0;
 }
 
-/* Content Area Fix - Dynamic padding based on header height */
-main#content-area {
+/* Content Area Fix - Now controlled by responsive-global.css per breakpoint */
+/* main#content-area {
     padding-top: 112px !important;
-}
+} */
 
 /* Fix for possible duplicated scrollbars */
 body {
@@ -935,6 +935,52 @@ body {
     cursor: pointer !important;
     box-shadow: 0 4px 12px rgba(204, 255, 0, 0.25) !important;
     flex-shrink: 0 !important;
+}
+
+/* ===== DRAWER TOP BAR: BLINDAJE LOGO & OVERFLOW ===== */
+.drawer-top-bar {
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+}
+
+.drawer-top-brand {
+    flex: 1 !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+}
+
+.drawer-top-brand img {
+    height: 34px !important;
+    width: 34px !important;
+    max-height: 34px !important;
+    max-width: 34px !important;
+    min-height: unset !important;
+    min-width: unset !important;
+    object-fit: cover !important;
+    border-radius: 10px !important;
+    flex-shrink: 0 !important;
+    display: block !important;
+}
+
+.drawer-top-brand-text {
+    min-width: 0 !important;
+    overflow: hidden !important;
+    flex: 1 1 auto !important;
+}
+
+.drawer-top-brand-title {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+.drawer-top-brand-badge {
+    white-space: nowrap !important;
+}
+
+.drawer-top-actions {
+    flex-shrink: 0 !important;
+    margin-left: 8px !important;
 }
 
 /* ==========================================================================

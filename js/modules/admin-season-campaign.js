@@ -139,7 +139,7 @@
                                 <span style="color:#94a3b8; font-size:0.75rem; font-weight:700;">Inscripciones Oficiales SomosPadel BCN</span>
                             </div>
                             <h1 style="margin: 0; font-size: 1.55rem; font-weight: 950; color: #fff; line-height: 1.2;">
-                                INSCRIPCIONES EQUIPOS <span style="color:#CCFF00;">TEMPORADA 2027</span>
+                                INSCRIPCIONES EQUIPOS <span style="color:#CCFF00;">TEMPORADA 27/28</span>
                             </h1>
                             <p style="margin: 6px 0 0; color: #94a3b8; font-size: 0.8rem;">
                                 Convocatoria y selección de plazas para los equipos de competición (Octubre - Noviembre 2027).
@@ -409,6 +409,10 @@
                     </div>
                 </div>
             `;
+
+            if (window.Router && typeof window.Router.attachCommunitySubmenu === 'function') {
+                window.Router.attachCommunitySubmenu('inscriptions');
+            }
         }
 
         _renderTableHtml() {

@@ -125,8 +125,8 @@ function calculateFixedPairsRound(event, existingMatches, roundNum, maxCourts) {
                 const court = Math.floor(i / 2) + 1;
                 matches.push({
                     court: court,
-                    team_a: pairs[i].pair_name || ${pairs[i].player1_name} / ,
-                    team_b: pairs[i + 1].pair_name || ${pairs[i + 1].player1_name} / ,
+                    team_a: pairs[i].pair_name || `${pairs[i].player1_name} / ${pairs[i].player2_name || ''}`,
+                    team_b: pairs[i + 1].pair_name || `${pairs[i + 1].player1_name} / ${pairs[i + 1].player2_name || ''}`,
                     team_a_ids: [pairs[i].player1_id, pairs[i].player2_id],
                     team_b_ids: [pairs[i + 1].player1_id, pairs[i + 1].player2_id],
                     players: [pairs[i].player1_id, pairs[i].player2_id, pairs[i + 1].player1_id, pairs[i + 1].player2_id]
@@ -190,8 +190,8 @@ function calculateRotatingPozoRound(event, existingMatches, roundNum, maxCourts,
             if (p.length === 4) {
                 matches.push({
                     court: c,
-                    team_a: ${p[0].name} / ,
-                    team_b: ${p[1].name} / ,
+                    team_a: `${p[0].name} / ${p[3].name}`,
+                    team_b: `${p[1].name} / ${p[2].name}`,
                     team_a_ids: [p[0].id || p[0].uid, p[3].id || p[3].uid],
                     team_b_ids: [p[1].id || p[1].uid, p[2].id || p[2].uid],
                     players: p.map(x => x.id || x.uid)
@@ -238,8 +238,8 @@ function calculateRotatingPozoRound(event, existingMatches, roundNum, maxCourts,
                 // Cruzar parejas para evitar que repitan juntos
                 matches.push({
                     court: c,
-                    team_a: ${pDocs[0].name} / ,
-                    team_b: ${pDocs[1].name} / ,
+                    team_a: `${pDocs[0].name} / ${pDocs[3].name}`,
+                    team_b: `${pDocs[1].name} / ${pDocs[2].name}`,
                     team_a_ids: [pDocs[0].id || pDocs[0].uid, pDocs[3].id || pDocs[3].uid],
                     team_b_ids: [pDocs[1].id || pDocs[1].uid, pDocs[2].id || pDocs[2].uid],
                     players: pDocs.map(x => x.id || x.uid)
@@ -321,7 +321,7 @@ exports.sendPushNotification = functions.firestore
         const fcmToken = userData ? userData.fcm_token : null;
 
         if (!fcmToken) {
-            console.log(✉️ No FCM token found for user , skipping push.);
+            console.log(`✉️ No FCM token found for user ${userId}, skipping push.`);
             return null;
         }
 
@@ -340,10 +340,10 @@ exports.sendPushNotification = functions.firestore
 
         try {
             const response = await admin.messaging().send(message);
-            console.log(🚀 Push sent successfully to :, response);
+            console.log(`🚀 Push sent successfully to ${userId}:`, response);
             return response;
         } catch (error) {
-            console.error(❌ Error sending push to :, error);
+            console.error(`❌ Error sending push to ${userId}:`, error);
             if (error.code === 'messaging/registration-token-not-registered') {
                 await db.collection('players').doc(userId).update({ fcm_token: admin.firestore.FieldValue.delete() });
             }

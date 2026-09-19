@@ -671,6 +671,15 @@
                 window.navigator.vibrate(15);
             }
 
+            const isAmericanasSection = ['events', 'agenda_americanas', 'help_americanas', 'finished_americanas'].includes(tabName);
+            if (isAmericanasSection && window.SubnavManager) {
+                window.SubnavManager.renderAmericanas(tabName);
+            }
+            const isEntrenosSection = ['entrenos', 'agenda', 'help', 'finished'].includes(tabName);
+            if (isEntrenosSection && window.SubnavManager) {
+                window.SubnavManager.renderCommunity('entrenos');
+            }
+
             // Gestionar polling en segundo plano según la pestaña
             if (tabName === 'events' || tabName === 'entrenos') {
                 this.startAutoRefreshPolling();
@@ -840,29 +849,28 @@
 
             const tabs = isAmericanasSection ? [
                 { id: 'events', label: 'AMERICANAS', icon: 'fa-trophy' },
-                { id: 'agenda_americanas', label: 'AGENDA', icon: 'fa-circle' },
+                { id: 'agenda_americanas', label: 'AGENDA', icon: 'fa-calendar-check' },
                 { id: 'help_americanas', label: 'INFO', icon: 'fa-info-circle' },
                 { id: 'finished_americanas', label: 'FINALIZADAS', icon: 'fa-history' }
-            ] : [
-                { id: 'entrenos', label: 'ENTRENOS', icon: 'fa-user-ninja' },
-                { id: 'agenda', label: 'AGENDA', icon: 'fa-circle' },
-                { id: 'help', label: 'INFO', icon: 'fa-info-circle' },
-                { id: 'finished', label: 'FINALIZADOS', icon: 'fa-history' }
-            ];
+            ] : [];
 
-            const navHtml = `
+            const navHtml = isAmericanasSection ? `
                 <style>
                     .events-submenu-wrapper {
                         position: sticky;
-                        top: 108px;
+                        top: var(--header-actual-height, 96px);
                         z-index: 9500;
-                        background: #0a0e1a;
+                        background: rgba(10, 14, 26, 0.98);
+                        backdrop-filter: blur(16px);
+                        -webkit-backdrop-filter: blur(16px);
                         border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-                        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+                        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
                         display: flex;
                         align-items: center;
-                        padding: 3px 6px 7px;
+                        padding: 6px 12px;
                         gap: 6px;
+                        box-sizing: border-box;
+                        width: 100%;
                     }
                     .events-submenu-pro-bar {
                         display: flex;
@@ -870,73 +878,52 @@
                         overflow-x: auto;
                         -webkit-overflow-scrolling: touch;
                         scroll-behavior: smooth;
-                        overscroll-behavior-x: contain;
                         touch-action: pan-x;
-                        padding: 6px 2px 8px;
-                        scrollbar-width: thin;
-                        scrollbar-color: #CCFF00 rgba(255, 255, 255, 0.08);
+                        padding: 2px 0;
+                        scrollbar-width: none;
                         flex: 1;
-                        cursor: grab;
-                        user-select: none;
-                        -webkit-user-select: none;
                     }
-                    .events-submenu-pro-bar:active {
-                        cursor: grabbing;
-                    }
-                    /* Barra de scroll visual deportiva */
                     .events-submenu-pro-bar::-webkit-scrollbar {
-                        height: 5px;
-                        display: block;
+                        display: none;
                     }
-                    .events-submenu-pro-bar::-webkit-scrollbar-track {
-                        background: rgba(255, 255, 255, 0.06);
-                        border-radius: 6px;
-                        margin: 0 4px;
-                    }
-                    .events-submenu-pro-bar::-webkit-scrollbar-thumb {
-                        background: #CCFF00;
-                        border-radius: 6px;
-                        box-shadow: 0 0 10px rgba(204, 255, 0, 0.6);
+                    @media (max-width: 680px) {
+                        .esm-nav-arrow {
+                            display: none !important;
+                        }
                     }
                     .esm-nav-arrow {
                         background: rgba(15, 23, 42, 0.95);
                         border: 1px solid rgba(255, 255, 255, 0.12);
                         color: #CCFF00;
-                        width: 30px;
-                        height: 38px;
+                        width: 28px;
+                        height: 34px;
                         display: flex;
                         align-items: center;
                         justify-content: center;
                         cursor: pointer;
-                        border-radius: 10px;
+                        border-radius: 8px;
                         flex-shrink: 0;
                         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-                        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-                        z-index: 2;
                         padding: 0;
                     }
                     .esm-nav-arrow:hover {
                         background: #CCFF00;
                         color: #000;
-                        transform: scale(1.08);
-                    }
-                    .esm-nav-arrow:active {
-                        transform: scale(0.9);
+                        transform: scale(1.05);
                     }
                     .esm-pro-btn {
                         flex-shrink: 0;
                         display: flex;
                         align-items: center;
-                        gap: 8px;
-                        padding: 8px 16px;
-                        border-radius: 14px;
+                        gap: 7px;
+                        padding: 7px 14px;
+                        border-radius: 12px;
                         font-size: 0.72rem;
                         font-weight: 900;
-                        letter-spacing: 0.4px;
+                        letter-spacing: 0.3px;
                         white-space: nowrap;
                         cursor: pointer;
-                        transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-                        scroll-snap-align: center;
+                        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
                     }
                     .esm-pro-btn:active {
                         transform: scale(0.96);
@@ -945,21 +932,20 @@
                         background: #CCFF00 !important;
                         color: #000000 !important;
                         border: 1.5px solid #CCFF00 !important;
-                        box-shadow: 0 4px 16px rgba(204, 255, 0, 0.38) !important;
+                        box-shadow: 0 4px 14px rgba(204, 255, 0, 0.35) !important;
                     }
                     .esm-pro-btn.active i {
                         color: #000000 !important;
                     }
                     .esm-pro-btn.inactive {
-                        background: rgba(255, 255, 255, 0.04);
+                        background: rgba(255, 255, 255, 0.05);
                         color: #94a3b8;
                         border: 1.5px solid rgba(255, 255, 255, 0.08);
                     }
                     .esm-pro-btn.inactive:hover {
-                        background: rgba(255, 255, 255, 0.08);
+                        background: rgba(255, 255, 255, 0.09);
                         color: #ffffff;
                     }
-                    /* Estilo y contraste PRO para botones de acción de eventos y entrenos */
                     [id^="event-fab-"] {
                         font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif !important;
                     }
@@ -970,37 +956,37 @@
                 </style>
                 <div class="events-submenu-wrapper">
                     <button id="esm-arrow-left" class="esm-nav-arrow" onclick="window.EventsController.scrollSubmenu('left')" title="Desplazar a la izquierda" aria-label="Desplazar izquierda">
-                        <i class="fas fa-chevron-left" style="font-size: 0.8rem;"></i>
+                        <i class="fas fa-chevron-left" style="font-size: 0.75rem;"></i>
                     </button>
                     <div id="events-submenu-bar" class="events-submenu-pro-bar">
                         ${tabs.map(tab => {
-                    const isActive = this.state.activeTab === tab.id;
-                    return `
-                        <button class="esm-pro-btn ${isActive ? 'active' : 'inactive'}"
-                            onclick="(function(btn){
-                                if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(12);
-                                window.EventsController.setTab('${tab.id}');
-                                try { btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
-                            })(this)"
-                            aria-label="${tab.label}">
-                            <i class="fas ${tab.icon}" style="font-size: 0.85rem; color: ${isActive ? '#000' : '#64748b'};"></i>
-                            <span style="text-transform: uppercase;">${tab.label}</span>
-                        </button>
-                    `;
-                }).join('')}
+                            const isActive = this.state.activeTab === tab.id;
+                            return `
+                                <button class="esm-pro-btn ${isActive ? 'active' : 'inactive'}"
+                                    onclick="(function(btn){
+                                        if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(12);
+                                        window.EventsController.setTab('${tab.id}');
+                                        try { btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
+                                    })(this)"
+                                    aria-label="${tab.label}">
+                                    <i class="fas ${tab.icon}" style="font-size: 0.82rem; color: ${isActive ? '#000' : '#94a3b8'};"></i>
+                                    <span style="text-transform: uppercase;">${tab.label}</span>
+                                </button>
+                            `;
+                        }).join('')}
                         <button class="esm-pro-btn inactive"
                             style="border: 1px solid rgba(204, 255, 0, 0.45); color: #CCFF00; background: rgba(204, 255, 0, 0.08);"
                             onclick="if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(12); window.showPointsPolicyModal ? window.showPointsPolicyModal() : null;"
                             aria-label="Sistema Oficial de Puntos">
-                            <i class="fas fa-balance-scale" style="font-size: 0.85rem; color: #CCFF00;"></i>
+                            <i class="fas fa-balance-scale" style="font-size: 0.82rem; color: #CCFF00;"></i>
                             <span style="text-transform: uppercase; font-weight: 950;">PUNTOS RANKING</span>
                         </button>
                     </div>
                     <button id="esm-arrow-right" class="esm-nav-arrow" onclick="window.EventsController.scrollSubmenu('right')" title="Desplazar a la derecha" aria-label="Desplazar derecha">
-                        <i class="fas fa-chevron-right" style="font-size: 0.8rem;"></i>
+                        <i class="fas fa-chevron-right" style="font-size: 0.75rem;"></i>
                     </button>
                 </div>
-            `;
+            ` : '';
 
             let contentHtml = '';
             if (this.state.loading) {
@@ -1019,7 +1005,96 @@
                 }
             }
 
-            container.innerHTML = `<div class="fade-in">${navHtml}${contentHtml}</div>`;
+            const isEntrenosSection = ['entrenos', 'agenda', 'help', 'finished'].includes(this.state.activeTab);
+            let entrenosSubmenuHtml = '';
+            if (isEntrenosSection) {
+                const entrenosTabs = [
+                    { id: 'entrenos', label: 'ENTRENOS', icon: 'fa-table-tennis' },
+                    { id: 'agenda', label: 'AGENDA', icon: 'fa-calendar-check' },
+                    { id: 'help', label: 'INFO', icon: 'fa-info-circle' },
+                    { id: 'finished', label: 'FINALIZADAS', icon: 'fa-history' }
+                ];
+                entrenosSubmenuHtml = `
+                    <div class="entrenos-subnav-container" style="
+                        width: 100%;
+                        background: #334155;
+                        border-top: 1px solid rgba(255, 255, 255, 0.18);
+                        border-bottom: 1px solid rgba(0, 0, 0, 0.35);
+                        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 4px 18px rgba(0, 0, 0, 0.25);
+                        padding: 6px 8px;
+                        box-sizing: border-box;
+                        margin-bottom: 16px;
+                    ">
+                        <div class="subnav-outer-flex" style="display: flex; align-items: center; max-width: 1200px; margin: 0 auto; gap: 6px;">
+                            <button class="subnav-nav-arrow" onclick="(function(){
+                                const b = document.getElementById('entrenos-tab-bar');
+                                if(b) b.scrollBy({ left: -220, behavior: 'smooth' });
+                            })()" title="Desplazar a la izquierda" aria-label="Desplazar izquierda" style="background: #1e293b; border: 1.5px solid rgba(255, 255, 255, 0.18); color: #CCFF00;">
+                                <i class="fas fa-chevron-left" style="font-size: 0.75rem;"></i>
+                            </button>
+                            <div id="entrenos-tab-bar" class="entrenos-submenu-bar" style="
+                                display: flex;
+                                gap: 8px;
+                                overflow-x: auto;
+                                -webkit-overflow-scrolling: touch;
+                                scroll-behavior: smooth;
+                                touch-action: pan-x;
+                                scrollbar-width: none;
+                                flex: 1;
+                                padding: 4px 4px;
+                                box-sizing: border-box;
+                            ">
+                                ${entrenosTabs.map(tab => {
+                                    const isActive = this.state.activeTab === tab.id;
+                                    return `
+                                        <button class="esm-pro-btn ${isActive ? 'active' : 'inactive'}"
+                                            onclick="(function(btn){
+                                                if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(12);
+                                                window.EventsController.setTab('${tab.id}');
+                                                try { btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
+                                            })(this)"
+                                            style="
+                                                flex-shrink: 0;
+                                                display: flex;
+                                                align-items: center;
+                                                gap: 8px;
+                                                padding: 8px 18px;
+                                                border-radius: 999px;
+                                                font-size: 0.72rem;
+                                                font-weight: 950;
+                                                letter-spacing: 0.3px;
+                                                white-space: nowrap;
+                                                cursor: pointer;
+                                                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                                                ${isActive ? 'background: #CCFF00 !important; color: #000000 !important; border: 1.5px solid #CCFF00 !important; box-shadow: 0 0 16px rgba(204, 255, 0, 0.45) !important;' : 'background: rgba(15, 23, 42, 0.65) !important; color: #f8fafc !important; border: 1.5px solid rgba(255, 255, 255, 0.15) !important;'}
+                                            "
+                                            aria-label="${tab.label}">
+                                            <i class="fas ${tab.icon}" style="font-size: 0.82rem; color: ${isActive ? '#000000' : '#f8fafc'};"></i>
+                                            <span style="text-transform: uppercase;">${tab.label}</span>
+                                        </button>
+                                    `;
+                                }).join('')}
+                            </div>
+                            <button class="subnav-nav-arrow" onclick="(function(){
+                                const b = document.getElementById('entrenos-tab-bar');
+                                if(b) b.scrollBy({ left: 220, behavior: 'smooth' });
+                            })()" title="Desplazar a la derecha" aria-label="Desplazar derecha" style="background: #1e293b; border: 1.5px solid rgba(255, 255, 255, 0.18); color: #CCFF00;">
+                                <i class="fas fa-chevron-right" style="font-size: 0.75rem;"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (isAmericanasSection && window.SubnavManager) {
+                window.SubnavManager.renderAmericanas(this.state.activeTab);
+            } else if (!isAmericanasSection) {
+                if (window.Router && typeof window.Router.attachCommunitySubmenu === 'function') {
+                    window.Router.attachCommunitySubmenu('entrenos');
+                }
+            }
+
+            container.innerHTML = `<div class="fade-in">${entrenosSubmenuHtml}${contentHtml}</div>`;
 
             // TRIGGER ASYNC CONTENT
             this.loadGeoRadarWidget();
@@ -1114,7 +1189,7 @@
         }
 
         initSubmenuScrollInteractions() {
-            const bar = document.getElementById('events-submenu-bar');
+            const bar = document.getElementById('events-submenu-bar') || document.getElementById('entrenos-tab-bar');
             if (!bar || bar._hasScrollInteractions) return;
             bar._hasScrollInteractions = true;
 
