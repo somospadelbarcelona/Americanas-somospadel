@@ -8,21 +8,64 @@
             this.db = this._getCollectionService('americana');
         }
 
-        validateGender(category, userGender) {
-            const cat = (category || 'open').toLowerCase();
-            const g = (userGender || '').toLowerCase();
-            const isChico = g === 'm' || g === 'chico' || g === 'male';
-            const isChica = g === 'f' || g === 'chica' || g === 'female';
+        validateGender(category, userGender, eventName = '') {
+            const rawCat = (category || '').toLowerCase().trim();
+            const rawName = (eventName || '').toLowerCase().trim();
+            const g = (userGender || '').toLowerCase().trim();
 
-            if (cat === 'masculina' && !isChico) {
-                throw new Error("⛔ Categoría MASCULINA: Solo permitida para chicos.");
+            const isChico = ['m', 'chico', 'male', 'masculino', 'hombre', 'boy'].includes(g);
+            const isChica = ['f', 'chica', 'female', 'femenina', 'femenino', 'mujer', 'girl'].includes(g);
+
+            // Determinar tipo de categoría normalizada
+            let catType = 'open';
+            if (
+                ['female', 'femenina', 'femenino', 'chicas', 'mujeres'].includes(rawCat) ||
+                rawCat.includes('fem') ||
+                rawName.includes('femenin') ||
+                rawName.includes('chicas')
+            ) {
+                catType = 'female';
+            } else if (
+                ['mixed', 'mixto', 'mixta'].includes(rawCat) ||
+                rawCat.includes('mix') ||
+                rawName.includes('mixt')
+            ) {
+                catType = 'mixed';
+            } else if (
+                ['male', 'masculino', 'masculina', 'chicos', 'hombres'].includes(rawCat) ||
+                rawCat.includes('masc') ||
+                rawName.includes('masculin') ||
+                rawName.includes('chicos')
+            ) {
+                catType = 'male';
+            } else if (rawCat === 'open' || rawName.includes('open')) {
+                catType = 'open';
+            } else if (rawCat) {
+                // Por defecto masculino si viene indicada categoría estándar
+                catType = 'male';
             }
-            if (cat === 'femenina' && !isChica) {
-                throw new Error("⛔ Categoría FEMENINA: Solo permitida para chicas.");
+
+            // Regla: Chico solo Masculino o Mixto. Chica solo Femenino o Mixto.
+            if (catType === 'male' && !isChico) {
+                if (isChica) {
+                    throw new Error("⛔ Categoría MASCULINA: Este evento es exclusivo para chicos. Como chica, puedes apuntarte a eventos Femeninos o Mixtos.");
+                } else {
+                    throw new Error("⛔ Debes definir tu género (chico/chica) en tu perfil para apuntarte a este evento masculino.");
+                }
             }
-            if (cat === 'mixta' && !isChico && !isChica) {
-                throw new Error("⛔ Categoría MIXTA: Debes definir tu género en el perfil.");
+
+            if (catType === 'female' && !isChica) {
+                if (isChico) {
+                    throw new Error("⛔ Categoría FEMENINA: Este evento es exclusivo para chicas. Como chico, puedes apuntarte a eventos Masculinos o Mixtos.");
+                } else {
+                    throw new Error("⛔ Debes definir tu género (chico/chica) en tu perfil para apuntarte a este evento femenino.");
+                }
             }
+
+            if (catType === 'mixed' && !isChico && !isChica) {
+                throw new Error("⛔ Categoría MIXTA: Debes definir tu género en el perfil antes de inscribirte.");
+            }
+
             return true;
         }
 
@@ -161,7 +204,7 @@
                     throw new Error("El evento se ha llenado hace unos instantes.");
                 }
 
-                this.validateGender(event.category, user.gender);
+                this.validateGender(event.category, user.gender, event.name);
 
                 // 2. PREPARAR DATOS
                 const newPlayerData = {
@@ -300,7 +343,7 @@
 
                     if (waitlist.find(p => (p.uid || p.id) === currentUid)) throw new Error("Ya estás en lista de espera.");
 
-                    this.validateGender(event.category, user.gender);
+                    this.validateGender(event.category, user.gender, event.name);
 
                     waitlist.push({
                         uid: currentUid, id: currentUid,

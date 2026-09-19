@@ -444,6 +444,97 @@
             }
         }
 
+        getNormalizedCategory(evt) {
+            const rawCat = (evt?.category || '').toLowerCase().trim();
+            const rawName = (evt?.name || '').toLowerCase().trim();
+
+            if (
+                ['female', 'femenina', 'femenino', 'chicas', 'mujeres'].includes(rawCat) ||
+                rawCat.includes('fem') ||
+                rawName.includes('femenin') ||
+                rawName.includes('chicas')
+            ) {
+                return 'female';
+            }
+            if (
+                ['mixed', 'mixto', 'mixta'].includes(rawCat) ||
+                rawCat.includes('mix') ||
+                rawName.includes('mixt')
+            ) {
+                return 'mixed';
+            }
+            if (
+                ['male', 'masculino', 'masculina', 'chicos', 'hombres'].includes(rawCat) ||
+                rawCat.includes('masc') ||
+                rawName.includes('masculin') ||
+                rawName.includes('chicos')
+            ) {
+                return 'male';
+            }
+            if (rawCat === 'open' || rawName.includes('open')) {
+                return 'open';
+            }
+            return 'male';
+        }
+
+        checkGenderEligibility(evt, user) {
+            if (!user) {
+                return { eligible: true, isChico: false, isChica: false, catType: 'open' };
+            }
+
+            const isAdmin = user.role === 'admin' || user.role === 'super_admin' || user.role === 'admin_player';
+            const userGender = (user.gender || '').toLowerCase().trim();
+            const isChico = ['m', 'chico', 'male', 'masculino', 'hombre', 'boy'].includes(userGender);
+            const isChica = ['f', 'chica', 'female', 'femenina', 'femenino', 'mujer', 'girl'].includes(userGender);
+
+            const catType = this.getNormalizedCategory(evt);
+
+            if (isAdmin) {
+                return { eligible: true, isChico, isChica, catType, isAdmin: true };
+            }
+
+            if (catType === 'male') {
+                if (!isChico) {
+                    return {
+                        eligible: false,
+                        mismatchCase: 'male',
+                        title: '⛔ CATEGORÍA MASCULINA',
+                        message: isChica
+                            ? 'Este evento es exclusivo para chicos. Como chica, solo puedes jugar en categoría Femenina o Mixta.'
+                            : 'Debes tener definido tu género (chico/chica) en tu perfil para apuntarte a este evento masculino.',
+                        buttonLabel: 'SOLO CHICOS',
+                        isChico, isChica, catType
+                    };
+                }
+            } else if (catType === 'female') {
+                if (!isChica) {
+                    return {
+                        eligible: false,
+                        mismatchCase: 'female',
+                        title: '⛔ CATEGORÍA FEMENINA',
+                        message: isChico
+                            ? 'Este evento es exclusivo para chicas. Como chico, solo puedes jugar en categoría Masculina o Mixta.'
+                            : 'Debes tener definido tu género (chico/chica) en tu perfil para apuntarte a este evento femenino.',
+                        buttonLabel: 'SOLO CHICAS',
+                        isChico, isChica, catType
+                    };
+                }
+            } else if (catType === 'mixed') {
+                if (!isChico && !isChica) {
+                    return {
+                        eligible: false,
+                        mismatchCase: 'mixed_no_gender',
+                        title: '⚠️ GÉNERO NO DEFINIDO',
+                        message: 'Por favor, define tu género en tu perfil antes de inscribirte a este evento mixto.',
+                        buttonLabel: 'DEFINIR GÉNERO',
+                        isChico, isChica, catType
+                    };
+                }
+            }
+
+            return { eligible: true, isChico, isChica, catType };
+        }
+
         getTodayStr() {
             const now = new Date();
             const year = now.getFullYear();
@@ -2144,31 +2235,7 @@
             const priceExt = numExt;
 
             // Category & Format Logic - Robust Category Normalization
-            const rawCat = (evt.category || '').toLowerCase().trim();
-            const rawName = (evt.name || '').toLowerCase();
-
-            let catType = 'male';
-            if (
-                ['female', 'femenina', 'femenino', 'chicas', 'mujeres'].includes(rawCat) ||
-                rawCat.includes('fem') ||
-                rawName.includes('femenin') ||
-                rawName.includes('chicas')
-            ) {
-                catType = 'female';
-            } else if (
-                ['mixed', 'mixto', 'mixta'].includes(rawCat) ||
-                rawCat.includes('mix') ||
-                rawName.includes('mixt')
-            ) {
-                catType = 'mixed';
-            } else if (
-                rawCat.includes('open') ||
-                rawName.includes('open')
-            ) {
-                catType = 'open';
-            } else {
-                catType = 'male';
-            }
+            const catType = this.getNormalizedCategory(evt);
 
             let categoryLabel = 'MASCULINO';
             let categoryIcon = 'fa-mars';
@@ -2227,18 +2294,10 @@
                 timeLabel = `${pad(times.start.getHours())}:${pad(times.start.getMinutes())} - ${pad(times.end.getHours())}:${pad(times.end.getMinutes())}`;
             }
 
-            // Gender Check (Robust normalization with Admin Bypass)
-            const userGender = user ? (user.gender || '').toLowerCase() : '';
-            const isChico = ['m', 'chico', 'male', 'masculino', 'hombre'].includes(userGender);
-            const isChica = ['f', 'chica', 'female', 'femenina', 'femenino', 'mujer'].includes(userGender);
-            let isGenderMismatch = false, mismatchCase = '';
-
-            const isEventMale = catType === 'male';
-            const isEventFemale = catType === 'female';
-
-            const isAdmin = user && (user.role === 'admin' || user.role === 'super_admin' || user.role === 'admin_player');
-            if (isEventMale && !isChico && !isAdmin) { isGenderMismatch = true; mismatchCase = 'male'; }
-            if (isEventFemale && !isChica && !isAdmin) { isGenderMismatch = true; mismatchCase = 'female'; }
+            // Gender Check (Centralized, Strict and Unified)
+            const genderCheck = this.checkGenderEligibility(evt, user);
+            const isGenderMismatch = !genderCheck.eligible;
+            const mismatchCase = genderCheck.mismatchCase;
 
             // Comprobación de Privacidad (Americana Privada con Contraseña)
             const isEventPrivate = (evt.is_private === true || evt.is_private === 'true');
@@ -2267,8 +2326,12 @@
                 btnLabel = 'SOLO AMERICANAS'; btnIcon = 'fa-lock'; btnColor = '#4b5563';
                 fabAction = `window.PremiumModal.alert({ title: '🏆 ACCESO EXCLUSIVO', message: 'Tu perfil de jugador está registrado exclusivamente para Americanas.' })`;
             } else if (isGenderMismatch && !isJoined) {
-                btnLabel = mismatchCase === 'male' ? 'SOLO CHICOS' : 'SOLO CHICAS'; btnIcon = 'fa-lock'; btnColor = '#4b5563';
-                fabAction = `window.PremiumModal.alert({ title: '⚠️ RESTRICCIÓN', message: 'Género no válido.' })`;
+                btnLabel = genderCheck.buttonLabel || (mismatchCase === 'male' ? 'SOLO CHICOS' : 'SOLO CHICAS'); 
+                btnIcon = 'fa-lock'; 
+                btnColor = '#4b5563';
+                const safeTitle = (genderCheck.title || '⚠️ RESTRICCIÓN').replace(/'/g, "\\'");
+                const safeMsg = (genderCheck.message || 'Género no válido.').replace(/'/g, "\\'");
+                fabAction = `window.PremiumModal.alert({ title: '${safeTitle}', message: '${safeMsg}', type: 'warning' })`;
             } else if (isInWaitlist) {
                 btnLabel = `ESPERA (${waitlistPos})`; btnIcon = 'fa-hourglass-half'; btnColor = '#94a3b8';
                 fabAction = `window.EventsController.leaveWaitlist('${evt.id}', '${evt.type || 'americana'}')`;
@@ -2491,27 +2554,27 @@
                                         onclick="event.stopPropagation(); ${fabAction}" 
                                         aria-label="${btnLabel}"
                                         style="
-                                            background: ${isLive ? '#FF2D55' : (isJoined ? '#00E36D' : (isFull ? '#eab308' : '#CCFF00'))} !important;
-                                            color: ${isLive ? '#ffffff' : '#000000'} !important;
+                                            background: ${isLive ? '#FF2D55' : (isJoined ? '#00E36D' : (isGenderMismatch ? 'rgba(255, 255, 255, 0.08)' : (isFull ? '#eab308' : '#CCFF00')))} !important;
+                                            color: ${isLive ? '#ffffff' : (isGenderMismatch ? '#94a3b8' : '#000000')} !important;
+                                            border: ${isGenderMismatch ? '1px solid rgba(255, 255, 255, 0.15)' : 'none'} !important;
                                             padding: 8px 11px;
                                             border-radius: 11px;
                                             font-size: 0.68rem;
                                             font-weight: 950;
-                                            border: none;
                                             cursor: pointer;
                                             text-transform: uppercase;
                                             letter-spacing: 0.3px;
                                             display: flex;
                                             align-items: center;
                                             gap: 4px;
-                                            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+                                            box-shadow: ${isGenderMismatch ? 'none' : '0 2px 10px rgba(0,0,0,0.3)'};
                                             transition: transform 0.15s ease;
                                         "
                                         onmouseover="this.style.transform='scale(1.04)';"
                                         onmouseout="this.style.transform='scale(1)';"
                                 >
-                                    <i id="event-fab-icon-${evt.id}" class="fas ${btnIcon}" style="font-size: 0.65rem; color: ${isLive ? '#ffffff' : '#000000'} !important;"></i>
-                                    <span id="event-fab-label-${evt.id}" style="white-space: nowrap; color: ${isLive ? '#ffffff' : '#000000'} !important;">${btnLabel === 'CLAVE ACCESO 🔒' ? 'CLAVE' : (btnLabel === 'DENTRO' ? 'DENTRO' : (isFull && !isJoined ? 'ESPERA' : 'UNIRME'))}</span>
+                                    <i id="event-fab-icon-${evt.id}" class="fas ${btnIcon}" style="font-size: 0.65rem; color: ${isLive ? '#ffffff' : (isGenderMismatch ? '#94a3b8' : '#000000')} !important;"></i>
+                                    <span id="event-fab-label-${evt.id}" style="white-space: nowrap; color: ${isLive ? '#ffffff' : (isGenderMismatch ? '#94a3b8' : '#000000')} !important;">${isGenderMismatch && !isJoined ? btnLabel : (btnLabel === 'CLAVE ACCESO 🔒' ? 'CLAVE' : (btnLabel === 'DENTRO' ? 'DENTRO' : (isFull && !isJoined ? 'ESPERA' : 'UNIRME')))}</span>
                                 </button>
 
                                 <!-- Chevron Button for Expand -->
@@ -2852,6 +2915,10 @@
                                             ctaBg = '#334155';
                                             ctaTextColor = '#ffffff';
                                             ctaShadow = '0 4px 12px rgba(0, 0, 0, 0.4)';
+                                        } else if (isGenderMismatch && !isJoined) {
+                                            ctaBg = '#1e293b';
+                                            ctaTextColor = '#94a3b8';
+                                            ctaShadow = 'none';
                                         } else if (isFull && !isJoined) {
                                             ctaBg = '#eab308';
                                             ctaTextColor = '#000000';
@@ -4338,6 +4405,17 @@
                 const evt = events.find(e => e.id === id);
                 if (!evt) return;
 
+                // 🛑 Comprobación estricta de género del jugador
+                const genderCheck = this.checkGenderEligibility(evt, this.state.currentUser);
+                if (!genderCheck.eligible) {
+                    window.PremiumModal.alert({
+                        title: genderCheck.title,
+                        message: genderCheck.message,
+                        type: 'warning'
+                    });
+                    return;
+                }
+
                 if (!this.isAmericanaUnlocked(evt)) {
                     this.promptPrivatePassword(id, type, 'join');
                     return;
@@ -4386,6 +4464,24 @@
                                 this.isJoining = false;
                                 return;
                             }
+
+                            // Validar también el género del compañero en eventos masculinos o femeninos
+                            if (genderCheck.catType === 'male' || genderCheck.catType === 'female') {
+                                const partnerFull = allPlayers.find(p => (p.id === selectedPartner.id || p.uid === selectedPartner.id));
+                                if (partnerFull) {
+                                    const partnerGenderCheck = this.checkGenderEligibility(evt, partnerFull);
+                                    if (!partnerGenderCheck.eligible) {
+                                        window.PremiumModal.alert({
+                                            title: "⛔ COMPAÑERO NO VÁLIDO",
+                                            message: `El jugador seleccionado (${selectedPartner.name}) no cumple con la categoría del evento (${genderCheck.catType === 'male' ? 'debe ser chico' : 'debe ser chica'}).`,
+                                            type: 'warning'
+                                        });
+                                        this.isJoining = false;
+                                        return;
+                                    }
+                                }
+                            }
+
                             partnerName = selectedPartner.name;
                             partnerId = selectedPartner.id;
                         } else {
@@ -4500,7 +4596,20 @@
 
                 const events = type === 'entreno' ? this.state.entrenos : this.state.americanas;
                 const evt = events?.find(e => e.id === id);
-                if (evt && !this.isAmericanaUnlocked(evt)) {
+                if (!evt) return;
+
+                // 🛑 Comprobación estricta de género para lista de espera
+                const genderCheck = this.checkGenderEligibility(evt, this.state.currentUser);
+                if (!genderCheck.eligible) {
+                    window.PremiumModal.alert({
+                        title: genderCheck.title,
+                        message: genderCheck.message,
+                        type: 'warning'
+                    });
+                    return;
+                }
+
+                if (!this.isAmericanaUnlocked(evt)) {
                     this.promptPrivatePassword(id, type, 'join');
                     return;
                 }
@@ -6528,6 +6637,10 @@
 
                 const isAmericanasOnlyUser = this.state.currentUser && this.state.currentUser.role === 'player_americanas';
 
+                // Gender Check in smartUpdate
+                const genderCheck = this.checkGenderEligibility(evt, this.state.currentUser);
+                const isGenderMismatch = !genderCheck.eligible;
+
                 if (isCancelled) {
                     btnLabel = 'ANULADO'; btnIcon = 'fa-ban'; btnColor = '#ef4444';
                     cardAction = "window.PremiumModal.alert({ title: '⛔ ANULADO', message: 'Este evento ha sido cancelado por la organización.', type: 'error' })";
@@ -6544,6 +6657,13 @@
                 } else if (isEntreno && isAmericanasOnlyUser && !isJoined) {
                     btnLabel = 'SOLO AMERICANAS'; btnIcon = 'fa-lock'; btnColor = '#4b5563';
                     fabAction = `window.PremiumModal.alert({ title: '🏆 ACCESO EXCLUSIVO', message: 'Tu perfil de jugador está registrado exclusivamente para Americanas.' })`;
+                } else if (isGenderMismatch && !isJoined) {
+                    btnLabel = genderCheck.buttonLabel || (genderCheck.mismatchCase === 'male' ? 'SOLO CHICOS' : 'SOLO CHICAS');
+                    btnIcon = 'fa-lock';
+                    btnColor = '#4b5563';
+                    const safeTitle = (genderCheck.title || '⚠️ RESTRICCIÓN').replace(/'/g, "\\'");
+                    const safeMsg = (genderCheck.message || 'Género no válido.').replace(/'/g, "\\'");
+                    fabAction = `window.PremiumModal.alert({ title: '${safeTitle}', message: '${safeMsg}', type: 'warning' })`;
                 } else if (isInWaitlist) {
                     btnLabel = `ESPERA (${waitlistPos})`; btnIcon = 'fa-hourglass-half'; btnColor = '#94a3b8';
                     fabAction = `window.EventsController.leaveWaitlist('${evt.id}', '${evt.type || 'americana'}')`;
@@ -6608,6 +6728,10 @@
                     ctaBg = '#334155';
                     ctaTextColor = '#ffffff';
                     ctaShadow = '0 6px 18px rgba(0, 0, 0, 0.4)';
+                } else if (isGenderMismatch && !isJoined) {
+                    ctaBg = '#1e293b';
+                    ctaTextColor = '#94a3b8';
+                    ctaShadow = 'none';
                 } else if (isFull && !isJoined) {
                     ctaBg = '#eab308';
                     ctaTextColor = '#000000';
@@ -6620,13 +6744,23 @@
                 }
 
                 if (fab) {
-                    if (fabLabel && fabLabel.innerText !== btnLabel) {
-                        fabLabel.innerText = btnLabel;
+                    const isMinCard = card.classList.contains('card-view-minimized');
+                    let displayLabel = btnLabel;
+                    if (isMinCard) {
+                        displayLabel = isGenderMismatch && !isJoined ? btnLabel : (btnLabel === 'CLAVE ACCESO 🔒' ? 'CLAVE' : (btnLabel === 'DENTRO' ? 'DENTRO' : (isFull && !isJoined ? 'ESPERA' : 'UNIRME')));
+                    }
+                    if (fabLabel && fabLabel.innerText !== displayLabel) {
+                        fabLabel.innerText = displayLabel;
                     }
                     fab.setAttribute('onclick', `event.stopPropagation(); ${fabAction}`);
                     fab.style.setProperty('background', ctaBg, 'important');
                     fab.style.setProperty('color', ctaTextColor, 'important');
                     fab.style.boxShadow = ctaShadow;
+                    if (isGenderMismatch && !isJoined) {
+                        fab.style.border = '1px solid rgba(255, 255, 255, 0.15)';
+                    } else {
+                        fab.style.border = 'none';
+                    }
                     if (fabLabel) {
                         fabLabel.style.setProperty('color', ctaTextColor, 'important');
                         fabLabel.style.fontWeight = '950';

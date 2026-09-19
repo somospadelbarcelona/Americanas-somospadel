@@ -9,10 +9,10 @@ window.ExtractedTeamsData = [
     "captain": "Pendiente",
     "subcaptain": "Pendiente",
     "ranking": 3,
-    "points": 13,
+    "points": 15,
     "stats": {
-      "pj": 9,
-      "pg": 6,
+      "pj": 10,
+      "pg": 7,
       "pp": 1,
       "sf": 0,
       "sc": 0
@@ -195,10 +195,10 @@ window.ExtractedTeamsData = [
         "date": "Diss 19 Set",
         "time": "12:30h",
         "opponent": "PÁDEL PEÑA MALAGA 3G",
-        "score": "Pendiente",
+        "score": "2 - 1",
         "venue": "Canvia Racket Club",
         "isHome": false,
-        "status": "upcoming"
+        "status": "completed"
       },
       {
         "j": 11,
@@ -255,11 +255,11 @@ window.ExtractedTeamsData = [
       {
         "pos": 1,
         "team": "PÁDEL PEÑA MALAGA 3G",
-        "pj": 8,
-        "pg": 5,
-        "pp": 3,
+        "pj": 10,
+        "pg": 6,
+        "pp": 4,
         "df": 0,
-        "pts": 15
+        "pts": 18
       },
       {
         "pos": 2,
@@ -273,21 +273,21 @@ window.ExtractedTeamsData = [
       {
         "pos": 3,
         "team": "SOMOS PÁDEL BCN 3MA",
-        "pj": 9,
-        "pg": 6,
+        "pj": 10,
+        "pg": 7,
         "pp": 1,
         "df": 0,
-        "pts": 13,
+        "pts": 15,
         "isCurrent": true
       },
       {
         "pos": 4,
         "team": "CRAZYXPADEL 3M GRIS",
-        "pj": 9,
-        "pg": 5,
+        "pj": 8,
+        "pg": 4,
         "pp": 4,
         "df": 0,
-        "pts": 15
+        "pts": 13
       },
       {
         "pos": 5,
@@ -547,10 +547,10 @@ window.ExtractedTeamsData = [
         "date": "Diss 19 Set",
         "time": "16:30h",
         "opponent": "CPI B EL CASINO GASTROBAR",
-        "score": "Pendiente",
+        "score": "En juego",
         "venue": "Padel bcn - el prat",
         "isHome": true,
-        "status": "upcoming"
+        "status": "live"
       },
       {
         "j": 11,
@@ -594,13 +594,13 @@ window.ExtractedTeamsData = [
       }
     ],
     "nextMatch": {
-      "j": 10,
-      "date": "Diss 19 Set",
-      "time": "16:30h",
-      "opponent": "CPI B EL CASINO GASTROBAR",
+      "j": 11,
+      "date": "Dium 27 Set",
+      "time": "13:00h",
+      "opponent": "HORIZON PADEL 3M",
       "score": "Pendiente",
-      "venue": "Padel bcn - el prat",
-      "isHome": true,
+      "venue": "Pro padel gavà .",
+      "isHome": false,
       "status": "upcoming"
     },
     "groupStandings": [
@@ -692,9 +692,9 @@ window.ExtractedTeamsData = [
     "ranking": 7,
     "points": 5,
     "stats": {
-      "pj": 10,
+      "pj": 11,
       "pg": 1,
-      "pp": 7,
+      "pp": 8,
       "sf": 0,
       "sc": 0
     },
@@ -896,10 +896,10 @@ window.ExtractedTeamsData = [
         "date": "Diss 19 Set",
         "time": "13:30h",
         "opponent": "PÁDEL OXIGEN 4M",
-        "score": "Pendiente",
+        "score": "0 - 3",
         "venue": "Padel bcn - el prat",
         "isHome": false,
-        "status": "upcoming"
+        "status": "completed"
       },
       {
         "j": 11,
@@ -943,13 +943,13 @@ window.ExtractedTeamsData = [
       }
     ],
     "nextMatch": {
-      "j": 10,
-      "date": "Diss 19 Set",
-      "time": "13:30h",
-      "opponent": "PÁDEL OXIGEN 4M",
+      "j": 11,
+      "date": "Diss 26 Set",
+      "time": "16:30h",
+      "opponent": "PADELAND 4M",
       "score": "Pendiente",
       "venue": "Padel bcn - el prat",
-      "isHome": false,
+      "isHome": true,
       "status": "upcoming"
     },
     "groupStandings": [
@@ -973,21 +973,21 @@ window.ExtractedTeamsData = [
       },
       {
         "pos": 3,
-        "team": "PAPIOL PADEL CLUB 4M",
-        "pj": 8,
-        "pg": 3,
-        "pp": 5,
+        "team": "PÁDEL OXIGEN 4M",
+        "pj": 9,
+        "pg": 5,
+        "pp": 4,
         "df": 0,
-        "pts": 11
+        "pts": 12
       },
       {
         "pos": 4,
-        "team": "PÁDEL OXIGEN 4M",
+        "team": "PAPIOL PADEL CLUB 4M",
         "pj": 7,
-        "pg": 4,
-        "pp": 3,
+        "pg": 3,
+        "pp": 4,
         "df": 0,
-        "pts": 9
+        "pts": 11
       },
       {
         "pos": 5,
@@ -1010,9 +1010,9 @@ window.ExtractedTeamsData = [
       {
         "pos": 7,
         "team": "SOMOS PÁDEL BCN 4M",
-        "pj": 10,
+        "pj": 11,
         "pg": 1,
-        "pp": 7,
+        "pp": 8,
         "df": 0,
         "pts": 5,
         "isCurrent": true
@@ -2092,10 +2092,10 @@ window.ExtractedTeamsData = [
     "captain": "Pendiente",
     "subcaptain": "Pendiente",
     "ranking": 3,
-    "points": 14,
+    "points": 17,
     "stats": {
-      "pj": 9,
-      "pg": 5,
+      "pj": 10,
+      "pg": 6,
       "pp": 4,
       "sf": 0,
       "sc": 0
@@ -2286,10 +2286,10 @@ window.ExtractedTeamsData = [
         "date": "Diss 19 Set",
         "time": "13:30h",
         "opponent": "VALKIRIAS CPV",
-        "score": "Pendiente",
+        "score": "3 - 0",
         "venue": "Padel bcn - el prat",
         "isHome": true,
-        "status": "upcoming"
+        "status": "completed"
       },
       {
         "j": 11,
@@ -2333,13 +2333,13 @@ window.ExtractedTeamsData = [
       }
     ],
     "nextMatch": {
-      "j": 10,
-      "date": "Diss 19 Set",
-      "time": "13:30h",
-      "opponent": "VALKIRIAS CPV",
+      "j": 11,
+      "date": "Dium 27 Set",
+      "time": "13:00h",
+      "opponent": "CRAZYXPADEL 4F LILA",
       "score": "Pendiente",
-      "venue": "Padel bcn - el prat",
-      "isHome": true,
+      "venue": "Aurial pàdel cornellà .",
+      "isHome": false,
       "status": "upcoming"
     },
     "groupStandings": [
@@ -2364,11 +2364,11 @@ window.ExtractedTeamsData = [
       {
         "pos": 3,
         "team": "SOMOS PÁDEL BCN 4FA",
-        "pj": 9,
-        "pg": 5,
+        "pj": 10,
+        "pg": 6,
         "pp": 4,
         "df": 0,
-        "pts": 14,
+        "pts": 17,
         "isCurrent": true
       },
       {
@@ -2401,9 +2401,9 @@ window.ExtractedTeamsData = [
       {
         "pos": 7,
         "team": "VALKIRIAS CPV",
-        "pj": 8,
+        "pj": 9,
         "pg": 2,
-        "pp": 6,
+        "pp": 7,
         "df": 0,
         "pts": 9
       },
@@ -2655,56 +2655,56 @@ window.ExtractedTeamsData = [
       {
         "pos": 1,
         "team": "CPR FEMENI",
-        "pj": 9,
-        "pg": 7,
+        "pj": 10,
+        "pg": 8,
         "pp": 2,
         "df": 0,
-        "pts": 22
+        "pts": 25
       },
       {
         "pos": 2,
         "team": "PÁDEL OXIGEN 2FA",
-        "pj": 8,
-        "pg": 7,
+        "pj": 9,
+        "pg": 8,
         "pp": 1,
         "df": 0,
-        "pts": 19
+        "pts": 21
       },
       {
         "pos": 3,
         "team": "PANTERES GROGUES",
-        "pj": 8,
+        "pj": 9,
         "pg": 5,
-        "pp": 3,
+        "pp": 4,
         "df": 0,
-        "pts": 14
+        "pts": 15
       },
       {
         "pos": 4,
         "team": "GALAS DELFOS 2FA",
-        "pj": 8,
+        "pj": 9,
         "pg": 6,
-        "pp": 2,
+        "pp": 3,
         "df": 0,
         "pts": 14
       },
       {
         "pos": 5,
         "team": "BCN PRO PADEL ACADEMY 2FA",
-        "pj": 9,
+        "pj": 10,
         "pg": 4,
-        "pp": 5,
+        "pp": 6,
         "df": 0,
-        "pts": 10
+        "pts": 11
       },
       {
         "pos": 6,
         "team": "CLUB PADEL VILANOVA C",
-        "pj": 7,
-        "pg": 3,
+        "pj": 8,
+        "pg": 4,
         "pp": 4,
         "df": 0,
-        "pts": 10
+        "pts": 12
       },
       {
         "pos": 7,
