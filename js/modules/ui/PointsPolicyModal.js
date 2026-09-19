@@ -37,6 +37,13 @@
         }
 
         static open() {
+            const currentUser = window.Store?.getState('currentUser') || 
+                (() => {
+                    try { return JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch (e) { return {}; }
+                })();
+            const userRole = (currentUser?.role || '').toLowerCase();
+            const isAdmin = ['super_admin', 'superadmin', 'admin', 'admin_player'].includes(userRole);
+
             let overlay = document.getElementById('sp-points-policy-overlay');
             if (overlay) {
                 overlay.remove();
@@ -442,10 +449,34 @@
                         border-top: 1px solid rgba(255, 255, 255, 0.08);
                         background: rgba(15, 23, 42, 0.7);
                         display: flex;
-                        justify-content: flex-end;
+                        gap: 10px;
+                        flex-wrap: wrap;
+                        justify-content: ${isAdmin ? 'space-between' : 'flex-end'};
                     ">
+                        ${isAdmin ? `
+                        <button onclick="if (window.recalculateGlobalRanking) { window.recalculateGlobalRanking(); if (window.NotificationService) window.NotificationService.showToast('Recalculando todo el histórico de entrenos y americanas...', 'success'); } window.PointsPolicyModal.close();" style="
+                            flex: 1;
+                            min-width: 180px;
+                            padding: 12px 16px;
+                            background: rgba(255, 255, 255, 0.06);
+                            color: #CCFF00;
+                            border: 1.5px solid rgba(204, 255, 0, 0.4);
+                            border-radius: 14px;
+                            font-weight: 950;
+                            font-size: 0.82rem;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 8px;
+                            transition: all 0.2s;
+                        " onmouseover="this.style.background='rgba(204, 255, 0, 0.15)';" onmouseout="this.style.background='rgba(255, 255, 255, 0.06)';">
+                            <i class="fas fa-sync-alt"></i>
+                            <span>RECALCULAR HISTÓRICO (ADMIN)</span>
+                        </button>
+                        ` : ''}
                         <button onclick="window.PointsPolicyModal.close()" style="
-                            width: 100%;
+                            ${isAdmin ? 'flex: 1; min-width: 180px;' : 'width: 100%;'}
                             padding: 12px 20px;
                             background: #CCFF00;
                             color: #000000;

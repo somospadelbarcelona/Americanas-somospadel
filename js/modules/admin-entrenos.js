@@ -438,6 +438,13 @@ function renderEntrenoCard(e) {
                     ` : ''}
 
                     <button class="btn-micro" 
+                            style="background: #a855f7 !important; color: #fff !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
+                            onclick="window.openManualRoundModal('${e.id}', 'entreno', 1)" 
+                            title="Definir Ronda Manual (Admin/Superadmin)">
+                        <i class="fas fa-sliders" style="font-size: 0.85rem; color: #fff !important;"></i>
+                    </button>
+
+                    <button class="btn-micro" 
                             style="background: #25D366 !important; color: #fff !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
                             onclick="window.launchWhatsAppShareEntreno('${e.id}')"
                             title="WhatsApp">

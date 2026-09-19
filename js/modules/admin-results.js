@@ -361,6 +361,19 @@ function renderResultsFrame(container, activeEvent, allEvents) {
                             </div>
                         </div>
 
+                        <!-- BOTÓN RONDA MANUAL (ADMIN / SUPERADMIN) -->
+                        <button onclick="window.Actions.openManualRoundModal()"
+                            style="height: 38px; padding: 0 14px; border-radius: 10px;
+                                   font-weight: 800; font-size: 0.75rem; letter-spacing: 0.3px;
+                                   border: 1px solid rgba(168, 85, 247, 0.4); cursor: pointer;
+                                   background: rgba(168, 85, 247, 0.15);
+                                   color: #d8b4fe; display: flex; align-items: center; gap: 6px; transition: all 0.25s;"
+                            onmouseover="this.style.background='rgba(168, 85, 247, 0.28)'; this.style.borderColor='rgba(168, 85, 247, 0.7)';"
+                            onmouseout="this.style.background='rgba(168, 85, 247, 0.15)'; this.style.borderColor='rgba(168, 85, 247, 0.4)';"
+                            title="Definir o editar manualmente los partidos y pistas de esta ronda (Admin/Superadmin)">
+                            <i class="fas fa-sliders"></i> ✍️ Ronda Manual
+                        </button>
+
                         <!-- ROND+1: Botón Principal Neón (Azul/Cian brillante) -->
                         <button onclick="window.Actions.generateRound()"
                             style="height: 38px; padding: 0 18px; border-radius: 10px;
@@ -547,9 +560,13 @@ async function renderMatchesGrid(eventId, type, round) {
                 <div id="admin-next-round-prompt" class="glass-card-enterprise animate-pop-in" style="grid-column: 1 / -1; margin-top: 2rem; padding: 2.5rem; border: 2px solid var(--primary); text-align: center; background: rgba(204,255,0,0.05);">
                     <h2 style="color: var(--primary); margin: 0 0 10px 0; font-weight: 900;">🎯 RONDA ${round} COMPLETADA</h2>
                     <p style="color: rgba(255,255,255,0.7); margin-bottom: 2rem;">Todos los partidos de esta ronda han finalizado. ¿Deseas generar la siguiente ronda ahora?</p>
-                    <div style="display: flex; gap: 1rem; justify-content: center;">
-                        <button onclick="window.Actions.generateRound(${round + 1})" class="btn-primary-pro" style="padding: 15px 40px; font-size: 1.1rem;">
-                            🚀 GENERAR RONDA ${round + 1}
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <button onclick="window.Actions.generateRound(${round + 1})" class="btn-primary-pro" style="padding: 14px 32px; font-size: 1rem;">
+                            🚀 GENERAR RONDA ${round + 1} (AUTO)
+                        </button>
+                        <button onclick="window.Actions.openManualRoundForRound(${round + 1})" class="btn-outline-pro" 
+                            style="padding: 14px 28px; font-size: 1rem; border-color: #a855f7; color: #d8b4fe; background: rgba(168, 85, 247, 0.12); cursor: pointer;">
+                            <i class="fas fa-sliders"></i> ✍️ DEFINIR RONDA ${round + 1} A MANO
                         </button>
                     </div>
                 </div>
@@ -804,6 +821,27 @@ function renderStandingsInternal(matches) {
 
 // --- ACTIONS EXPOSED TO WINDOW ---
 window.Actions = {
+    openManualRoundModal() {
+        const evt = window.AdminController.activeEvent;
+        const currentR = window.AdminController.currentRound || 1;
+        if (!evt) return alert("No hay evento activo seleccionado.");
+        if (window.openManualRoundModal) {
+            window.openManualRoundModal(evt.id, evt.type, currentR);
+        } else {
+            alert("Módulo ManualRoundModal no disponible.");
+        }
+    },
+
+    openManualRoundForRound(targetRound) {
+        const evt = window.AdminController.activeEvent;
+        if (!evt) return alert("No hay evento activo seleccionado.");
+        if (window.openManualRoundModal) {
+            window.openManualRoundModal(evt.id, evt.type, targetRound);
+        } else {
+            alert("Módulo ManualRoundModal no disponible.");
+        }
+    },
+
     async purgeFutureRoundsFromUI() {
         const evt = window.AdminController.activeEvent;
         const round = window.AdminController.currentRound;

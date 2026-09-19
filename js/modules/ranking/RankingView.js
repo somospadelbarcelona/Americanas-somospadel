@@ -5,7 +5,11 @@
 (function () {
     class RankingView {
         constructor() {
-            this.currentView = 'entrenos'; // americanas | entrenos
+            let savedView = 'entrenos';
+            try {
+                savedView = localStorage.getItem('sp_dashboard_ranking_mode') || 'entrenos';
+            } catch (e) {}
+            this.currentView = savedView; // americanas | entrenos
             this.currentCategory = 'todas'; // todas | male | female | mixed
             this.playersData = [];
             this.isSearching = false;
@@ -60,6 +64,17 @@
             // 0. Process data for current view/category
             const rankedData = this.getProcessedData();
 
+            // Activity counts for each modality
+            const countAmericanas = (this.playersData || []).filter(p => {
+                const s = p.stats?.americanas;
+                return s && ((s.played || 0) + (s.points || 0) > 0);
+            }).length;
+
+            const countEntrenos = (this.playersData || []).filter(p => {
+                const s = p.stats?.entrenos;
+                return s && ((s.played || 0) + (s.points || 0) > 0);
+            }).length;
+
             container.innerHTML = `
                 <div class="ranking-global-wrapper fade-in" style="
                     background: #f8fafc;
@@ -75,10 +90,10 @@
                     <div style="position: absolute; top: 200px; right: -100px; width: 400px; height: 400px; background: radial-gradient(circle, rgba(59, 130, 246, 0.05) 0%, transparent 70%); pointer-events: none;"></div>
                     
                     <!-- 1. PREMIUM HEADER -->
-                    <div style="padding: 35px 25px 20px; position: relative; z-index: 5;">
+                    <div style="padding: clamp(20px, 5vw, 35px) clamp(16px, 4vw, 25px) 20px; position: relative; z-index: 5;">
                         <div style="position: absolute; top: -10px; right: -10px; font-size: 8rem; color: rgba(0, 0, 0, 0.02); font-weight: 950; transform: rotate(-5deg); pointer-events: none;">RANK</div>
                         
-                        <div style="display: flex; justify-content: space-between; align-items: center; position: relative;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; position: relative; margin-bottom: 20px;">
                             <div>
                                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">
                                     <div style="width: 10px; height: 10px; border-radius: 2px; background: #65a30d; box-shadow: 0 0 10px rgba(101, 163, 13, 0.4);"></div>
@@ -106,10 +121,156 @@
                             </div>
                             `}
                         </div>
+
+                        <!-- 🎛️ SELECTOR PRINCIPAL DE MODALIDAD (EVOLUCIONADO — ARRIBA DEL TODO) -->
+                        <div id="ranking-top-mode-selector" style="
+                            background: #e2e8f0; 
+                            padding: 5px; 
+                            border-radius: 20px; 
+                            display: flex; 
+                            border: 1.5px solid #cbd5e1; 
+                            gap: 6px; 
+                            box-shadow: inset 0 2px 4px rgba(0,0,0,0.04), 0 4px 16px rgba(15, 23, 42, 0.05);
+                        ">
+                            <button type="button" onclick="window.RankingView.switchView('americanas')" 
+                                style="
+                                    flex: 1; 
+                                    padding: 12px 14px; 
+                                    border-radius: 16px; 
+                                    border: none; 
+                                    font-weight: 950; 
+                                    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); 
+                                    cursor: pointer; 
+                                    background: ${this.currentView === 'americanas' ? '#0f172a' : 'transparent'}; 
+                                    color: ${this.currentView === 'americanas' ? '#ccff00' : '#475569'}; 
+                                    text-transform: uppercase; 
+                                    font-size: clamp(0.72rem, 2.3vw, 0.8rem); 
+                                    letter-spacing: 0.8px; 
+                                    display: flex; 
+                                    align-items: center; 
+                                    justify-content: center; 
+                                    gap: 8px;
+                                    box-shadow: ${this.currentView === 'americanas' ? '0 4px 14px rgba(15, 23, 42, 0.28)' : 'none'};
+                                "
+                                onmouseover="if('${this.currentView}' !== 'americanas') { this.style.color='#0f172a'; this.style.background='rgba(255,255,255,0.4)'; }"
+                                onmouseout="if('${this.currentView}' !== 'americanas') { this.style.color='#475569'; this.style.background='transparent'; }"
+                            >
+                                <i class="fas fa-trophy" style="font-size: 0.85rem; ${this.currentView === 'americanas' ? 'color: #ccff00;' : 'color: #94a3b8;'}"></i> 
+                                AMERICANAS
+                                <span style="
+                                    font-size: 0.65rem; 
+                                    padding: 2px 8px; 
+                                    border-radius: 10px; 
+                                    font-weight: 900; 
+                                    background: ${this.currentView === 'americanas' ? 'rgba(204, 255, 0, 0.2)' : 'rgba(148, 163, 184, 0.25)'}; 
+                                    color: ${this.currentView === 'americanas' ? '#ccff00' : '#64748b'};
+                                    border: ${this.currentView === 'americanas' ? '1px solid rgba(204, 255, 0, 0.4)' : '1px solid rgba(148, 163, 184, 0.3)'};
+                                ">${countAmericanas}</span>
+                            </button>
+
+                            <button type="button" onclick="window.RankingView.switchView('entrenos')" 
+                                style="
+                                    flex: 1; 
+                                    padding: 12px 14px; 
+                                    border-radius: 16px; 
+                                    border: none; 
+                                    font-weight: 950; 
+                                    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); 
+                                    cursor: pointer; 
+                                    background: ${this.currentView === 'entrenos' ? '#0f172a' : 'transparent'}; 
+                                    color: ${this.currentView === 'entrenos' ? '#ccff00' : '#475569'}; 
+                                    text-transform: uppercase; 
+                                    font-size: clamp(0.72rem, 2.3vw, 0.8rem); 
+                                    letter-spacing: 0.8px; 
+                                    display: flex; 
+                                    align-items: center; 
+                                    justify-content: center; 
+                                    gap: 8px;
+                                    box-shadow: ${this.currentView === 'entrenos' ? '0 4px 14px rgba(15, 23, 42, 0.28)' : 'none'};
+                                    opacity: ${isAmericanasOnly ? '0.75' : '1'};
+                                "
+                                onmouseover="if('${this.currentView}' !== 'entrenos') { this.style.color='#0f172a'; this.style.background='rgba(255,255,255,0.4)'; }"
+                                onmouseout="if('${this.currentView}' !== 'entrenos') { this.style.color='#475569'; this.style.background='transparent'; }"
+                            >
+                                <i class="fas fa-dumbbell" style="font-size: 0.85rem; ${this.currentView === 'entrenos' ? 'color: #ccff00;' : 'color: #94a3b8;'}"></i> 
+                                ENTRENOS
+                                <span style="
+                                    font-size: 0.65rem; 
+                                    padding: 2px 8px; 
+                                    border-radius: 10px; 
+                                    font-weight: 900; 
+                                    background: ${this.currentView === 'entrenos' ? 'rgba(204, 255, 0, 0.2)' : 'rgba(148, 163, 184, 0.25)'}; 
+                                    color: ${this.currentView === 'entrenos' ? '#ccff00' : '#64748b'};
+                                    border: ${this.currentView === 'entrenos' ? '1px solid rgba(204, 255, 0, 0.4)' : '1px solid rgba(148, 163, 184, 0.3)'};
+                                ">${countEntrenos}</span>
+                                ${isAmericanasOnly ? '<i class="fas fa-lock" style="color: #f59e0b; font-size: 0.68rem; margin-left: 2px;" title="Exclusivo SomosPadel"></i>' : ''}
+                            </button>
+                        </div>
+
+                        <!-- 💡 TARJETA DE CONTEXTO ACTIVO (EVOLUCIÓN VISUAL INFORMATIVA) -->
+                        <div style="
+                            display: flex; 
+                            align-items: center; 
+                            justify-content: space-between; 
+                            background: #ffffff; 
+                            border: 1.5px solid #e2e8f0; 
+                            border-radius: 16px; 
+                            padding: 10px 16px; 
+                            margin-top: 10px;
+                            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+                        ">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="
+                                    width: 32px; 
+                                    height: 32px; 
+                                    border-radius: 10px; 
+                                    background: ${this.currentView === 'americanas' ? 'rgba(245, 158, 11, 0.12)' : 'rgba(132, 204, 22, 0.15)'}; 
+                                    color: ${this.currentView === 'americanas' ? '#d97706' : '#4d7c0f'}; 
+                                    display: flex; 
+                                    align-items: center; 
+                                    justify-content: center; 
+                                    font-size: 0.9rem;
+                                ">
+                                    <i class="fas ${this.currentView === 'americanas' ? 'fa-trophy' : 'fa-dumbbell'}"></i>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.74rem; font-weight: 950; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">
+                                        Ranking Oficial de ${this.currentView === 'americanas' ? 'Americanas' : 'Entrenamientos'}
+                                    </div>
+                                    <div style="font-size: 0.65rem; color: #64748b; font-weight: 700;">
+                                        ${this.currentView === 'americanas' 
+                                            ? `Puntos acumulados en Americanas • ${rankedData.length} jugadores clasificados` 
+                                            : `Puntos de Entrenos Oficiales • ${rankedData.length} jugadores clasificados`}
+                                    </div>
+                                </div>
+                            </div>
+                            <span style="
+                                display: inline-flex; 
+                                align-items: center; 
+                                gap: 5px; 
+                                font-size: 0.62rem; 
+                                font-weight: 900; 
+                                color: #047857; 
+                                background: #ecfdf5; 
+                                border: 1px solid #a7f3d0; 
+                                padding: 3px 8px; 
+                                border-radius: 8px; 
+                                text-transform: uppercase;
+                                letter-spacing: 0.5px;
+                            ">
+                                <span style="width: 6px; height: 6px; border-radius: 50%; background: #10b981; display: inline-block; box-shadow: 0 0 6px #10b981;"></span>
+                                EN PANTALLA
+                            </span>
+                        </div>
                     </div>
 
                     <!-- 2. OLYMPIC PODIUM (Top 3 Visual) -->
                     <div id="ranking-podium-root" style="position: relative; z-index: 4;">
+                        <div style="text-align: center; margin-bottom: 4px;">
+                            <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.68rem; font-weight: 950; letter-spacing: 1.2px; text-transform: uppercase; color: #475569; background: #ffffff; padding: 4px 14px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+                                👑 TOP 3 PODIO • ${this.currentView === 'americanas' ? 'AMERICANAS' : 'ENTRENOS'}
+                            </span>
+                        </div>
                         ${this.renderPodium(rankedData)}
                     </div>
 
@@ -173,7 +334,7 @@
 
                     return `
                                         <div style="text-align: left; border-right: 1px solid #e2e8f0; padding-right: 15px;">
-                                            <div style="font-size: 0.6rem; color: #64748b; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">POSICIÓN ACTUAL</div>
+                                            <div style="font-size: 0.6rem; color: #64748b; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">POSICIÓN ACTUAL (${this.currentView.toUpperCase()})</div>
                                             <div style="font-size: 2rem; font-weight: 950; color: #0a192f; line-height: 1.2;">#${pos}</div>
                                             <div style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.65rem; color: #047857; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 2px 7px; border-radius: 6px; font-weight: 900; margin-top: 4px; letter-spacing: 0.3px;">
                                                 <i class="fas fa-chart-line" style="font-size: 0.6rem; color: #059669;"></i> TOP ${(pos / rankedData.length * 100).toFixed(0)}% EN ${this.currentCategory.toUpperCase()}
@@ -200,15 +361,15 @@
                     <!-- STICKY HEADER: TABS + SEARCH -->
                     <div style="position: sticky; top: clamp(64px, 10vw, 85px); z-index: 1001; background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 12px clamp(12px, 3.5vw, 25px) 16px;">
                         
-                        <!-- Navigation Tabs (AMERICANAS / ENTRENOS) -->
-                        <div style="background: #e2e8f0; padding: 4px; border-radius: 18px; display: flex; border: 1px solid #cbd5e1; margin-bottom: 14px; gap: 4px;">
+                        <!-- Navigation Tabs (AMERICANAS / ENTRENOS) Sincronizadas -->
+                        <div style="background: #e2e8f0; padding: 4px; border-radius: 16px; display: flex; border: 1px solid #cbd5e1; margin-bottom: 14px; gap: 4px;">
                             <button onclick="window.RankingView.switchView('americanas')" 
-                                 style="flex: 1; padding: 11px; border-radius: 14px; border: none; font-weight: 950; transition: all 0.25s ease; cursor: pointer; background: ${this.currentView === 'americanas' ? '#0f172a' : 'transparent'}; color: ${this.currentView === 'americanas' ? '#ccff00' : '#475569'}; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 1px; box-shadow: ${this.currentView === 'americanas' ? '0 4px 12px rgba(15, 23, 42, 0.2)' : 'none'};">
-                                <i class="fas fa-trophy" style="margin-right: 5px; font-size: 0.7rem; ${this.currentView === 'americanas' ? 'color: #ccff00;' : 'color: #94a3b8;'}"></i> AMERICANAS
+                                 style="flex: 1; padding: 10px; border-radius: 12px; border: none; font-weight: 950; transition: all 0.25s ease; cursor: pointer; background: ${this.currentView === 'americanas' ? '#0f172a' : 'transparent'}; color: ${this.currentView === 'americanas' ? '#ccff00' : '#475569'}; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.8px; box-shadow: ${this.currentView === 'americanas' ? '0 4px 12px rgba(15, 23, 42, 0.2)' : 'none'};">
+                                <i class="fas fa-trophy" style="margin-right: 5px; font-size: 0.7rem; ${this.currentView === 'americanas' ? 'color: #ccff00;' : 'color: #94a3b8;'}"></i> AMERICANAS (${countAmericanas})
                             </button>
                             <button onclick="window.RankingView.switchView('entrenos')" 
-                                style="flex: 1; padding: 11px; border-radius: 14px; border: none; font-weight: 950; transition: all 0.25s ease; cursor: pointer; background: ${this.currentView === 'entrenos' ? '#0f172a' : 'transparent'}; color: ${this.currentView === 'entrenos' ? '#ccff00' : '#475569'}; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 1px; box-shadow: ${this.currentView === 'entrenos' ? '0 4px 12px rgba(15, 23, 42, 0.2)' : 'none'}; opacity: ${isAmericanasOnly ? '0.85' : '1'};">
-                                <i class="fas fa-dumbbell" style="margin-right: 5px; font-size: 0.7rem; ${this.currentView === 'entrenos' ? 'color: #ccff00;' : 'color: #94a3b8;'}"></i> ENTRENOS ${isAmericanasOnly ? '<i class="fas fa-lock" style="color: #f59e0b; font-size: 0.65rem; margin-left: 4px;" title="Exclusivo SomosPadel"></i>' : ''}
+                                style="flex: 1; padding: 10px; border-radius: 12px; border: none; font-weight: 950; transition: all 0.25s ease; cursor: pointer; background: ${this.currentView === 'entrenos' ? '#0f172a' : 'transparent'}; color: ${this.currentView === 'entrenos' ? '#ccff00' : '#475569'}; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.8px; box-shadow: ${this.currentView === 'entrenos' ? '0 4px 12px rgba(15, 23, 42, 0.2)' : 'none'}; opacity: ${isAmericanasOnly ? '0.85' : '1'};">
+                                <i class="fas fa-dumbbell" style="margin-right: 5px; font-size: 0.7rem; ${this.currentView === 'entrenos' ? 'color: #ccff00;' : 'color: #94a3b8;'}"></i> ENTRENOS (${countEntrenos}) ${isAmericanasOnly ? '<i class="fas fa-lock" style="color: #f59e0b; font-size: 0.65rem; margin-left: 4px;" title="Exclusivo SomosPadel"></i>' : ''}
                             </button>
                         </div>
 
@@ -643,15 +804,18 @@
         getProcessedData() {
             if (!this.playersData) return [];
 
-            // 1. Initial Filter (Played at least 1 match in this view)
+            // 1. Initial Filter (Played at least 1 match or has points in this view)
             let filtered = this.playersData.filter(p => {
-                const s = p.stats[this.currentView];
-                if (!s || s.played === 0) return false;
+                const s = p.stats ? p.stats[this.currentView] : null;
+                if (!s) return false;
+                const totalActivity = (s.played || 0) + (s.points || 0);
+                if (totalActivity === 0) return false;
 
                 // Category Filter
                 if (this.currentCategory !== 'todas') {
-                    const hasCat = s.categories && s.categories[this.currentCategory] && s.categories[this.currentCategory].played > 0;
-                    return hasCat;
+                    const catObj = s.categories ? s.categories[this.currentCategory] : null;
+                    const catActivity = catObj ? ((catObj.played || 0) + (catObj.points || 0)) : 0;
+                    return catActivity > 0;
                 }
                 return true;
             });
@@ -801,6 +965,7 @@
         }
 
         switchView(view) {
+            try { window.PlayerView?.haptic?.(25); } catch (e) {}
             const currentUser = window.Store?.getState('currentUser') || 
                 (() => {
                     try { return JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch (e) { return {}; }
@@ -818,6 +983,8 @@
                 return;
             }
             this.currentView = view;
+            try { localStorage.setItem('sp_dashboard_ranking_mode', view); } catch (e) {}
+            window._dashboardRankingMode = view;
             this.render(this.playersData);
         }
 

@@ -144,6 +144,9 @@
                 : key;
 
             this._ensurePlayer(stats, key, displayName);
+            if (!stats[key].playerIds && sortedIds.length > 0) {
+                stats[key].playerIds = sortedIds;
+            }
             
             // 🛡️ PER-PAIR ROUND DEDUPLICATION
             if (!stats[key]._seenRounds) stats[key]._seenRounds = new Set();

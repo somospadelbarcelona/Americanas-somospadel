@@ -201,6 +201,7 @@
             }
 
             console.log(`[Router] Transitioning: ${this.currentRoute} -> ${route} (force: ${force})`);
+            this.currentRoute = route;
 
             // === MEMORY & RESOURCE CLEANUP ===
             this.cleanupPreviousRoute(route);

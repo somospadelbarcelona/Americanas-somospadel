@@ -568,6 +568,88 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
 
                 console.log(`✅ Substitution complete. Updated ${updatesCount} matches in ${winningCollection}.`);
                 return updatesCount;
+            },
+
+            /**
+             * Guardar una ronda definida manualmente por ADMIN o SUPERADMIN.
+             */
+            async saveManualRound(eventId, eventType, roundNum, matchesData, restingPlayers = []) {
+                console.log(`✍️ MatchMakingService: Guardando ronda manual ${roundNum} para ${eventType} ${eventId}...`);
+                
+                // 1. Validar permisos de administrador
+                const user = window.AdminAuth?.user || 
+                    (window.AuthService?.getCurrentUser && window.AuthService.getCurrentUser()) ||
+                    JSON.parse(localStorage.getItem('adminUser') || localStorage.getItem('currentUser') || 'null');
+                const role = (user?.role || '').toLowerCase().trim();
+                const isAuthorized = ['super_admin', 'superadmin', 'admin', 'admin_player'].includes(role);
+                
+                if (!isAuthorized) {
+                    throw new Error("Acceso denegado: Solo ADMIN y SUPERADMIN pueden definir rondas manuales.");
+                }
+
+                const colName = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
+                const dbCol = window.db.collection(colName);
+                const rNum = parseInt(roundNum);
+
+                // 2. Eliminar partidos existentes no terminados para esta ronda
+                const snap = await dbCol.where('americana_id', '==', eventId).where('round', '==', rNum).get();
+                const batch = window.db.batch();
+
+                snap.docs.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+
+                // 3. Crear los nuevos partidos definidos manualmente
+                matchesData.forEach(m => {
+                    const newDocRef = dbCol.doc();
+                    const payload = {
+                        ...m,
+                        americana_id: eventId,
+                        round: rNum,
+                        court: parseInt(m.court),
+                        status: 'scheduled',
+                        score_a: 0,
+                        score_b: 0,
+                        is_manual: true,
+                        createdAt: new Date().toISOString()
+                    };
+                    batch.set(newDocRef, payload);
+                });
+
+                // 4. Actualizar el evento
+                const eventCol = (eventType === 'entreno') ? window.FirebaseDB?.entrenos : window.FirebaseDB?.americanas;
+                if (eventCol) {
+                    const eventDoc = await eventCol.getById(eventId);
+                    const updates = {};
+
+                    // Si estaba en 'open' o 'pairing', pasar a 'live'
+                    if (eventDoc && (eventDoc.status === 'open' || eventDoc.status === 'pairing')) {
+                        updates.status = 'live';
+                    }
+
+                    // Actualizar current_court en los jugadores del evento
+                    if (eventDoc && eventDoc.players) {
+                        const updatedPlayers = eventDoc.players.map(p => {
+                            const match = matchesData.find(m => 
+                                (m.team_a_ids || []).includes(p.id) || (m.team_b_ids || []).includes(p.id)
+                            );
+                            if (match) {
+                                return { ...p, current_court: parseInt(match.court) };
+                            } else {
+                                return { ...p, current_court: null };
+                            }
+                        });
+                        updates.players = updatedPlayers;
+                    }
+
+                    if (Object.keys(updates).length > 0) {
+                        await eventCol.update(eventId, updates);
+                    }
+                }
+
+                await batch.commit();
+                console.log(`✅ Ronda manual ${rNum} guardada exitosamente con ${matchesData.length} pistas.`);
+                return true;
             }
         };
 

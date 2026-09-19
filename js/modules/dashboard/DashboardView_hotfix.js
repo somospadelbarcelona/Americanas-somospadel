@@ -2127,7 +2127,16 @@
                         posts = window.SomosPadelNewsEngine ? window.SomosPadelNewsEngine.getDeterministicFallbackPosts() : [];
                     }
 
-                    // Rotación periódica inteligente: asegurar que las noticias clave de Modos de Juego aparezcan en el feed
+                    // Rotación periódica inteligente: asegurar que las novedades de la app y guías clave aparezcan al inicio
+                    const appNewsPosts = posts.filter(p => p.id && (p.id.includes('app-noticia') || (p.category && p.category.includes('NOVEDADES'))));
+                    if (appNewsPosts.length > 0) {
+                        const appSlot = Math.floor(Date.now() / (1000 * 60 * 60 * 4));
+                        const featuredAppNews = appNewsPosts[appSlot % appNewsPosts.length];
+                        const curAppIdx = posts.findIndex(p => p.id === featuredAppNews.id);
+                        if (curAppIdx !== -1) posts.splice(curAppIdx, 1);
+                        posts.unshift(featuredAppNews); // Posición inicial destacada
+                    }
+
                     const gameModesPosts = posts.filter(p => p.id && p.id.includes('modos-juego'));
                     if (gameModesPosts.length > 0) {
                         // Rotación cada 6 horas entre los artículos de Modos de Juego
@@ -2139,7 +2148,7 @@
                         if (currentIdx !== -1) {
                             posts.splice(currentIdx, 1);
                         }
-                        const insertPos = (periodSlot % 2 === 0) ? 1 : 0;
+                        const insertPos = (periodSlot % 2 === 0) ? 1 : 2;
                         posts.splice(Math.min(insertPos, posts.length), 0, featuredGuide);
                     }
 
@@ -2180,6 +2189,7 @@
                     <div style="position: relative; margin-bottom: 16px;">
                         <div class="blog-categories-filter" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; padding-right: 20px; scrollbar-width: none; -ms-overflow-style: none; -webkit-mask-image: linear-gradient(to right, black calc(100% - 36px), transparent 100%); mask-image: linear-gradient(to right, black calc(100% - 36px), transparent 100%);">
                             <button onclick="window.DashboardView.filterBlogCategory('ALL')" class="blog-filter-btn active" style="flex-shrink: 0; background: #CCFF00; border: 1px solid #CCFF00; color: #000; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 900; cursor: pointer; transition: all 0.25s; font-family: 'Outfit'; box-shadow: 0 4px 10px rgba(204,255,0,0.2);">TODAS</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('NOVEDADES')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.09); color: #475569; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">🚀 NOVEDADES</button>
                             <button onclick="window.DashboardView.filterBlogCategory('TORNEOS')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.09); color: #475569; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">🏆 TORNEOS</button>
                             <button onclick="window.DashboardView.filterBlogCategory('CONSEJOS')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.09); color: #475569; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">💡 CONSEJOS</button>
                             <button onclick="window.DashboardView.filterBlogCategory('RANKING')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.09); color: #475569; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">📊 RANKING</button>
@@ -3058,26 +3068,101 @@
                     articleImg = 'img/pista_padel_azul.png';
                 }
 
-                // Detectar si el post trata sobre Modos de Juego
+                // Detectar si el post tiene acción interactiva integrada
                 const isGameModesPost = (postId && postId.includes('modos-juego')) ||
                     (post.title && (post.title.toLowerCase().includes('pareja fija') || post.title.toLowerCase().includes('twister') || post.title.toLowerCase().includes('suizo') || post.title.toLowerCase().includes('suiza') || post.title.toLowerCase().includes('modos de juego')));
+                const isTeamsPost = (postId && postId.includes('equipos-2027')) || (post.title && post.title.toLowerCase().includes('pre-inscripciones abiertas liga 2027'));
+                const isRankingPost = (postId && postId.includes('doble-ranking')) || (post.title && post.title.toLowerCase().includes('doble ranking'));
+                const isFutPost = (postId && postId.includes('cartas-fut')) || (post.title && post.title.toLowerCase().includes('cartas de jugador 3d'));
+                const isWeatherPost = (postId && postId.includes('radar-meteorologico')) || (post.title && post.title.toLowerCase().includes('radar meteorol'));
 
-                const gameModesActionHtml = isGameModesPost ? `
-                    <div style="margin: 20px 0 16px; background: linear-gradient(135deg, rgba(204, 255, 0, 0.12) 0%, rgba(56, 189, 248, 0.1) 100%); border: 1.5px solid rgba(204, 255, 0, 0.45); border-radius: 18px; padding: 18px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.35);">
-                        <div style="font-size: 1.6rem; margin-bottom: 6px;">🎮 👥 🌪️ 🇨🇭</div>
-                        <div style="font-size: 0.98rem; font-weight: 950; color: #ffffff; margin-bottom: 4px;">Comparativa & Normativa Oficial</div>
-                        <div style="font-size: 0.78rem; color: #cbd5e1; margin-bottom: 14px; line-height: 1.45;">
-                            Abre la guía interactiva oficial para consultar todas las reglas, dinámicas de rotación y sistemas de puntuación.
+                let interactiveActionHtml = '';
+                if (isGameModesPost) {
+                    interactiveActionHtml = `
+                        <div style="margin: 20px 0 16px; background: linear-gradient(135deg, rgba(204, 255, 0, 0.12) 0%, rgba(56, 189, 248, 0.1) 100%); border: 1.5px solid rgba(204, 255, 0, 0.45); border-radius: 18px; padding: 18px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.35);">
+                            <div style="font-size: 1.6rem; margin-bottom: 6px;">🎮 👥 🌪️ 🇨🇭</div>
+                            <div style="font-size: 0.98rem; font-weight: 950; color: #ffffff; margin-bottom: 4px;">Comparativa & Normativa Oficial</div>
+                            <div style="font-size: 0.78rem; color: #cbd5e1; margin-bottom: 14px; line-height: 1.45;">
+                                Abre la guía interactiva oficial para consultar todas las reglas, dinámicas de rotación y sistemas de puntuación.
+                            </div>
+                            <button id="blog-modal-modes-action-btn" 
+                                    style="background: #CCFF00; color: #000000; font-weight: 950; font-size: 0.82rem; border: none; padding: 11px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(204, 255, 0, 0.35); transition: all 0.2s ease;"
+                                    onmouseover="this.style.transform='scale(1.04)';"
+                                    onmouseout="this.style.transform='scale(1)';"
+                                    onmousedown="this.style.transform='scale(0.97)';">
+                                <i class="fas fa-gamepad"></i> ABRIR MODOS DE JUEGO
+                            </button>
                         </div>
-                        <button id="blog-modal-modes-action-btn" 
-                                style="background: #CCFF00; color: #000000; font-weight: 950; font-size: 0.82rem; border: none; padding: 11px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(204, 255, 0, 0.35); transition: all 0.2s ease;"
-                                onmouseover="this.style.transform='scale(1.04)';"
-                                onmouseout="this.style.transform='scale(1)';"
-                                onmousedown="this.style.transform='scale(0.97)';">
-                            <i class="fas fa-gamepad"></i> ABRIR MODOS DE JUEGO
-                        </button>
-                    </div>
-                ` : '';
+                    `;
+                } else if (isTeamsPost) {
+                    interactiveActionHtml = `
+                        <div style="margin: 20px 0 16px; background: linear-gradient(135deg, rgba(204, 255, 0, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%); border: 1.5px solid rgba(204, 255, 0, 0.5); border-radius: 18px; padding: 18px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.35);">
+                            <div style="font-size: 1.6rem; margin-bottom: 6px;">🏆 🛡️ 🇪🇸</div>
+                            <div style="font-size: 0.98rem; font-weight: 950; color: #ffffff; margin-bottom: 4px;">Pre-Inscripción Liga 2027</div>
+                            <div style="font-size: 0.78rem; color: #cbd5e1; margin-bottom: 14px; line-height: 1.45;">
+                                Consulta las convocatorias de nuestros 8 equipos y solicita tu prueba de nivel para la próxima temporada.
+                            </div>
+                            <button id="blog-modal-teams-action-btn" 
+                                    style="background: #CCFF00; color: #000000; font-weight: 950; font-size: 0.82rem; border: none; padding: 11px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(204, 255, 0, 0.35); transition: all 0.2s ease;"
+                                    onmouseover="this.style.transform='scale(1.04)';"
+                                    onmouseout="this.style.transform='scale(1)';"
+                                    onmousedown="this.style.transform='scale(0.97)';">
+                                <i class="fas fa-users"></i> IR A SECCIÓN DE EQUIPOS
+                            </button>
+                        </div>
+                    `;
+                } else if (isRankingPost) {
+                    interactiveActionHtml = `
+                        <div style="margin: 20px 0 16px; background: linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%); border: 1.5px solid rgba(56, 189, 248, 0.5); border-radius: 18px; padding: 18px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.35);">
+                            <div style="font-size: 1.6rem; margin-bottom: 6px;">📊 🥇 🥈 🥉</div>
+                            <div style="font-size: 0.98rem; font-weight: 950; color: #ffffff; margin-bottom: 4px;">Doble Ranking en Inicio</div>
+                            <div style="font-size: 0.78rem; color: #cbd5e1; margin-bottom: 14px; line-height: 1.45;">
+                                Comprueba las posiciones del Top 10 Élite alternando entre el modo Entrenos y Americanas.
+                            </div>
+                            <button id="blog-modal-ranking-action-btn" 
+                                    style="background: #38bdf8; color: #000000; font-weight: 950; font-size: 0.82rem; border: none; padding: 11px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(56, 189, 248, 0.35); transition: all 0.2s ease;"
+                                    onmouseover="this.style.transform='scale(1.04)';"
+                                    onmouseout="this.style.transform='scale(1)';"
+                                    onmousedown="this.style.transform='scale(0.97)';">
+                                <i class="fas fa-chart-line"></i> VER TOP 10 EN INICIO
+                            </button>
+                        </div>
+                    `;
+                } else if (isFutPost) {
+                    interactiveActionHtml = `
+                        <div style="margin: 20px 0 16px; background: linear-gradient(135deg, rgba(250, 204, 21, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%); border: 1.5px solid rgba(250, 204, 21, 0.5); border-radius: 18px; padding: 18px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.35);">
+                            <div style="font-size: 1.6rem; margin-bottom: 6px;">🃏 ⚡ 💎</div>
+                            <div style="font-size: 0.98rem; font-weight: 950; color: #ffffff; margin-bottom: 4px;">Tu Carta FUT Holográfica</div>
+                            <div style="font-size: 0.78rem; color: #cbd5e1; margin-bottom: 14px; line-height: 1.45;">
+                                Consulta tu valoración OVR, atributos en 3D y compártela directamente con tus compañeros de juego.
+                            </div>
+                            <button id="blog-modal-fut-action-btn" 
+                                    style="background: #facc15; color: #000000; font-weight: 950; font-size: 0.82rem; border: none; padding: 11px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(250, 204, 21, 0.35); transition: all 0.2s ease;"
+                                    onmouseover="this.style.transform='scale(1.04)';"
+                                    onmouseout="this.style.transform='scale(1)';"
+                                    onmousedown="this.style.transform='scale(0.97)';">
+                                <i class="fas fa-id-card"></i> ABRIR MI PERFIL DE JUGADOR
+                            </button>
+                        </div>
+                    `;
+                } else if (isWeatherPost) {
+                    interactiveActionHtml = `
+                        <div style="margin: 20px 0 16px; background: linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%); border: 1.5px solid rgba(56, 189, 248, 0.5); border-radius: 18px; padding: 18px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.35);">
+                            <div style="font-size: 1.6rem; margin-bottom: 6px;">🌦️ 💨 🎾</div>
+                            <div style="font-size: 0.98rem; font-weight: 950; color: #ffffff; margin-bottom: 4px;">Radar Meteorológico en Vivo</div>
+                            <div style="font-size: 0.78rem; color: #cbd5e1; margin-bottom: 14px; line-height: 1.45;">
+                                Consulta la predicción en tiempo real de humedad y velocidad de bola para planificar tu estrategia.
+                            </div>
+                            <button id="blog-modal-weather-action-btn" 
+                                    style="background: #38bdf8; color: #000000; font-weight: 950; font-size: 0.82rem; border: none; padding: 11px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(56, 189, 248, 0.35); transition: all 0.2s ease;"
+                                    onmouseover="this.style.transform='scale(1.04)';"
+                                    onmouseout="this.style.transform='scale(1)';"
+                                    onmousedown="this.style.transform='scale(0.97)';">
+                                <i class="fas fa-cloud-sun"></i> VER METEOROLOGÍA EN INICIO
+                            </button>
+                        </div>
+                    `;
+                }
 
                 const modal = document.createElement('div');
                 modal.id = 'blog-post-modal';
@@ -3117,7 +3202,7 @@
                             
                             <p style="color: rgba(255,255,255,0.85); font-size: 0.86rem; font-weight: 500; line-height: 1.65; margin: 0 0 20px 0; word-break: break-word; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">${post.content}</p>
                             
-                            ${gameModesActionHtml}
+                            ${interactiveActionHtml}
 
                             <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 0.68rem; color: rgba(255,255,255,0.4); font-weight: 800; letter-spacing: 0.5px;">
                                 <span>Publicado: ${post.date || 'Recientemente'}</span>
@@ -3223,6 +3308,52 @@
                                 ? 'suizo'
                                 : ((postId && postId.includes('twister')) ? 'twister' : 'pareja');
                             window.showGameModesModal(targetTab);
+                        }
+                    });
+                }
+
+                const teamsBtn = modal.querySelector('#blog-modal-teams-action-btn');
+                if (teamsBtn) {
+                    teamsBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        modal.remove();
+                        if (window.Router && typeof window.Router.navigate === 'function') {
+                            window.Router.navigate('teams');
+                        }
+                    });
+                }
+
+                const rankingBtn = modal.querySelector('#blog-modal-ranking-action-btn');
+                if (rankingBtn) {
+                    rankingBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        modal.remove();
+                        const top10El = document.querySelector('.top10-elite-card-container') || document.getElementById('dsbl-nav-inicio');
+                        if (top10El) {
+                            top10El.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    });
+                }
+
+                const futBtn = modal.querySelector('#blog-modal-fut-action-btn');
+                if (futBtn) {
+                    futBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        modal.remove();
+                        if (window.Router && typeof window.Router.navigate === 'function') {
+                            window.Router.navigate('profile');
+                        }
+                    });
+                }
+
+                const weatherBtn = modal.querySelector('#blog-modal-weather-action-btn');
+                if (weatherBtn) {
+                    weatherBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        modal.remove();
+                        const weatherCard = document.querySelector('.weather-card-container') || document.querySelector('.weather-intel-badge');
+                        if (weatherCard) {
+                            weatherCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }
                     });
                 }

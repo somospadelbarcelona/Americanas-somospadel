@@ -520,6 +520,128 @@
             readTime: '3 min',
             snippet: 'Balance de la temporada de nuestras ramas Masculina, Femenina y Mixta en 2ª, 3ª y 4ª división.',
             contentTemplate: `Con 8 equipos oficiales y más de 140 jugadores convocados cada fin de semana, SomosPadel BCN se consolida como uno de los clubes más activos de Cataluña en la Lliga GuinotPrunera. Los 3 equipos masculinos (3MA, 3MB, 4M), los 2 femeninos (2F, 4FA) y los 3 mixtos (3XA, 4XA, 4XB) están cosechando grandes resultados.<br><br><strong>{PLAYER1}</strong> elogia: <em>'El compañerismo y los viajes en equipo para jugar fuera son lo mejor de la temporada'</em>. <strong>{PLAYER2}</strong> invita a todos los jugadores de las americanas a probar los entrenamientos específicos de equipo.`
+        },
+
+        // ── 🚀 NOVEDADES & SUCESOS OFICIALES DE LA APP SOMOSPADEL ──────────────
+        {
+            id: 'app-noticia-equipos-2027-preinscripcion',
+            title: 'Pre-Inscripciones Abiertas Liga 2027: ¡Asegura tu Plaza en los Equipos Oficiales!',
+            category: '🚀 NOVEDADES APP',
+            catColor: '#CCFF00',
+            theme: 'tournaments',
+            emoji: '🏆',
+            imgGrad: 'linear-gradient(135deg, rgba(204, 255, 0, 0.25) 0%, #0f172a 100%)',
+            readTime: '3 min',
+            snippet: 'Abierto el formulario oficial para las divisiones Masculina, Femenina y Mixta. Descubre las pruebas de nivel y fechas de corte.',
+            contentTemplate: `¡La familia de competición de SomosPadel Barcelona sigue creciendo! Tras el rotundo éxito de la presente temporada con 8 escuadras federadas en la Lliga GuinotPrunera, la dirección deportiva abre formalmente el periodo de pre-inscripción y pruebas de nivel para la <strong>Temporada 2027</strong>.<br><br>Para 2027 se sumarán dos nuevas divisiones (Veteranos +40 y Mixto Promoción), ampliando la cobertura para todos los niveles de juego. Cada equipo contará con capitán asignado, 2 entrenamientos mensuales dirigidos de táctica y jugadas a balón parado, Welcome Pack exclusivo de patrocinadores y seguimiento estadístico en la app.<br><br><strong>{PLAYER1}</strong> anima a todos: <em>'Jugar la liga en equipo transforma por completo tu visión del pádel; la adrenalina de los terceros sets compartidos no se compara con nada'</em>. <strong>{PLAYER2}</strong> recuerda que las plazas son estrictamente limitadas y se asignarán según compromiso en entrenos y rendimiento en americanas.<br><br>👉 <em>Puedes acceder a la sección de Equipos desde el menú inferior de la app para ver plantillas y rellenar tu solicitud.</em>`
+        },
+        {
+            id: 'app-noticia-doble-ranking-inicio',
+            title: 'Nuevo Doble Ranking en Inicio: Alterna al Instante entre Entrenos y Americanas',
+            category: '🚀 NOVEDADES APP',
+            catColor: '#38bdf8',
+            theme: 'tournaments',
+            emoji: '📊',
+            imgGrad: 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, #0f172a 100%)',
+            readTime: '2 min',
+            snippet: 'El módulo Top 10 Élite del Inicio ahora incorpora un selector ultra-rápido para consultar la tabla de Entrenos o de Americanas por separado.',
+            contentTemplate: `Escuchando las sugerencias de la comunidad, hemos evolucionado la pantalla de Inicio de SomosPadel. Ahora el módulo <strong>TOP 10 ÉLITE</strong> cuenta con un selector de pestañas que permite diferenciar con un solo toque el ranking de <strong>ENTRENOS</strong> y el de <strong>AMERICANAS</strong>.<br><br>Cada modalidad tiene su propia naturaleza competitiva: mientras que en los Entrenos se prima la consistencia táctica y la regularidad semanal en pista de prácticas, en las Americanas computa la velocidad de adaptación con compañeros rotativos y la presión del reloj de 120 minutos.<br><br><strong>{PLAYER1}</strong> comenta entusiasmado: <em>'Ahora se hace justicia con quienes destacan entrenando entre semana y con los especialistas de torneo de fin de semana'</em>. <strong>{PLAYER2}</strong> destaca el podio visual con los trofeos Oro, Plata y Bronce y el carrusel horizontal para el resto del Top 10.`
+        },
+        {
+            id: 'app-noticia-cartas-fut-3d-interactivas',
+            title: 'Cartas de Jugador 3D estilo FUT: Descubre tu Valoración Media (OVR) y Habilidades',
+            category: '🚀 NOVEDADES APP',
+            catColor: '#facc15',
+            theme: 'action',
+            emoji: '🃏',
+            imgGrad: 'linear-gradient(135deg, rgba(250, 204, 21, 0.25) 0%, #0f172a 100%)',
+            readTime: '3 min',
+            snippet: 'Tu perfil personal ahora genera un cromo holográfico interactivo 3D con tus stats de Ataque, Defensa, Físico, Volea y Mentalidad.',
+            contentTemplate: `¿Alguna vez te has preguntado qué media tendrías si el pádel tuviera cartas coleccionables como el FIFA / FC 25? ¡Ya está disponible en SomosPadel! Nuestro motor de estadísticas procesa tu historial de victorias, efectividad de quiebre, resiliencia en puntos de oro y partidos disputados para otorgarte tu <strong>Carta FUT Oficial</strong>.<br><br>La carta cuenta con efectos holográficos dorados, plateados o de leyenda, clasificaciones por atributos (ATA, DEF, FIS, MNT, PAS, TAC) y un botón de compartir directo a WhatsApp o Instagram Stories para presumir de cromo con tus compañeros de pista.<br><br><strong>{PLAYER1}</strong> bromea: <em>'Mi carta tiene 88 de smash pero 65 de globo defensivo... ¡la IA no miente!'</em>. <strong>{PLAYER2}</strong> subraya que ganar partidos contra parejas de mayor ELO es la forma más rápida de subir el OVR general de tu cromo.`
+        },
+        {
+            id: 'app-noticia-sudadera-oficial-edicion-limitada',
+            title: 'Sudadera Oficial SomosPadel 2026: Tejido Premium de 320g y Edición Limitada',
+            category: '🚀 NOVEDADES APP',
+            catColor: '#fb923c',
+            theme: 'material',
+            emoji: '👕',
+            imgGrad: 'linear-gradient(135deg, rgba(251, 146, 60, 0.25) 0%, #0f172a 100%)',
+            readTime: '2 min',
+            snippet: 'Llega la nueva prenda oficial de nuestra comunidad: algodón peinado térmico, capucha envolvente y logotipo bordado en amarillo flúor.',
+            contentTemplate: `Para las noches frescas en los clubes y el indispensable tercer tiempo tras dos horas de intensidad en pista, presentamos la <strong>Sudadera Oficial SomosPadel Barcelona 2026</strong>.<br><br>Diseñada con tejido premium de 320 gramos (80% algodón peinado, 20% poliéster técnico), ofrece máxima calidez sin sacrificar transpirabilidad. Presenta costuras reforzadas, bolsillo delantero tipo canguro con compartimento interior para el móvil y detalles de alta visibilidad con el emblema icónico del club.<br><br><strong>{PLAYER1}</strong> señala: <em>'Es comodísima para el calentamiento previo y para quedarse comentando las jugadas con una cerveza en la terraza'</em>. <strong>{PLAYER2}</strong> recuerda que las primeras 50 unidades incluyen la personalización de nombre de jugador o dorsal en la espalda.`
+        },
+        {
+            id: 'app-noticia-piloto-automatico-matchmaking',
+            title: 'Piloto Automático de Cruces: Matchmaking Inteligente 4 Horas Antes de Cada Evento',
+            category: '🚀 NOVEDADES APP',
+            catColor: '#a855f7',
+            theme: 'courts',
+            emoji: '⚡',
+            imgGrad: 'linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, #0f172a 100%)',
+            readTime: '3 min',
+            snippet: 'El algoritmo analiza el ELO dinámico de los inscritos para distribuir automáticamente las pistas y garantizar cruces disputados.',
+            contentTemplate: `Atrás quedaron las dudas sobre qué pista le corresponde a cada pareja al llegar al club. La app de SomosPadel incorpora un sistema de <strong>Piloto Automático</strong> que se ejecuta exactamente 4 horas antes del pitido inicial de cada americana o entreno.<br><br>El algoritmo cruza el nivel ELO histórico de los inscritos, su racha de victorias en las últimas 3 semanas y la compatibilidad de lados (revés / drive) para conformar grupos de pista hiper-equilibrados, asegurando que desde la Ronda 1 los sets se definan por detalles y emoción máxima.<br><br><strong>{PLAYER1}</strong> recalca: <em>'La sensación de que cualquier pareja puede ganar la pista 1 hace que la americana mantenga la tensión competitiva de principio a fin'</em>. <strong>{PLAYER2}</strong> agradece que los cruces se notifiquen directamente a la app con tiempo para preparar la táctica.`
+        },
+        {
+            id: 'app-noticia-comunidad-500-americanas-record',
+            title: '¡Hito Histórico! Superamos las 500 Americanas Disputadas y 1.200 Jugadores',
+            category: '🚀 NOVEDADES APP',
+            catColor: '#22c55e',
+            theme: 'community',
+            emoji: '🎉',
+            imgGrad: 'linear-gradient(135deg, rgba(34, 197, 94, 0.25) 0%, #0f172a 100%)',
+            readTime: '2 min',
+            snippet: 'La comunidad de SomosPadel Barcelona pulveriza todas las marcas históricas con más de 12.000 juegos disputados en nuestras pistas.',
+            contentTemplate: `Lo que comenzó como un grupo de amigos con ganas de jugar partidos igualados en Barcelona se ha convertido en el circuito social de pádel más vibrante de la ciudad. Este mes celebramos un hito histórico: más de <strong>500 eventos oficiales celebrados</strong> y una comunidad activa que supera ya los <strong>1.200 padeleros y padeleras</strong>.<br><br>Más allá de las estadísticas, el verdadero orgullo de SomosPadel reside en los lazos de amistad, las risas en el tercer tiempo, las parejas que se formaron en una americana y ahora compiten juntas en liga federada y el ambiente de respeto mutuo en cada bola.<br><br><strong>{PLAYER1}</strong> emocionado: <em>'Llegué sin conocer a nadie en la ciudad y hoy tengo un grupo de amigos inseparables gracias a SomosPadel'</em>. <strong>{PLAYER2}</strong> agradece a todos los organizadores y jugadores su fidelidad y pasión inquebrantable cada semana.`
+        },
+        {
+            id: 'app-noticia-protocolo-pista-1-corona',
+            title: 'Protocolo Pista 1 "La Corona": Dinámica Oficial de Ascensos y Permanencia',
+            category: '🚀 NOVEDADES APP',
+            catColor: '#f59e0b',
+            theme: 'courts',
+            emoji: '👑',
+            imgGrad: 'linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, #0f172a 100%)',
+            readTime: '3 min',
+            snippet: 'Conoce a fondo las reglas de pista reina: cómo subir de pista tras vencer el juego y defender la corona de los retadores.',
+            contentTemplate: `En los formatos de americana continua y pozo por niveles, la <strong>Pista 1 (La Corona)</strong> es el epicentro del torneo. Los ganadores de la Pista 1 conservan el reinado pero cambian de pareja, mientras que los perdedores descienden a la Pista 2 para volver a ganarse el ascenso.<br><br>Para evitar empates por tiempo, si el reloj de 20 minutos de la ronda suena con punto en juego, dicho punto se finaliza por completo. En caso de igualdad de juegos al sonar la bocina, se disputa un 'Punto de Oro' directo para decidir quién sube y quién baja de pista.<br><br><strong>{PLAYER1}</strong> revela su estrategia: <em>'En la Pista 1 la presión es doble; hay que jugar con mucho margen sobre la red y no precipitarse en las bolas de contraataque'</em>. <strong>{PLAYER2}</strong> concluye que mantenerse 3 rondas seguidas en la corona es la verdadera prueba de fuego.`
+        },
+        {
+            id: 'app-noticia-radar-meteorologico-live',
+            title: 'Radar Meteorológico en Vivo: Humedad, Viento y su Efecto en el Bote de la Bola',
+            category: '🚀 NOVEDADES APP',
+            catColor: '#38bdf8',
+            theme: 'courts',
+            emoji: '🌦️',
+            imgGrad: 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, #0f172a 100%)',
+            readTime: '2 min',
+            snippet: 'El sensor de inicio monitoriza las condiciones ambientales del club para calcular el índice de salida de bola y fricción de cristales.',
+            contentTemplate: `Jugar al nivel del mar en Barcelona significa que la meteorología transforma el partido por completo. Con temperaturas altas y baja humedad, el fieltro de la pelota se calienta y el rebote en pared de fondo se dispara más de 35 cm, haciendo que el remate x3 y x4 sea letal.<br><br>Por el contrario, en tardes y noches húmedas con condensación en el vidrio, la pelota patina al impactar y se cae al suelo a ras de moqueta. El widget meteorológico integrado en el Inicio te indica en tiempo real si las condiciones son propicias para el ataque rápido o si conviene optar por bandejas conservadoras y juego de fondo.<br><br><strong>{PLAYER1}</strong> comenta: <em>'Consultar el clima antes de elegir pala con goma blanda o dura te da una ventaja competitiva determinante'</em>. <strong>{PLAYER2}</strong> recuerda secar siempre los cristales antes del inicio de cada ronda.`
+        },
+        {
+            id: 'app-noticia-fair-play-regla-dos-bolas',
+            title: 'Cultura Fair Play: Protocolo de Convivencia y Regla de "Dos Bolas" ante Dudas',
+            category: '🚀 NOVEDADES APP',
+            catColor: '#ec4899',
+            theme: 'community',
+            emoji: '🤝',
+            imgGrad: 'linear-gradient(135deg, rgba(236, 72, 153, 0.25) 0%, #0f172a 100%)',
+            readTime: '2 min',
+            snippet: 'En caso de discrepancia en una línea ajustada o toque de red, se repite el punto con elegancia. El respeto es innegociable.',
+            contentTemplate: `En SomosPadel nos mueve la competitividad sana, pero por encima de cualquier trofeo o punto de ranking está la deportividad y el respeto hacia los compañeros de juego. Por ello, recordamos a todos los participantes la vigencia del <strong>Código de Honor de la Comunidad</strong>.<br><br>Si una bola bota en el límite de la línea y la pareja receptora tiene dudas honestas sobre si tocó fuera o dentro, la normativa estipula cantar 'dos bolas' y repetir el saque de inmediato, sin discusiones ni pérdidas de tiempo. Asimismo, cualquier invasión involuntaria o roce de pala con la red debe ser cantada por el propio infractor.<br><br><strong>{PLAYER1}</strong> subraya: <em>'Ganar un punto con trampa o polémica no tiene ningún mérito; preferimos perder el punto y ganar el respeto de todos'</em>. <strong>{PLAYER2}</strong> aplaude que el fair play sea la seña de identidad del club.`
+        },
+        {
+            id: 'app-noticia-pwa-instalacion-movil',
+            title: 'Cómo Instalar SomosPadel como App Nativa en iPhone y Android sin Tiendas',
+            category: '🚀 NOVEDADES APP',
+            catColor: '#CCFF00',
+            theme: 'material',
+            emoji: '📱',
+            imgGrad: 'linear-gradient(135deg, rgba(204, 255, 0, 0.25) 0%, #0f172a 100%)',
+            readTime: '2 min',
+            snippet: 'Añade el acceso directo a tu pantalla de inicio en 10 segundos: disfruta de pantalla completa, fluidez nativa y carga sin esperas.',
+            contentTemplate: `Para disfrutar de la mejor experiencia visual en tu móvil, SomosPadel está construida como una <strong>Progressive Web App (PWA) de última generación</strong>. No necesitas descargar actualizaciones pesadas desde App Store o Google Play: se actualiza al instante cada vez que abres la app.<br><br><strong>En iPhone / Safari:</strong> Pulsa el botón 'Compartir' (icono con flecha hacia arriba en la barra inferior del navegador), baja en el menú y selecciona <em>'Añadir a pantalla de inicio'</em>.<br><br><strong>En Android / Chrome:</strong> Pulsa los tres puntos de la esquina superior derecha y toca en <em>'Instalar aplicación'</em> o <em>'Añadir a pantalla principal'</em>.<br><br><strong>{PLAYER1}</strong> señala: <em>'Al tener el icono en el escritorio del móvil se abre a pantalla completa como una app nativa y no gasta batería ni almacenamiento'</em>. <strong>{PLAYER2}</strong> recomienda hacerlo a todos los nuevos inscritos para recibir avisos de pista al momento.`
         }
     ];
 
