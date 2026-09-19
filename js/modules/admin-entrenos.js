@@ -159,6 +159,13 @@ window.AdminViews.entrenos_create = async function () {
                 <h3 style="color: var(--primary); margin-bottom: 2rem; display: flex; align-items: center; gap: 12px; font-weight:800; font-size: 1.2rem;">
                     <i class="fas fa-plus-circle" style="font-size: 1.5rem; color: #CCFF00;"></i> CREAR NUEVO EVENTO DE ENTRENO
                 </h3>
+
+                <!-- Botones de Preset Rápido -->
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;">
+                    <button type="button" class="btn-micro" onclick="window.applyEntrenoPreset('suizo')" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4);">🇨🇭 Entreno Suizo (2h • 6 Rondas)</button>
+                    <button type="button" class="btn-micro" onclick="window.applyEntrenoPreset('twister')" style="background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4);">🌪️ Twister Dinámico</button>
+                    <button type="button" class="btn-micro" onclick="window.applyEntrenoPreset('fija')" style="background: rgba(14, 165, 233, 0.2); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.4);">🔒 Pareja Fija</button>
+                </div>
                 
                 <form id="create-entreno-form" class="pro-form compact-admin-form">
                     
@@ -221,6 +228,7 @@ window.AdminViews.entrenos_create = async function () {
                             <select name="pair_mode" id="create-entreno-pair-mode" class="pro-input" onchange="window.updatePairModeHelper(this, 'create-entreno-pair-mode-desc')">
                                 <option value="fixed">🔒 PAREJA FIJA</option>
                                 <option value="rotating" selected>🌪️ TWISTER INDIVIDUAL</option>
+                                <option value="swiss">🇨🇭 SUIZO (Americana / Entreno Suizo)</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -467,6 +475,52 @@ window.selectCreateEntrenoImage = (url) => {
         input.value = url;
         const preview = document.getElementById('create-entreno-img-preview');
         if (preview) preview.src = url;
+    }
+};
+
+window.applyEntrenoPreset = (type) => {
+    const form = document.getElementById('create-entreno-form');
+    if (!form) return;
+
+    if (type === 'suizo') {
+        const nameInput = form.querySelector('[name=name]');
+        if (nameInput) nameInput.value = '🇨🇭 ENTRENO SUIZO';
+        const pairMode = form.querySelector('[name=pair_mode]');
+        if (pairMode) pairMode.value = 'swiss';
+        const courts = form.querySelector('[name=max_courts]');
+        if (courts) courts.value = '3';
+        const rounds = form.querySelector('[name=rounds_count]');
+        if (rounds) rounds.value = '6';
+        const tStart = form.querySelector('[name=time]');
+        const tEnd = form.querySelector('[name=time_end]');
+        if (tStart) tStart.value = '10:00';
+        if (tEnd) tEnd.value = '12:00';
+        if (window.selectCreateEntrenoImage) window.selectCreateEntrenoImage('img/entreno masculino prat.jpg');
+    } else if (type === 'twister') {
+        const nameInput = form.querySelector('[name=name]');
+        if (nameInput) nameInput.value = '🌪️ ENTRENO TWISTER DINÁMICO';
+        const pairMode = form.querySelector('[name=pair_mode]');
+        if (pairMode) pairMode.value = 'rotating';
+        const courts = form.querySelector('[name=max_courts]');
+        if (courts) courts.value = '4';
+        const rounds = form.querySelector('[name=rounds_count]');
+        if (rounds) rounds.value = '6';
+        if (window.selectCreateEntrenoImage) window.selectCreateEntrenoImage('img/entreno fem indoor.jpg');
+    } else if (type === 'fija') {
+        const nameInput = form.querySelector('[name=name]');
+        if (nameInput) nameInput.value = '🔒 ENTRENO PAREJA FIJA';
+        const pairMode = form.querySelector('[name=pair_mode]');
+        if (pairMode) pairMode.value = 'fixed';
+        const courts = form.querySelector('[name=max_courts]');
+        if (courts) courts.value = '4';
+        const rounds = form.querySelector('[name=rounds_count]');
+        if (rounds) rounds.value = '6';
+        if (window.selectCreateEntrenoImage) window.selectCreateEntrenoImage('img/ball-mixta.png');
+    }
+
+    const pairModeEl = form.querySelector('[name=pair_mode]');
+    if (pairModeEl && window.updatePairModeHelper) {
+        window.updatePairModeHelper(pairModeEl, 'create-entreno-pair-mode-desc');
     }
 };
 
@@ -726,7 +780,9 @@ window.openEditEntrenoModal = async (entreno) => {
     const pairsArea = document.getElementById('entreno-fixed-pairs-area');
 
     if (pairModeSelect) {
-        if (pairModeSelect.value !== 'rotating') {
+        if (entreno.pair_mode === 'swiss' || entreno.pair_mode === 'rotating') {
+            pairModeSelect.value = entreno.pair_mode;
+        } else {
             pairModeSelect.value = 'fixed';
         }
     }
@@ -868,6 +924,58 @@ window.selectEntrenoImage = (url) => {
         }
     }
 };
+
+if (!window.updatePairModeHelper) {
+    window.updatePairModeHelper = function(selectEl, descContainerId) {
+        const container = document.getElementById(descContainerId);
+        if (!container) return;
+        const mode = selectEl ? selectEl.value : 'fixed';
+
+        if (mode === 'swiss') {
+            container.innerHTML = `
+                <div style="display:flex; align-items:flex-start; gap:8px;">
+                    <span style="font-size: 1.15rem; line-height: 1;">🇨🇭</span>
+                    <div>
+                        <strong style="color: #ef4444; font-size: 0.76rem; text-transform: uppercase;">Modalidad Sistema Suizo (Express 2h):</strong>
+                        <div style="color: #cbd5e1; font-size: 0.72rem; margin-top: 2px;">
+                            Inscripción individual. 6 rondas express de juego efectivo (2 horas). Los juegos ganados son tus puntos acumulados. Tras cada ronda los 4 mejores van a Pista 1, siguientes a Pista 2, restantes a Pista 3, cruzando parejas sin repetir compañero.
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.style.borderLeftColor = '#ef4444';
+            container.style.background = 'rgba(239, 68, 68, 0.08)';
+        } else if (mode === 'rotating') {
+            container.innerHTML = `
+                <div style="display:flex; align-items:flex-start; gap:8px;">
+                    <span style="font-size: 1.15rem; line-height: 1;">🌪️</span>
+                    <div>
+                        <strong style="color: #60a5fa; font-size: 0.76rem; text-transform: uppercase;">Modalidad Twister Individual:</strong>
+                        <div style="color: #cbd5e1; font-size: 0.72rem; margin-top: 2px;">
+                            Inscripción individual. Los jugadores rotan y cambian de pareja y de rivales en cada ronda según su puntuación. ¡El sistema calcula los cruces y pistas automáticamente!
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.style.borderLeftColor = '#3b82f6';
+            container.style.background = 'rgba(59, 130, 246, 0.08)';
+        } else {
+            container.innerHTML = `
+                <div style="display:flex; align-items:flex-start; gap:8px;">
+                    <span style="font-size: 1.15rem; line-height: 1;">🔒</span>
+                    <div>
+                        <strong style="color: #CCFF00; font-size: 0.76rem; text-transform: uppercase;">Modalidad Pareja Fija:</strong>
+                        <div style="color: #cbd5e1; font-size: 0.72rem; margin-top: 2px;">
+                            Los jugadores compiten en dupla cerrada de principio a fin con el mismo compañero. En la columna derecha podrás vincular parejas manualmente y asignarles pistas.
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.style.borderLeftColor = '#CCFF00';
+            container.style.background = 'rgba(204, 255, 0, 0.06)';
+        }
+    };
+}
 
 window.openAddPlayerToEntrenoSelector = async (eventId) => {
     if (!window.PremiumModal) return alert("PremiumModal no disponible");

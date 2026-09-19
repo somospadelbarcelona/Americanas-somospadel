@@ -25,8 +25,9 @@
             }
 
             const isEntreno = !!eventDoc?.isEntreno;
-            const isFija = !!(eventDoc?.is_fija || (eventDoc?.pair_mode || '').toLowerCase().includes('fix') || (eventDoc?.name || '').toUpperCase().includes('FIJA'));
-            const ranking = window.StandingsService.calculate(matches, isEntreno ? 'entreno' : 'americana', isFija, eventDoc?.players || []);
+            const isSwiss = !!(eventDoc?.pair_mode === 'swiss' || (eventDoc?.name || '').toUpperCase().includes('SUIZ'));
+            const isFija = !isSwiss && !!(eventDoc?.is_fija || (eventDoc?.pair_mode || '').toLowerCase().includes('fix') || (eventDoc?.name || '').toUpperCase().includes('FIJA'));
+            const ranking = window.StandingsService.calculate(matches, isSwiss ? 'swiss' : (isEntreno ? 'entreno' : 'americana'), isFija, eventDoc?.players || [], isSwiss);
             window.ControlTowerStats.lastRankingData = ranking;
             window.ControlTowerStats.lastMatches = matches;
             window.ControlTowerStats.lastEventDoc = eventDoc;
@@ -941,10 +942,11 @@
 
             let ranking = window.ControlTowerStats.lastRankingData || [];
             const isEntreno = !!eventDoc?.isEntreno;
-            const isFija = !!(eventDoc?.is_fija || (eventDoc?.pair_mode || '').toLowerCase().includes('fix') || (eventDoc?.name || '').toUpperCase().includes('FIJA'));
+            const isSwiss = !!(eventDoc?.pair_mode === 'swiss' || (eventDoc?.name || '').toUpperCase().includes('SUIZ'));
+            const isFija = !isSwiss && !!(eventDoc?.is_fija || (eventDoc?.pair_mode || '').toLowerCase().includes('fix') || (eventDoc?.name || '').toUpperCase().includes('FIJA'));
 
             if ((!ranking || ranking.length === 0) && window.StandingsService && matches.length > 0) {
-                ranking = window.StandingsService.calculate(matches, isEntreno ? 'entreno' : 'americana', isFija, eventDoc?.players || []);
+                ranking = window.StandingsService.calculate(matches, isSwiss ? 'swiss' : (isEntreno ? 'entreno' : 'americana'), isFija, eventDoc?.players || [], isSwiss);
                 window.ControlTowerStats.lastRankingData = ranking;
             }
 

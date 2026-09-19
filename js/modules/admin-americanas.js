@@ -166,6 +166,7 @@ window.AdminViews.americanas_create = async function () {
                     <button type="button" class="btn-micro" onclick="window.applyAmericanaPreset('fem4')" style="background: rgba(236, 72, 153, 0.2); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.4);">🌸 Fem 4 Pistas</button>
                     <button type="button" class="btn-micro" onclick="window.applyAmericanaPreset('mixta4')" style="background: rgba(234, 179, 8, 0.2); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.4);">⚡ Mixta 4 Pistas</button>
                     <button type="button" class="btn-micro" onclick="window.applyAmericanaPreset('twister')" style="background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4);">🌪️ Twister Indiv.</button>
+                    <button type="button" class="btn-micro" onclick="window.applyAmericanaPreset('suiza')" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4);">🇨🇭 Americana Suiza (2h • 6 Rondas)</button>
                     <button type="button" class="btn-micro" onclick="window.applyAmericanaPreset('club')" style="background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.4);">🏛️ Club Colaborador</button>
                 </div>
 
@@ -290,6 +291,7 @@ window.AdminViews.americanas_create = async function () {
                             <select name="pair_mode" id="create-americana-pair-mode" class="pro-input" onchange="window.updatePairModeHelper(this, 'create-americana-pair-mode-desc')">
                                 <option value="fixed" selected>🔒 PAREJA FIJA</option>
                                 <option value="rotating">🌪️ TWISTER INDIVIDUAL</option>
+                                <option value="swiss">🇨🇭 SUIZO (Americana / Entreno Suizo)</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -447,6 +449,18 @@ window.applyAmericanaPreset = (type) => {
         form.querySelector('[name=pair_mode]').value = 'rotating';
         form.querySelector('[name=max_courts]').value = '4';
         window.selectCreateAmericanaImage('img/ball-mixta.png');
+    } else if (type === 'suiza') {
+        form.querySelector('[name=name]').value = '🇨🇭 AMERICANA SUIZA';
+        form.querySelector('[name=category]').value = 'open';
+        form.querySelector('[name=pair_mode]').value = 'swiss';
+        form.querySelector('[name=max_courts]').value = '3';
+        const roundsEl = form.querySelector('[name=rounds_count]');
+        if (roundsEl) roundsEl.value = '6';
+        const tStart = form.querySelector('[name=time]');
+        const tEnd = form.querySelector('[name=time_end]');
+        if (tStart) tStart.value = '18:00';
+        if (tEnd) tEnd.value = '20:00';
+        window.selectCreateAmericanaImage('img/padel-event.jpg');
     } else if (type === 'club') {
         form.querySelector('[name=name]').value = 'AMERICANA CLUB COLABORADOR';
         form.querySelector('[name=is_external]').value = 'true';
@@ -760,7 +774,21 @@ window.updatePairModeHelper = function(selectEl, descContainerId) {
     if (!container) return;
     const mode = selectEl ? selectEl.value : 'fixed';
 
-    if (mode === 'rotating') {
+    if (mode === 'swiss') {
+        container.innerHTML = `
+            <div style="display:flex; align-items:flex-start; gap:8px;">
+                <span style="font-size: 1.15rem; line-height: 1;">🇨🇭</span>
+                <div>
+                    <strong style="color: #ef4444; font-size: 0.76rem; text-transform: uppercase;">Modalidad Sistema Suizo (Express 2h):</strong>
+                    <div style="color: #cbd5e1; font-size: 0.72rem; margin-top: 2px;">
+                        Inscripción individual. 6 rondas express de juego efectivo (2 horas). Los juegos ganados son tus puntos acumulados. Tras cada ronda los 4 mejores van a Pista 1, siguientes a Pista 2, restantes a Pista 3, cruzando parejas sin repetir compañero.
+                    </div>
+                </div>
+            </div>
+        `;
+        container.style.borderLeftColor = '#ef4444';
+        container.style.background = 'rgba(239, 68, 68, 0.08)';
+    } else if (mode === 'rotating') {
         container.innerHTML = `
             <div style="display:flex; align-items:flex-start; gap:8px;">
                 <span style="font-size: 1.15rem; line-height: 1;">🌪️</span>
@@ -1105,7 +1133,9 @@ window.openEditAmericanaModal = async (americana) => {
     const pairsArea = document.getElementById('americana-fixed-pairs-area');
 
     if (pairModeSelect) {
-        if (pairModeSelect.value !== 'rotating') {
+        if (americana.pair_mode === 'swiss' || americana.pair_mode === 'rotating') {
+            pairModeSelect.value = americana.pair_mode;
+        } else {
             pairModeSelect.value = 'fixed';
         }
     }

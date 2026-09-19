@@ -1070,87 +1070,141 @@
                                 background: rgba(114, 168, 0, 0.6);
                             }
                         </style>
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 4px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding:0 4px;">
                             <div style="font-weight:950; font-size:0.85rem; color:#0a192f; letter-spacing:1px; text-transform:uppercase; display:flex; align-items:center; gap:8px;">
                                 <i class="fas fa-trophy" style="color: #fbbf24; font-size: 1rem;"></i> TOP 10 ELITE
                             </div>
-                            <div style="font-size:0.65rem; color:#72a800; font-weight:950; cursor:pointer;" onclick="window.Router.navigate('ranking')">VER RANKING <i class="fas fa-chevron-right" style="font-size:0.55rem;"></i></div>
+                            <div id="dashboard-ranking-see-all" style="font-size:0.65rem; color:#72a800; font-weight:950; cursor:pointer;" onclick="window.navigateFromDashboardRanking && window.navigateFromDashboardRanking()">
+                                VER RANKING COMPLETO <i class="fas fa-chevron-right" style="font-size:0.55rem;"></i>
+                            </div>
                         </div>
+
+                        <!-- SELECTOR DE MODALIDAD: ENTRENOS VS AMERICANAS -->
+                        <div id="dashboard-ranking-mode-tabs" style="display: flex; background: #e2e8f0; padding: 4px; border-radius: 14px; margin-bottom: 12px; gap: 4px; border: 1px solid #cbd5e1;">
+                            <button type="button" id="tab-dashboard-entrenos" onclick="window.switchDashboardRankingMode && window.switchDashboardRankingMode('entrenos')" style="flex: 1; padding: 8px 12px; border-radius: 10px; border: none; font-weight: 950; font-size: 0.7rem; letter-spacing: 0.5px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s ease; background: #0f172a; color: #CCFF00; box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2);">
+                                <i class="fas fa-dumbbell"></i> ENTRENOS
+                            </button>
+                            <button type="button" id="tab-dashboard-americanas" onclick="window.switchDashboardRankingMode && window.switchDashboardRankingMode('americanas')" style="flex: 1; padding: 8px 12px; border-radius: 10px; border: none; font-weight: 950; font-size: 0.7rem; letter-spacing: 0.5px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s ease; background: transparent; color: #64748b;">
+                                <i class="fas fa-trophy"></i> AMERICANAS
+                            </button>
+                        </div>
+
+                        <!-- 1. MVP ORO #1 -->
                         <div id="mvp-spotlight-container" style="margin-bottom:12px;"></div>
+                        <!-- 2. DUPLA DE HONOR: #2 PLATA Y #3 BRONCE -->
+                        <div id="podium-runners-container" style="margin-bottom:12px;"></div>
+                        
+                        <!-- 3. CARRUSEL DE ASPIRANTES (#4 AL #10) -->
+                        <div id="trending-section-header" style="display:flex; justify-content:space-between; align-items:center; margin: 12px 4px 8px;">
+                            <div style="font-size:0.68rem; font-weight:950; color:#475569; letter-spacing:0.8px; text-transform:uppercase; display:flex; align-items:center; gap:6px;">
+                                <i class="fas fa-fire" style="color:#f97316;"></i> ASPIRANTES AL TOP 10 (#4 - #10)
+                            </div>
+                            <div style="font-size:0.58rem; color:#64748b; font-weight:800; text-transform:uppercase;"><i class="fas fa-id-card" style="color:#72a800;"></i> CARTA INTERACTIVA</div>
+                        </div>
                         <div id="trending-players-list" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:12px; scrollbar-width:thin; scrollbar-color:rgba(114,168,0,0.35) transparent; -webkit-overflow-scrolling:touch;">
                             <div style="margin:20px auto; color:#94a3b8;"><i class="fas fa-circle-notch fa-spin"></i></div>
                         </div>
                     </div>
 
-                    <!-- 7. MERCH PROMO (SOMOS PADEL BCN) - FINAL MOBILE FIX -->
-                    <div id="merch-widget-root" onclick="window.open('https://wa.me/34649219350?text=Hola!%20Me%20interesa%20la%20sudadera%20de%20Somos%20Padel%20BCN', '_blank')" style="
-                        margin: 0 15px 8px !important;
-                        background: linear-gradient(135deg, #3b82f6 0%, #1e3a8a 100%);
+                    <!-- 7. MERCH PROMO (SOMOS PADEL BCN) - BOUTIQUE PREMIUM CON SELECTOR INTERACTIVO -->
+                    <div id="merch-widget-root" style="
+                        margin: 0 15px 14px !important;
+                        background: linear-gradient(135deg, #0b172a 0%, #172554 50%, #1e3a8a 100%);
                         border-radius: 24px;
-                        padding: 0;
+                        padding: 16px;
                         position: relative;
                         overflow: hidden;
-                        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
-                        border: 1px solid rgba(255, 255, 255, 0.25);
-                        cursor: pointer;
+                        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+                        border: 1px solid rgba(255, 255, 255, 0.15);
                         animation: floatUp 0.8s ease-out forwards;
-                        display: flex;
-                        height: 180px;
-                        transition: transform 0.2s;
-                    " onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
+                    ">
+                        <!-- BG Effect Pattern -->
+                        <div style="position: absolute; top:0; left:0; width:100%; height:100%; opacity: 0.08; background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 14px 14px; pointer-events: none;"></div>
                         
-                        <!-- BG Effect -->
-                        <div style="position: absolute; top:0; left:0; width:100%; height:100%; opacity: 0.1; background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 15px 15px; pointer-events: none;"></div>
-
-                        <!-- Image Section (Left) - PRECISION MASKING -->
-                        <div style="width: 42%; position: relative; display: flex; align-items: center; justify-content: center; z-index: 5; pointer-events: none;">
-                             <img src="./img/sudadera.jpg" 
-                                  onerror="this.style.display='none'" 
-                                  style="
-                                      width: 110%; 
-                                      height: 110%; 
-                                      object-fit: contain; 
-                                      transform: rotate(-3deg) translateX(-5px); 
-                                      filter: drop-shadow(0 25px 35px rgba(0,0,0,0.7)) brightness(1.05) contrast(1.1);
-                                  ">
-                        </div>
-
-                        <!-- Content Section (Right) - DARK GRADIENT FOR LEGIBILITY -->
-                        <div style="width: 60%; padding: 15px 15px 15px 10px; display: flex; flex-direction: column; justify-content: center; gap: 6px; position: relative; z-index: 10; pointer-events: none; background: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 20%, rgba(0,0,0,0.8) 100%);">
-                            
-                            <div style="background: #CCFF00; color: #000; font-size: 0.6rem; font-weight: 1000; padding: 3px 10px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; width: fit-content; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                                NUEVA COLECCIÓN
-                            </div>
-                            
-                            <h3 style="margin: 0; font-size: 1.4rem; color: white; font-weight: 950; line-height: 1; text-shadow: 0 4px 15px rgba(0,0,0,0.8);">
-                                SUDADERA
-                            </h3>
-                            
-                            <div style="font-size: 0.95rem; color: rgba(255,255,255,1); font-weight: 800; text-shadow: 0 2px 8px rgba(0,0,0,1);">
-                                SOMOSPADEL BCN
-                            </div>
-                            
-                            <div style="color:#CCFF00; font-weight:900; font-size: 1.5rem; text-shadow:0 3px 12px rgba(0,0,0,0.8); margin: 2px 0;">
-                                24<span style="font-size:0.85rem; vertical-align:top;">,99€</span>
+                        <div style="display: flex; gap: 12px; align-items: center; position: relative; z-index: 5;">
+                            <!-- Image Section (Left) -->
+                            <div style="width: 36%; flex-shrink: 0; position: relative; display: flex; align-items: center; justify-content: center;">
+                                <div style="position: absolute; width: 90px; height: 90px; background: radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, transparent 70%); filter: blur(10px);"></div>
+                                <img src="./img/sudadera.jpg" 
+                                     onerror="this.style.display='none'" 
+                                     alt="Sudadera Oficial SomosPadel BCN"
+                                     style="
+                                         width: 110%; 
+                                         max-height: 145px; 
+                                         object-fit: contain; 
+                                         transform: rotate(-3deg); 
+                                         filter: drop-shadow(0 15px 25px rgba(0,0,0,0.65)) brightness(1.05);
+                                         transition: transform 0.3s ease;
+                                     " onmouseover="this.style.transform='rotate(0deg) scale(1.06)'" onmouseout="this.style.transform='rotate(-3deg) scale(1)'">
                             </div>
 
-                            <div style="pointer-events: auto; margin-top: 4px;">
-                                <div style="
-                                    background: white; 
-                                    color: #1e40af; 
-                                    font-size: 0.8rem; 
-                                    font-weight: 1000; 
-                                    padding: 10px 22px; 
-                                    border-radius: 14px; 
-                                    box-shadow: 0 8px 20px rgba(0,0,0,0.3); 
-                                    display: inline-flex; 
-                                    align-items: center; 
-                                    gap: 8px; 
-                                    transition: all 0.2s;
-                                    cursor: pointer;
-                                " onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 12px 25px rgba(0,0,0,0.4)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.3)'">
-                                    COMPRAR <i class="fas fa-shopping-cart" style="font-size: 0.8rem;"></i>
+                            <!-- Content Section (Right) -->
+                            <div style="width: 64%; display: flex; flex-direction: column; gap: 5px;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
+                                    <span style="background: #CCFF00; color: #000; font-size: 0.55rem; font-weight: 1000; padding: 2px 7px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 2px 6px rgba(204,255,0,0.3);">
+                                        OFICIAL 2026
+                                    </span>
+                                    <span style="font-size: 0.55rem; color: #94a3b8; font-weight: 800; display: flex; align-items: center; gap: 3px;">
+                                        <i class="fas fa-shield-halved" style="color: #38bdf8;"></i> CLUB PRO
+                                    </span>
                                 </div>
+
+                                <h3 style="margin: 0; font-size: 1.15rem; color: #ffffff; font-weight: 950; line-height: 1.1; text-shadow: 0 2px 8px rgba(0,0,0,0.6);">
+                                    SUDADERA OFICIAL
+                                </h3>
+
+                                <div style="font-size: 0.68rem; color: #cbd5e1; font-weight: 700; line-height: 1.2;">
+                                    100% Algodón Premium 320g · Barcelona
+                                </div>
+
+                                <!-- Price block -->
+                                <div style="display: flex; align-items: baseline; gap: 6px; margin: 1px 0;">
+                                    <div style="color:#CCFF00; font-weight:1000; font-size: 1.4rem; line-height: 1; text-shadow:0 0 12px rgba(204,255,0,0.3);">
+                                        24<span style="font-size:0.8rem; vertical-align:top;">,99€</span>
+                                    </div>
+                                    <div style="text-decoration: line-through; color: #64748b; font-size: 0.75rem; font-weight: 700;">
+                                        39,99€
+                                    </div>
+                                    <div style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; font-size: 0.52rem; font-weight: 900; padding: 1px 5px; border-radius: 4px;">
+                                        -37% CLUB
+                                    </div>
+                                </div>
+
+                                <!-- Size Selector -->
+                                <div>
+                                    <div style="font-size: 0.54rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.5px;">
+                                        TALLA:
+                                    </div>
+                                    <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                                        <button type="button" class="merch-size-btn" data-size="S" onclick="window.selectMerchSize && window.selectMerchSize('S')" style="padding: 3px 7px; border-radius: 7px; font-size: 0.62rem; font-weight: 900; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer;">S</button>
+                                        <button type="button" class="merch-size-btn" data-size="M" onclick="window.selectMerchSize && window.selectMerchSize('M')" style="padding: 3px 7px; border-radius: 7px; font-size: 0.62rem; font-weight: 900; border: 1px solid #CCFF00; background: #CCFF00; color: #000; cursor: pointer; transform: scale(1.08);">M</button>
+                                        <button type="button" class="merch-size-btn" data-size="L" onclick="window.selectMerchSize && window.selectMerchSize('L')" style="padding: 3px 7px; border-radius: 7px; font-size: 0.62rem; font-weight: 900; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer;">L</button>
+                                        <button type="button" class="merch-size-btn" data-size="XL" onclick="window.selectMerchSize && window.selectMerchSize('XL')" style="padding: 3px 7px; border-radius: 7px; font-size: 0.62rem; font-weight: 900; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer;">XL</button>
+                                        <button type="button" class="merch-size-btn" data-size="XXL" onclick="window.selectMerchSize && window.selectMerchSize('XXL')" style="padding: 3px 7px; border-radius: 7px; font-size: 0.62rem; font-weight: 900; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer;">XXL</button>
+                                    </div>
+                                </div>
+
+                                <!-- CTA Order Button -->
+                                <button type="button" id="merch-order-btn" onclick="window.open('https://wa.me/34649219350?text=Hola%20SomosPadel!%20Quiero%20pedir%20la%20sudadera%20oficial%20SomosPadel%20BCN%20(24,99%E2%82%AC)%20en%20talla%20M.', '_blank')" style="
+                                    margin-top: 3px;
+                                    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+                                    border: none;
+                                    border-radius: 10px;
+                                    padding: 7px 12px;
+                                    color: #ffffff;
+                                    font-size: 0.7rem;
+                                    font-weight: 1000;
+                                    letter-spacing: 0.5px;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    gap: 6px;
+                                    cursor: pointer;
+                                    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.35);
+                                    transition: all 0.2s ease;
+                                " onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 6px 18px rgba(34, 197, 94, 0.5)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(34, 197, 94, 0.35)'">
+                                    <span>PEDIR TALLA M</span> <i class="fab fa-whatsapp" style="font-size: 0.9rem;"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1977,6 +2031,22 @@
                         });
                     } else if (posts.length === 0) {
                         posts = window.SomosPadelNewsEngine ? window.SomosPadelNewsEngine.getDeterministicFallbackPosts() : [];
+                    }
+
+                    // Rotación periódica inteligente: asegurar que las noticias clave de Modos de Juego aparezcan en el feed
+                    const gameModesPosts = posts.filter(p => p.id && p.id.includes('modos-juego'));
+                    if (gameModesPosts.length > 0) {
+                        // Rotación cada 6 horas entre los artículos de Modos de Juego
+                        const periodSlot = Math.floor(Date.now() / (1000 * 60 * 60 * 6));
+                        const featuredGuide = gameModesPosts[periodSlot % gameModesPosts.length];
+                        
+                        // Posicionar la guía en puestos visibles del feed (intercalada en puesto 1 ó 2)
+                        const currentIdx = posts.findIndex(p => p.id === featuredGuide.id);
+                        if (currentIdx !== -1) {
+                            posts.splice(currentIdx, 1);
+                        }
+                        const insertPos = (periodSlot % 2 === 0) ? 1 : 0;
+                        posts.splice(Math.min(insertPos, posts.length), 0, featuredGuide);
                     }
 
                     // Guardar en caché local para filtrado instantáneo
@@ -2841,6 +2911,36 @@
                             readTime: '3 min',
                             emoji: '⚡',
                             imgGrad: 'linear-gradient(135deg, #fb923c 0%, #f97316 100%)'
+                        },
+                        'modos-juego-pareja-fija-vs-twister': {
+                            category: '🎮 MODOS DE JUEGO',
+                            catColor: '#CCFF00',
+                            title: 'Pareja Fija vs Twister Individual: ¿En qué formato anotarte según tus objetivos?',
+                            content: 'En SomosPadel Barcelona contamos con dos formatos estelares diseñados para cubrir cualquier aspiración: Pareja Fija (en tándem, subís y bajáis juntos de pista según ganes o pierdas, puntuación conjunta y sincronía para torneos) y Twister Individual (inscripción individual sin necesidad de pareja previa, cambio de compañero en cada ronda, y podio por diferencial individual de juegos). ¡Ambos formatos garantizan la máxima emoción!',
+                            date: 'Hoy',
+                            readTime: '4 min',
+                            emoji: '🎮',
+                            imgGrad: 'linear-gradient(135deg, #0284c7 0%, #db2777 100%)'
+                        },
+                        'modos-juego-twister-individual-guia': {
+                            category: '💡 CONSEJOS',
+                            catColor: '#ec4899',
+                            title: 'Guía Táctica Twister: Cómo Adaptarte al Instante a una Nueva Pareja',
+                            content: 'Jugar una americana en formato Twister Individual exige compenetración express. Acuerda con tu nueva pareja en 30 segundos los roles de drive y revés, la cobertura del centro en globos rivales y mantén un refuerzo positivo constante. La versatilidad para jugar en ambos lados es la llave del triunfo en las rotaciones individuales.',
+                            date: 'Hoy',
+                            readTime: '3 min',
+                            emoji: '🌪️',
+                            imgGrad: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)'
+                        },
+                        'modos-juego-suizo-americana-entreno': {
+                            category: '🎮 MODOS DE JUEGO',
+                            catColor: '#ef4444',
+                            title: 'Sistema Suizo en SomosPadel: 6 Rondas Express, Puntos Individuales y Reagrupación por Pistas',
+                            content: 'La 3ª modalidad de SomosPadel Barcelona: el Sistema Suizo (Americana Suiza y Entreno Suizo). Duración 2h, 6 rondas express de juego efectivo (al sonar el silbato concluye el punto). Formato individual con cambio de pareja. Puntos individuales = juegos ganados. Reagrupación tras cada ronda: Top 4 a Pista 1, siguientes a Pista 2, restantes a Pista 3, sin repetir compañero. Campeón: más juegos sumados.',
+                            date: 'Hoy',
+                            readTime: '4 min',
+                            emoji: '🇨🇭',
+                            imgGrad: 'linear-gradient(135deg, #ef4444 0%, #0f172a 100%)'
                         }
                     };
                     post = fallbackPosts[postId];
@@ -2863,6 +2963,27 @@
                 if (!articleImg) {
                     articleImg = 'img/pista_padel_azul.png';
                 }
+
+                // Detectar si el post trata sobre Modos de Juego
+                const isGameModesPost = (postId && postId.includes('modos-juego')) ||
+                    (post.title && (post.title.toLowerCase().includes('pareja fija') || post.title.toLowerCase().includes('twister') || post.title.toLowerCase().includes('suizo') || post.title.toLowerCase().includes('suiza') || post.title.toLowerCase().includes('modos de juego')));
+
+                const gameModesActionHtml = isGameModesPost ? `
+                    <div style="margin: 20px 0 16px; background: linear-gradient(135deg, rgba(204, 255, 0, 0.12) 0%, rgba(56, 189, 248, 0.1) 100%); border: 1.5px solid rgba(204, 255, 0, 0.45); border-radius: 18px; padding: 18px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.35);">
+                        <div style="font-size: 1.6rem; margin-bottom: 6px;">🎮 👥 🌪️ 🇨🇭</div>
+                        <div style="font-size: 0.98rem; font-weight: 950; color: #ffffff; margin-bottom: 4px;">Comparativa & Normativa Oficial</div>
+                        <div style="font-size: 0.78rem; color: #cbd5e1; margin-bottom: 14px; line-height: 1.45;">
+                            Abre la guía interactiva oficial para consultar todas las reglas, dinámicas de rotación y sistemas de puntuación.
+                        </div>
+                        <button id="blog-modal-modes-action-btn" 
+                                style="background: #CCFF00; color: #000000; font-weight: 950; font-size: 0.82rem; border: none; padding: 11px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(204, 255, 0, 0.35); transition: all 0.2s ease;"
+                                onmouseover="this.style.transform='scale(1.04)';"
+                                onmouseout="this.style.transform='scale(1)';"
+                                onmousedown="this.style.transform='scale(0.97)';">
+                            <i class="fas fa-gamepad"></i> ABRIR MODOS DE JUEGO
+                        </button>
+                    </div>
+                ` : '';
 
                 const modal = document.createElement('div');
                 modal.id = 'blog-post-modal';
@@ -2902,6 +3023,8 @@
                             
                             <p style="color: rgba(255,255,255,0.85); font-size: 0.86rem; font-weight: 500; line-height: 1.65; margin: 0 0 20px 0; word-break: break-word; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">${post.content}</p>
                             
+                            ${gameModesActionHtml}
+
                             <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 0.68rem; color: rgba(255,255,255,0.4); font-weight: 800; letter-spacing: 0.5px;">
                                 <span>Publicado: ${post.date || 'Recientemente'}</span>
                                 <span style="color: #CCFF00; font-weight: 900; letter-spacing: 0.8px;">SOMOSPADEL BCN</span>
@@ -2993,6 +3116,20 @@
                         saveBtn.style.borderColor = isNowSaved ? '#CCFF00' : 'rgba(255,255,255,0.25)';
                         const icon = saveBtn.querySelector('i');
                         if (icon) icon.className = isNowSaved ? 'fas fa-bookmark' : 'far fa-bookmark';
+                    });
+                }
+
+                const modesBtn = modal.querySelector('#blog-modal-modes-action-btn');
+                if (modesBtn) {
+                    modesBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        modal.remove();
+                        if (typeof window.showGameModesModal === 'function') {
+                            const targetTab = (postId && (postId.includes('suiz') || postId.includes('swiss')))
+                                ? 'suizo'
+                                : ((postId && postId.includes('twister')) ? 'twister' : 'pareja');
+                            window.showGameModesModal(targetTab);
+                        }
                     });
                 }
 
@@ -4139,374 +4276,602 @@
                 if (!currentRoot) return;
 
                 try {
-                    // --- 1. MVP SPOTLIGHT (Top 1) ---
-                    if (currentMvpRoot) {
-                    let mvp = (players && players.length > 0) ? players[0] : null;
-                    if (!mvp) {
-                        const currentUser = window.Store ? window.Store.getState('currentUser') : null;
-                        mvp = currentUser ? {
-                            name: currentUser.name || "Alejandro Coscolín",
-                            level: currentUser.level || 3.5,
-                            stats: {
-                                americanas: { points: 2450, played: 12, won: 6 },
-                                entrenos: { points: 0, played: 0, won: 0 }
-                            },
-                            photo_url: currentUser.photo_url || currentUser.photoURL || null,
-                            ranking_pos: 1
-                        } : {
-                            name: "Alejandro Coscolín",
-                            level: 3.5,
-                            stats: {
-                                americanas: { points: 2450, played: 12, won: 6 },
-                                entrenos: { points: 0, played: 0, won: 0 }
-                            },
-                            photo_url: null,
-                            ranking_pos: 1
-                        };
+                    // Guardar copia de los últimos datos de ranking
+                    this._lastRankingPlayers = (players && players.length > 0) ? players : (this._lastRankingPlayers || []);
+                    const currentMode = window._dashboardRankingMode || localStorage.getItem('sp_dashboard_ranking_mode') || 'entrenos';
+                    window._dashboardRankingMode = currentMode;
+
+                    // 0. Sincronizar estilo de las pestañas
+                    const tabEntrenos = document.getElementById('tab-dashboard-entrenos');
+                    const tabAmericanas = document.getElementById('tab-dashboard-americanas');
+                    if (tabEntrenos && tabAmericanas) {
+                        if (currentMode === 'entrenos') {
+                            tabEntrenos.style.background = '#0f172a';
+                            tabEntrenos.style.color = '#CCFF00';
+                            tabEntrenos.style.boxShadow = '0 4px 10px rgba(15, 23, 42, 0.25)';
+                            tabAmericanas.style.background = 'transparent';
+                            tabAmericanas.style.color = '#64748b';
+                            tabAmericanas.style.boxShadow = 'none';
+                        } else {
+                            tabAmericanas.style.background = '#0f172a';
+                            tabAmericanas.style.color = '#CCFF00';
+                            tabAmericanas.style.boxShadow = '0 4px 10px rgba(15, 23, 42, 0.25)';
+                            tabEntrenos.style.background = 'transparent';
+                            tabEntrenos.style.color = '#64748b';
+                            tabEntrenos.style.boxShadow = 'none';
+                        }
                     }
 
-                    // Precalculate aggregated stats for FUT card rendering
-                    const mvpPoints = (mvp.stats?.americanas?.points || 0) + (mvp.stats?.entrenos?.points || 0);
-                    const mvpWon = (mvp.stats?.americanas?.won || 0) + (mvp.stats?.entrenos?.won || 0);
-                    const mvpStreak = mvpWon > 0 ? (1 + ((mvp.id ? String(mvp.id).charCodeAt(0) : 0) % Math.min(mvpWon, 4))) : 0;
+                    // Actualizar subtítulo del carrusel de aspirantes
+                    const headerEl = document.getElementById('trending-section-header');
+                    if (headerEl) {
+                        headerEl.innerHTML = `
+                            <div style="font-size:0.68rem; font-weight:950; color:#475569; letter-spacing:0.8px; text-transform:uppercase; display:flex; align-items:center; gap:6px;">
+                                <i class="fas fa-fire" style="color:#f97316;"></i> ASPIRANTES TOP 10 ${currentMode === 'entrenos' ? 'ENTRENOS' : 'AMERICANAS'} (#4 - #10)
+                            </div>
+                            <div style="font-size:0.58rem; color:#64748b; font-weight:800; text-transform:uppercase;"><i class="fas fa-id-card" style="color:#72a800;"></i> CARTA INTERACTIVA</div>
+                        `;
+                    }
 
-                    const levelNum = parseFloat(mvp.level || 3.5);
+                    // 1. Filtrar y ordenar la lista específicamente para el modo seleccionado (entrenos vs americanas)
+                    const modeKey = currentMode;
+                    const modePlayers = (this._lastRankingPlayers || []).map(p => {
+                        const mStats = p.stats?.[modeKey] || { points: 0, played: 0, won: 0, lost: 0, gamesWon: 0, gamesLost: 0 };
+                        return {
+                            ...p,
+                            modePoints: mStats.points || 0,
+                            modePlayed: mStats.played || 0,
+                            modeWon: mStats.won || 0,
+                            modeLost: mStats.lost || 0,
+                            modeGamesWon: mStats.gamesWon || 0,
+                            modeGamesLost: mStats.gamesLost || 0
+                        };
+                    });
 
-                    // Estadísticas de rendimiento reales
-                    const playedAme = mvp.stats?.americanas?.played || 0;
-                    const playedEnt = mvp.stats?.entrenos?.played || 0;
-                    const totalPlayed = playedAme + playedEnt;
+                    modePlayers.sort((a, b) => {
+                        if (b.modePoints !== a.modePoints) return b.modePoints - a.modePoints;
+                        if (b.modeWon !== a.modeWon) return b.modeWon - a.modeWon;
+                        return (parseFloat(b.level || 3.5) - parseFloat(a.level || 3.5));
+                    });
 
-                    const wonAme = mvp.stats?.americanas?.won || 0;
-                    const wonEnt = mvp.stats?.entrenos?.won || 0;
-                    const totalWon = wonAme + wonEnt;
+                    // --- 1. MVP SPOTLIGHT (Top 1) ---
+                    if (currentMvpRoot) {
+                        let mvp = (modePlayers && modePlayers.length > 0) ? modePlayers[0] : null;
+                        if (!mvp) {
+                            const currentUser = window.Store ? window.Store.getState('currentUser') : null;
+                            mvp = currentUser ? {
+                                name: currentUser.name || "Alejandro Coscolín",
+                                level: currentUser.level || 3.5,
+                                modePoints: currentMode === 'entrenos' ? 145 : 2450,
+                                modePlayed: 12,
+                                modeWon: 8,
+                                modeLost: 4,
+                                modeGamesWon: 48,
+                                modeGamesLost: 24,
+                                photo_url: currentUser.photo_url || currentUser.photoURL || null,
+                                ranking_pos: 1
+                            } : {
+                                name: "Alejandro Coscolín",
+                                level: 3.5,
+                                modePoints: currentMode === 'entrenos' ? 145 : 2450,
+                                modePlayed: 12,
+                                modeWon: 8,
+                                modeLost: 4,
+                                modeGamesWon: 48,
+                                modeGamesLost: 24,
+                                photo_url: null,
+                                ranking_pos: 1
+                            };
+                        }
 
-                    const lostAme = mvp.stats?.americanas?.lost || 0;
-                    const lostEnt = mvp.stats?.entrenos?.lost || 0;
-                    const totalLost = lostAme + lostEnt;
+                        // Estadísticas específicas de la modalidad seleccionada
+                        const mvpPoints = mvp.modePoints;
+                        const mvpWon = mvp.modeWon;
+                        const mvpPlayed = mvp.modePlayed;
+                        const mvpLost = mvp.modeLost;
+                        const mvpGamesWon = mvp.modeGamesWon;
+                        const mvpGamesLost = mvp.modeGamesLost;
+                        const mvpStreak = mvpWon > 0 ? (1 + ((mvp.id ? String(mvp.id).charCodeAt(0) : 0) % Math.min(mvpWon, 4))) : 0;
+                        const winRate = mvpPlayed > 0 ? Math.round((mvpWon / mvpPlayed) * 100) : 0;
+                        const levelNum = parseFloat(mvp.level || 3.5);
+                        const rankBadge = window.RankingController?.getLevelBadge(levelNum) || { label: 'GOLD', color: '#fbbf24' };
+                        const modeLabelUpper = currentMode === 'entrenos' ? 'ENTRENOS' : 'AMERICANAS';
 
-                    const winRate = totalPlayed > 0 ? Math.round((totalWon / totalPlayed) * 100) : 0;
+                        mvpRoot.innerHTML = `
+                            <div class="fut-card-wrapper" onclick="this.classList.toggle('flipped')" style="
+                                perspective: 1000px;
+                                margin-bottom: 16px;
+                                font-family: 'Outfit', 'Inter', sans-serif;
+                                cursor: pointer;
+                                position: relative;
+                                user-select: none;
+                                -webkit-tap-highlight-color: transparent;">
+                                <style>
+                                    @keyframes gold-shine {
+                                        0% { background-position: 0% 50%; }
+                                        50% { background-position: 100% 50%; }
+                                        100% { background-position: 0% 50%; }
+                                    }
+                                    @keyframes pulse-soft {
+                                        0% { opacity: 0.6; transform: scale(1); }
+                                        50% { opacity: 1; transform: scale(1.02); }
+                                        100% { opacity: 0.6; transform: scale(1); }
+                                    }
+                                    .fut-card-flipper {
+                                        position: relative;
+                                        width: 100%;
+                                        transform-style: preserve-3d;
+                                        transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                                    }
+                                    .fut-card-wrapper.flipped .fut-card-flipper {
+                                        transform: rotateY(180deg);
+                                    }
+                                    .fut-card-wrapper:not(.flipped):hover .fut-card-flipper {
+                                        transform: rotateY(10deg) rotateX(5deg) scale(1.02);
+                                    }
+                                    .fut-card-front, .fut-card-back {
+                                        width: 100%;
+                                        backface-visibility: hidden;
+                                        -webkit-backface-visibility: hidden;
+                                        border-radius: 24px;
+                                        border: 2px solid #eab308;
+                                        box-sizing: border-box;
+                                        overflow: hidden;
+                                    }
+                                    .fut-card-front {
+                                        background: linear-gradient(135deg, #1e1b4b 0%, #030712 100%);
+                                        box-shadow: 0 15px 35px rgba(234, 179, 8, 0.15), 0 0 25px rgba(234, 179, 8, 0.05);
+                                        position: relative;
+                                        z-index: 2;
+                                    }
+                                    .fut-card-back {
+                                        background: linear-gradient(135deg, #090514 0%, #02010a 100%);
+                                        box-shadow: 0 15px 35px rgba(234, 179, 8, 0.15), 0 0 25px rgba(234, 179, 8, 0.05);
+                                        transform: rotateY(180deg);
+                                        position: absolute;
+                                        top: 0;
+                                        left: 0;
+                                        height: 100%;
+                                        z-index: 1;
+                                    }
+                                    .fut-card-inner {
+                                        background: radial-gradient(circle at center, #1c1917 0%, #0c0a09 100%);
+                                        border-radius: 22px;
+                                        padding: 16px;
+                                        position: relative;
+                                        overflow: hidden;
+                                        border: 1px solid rgba(234, 179, 8, 0.25);
+                                        height: 100%;
+                                        box-sizing: border-box;
+                                    }
+                                    .fut-gold-glow {
+                                        position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+                                        background: linear-gradient(45deg, transparent, rgba(234, 179, 8, 0.15), transparent);
+                                        transform: rotate(30deg);
+                                        pointer-events: none;
+                                        animation: gold-shine 6s ease infinite;
+                                        background-size: 200% 200%;
+                                    }
+                                    .fut-badge-gold {
+                                        background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+                                        color: #000;
+                                        font-weight: 1000;
+                                        font-size: 0.55rem;
+                                        padding: 3px 8px;
+                                        border-radius: 6px;
+                                        text-transform: uppercase;
+                                        letter-spacing: 1px;
+                                        box-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
+                                        display: inline-block;
+                                    }
+                                    .fut-stat-label {
+                                        color: rgba(255,255,255,0.4);
+                                        font-size: 0.52rem;
+                                        font-weight: 800;
+                                        text-transform: uppercase;
+                                        letter-spacing: 0.5px;
+                                    }
+                                    .fut-stat-value {
+                                        color: #fbbf24;
+                                        font-size: 0.95rem;
+                                        font-weight: 950;
+                                        text-shadow: 0 0 5px rgba(251, 191, 36, 0.2);
+                                    }
+                                </style>
+                                <div class="fut-card-flipper">
+                                    <!-- CARA FRONTAL -->
+                                    <div class="fut-card-front">
+                                        <div class="fut-gold-glow"></div>
+                                        <div class="fut-card-inner">
+                                            <!-- HEADER STATUS -->
+                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; position: relative; z-index: 5;">
+                                                <span class="fut-badge-gold"><i class="fas fa-crown"></i> LÍDER ${modeLabelUpper}</span>
+                                                <span style="color: rgba(251, 191, 36, 0.7); font-size: 0.65rem; font-weight: 900; letter-spacing: 1px;">SOMOSPADEL ELITE</span>
+                                            </div>
 
-                    const gamesWonAme = mvp.stats?.americanas?.gamesWon || 0;
-                    const gamesWonEnt = mvp.stats?.entrenos?.gamesWon || 0;
-                    const totalGamesWon = gamesWonAme + gamesWonEnt;
-
-                    const gamesLostAme = mvp.stats?.americanas?.gamesLost || 0;
-                    const gamesLostEnt = mvp.stats?.entrenos?.gamesLost || 0;
-                    const totalGamesLost = gamesLostAme + gamesLostEnt;
-
-                    const rankBadge = window.RankingController?.getLevelBadge(levelNum) || { label: 'GOLD', color: '#fbbf24' };
-
-                    mvpRoot.innerHTML = `
-                        <div class="fut-card-wrapper" onclick="this.classList.toggle('flipped')" style="
-                            perspective: 1000px;
-                            margin-bottom: 16px;
-                            font-family: 'Outfit', 'Inter', sans-serif;
-                            cursor: pointer;
-                            position: relative;
-                            user-select: none;
-                            -webkit-tap-highlight-color: transparent;">
-                            <style>
-                                @keyframes gold-shine {
-                                    0% { background-position: 0% 50%; }
-                                    50% { background-position: 100% 50%; }
-                                    100% { background-position: 0% 50%; }
-                                }
-                                @keyframes pulse-soft {
-                                    0% { opacity: 0.6; transform: scale(1); }
-                                    50% { opacity: 1; transform: scale(1.02); }
-                                    100% { opacity: 0.6; transform: scale(1); }
-                                }
-                                .fut-card-flipper {
-                                    position: relative;
-                                    width: 100%;
-                                    transform-style: preserve-3d;
-                                    transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                                }
-                                .fut-card-wrapper.flipped .fut-card-flipper {
-                                    transform: rotateY(180deg);
-                                }
-                                .fut-card-wrapper:not(.flipped):hover .fut-card-flipper {
-                                    transform: rotateY(10deg) rotateX(5deg) scale(1.02);
-                                }
-                                .fut-card-front, .fut-card-back {
-                                    width: 100%;
-                                    backface-visibility: hidden;
-                                    -webkit-backface-visibility: hidden;
-                                    border-radius: 24px;
-                                    border: 2px solid #eab308;
-                                    box-sizing: border-box;
-                                    overflow: hidden;
-                                }
-                                .fut-card-front {
-                                    background: linear-gradient(135deg, #1e1b4b 0%, #030712 100%);
-                                    box-shadow: 0 15px 35px rgba(234, 179, 8, 0.15), 0 0 25px rgba(234, 179, 8, 0.05);
-                                    position: relative;
-                                    z-index: 2;
-                                }
-                                .fut-card-back {
-                                    background: linear-gradient(135deg, #090514 0%, #02010a 100%);
-                                    box-shadow: 0 15px 35px rgba(234, 179, 8, 0.15), 0 0 25px rgba(234, 179, 8, 0.05);
-                                    transform: rotateY(180deg);
-                                    position: absolute;
-                                    top: 0;
-                                    left: 0;
-                                    height: 100%;
-                                    z-index: 1;
-                                }
-                                .fut-card-inner {
-                                    background: radial-gradient(circle at center, #1c1917 0%, #0c0a09 100%);
-                                    border-radius: 22px;
-                                    padding: 16px;
-                                    position: relative;
-                                    overflow: hidden;
-                                    border: 1px solid rgba(234, 179, 8, 0.25);
-                                    height: 100%;
-                                    box-sizing: border-box;
-                                }
-                                .fut-gold-glow {
-                                    position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-                                    background: linear-gradient(45deg, transparent, rgba(234, 179, 8, 0.15), transparent);
-                                    transform: rotate(30deg);
-                                    pointer-events: none;
-                                    animation: gold-shine 6s ease infinite;
-                                    background-size: 200% 200%;
-                                }
-                                .fut-badge-gold {
-                                    background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
-                                    color: #000;
-                                    font-weight: 1000;
-                                    font-size: 0.55rem;
-                                    padding: 3px 8px;
-                                    border-radius: 6px;
-                                    text-transform: uppercase;
-                                    letter-spacing: 1px;
-                                    box-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
-                                    display: inline-block;
-                                }
-                                .fut-stat-label {
-                                    color: rgba(255,255,255,0.4);
-                                    font-size: 0.52rem;
-                                    font-weight: 800;
-                                    text-transform: uppercase;
-                                    letter-spacing: 0.5px;
-                                }
-                                .fut-stat-value {
-                                    color: #fbbf24;
-                                    font-size: 0.95rem;
-                                    font-weight: 950;
-                                    text-shadow: 0 0 5px rgba(251, 191, 36, 0.2);
-                                }
-                            </style>
-                            <div class="fut-card-flipper">
-                                <!-- CARA FRONTAL -->
-                                <div class="fut-card-front">
-                                    <div class="fut-gold-glow"></div>
-                                    <div class="fut-card-inner">
-                                        <!-- HEADER STATUS -->
-                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; position: relative; z-index: 5;">
-                                            <span class="fut-badge-gold"><i class="fas fa-crown"></i> MVP OF THE WEEK</span>
-                                            <span style="color: rgba(251, 191, 36, 0.7); font-size: 0.65rem; font-weight: 900; letter-spacing: 1px;">SOMOSPADEL ELITE</span>
-                                        </div>
-
-                                        <!-- CORE DATA ROW -->
-                                        <div style="display: flex; align-items: center; gap: 16px; position: relative; z-index: 5; margin-bottom: 14px;">
-                                            <!-- Left Column: Score & Rank -->
-                                            <div style="text-align: center; border-right: 1px solid rgba(234, 179, 8, 0.2); padding-right: 14px;">
-                                                <!-- Real Padel Level -->
-                                                <div style="font-size: 2rem; font-weight: 1000; color: #fbbf24; line-height: 0.8; letter-spacing: -1.5px; font-family: 'Outfit';">
-                                                    ${parseFloat(mvp.level || 3.5).toFixed(2)}
+                                            <!-- CORE DATA ROW -->
+                                            <div style="display: flex; align-items: center; gap: 16px; position: relative; z-index: 5; margin-bottom: 14px;">
+                                                <!-- Left Column: Score & Rank -->
+                                                <div style="text-align: center; border-right: 1px solid rgba(234, 179, 8, 0.2); padding-right: 14px;">
+                                                    <!-- Real Padel Level -->
+                                                    <div style="font-size: 2rem; font-weight: 1000; color: #fbbf24; line-height: 0.8; letter-spacing: -1.5px; font-family: 'Outfit';">
+                                                        ${parseFloat(mvp.level || 3.5).toFixed(2)}
+                                                    </div>
+                                                    <div style="font-size: 0.5rem; color: #fbbf24; font-weight: 950; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; line-height: 1;">NIVEL</div>
+                                                    <div style="font-size: 0.65rem; color: #fff; font-weight: 950; margin-top: 8px; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);">
+                                                        RANK #1
+                                                    </div>
                                                 </div>
-                                                <div style="font-size: 0.5rem; color: #fbbf24; font-weight: 950; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; line-height: 1;">NIVEL</div>
-                                                <div style="font-size: 0.65rem; color: #fff; font-weight: 950; margin-top: 8px; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);">
-                                                    RANK #1
+
+                                                <!-- Center: Player Avatar Frame -->
+                                                <div style="position: relative;">
+                                                    <div style="
+                                                        width: 76px; height: 76px; border-radius: 18px;
+                                                        border: 2px solid #fbbf24;
+                                                        background: ${mvp.photo_url ? `url('${mvp.photo_url}') center/cover` : '#27272a'};
+                                                        box-shadow: 0 8px 20px rgba(0,0,0,0.5), 0 0 15px rgba(234, 179, 8, 0.15);
+                                                        overflow: hidden;
+                                                        display: flex; align-items: center; justify-content: center;">
+                                                        ${!mvp.photo_url ? `<span style="font-size: 2.2rem; font-weight: 1000; color: #fbbf24; font-family: 'Outfit';">${mvp.name.charAt(0).toUpperCase()}</span>` : ''}
+                                                    </div>
+                                                    <!-- Small Sparkle icon -->
+                                                    <div style="position: absolute; bottom: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: #fbbf24; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 8px #fbbf24;">
+                                                        <i class="fas fa-star" style="font-size: 0.55rem; color: #000;"></i>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Right: Player Name & Primary Info -->
+                                                <div style="flex: 1;">
+                                                    <h3 style="margin: 0; font-size: 1.25rem; font-weight: 1000; color: #fff; letter-spacing: -0.5px; line-height: 1.1; font-family: 'Outfit'; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+                                                        ${mvp.name.toUpperCase()}
+                                                    </h3>
+                                                    <div style="color: #a3e635; font-size: 0.6rem; font-weight: 800; display: flex; align-items: center; gap: 5px; margin-top: 6px;">
+                                                        <i class="fas fa-fire"></i> Racha: <span style="font-weight:950;">${mvpStreak} victorias</span>
+                                                    </div>
+                                                    <div style="color: rgba(255,255,255,0.4); font-size: 0.55rem; font-weight: 700; margin-top: 3px; display: flex; align-items: center; gap: 4px;">
+                                                        <i class="fas fa-satellite"></i> NODO_BCN_${modeLabelUpper}
+                                                    </div>
                                                 </div>
                                             </div>
 
-                                            <!-- Center: Player Avatar Frame -->
-                                            <div style="position: relative;">
-                                                <div style="
-                                                    width: 76px; height: 76px; border-radius: 18px;
-                                                    border: 2px solid #fbbf24;
-                                                    background: ${mvp.photo_url ? `url('${mvp.photo_url}') center/cover` : '#27272a'};
-                                                    box-shadow: 0 8px 20px rgba(0,0,0,0.5), 0 0 15px rgba(234, 179, 8, 0.15);
-                                                    overflow: hidden;
-                                                    display: flex; align-items: center; justify-content: center;">
-                                                    ${!mvp.photo_url ? `<span style="font-size: 2.2rem; font-weight: 1000; color: #fbbf24; font-family: 'Outfit';">${mvp.name.charAt(0).toUpperCase()}</span>` : ''}
+                                            <!-- FIFA STYLE ATRIBUTES COLUMNS -->
+                                            <div style="
+                                                background: rgba(0, 0, 0, 0.4);
+                                                border: 1px solid rgba(234, 179, 8, 0.15);
+                                                border-radius: 14px;
+                                                padding: 10px 14px;
+                                                display: grid;
+                                                grid-template-columns: 1fr 1fr 1fr 1fr;
+                                                text-align: center;
+                                                gap: 8px;
+                                                position: relative;
+                                                z-index: 5;">
+                                                
+                                                <div>
+                                                    <div class="fut-stat-label">NIV</div>
+                                                    <div class="fut-stat-value">${parseFloat(mvp.level || 3.5).toFixed(2)}</div>
                                                 </div>
-                                                <!-- Small Sparkle icon -->
-                                                <div style="position: absolute; bottom: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: #fbbf24; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 8px #fbbf24;">
-                                                    <i class="fas fa-star" style="font-size: 0.55rem; color: #000;"></i>
+                                                <div style="border-left: 1px solid rgba(255,255,255,0.06);">
+                                                    <div class="fut-stat-label">PTS</div>
+                                                    <div class="fut-stat-value">${mvpPoints}</div>
+                                                </div>
+                                                <div style="border-left: 1px solid rgba(255,255,255,0.06);">
+                                                    <div class="fut-stat-label">RAC</div>
+                                                    <div class="fut-stat-value">${mvpStreak}</div>
+                                                </div>
+                                                <div style="border-left: 1px solid rgba(255,255,255,0.06);">
+                                                    <div class="fut-stat-label">VIC</div>
+                                                    <div class="fut-stat-value">${mvpWon}</div>
                                                 </div>
                                             </div>
 
-                                            <!-- Right: Player Name & Primary Info -->
-                                            <div style="flex: 1;">
-                                                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 1000; color: #fff; letter-spacing: -0.5px; line-height: 1.1; font-family: 'Outfit'; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
-                                                    ${mvp.name.toUpperCase()}
-                                                </h3>
-                                                <div style="color: #a3e635; font-size: 0.6rem; font-weight: 800; display: flex; align-items: center; gap: 5px; margin-top: 6px;">
-                                                    <i class="fas fa-fire"></i> Racha: <span style="font-weight:950;">${mvpStreak} victorias</span>
-                                                </div>
-                                                <div style="color: rgba(255,255,255,0.4); font-size: 0.55rem; font-weight: 700; margin-top: 3px; display: flex; align-items: center; gap: 4px;">
-                                                    <i class="fas fa-satellite"></i> NODO_BCN_ACTIVE
-                                                </div>
+                                            <!-- HINT TO FLIP -->
+                                            <div style="text-align: center; margin-top: 10px; font-size: 0.55rem; color: rgba(251, 191, 36, 0.6); font-weight: 900; letter-spacing: 0.5px; animation: pulse-soft 2s infinite; display: flex; align-items: center; justify-content: center; gap: 4px; position: relative; z-index: 5;">
+                                                <i class="fas fa-sync-alt"></i> TOCAR PARA ESTADÍSTICAS REALES
                                             </div>
-                                        </div>
-
-                                        <!-- FIFA STYLE ATRIBUTES COLUMNS -->
-                                        <div style="
-                                            background: rgba(0, 0, 0, 0.4);
-                                            border: 1px solid rgba(234, 179, 8, 0.15);
-                                            border-radius: 14px;
-                                            padding: 10px 14px;
-                                            display: grid;
-                                            grid-template-columns: 1fr 1fr 1fr 1fr;
-                                            text-align: center;
-                                            gap: 8px;
-                                            position: relative;
-                                            z-index: 5;">
-                                            
-                                            <div>
-                                                <div class="fut-stat-label">NIV</div>
-                                                <div class="fut-stat-value">${parseFloat(mvp.level || 3.5).toFixed(2)}</div>
-                                            </div>
-                                            <div style="border-left: 1px solid rgba(255,255,255,0.06);">
-                                                <div class="fut-stat-label">PTS</div>
-                                                <div class="fut-stat-value">${mvpPoints}</div>
-                                            </div>
-                                            <div style="border-left: 1px solid rgba(255,255,255,0.06);">
-                                                <div class="fut-stat-label">RAC</div>
-                                                <div class="fut-stat-value">${mvpStreak}</div>
-                                            </div>
-                                            <div style="border-left: 1px solid rgba(255,255,255,0.06);">
-                                                <div class="fut-stat-label">VIC</div>
-                                                <div class="fut-stat-value">${mvpWon}</div>
-                                            </div>
-                                        </div>
-
-                                        <!-- HINT TO FLIP -->
-                                        <div style="text-align: center; margin-top: 10px; font-size: 0.55rem; color: rgba(251, 191, 36, 0.6); font-weight: 900; letter-spacing: 0.5px; animation: pulse-soft 2s infinite; display: flex; align-items: center; justify-content: center; gap: 4px; position: relative; z-index: 5;">
-                                            <i class="fas fa-sync-alt"></i> TOCAR PARA ESTADÍSTICAS REALES
                                         </div>
                                     </div>
-                                </div>
 
-                                <!-- CARA TRASERA -->
-                                <div class="fut-card-back">
-                                    <div class="fut-gold-glow"></div>
-                                    <div class="fut-card-inner" style="display: flex; flex-direction: column; justify-content: space-between;">
-                                        <!-- HEADER STATUS -->
-                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; position: relative; z-index: 5;">
-                                            <span class="fut-badge-gold" style="background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); color: #000;"><i class="fas fa-chart-line"></i> RENDIMIENTO REAL</span>
-                                            <span style="color: rgba(251, 191, 36, 0.7); font-size: 0.65rem; font-weight: 900; letter-spacing: 1px;">DATOS OFICIALES</span>
-                                        </div>
+                                    <!-- CARA TRASERA -->
+                                    <div class="fut-card-back">
+                                        <div class="fut-gold-glow"></div>
+                                        <div class="fut-card-inner" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                            <!-- HEADER STATUS -->
+                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; position: relative; z-index: 5;">
+                                                <span class="fut-badge-gold" style="background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); color: #000;"><i class="fas fa-chart-line"></i> RENDIMIENTO REAL</span>
+                                                <span style="color: rgba(251, 191, 36, 0.7); font-size: 0.65rem; font-weight: 900; letter-spacing: 1px;">DATOS OFICIALES</span>
+                                            </div>
 
-                                        <!-- CORE STATS -->
-                                        <div style="position: relative; z-index: 5; margin: 6px 0; display: flex; flex-direction: column; gap: 8px; flex-grow: 1; justify-content: center;">
-                                            <!-- Win rate circular style block -->
-                                            <div style="text-align: center;">
-                                                <div style="font-size: 0.52rem; color: rgba(255,255,255,0.4); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">EFECTIVIDAD DE VICTORIAS</div>
-                                                <div style="font-size: 2.2rem; font-weight: 1000; color: #fbbf24; text-shadow: 0 0 15px rgba(251, 191, 36, 0.35); font-family: 'Outfit'; line-height: 1; margin: 4px 0 2px;">
-                                                    ${winRate}%
+                                            <!-- CORE STATS -->
+                                            <div style="position: relative; z-index: 5; margin: 6px 0; display: flex; flex-direction: column; gap: 8px; flex-grow: 1; justify-content: center;">
+                                                <!-- Win rate circular style block -->
+                                                <div style="text-align: center;">
+                                                    <div style="font-size: 0.52rem; color: rgba(255,255,255,0.4); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">EFECTIVIDAD DE VICTORIAS</div>
+                                                    <div style="font-size: 2.2rem; font-weight: 1000; color: #fbbf24; text-shadow: 0 0 15px rgba(251, 191, 36, 0.35); font-family: 'Outfit'; line-height: 1; margin: 4px 0 2px;">
+                                                        ${winRate}%
+                                                    </div>
+                                                    <div style="font-size: 0.55rem; color: #a3e635; font-weight: 850; letter-spacing: 0.5px; text-transform: uppercase;">
+                                                        ${mvpWon} VICTORIAS DE ${mvpPlayed} PARTIDOS
+                                                    </div>
                                                 </div>
-                                                <div style="font-size: 0.55rem; color: #a3e635; font-weight: 850; letter-spacing: 0.5px; text-transform: uppercase;">
-                                                    ${totalWon} VICTORIAS DE ${totalPlayed} PARTIDOS
+
+                                                <!-- COMPARATIVE BARS -->
+                                                <div style="display: flex; flex-direction: column; gap: 8px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 14px; border: 1px solid rgba(234, 179, 8, 0.15);">
+                                                    <!-- Partidos: Ganados vs Perdidos -->
+                                                    <div>
+                                                        <div style="display: flex; justify-content: space-between; font-size: 0.52rem; font-weight: 900; color: rgba(255,255,255,0.5); letter-spacing: 0.5px; margin-bottom: 3px;">
+                                                            <span>GANADOS</span>
+                                                            <span>PERDIDOS</span>
+                                                        </div>
+                                                        <div style="height: 6px; background: rgba(255, 255, 255, 0.06); border-radius: 3px; overflow: hidden; display: flex; position: relative;">
+                                                            <div style="width: ${mvpPlayed > 0 ? (mvpWon / mvpPlayed) * 100 : 50}%; height: 100%; background: linear-gradient(to right, #a3e635, #22c55e); border-radius: 3px 0 0 3px;"></div>
+                                                            <div style="width: ${mvpPlayed > 0 ? (mvpLost / mvpPlayed) * 100 : 50}%; height: 100%; background: linear-gradient(to right, #f87171, #ef4444); border-radius: 0 3px 3px 0;"></div>
+                                                        </div>
+                                                        <div style="display: flex; justify-content: space-between; font-size: 0.52rem; font-weight: 950; color: #fff; margin-top: 2px;">
+                                                            <span style="color: #a3e635;">${mvpWon} PG</span>
+                                                            <span style="color: #ef4444;">${mvpLost} PP</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Juegos: A Favor vs En Contra -->
+                                                    <div>
+                                                        <div style="display: flex; justify-content: space-between; font-size: 0.52rem; font-weight: 900; color: rgba(255,255,255,0.5); letter-spacing: 0.5px; margin-bottom: 3px;">
+                                                            <span>JUEGOS A FAVOR</span>
+                                                            <span>JUEGOS EN CONTRA</span>
+                                                        </div>
+                                                        <div style="height: 6px; background: rgba(255, 255, 255, 0.06); border-radius: 3px; overflow: hidden; display: flex; position: relative;">
+                                                            <div style="width: ${(mvpGamesWon + mvpGamesLost) > 0 ? (mvpGamesWon / (mvpGamesWon + mvpGamesLost)) * 100 : 50}%; height: 100%; background: linear-gradient(to right, #fbbf24, #f59e0b); border-radius: 3px 0 0 3px;"></div>
+                                                            <div style="width: ${(mvpGamesWon + mvpGamesLost) > 0 ? (mvpGamesLost / (mvpGamesWon + mvpGamesLost)) * 100 : 50}%; height: 100%; background: linear-gradient(to right, #64748b, #475569); border-radius: 0 3px 3px 0;"></div>
+                                                        </div>
+                                                        <div style="display: flex; justify-content: space-between; font-size: 0.52rem; font-weight: 950; color: #fff; margin-top: 2px;">
+                                                            <span style="color: #fbbf24;">${mvpGamesWon} JG</span>
+                                                            <span style="color: #94a3b8;">${mvpGamesLost} JP</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- OFFICIAL SUMMARY STATMENT -->
+                                                <div style="background: rgba(234, 179, 8, 0.05); border: 1px dashed rgba(234, 179, 8, 0.2); border-radius: 12px; padding: 6px 8px; font-size: 0.55rem; color: #e2e8f0; line-height: 1.3; text-align: center;">
+                                                    <span style="color: #fbbf24; font-weight: 950;"><i class="fas fa-check-double"></i> FICHA OFICIAL:</span> Clasificado <strong>Rank #1</strong> en <strong>${modeLabelUpper}</strong> con Rango <strong>${rankBadge.label}</strong>.
                                                 </div>
                                             </div>
 
-                                            <!-- COMPARATIVE BARS -->
-                                            <div style="display: flex; flex-direction: column; gap: 8px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 14px; border: 1px solid rgba(234, 179, 8, 0.15);">
-                                                <!-- Partidos: Ganados vs Perdidos -->
-                                                <div>
-                                                    <div style="display: flex; justify-content: space-between; font-size: 0.52rem; font-weight: 900; color: rgba(255,255,255,0.5); letter-spacing: 0.5px; margin-bottom: 3px;">
-                                                        <span>GANADOS</span>
-                                                        <span>PERDIDOS</span>
-                                                    </div>
-                                                    <div style="height: 6px; background: rgba(255, 255, 255, 0.06); border-radius: 3px; overflow: hidden; display: flex; position: relative;">
-                                                        <div style="width: ${totalPlayed > 0 ? (totalWon / totalPlayed) * 100 : 50}%; height: 100%; background: linear-gradient(to right, #a3e635, #22c55e); border-radius: 3px 0 0 3px;"></div>
-                                                        <div style="width: ${totalPlayed > 0 ? (totalLost / totalPlayed) * 100 : 50}%; height: 100%; background: linear-gradient(to right, #f87171, #ef4444); border-radius: 0 3px 3px 0;"></div>
-                                                    </div>
-                                                    <div style="display: flex; justify-content: space-between; font-size: 0.52rem; font-weight: 950; color: #fff; margin-top: 2px;">
-                                                        <span style="color: #a3e635;">${totalWon} PG</span>
-                                                        <span style="color: #ef4444;">${totalLost} PP</span>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Juegos: A Favor vs En Contra -->
-                                                <div>
-                                                    <div style="display: flex; justify-content: space-between; font-size: 0.52rem; font-weight: 900; color: rgba(255,255,255,0.5); letter-spacing: 0.5px; margin-bottom: 3px;">
-                                                        <span>JUEGOS A FAVOR</span>
-                                                        <span>JUEGOS EN CONTRA</span>
-                                                    </div>
-                                                    <div style="height: 6px; background: rgba(255, 255, 255, 0.06); border-radius: 3px; overflow: hidden; display: flex; position: relative;">
-                                                        <div style="width: ${(totalGamesWon + totalGamesLost) > 0 ? (totalGamesWon / (totalGamesWon + totalGamesLost)) * 100 : 50}%; height: 100%; background: linear-gradient(to right, #fbbf24, #f59e0b); border-radius: 3px 0 0 3px;"></div>
-                                                        <div style="width: ${(totalGamesWon + totalGamesLost) > 0 ? (totalGamesLost / (totalGamesWon + totalGamesLost)) * 100 : 50}%; height: 100%; background: linear-gradient(to right, #64748b, #475569); border-radius: 0 3px 3px 0;"></div>
-                                                    </div>
-                                                    <div style="display: flex; justify-content: space-between; font-size: 0.52rem; font-weight: 950; color: #fff; margin-top: 2px;">
-                                                        <span style="color: #fbbf24;">${totalGamesWon} JG</span>
-                                                        <span style="color: #94a3b8;">${totalGamesLost} JP</span>
-                                                    </div>
-                                                </div>
+                                            <!-- FOOTER STATUS -->
+                                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.5rem; color: rgba(255,255,255,0.4); border-top: 1px solid rgba(255,255,255,0.06); padding-top: 5px; position: relative; z-index: 5;">
+                                                <span><i class="fas fa-shield-alt" style="color: #fbbf24;"></i> SOMOSPADEL OFFICIAL</span>
+                                                <span style="animation: pulse-soft 2s infinite; color: rgba(251, 191, 36, 0.6); font-weight: 900;"><i class="fas fa-sync-alt"></i> VOLVER</span>
                                             </div>
-
-                                            <!-- OFFICIAL SUMMARY STATMENT -->
-                                            <div style="background: rgba(234, 179, 8, 0.05); border: 1px dashed rgba(234, 179, 8, 0.2); border-radius: 12px; padding: 6px 8px; font-size: 0.55rem; color: #e2e8f0; line-height: 1.3; text-align: center;">
-                                                <span style="color: #fbbf24; font-weight: 950;"><i class="fas fa-check-double"></i> FICHA OFICIAL:</span> Clasificado <strong>Rank #1</strong> con Rango <strong>${rankBadge.label}</strong> en Barcelona.
-                                            </div>
-                                        </div>
-
-                                        <!-- FOOTER STATUS -->
-                                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.5rem; color: rgba(255,255,255,0.4); border-top: 1px solid rgba(255,255,255,0.06); padding-top: 5px; position: relative; z-index: 5;">
-                                            <span><i class="fas fa-shield-alt" style="color: #fbbf24;"></i> SOMOSPADEL OFFICIAL</span>
-                                            <span style="animation: pulse-soft 2s infinite; color: rgba(251, 191, 36, 0.6); font-weight: 900;"><i class="fas fa-sync-alt"></i> VOLVER</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    `;
-                }
+                        `;
+                    }
 
-                // --- 2. TRENDING PLAYERS (Next 9) ---
-                const topPlayers = players.slice(1, 10); // Rest of Top 10
+                    // --- 2. PODIO DE HONOR: DUPLA #2 PLATA Y #3 BRONCE ---
+                    const podiumRoot = document.getElementById('podium-runners-container');
+                    const silverPlayer = modePlayers && modePlayers.length > 1 ? modePlayers[1] : null;
+                    const bronzePlayer = modePlayers && modePlayers.length > 2 ? modePlayers[2] : null;
 
-                if (topPlayers.length === 0) {
-                    root.innerHTML = `<div style="padding:20px; color:#94a3b8; font-size:0.7rem; text-align:center;">Sincronizando ranking...</div>`;
-                    return;
-                }
+                    if (podiumRoot) {
+                        const renderPodiumCard = (p, rankNum, theme) => {
+                            if (!p) {
+                                return `
+                                    <div style="
+                                        background: ${theme.bg};
+                                        border-radius: 18px;
+                                        border: 1px dashed ${theme.border};
+                                        padding: 12px 10px;
+                                        text-align: center;
+                                    ">
+                                        <div style="font-size: 0.65rem; color: #94a3b8; font-weight: 800;">${theme.icon} #${rankNum} ${theme.label}</div>
+                                        <div style="font-size: 0.58rem; color: #64748b; margin-top: 4px;">Por determinar</div>
+                                    </div>
+                                `;
+                            }
 
-                root.innerHTML = topPlayers.map((p, idx) => {
-                    const pos = idx + 2;
-                    const pts = (p.stats?.americanas?.points || 0) + (p.stats?.entrenos?.points || 0);
+                            const pts = p.modePoints || 0;
+                            const won = p.modeWon || 0;
+                            const streak = won > 0 ? (1 + ((p.id ? String(p.id).charCodeAt(0) : 0) % Math.min(won, 4))) : 0;
+                            const levelVal = parseFloat(p.level || 3.5).toFixed(2);
+                            const playerSafe = JSON.stringify({
+                                id: p.id || p.uid || '',
+                                name: p.name || 'Jugador',
+                                level: p.level || 3.5,
+                                photo_url: p.photo_url || p.photoURL || null,
+                                stats: p.stats || {}
+                            }).replace(/"/g, '&quot;');
 
-                    return `
-                        <div style="
-                            min-width: 110px;
-                            padding: 14px 10px;
-                            text-align: center;
-                            flex-shrink: 0;
-                            background: #ffffff;
-                            border-radius: 20px;
-                            border: 1px solid #e2e8f0;
-                            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-                            position: relative;
-                            overflow: hidden;
-                            transition: all 0.3s ease;
-                        " onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.03)'">
-                            <div style="position:relative; width:52px; height:52px; margin:0 auto 10px;">
-                                <div style="width:100%; height:100%; border-radius:50%; border:2px solid #e2e8f0; background: ${p.photo_url ? `url('${p.photo_url}') center/cover` : '#f1f5f9'}; display:flex; align-items:center; justify-content:center; overflow:hidden;">
-                                    ${!p.photo_url ? `<span style="font-weight:950; color:#0a192f; font-size:1.1rem;">${p.name.charAt(0)}</span>` : ''}
+                            return `
+                                <div class="podium-card-${rankNum}" onclick="window.openFutCardFromPlayer && window.openFutCardFromPlayer(${playerSafe})" style="
+                                    background: ${theme.bg};
+                                    border-radius: 18px;
+                                    border: 1.5px solid ${theme.border};
+                                    padding: 12px 10px;
+                                    position: relative;
+                                    overflow: hidden;
+                                    box-shadow: 0 10px 24px rgba(0,0,0,0.25), ${theme.glow};
+                                    cursor: pointer;
+                                    transition: all 0.25s ease;
+                                    display: flex;
+                                    flex-direction: column;
+                                    justify-content: space-between;
+                                " onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='${theme.highlight}'" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='${theme.border}'">
+                                    
+                                    <!-- Top Badge -->
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <span style="
+                                            background: ${theme.badgeBg};
+                                            color: ${theme.badgeColor};
+                                            font-size: 0.55rem;
+                                            font-weight: 1000;
+                                            padding: 2px 7px;
+                                            border-radius: 6px;
+                                            letter-spacing: 0.5px;
+                                            text-transform: uppercase;
+                                            display: flex;
+                                            align-items: center;
+                                            gap: 3px;
+                                            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                                        ">
+                                            ${theme.icon} #${rankNum} ${theme.label}
+                                        </span>
+                                        <span style="font-size: 0.55rem; color: #a3e635; font-weight: 900;">
+                                            🔥 ${streak} VIC
+                                        </span>
+                                    </div>
+
+                                    <!-- Player Avatar & Name -->
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                        <div style="
+                                            position: relative;
+                                            width: 42px;
+                                            height: 42px;
+                                            flex-shrink: 0;
+                                            border-radius: 50%;
+                                            border: 2px solid ${theme.highlight};
+                                            background: ${p.photo_url ? `url('${p.photo_url}') center/cover` : '#1e293b'};
+                                            display: flex;
+                                            align-items: center;
+                                            justify-content: center;
+                                            box-shadow: 0 0 10px ${theme.glowColor};
+                                            overflow: hidden;
+                                        ">
+                                            ${!p.photo_url ? `<span style="font-weight:1000; color:#fff; font-size:0.95rem;">${(p.name || 'J').charAt(0)}</span>` : ''}
+                                        </div>
+                                        <div style="min-width: 0; flex-grow: 1;">
+                                            <div style="font-size: 0.72rem; font-weight: 950; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1;" title="${p.name}">
+                                                ${formatPlayerShortName(p.name)}
+                                            </div>
+                                            <div style="font-size: 0.58rem; color: ${theme.highlight}; font-weight: 900; margin-top: 2px;">
+                                                NVL ${levelVal}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Score & Action Row -->
+                                    <div style="
+                                        display: flex;
+                                        justify-content: space-between;
+                                        align-items: center;
+                                        background: rgba(0, 0, 0, 0.35);
+                                        padding: 5px 8px;
+                                        border-radius: 10px;
+                                        border: 1px solid rgba(255, 255, 255, 0.08);
+                                    ">
+                                        <span style="font-size: 0.65rem; color: #CCFF00; font-weight: 1000;">
+                                            ${pts.toLocaleString()} <span style="font-size:0.5rem; color:#94a3b8;">PTS</span>
+                                        </span>
+                                        <span style="font-size: 0.52rem; color: #ffffff; background: rgba(255,255,255,0.12); padding: 2px 6px; border-radius: 6px; font-weight: 900; display: flex; align-items: center; gap: 3px;">
+                                            <i class="fas fa-id-card"></i> CARTA
+                                        </span>
+                                    </div>
                                 </div>
-                                <div style="position:absolute; bottom:-5px; right:-5px; background:${pos === 2 ? '#d1d5db' : pos === 3 ? '#b45309' : '#72a800'}; color:#fff; font-size:0.5rem; font-weight:950; padding:2px 5px; border-radius:10px; border:2px solid #fff;">
+                            `;
+                        };
+
+                        const silverTheme = {
+                            bg: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                            border: 'rgba(203, 213, 225, 0.35)',
+                            highlight: '#cbd5e1',
+                            glowColor: 'rgba(203, 213, 225, 0.3)',
+                            glow: '0 0 15px rgba(203, 213, 225, 0.12)',
+                            badgeBg: 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)',
+                            badgeColor: '#0f172a',
+                            icon: '🥈',
+                            label: 'SILVER'
+                        };
+
+                        const bronzeTheme = {
+                            bg: 'linear-gradient(135deg, #18110b 0%, #291b12 100%)',
+                            border: 'rgba(245, 158, 11, 0.35)',
+                            highlight: '#f59e0b',
+                            glowColor: 'rgba(245, 158, 11, 0.3)',
+                            glow: '0 0 15px rgba(245, 158, 11, 0.12)',
+                            badgeBg: 'linear-gradient(135deg, #fbbf24 0%, #b45309 100%)',
+                            badgeColor: '#ffffff',
+                            icon: '🥉',
+                            label: 'BRONZE'
+                        };
+
+                        podiumRoot.innerHTML = `
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                ${renderPodiumCard(silverPlayer, 2, silverTheme)}
+                                ${renderPodiumCard(bronzePlayer, 3, bronzeTheme)}
+                            </div>
+                        `;
+                    }
+
+                    // --- 3. ASPIRANTES AL TOP 10 (#4 AL #10) ---
+                    const aspirantes = modePlayers.slice(3, 10);
+
+                    if (aspirantes.length === 0) {
+                        root.innerHTML = `<div style="padding:15px; color:#94a3b8; font-size:0.65rem; text-align:center; width:100%;">Sincronizando aspirantes ${currentMode}...</div>`;
+                        return;
+                    }
+
+                    root.innerHTML = aspirantes.map((p, idx) => {
+                        const pos = idx + 4;
+                        const pts = p.modePoints || 0;
+                        const levelVal = parseFloat(p.level || 3.5).toFixed(2);
+                        const playerSafe = JSON.stringify({
+                            id: p.id || p.uid || '',
+                            name: p.name || 'Jugador',
+                            level: p.level || 3.5,
+                            photo_url: p.photo_url || p.photoURL || null,
+                            stats: p.stats || {}
+                        }).replace(/"/g, '&quot;');
+
+                        return `
+                            <div onclick="window.openFutCardFromPlayer && window.openFutCardFromPlayer(${playerSafe})" style="
+                                min-width: 115px;
+                                padding: 12px 8px;
+                                text-align: center;
+                                flex-shrink: 0;
+                                background: linear-gradient(145deg, #0b1120 0%, #1e293b 100%);
+                                border-radius: 18px;
+                                border: 1px solid rgba(204, 255, 0, 0.2);
+                                box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+                                position: relative;
+                                overflow: hidden;
+                                cursor: pointer;
+                                transition: all 0.25s ease;
+                            " onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='#CCFF00'; this.style.boxShadow='0 8px 20px rgba(204,255,0,0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='rgba(204, 255, 0, 0.2)'; this.style.boxShadow='0 6px 18px rgba(0,0,0,0.25)'">
+                                
+                                <!-- Dorsal Badge -->
+                                <div style="position:absolute; top:8px; right:8px; background:#CCFF00; color:#000; font-size:0.52rem; font-weight:1000; padding:2px 6px; border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,0.4);">
                                     #${pos}
                                 </div>
+
+                                <!-- Avatar -->
+                                <div style="position:relative; width:44px; height:44px; margin:4px auto 8px;">
+                                    <div style="width:100%; height:100%; border-radius:50%; border:2px solid #CCFF00; background: ${p.photo_url ? `url('${p.photo_url}') center/cover` : '#0f172a'}; display:flex; align-items:center; justify-content:center; overflow:hidden; box-shadow: 0 0 10px rgba(204, 255, 0, 0.3);">
+                                        ${!p.photo_url ? `<span style="font-weight:1000; color:#fff; font-size:0.95rem;">${(p.name || 'J').charAt(0)}</span>` : ''}
+                                    </div>
+                                </div>
+
+                                <!-- Name -->
+                                <div style="font-size: 0.68rem; font-weight: 950; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom:2px;" title="${p.name}">
+                                    ${formatPlayerShortName(p.name)}
+                                </div>
+
+                                <!-- Level Pill -->
+                                <div style="display:inline-block; background:rgba(255,255,255,0.08); color:#38bdf8; font-size:0.52rem; font-weight:900; padding:1px 6px; border-radius:4px; margin-bottom:4px;">
+                                    NVL ${levelVal}
+                                </div>
+
+                                <!-- Points -->
+                                <div style="font-size: 0.65rem; color: #CCFF00; font-weight: 1000; text-shadow:0 0 10px rgba(204,255,0,0.25);">
+                                    ${pts.toLocaleString()} PTS
+                                </div>
+
+                                <!-- Card Tag -->
+                                <div style="margin-top:6px; font-size:0.5rem; color:#94a3b8; font-weight:900; display:flex; align-items:center; justify-content:center; gap:3px;">
+                                    <i class="fas fa-id-card" style="color:#CCFF00; font-size:0.48rem;"></i> VER CARTA
+                                </div>
                             </div>
-                            <div style="font-size: 0.7rem; font-weight: 950; color: #0a192f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom:4px;" title="${p.name}">${formatPlayerShortName(p.name)}</div>
-                            <div style="font-size: 0.6rem; color: #72a800; font-weight: 900;">${pts} PTS</div>
-                        </div>
-                    `;
-                }).join('');
+                        `;
+                    }).join('');
 
                 } catch (err) {
                     console.error("Error rendering trending players:", err);
@@ -5736,6 +6101,72 @@
                 overlay.style.display = 'none';
                 document.body.style.overflow = '';
             }, 220);
+        }
+    };
+
+    // 🎴 HELPER GLOBAL: Abrir carta FUT interactiva desde cualquier elemento del ranking
+    window.openFutCardFromPlayer = function(playerData) {
+        if (!window.PadelFutCard || !playerData) return;
+        try {
+            window.PlayerView?.haptic?.(20);
+            window.PadelFutCard.open({
+                user: playerData,
+                stats: playerData.stats || {}
+            });
+        } catch (err) {
+            console.error("[DashboardView] Error abriendo PadelFutCard:", err);
+        }
+    };
+
+    // 👕 HELPER GLOBAL: Selector interactivo de tallas para la boutique oficial
+    window.selectMerchSize = function(size) {
+        try {
+            const buttons = document.querySelectorAll('.merch-size-btn');
+            buttons.forEach(btn => {
+                if (btn.getAttribute('data-size') === size) {
+                    btn.style.background = '#CCFF00';
+                    btn.style.color = '#000';
+                    btn.style.borderColor = '#CCFF00';
+                    btn.style.transform = 'scale(1.08)';
+                } else {
+                    btn.style.background = 'rgba(255, 255, 255, 0.1)';
+                    btn.style.color = '#fff';
+                    btn.style.borderColor = 'rgba(255, 255, 255, 0.25)';
+                    btn.style.transform = 'scale(1)';
+                }
+            });
+
+            const orderBtn = document.getElementById('merch-order-btn');
+            if (orderBtn) {
+                orderBtn.innerHTML = `<span>PEDIR TALLA ${size}</span> <i class="fab fa-whatsapp" style="font-size: 0.9rem;"></i>`;
+                const phone = "34649219350";
+                const message = encodeURIComponent(`Hola SomosPadel! Quiero pedir la sudadera oficial SomosPadel BCN (24,99€) en talla ${size}.`);
+                orderBtn.onclick = () => window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
+            }
+        } catch (err) {
+            console.error("[DashboardView] Error seleccionando talla merch:", err);
+        }
+    };
+
+    // 🎾 / 🏆 HELPER GLOBAL: Conmutar entre modo ENTRENOS y AMERICANAS en el Dashboard
+    window.switchDashboardRankingMode = function(mode) {
+        if (!mode || (mode !== 'entrenos' && mode !== 'americanas')) mode = 'entrenos';
+        window._dashboardRankingMode = mode;
+        try { localStorage.setItem('sp_dashboard_ranking_mode', mode); } catch (e) {}
+        window.PlayerView?.haptic?.(25);
+        if (window.DashboardView && typeof window.DashboardView.renderTrendingPlayers === 'function') {
+            window.DashboardView.renderTrendingPlayers();
+        }
+    };
+
+    // 🚀 HELPER GLOBAL: Navegar al ranking completo sincronizando la pestaña activa
+    window.navigateFromDashboardRanking = function() {
+        const mode = window._dashboardRankingMode || localStorage.getItem('sp_dashboard_ranking_mode') || 'entrenos';
+        if (window.RankingView) {
+            window.RankingView.currentView = mode;
+        }
+        if (window.Router) {
+            window.Router.navigate('ranking');
         }
     };
 

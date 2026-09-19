@@ -93,6 +93,71 @@
 
     // Catálogo masivo de artículos curados y especializados de pádel
     const ARTICLES_DATABASE = [
+        // ── 🎮 MODOS DE JUEGO SOMOSPADEL BCN ──────────────────────────────────
+        {
+            id: 'modos-juego-pareja-fija-vs-twister',
+            title: 'Pareja Fija vs Twister Individual: ¿En qué formato anotarte según tus objetivos?',
+            category: '🎮 MODOS DE JUEGO',
+            catColor: '#CCFF00',
+            theme: 'tournaments',
+            emoji: '🎮',
+            imgGrad: 'linear-gradient(135deg, #0284c7 0%, #db2777 100%)',
+            readTime: '4 min',
+            snippet: 'Descubre las diferencias clave entre competir en tándem cerrado o en rotación individual dinámica en SomosPadel Barcelona.',
+            contentTemplate: `En <strong>SomosPadel Barcelona</strong> contamos con dos formatos estelares diseñados para cubrir cualquier aspiración deportiva y social: <strong>Pareja Fija 👥</strong> y <strong>Twister Individual 🌪️</strong>.<br><br>
+            <strong>1. Formato Pareja Fija (En Tándem):</strong><br>
+            • <em>Dinámica:</em> Compites junto a tu compañero asignado o elegido de principio a fin del torneo.<br>
+            • <em>Rotación de pistas:</em> Si ganáis vuestro partido en la ronda, <strong>subís juntos de pista</strong>; si perdéis, <strong>bajáis juntos</strong>. El objetivo es conquistar y retener la codiciada Pista 1 (Corona).<br>
+            • <em>Puntuación:</em> Los juegos ganados y perdidos computan en equipo para vuestro ranking conjunto y oficial.<br>
+            • <em>¿Para quién es?:</em> Ideal para parejas que compiten en ligas interclubs, torneos federados o buscan afianzar automatismos tácticos bajo presión.<br><br>
+            <strong>2. Formato Twister Individual (Rotación Total):</strong><br>
+            • <em>Dinámica:</em> <strong>Inscripción 100% individual</strong>. No necesitas buscar pareja previa: puedes venir solo y la plataforma organiza las pistas por niveles.<br>
+            • <em>Rotación de pistas:</em> En cada ronda juegas con un compañero diferente. Si ganas tu partido, <strong>TÚ subes de pista y cambias de pareja</strong>; si pierdes, <strong>TÚ bajas de pista y cambias de pareja</strong>.<br>
+            • <em>Puntuación:</em> Cada jugador suma sus propios juegos ganados. Al final, el podio individual se define por el total de juegos y el diferencial personal (+/-).<br>
+            • <em>¿Para quién es?:</em> Perfecto para quienes buscan dinamismo, ampliar su círculo de pádel, mejorar su adaptabilidad y jugar siempre con y contra jugadores distintos en cada turno.<br><br>
+            El capitán <strong>{PLAYER1}</strong> comenta: <em>'El Twister te enseña a leer el juego de cualquier compañero en dos puntos, mientras que la Pareja Fija pone a prueba la complicidad en momentos calientes'</em>. Su compañero <strong>{PLAYER2}</strong> recomienda alternar ambos modos a lo largo del mes para forjar un perfil de jugador completo.`
+        },
+        {
+            id: 'modos-juego-suizo-americana-entreno',
+            title: 'Sistema Suizo en SomosPadel: 6 Rondas Express, Puntos Individuales y Reagrupación por Pistas',
+            category: '🎮 MODOS DE JUEGO',
+            catColor: '#ef4444',
+            theme: 'tournaments',
+            emoji: '🇨🇭',
+            imgGrad: 'linear-gradient(135deg, #ef4444 0%, #0f172a 100%)',
+            readTime: '4 min',
+            snippet: 'Descubre las normas oficiales del Sistema Suizo en Americanas y Entrenos: 2 horas, 6 rondas express, juegos ganados acumulados y cruces equilibrados sin repetir compañero.',
+            contentTemplate: `Llega a <strong>SomosPadel Barcelona</strong> la tercera y más vibrante modalidad de juego: el <strong>Sistema Suizo 🇨🇭</strong> (disponible tanto para <em>Americana Suiza</em> como para <em>Entreno Suizo</em>), diseñado para garantizar máxima equidad competitiva y partidos de altísimo ritmo.<br><br>
+            <strong>Normativa Oficial del Sistema Suizo:</strong><br>
+            • <strong>Duración y Formato:</strong> Evento de <strong>2 horas de duración</strong> (habitualmente organizado en 3 pistas con 12 jugadores o proporcional). La inscripción es <strong>100% individual</strong> y cambias de compañero en cada ronda.<br>
+            • <strong>6 Rondas Express de Juego Efectivo:</strong> Se disputan exactamente 6 rondas express para ir perfecto de tiempos. En cuanto suena el silbato de Alex, se acaba el punto en juego de forma inmediata.<br>
+            • <strong>Puntuación Individual Acumulada:</strong> Se contabilizan los <strong>juegos totales que ganes en tu partido</strong> como tus puntos personales en la tabla general. Por ejemplo: si tu partido finaliza 6-3, tú y tu compañero sumáis 6 puntos cada uno en la clasificación; los rivales suman 3 puntos.<br>
+            • <strong>Reagrupación por Pistas tras cada Ronda:</strong> Tras finalizar cada ronda, la plataforma suma los puntos acumulados de cada jugador y reorganiza las pistas:<br>
+            &nbsp;&nbsp;🥇 <em>Pista 1 (Top):</em> Los 4 jugadores más altos en la tabla suben a la Pista 1.<br>
+            &nbsp;&nbsp;🥈 <em>Pista 2 (Medios):</em> Los 4 siguientes clasificados van a la Pista 2.<br>
+            &nbsp;&nbsp;🥉 <em>Pista 3 (Bajos):</em> Los 4 restantes disputan la Pista 3.<br>
+            • <strong>Compañeros Equilibrados sin Repetición:</strong> En cada pista se cruzan las parejas para que los duelos sean ultra equilibrados y el algoritmo evita repetir compañero si es posible según el historial del torneo.<br>
+            • <strong>Campeón del Torneo:</strong> Al concluir las 6 rondas, el jugador que acumule el mayor número de juegos sumados en la tabla general se corona Campeón Oficial del Torneo.<br><br>
+            El jugador <strong>{PLAYER1}</strong> señala: <em>'El formato Suizo te exige darlo todo en cada juego: aquí no te conformas con ganar el partido, cada juego extra te impulsa hacia la Pista 1'</em>. Por su parte, <strong>{PLAYER2}</strong> resalta que la dinámica de 6 rondas mantiene una intensidad física y mental incomparable.`
+        },
+        {
+            id: 'modos-juego-twister-individual-guia',
+            title: 'Guía Táctica Twister: Cómo Adaptarte al Instante a una Nueva Pareja',
+            category: '💡 CONSEJOS',
+            catColor: '#ec4899',
+            theme: 'action',
+            emoji: '🌪️',
+            imgGrad: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
+            readTime: '3 min',
+            snippet: 'Comunicación express en 30 segundos, asignación de drive/revés y la clave psicológica para liderar en formato Twister.',
+            contentTemplate: `Jugar una americana en formato <strong>Twister Individual</strong> es uno de los retos más divertidos y exigentes del pádel. Cambias de compañero en cada ronda, y el que mejor y más rápido se compenetre se lleva el diferencial de juegos hacia el podio.<br><br>
+            <strong>Puntos clave para arrasar en Twister:</strong><br>
+            1. <strong>Protocolo Express de 30 segundos:</strong> Nada más entrar a la pista con tu nueva pareja, acuerda dos cosas básicas: quién prefiere el revés y quién cubre el centro en globos entre medias.<br>
+            2. <strong>Versatilidad de lado:</strong> Si dominas tanto el drive como el revés, tu porcentaje de victorias en Twister se dispara un 35%. Permites que tu nuevo compañero juegue en su zona de confort.<br>
+            3. <strong>Refuerzo positivo inmediato:</strong> En rondas cortas no hay tiempo para reproches. Animar a tu pareja tras un error forzado genera confianza y evita que baje los brazos.<br>
+            4. <strong>Liderazgo sin imposición:</strong> Marca las subidas a la red con voz clara pero tranquila ('subimos', 'tuya', 'mía').<br><br>
+            <strong>{PLAYER1}</strong> nos cuenta: <em>'En el Twister no gana el mejor pegador individual, sino el jugador que hace jugar más cómodo al compañero que le toque en esa ronda'</em>. Por su parte, <strong>{PLAYER2}</strong> aconseja mantener una táctica sencilla en los dos primeros juegos de cada ronda para calibrar el ritmo antes de arriesgar.`
+        },
         // ── 💡 TÁCTICA & ESTRATEGIA ─────────────────────────────────────────────
         {
             id: 'tactica-teoria-centro',
@@ -577,32 +642,45 @@
         },
 
         /**
-         * Obtiene una lista de fotos deduplicadas para un conjunto de posts
+         * Obtiene una lista de fotos deduplicadas para un conjunto de posts,
+         * sustituyendo automáticamente fotos locales repetidas por fotos nuevas HD.
          */
         assignUniquePhotos(posts) {
             const assigned = {};
             const used = new Set();
+            const legacyLocalImages = [
+                'img/blog_action_smash.png', 
+                'img/blog_court_night.png', 
+                'img/blog_racket_ball.png', 
+                'img/blog_ball_glass.png', 
+                'img/blog_player_victory.png', 
+                'img/blog_club_lounge.png',
+                'img/pista_padel_azul.png'
+            ];
 
             posts.forEach((post, idx) => {
-                // Si el post ya tiene una foto válida que no se haya usado en este ciclo
-                if (post.imageUrl && !used.has(post.imageUrl)) {
+                const theme = post.theme || this.detectTheme(post);
+                const candidates = PHOTO_LIBRARY[theme] || ALL_PHOTOS;
+
+                // Si la imagen es una de las locales antiguas repetidas o no tiene foto, forzar una foto nueva HD del tema
+                const isLegacy = !post.imageUrl || legacyLocalImages.some(leg => post.imageUrl.includes(leg));
+                
+                if (!isLegacy && !used.has(post.imageUrl)) {
                     assigned[post.id] = post.imageUrl;
                     used.add(post.imageUrl);
                     return;
                 }
 
-                // Buscar por categoría o tema
-                const theme = post.theme || this.detectTheme(post);
-                const candidates = PHOTO_LIBRARY[theme] || ALL_PHOTOS;
-                const fresh = candidates.find(img => !used.has(img));
+                // Buscar foto fresca no usada del tema que no sea de las antiguas
+                const fresh = candidates.find(img => !used.has(img) && !legacyLocalImages.some(leg => img.includes(leg)));
 
                 if (fresh) {
                     assigned[post.id] = fresh;
                     used.add(fresh);
                 } else {
-                    // Si se agotaron las de la categoría, tomar del pool global
-                    const anyFresh = ALL_PHOTOS.find(img => !used.has(img));
-                    const chosen = anyFresh || ALL_PHOTOS[idx % ALL_PHOTOS.length];
+                    // Si se agotaron las del tema, tomar cualquiera no usada del pool global
+                    const anyFresh = ALL_PHOTOS.find(img => !used.has(img) && !legacyLocalImages.some(leg => img.includes(leg)));
+                    const chosen = anyFresh || candidates[idx % candidates.length];
                     assigned[post.id] = chosen;
                     used.add(chosen);
                 }

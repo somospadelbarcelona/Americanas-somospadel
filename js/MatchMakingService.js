@@ -48,11 +48,14 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
                 if (!event) throw new Error("Event not found");
 
                 // Determine Mode
-                let isFixedPairs = (event.pair_mode === APP_CONSTANTS.PAIR_MODES.FIXED) ||
-                    (event.fixed_pairs && event.fixed_pairs.length > 0);
+                const isSwiss = (event.pair_mode === 'swiss') ||
+                    (event.name && event.name.toUpperCase().includes('SUIZ'));
+
+                let isFixedPairs = !isSwiss && ((event.pair_mode === APP_CONSTANTS.PAIR_MODES.FIXED) ||
+                    (event.fixed_pairs && event.fixed_pairs.length > 0));
 
                 // HEURISTIC: Force Fixed Pairs if name contains "FIJA" or "FIJO" (Case Insensitive)
-                if (!isFixedPairs && event.name && (event.name.toUpperCase().includes('FIJA') || event.name.toUpperCase().includes('FIJO'))) {
+                if (!isSwiss && !isFixedPairs && event.name && (event.name.toUpperCase().includes('FIJA') || event.name.toUpperCase().includes('FIJO'))) {
                     console.log(`🔒 Heuristic: Detected "FIJA/FIJO" in name "${event.name}". Forcing FIXED PAIRS mode.`);
                     isFixedPairs = true;
                 }
@@ -114,14 +117,17 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
 
                         return this._createMatches(eventId, FixedPairsLogic.generatePozoRound(updatedPairs, roundNum, effectiveCourts), eventType);
                     } else {
-                        // Rotating Logic
+                        // Rotating / Swiss Logic
                         const players = event.players || [];
                         let movedPlayers;
-                        console.log(`🔄 Generating Rotating Round ${roundNum} for ${eventType}...`);
 
                         if (!window.RotatingPozoLogic) throw new Error("RotatingPozoLogic not loaded");
 
-                        if (eventType === 'entreno') {
+                        if (isSwiss) {
+                            console.log(`🇨🇭 Generating Swiss Round ${roundNum} for ${eventType}...`);
+                            const allFinishedMatches = matches.filter(m => m.status === 'finished');
+                            movedPlayers = RotatingPozoLogic.updatePlayerCourtsSwiss(players, allFinishedMatches, effectiveCourts);
+                        } else if (eventType === 'entreno') {
                             // Entreno R2+: Use Standard Pozo Movement
                             console.log("🏃‍♂️ Using Entreno Pozo Movement...");
                             movedPlayers = RotatingPozoLogic.updatePlayerCourts(players, prevRoundMatches, effectiveCourts, 'open');
@@ -133,7 +139,7 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
                         await collection.update(eventId, { players: movedPlayers });
                         console.log("✅ Player courts updated.");
 
-                        const genCategory = eventType === 'entreno' ? 'entreno' : event.category;
+                        const genCategory = isSwiss ? 'open' : (eventType === 'entreno' ? 'entreno' : event.category);
                         const newMatches = RotatingPozoLogic.generateRound(movedPlayers, roundNum, effectiveCourts, genCategory);
 
                         console.log(`✨ Generated ${newMatches.length} new matches.`);
@@ -217,8 +223,8 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
                         });
                         await collection.update(eventId, { players });
 
-                        // FIX: For entrenos, always use 'entreno' category so _createEntrenoPairs is used
-                        const genCat = eventType === 'entreno' ? 'entreno' : event.category;
+                        // FIX: For entrenos, always use 'entreno' category so _createEntrenoPairs is used (unless Swiss mode)
+                        const genCat = isSwiss ? 'open' : (eventType === 'entreno' ? 'entreno' : event.category);
                         return this._createMatches(eventId, RotatingPozoLogic.generateRound(players, 1, effectiveCourts, genCat), eventType);
                     }
                 }

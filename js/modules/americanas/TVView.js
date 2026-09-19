@@ -177,7 +177,8 @@
         calculateStandings() {
             if (!window.StandingsService) return;
             // Use StandingsService for consistent data across app
-            this.standings = window.StandingsService.calculate(this.matches, this.type);
+            const isSwiss = !!(this.event?.pair_mode === 'swiss' || (this.event?.name || '').toUpperCase().includes('SUIZ'));
+            this.standings = window.StandingsService.calculate(this.matches, isSwiss ? 'swiss' : this.type, false, this.event?.players || [], isSwiss);
         }
 
         filterNextRound() {

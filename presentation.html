@@ -4,221 +4,1377 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SomosPadel BCN - App Portfolio</title>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;800;900&family=Inter:wght@400;600&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Ecosistema Somos Pádel BCN • Tour Oficial 2026</title>
+    <meta name="description" content="Descubre todo lo que ofrece la App Oficial de Somos Pádel Barcelona: Americanas automáticas, ELO oficial, cartas FUT de jugador, Brain AI predictivo, ligas, entrenos y comunidad.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
     <style>
         :root {
+            --bg-deep: #070a13;
+            --bg-card: rgba(13, 20, 36, 0.72);
+            --bg-card-hover: rgba(18, 28, 50, 0.85);
             --primary: #CCFF00;
-            --dark: #0f172a;
-            --darker: #020617;
-            --glass: rgba(255, 255, 255, 0.05);
-            --border: rgba(255, 255, 255, 0.1);
+            --primary-glow: rgba(204, 255, 0, 0.35);
+            --primary-subtle: rgba(204, 255, 0, 0.1);
+            --cyan: #00e5ff;
+            --cyan-glow: rgba(0, 229, 255, 0.3);
+            --accent-pink: #ff007f;
+            --border-glass: rgba(255, 255, 255, 0.09);
+            --border-highlight: rgba(204, 255, 0, 0.28);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-sub: #cbd5e1;
+            --font-display: 'Outfit', sans-serif;
+            --font-body: 'Montserrat', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
-            margin: 0;
-            background-color: var(--darker);
-            color: white;
-            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            font-family: var(--font-body);
             overflow-x: hidden;
+            line-height: 1.6;
+            background-image: 
+                radial-gradient(ellipse 90% 60% at 50% -20%, rgba(204, 255, 0, 0.12), transparent 70%),
+                radial-gradient(circle at 10% 25%, rgba(0, 229, 255, 0.05), transparent 45%),
+                radial-gradient(circle at 90% 65%, rgba(204, 255, 0, 0.05), transparent 45%),
+                radial-gradient(circle at 50% 90%, rgba(0, 229, 255, 0.04), transparent 50%);
+            background-attachment: fixed;
         }
 
-        h1,
-        h2,
-        h3 {
-            font-family: 'Outfit', sans-serif;
-            margin: 0;
-            line-height: 1.1;
+        h1, h2, h3, h4, .brand-font {
+            font-family: var(--font-display);
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1240px;
             margin: 0 auto;
-            padding: 0 20px;
+            padding: 0 24px;
+        }
+
+        /* NAVIGATION */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            padding: 16px 0;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            background: rgba(7, 10, 19, 0.75);
+            border-bottom: 1px solid var(--border-glass);
+            transition: all 0.3s ease;
+        }
+
+        .navbar.scrolled {
+            padding: 12px 0;
+            background: rgba(7, 10, 19, 0.92);
+            border-bottom: 1px solid rgba(204, 255, 0, 0.15);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .nav-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-logo-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-logo-img {
+            height: 38px;
+            width: auto;
+            filter: drop-shadow(0 0 12px rgba(204, 255, 0, 0.35));
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .nav-logo-group:hover .nav-logo-img {
+            transform: scale(1.08) rotate(-4deg);
+        }
+
+        .nav-brand-title {
+            font-size: 1.25rem;
+            font-weight: 900;
+            color: #fff;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-brand-tag {
+            font-size: 0.65rem;
+            background: rgba(204, 255, 0, 0.15);
+            color: var(--primary);
+            border: 1px solid rgba(204, 255, 0, 0.35);
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .nav-link {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            transition: color 0.2s, transform 0.2s;
+            position: relative;
+        }
+
+        .nav-link:hover {
+            color: var(--primary);
+            transform: translateY(-1px);
+        }
+
+        .nav-cta-btn {
+            background: linear-gradient(135deg, var(--primary) 0%, #a8d900 100%);
+            color: #050811;
+            font-family: var(--font-display);
+            font-size: 0.85rem;
+            font-weight: 800;
+            padding: 10px 22px;
+            border-radius: 999px;
+            letter-spacing: 0.6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 20px var(--primary-glow);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .nav-cta-btn:hover {
+            transform: translateY(-2px) scale(1.03);
+            box-shadow: 0 8px 28px rgba(204, 255, 0, 0.6);
+            color: #000;
         }
 
         /* HERO SECTION */
         .hero {
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            text-align: center;
-            background: radial-gradient(circle at center, #1a2c4e 0%, var(--darker) 70%);
             position: relative;
+            padding: 140px 0 80px 0;
+            text-align: center;
+            overflow: hidden;
         }
 
-        .hero h1 {
-            font-size: 5rem;
+        .hero::before {
+            content: '';
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(204, 255, 0, 0.12), transparent 70%);
+            top: 15%;
+            left: 50%;
+            transform: translateX(-50%);
+            filter: blur(50px);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(204, 255, 0, 0.08);
+            border: 1px solid rgba(204, 255, 0, 0.3);
+            padding: 8px 18px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 1.4px;
+            color: var(--primary);
+            text-transform: uppercase;
+            margin-bottom: 24px;
+            box-shadow: 0 0 24px rgba(204, 255, 0, 0.15);
+        }
+
+        .pulse-beacon {
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--primary);
+            animation: pulse-beacon-anim 1.8s infinite;
+        }
+
+        @keyframes pulse-beacon-anim {
+            0% { transform: scale(0.9); opacity: 0.7; box-shadow: 0 0 0 0 rgba(204, 255, 0, 0.7); }
+            70% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 0 10px rgba(204, 255, 0, 0); }
+            100% { transform: scale(0.9); opacity: 0.7; box-shadow: 0 0 0 0 rgba(204, 255, 0, 0); }
+        }
+
+        .hero-title {
+            font-size: clamp(2.6rem, 6vw, 4.8rem);
+            line-height: 1.05;
             font-weight: 900;
-            background: linear-gradient(to right, #fff, var(--primary));
+            margin-bottom: 24px;
+            color: #ffffff;
+            text-transform: uppercase;
+        }
+
+        .hero-title span.neon-text {
+            background: linear-gradient(135deg, #ffffff 10%, var(--primary) 70%, #00e5ff 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 20px;
-            text-transform: uppercase;
+            text-shadow: 0 0 40px rgba(204, 255, 0, 0.2);
         }
 
-        .hero p {
-            font-size: 1.5rem;
-            color: #94a3b8;
-            max-width: 600px;
-            margin: 0 auto 40px auto;
+        .hero-subtitle {
+            font-size: clamp(1rem, 2vw, 1.25rem);
+            color: var(--text-sub);
+            max-width: 780px;
+            margin: 0 auto 36px auto;
+            font-weight: 400;
+            line-height: 1.65;
         }
 
-        .btn-scroll {
+        .hero-subtitle strong {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .hero-actions {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 50px;
+        }
+
+        .btn-primary-hero {
             background: var(--primary);
-            color: black;
-            padding: 15px 40px;
-            border-radius: 50px;
-            font-weight: 800;
-            text-decoration: none;
+            color: #050811;
+            font-family: var(--font-display);
+            font-size: 1rem;
+            font-weight: 900;
+            padding: 16px 36px;
+            border-radius: 999px;
+            letter-spacing: 0.8px;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            display: inline-block;
-            transition: transform 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 8px 30px var(--primary-glow);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
-        .btn-scroll:hover {
-            transform: scale(1.05);
+        .btn-primary-hero:hover {
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 12px 40px rgba(204, 255, 0, 0.6);
+            color: #000;
         }
 
-        /* MOCKUP GRIDS */
-        .section {
+        .btn-secondary-hero {
+            background: rgba(255, 255, 255, 0.05);
+            color: #ffffff;
+            border: 1px solid var(--border-glass);
+            font-family: var(--font-display);
+            font-size: 1rem;
+            font-weight: 700;
+            padding: 16px 32px;
+            border-radius: 999px;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            backdrop-filter: blur(12px);
+            transition: all 0.25s ease;
+        }
+
+        .btn-secondary-hero:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(204, 255, 0, 0.4);
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        /* METRICS STRIP */
+        .stats-strip {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            max-width: 1080px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 18px;
+            padding: 20px 16px;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            opacity: 0.5;
+            transition: opacity 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--border-highlight);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(204, 255, 0, 0.1);
+        }
+
+        .stat-card:hover::before {
+            opacity: 1;
+        }
+
+        .stat-number {
+            font-family: var(--font-display);
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: #ffffff;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .stat-number span.stat-accent {
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.74rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 700;
+        }
+
+        /* SECTION COMMON STYLES */
+        .pillar-section {
             padding: 100px 0;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid var(--border-glass);
+            position: relative;
+            overflow: hidden;
         }
 
-        .grid-2 {
+        .pillar-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 60px;
             align-items: center;
         }
 
-        .text-content h2 {
-            font-size: 3rem;
+        .pillar-grid.reverse {
+            direction: rtl;
+        }
+
+        .pillar-grid.reverse > * {
+            direction: ltr;
+        }
+
+        .pillar-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--primary-subtle);
+            color: var(--primary);
+            border: 1px solid rgba(204, 255, 0, 0.25);
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 18px;
+        }
+
+        .pillar-title {
+            font-size: clamp(2rem, 3.5vw, 3rem);
+            line-height: 1.15;
+            color: #ffffff;
             margin-bottom: 20px;
         }
 
-        .text-content p {
-            font-size: 1.1rem;
-            color: #cbd5e1;
-            line-height: 1.6;
+        .pillar-title .accent {
+            color: var(--primary);
+            text-shadow: 0 0 25px rgba(204, 255, 0, 0.3);
+        }
+
+        .pillar-desc {
+            font-size: 1.05rem;
+            color: var(--text-sub);
+            line-height: 1.7;
             margin-bottom: 30px;
         }
 
-        .feature-card {
-            background: var(--glass);
-            border: 1px solid var(--border);
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 15px;
+        .feature-bullets {
             display: flex;
-            align-items: center;
-            gap: 15px;
+            flex-direction: column;
+            gap: 14px;
         }
 
-        .feature-icon {
-            width: 40px;
-            height: 40px;
-            background: rgba(204, 255, 0, 0.1);
+        .bullet-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-glass);
+            border-radius: 14px;
+            padding: 16px 18px;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            transition: all 0.25s ease;
+        }
+
+        .bullet-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(204, 255, 0, 0.3);
+            transform: translateX(4px);
+        }
+
+        .bullet-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: rgba(204, 255, 0, 0.12);
             color: var(--primary);
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
-            font-size: 1.2rem;
+            font-size: 1.05rem;
+            flex-shrink: 0;
+            margin-top: 2px;
+            border: 1px solid rgba(204, 255, 0, 0.25);
         }
 
-        /* PHONE MOCKUP CONTAINER */
-        .mockup-container {
+        .bullet-content h4 {
+            font-size: 0.98rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 3px;
+        }
+
+        .bullet-content p {
+            font-size: 0.84rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        /* LIVE MOCKUP CONTAINERS */
+        .mockup-wrapper {
             position: relative;
-            height: 600px;
-            background: radial-gradient(circle at center, rgba(204, 255, 0, 0.05), transparent 60%);
             display: flex;
             justify-content: center;
             align-items: center;
         }
 
-        .phone-frame {
-            width: 300px;
-            height: 600px;
-            background: #000;
-            border-radius: 40px;
-            border: 8px solid #333;
+        .mockup-glow {
+            position: absolute;
+            width: 380px;
+            height: 380px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--primary-glow), transparent 70%);
+            filter: blur(40px);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .mockup-card-surface {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 440px;
+            background: rgba(11, 17, 32, 0.88);
+            border: 1px solid var(--border-glass);
+            border-radius: 28px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.65), 0 0 30px rgba(204, 255, 0, 0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             overflow: hidden;
-            position: relative;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
-        .phone-screen {
-            width: 100%;
-            height: 100%;
-            background: #1e1e1e;
+        .mockup-card-surface:hover {
+            transform: translateY(-6px);
+            border-color: rgba(204, 255, 0, 0.35);
+            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.75), 0 0 40px rgba(204, 255, 0, 0.18);
+        }
+
+        .mockup-header-bar {
+            padding: 14px 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid var(--border-glass);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .mockup-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .mockup-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .mockup-dot.active {
+            background: var(--primary);
+            box-shadow: 0 0 8px var(--primary);
+        }
+
+        .mockup-body {
+            padding: 22px;
+        }
+
+        /* LIVE SCOREBOARD MOCKUP */
+        .scoreboard-live {
+            background: rgba(5, 8, 16, 0.8);
+            border-radius: 18px;
+            padding: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            margin-bottom: 16px;
+        }
+
+        .court-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(204, 255, 0, 0.12);
+            color: var(--primary);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .scoreboard-match-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 14px 0;
+            padding: 10px 0;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+        }
+
+        .scoreboard-team {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.92rem;
+            font-weight: 700;
+        }
+
+        .team-avatar-pair {
+            display: flex;
+        }
+
+        .team-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid #0b1120;
+            margin-left: -8px;
+            background: #1e293b;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #555;
-            font-size: 0.8rem;
-            flex-direction: column;
-            text-align: center;
-            padding: 20px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: var(--primary);
         }
 
-        .mock-img {
+        .team-avatar:first-child {
+            margin-left: 0;
+        }
+
+        .scoreboard-points {
+            font-family: var(--font-display);
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--primary);
+            letter-spacing: 4px;
+            text-shadow: 0 0 15px rgba(204, 255, 0, 0.5);
+        }
+
+        .timer-badge {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(204, 255, 0, 0.06);
+            border: 1px solid rgba(204, 255, 0, 0.2);
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .timer-clock {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* FUT CARD COMPONENT */
+        .fut-card-container {
+            width: 300px;
+            height: 440px;
+            border-radius: 24px;
+            background: linear-gradient(145deg, #1f2b10 0%, #0d1624 50%, #151b0a 100%);
+            border: 2px solid rgba(204, 255, 0, 0.45);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 35px rgba(204, 255, 0, 0.25);
+            position: relative;
+            overflow: hidden;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            margin: 0 auto;
+            transform-style: preserve-3d;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .fut-card-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent 45%,
+                rgba(255, 255, 255, 0.12) 50%,
+                transparent 55%
+            );
+            transform: rotate(30deg);
+            pointer-events: none;
+            animation: card-hologram 4s infinite linear;
+        }
+
+        @keyframes card-hologram {
+            0% { transform: translateY(-100%) rotate(30deg); }
+            100% { transform: translateY(100%) rotate(30deg); }
+        }
+
+        .fut-card-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            position: relative;
+            z-index: 2;
+        }
+
+        .fut-rating-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            line-height: 1;
+        }
+
+        .fut-ovr {
+            font-family: var(--font-display);
+            font-size: 3.2rem;
+            font-weight: 900;
+            color: var(--primary);
+            text-shadow: 0 0 20px rgba(204, 255, 0, 0.6);
+        }
+
+        .fut-pos {
+            font-family: var(--font-display);
+            font-size: 1rem;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: 1px;
+            margin-top: -4px;
+        }
+
+        .fut-club-badge {
+            width: 44px;
+            height: 44px;
+            filter: drop-shadow(0 0 10px rgba(204, 255, 0, 0.4));
+        }
+
+        .fut-player-visual {
+            text-align: center;
+            position: relative;
+            z-index: 2;
+            margin: -10px 0;
+        }
+
+        .fut-avatar-circle {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #223715, #0a111a);
+            border: 3px solid var(--primary);
+            margin: 0 auto 10px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(204, 255, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .fut-player-name {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            font-weight: 900;
+            color: #ffffff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .fut-tier-pill {
+            display: inline-block;
+            background: rgba(204, 255, 0, 0.15);
+            color: var(--primary);
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 2px 10px;
+            border-radius: 999px;
+            letter-spacing: 1px;
+            border: 1px solid rgba(204, 255, 0, 0.3);
+        }
+
+        .fut-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            padding-top: 14px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .fut-stat-item {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            gap: 4px;
+            font-family: var(--font-display);
+        }
+
+        .fut-stat-val {
+            font-size: 1.15rem;
+            font-weight: 900;
+            color: #ffffff;
+        }
+
+        .fut-stat-key {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+        }
+
+        .fut-chemistry-bar {
+            margin-top: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 999px;
+            padding: 4px 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.68rem;
+            font-weight: 800;
+            color: #ffffff;
+            border: 1px solid rgba(204, 255, 0, 0.2);
+            position: relative;
+            z-index: 2;
+        }
+
+        /* BRAIN RADAR VISUAL */
+        .radar-box {
+            background: rgba(6, 11, 23, 0.85);
+            border: 1px solid rgba(0, 229, 255, 0.25);
+            border-radius: 20px;
+            padding: 24px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(0, 229, 255, 0.1);
+        }
+
+        .synergy-score-display {
+            font-family: var(--font-display);
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--cyan);
+            text-shadow: 0 0 25px rgba(0, 229, 255, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .synergy-badge-pulse {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(0, 229, 255, 0.12);
+            color: var(--cyan);
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 0.74rem;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+
+        .scout-insights-list {
+            margin-top: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            text-align: left;
+        }
+
+        .scout-insight-item {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 10px;
+            padding: 8px 12px;
+            font-size: 0.78rem;
+            color: var(--text-sub);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .scout-insight-item i {
+            color: var(--cyan);
+        }
+
+        /* STORIES & FEED VISUAL */
+        .stories-bar {
+            display: flex;
+            gap: 14px;
+            padding-bottom: 14px;
+            margin-bottom: 16px;
+            overflow-x: auto;
+        }
+
+        .story-circle-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .story-ring {
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            padding: 2px;
+            background: linear-gradient(135deg, var(--primary) 0%, #00e5ff 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 15px rgba(204, 255, 0, 0.35);
+        }
+
+        .story-thumb {
             width: 100%;
             height: 100%;
+            border-radius: 50%;
+            background: #0f172a;
+            border: 2px solid #070a13;
             object-fit: cover;
         }
 
-        /* HIGHLIGHT TEXT */
-        .highlight {
+        .story-author {
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: var(--text-sub);
+            max-width: 60px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .feed-card-sample {
+            background: rgba(14, 22, 38, 0.9);
+            border-radius: 16px;
+            border: 1px solid var(--border-glass);
+            overflow: hidden;
+        }
+
+        .feed-header {
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .feed-user {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
+        .feed-img-container {
+            width: 100%;
+            height: 180px;
+            background: #0f172a;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feed-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .feed-card-sample:hover .feed-img {
+            transform: scale(1.05);
+        }
+
+        .feed-footer {
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .feed-likes {
+            color: #ffffff;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .feed-likes i {
+            color: var(--accent-pink);
+        }
+
+        /* 3D MASCOT & MERCH SECTION */
+        .mascot-showcase {
+            background: radial-gradient(circle at center, #14233c 0%, #060b16 80%);
+            border-radius: 28px;
+            border: 1px solid rgba(204, 255, 0, 0.3);
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(204, 255, 0, 0.15);
+            position: relative;
+        }
+
+        .mascot-showcase-img {
+            width: 180px;
+            height: auto;
+            filter: drop-shadow(0 15px 30px rgba(204, 255, 0, 0.45));
+            animation: mascot-float 3.5s ease-in-out infinite;
+            cursor: pointer;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .mascot-showcase-img:hover {
+            transform: scale(1.15) rotate(5deg);
+        }
+
+        @keyframes mascot-float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(-3deg); }
+        }
+
+        .speech-bubble-tip {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(204, 255, 0, 0.3);
+            padding: 12px 18px;
+            border-radius: 18px;
+            font-size: 0.82rem;
+            color: #ffffff;
+            margin-top: 16px;
+            display: inline-block;
+            position: relative;
+        }
+
+        .speech-bubble-tip::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 0 8px 8px 8px;
+            border-style: solid;
+            border-color: transparent transparent rgba(204, 255, 0, 0.3) transparent;
+        }
+
+        /* COMPARISON TABLE */
+        .comparison-section {
+            padding: 100px 0;
+            background: rgba(5, 9, 18, 0.6);
+            border-bottom: 1px solid var(--border-glass);
+        }
+
+        .comparison-header {
+            text-align: center;
+            max-width: 720px;
+            margin: 0 auto 50px auto;
+        }
+
+        .comparison-table-wrapper {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 24px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .comp-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        .comp-table th {
+            padding: 20px 24px;
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            font-weight: 800;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid var(--border-glass);
+        }
+
+        .comp-table th.brand-col {
+            color: var(--primary);
+            background: rgba(204, 255, 0, 0.05);
+            border-left: 1px solid rgba(204, 255, 0, 0.2);
+            border-right: 1px solid rgba(204, 255, 0, 0.2);
+        }
+
+        .comp-table td {
+            padding: 18px 24px;
+            font-size: 0.92rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text-sub);
+        }
+
+        .comp-table td.brand-col {
+            background: rgba(204, 255, 0, 0.03);
+            border-left: 1px solid rgba(204, 255, 0, 0.2);
+            border-right: 1px solid rgba(204, 255, 0, 0.2);
+            color: #ffffff;
+            font-weight: 700;
+        }
+
+        .comp-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .comp-table tr:hover td.brand-col {
+            background: rgba(204, 255, 0, 0.07);
+        }
+
+        .badge-comp-good {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .badge-comp-bad {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #ef4444;
+            font-weight: 500;
+        }
+
+        /* FINAL CTA BANNER */
+        .cta-banner-section {
+            padding: 120px 0;
+            position: relative;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .cta-card {
+            background: radial-gradient(circle at center, #152438 0%, #090e1c 80%);
+            border: 2px solid rgba(204, 255, 0, 0.35);
+            border-radius: 36px;
+            padding: 70px 40px;
+            position: relative;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8), 0 0 50px rgba(204, 255, 0, 0.2);
+            overflow: hidden;
+            max-width: 980px;
+            margin: 0 auto;
+        }
+
+        .cta-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% 0%, rgba(204, 255, 0, 0.15), transparent 70%);
+            pointer-events: none;
+        }
+
+        .cta-title {
+            font-size: clamp(2.2rem, 4.5vw, 3.8rem);
+            line-height: 1.1;
+            font-weight: 900;
+            color: #ffffff;
+            margin-bottom: 20px;
+        }
+
+        .cta-desc {
+            font-size: 1.15rem;
+            color: var(--text-sub);
+            max-width: 650px;
+            margin: 0 auto 40px auto;
+            line-height: 1.7;
+        }
+
+        .cta-buttons-group {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+
+        .cta-badges-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .cta-badge-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cta-badge-item i {
             color: var(--primary);
         }
 
-        /* RESPONSIVE DESIGN (TABLET & MOBILE) */
-        @media (max-width: 900px) {
-            .hero h1 {
-                font-size: 3rem;
-            }
+        /* FOOTER */
+        .footer {
+            padding: 50px 0;
+            border-top: 1px solid var(--border-glass);
+            background: #04070d;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
 
-            .grid-2 {
-                grid-template-columns: 1fr;
+        .footer-logo {
+            height: 42px;
+            margin-bottom: 16px;
+            filter: drop-shadow(0 0 10px rgba(204, 255, 0, 0.3));
+        }
+
+        .footer p {
+            margin-bottom: 8px;
+        }
+
+        .footer a {
+            color: var(--primary);
+            font-weight: 700;
+            transition: opacity 0.2s;
+        }
+
+        .footer a:hover {
+            opacity: 0.8;
+            text-decoration: underline;
+        }
+
+        /* BACK TO TOP BUTTON */
+        .back-to-top {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(13, 20, 36, 0.8);
+            border: 1px solid rgba(204, 255, 0, 0.4);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            backdrop-filter: blur(10px);
+            cursor: pointer;
+            z-index: 999;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(10px);
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .back-to-top:hover {
+            background: var(--primary);
+            color: #000;
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px var(--primary-glow);
+        }
+
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 1024px) {
+            .stats-strip {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .pillar-grid {
                 gap: 40px;
-                text-align: center;
+            }
+            .nav-links {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .pillar-grid, .pillar-grid.reverse {
+                grid-template-columns: 1fr;
+                gap: 36px;
+                direction: ltr;
             }
 
-            .feature-card {
-                text-align: left;
+            .pillar-section {
+                padding: 70px 0;
             }
 
-            /* Reorder text above image on mobile for better flow */
-            .section:nth-child(odd) .mockup-container {
+            .mockup-wrapper {
                 order: 2;
             }
 
-            .section:nth-child(odd) .text-content {
+            .pillar-content-col {
                 order: 1;
             }
 
-            .phone-frame {
-                width: 260px;
-                height: 520px;
-                border-width: 6px;
+            .stats-strip {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
             }
 
-            .mockup-container {
-                height: auto;
-                padding: 40px 0;
+            .stat-number {
+                font-size: 1.7rem;
             }
 
-            nav {
-                padding: 15px 20px;
-                position: relative;
-                background: var(--darker);
+            .hero-title {
+                font-size: 2.3rem;
+            }
+
+            .fut-card-container {
+                width: 280px;
+                height: 420px;
+                padding: 20px;
+            }
+
+            .fut-ovr {
+                font-size: 2.6rem;
+            }
+
+            .fut-avatar-circle {
+                width: 90px;
+                height: 90px;
+            }
+
+            .cta-card {
+                padding: 40px 20px;
+                border-radius: 24px;
+            }
+
+            .comp-table th, .comp-table td {
+                padding: 12px 14px;
+                font-size: 0.8rem;
+            }
+
+            .comp-table {
+                min-width: 560px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-strip {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-primary-hero, .btn-secondary-hero {
+                width: 100%;
+                justify-content: center;
             }
         }
     </style>
@@ -227,198 +1383,1136 @@
 <body>
 
     <!-- NAVBAR -->
-    <nav
-        style="padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; position: absolute; width: 100%; top: 0; box-sizing: border-box; z-index: 10;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <img src="img/logo_somospadel.png" alt="Logo SomosPadel" style="height: 40px;">
-            <span style="font-family: 'Outfit'; font-weight: 800; font-size: 1.2rem; color: white;">SOMOSPADEL
-                BCN</span>
-        </div>
-        <div>
-            <span style="opacity: 0.5; font-size: 0.9rem;">v2.1 Stable</span>
+    <nav class="navbar" id="navbar">
+        <div class="container nav-inner">
+            <a href="index.html" class="nav-logo-group">
+                <img src="img/logo_somospadel.png" alt="SomosPadel BCN" class="nav-logo-img">
+                <div class="nav-brand-title">
+                    SOMOS PÁDEL <span class="nav-brand-tag">PRO 2026</span>
+                </div>
+            </a>
+
+            <div class="nav-links">
+                <a href="#americanas" class="nav-link">Americanas</a>
+                <a href="#partidos" class="nav-link">Partidos</a>
+                <a href="#fut-card" class="nav-link">Cartas FUT</a>
+                <a href="#ranking" class="nav-link">Ranking ELO</a>
+                <a href="#equipos" class="nav-link">Equipos</a>
+                <a href="#entrenos" class="nav-link">Entrenos</a>
+                <a href="#brain-ai" class="nav-link">Brain AI</a>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <a href="index.html" class="nav-cta-btn">
+                    <i class="fas fa-arrow-right-to-bracket"></i>
+                    <span>ENTRAR A LA APP</span>
+                </a>
+            </div>
         </div>
     </nav>
 
-    <!-- HERO -->
-    <section class="hero">
-        <div class="container">
-            <div
-                style="font-size: 1rem; font-weight: 800; color: var(--primary); letter-spacing: 2px; margin-bottom: 20px;">
-                TECNOLOGÍA DE VANGUARDIA 2026</div>
-            <h1>El Ecosistema de Pádel<br>Más Avanzado</h1>
-            <p>Descubre las innovadoras capas de Inteligencia Artificial, físicas tridimensionales interactivas y seguridad digital militar integradas en la app oficial de SomosPadel BCN.</p>
-            <a href="#features" class="btn-scroll">Explorar Tour 3D</a>
-        </div>
-    </section>
-
-    <!-- 1. BIOMETRÍA & FÍSICAS -->
-    <section id="features" class="section">
-        <div class="container grid-2">
-            <div class="mockup-container">
-                <div class="phone-frame">
-                    <img src="scratch/1_inicio.png" class="mock-img" alt="Pantalla de Acceso 3D y Biometría">
-                </div>
+    <!-- HERO SECTION -->
+    <header class="hero">
+        <div class="container hero-content">
+            <div class="hero-badge">
+                <span class="pulse-beacon"></span>
+                <span>ECOSISTEMA SOMOS PÁDEL BARCELONA • TEMPORADA 2026/27</span>
             </div>
-            <div class="text-content">
-                <h2>Acceso Inteligente<br><span class="highlight">y Físicas 3D</span></h2>
-                <p>Tu inicio de sesión ahora es una experiencia inmersiva completa. Implementamos tecnologías avanzadas de protección e interactividad en la pasarela de entrada:</p>
 
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fas fa-fingerprint"></i></div>
-                    <div><b>Seguridad Biométrica Activa</b><br><small style="color:#aaa">Escaneo láser cibernético verde de firma digital de neón al enviar tus credenciales.</small></div>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fas fa-cube"></i></div>
-                    <div><b>Inclinación Giroscópica 3D</b><br><small style="color:#aaa">La tarjeta de login responde de forma reactiva con perspectiva tridimensional glassmorphic según tu cursor o giroscopio móvil.</small></div>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fas fa-bolt"></i></div>
-                    <div><b>Sistema Smash de Pelota</b><br><small style="color:#aaa">Pulsa la pelota de SomosPadel en el login para desatar un estallido físico de partículas de neón en tiempo real.</small></div>
-                </div>
-            </div>
-        </div>
-    </section>
+            <h1 class="hero-title">
+                EL CIRCUITO DE PÁDEL DEFINITIVO,<br>
+                <span class="neon-text">AHORA EN TU MANO</span>
+            </h1>
 
-    <!-- 2. BRAIN AI -->
-    <section class="section">
-        <div class="container grid-2">
-            <div class="text-content">
-                <h2>SomosPadel Brain AI<br><span class="highlight">Big Data Predictivo</span></h2>
-                <p>Nuestra plataforma cuenta con un motor cognitivo autónomo de Inteligencia Artificial que procesa el rendimiento histórico de los jugadores para llevar los partidos al siguiente nivel:</p>
-
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fas fa-brain"></i></div>
-                    <div><b>Matchmaking Óptimo en Vivo</b><br><small style="color:#aaa">El algoritmo de IA calcula cruces equilibrados milimétricamente en base al nivel real dinámico y dinámicas de equipo.</small></div>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fas fa-chart-radar"></i></div>
-                    <div><b>Widget Predictive Synergy Scan</b><br><small style="color:#aaa">Visualiza en tiempo real gráficos tridimensionales de radar 3D con proyecciones inteligentes de compatibilidad de pareja.</small></div>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fas fa-radar"></i></div>
-                    <div><b>Scouting Táctico de Oponentes</b><br><small style="color:#aaa">Usa el botón de radiación verde en Equipos para generar reportes automáticos de debilidades y fortalezas de tus rivales.</small></div>
-                </div>
-            </div>
-            <div class="mockup-container">
-                <div class="phone-frame">
-                    <img src="img/portfolio_results.png" class="mock-img" alt="Matchmaking y Resultados de Partidos Inteligentes">
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- 3. MASCOTA INTERACTIVA -->
-    <section class="section">
-        <div class="container grid-2">
-            <div class="mockup-container">
-                <div class="phone-frame" style="background: radial-gradient(circle at center, #0f1d3a 0%, #030a16 100%); display: flex; align-items: center; justify-content: center;">
-                    <img src="img/brain_ball_mascot_3d.png" class="mock-img" style="width: 85%; height: auto; object-fit: contain; filter: drop-shadow(0 12px 30px rgba(204,255,0,0.4));" alt="Mascota Virtual 3D">
-                </div>
-            </div>
-            <div class="text-content">
-                <h2>Mascota Virtual<br><span class="highlight">Tu Padel Companion</span></h2>
-                <p>Hemos integrado a tu asistente virtual inteligente interactivo directamente en la barra flotante del Dashboard para acompañarte y motivarte en tu día a día deportivo:</p>
-
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fas fa-eye"></i></div>
-                    <div><b>Seguimiento de Mirada del Cursor</b><br><small style="color:#aaa">Los ojos 3D de la mascota te siguen con precisión reactiva al mover tu ratón o al deslizar tu dedo por la pantalla.</small></div>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fas fa-sync-alt"></i></div>
-                    <div><b>Pirueta 3D con Partículas</b><br><small style="color:#aaa">Pulsa la pelotita en el Dashboard para que realice un giro giroscópico completo y genere un estallido de energía multicolor.</small></div>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fas fa-comment-alt"></i></div>
-                    <div><b>Banco de Tips Inteligentes</b><br><small style="color:#aaa">Recibe consejos tácticos de juego, alertas de tus próximos partidos y notificaciones premium contextuales en un bocadillo animado.</small></div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- 4. SUDADERA OFICIAL -->
-    <section class="section">
-        <div class="container grid-2">
-            <div class="text-content">
-                <h2>Sudadera de Élite<br><span class="highlight">Identidad Oficial del Club</span></h2>
-                <p>Luce con orgullo los colores oficiales de SomosPadel BCN. Te presentamos nuestra exclusiva prenda de vestir técnica de alto rendimiento deportivo:</p>
-
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fas fa-shirt"></i></div>
-                    <div><b>Diseño de Alta Costura Deportiva</b><br><small style="color:#aaa">Prenda confeccionada en azul marino profundo premium con detalles y logotipos en verde lima vibrante.</small></div>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fab fa-whatsapp"></i></div>
-                    <div><b>Widget de Pedidos Rápidos</b><br><small style="color:#aaa">Selecciona tu talla y reserva tu prenda directamente por WhatsApp con un solo toque desde la sección oficial de Merch en la app.</small></div>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fas fa-gem"></i></div>
-                    <div><b>Welcome Pack Pro</b><br><small style="color:#aaa">Consíguela como parte del Pack Oficial de Bienvenida en los torneos y americanas especiales del club.</small></div>
-                </div>
-            </div>
-            <div class="mockup-container">
-                <div class="phone-frame">
-                    <img src="img/sudadera.jpg" class="mock-img" alt="Sudadera Oficial SomosPadel">
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- 5. RESUMEN ECOSISTEMA -->
-    <section class="section"
-        style="background: linear-gradient(to bottom, transparent, rgba(204, 255, 0, 0.03)); border-bottom: none;">
-        <div class="container" style="text-align: center; max-width: 900px;">
-            <div
-                style="font-size: 0.9rem; font-weight: 800; color: #fff; opacity: 0.6; letter-spacing: 2px; margin-bottom: 20px;">
-                ECOSISTEMA INTEGRADO</div>
-            <h2 style="font-size: 2.5rem; margin-bottom: 30px;">Una Experiencia <span class="highlight">Deportiva Única</span>
-            </h2>
-
-            <p style="font-size: 1.2rem; color: #cbd5e1; line-height: 1.8; margin-bottom: 60px;">
-                Más que una aplicación, es la plataforma de alto rendimiento para la comunidad de SomosPadel BCN. Olvida el caos de WhatsApp y disfruta de la <b>gestión automática de americanas</b> y entrenos con listas de espera, emparejamiento <b>algorítmico predictivo SomosPadel Brain</b> que balancea al milímetro, gamificación mediante el <b>Semáforo de Fiabilidad</b>, seguimiento del perfil en tiempo real con nuestra mascota 3D y sistema de deep-linking para compartir tus partidos preferidos al instante. Todo optimizado bajo un diseño premium de máxima fluidez.
+            <p class="hero-subtitle">
+                Di adiós a los chats caóticos de WhatsApp. <strong>Somos Pádel BCN</strong> centraliza la gestión automática de americanas, emparejamientos inteligentes con <strong>Brain AI</strong>, cartas de jugador estilo FIFA FUT, ranking oficial ELO y el semáforo antipinchazos de asistencia.
             </p>
 
-            <!-- MICRO FEATURES GRID -->
-            <div
-                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; text-align: left;">
-                <div class="feature-card" style="flex-direction: column; align-items: flex-start; padding: 25px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 18px;">
-                    <i class="fas fa-shield highlight" style="font-size: 1.5rem; margin-bottom: 10px;"></i>
-                    <div style="font-weight: 700; color: white;">Seguridad Biométrica</div>
-                    <div style="font-size: 0.8rem; color: #aaa;">Protección avanzada en login para el resguardo de tus datos competitivos.</div>
+            <div class="hero-actions">
+                <a href="index.html" class="btn-primary-hero">
+                    <i class="fas fa-bolt"></i> ACCEDER A LA APP / CREAR CUENTA
+                </a>
+                <a href="#americanas" class="btn-secondary-hero">
+                    <i class="fas fa-compass"></i> EXPLORAR PILARES DEL TOUR
+                </a>
+            </div>
+
+            <!-- LIVE STATS STRIP -->
+            <div class="stats-strip">
+                <div class="stat-card">
+                    <div class="stat-number">
+                        <span>+1.200</span>
+                    </div>
+                    <div class="stat-label">Partidos Oficiales Jugados</div>
                 </div>
-                <div class="feature-card" style="flex-direction: column; align-items: flex-start; padding: 25px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 18px;">
-                    <i class="fas fa-brain highlight" style="font-size: 1.5rem; margin-bottom: 10px;"></i>
-                    <div style="font-weight: 700; color: white;">Inteligencia Artificial</div>
-                    <div style="font-size: 0.8rem; color: #aaa;">Matchmaking predictivo por Big Data que calcula sinergias en tiempo real.</div>
+                <div class="stat-card">
+                    <div class="stat-number">
+                        <span>+500</span><span class="stat-accent">★</span>
+                    </div>
+                    <div class="stat-label">Jugadores Activos en BCN</div>
                 </div>
-                <div class="feature-card" style="flex-direction: column; align-items: flex-start; padding: 25px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 18px;">
-                    <i class="fas fa-ghost highlight" style="font-size: 1.5rem; margin-bottom: 10px;"></i>
-                    <div style="font-weight: 700; color: white;">Asistente Mascota 3D</div>
-                    <div style="font-size: 0.8rem; color: #aaa;">Acompañante interactivo de mirada reactiva y piruetas giroscópicas de neón.</div>
+                <div class="stat-card">
+                    <div class="stat-number">
+                        <span>100<span class="stat-accent">%</span></span>
+                    </div>
+                    <div class="stat-label">Rotación Pistas Automática</div>
                 </div>
-                <div class="feature-card" style="flex-direction: column; align-items: flex-start; padding: 25px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 18px;">
-                    <i class="fab fa-whatsapp highlight" style="font-size: 1.5rem; margin-bottom: 10px;"></i>
-                    <div style="font-weight: 700; color: white;">Club Merchandising</div>
-                    <div style="font-size: 0.8rem; color: #aaa;">Pedido directo e interactivo de la Sudadera Oficial del Club por WhatsApp.</div>
+                <div class="stat-card">
+                    <div class="stat-number">
+                        <span class="stat-accent">AI</span><span>v2.6</span>
+                    </div>
+                    <div class="stat-label">Brain Matchmaking & Scouting</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ========================================================== -->
+    <!-- 1. AMERICANAS PRO & REY DE PISTA -->
+    <!-- ========================================================== -->
+    <section id="americanas" class="pillar-section">
+        <div class="container pillar-grid">
+            <div class="pillar-content-col">
+                <div class="pillar-tag">
+                    <i class="fas fa-trophy"></i> PILAR 01 &bull; COMPETICIÓN EN TIEMPO REAL
+                </div>
+                <h2 class="pillar-title">
+                    Americanas Pro & <br><span class="accent">Rey de Pista</span>
+                </h2>
+                <p class="pillar-desc">
+                    Se acabaron las hojas de cálculo y las discusiones sobre a quién le toca jugar o en qué pista colocarse. El algoritmo maestro de Somos Pádel gestiona los tiempos de rotación, balancea parejas y sincroniza los marcadores en vivo desde cualquier smartphone.
+                </p>
+
+                <div class="feature-bullets">
+                    <div class="bullet-item">
+                        <div class="bullet-icon"><i class="fas fa-arrows-spin"></i></div>
+                        <div class="bullet-content">
+                            <h4>Rotaciones Dinámicas Inteligentes</h4>
+                            <p>Algoritmo que empareja y rota automáticamente para que juegues con y contra diferentes perfiles sin esperas en los banquillos.</p>
+                        </div>
+                    </div>
+                    <div class="bullet-item">
+                        <div class="bullet-icon"><i class="fas fa-stopwatch"></i></div>
+                        <div class="bullet-content">
+                            <h4>Cronómetros Oficiales y Avisos Acústicos</h4>
+                            <p>Control visual del tiempo restante por ronda con señal auditiva de cambio de pista y marcador instantáneo punto a punto.</p>
+                        </div>
+                    </div>
+                    <div class="bullet-item">
+                        <div class="bullet-icon"><i class="fas fa-crown"></i></div>
+                        <div class="bullet-content">
+                            <h4>Modos Rey de Pista y Pozo Pro</h4>
+                            <p>Sube a la Pista Central con cada victoria o defiende tu posición mientras los demás intentan derrocarte ronda a ronda.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- COMMUNITY ACCESS BANNER -->
-            <div
-                style="margin-top: 50px; padding: 30px; background: rgba(255, 255, 255, 0.02); border-radius: 20px; border: 1px dashed rgba(255,255,255,0.1); display: inline-block;">
-                <h3 style="color: var(--primary); font-size: 1.2rem; margin-bottom: 10px;"><i class="fas fa-users"></i>
-                    DISPONIBLE PARA LA COMUNIDAD</h3>
-                <p style="color: #ccc; margin: 0; font-size: 1rem;">
-                    Esta plataforma de alta tecnología está abierta y plenamente operativa para <b>todos los miembros de SomosPadel BCN</b>. <br>
-                    Cada jugador dispone de su propio acceso personal para consultar su evolución, calentar con los tips e inscribirse de forma segura.
-                </p>
+            <!-- LIVE SCOREBOARD MOCKUP -->
+            <div class="mockup-wrapper">
+                <div class="mockup-glow"></div>
+                <div class="mockup-card-surface">
+                    <div class="mockup-header-bar">
+                        <div class="mockup-dots">
+                            <span class="mockup-dot active"></span>
+                            <span class="mockup-dot"></span>
+                            <span class="mockup-dot"></span>
+                        </div>
+                        <div style="font-size: 0.75rem; font-weight: 800; color: var(--primary);">
+                            <i class="fas fa-signal"></i> EN DIRECTO &bull; RONDA 4/8
+                        </div>
+                    </div>
+
+                    <div class="mockup-body">
+                        <div class="scoreboard-live">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <span class="court-badge"><i class="fas fa-table-tennis-paddle-ball"></i> Pista 1 &bull; Central</span>
+                                <span style="font-size: 0.72rem; color: #94a3b8; font-weight: 600;">Americanas Viernes Night</span>
+                            </div>
+
+                            <div class="scoreboard-match-row">
+                                <div class="scoreboard-team">
+                                    <div class="team-avatar-pair">
+                                        <div class="team-avatar">AC</div>
+                                        <div class="team-avatar" style="background:#0284c7; color:#fff;">MR</div>
+                                    </div>
+                                    <div>
+                                        <div>Alex & Marc</div>
+                                        <div style="font-size: 0.7rem; color: var(--primary); font-weight: 600;">Líderes de Pista</div>
+                                    </div>
+                                </div>
+                                <div class="scoreboard-points">24</div>
+                            </div>
+
+                            <div class="scoreboard-match-row" style="border-bottom: none; margin-bottom: 0;">
+                                <div class="scoreboard-team">
+                                    <div class="team-avatar-pair">
+                                        <div class="team-avatar" style="background:#4f46e5; color:#fff;">JS</div>
+                                        <div class="team-avatar" style="background:#d97706; color:#fff;">DL</div>
+                                    </div>
+                                    <div>
+                                        <div>Jordi & Dani</div>
+                                        <div style="font-size: 0.7rem; color: #94a3b8; font-weight: 600;">Retadores Ronda 4</div>
+                                    </div>
+                                </div>
+                                <div class="scoreboard-points" style="color: #cbd5e1;">19</div>
+                            </div>
+                        </div>
+
+                        <div class="timer-badge">
+                            <div>
+                                <div style="color: #94a3b8; font-size: 0.7rem;">TIEMPO RESTANTE RONDA</div>
+                                <div class="timer-clock"><i class="fas fa-clock"></i> 03:42 min</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <span style="display: inline-block; background: rgba(204,255,0,0.15); color: var(--primary); padding: 4px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: 800;">
+                                    Rotación Automática
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
-    <footer style="text-align:center; padding: 50px; color:#666; border-top: 1px solid var(--border);">
-        <p style="font-size: 0.9rem;">SomosPadel BCN © 2026. Powered by <span style="color:white; font-weight:700;">Alex
-                Coscolin - Somospadel EU</span></p>
+    <!-- ========================================================== -->
+    <!-- 2. PARTIDOS ABIERTOS & MATCHMAKING INTELIGENTE -->
+    <!-- ========================================================== -->
+    <section id="partidos" class="pillar-section">
+        <div class="container pillar-grid reverse">
+            <div class="pillar-content-col">
+                <div class="pillar-tag">
+                    <i class="fas fa-handshake"></i> PILAR 02 &bull; MATCHMAKING DE PRECISIÓN
+                </div>
+                <h2 class="pillar-title">
+                    Partidos Abiertos & <br><span class="accent">Nivel Equilibrado</span>
+                </h2>
+                <p class="pillar-desc">
+                    ¿Te falta uno o dos jugadores para cerrar una partida hoy mismo? El motor de Partidos Abiertos escanea la comunidad de Barcelona y notifica a jugadores con tu mismo rango técnico de 1.0 a 6.0, evitando partidos aburridos o descompensados.
+                </p>
+
+                <div class="feature-bullets">
+                    <div class="bullet-item">
+                        <div class="bullet-icon"><i class="fas fa-sliders"></i></div>
+                        <div class="bullet-content">
+                            <h4>Filtro de Nivel Homogéneo (1.0 - 6.0)</h4>
+                            <p>Regulación por horquillas estrechas para garantizar intensidad, peloteos largos y competitividad máxima en cada set.</p>
+                        </div>
+                    </div>
+                    <div class="bullet-item">
+                        <div class="bullet-icon"><i class="fas fa-bell"></i></div>
+                        <div class="bullet-content">
+                            <h4>Alertas Instantáneas de Hueco Libre</h4>
+                            <p>Notificaciones push cuando alguien crea o busca relevo en tu club habitual (Delfos, Prat, Indoor BCN, etc.).</p>
+                        </div>
+                    </div>
+                    <div class="bullet-item">
+                        <div class="bullet-icon"><i class="fas fa-user-clock"></i></div>
+                        <div class="bullet-content">
+                            <h4>Lista de Espera con Auto-Confirmación</h4>
+                            <p>Si una plaza se libera por imprevisto, la app promueve automáticamente al primer jugador en reserva en cuestión de segundos.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MATCHMAKING CARD MOCKUP -->
+            <div class="mockup-wrapper">
+                <div class="mockup-glow" style="background: radial-gradient(circle, rgba(0, 229, 255, 0.3), transparent 70%);"></div>
+                <div class="mockup-card-surface">
+                    <div class="mockup-header-bar">
+                        <div class="mockup-dots">
+                            <span class="mockup-dot" style="background: var(--cyan); box-shadow: 0 0 8px var(--cyan);"></span>
+                            <span class="mockup-dot"></span>
+                            <span class="mockup-dot"></span>
+                        </div>
+                        <div style="font-size: 0.75rem; font-weight: 800; color: var(--cyan);">
+                            <i class="fas fa-unlock"></i> 1 PLAZA LIBRE DISPONIBLE
+                        </div>
+                    </div>
+
+                    <div class="mockup-body">
+                        <div style="background: rgba(4, 9, 20, 0.85); border-radius: 18px; padding: 20px; border: 1px solid rgba(0, 229, 255, 0.2);">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
+                                <div>
+                                    <div style="font-size: 0.75rem; color: var(--cyan); font-weight: 800; letter-spacing: 0.8px;">CLUB DELFOS SPORTS BCN</div>
+                                    <div style="font-size: 1.15rem; font-weight: 800; color: #fff;">Partido Abierto Nivel 3.5 - 4.0</div>
+                                </div>
+                                <span style="background: rgba(0,229,255,0.15); color: var(--cyan); padding: 4px 10px; border-radius: 8px; font-size: 0.72rem; font-weight: 800;">
+                                    Hoy &bull; 19:30h
+                                </span>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
+                                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 10px; display: flex; align-items: center; gap: 10px;">
+                                    <div class="team-avatar" style="background:#059669; color:#fff;">CR</div>
+                                    <div>
+                                        <div style="font-size: 0.8rem; font-weight: 700;">Carlos R.</div>
+                                        <div style="font-size: 0.68rem; color: var(--primary);">Nivel 3.8 &bull; Drive</div>
+                                    </div>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 10px; display: flex; align-items: center; gap: 10px;">
+                                    <div class="team-avatar" style="background:#7c3aed; color:#fff;">MG</div>
+                                    <div>
+                                        <div style="font-size: 0.8rem; font-weight: 700;">Marc G.</div>
+                                        <div style="font-size: 0.68rem; color: var(--primary);">Nivel 3.7 &bull; Revés</div>
+                                    </div>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 10px; display: flex; align-items: center; gap: 10px;">
+                                    <div class="team-avatar" style="background:#ea580c; color:#fff;">AL</div>
+                                    <div>
+                                        <div style="font-size: 0.8rem; font-weight: 700;">Albert L.</div>
+                                        <div style="font-size: 0.68rem; color: var(--primary);">Nivel 3.9 &bull; Drive</div>
+                                    </div>
+                                </div>
+                                <div style="border: 1.5px dashed var(--primary); background: rgba(204,255,0,0.06); border-radius: 12px; padding: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;">
+                                    <i class="fas fa-plus" style="color: var(--primary);"></i>
+                                    <span style="font-size: 0.78rem; font-weight: 800; color: var(--primary);">¡TU HUECO!</span>
+                                </div>
+                            </div>
+
+                            <a href="index.html" style="display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--primary); color: #000; padding: 12px; border-radius: 12px; font-weight: 800; font-size: 0.85rem; text-transform: uppercase;">
+                                <i class="fas fa-check-circle"></i> Apuntarse en 1 Clic
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================================== -->
+    <!-- 3. CARTAS DE JUGADOR PADEL FUT (FIFA STYLE) -->
+    <!-- ========================================================== -->
+    <section id="fut-card" class="pillar-section">
+        <div class="container pillar-grid">
+            <div class="pillar-content-col">
+                <div class="pillar-tag">
+                    <i class="fas fa-id-badge"></i> PILAR 03 &bull; GAMIFICACIÓN DEPORTIVA ÉLITE
+                </div>
+                <h2 class="pillar-title">
+                    Cartas de Jugador <br><span class="accent">Pádel FUT (FIFA Style)</span>
+                </h2>
+                <p class="pillar-desc">
+                    Lleva tu identidad como padelero a otra dimensión. Tu perfil genera una carta holográfica interactiva calculada con tu media global (OVR), desglose de estadísticas en pista y cálculo dinámico de química según con quién juegues.
+                </p>
+
+                <div class="feature-bullets">
+                    <div class="bullet-item">
+                        <div class="bullet-icon"><i class="fas fa-chart-pie"></i></div>
+                        <div class="bullet-content">
+                            <h4>Media Global (OVR) Dinámica</h4>
+                            <p>Tu valoración de 60 a 99 sube y baja orgánicamente según victorias, diferencial de juegos ganados y nivel de los rivales superados.</p>
+                        </div>
+                    </div>
+                    <div class="bullet-item">
+                        <div class="bullet-icon"><i class="fas fa-wand-magic-sparkles"></i></div>
+                        <div class="bullet-content">
+                            <h4>6 Estadísticas Técnicas Desglosadas</h4>
+                            <p>Puntuación específica en <strong>Remate Smash (SMA)</strong>, <strong>Volea en Red (VOL)</strong>, <strong>Bandeja/Víbora (BAN)</strong>, <strong>Defensa de Pared (DEF)</strong>, <strong>Físico/Velocidad (FIS)</strong> y <strong>Paciencia Táctica (PAC)</strong>.</p>
+                        </div>
+                    </div>
+                    <div class="bullet-item">
+                        <div class="bullet-icon"><i class="fas fa-link"></i></div>
+                        <div class="bullet-content">
+                            <h4>Cálculo de Química de Pareja (+100%)</h4>
+                            <p>Visualiza en segundos si tu estilo de juego complementa las virtudes de tu compañero de pista para formar una dupla letal.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- INTERACTIVE FUT CARD MOCKUP -->
+            <div class="mockup-wrapper">
+                <div class="mockup-glow"></div>
+                <div class="fut-card-container" id="futCardSample">
+                    <div class="fut-card-top">
+                        <div class="fut-rating-block">
+                            <div class="fut-ovr">89</div>
+                            <div class="fut-pos">REVÉS</div>
+                        </div>
+                        <img src="img/logo_somospadel.png" class="fut-club-badge" alt="SomosPadel">
+                    </div>
+
+                    <div class="fut-player-visual">
+                        <div class="fut-avatar-circle">
+                            <i class="fas fa-user-ninja" style="font-size: 3.5rem; color: var(--primary);"></i>
+                        </div>
+                        <div class="fut-player-name">ALEX C.</div>
+                        <div class="fut-tier-pill"><i class="fas fa-star"></i> JUGADOR ORO DESTACADO</div>
+                    </div>
+
+                    <div>
+                        <div class="fut-stats-grid">
+                            <div class="fut-stat-item"><span class="fut-stat-val">92</span><span class="fut-stat-key">SMA</span></div>
+                            <div class="fut-stat-item"><span class="fut-stat-val">88</span><span class="fut-stat-key">VOL</span></div>
+                            <div class="fut-stat-item"><span class="fut-stat-val">89</span><span class="fut-stat-key">BAN</span></div>
+                            <div class="fut-stat-item"><span class="fut-stat-val">85</span><span class="fut-stat-key">DEF</span></div>
+                            <div class="fut-stat-item"><span class="fut-stat-val">91</span><span class="fut-stat-key">FIS</span></div>
+                            <div class="fut-stat-item"><span class="fut-stat-val">87</span><span class="fut-stat-key">PAC</span></div>
+                        </div>
+
+                        <div class="fut-chemistry-bar">
+                            <span><i class="fas fa-heart-pulse" style="color: var(--primary);"></i> QUÍMICA DE PAREJA</span>
+                            <span style="color: var(--primary);">98% &bull; SINERGIA MÁXIMA</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================================== -->
+    <!-- 4. RANKING OFICIAL ELO & SEMÁFORO DE FIABILIDAD -->
+    <!-- ========================================================== -->
+    <section id="ranking" class="pillar-section">
+        <div class="container pillar-grid reverse">
+            <div class="pillar-content-col">
+                <div class="pillar-tag">
+                    <i class="fas fa-ranking-star"></i> PILAR 04 &bull; JUSTICIA & REPUTACIÓN
+                </div>
+                <h2 class="pillar-title">
+                    Ranking Oficial ELO & <br><span class="accent">Semáforo de Fiabilidad</span>
+                </h2>
+                <p class="pillar-desc">
+                    La puntuación no es una opinión subjetiva. Nuestro algoritmo ELO oficial pondera la dificultad de cada rival y premia la constancia. Además, el Semáforo de Fiabilidad garantiza que nadie cancele a última hora sin consecuencias para el grupo.
+                </p>
+
+                <div class="feature-bullets">
+                    <div class="bullet-item">
+                        <div class="bullet-icon"><i class="fas fa-chart-line"></i></div>
+                        <div class="bullet-content">
+                            <h4>Algoritmo ELO Matemático Ponderado</h4>
+                            <p>Gana más puntos al vencer a parejas de nivel superior y mantén tus rachas de victoria vivas para ascender de división.</p>
+                        </div>
+                    </div>
+                    <div class="bullet-item">
+                        <div class="bullet-icon"><i class="fas fa-traffic-light"></i></div>
+                        <div class="bullet-content">
+                            <h4>Semáforo Antipinchazos de Asistencia</h4>
+                            <p>Verde (100% de fiabilidad comprobada), Amarillo (cancelaciones tardías) o Rojo (bloqueo temporal de inscripciones prioritarias).</p>
+                        </div>
+                    </div>
+                    <div class="bullet-item">
+                        <div class="bullet-icon"><i class="fas fa-medal"></i></div>
+                        <div class="bullet-content">
+                            <h4>Historial y Cuadro de Honor</h4>
+                            <p>Consulta el historial completo de sets, % de victorias por lado (drive/revés) y posición en el podio mensual del club.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LEADERBOARD & RELIABILITY MOCKUP -->
+            <div class="mockup-wrapper">
+                <div class="mockup-glow" style="background: radial-gradient(circle, rgba(204, 255, 0, 0.25), transparent 70%);"></div>
+                <div class="mockup-card-surface">
+                    <div class="mockup-header-bar">
+                        <div class="mockup-dots">
+                            <span class="mockup-dot active"></span>
+                            <span class="mockup-dot"></span>
+                            <span class="mockup-dot"></span>
+                        </div>
+                        <div style="font-size: 0.75rem; font-weight: 800; color: #fff;">
+                            <i class="fas fa-crown" style="color: #facc15;"></i> TOP RANKING ELO &bull; SOMOSPÁDEL BCN
+                        </div>
+                    </div>
+
+                    <div class="mockup-body">
+                        <!-- Podio fila 1 -->
+                        <div style="background: rgba(255, 215, 0, 0.08); border: 1px solid rgba(255, 215, 0, 0.3); border-radius: 14px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="font-family: var(--font-display); font-size: 1.3rem; font-weight: 900; color: #facc15;">#1</div>
+                                <div>
+                                    <div style="font-weight: 800; font-size: 0.92rem; color: #fff;">Alex Coscolin</div>
+                                    <div style="font-size: 0.7rem; color: #94a3b8;"><i class="fas fa-fire" style="color: #f97316;"></i> Racha 7W seguidas</div>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 900; color: var(--primary);">2.450 <span style="font-size: 0.7rem;">ELO</span></div>
+                                <span style="font-size: 0.65rem; background: rgba(34, 197, 94, 0.2); color: #4ade80; padding: 2px 8px; border-radius: 999px; font-weight: 700;">
+                                    ● 100% FIABLE
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Podio fila 2 -->
+                        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-glass); border-radius: 14px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="font-family: var(--font-display); font-size: 1.3rem; font-weight: 900; color: #cbd5e1;">#2</div>
+                                <div>
+                                    <div style="font-weight: 800; font-size: 0.92rem; color: #fff;">David López</div>
+                                    <div style="font-size: 0.7rem; color: #94a3b8;">45 Partidos Jugados</div>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 900; color: #ffffff;">2.310 <span style="font-size: 0.7rem;">ELO</span></div>
+                                <span style="font-size: 0.65rem; background: rgba(34, 197, 94, 0.2); color: #4ade80; padding: 2px 8px; border-radius: 999px; font-weight: 700;">
+                                    ● 98% FIABLE
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Podio fila 3 -->
+                        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-glass); border-radius: 14px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="font-family: var(--font-display); font-size: 1.3rem; font-weight: 900; color: #b45309;">#3</div>
+                                <div>
+                                    <div style="font-weight: 800; font-size: 0.92rem; color: #fff;">Laura Martínez</div>
+                                    <div style="font-size: 0.7rem; color: #94a3b8;">Campeona Femenino Pro</div>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 900; color: #ffffff;">2.240 <span style="font-size: 0.7rem;">ELO</span></div>
+                                <span style="font-size: 0.65rem; background: rgba(34, 197, 94, 0.2); color: #4ade80; padding: 2px 8px; border-radius: 999px; font-weight: 700;">
+                                    ● 100% FIABLE
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================================== -->
+    <!-- 5. EQUIPOS, LIGAS & CAPITANÍAS -->
+    <!-- ========================================================== -->
+    <section id="equipos" class="pillar-section">
+        <div class="container pillar-grid">
+            <div class="pillar-content-col">
+                <div class="pillar-tag">
+                    <i class="fas fa-shield"></i> PILAR 05 &bull; ESPÍRITU DE CLUB & ESCUADRAS
+                </div>
+                <h2 class="pillar-title">
+                    Equipos, Ligas & <br><span class="accent">Capitanías Oficiales</span>
+                </h2>
+                <p class="pillar-desc">
+                    El pádel en equipo sabe mejor. Crea tu propia escuadra o únete a las selecciones oficiales de Somos Pádel Barcelona. Los capitanes disponen de una suite completa para convocar, alinear parejas y lanzar retos directos entre divisiones.
+                </p>
+
+                <div class="feature-bullets">
+                    <div class="bullet-item">
+                        <div class="bullet-icon"><i class="fas fa-user-gear"></i></div>
+                        <div class="bullet-content">
+                            <h4>Panel de Capitán y Convocatorias</h4>
+                            <p>Envía llamamientos oficiales a tus jugadores, revisa confirmaciones en tiempo real y asigna las pistas estratégicamente.</p>
+                        </div>
+                    </div>
+                    <div class="bullet-item">
+                        <div class="bullet-icon"><i class="fas fa-crosshairs"></i></div>
+                        <div class="bullet-content">
+                            <h4>Retos Directos Inter-Equipos</h4>
+                            <p>Desafía a escuadras rivales de tu zona con un solo toque y acordad fecha, pistas y condiciones directamente dentro de la app.</p>
+                        </div>
+                    </div>
+                    <div class="bullet-item">
+                        <div class="bullet-icon"><i class="fas fa-sitemap"></i></div>
+                        <div class="bullet-content">
+                            <h4>Clasificación por Divisiones (Oro, Plata, Bronce)</h4>
+                            <p>Ascensos y descensos automáticos cada trimestre para mantener la adrenalina de club al rojo vivo.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TEAM CARD MOCKUP -->
+            <div class="mockup-wrapper">
+                <div class="mockup-glow" style="background: radial-gradient(circle, rgba(204, 255, 0, 0.2), transparent 70%);"></div>
+                <div class="mockup-card-surface">
+                    <div class="mockup-header-bar">
+                        <div class="mockup-dots">
+                            <span class="mockup-dot active"></span>
+                            <span class="mockup-dot"></span>
+                            <span class="mockup-dot"></span>
+                        </div>
+                        <div style="font-size: 0.75rem; font-weight: 800; color: var(--primary);">
+                            <i class="fas fa-users-viewfinder"></i> ESCUADRA OFICIAL
+                        </div>
+                    </div>
+
+                    <div class="mockup-body">
+                        <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border-glass);">
+                            <div style="width: 52px; height: 52px; border-radius: 14px; background: rgba(204,255,0,0.15); border: 1.5px solid var(--primary); display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-shield-cat" style="font-size: 1.6rem; color: var(--primary);"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 1.15rem; font-weight: 900; color: #fff;">SOMOS PÁDEL VIPERS</div>
+                                <div style="font-size: 0.72rem; color: var(--primary); font-weight: 700;">DIVISIÓN 1 ORO &bull; CAPITÁN: MARC R.</div>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 16px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.74rem; margin-bottom: 8px; font-weight: 700;">
+                                <span style="color: #94a3b8;">CONVOCATORIA PRÓXIMO RETO</span>
+                                <span style="color: var(--primary);">4 / 4 CONFIRMADOS (100%)</span>
+                            </div>
+                            <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 999px; overflow: hidden;">
+                                <div style="width: 100%; height: 100%; background: var(--primary);"></div>
+                            </div>
+                        </div>
+
+                        <div style="background: rgba(255, 255, 255, 0.02); border-radius: 12px; padding: 12px; border: 1px dashed rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-size: 0.72rem; color: #94a3b8;">PRÓXIMO DERBI</div>
+                                <div style="font-size: 0.88rem; font-weight: 800; color: #fff;">vs Padel Masters BCN</div>
+                            </div>
+                            <span style="background: rgba(204,255,0,0.15); color: var(--primary); padding: 5px 12px; border-radius: 8px; font-size: 0.72rem; font-weight: 800;">
+                                Sábado 18:00
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================================== -->
+    <!-- 6. ENTRENOS & CLÍNICS DE PERFECCIONAMIENTO -->
+    <!-- ========================================================== -->
+    <section id="entrenos" class="pillar-section">
+        <div class="container pillar-grid reverse">
+            <div class="pillar-content-col">
+                <div class="pillar-tag">
+                    <i class="fas fa-graduation-cap"></i> PILAR 06 &bull; ACADEMIA & TÉCNICA
+                </div>
+                <h2 class="pillar-title">
+                    Entrenos & Clínics <br><span class="accent">de Perfeccionamiento</span>
+                </h2>
+                <p class="pillar-desc">
+                    El talento se entrena. Reserva tu plaza en los clínics técnicos del club impartidos por entrenadores titulados en instalaciones de primer nivel como Delfos Sports y Padel Prat. Grupos reducidos de 4 alumnos para maximizar toques de bola y corrección táctica.
+                </p>
+
+                <div class="feature-bullets">
+                    <div class="bullet-item">
+                        <div class="bullet-icon"><i class="fas fa-chalkboard-user"></i></div>
+                        <div class="bullet-content">
+                            <h4>Monitores Titulados Nacionales</h4>
+                            <p>Metodología moderna orientada a situaciones reales de juego: bandejas cruzadas, bloqueos en red y salidas de pared agresivas.</p>
+                        </div>
+                    </div>
+                    <div class="bullet-item">
+                        <div class="bullet-icon"><i class="fas fa-users-rectangle"></i></div>
+                        <div class="bullet-content">
+                            <h4>Grupos Estrictos de 4 Jugadores</h4>
+                            <p>Garantía de máxima intensidad física y atención personalizada del profesor durante toda la sesión de 90 minutos.</p>
+                        </div>
+                    </div>
+                    <div class="bullet-item">
+                        <div class="bullet-icon"><i class="fas fa-calendar-check"></i></div>
+                        <div class="bullet-content">
+                            <h4>Reserva con 1 Clic & Sede Delfos / Prat</h4>
+                            <p>Elige tu día, horario y nivel técnico desde la app sin llamadas telefónicas ni transferencias manuales complejas.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CLINIC CARD MOCKUP -->
+            <div class="mockup-wrapper">
+                <div class="mockup-glow" style="background: radial-gradient(circle, rgba(0, 229, 255, 0.25), transparent 70%);"></div>
+                <div class="mockup-card-surface">
+                    <div class="mockup-header-bar">
+                        <div class="mockup-dots">
+                            <span class="mockup-dot" style="background: var(--cyan); box-shadow: 0 0 8px var(--cyan);"></span>
+                            <span class="mockup-dot"></span>
+                            <span class="mockup-dot"></span>
+                        </div>
+                        <div style="font-size: 0.75rem; font-weight: 800; color: var(--cyan);">
+                            <i class="fas fa-graduation-cap"></i> CLÍNIC TÉCNICO OFICIAL
+                        </div>
+                    </div>
+
+                    <div class="mockup-body">
+                        <div style="background: #0d1624; border-radius: 16px; overflow: hidden; border: 1px solid rgba(0, 229, 255, 0.2);">
+                            <img src="img/pista_padel_azul.png" alt="Pista Delfos" style="width: 100%; height: 130px; object-fit: cover; opacity: 0.85;">
+                            
+                            <div style="padding: 16px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <span style="font-size: 0.7rem; background: rgba(0,229,255,0.15); color: var(--cyan); padding: 3px 8px; border-radius: 6px; font-weight: 800;">
+                                        DELFOS SPORTS BCN
+                                    </span>
+                                    <span style="font-size: 0.75rem; color: #94a3b8; font-weight: 700;">Miércoles 18:30h</span>
+                                </div>
+                                
+                                <div style="font-size: 1.05rem; font-weight: 800; color: #fff; margin-bottom: 6px;">
+                                    Masterclass: Bandeja y Transición a Red
+                                </div>
+                                <div style="font-size: 0.78rem; color: #94a3b8; margin-bottom: 14px;">
+                                    Monitor: Javier C. (Entrenador Nacional FCP)
+                                </div>
+
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08);">
+                                    <div>
+                                        <div style="font-size: 0.7rem; color: #94a3b8;">PLAZAS OCUPADAS</div>
+                                        <div style="font-size: 0.95rem; font-weight: 900; color: var(--primary);">3 / 4 (¡Último Hueco!)</div>
+                                    </div>
+                                    <a href="index.html" style="background: var(--primary); color: #000; padding: 8px 16px; border-radius: 10px; font-size: 0.75rem; font-weight: 900;">
+                                        RESERVAR
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================================== -->
+    <!-- 7. SOMOSPADEL BRAIN AI & SCOUTING TÁCTICO -->
+    <!-- ========================================================== -->
+    <section id="brain-ai" class="pillar-section">
+        <div class="container pillar-grid">
+            <div class="pillar-content-col">
+                <div class="pillar-tag">
+                    <i class="fas fa-brain"></i> PILAR 07 &bull; INTELIGENCIA ARTIFICIAL DE VANGUARDIA
+                </div>
+                <h2 class="pillar-title">
+                    SomosPadel Brain AI & <br><span class="accent">Scouting Táctico</span>
+                </h2>
+                <p class="pillar-desc">
+                    Tu entrenador personal de datos en el bolsillo. Brain AI analiza cientos de variables de cada jugador: efectividad en bolas de break, porcentaje de remates sacados x3 y puntos débiles bajo presión para diseñarte el plan táctico ganador antes de saltar a la pista.
+                </p>
+
+                <div class="feature-bullets">
+                    <div class="bullet-item">
+                        <div class="bullet-icon"><i class="fas fa-radar"></i></div>
+                        <div class="bullet-content">
+                            <h4>Escáner Radar de Compatibilidad (Synergy Scan)</h4>
+                            <p>Compara el solapamiento de zonas de pista entre dos jugadores para evitar huecos en el centro y maximizar la cobertura en red.</p>
+                        </div>
+                    </div>
+                    <div class="bullet-item">
+                        <div class="bullet-icon"><i class="fas fa-shield-virus"></i></div>
+                        <div class="bullet-content">
+                            <h4>Detección de Debilidades de Rivales</h4>
+                            <p>Reportes automáticos previos al partido: "¿Quién comete más errores no forzados?", "¿A quién conviene tirar el globo en paralelo?".</p>
+                        </div>
+                    </div>
+                    <div class="bullet-item">
+                        <div class="bullet-icon"><i class="fas fa-microchip"></i></div>
+                        <div class="bullet-content">
+                            <h4>Motor Cognitivo Predictivo v2.6</h4>
+                            <p>Procesa los resultados de todo el circuito para estimar la probabilidad de victoria y proyectar la evolución de tu nivel.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BRAIN RADAR MOCKUP -->
+            <div class="mockup-wrapper">
+                <div class="mockup-glow" style="background: radial-gradient(circle, rgba(0, 229, 255, 0.35), transparent 70%);"></div>
+                <div class="mockup-card-surface">
+                    <div class="mockup-header-bar">
+                        <div class="mockup-dots">
+                            <span class="mockup-dot" style="background: var(--cyan); box-shadow: 0 0 8px var(--cyan);"></span>
+                            <span class="mockup-dot"></span>
+                            <span class="mockup-dot"></span>
+                        </div>
+                        <div style="font-size: 0.75rem; font-weight: 800; color: var(--cyan);">
+                            <i class="fas fa-microchip"></i> SOMOSPADEL BRAIN &bull; ENGINE 2.6
+                        </div>
+                    </div>
+
+                    <div class="mockup-body">
+                        <div class="radar-box">
+                            <div class="synergy-badge-pulse">
+                                <i class="fas fa-atom"></i> SINERGIA DE DUPLA CALCULADA
+                            </div>
+
+                            <div class="synergy-score-display">
+                                94<span style="font-size: 1.6rem; color: #fff;">%</span>
+                            </div>
+                            <div style="font-size: 0.78rem; color: #cbd5e1; font-weight: 700;">
+                                Compatibilidad Táctica Extraordinaria
+                            </div>
+
+                            <div class="scout-insights-list">
+                                <div class="scout-insight-item">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span><b>Fuerte:</b> Alex domina el smash definitorio (92 SMA) y Marc cierra el medio con volea (88 VOL).</span>
+                                </div>
+                                <div class="scout-insight-item">
+                                    <i class="fas fa-triangle-exclamation" style="color: #facc15;"></i>
+                                    <span><b>Alerta Rival:</b> Su rival de drive tiene un 68% de error en salidas de pared de revés profunda.</span>
+                                </div>
+                                <div class="scout-insight-item">
+                                    <i class="fas fa-lightbulb" style="color: var(--primary);"></i>
+                                    <span><b>Consejo IA:</b> Cargar el juego en la esquina izquierda y presionar la red en bolas cortas.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================================== -->
+    <!-- 8. FEED SOCIAL, STORIES & COMUNIDAD -->
+    <!-- ========================================================== -->
+    <section id="comunidad" class="pillar-section">
+        <div class="container pillar-grid reverse">
+            <div class="pillar-content-col">
+                <div class="pillar-tag">
+                    <i class="fas fa-comments"></i> PILAR 08 &bull; PASIÓN COMPARTIDA & MURO
+                </div>
+                <h2 class="pillar-title">
+                    Feed Social, Stories & <br><span class="accent">Comunidad Activa</span>
+                </h2>
+                <p class="pillar-desc">
+                    El pádel no termina con el último punto del partido. El muro social de Somos Pádel BCN te permite compartir las mejores fotos de las americanas, felicitar a los campeones de podio, seguir stories temporales y debatir jugadas con toda la comunidad barcelonesa.
+                </p>
+
+                <div class="feature-bullets">
+                    <div class="bullet-item">
+                        <div class="bullet-icon"><i class="fas fa-camera-retro"></i></div>
+                        <div class="bullet-content">
+                            <h4>Stories Temporales del Club (24h)</h4>
+                            <p>Visualiza en formato dinámico tipo Instagram quién está jugando en cada club, los puntazos de la tarde y los festejos de entrega de premios.</p>
+                        </div>
+                    </div>
+                    <div class="bullet-item">
+                        <div class="bullet-icon"><i class="fas fa-newspaper"></i></div>
+                        <div class="bullet-content">
+                            <h4>Muro Deportivo & Galería de Podios</h4>
+                            <p>Publicaciones oficiales de cada evento, fotos en alta resolución de los ganadores de cada categoría y noticias exclusivas de los torneos.</p>
+                        </div>
+                    </div>
+                    <div class="bullet-item">
+                        <div class="bullet-icon"><i class="fas fa-heart"></i></div>
+                        <div class="bullet-content">
+                            <h4>Interacciones, Comentarios y Tercer Tiempo</h4>
+                            <p>Reacciona con aplausos, comenta las finales más apretadas y coordina las cervezas del post-partido sin salir de la plataforma.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SOCIAL FEED MOCKUP -->
+            <div class="mockup-wrapper">
+                <div class="mockup-glow" style="background: radial-gradient(circle, rgba(255, 0, 127, 0.25), transparent 70%);"></div>
+                <div class="mockup-card-surface">
+                    <div class="mockup-header-bar">
+                        <div class="mockup-dots">
+                            <span class="mockup-dot" style="background: var(--accent-pink); box-shadow: 0 0 8px var(--accent-pink);"></span>
+                            <span class="mockup-dot"></span>
+                            <span class="mockup-dot"></span>
+                        </div>
+                        <div style="font-size: 0.75rem; font-weight: 800; color: #fff;">
+                            <i class="fas fa-camera" style="color: var(--accent-pink);"></i> FEED OFICIAL &bull; SOMOSPÁDEL
+                        </div>
+                    </div>
+
+                    <div class="mockup-body">
+                        <!-- Stories bar -->
+                        <div class="stories-bar">
+                            <div class="story-circle-item">
+                                <div class="story-ring">
+                                    <img src="img/brain_ball_mascot_3d.png" class="story-thumb" alt="Club Story">
+                                </div>
+                                <span class="story-author">Club BCN</span>
+                            </div>
+                            <div class="story-circle-item">
+                                <div class="story-ring" style="background: linear-gradient(135deg, #00e5ff, #7c3aed);">
+                                    <div class="story-thumb" style="display:flex;align-items:center;justify-content:center;color:var(--primary);font-weight:900;font-size:0.7rem;">AC</div>
+                                </div>
+                                <span class="story-author">Alex C.</span>
+                            </div>
+                            <div class="story-circle-item">
+                                <div class="story-ring" style="background: linear-gradient(135deg, #f59e0b, #ef4444);">
+                                    <div class="story-thumb" style="display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:0.7rem;">MR</div>
+                                </div>
+                                <span class="story-author">Marc R.</span>
+                            </div>
+                            <div class="story-circle-item">
+                                <div class="story-ring">
+                                    <div class="story-thumb" style="display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:0.7rem;">LM</div>
+                                </div>
+                                <span class="story-author">Laura M.</span>
+                            </div>
+                        </div>
+
+                        <!-- Sample post card -->
+                        <div class="feed-card-sample">
+                            <div class="feed-header">
+                                <div class="feed-user">
+                                    <div class="team-avatar" style="background: #0284c7; color:#fff;">SP</div>
+                                    <div>
+                                        <div>Somos Pádel Oficial</div>
+                                        <div style="font-size: 0.68rem; color: #94a3b8;">Hace 2 horas &bull; Delfos Sports</div>
+                                    </div>
+                                </div>
+                                <i class="fas fa-ellipsis-vertical" style="color: #64748b;"></i>
+                            </div>
+
+                            <div class="feed-img-container">
+                                <img src="img/blog_court_night.png" class="feed-img" alt="Americana Viernes Noche">
+                            </div>
+
+                            <div class="feed-footer">
+                                <div class="feed-likes">
+                                    <i class="fas fa-heart"></i>
+                                    <span>128 likes</span>
+                                </div>
+                                <div style="display: flex; gap: 12px; color: #cbd5e1;">
+                                    <i class="fas fa-comment"></i>
+                                    <i class="fas fa-share-nodes"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================================== -->
+    <!-- 9. MASCOTA VIRTUAL 3D & TIENDA OFICIAL -->
+    <!-- ========================================================== -->
+    <section id="tienda" class="pillar-section">
+        <div class="container pillar-grid">
+            <div class="pillar-content-col">
+                <div class="pillar-tag">
+                    <i class="fas fa-shirt"></i> PILAR 09 &bull; ASISTENTE INTERACTIVO & MERCH
+                </div>
+                <h2 class="pillar-title">
+                    Mascota Virtual 3D & <br><span class="accent">Tienda Oficial del Club</span>
+                </h2>
+                <p class="pillar-desc">
+                    Conoce a tu fiel compañero táctico: la Mascota Virtual 3D que vive en el Dashboard para aconsejarte en cada calentamiento. Y cuando saltes a la pista, luce los colores oficiales de Somos Pádel Barcelona con nuestra sudadera técnica de élite.
+                </p>
+
+                <div class="feature-bullets">
+                    <div class="bullet-item">
+                        <div class="bullet-icon"><i class="fas fa-eye"></i></div>
+                        <div class="bullet-content">
+                            <h4>Mascota 3D Reactiva con Seguimiento Ocular</h4>
+                            <p>Sigue con su mirada el movimiento de tu cursor o dedo en pantalla y realiza piruetas con partículas de neón al pulsarla.</p>
+                        </div>
+                    </div>
+                    <div class="bullet-item">
+                        <div class="bullet-icon"><i class="fas fa-lightbulb"></i></div>
+                        <div class="bullet-content">
+                            <h4>Consejos Tácticos Contextuales</h4>
+                            <p>Bocadillos inteligentes con consejos de hidratación, posición en el resto y recordatorios de tus próximos partidos.</p>
+                        </div>
+                    </div>
+                    <div class="bullet-item">
+                        <div class="bullet-icon"><i class="fab fa-whatsapp"></i></div>
+                        <div class="bullet-content">
+                            <h4>Sudadera Oficial con Pedido por WhatsApp</h4>
+                            <p>Prenda térmica de alta costura deportiva en azul marino y verde lima vibrante. Selecciona tu talla y resérvala en 1 clic.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MASCOT & MERCH SHOWCASE -->
+            <div class="mockup-wrapper">
+                <div class="mockup-glow" style="background: radial-gradient(circle, rgba(204, 255, 0, 0.3), transparent 70%);"></div>
+                <div class="mockup-card-surface">
+                    <div class="mockup-header-bar">
+                        <div class="mockup-dots">
+                            <span class="mockup-dot active"></span>
+                            <span class="mockup-dot"></span>
+                            <span class="mockup-dot"></span>
+                        </div>
+                        <div style="font-size: 0.75rem; font-weight: 800; color: var(--primary);">
+                            <i class="fas fa-vest-patches"></i> CLUB EXCLUSIVE STORE & MASCOT
+                        </div>
+                    </div>
+
+                    <div class="mockup-body">
+                        <div class="mascot-showcase" style="margin-bottom: 20px;">
+                            <img src="img/brain_ball_mascot_3d.png" alt="Mascota 3D SomosPadel" class="mascot-showcase-img" id="mascotInteractive">
+                            <div class="speech-bubble-tip">
+                                <i class="fas fa-quote-left" style="color: var(--primary); margin-right: 4px;"></i>
+                                "¡Recuerda flexionar las piernas en las salidas de pared bajas!"
+                            </div>
+                        </div>
+
+                        <!-- Merch item row -->
+                        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-glass); border-radius: 16px; padding: 12px; display: flex; align-items: center; gap: 14px;">
+                            <img src="img/sudadera.jpg" alt="Sudadera Oficial" style="width: 60px; height: 60px; border-radius: 10px; object-fit: cover; border: 1px solid rgba(204,255,0,0.3);">
+                            <div style="flex: 1;">
+                                <div style="font-size: 0.9rem; font-weight: 800; color: #fff;">Sudadera Élite 2026</div>
+                                <div style="font-size: 0.72rem; color: #94a3b8;">Edición Oficial Navy Blue & Lima Neón</div>
+                            </div>
+                            <a href="https://wa.me/?text=Hola%20SomosPadel,%20quiero%20reservar%20mi%20Sudadera%20Oficial" target="_blank" style="background: #25D366; color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;">
+                                <i class="fab fa-whatsapp"></i> Pedir
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================================== -->
+    <!-- COMPARATIVA: SOMOS PÁDEL VS WHATSAPP -->
+    <!-- ========================================================== -->
+    <section class="comparison-section">
+        <div class="container">
+            <div class="comparison-header">
+                <div class="pillar-tag"><i class="fas fa-code-compare"></i> LA REVOLUCIÓN DIGITAL</div>
+                <h2 style="font-size: 2.6rem; margin-bottom: 16px;">¿Por qué Somos Pádel BCN <br><span style="color: var(--primary);">vs Grupos de WhatsApp?</span></h2>
+                <p style="color: var(--text-sub); font-size: 1.05rem;">Comprueba la diferencia de jugar con una infraestructura tecnológica diseñada exclusivamente para deportistas.</p>
+            </div>
+
+            <div class="comparison-table-wrapper">
+                <table class="comp-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 40%;">Característica</th>
+                            <th class="brand-col" style="width: 30%;"><i class="fas fa-shield-halved"></i> App Somos Pádel</th>
+                            <th style="width: 30%; color: #94a3b8;">Grupos de WhatsApp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><b>Organización de Americanas</b></td>
+                            <td class="brand-col"><span class="badge-comp-good"><i class="fas fa-check-circle"></i> 100% Automática con rotación de pistas y reloj</span></td>
+                            <td><span class="badge-comp-bad"><i class="fas fa-circle-xmark"></i> Papeles, notas y discusiones</span></td>
+                        </tr>
+                        <tr>
+                            <td><b>Equilibrio de Nivel</b></td>
+                            <td class="brand-col"><span class="badge-comp-good"><i class="fas fa-check-circle"></i> Matchmaking Brain AI por rango 1.0 a 6.0</span></td>
+                            <td><span class="badge-comp-bad"><i class="fas fa-circle-xmark"></i> Descompensaciones habituales</span></td>
+                        </tr>
+                        <tr>
+                            <td><b>Cancelaciones de Última Hora</b></td>
+                            <td class="brand-col"><span class="badge-comp-good"><i class="fas fa-check-circle"></i> Semáforo de Fiabilidad y lista de espera en 1 clic</span></td>
+                            <td><span class="badge-comp-bad"><i class="fas fa-circle-xmark"></i> Partidos suspendidos a última hora</span></td>
+                        </tr>
+                        <tr>
+                            <td><b>Progreso & Estadísticas</b></td>
+                            <td class="brand-col"><span class="badge-comp-good"><i class="fas fa-check-circle"></i> Ranking Oficial ELO y Cartas FUT interactivas</span></td>
+                            <td><span class="badge-comp-bad"><i class="fas fa-circle-xmark"></i> Se pierde en el historial de mensajes</span></td>
+                        </tr>
+                        <tr>
+                            <td><b>Reserva de Entrenos & Clínics</b></td>
+                            <td class="brand-col"><span class="badge-comp-good"><i class="fas fa-check-circle"></i> Plazas garantizadas en Delfos y Prat en tiempo real</span></td>
+                            <td><span class="badge-comp-bad"><i class="fas fa-circle-xmark"></i> Cientos de mensajes para cuadrar hora</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================================== -->
+    <!-- FINAL CALL TO ACTION -->
+    <!-- ========================================================== -->
+    <section class="cta-banner-section">
+        <div class="container">
+            <div class="cta-card">
+                <div class="hero-badge" style="margin-bottom: 20px;">
+                    <i class="fas fa-bolt"></i> ÚNETE A LA TEMPORADA 2026/27
+                </div>
+
+                <h2 class="cta-title">
+                    ¿LISTO PARA SALTAR A LA PISTA <br>
+                    <span style="color: var(--primary);">CON LA APP NÚMERO 1?</span>
+                </h2>
+
+                <p class="cta-desc">
+                    Crea tu cuenta gratuita en menos de 1 minuto, descubre tu media inicial, apúntate a las próximas americanas y empieza a escalar en el ranking oficial de Barcelona.
+                </p>
+
+                <div class="cta-buttons-group">
+                    <a href="index.html" class="btn-primary-hero" style="font-size: 1.1rem; padding: 18px 42px;">
+                        <i class="fas fa-arrow-right-to-bracket"></i> ACCEDER A LA APP / CREAR CUENTA
+                    </a>
+                </div>
+
+                <div class="cta-badges-row">
+                    <div class="cta-badge-item">
+                        <i class="fas fa-lock"></i> Seguridad Militar y Biometría
+                    </div>
+                    <div class="cta-badge-item">
+                        <i class="fas fa-mobile-screen"></i> PWA Web App &bull; Sin descargas obligatorias
+                    </div>
+                    <div class="cta-badge-item">
+                        <i class="fas fa-check-double"></i> 100% Gratuito para la Comunidad
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container">
+            <img src="img/logo_somospadel.png" alt="SomosPadel Logo" class="footer-logo">
+            <p><strong>Somos Pádel Barcelona</strong> &bull; El Ecosistema Deportivo Más Avanzado de Catalunya</p>
+            <p style="font-size: 0.78rem; opacity: 0.7;">
+                Desarrollado y optimizado por <a href="index.html">Alex Coscolin & Somospadel EU</a> &bull; Temporada 2026/2027
+            </p>
+            <div style="margin-top: 14px; display: flex; justify-content: center; gap: 16px; font-size: 0.8rem;">
+                <a href="index.html"><i class="fas fa-arrow-left"></i> Volver a la App</a>
+                <span>&bull;</span>
+                <a href="#americanas">Subir al Inicio</a>
+            </div>
+        </div>
     </footer>
+
+    <!-- BACK TO TOP BUTTON -->
+    <button class="back-to-top" id="backToTop" title="Volver arriba">
+        <i class="fas fa-chevron-up"></i>
+    </button>
+
+    <!-- CLIENT INTERACTIVE SCRIPT -->
+    <script>
+        // Navbar on scroll effect
+        const navbar = document.getElementById('navbar');
+        const backToTop = document.getElementById('backToTop');
+
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+                backToTop.classList.add('visible');
+            } else {
+                navbar.classList.remove('scrolled');
+                backToTop.classList.remove('visible');
+            }
+        });
+
+        backToTop.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // 3D Card tilt effect on mouse move (FUT card)
+        const card = document.getElementById('futCardSample');
+        if (card) {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left - rect.width / 2;
+                const y = e.clientY - rect.top - rect.height / 2;
+                const rotateX = (-y / 15).toFixed(2);
+                const rotateY = (x / 15).toFixed(2);
+                card.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+            });
+
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'perspective(800px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+            });
+        }
+
+        // Mascot interactive bounce
+        const mascot = document.getElementById('mascotInteractive');
+        if (mascot) {
+            mascot.addEventListener('click', () => {
+                mascot.style.transition = 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                mascot.style.transform = 'scale(1.3) rotate(360deg)';
+                setTimeout(() => {
+                    mascot.style.transform = '';
+                }, 600);
+            });
+        }
+    </script>
 
 </body>
 

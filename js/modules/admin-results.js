@@ -151,7 +151,11 @@ function renderResultsFrame(container, activeEvent, allEvents) {
                         </div>
                         <!-- Formato Chip -->
                         <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); padding: 6px 12px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; color: #a0aec0; display: flex; align-items: center; gap: 6px;">
-                            <i class="fas fa-shuffle" style="color: #A78BFA;"></i> Formato: ${activeEvent.pair_mode === 'rotating' ? 'Individual / Twister' : 'Parejas Fijas'}
+                            ${(activeEvent.pair_mode === 'swiss' || (activeEvent.name && activeEvent.name.toUpperCase().includes('SUIZ')))
+                                ? '<i class="fas fa-flag" style="color: #ef4444;"></i> Formato: 🇨🇭 Suizo (Individual)'
+                                : (activeEvent.pair_mode === 'rotating'
+                                    ? '<i class="fas fa-shuffle" style="color: #A78BFA;"></i> Formato: 🌪️ Twister Individual'
+                                    : '<i class="fas fa-user-friends" style="color: #60A5FA;"></i> Formato: 🔒 Parejas Fijas')}
                         </div>
                         <!-- Modo de juego -->
                         <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); padding: 6px 12px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; color: #a0aec0; display: flex; align-items: center; gap: 6px;">
@@ -297,7 +301,7 @@ function renderResultsFrame(container, activeEvent, allEvents) {
                                 </div>
 
                                 <!-- SIMULAR / AZAR (Condicional): Naranja -->
-                                ${activeEvent.pair_mode === 'rotating' || activeEvent.type === 'entreno' ? `
+                                ${activeEvent.pair_mode === 'rotating' || activeEvent.pair_mode === 'swiss' || activeEvent.type === 'entreno' ? `
                                 <div style="display: flex; flex-direction: column; width: 100%;">
                                     <button onclick="window.Actions.resetEvent(true); window.Actions.toggleToolsDropdown()"
                                         style="width: 100%; text-align: left; padding: 10px 12px; border-radius: 9px;
@@ -544,7 +548,7 @@ async function renderMatchesGrid(eventId, type, round) {
                     <h2 style="color: var(--primary); margin: 0 0 10px 0; font-weight: 900;">🎯 RONDA ${round} COMPLETADA</h2>
                     <p style="color: rgba(255,255,255,0.7); margin-bottom: 2rem;">Todos los partidos de esta ronda han finalizado. ¿Deseas generar la siguiente ronda ahora?</p>
                     <div style="display: flex; gap: 1rem; justify-content: center;">
-                        <button onclick="window.Actions.generateRound()" class="btn-primary-pro" style="padding: 15px 40px; font-size: 1.1rem;">
+                        <button onclick="window.Actions.generateRound(${round + 1})" class="btn-primary-pro" style="padding: 15px 40px; font-size: 1.1rem;">
                             🚀 GENERAR RONDA ${round + 1}
                         </button>
                     </div>
@@ -700,15 +704,18 @@ function renderStandingsInternal(matches) {
 
     const stats = {};
     const evt = window.AdminController.activeEvent;
-    const isRotating = evt && evt.pair_mode === 'rotating';
+    const isSwiss = evt && (evt.pair_mode === 'swiss' || (evt.name && evt.name.toUpperCase().includes('SUIZ')));
+    const isIndividual = isSwiss || (evt && (evt.pair_mode === 'rotating' || (evt.name && evt.name.toUpperCase().includes('TWISTER'))));
 
     matches.forEach(m => {
         if (m.status === 'finished' || m.status === 'finalizado') {
-            const processTeams = (namesGroup, score) => {
-                // Determine if we should treat names as separate individuals or a single pair
+            const sA = parseInt(m.score_a || 0);
+            const sB = parseInt(m.score_b || 0);
+
+            const processTeams = (namesGroup, scoreWon, scoreLost) => {
                 let namesToProcess = [];
                 if (Array.isArray(namesGroup)) {
-                    if (isRotating) namesToProcess = namesGroup; // Process each player
+                    if (isIndividual) namesToProcess = namesGroup; // Process each player individually
                     else namesToProcess = [namesGroup.join(' / ')]; // Process as one pair
                 } else if (typeof namesGroup === 'string') {
                     namesToProcess = [namesGroup];
@@ -716,20 +723,72 @@ function renderStandingsInternal(matches) {
 
                 namesToProcess.forEach(name => {
                     if (!name || name.includes('VACANTE')) return;
-                    if (!stats[name]) stats[name] = { played: 0, games: 0, wins: 0 };
+                    if (!stats[name]) stats[name] = { played: 0, games: 0, games_lost: 0, diff: 0, wins: 0 };
                     stats[name].played++;
-                    stats[name].games += parseInt(score || 0);
+                    stats[name].games += scoreWon;
+                    stats[name].games_lost += scoreLost;
+                    stats[name].diff = stats[name].games - stats[name].games_lost;
+                    if (scoreWon > scoreLost) stats[name].wins++;
                 });
             };
 
-            processTeams(m.team_a_names, m.score_a);
-            processTeams(m.team_b_names, m.score_b);
+            processTeams(m.team_a_names, sA, sB);
+            processTeams(m.team_b_names, sB, sA);
         }
     });
 
     const sorted = Object.entries(stats)
         .map(([k, v]) => ({ name: k, ...v }))
-        .sort((a, b) => b.games - a.games);
+        .sort((a, b) => {
+            if (b.games !== a.games) return b.games - a.games;
+            if (b.diff !== a.diff) return b.diff - a.diff;
+            return a.games_lost - b.games_lost;
+        });
+
+    if (isSwiss && sorted.length > 0) {
+        let html = `
+            <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 1.1rem;">🇨🇭</span>
+                    <span style="font-size: 0.78rem; font-weight: 900; color: #f87171; text-transform: uppercase;">Sistema Suizo: Puntos = Juegos Ganados</span>
+                </div>
+                <span style="font-size: 0.65rem; color: #cbd5e1; background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 6px;">6 Rondas Express</span>
+            </div>
+        `;
+
+        html += sorted.map((s, i) => {
+            let courtLabel = '';
+            let courtBadgeStyle = '';
+            if (i < 4) {
+                courtLabel = 'Pista 1 (Top)';
+                courtBadgeStyle = 'background: rgba(204, 255, 0, 0.15); color: #CCFF00; border: 1px solid rgba(204, 255, 0, 0.3);';
+            } else if (i < 8) {
+                courtLabel = 'Pista 2 (Medios)';
+                courtBadgeStyle = 'background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);';
+            } else {
+                courtLabel = 'Pista 3 (Bajos)';
+                courtBadgeStyle = 'background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);';
+            }
+
+            const diffStr = (s.diff > 0 ? `+${s.diff}` : `${s.diff}`);
+            return `
+                <div style="display:flex; justify-content:space-between; padding:8px 10px; border-bottom:1px solid rgba(255,255,255,0.05); align-items:center;">
+                    <div style="display:flex; align-items:center; gap:8px; overflow:hidden;">
+                        <span style="color:${i === 0 ? '#facc15' : 'var(--primary)'}; font-weight:900; min-width:25px;">${i === 0 ? '👑 #1' : `#${i + 1}`}</span> 
+                        <span style="color:white; font-size:0.85rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${s.name}</span>
+                        <span style="font-size: 0.62rem; font-weight: 800; padding: 2px 6px; border-radius: 6px; text-transform: uppercase; ${courtBadgeStyle}">${courtLabel}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 0.68rem; color: #94a3b8; font-weight: 700;">(${diffStr} dif)</span>
+                        <div style="color:#CCFF00; font-weight:900; font-size: 0.95rem; background:rgba(204,255,0,0.1); border: 1px solid rgba(204,255,0,0.25); padding:2px 10px; border-radius:6px;">${s.games} <span style="font-size: 0.65rem; color: #94a3b8;">PTS</span></div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = html;
+        return;
+    }
 
     container.innerHTML = sorted.map((s, i) => `
         <div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid rgba(255,255,255,0.05); align-items:center;">
@@ -768,9 +827,14 @@ window.Actions = {
         }
     },
 
-    async generateRound() {
+    async generateRound(targetRound = null) {
         const evt = window.AdminController.activeEvent;
-        const round = window.AdminController.currentRound;
+        const currentR = window.AdminController.currentRound || 1;
+        const matches = window.AdminController.matchesBuffer || [];
+        const maxMatchRound = matches.length > 0 ? Math.max(...matches.map(m => parseInt(m.round) || 1)) : 1;
+        
+        // Determine the target round to generate
+        const round = targetRound ? parseInt(targetRound) : (matches.length > 0 ? maxMatchRound + 1 : currentR);
 
         // Confirmation?
         // RESTRICTION: Specific Status Check
@@ -788,11 +852,17 @@ window.Actions = {
         try {
             await MatchMakingService.generateRound(evt.id, evt.type, round);
             window.loadResultsView(evt.type); // Refresh
+            if (window.Actions?.switchRound) {
+                setTimeout(() => window.Actions.switchRound(round), 200);
+            }
         } catch (e) {
             if (e.message.includes('sin finalizar') && confirm(e.message + "\n\n¿Quieres FORZAR la generación de la siguiente ronda?")) {
                 try {
                     await MatchMakingService.generateRound(evt.id, evt.type, round, true);
                     window.loadResultsView(evt.type);
+                    if (window.Actions?.switchRound) {
+                        setTimeout(() => window.Actions.switchRound(round), 200);
+                    }
                 } catch (err) { alert("Error al forzar: " + err.message); }
             } else {
                 alert(e.message);

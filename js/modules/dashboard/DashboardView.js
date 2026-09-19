@@ -1130,12 +1130,68 @@ console.log("âœ… [v40] DashboardView Loaded Correctly");
                             readTime: '3 min',
                             emoji: '⚡',
                             imgGrad: 'linear-gradient(135deg, #fb923c 0%, #f97316 100%)'
+                        },
+                        'modos-juego-pareja-fija-vs-twister': {
+                            category: '🎮 MODOS DE JUEGO',
+                            catColor: '#CCFF00',
+                            title: 'Pareja Fija vs Twister Individual: ¿En qué formato anotarte según tus objetivos?',
+                            content: 'En SomosPadel Barcelona contamos con dos formatos estelares: Pareja Fija (en tándem, subida y bajada de pista conjunta, preparación de competición oficial) y Twister Individual (inscripción individual sin necesidad de pareja previa, cambio de compañero en cada ronda, y podio por diferencial personal de juegos). ¡Ambos formatos garantizan la máxima emoción!',
+                            date: 'Hoy',
+                            readTime: '4 min',
+                            emoji: '🎮',
+                            imgGrad: 'linear-gradient(135deg, #0284c7 0%, #db2777 100%)'
+                        },
+                        'modos-juego-twister-individual-guia': {
+                            category: '💡 CONSEJOS',
+                            catColor: '#ec4899',
+                            title: 'Guía Táctica Twister: Cómo Adaptarte al Instante a una Nueva Pareja',
+                            content: 'Jugar una americana en formato Twister Individual exige compenetración express. Acuerda con tu nueva pareja en 30 segundos los roles de drive y revés, la cobertura del centro en globos rivales y mantén un refuerzo positivo constante. La versatilidad para jugar en ambos lados es la llave del triunfo en las rotaciones individuales.',
+                            date: 'Hoy',
+                            readTime: '3 min',
+                            emoji: '🌪️',
+                            imgGrad: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)'
+                        },
+                        'modos-juego-suizo-americana-entreno': {
+                            category: '🎮 MODOS DE JUEGO',
+                            catColor: '#ef4444',
+                            title: 'Sistema Suizo en SomosPadel: 6 Rondas Express, Puntos Individuales y Reagrupación por Pistas',
+                            content: 'La 3ª modalidad de SomosPadel Barcelona: el Sistema Suizo (Americana Suiza y Entreno Suizo). Duración 2h, 6 rondas express de juego efectivo (al sonar el silbato concluye el punto). Formato individual con cambio de pareja. Puntos individuales = juegos ganados. Reagrupación tras cada ronda: Top 4 a Pista 1, siguientes a Pista 2, restantes a Pista 3, sin repetir compañero. Campeón: más juegos sumados.',
+                            date: 'Hoy',
+                            readTime: '4 min',
+                            emoji: '🇨🇭',
+                            imgGrad: 'linear-gradient(135deg, #ef4444 0%, #0f172a 100%)'
                         }
                     };
                     post = fallbackPosts[postId];
                 }
 
+                // Buscar en catálogo masivo si no estaba en Firestore ni en los básicos
+                if (!post && window.NewsCatalog && typeof window.NewsCatalog.getFullCatalog === 'function') {
+                    const allCat = window.NewsCatalog.getFullCatalog();
+                    post = allCat.find(p => p.id === postId || p.id.includes(postId));
+                }
+
                 if (!post) return;
+
+                const isGameModesPost = (postId && postId.includes('modos-juego')) ||
+                    (post.title && (post.title.toLowerCase().includes('pareja fija') || post.title.toLowerCase().includes('twister') || post.title.toLowerCase().includes('suizo') || post.title.toLowerCase().includes('suiza') || post.title.toLowerCase().includes('modos de juego')));
+
+                const gameModesActionHtml = isGameModesPost ? `
+                    <div style="margin: 20px 0 16px; background: linear-gradient(135deg, rgba(204, 255, 0, 0.12) 0%, rgba(56, 189, 248, 0.1) 100%); border: 1.5px solid rgba(204, 255, 0, 0.45); border-radius: 18px; padding: 18px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.35);">
+                        <div style="font-size: 1.6rem; margin-bottom: 6px;">🎮 👥 🌪️ 🇨🇭</div>
+                        <div style="font-size: 0.98rem; font-weight: 950; color: #ffffff; margin-bottom: 4px;">Comparativa & Normativa Oficial</div>
+                        <div style="font-size: 0.78rem; color: #cbd5e1; margin-bottom: 14px; line-height: 1.45;">
+                            Abre la guía interactiva oficial para consultar todas las reglas, dinámicas de rotación y sistemas de puntuación.
+                        </div>
+                        <button id="blog-modal-modes-action-btn" 
+                                style="background: #CCFF00; color: #000000; font-weight: 950; font-size: 0.82rem; border: none; padding: 11px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(204, 255, 0, 0.35); transition: all 0.2s ease;"
+                                onmouseover="this.style.transform='scale(1.04)';"
+                                onmouseout="this.style.transform='scale(1)';"
+                                onmousedown="this.style.transform='scale(0.97)';">
+                            <i class="fas fa-gamepad"></i> ABRIR MODOS DE JUEGO
+                        </button>
+                    </div>
+                ` : '';
 
                 const modal = document.createElement('div');
                 modal.id = 'blog-post-modal';
@@ -1172,6 +1228,8 @@ console.log("âœ… [v40] DashboardView Loaded Correctly");
                             
                             <p style="color: rgba(255,255,255,0.85); font-size: 0.86rem; font-weight: 500; line-height: 1.65; margin: 0 0 20px 0; word-break: break-word; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">${post.content}</p>
                             
+                            ${gameModesActionHtml}
+
                             <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 0.68rem; color: rgba(255,255,255,0.4); font-weight: 800; letter-spacing: 0.5px;">
                                 <span>Publicado: ${post.date || 'Recientemente'}</span>
                                 <span style="color: #CCFF00; font-weight: 900; letter-spacing: 0.8px;">SOMOSPADEL BCN</span>
@@ -1225,6 +1283,20 @@ console.log("âœ… [v40] DashboardView Loaded Correctly");
                     shareBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
                         this.shareBlogPost(postId, post.title);
+                    });
+                }
+
+                const modesBtn = modal.querySelector('#blog-modal-modes-action-btn');
+                if (modesBtn) {
+                    modesBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        modal.remove();
+                        if (typeof window.showGameModesModal === 'function') {
+                            const targetTab = (postId && (postId.includes('suiz') || postId.includes('swiss')))
+                                ? 'suizo'
+                                : ((postId && postId.includes('twister')) ? 'twister' : 'pareja');
+                            window.showGameModesModal(targetTab);
+                        }
                     });
                 }
 

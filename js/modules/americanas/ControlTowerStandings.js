@@ -13,10 +13,18 @@
             }
 
             const isEntreno = !!eventDoc?.isEntreno;
-            const isFixedPairs = !!(eventDoc?.is_fija || (eventDoc?.pair_mode || '').toLowerCase().includes('fix') || (eventDoc?.name || '').toUpperCase().includes('FIJA'));
-            const ranking = window.StandingsService.calculate(matches || [], isEntreno ? 'entreno' : 'americana', isFixedPairs, eventDoc?.players || []);
+            const isSwiss = !!(eventDoc?.pair_mode === 'swiss' || (eventDoc?.name || '').toUpperCase().includes('SUIZ'));
+            const isFixedPairs = !isSwiss && !!(eventDoc?.is_fija || (eventDoc?.pair_mode || '').toLowerCase().includes('fix') || (eventDoc?.name || '').toUpperCase().includes('FIJA'));
+            const ranking = window.StandingsService.calculate(
+                matches || [], 
+                isSwiss ? 'swiss' : (isEntreno ? 'entreno' : 'americana'), 
+                isFixedPairs, 
+                eventDoc?.players || [],
+                isSwiss
+            );
             window.ControlTowerStandings.lastRankingData = ranking;
             window.ControlTowerStandings.lastIsEntreno = isEntreno;
+            window.ControlTowerStandings.lastIsSwiss = isSwiss;
             const currentMode = window.ControlTowerStandings.currentViewMode || 'quick';
 
             const top1 = ranking[0] || null;
@@ -1052,54 +1060,97 @@
                     <div class="sp-rules-banner" id="sp-rules-banner-card">
                         <div class="sp-rules-header" onclick="window.ControlTowerStandings.toggleRulesBanner()">
                             <div class="sp-rules-header-title">
-                                <i class="fas fa-award" style="color:#0284c7;"></i>
-                                <span>${isEntreno ? 'NORMAS DEL ENTRENO Y REGLAS DE PUNTUACIÓN' : 'NORMAS OFICIALES DEL TORNEO'}</span>
+                                <i class="fas fa-award" style="color:${isSwiss ? '#dc2626' : '#0284c7'};"></i>
+                                <span>${isSwiss ? 'NORMAS OFICIALES • SISTEMA SUIZO EXPRESS (6 RONDAS)' : (isEntreno ? 'NORMAS DEL ENTRENO Y REGLAS DE PUNTUACIÓN' : 'NORMAS OFICIALES DEL TORNEO')}</span>
                             </div>
                             <div class="sp-rules-toggle-icon" id="sp-rules-toggle-icon">
                                 <i class="fas fa-chevron-up"></i>
                             </div>
                         </div>
                         <div class="sp-rules-body" id="sp-rules-body-content">
-                            <div class="sp-rule-box">
-                                <div class="sp-rule-box-header">
-                                    <span style="font-size:1.1rem;">🎯</span>
-                                    <span>1. Objetivo del Entreno</span>
+                            ${isSwiss ? `
+                                <div class="sp-rule-box">
+                                    <div class="sp-rule-box-header">
+                                        <span style="font-size:1.1rem;">⏱️</span>
+                                        <span>1. 6 Rondas Express (2h)</span>
+                                    </div>
+                                    <p class="sp-rule-box-desc">
+                                        Partidos express de <strong>6 rondas de juego efectivo</strong> para ir perfecto de tiempos. Al sonar el silbato de la organización se acaba de inmediato el punto en juego.
+                                    </p>
                                 </div>
-                                <p class="sp-rule-box-desc">
-                                    Mejorar nuestro nivel de juego individual y <strong>ayudar a mejorar el nivel a los compañeros de entreno</strong> en cada punto y partido con el máximo compañerismo.
-                                </p>
-                            </div>
 
-                            <div class="sp-rule-box">
-                                <div class="sp-rule-box-header">
-                                    <span style="font-size:1.1rem;">👑</span>
-                                    <span>2. Disputar la Victoria (Pista 1)</span>
+                                <div class="sp-rule-box">
+                                    <div class="sp-rule-box-header">
+                                        <span style="font-size:1.1rem;">📊</span>
+                                        <span>2. Puntos = Juegos Ganados</span>
+                                    </div>
+                                    <p class="sp-rule-box-desc">
+                                        Cada juego ganado en tu partido suma <strong>1 punto individual</strong> en tu casillero (ej: si quedáis 6-3, sumas 6 puntos tú y 6 tu compañero; los rivales suman 3).
+                                    </p>
                                 </div>
-                                <p class="sp-rule-box-desc">
-                                    Intentar <strong>alcanzar la Pista 1 en el último partido del entreno</strong> para poder disputar la victoria del entreno, que sólo sirve de <strong>forma anecdótica</strong> para marcar un objetivo motivador durante la sesión.
-                                </p>
-                            </div>
 
-                            <div class="sp-rule-box">
-                                <div class="sp-rule-box-header">
-                                    <span style="font-size:1.1rem;">📈</span>
-                                    <span>3. Tu Nivel Oficial SomosPadel</span>
+                                <div class="sp-rule-box">
+                                    <div class="sp-rule-box-header">
+                                        <span style="font-size:1.1rem;">✚</span>
+                                        <span>3. Reagrupación Suiza</span>
+                                    </div>
+                                    <p class="sp-rule-box-desc">
+                                        Tras cada ronda: <strong>Top 4 clasificados van a Pista 1</strong>, los 4 siguientes a Pista 2, y los 4 restantes a Pista 3. ¡Cruces equilibrados sin repetir compañero!
+                                    </p>
                                 </div>
-                                <p class="sp-rule-box-desc">
-                                    Nuestros <strong>partidos ganados y perdidos</strong>, y nuestros <strong>juegos ganados y perdidos</strong>, se reflejan directamente en nuestro <strong>nivel de jugador</strong> en la app de SomosPadelBarcelona. Puedes consultar tu nivel, el de los compañeros, tablas de logros y ránkings oficiales.
-                                </p>
-                            </div>
 
-                            <div class="sp-rule-box" style="border-left: 3px solid #0284c7; background: #f0fdf4;">
-                                <div class="sp-rule-box-header" style="color:#0369a1;">
-                                    <span style="font-size:1.1rem;">⚖️</span>
-                                    <span>Clasificación & Desempates</span>
+                                <div class="sp-rule-box" style="border-left: 3px solid #dc2626; background: #fef2f2;">
+                                    <div class="sp-rule-box-header" style="color:#b91c1c;">
+                                        <span style="font-size:1.1rem;">👑</span>
+                                        <span>Campeón & Desempate</span>
+                                    </div>
+                                    <p class="sp-rule-box-desc" style="color:#0f172a;">
+                                        <strong>1º Criterio:</strong> Total de Juegos Ganados (Puntos).<br>
+                                        <strong>Desempates:</strong> 1º Diferencial (+/-) • 2º Partidos Ganados • 3º Menos juegos perdidos. Quien tenga más juegos tras las 6 rondas es el Campeón.
+                                    </p>
                                 </div>
-                                <p class="sp-rule-box-desc" style="color:#0f172a;">
-                                    <strong>1º Criterio:</strong> Partidos Ganados totales (PG).<br>
-                                    <strong>En caso de empate a victorias:</strong> 1º Victoria último partido Pista 1 • 2º Pista final disputada • 3º Ganador última pista • 4º Veces en P1 • 5º Dif. Juegos • 6º Puntos.
-                                </p>
-                            </div>
+                            ` : `
+                                <div class="sp-rule-box">
+                                    <div class="sp-rule-box-header">
+                                        <span style="font-size:1.1rem;">🎯</span>
+                                        <span>1. Objetivo del Entreno</span>
+                                    </div>
+                                    <p class="sp-rule-box-desc">
+                                        Mejorar nuestro nivel de juego individual y <strong>ayudar a mejorar el nivel a los compañeros de entreno</strong> en cada punto y partido con el máximo compañerismo.
+                                    </p>
+                                </div>
+
+                                <div class="sp-rule-box">
+                                    <div class="sp-rule-box-header">
+                                        <span style="font-size:1.1rem;">👑</span>
+                                        <span>2. Disputar la Victoria (Pista 1)</span>
+                                    </div>
+                                    <p class="sp-rule-box-desc">
+                                        Intentar <strong>alcanzar la Pista 1 en el último partido del entreno</strong> para poder disputar la victoria del entreno, que sólo sirve de <strong>forma anecdótica</strong> para marcar un objetivo motivador durante la sesión.
+                                    </p>
+                                </div>
+
+                                <div class="sp-rule-box">
+                                    <div class="sp-rule-box-header">
+                                        <span style="font-size:1.1rem;">📈</span>
+                                        <span>3. Tu Nivel Oficial SomosPadel</span>
+                                    </div>
+                                    <p class="sp-rule-box-desc">
+                                        Nuestros <strong>partidos ganados y perdidos</strong>, y nuestros <strong>juegos ganados y perdidos</strong>, se reflejan directamente en nuestro <strong>nivel de jugador</strong> en la app de SomosPadelBarcelona. Puedes consultar tu nivel, el de los compañeros, tablas de logros y ránkings oficiales.
+                                    </p>
+                                </div>
+
+                                <div class="sp-rule-box" style="border-left: 3px solid #0284c7; background: #f0fdf4;">
+                                    <div class="sp-rule-box-header" style="color:#0369a1;">
+                                        <span style="font-size:1.1rem;">⚖️</span>
+                                        <span>Clasificación & Desempates</span>
+                                    </div>
+                                    <p class="sp-rule-box-desc" style="color:#0f172a;">
+                                        <strong>1º Criterio:</strong> Partidos Ganados totales (PG).<br>
+                                        <strong>En caso de empate a victorias:</strong> 1º Victoria último partido Pista 1 • 2º Pista final disputada • 3º Ganador última pista • 4º Veces en P1 • 5º Dif. Juegos • 6º Puntos.
+                                    </p>
+                                </div>
+                            `}
                         </div>
                     </div>
 
@@ -1109,58 +1160,105 @@
                             <div class="sp-rules-modal-header">
                                 <h3>
                                     <i class="fas fa-book-open"></i>
-                                    <span>${isEntreno ? 'NORMAS DEL ENTRENO • SOMOSPADEL BCN' : 'REGLAS OFICIALES • SOMOSPADEL BCN'}</span>
+                                    <span>${isSwiss ? 'NORMAS OFICIALES • SISTEMA SUIZO' : (isEntreno ? 'NORMAS DEL ENTRENO • SOMOSPADEL BCN' : 'REGLAS OFICIALES • SOMOSPADEL BCN')}</span>
                                 </h3>
                                 <button class="sp-rules-modal-close" onclick="window.ControlTowerStandings.toggleRulesModal(false)">✕</button>
                             </div>
                             <div class="sp-rules-modal-content">
-                                <div class="sp-rule-box" style="border-left: 4px solid #10b981;">
-                                    <div class="sp-rule-box-header" style="color:#065f46;">
-                                        <span style="font-size:1.2rem;">🎯</span>
-                                        <span style="font-size:0.82rem;">1. OBJETIVO FORMATIVO Y COMPAÑERISMO</span>
+                                ${isSwiss ? `
+                                    <div class="sp-rule-box" style="border-left: 4px solid #dc2626;">
+                                        <div class="sp-rule-box-header" style="color:#b91c1c;">
+                                            <span style="font-size:1.2rem;">⏱️</span>
+                                            <span style="font-size:0.82rem;">1. FORMATO Y DURACIÓN (2 HORAS)</span>
+                                        </div>
+                                        <p class="sp-rule-box-desc" style="font-size:0.76rem;">
+                                            El evento consta de <strong>6 rondas express de juego efectivo</strong> (normalmente 3 pistas y 12 jugadores) para ir perfecto de tiempos. Al sonar el silbato de la organización, el punto en juego se da por concluido de inmediato.
+                                        </p>
                                     </div>
-                                    <p class="sp-rule-box-desc" style="font-size:0.76rem;">
-                                        El objetivo primordial del entreno es mejorar nuestro nivel de juego y ayudar a mejorar el nivel a los compañeros de entreno. El respeto, el fair play y el buen ambiente en pista son la máxima prioridad de SomosPadel Barcelona.
-                                    </p>
-                                </div>
 
-                                <div class="sp-rule-box" style="border-left: 4px solid #f59e0b;">
-                                    <div class="sp-rule-box-header" style="color:#92400e;">
-                                        <span style="font-size:1.2rem;">👑</span>
-                                        <span style="font-size:0.82rem;">2. ALCANZAR LA PISTA 1 EN EL ÚLTIMO PARTIDO</span>
+                                    <div class="sp-rule-box" style="border-left: 4px solid #0284c7;">
+                                        <div class="sp-rule-box-header" style="color:#0369a1;">
+                                            <span style="font-size:1.2rem;">📊</span>
+                                            <span style="font-size:0.82rem;">2. PUNTUACIÓN INDIVIDUAL POR JUEGOS</span>
+                                        </div>
+                                        <p class="sp-rule-box-desc" style="font-size:0.76rem;">
+                                            En cada ronda se computan los juegos ganados de tu partido como tus puntos individuales (ejemplo: si el partido concluye 6-3, tú y tu compañero sumáis 6 puntos cada uno; la pareja rival suma 3 puntos).
+                                        </p>
                                     </div>
-                                    <p class="sp-rule-box-desc" style="font-size:0.76rem;">
-                                        Intentar alcanzar la <strong>Pista 1 en el último partido del entreno</strong> para poder disputar la victoria del entreno. Esta victoria sólo sirve de <strong>forma anecdótica</strong> para marcar un objetivo motivador y dinámico durante la sesión.
-                                    </p>
-                                </div>
 
-                                <div class="sp-rule-box" style="border-left: 4px solid #0284c7;">
-                                    <div class="sp-rule-box-header" style="color:#0369a1;">
-                                        <span style="font-size:1.2rem;">📈</span>
-                                        <span style="font-size:0.82rem;">3. REFLEJO EN TU NIVEL, LOGROS Y RÁNKINGS</span>
+                                    <div class="sp-rule-box" style="border-left: 4px solid #10b981;">
+                                        <div class="sp-rule-box-header" style="color:#065f46;">
+                                            <span style="font-size:1.2rem;">✚</span>
+                                            <span style="font-size:0.82rem;">3. REAGRUPACIÓN Y PAREJAS CRUZADAS</span>
+                                        </div>
+                                        <p class="sp-rule-box-desc" style="font-size:0.76rem;">
+                                            Al finalizar cada ronda, la tabla se actualiza: <strong>los 4 primeros van a la Pista 1 (Top)</strong>, los siguientes 4 a la Pista 2 (Medios), y los restantes 4 a la Pista 3 (Bajos). Dentro de cada pista se cruzan las parejas para que no repitan compañero y el partido sea de máxima igualdad competitiva.
+                                        </p>
                                     </div>
-                                    <p class="sp-rule-box-desc" style="font-size:0.76rem;">
-                                        Nuestros <strong>partidos ganados y perdidos</strong>, y nuestros <strong>juegos ganados y perdidos</strong>, se reflejan fielmente en nuestro nivel de jugador en la app oficial de SomosPadelBarcelona. Todos los jugadores pueden consultar su nivel y el de sus compañeros, así como las tablas de logros y rankings actualizados.
-                                    </p>
-                                </div>
 
-                                <div class="sp-rule-box" style="border-left: 4px solid #8b5cf6; background:#f5f3ff;">
-                                    <div class="sp-rule-box-header" style="color:#6d28d9;">
-                                        <span style="font-size:1.2rem;">⚖️</span>
-                                        <span style="font-size:0.82rem;">SISTEMA OFICIAL DE DESEMPATE Y CLASIFICACIÓN</span>
+                                    <div class="sp-rule-box" style="border-left: 4px solid #8b5cf6; background:#f5f3ff;">
+                                        <div class="sp-rule-box-header" style="color:#6d28d9;">
+                                            <span style="font-size:1.2rem;">👑</span>
+                                            <span style="font-size:0.82rem;">CAMPEÓN DEL TORNEO Y CRITERIOS DE DESEMPATE</span>
+                                        </div>
+                                        <p class="sp-rule-box-desc" style="font-size:0.74rem; color:#334155;">
+                                            Al concluir las 6 rondas, el jugador con mayor cantidad de juegos sumados en la tabla general se corona <strong>Campeón del Torneo Suizo</strong>.<br><br>
+                                            <strong>Criterios de desempate oficiales:</strong><br>
+                                            • <strong>1º:</strong> Total de Juegos Ganados (Puntos).<br>
+                                            • <strong>2º:</strong> Mayor Diferencial de Juegos (Juegos a Favor - Juegos en Contra).<br>
+                                            • <strong>3º:</strong> Mayor número de Partidos Ganados.<br>
+                                            • <strong>4º:</strong> Menor cantidad de Juegos Recibidos / Perdidos.
+                                        </p>
                                     </div>
-                                    <p class="sp-rule-box-desc" style="font-size:0.74rem; color:#334155;">
-                                        <strong>1. Partidos Ganados Totales:</strong> El orden de mérito principal se basa en el número de victorias conseguidas en el entreno.<br><br>
-                                        <strong>2. Criterios de Desempate (en caso de igual número de victorias):</strong><br>
-                                        • <strong>1º:</strong> Pareja ganadora del último partido en Pista 1 (Campeones anecdóticos del entreno).<br>
-                                        • <strong>2º:</strong> Finalistas en Pista 1 en la última ronda.<br>
-                                        • <strong>3º:</strong> Pista final alcanzada (Pista 1 &gt; Pista 2 &gt; Pista 3...).<br>
-                                        • <strong>4º:</strong> Resultado en la última pista (ganador por delante de perdedor).<br>
-                                        • <strong>5º:</strong> Veces jugadas en Pista 1 a lo largo del entreno.<br>
-                                        • <strong>6º:</strong> Diferencia global de juegos (Juegos a Favor - Juegos en Contra).<br>
-                                        • <strong>7º:</strong> Juegos ganados totales (Puntos).
-                                    </p>
-                                </div>
+                                ` : `
+                                    <div class="sp-rule-box" style="border-left: 4px solid #10b981;">
+                                        <div class="sp-rule-box-header" style="color:#065f46;">
+                                            <span style="font-size:1.2rem;">🎯</span>
+                                            <span style="font-size:0.82rem;">1. OBJETIVO FORMATIVO Y COMPAÑERISMO</span>
+                                        </div>
+                                        <p class="sp-rule-box-desc" style="font-size:0.76rem;">
+                                            El objetivo primordial del entreno es mejorar nuestro nivel de juego y ayudar a mejorar el nivel a los compañeros de entreno. El respeto, el fair play y el buen ambiente en pista son la máxima prioridad de SomosPadel Barcelona.
+                                        </p>
+                                    </div>
+
+                                    <div class="sp-rule-box" style="border-left: 4px solid #f59e0b;">
+                                        <div class="sp-rule-box-header" style="color:#92400e;">
+                                            <span style="font-size:1.2rem;">👑</span>
+                                            <span style="font-size:0.82rem;">2. ALCANZAR LA PISTA 1 EN EL ÚLTIMO PARTIDO</span>
+                                        </div>
+                                        <p class="sp-rule-box-desc" style="font-size:0.76rem;">
+                                            Intentar alcanzar la <strong>Pista 1 en el último partido del entreno</strong> para poder disputar la victoria del entreno. Esta victoria sólo sirve de <strong>forma anecdótica</strong> para marcar un objetivo motivador y dinámico durante la sesión.
+                                        </p>
+                                    </div>
+
+                                    <div class="sp-rule-box" style="border-left: 4px solid #0284c7;">
+                                        <div class="sp-rule-box-header" style="color:#0369a1;">
+                                            <span style="font-size:1.2rem;">📈</span>
+                                            <span style="font-size:0.82rem;">3. REFLEJO EN TU NIVEL, LOGROS Y RÁNKINGS</span>
+                                        </div>
+                                        <p class="sp-rule-box-desc" style="font-size:0.76rem;">
+                                            Nuestros <strong>partidos ganados y perdidos</strong>, y nuestros <strong>juegos ganados y perdidos</strong>, se reflejan fielmente en nuestro nivel de jugador en la app oficial de SomosPadelBarcelona. Todos los jugadores pueden consultar su nivel y el de sus compañeros, así como las tablas de logros y rankings actualizados.
+                                        </p>
+                                    </div>
+
+                                    <div class="sp-rule-box" style="border-left: 4px solid #8b5cf6; background:#f5f3ff;">
+                                        <div class="sp-rule-box-header" style="color:#6d28d9;">
+                                            <span style="font-size:1.2rem;">⚖️</span>
+                                            <span style="font-size:0.82rem;">SISTEMA OFICIAL DE DESEMPATE Y CLASIFICACIÓN</span>
+                                        </div>
+                                        <p class="sp-rule-box-desc" style="font-size:0.74rem; color:#334155;">
+                                            <strong>1. Partidos Ganados Totales:</strong> El orden de mérito principal se basa en el número de victorias conseguidas en el entreno.<br><br>
+                                            <strong>2. Criterios de Desempate (en caso de igual número de victorias):</strong><br>
+                                            • <strong>1º:</strong> Pareja ganadora del último partido en Pista 1 (Campeones anecdóticos del entreno).<br>
+                                            • <strong>2º:</strong> Finalistas en Pista 1 en la última ronda.<br>
+                                            • <strong>3º:</strong> Pista final alcanzada (Pista 1 &gt; Pista 2 &gt; Pista 3...).<br>
+                                            • <strong>4º:</strong> Resultado en la última pista (ganador por delante de perdedor).<br>
+                                            • <strong>5º:</strong> Veces jugadas en Pista 1 a lo largo del entreno.<br>
+                                            • <strong>6º:</strong> Diferencia global de juegos (Juegos a Favor - Juegos en Contra).<br>
+                                            • <strong>7º:</strong> Juegos ganados totales (Puntos).
+                                        </p>
+                                    </div>
+                                `}
 
                                 <button class="sp-btn-share-ranking" style="justify-content:center; padding:12px; margin-top:6px;" onclick="window.ControlTowerStandings.toggleRulesModal(false)">
                                     <i class="fas fa-check"></i>

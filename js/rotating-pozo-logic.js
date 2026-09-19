@@ -172,6 +172,135 @@ const RotatingPozoLogic = {
     },
 
     /**
+     * 🇨🇭 SISTEMA SUIZO (Individual)
+     * Actualiza la pista de cada jugador en función de su puntuación acumulada
+     * (total de juegos ganados en todos los partidos disputados hasta el momento).
+     * Reagrupa a los 4 mejores a Pista 1, siguientes 4 a Pista 2, restantes a Pista 3, etc.
+     * Registra last_partner y partner_history para que en la pista asignada
+     * no repitan compañero si es posible.
+     *
+     * @param {Array} players - Lista de jugadores
+     * @param {Array} matches - Todos los partidos finalizados del evento
+     * @param {Number} maxCourts - Número máximo de pistas
+     * @returns {Array} - Jugadores ordenados con current_court actualizado y stats acumuladas
+     */
+    updatePlayerCourtsSwiss(players, matches, maxCourts) {
+        console.log(`🇨🇭 Calculando Clasificación y Pistas SISTEMA SUIZO...`);
+
+        // 1. Mapear jugadores iniciales con estadísticas acumuladas
+        const playerMap = {};
+        (players || []).forEach(p => {
+            const key = String(p.id || p.uid || "");
+            playerMap[key] = {
+                ...p,
+                id: key,
+                current_court: parseInt(p.current_court || maxCourts || 3),
+                swiss_games_won: 0,
+                swiss_games_lost: 0,
+                swiss_diff: 0,
+                matches_played: 0
+            };
+        });
+
+        const findKey = (id) => Object.keys(playerMap).find(k => 
+            String(k) === String(id) || 
+            String(playerMap[k]?.uid || "") === String(id) || 
+            String(playerMap[k]?.id || "") === String(id)
+        );
+
+        // 2. Ordenar partidos por ronda ascendente para reconstruir fielmente partner_history y last_partner
+        const finishedMatches = (matches || [])
+            .filter(m => m.status === 'finished')
+            .sort((a, b) => parseInt(a.round || 1) - parseInt(b.round || 1));
+
+        finishedMatches.forEach(m => {
+            const sA = parseInt(m.score_a || 0);
+            const sB = parseInt(m.score_b || 0);
+            const teamA = (m.team_a_ids || []).map(String);
+            const teamB = (m.team_b_ids || []).map(String);
+
+            // Procesar Equipo A
+            teamA.forEach(id => {
+                const k = findKey(id);
+                if (k && playerMap[k]) {
+                    const pObj = playerMap[k];
+                    pObj.swiss_games_won += sA;
+                    pObj.swiss_games_lost += sB;
+                    pObj.matches_played++;
+
+                    const partnerId = teamA.find(pid => String(pid) !== String(id));
+                    if (partnerId) {
+                        const curHist = pObj.partner_history || (pObj.last_partner ? [pObj.last_partner] : []);
+                        pObj.last_partner = partnerId;
+                        pObj.partner_history = [partnerId, ...curHist.filter(hid => String(hid) !== String(partnerId))];
+                    }
+                }
+            });
+
+            // Procesar Equipo B
+            teamB.forEach(id => {
+                const k = findKey(id);
+                if (k && playerMap[k]) {
+                    const pObj = playerMap[k];
+                    pObj.swiss_games_won += sB;
+                    pObj.swiss_games_lost += sA;
+                    pObj.matches_played++;
+
+                    const partnerId = teamB.find(pid => String(pid) !== String(id));
+                    if (partnerId) {
+                        const curHist = pObj.partner_history || (pObj.last_partner ? [pObj.last_partner] : []);
+                        pObj.last_partner = partnerId;
+                        pObj.partner_history = [partnerId, ...curHist.filter(hid => String(hid) !== String(partnerId))];
+                    }
+                }
+            });
+        });
+
+        // 3. Calcular diferencial
+        let allPlayers = Object.values(playerMap);
+        allPlayers.forEach(p => {
+            p.swiss_diff = p.swiss_games_won - p.swiss_games_lost;
+        });
+
+        // 4. Ordenar según Sistema Suizo:
+        // Criterio 1: Puntuación individual (total juegos ganados acumulados) Descendente
+        // Criterio 2: Diferencial de juegos (swiss_diff) Descendente
+        // Criterio 3: Menor cantidad de juegos recibidos (swiss_games_lost) Ascendente
+        // Criterio 4: Nivel / Alfabético
+        allPlayers.sort((a, b) => {
+            if (b.swiss_games_won !== a.swiss_games_won) {
+                return b.swiss_games_won - a.swiss_games_won;
+            }
+            if (b.swiss_diff !== a.swiss_diff) {
+                return b.swiss_diff - a.swiss_diff;
+            }
+            if (a.swiss_games_lost !== b.swiss_games_lost) {
+                return a.swiss_games_lost - b.swiss_games_lost;
+            }
+            const lvlA = parseFloat(a.level || 0);
+            const lvlB = parseFloat(b.level || 0);
+            if (lvlB !== lvlA) return lvlB - lvlA;
+            return String(a.name || '').localeCompare(String(b.name || ''));
+        });
+
+        // 5. Asignar pistas:
+        // Top 4 clasificados -> Pista 1
+        // Siguientes 4 clasificados -> Pista 2
+        // Siguientes 4 clasificados -> Pista 3
+        // etc.
+        const effectiveCourts = maxCourts || Math.ceil(allPlayers.length / 4) || 3;
+        console.log(`🇨🇭 [Swiss Ranking Audit] Asignando pistas según puntos acumulados:`);
+        allPlayers.forEach((p, i) => {
+            const oldCourt = p.current_court;
+            const newCourt = Math.min(Math.floor(i / 4) + 1, effectiveCourts);
+            p.current_court = newCourt;
+            console.log(`   #${i + 1} ${p.name}: ${p.swiss_games_won} pts (+/- ${p.swiss_diff}) -> Pista ${newCourt} (antes P${oldCourt})`);
+        });
+
+        return allPlayers;
+    },
+
+    /**
      * Genera los partidos de la siguiente ronda con ROTACIÓN DE PAREJAS
      * En modo TWISTER, los jugadores SIEMPRE cambian de pareja entre rondas
      * Ganadores suben de pista, perdedores bajan
@@ -383,9 +512,9 @@ const RotatingPozoLogic = {
 
         const p = players;
         const options = [
-            { teamA: [p[0], p[1]], teamB: [p[2], p[3]] },
-            { teamA: [p[0], p[2]], teamB: [p[1], p[3]] },
-            { teamA: [p[0], p[3]], teamB: [p[1], p[2]] }
+            { teamA: [p[0], p[3]], teamB: [p[1], p[2]] }, // 1º con 4º vs 2º con 3º (Máximo equilibrio competitivo)
+            { teamA: [p[0], p[2]], teamB: [p[1], p[3]] }, // 1º con 3º vs 2º con 4º
+            { teamA: [p[0], p[1]], teamB: [p[2], p[3]] }  // 1º con 2º vs 3º con 4º
         ];
 
         // Función auxiliar para verificar si dos jugadores han sido compañeros en el rango dado de historial
