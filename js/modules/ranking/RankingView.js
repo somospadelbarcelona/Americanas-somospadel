@@ -84,10 +84,13 @@
                                     <div style="width: 10px; height: 10px; border-radius: 2px; background: #65a30d; box-shadow: 0 0 10px rgba(101, 163, 13, 0.4);"></div>
                                     <span style="color: #64748b; font-size: 0.65rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;">${isAmericanasOnly ? 'Ranking Exclusivo Americanas' : 'Somospadel World Tour'}</span>
                                 </div>
-                                <h1 style="font-weight: 950; font-size: 2.3rem; margin: 0; letter-spacing: -1.5px; color: #0f172a; line-height: 1.1; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                <h1 style="font-weight: 950; font-size: 2.3rem; margin: 0; letter-spacing: -1.5px; color: #0f172a; line-height: 1.1; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                     RANKING <span style="background: linear-gradient(135deg, #15803d 0%, #4d7c0f 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">PRO</span>
                                     <span onclick="window.showRolesLegendModal()" style="cursor: pointer; font-size: 0.62rem; font-weight: 900; padding: 4px 10px; border-radius: 10px; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; text-transform: uppercase; letter-spacing: 0.8px; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s;" onmouseover="this.style.background='#e2e8f0'; this.style.color='#0f172a';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#334155';">
                                         <i class="fas fa-question-circle" style="color: #059669;"></i> Info Roles
+                                    </span>
+                                    <span onclick="window.showPointsPolicyModal ? window.showPointsPolicyModal() : null" style="cursor: pointer; font-size: 0.62rem; font-weight: 950; padding: 4px 10px; border-radius: 10px; background: #0f172a; color: #CCFF00; border: 1px solid rgba(204, 255, 0, 0.4); text-transform: uppercase; letter-spacing: 0.8px; display: inline-flex; align-items: center; gap: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.12); transition: all 0.2s;" onmouseover="this.style.background='#1e293b'; this.style.transform='scale(1.03)';" onmouseout="this.style.background='#0f172a'; this.style.transform='scale(1)';">
+                                        <i class="fas fa-balance-scale" style="color: #CCFF00;"></i> Sistema de Puntos
                                     </span>
                                 </h1>
                             </div>

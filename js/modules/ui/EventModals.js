@@ -36,6 +36,23 @@
         return found?.level || found?.nivel || '3.5';
     };
 
+    const ensureHtml2Canvas = async () => {
+        if (typeof window.html2canvas !== 'undefined') return window.html2canvas;
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+            script.onload = () => resolve(window.html2canvas);
+            script.onerror = () => {
+                const fallback = document.createElement('script');
+                fallback.src = 'https://html2canvas.hertzen.com/dist/html2canvas.min.js';
+                fallback.onload = () => resolve(window.html2canvas);
+                fallback.onerror = (err) => reject(new Error('No se pudo cargar html2canvas'));
+                document.head.appendChild(fallback);
+            };
+            document.head.appendChild(script);
+        });
+    };
+
     const sanitizeTeamNames = (raw, fallback) => {
         let list = [];
         if (Array.isArray(raw)) {
@@ -246,25 +263,53 @@
         },
 
         /**
-         * Shows the final podium modal for a finished training session.
-         * Upgraded with Dark Tech Athletic Design & Full Tie-break Transparency.
+         * Shows the summary/gala flyer modal for both Entrenos and Americanas.
+         * Supports both live (in-progress) and finished sessions, individual and fixed pairs.
+         * Features html2canvas HD capture, WhatsApp/Instagram direct Web Share API, and downloads.
          */
         showTrainingFinishedModal(finalRound, matches, americanaDoc, onShare, onTabChange, onMenu) {
             if (document.getElementById('training-finished-modal')) return;
 
-            const isFixedPairs = (americanaDoc?.pair_mode || '').toLowerCase().includes('fix')
-                || (americanaDoc?.name || '').toUpperCase().includes('FIJA');
+            const isEntreno = !!(americanaDoc?.isEntreno || (americanaDoc?.type || '').toLowerCase().includes('entreno') || (americanaDoc?.name || '').toLowerCase().includes('entreno'));
+            const isSwiss = !!(americanaDoc?.isSwiss || (americanaDoc?.type || '').toLowerCase().includes('swiss') || (americanaDoc?.tournament_type || '').toLowerCase().includes('swiss') || (americanaDoc?.format || '').toLowerCase().includes('suizo') || (americanaDoc?.name || '').toLowerCase().includes('suizo'));
+            const eventType = isSwiss ? 'swiss' : (isEntreno ? 'entreno' : 'americana');
+
+            const isFixedPairs = !!(
+                (americanaDoc?.pair_mode || '').toLowerCase().includes('fix')
+                || (americanaDoc?.name || '').toUpperCase().includes('FIJA')
+                || (americanaDoc?.tournament_type || '').toLowerCase().includes('fija')
+                || (americanaDoc?.format || '').toLowerCase().includes('fija')
+            );
 
             const allPlayers = americanaDoc?.players || [];
             const safeMatches = Array.isArray(matches) ? matches : [];
 
+            const totalRounds = parseInt(americanaDoc?.rounds_count || americanaDoc?.rounds) || 6;
+            const maxPlayedRound = (safeMatches.length > 0)
+                ? Math.max(...safeMatches.map(m => parseInt(m.round || 1)))
+                : 1;
+            const currentRound = finalRound || maxPlayedRound;
+            const maxRound = currentRound;
+
+            // Determine if the session is completed or live/in-progress
+            const isFinished = Boolean(
+                americanaDoc?.status === 'finished'
+                || americanaDoc?.status === 'completed'
+                || americanaDoc?.is_finished === true
+                || (maxPlayedRound >= totalRounds && safeMatches.length > 0 && safeMatches.filter(m => parseInt(m.round) === totalRounds).every(m => m.status === 'completed' || m.status === 'finished' || (m.score_a !== undefined && m.score_a !== '' && m.score_a !== null)))
+            );
+
+            // Compute standings transparently according to event type and format
             let rankingItems = (window.StandingsService && safeMatches.length > 0)
-                ? window.StandingsService.calculate(safeMatches, 'entreno', isFixedPairs, allPlayers)
+                ? window.StandingsService.calculate(safeMatches, isSwiss ? 'swiss' : eventType, isFixedPairs, allPlayers, isSwiss)
                 : [];
 
-            // 1. Identify final round & Court 1 Match for Pair Winners & Finalists
-            const maxRound = finalRound || (safeMatches.length > 0 ? Math.max(...safeMatches.map(m => parseInt(m.round || 1))) : 1);
-            const finalCourt1Match = safeMatches.find(m => parseInt(m.round) === parseInt(maxRound) && parseInt(m.court) === 1);
+            // 1. Identify Court 1 Match for Pair Winners/Leaders & Finalists/Aspirants
+            let finalCourt1Match = safeMatches.find(m => parseInt(m.round) === parseInt(maxRound) && parseInt(m.court) === 1);
+            if (!finalCourt1Match && safeMatches.length > 0) {
+                const c1Matches = safeMatches.filter(m => parseInt(m.court) === 1).sort((a, b) => parseInt(b.round || 1) - parseInt(a.round || 1));
+                if (c1Matches.length > 0) finalCourt1Match = c1Matches[0];
+            }
 
             let winningPair = null;
             let finalistPair = null;
@@ -295,9 +340,11 @@
                     winningPair = { names: teamBNames, score: scoreB, rivalScore: scoreA };
                     finalistPair = { names: teamANames, score: scoreA, rivalScore: scoreB };
                 } else if (hasScores && (scoreA > 0 || scoreB > 0)) {
-                    // Empate con juegos disputados y sin desempate explícito
                     winningPair = { names: teamANames, score: scoreA, rivalScore: scoreB };
                     finalistPair = { names: teamBNames, score: scoreB, rivalScore: scoreA };
+                } else if (teamANames.length > 0 || teamBNames.length > 0) {
+                    winningPair = { names: teamANames, score: null, rivalScore: null };
+                    finalistPair = { names: teamBNames, score: null, rivalScore: null };
                 }
             }
 
@@ -332,7 +379,24 @@
                     : null
             };
 
-            // Pair Highlight Cards HTML
+            // Text Adaptation (Live vs Finished)
+            const eventName = americanaDoc?.name || (isEntreno ? 'Entreno SomosPadel' : (isSwiss ? 'Torneo Suizo' : 'Americana SomosPadel'));
+            let badgeText = '';
+            let modalTitle = '';
+            let modalSubtitle = '';
+
+            if (isFinished) {
+                const sessionLabel = isEntreno ? 'SESIÓN COMPLETADA' : 'TORNEO COMPLETADO';
+                badgeText = `<span style="width: 6px; height: 6px; border-radius: 50%; background: #CCFF00; box-shadow: 0 0 8px #CCFF00; display: inline-block;"></span> SOMOSPADEL BCN • ${sessionLabel}`;
+                modalTitle = isEntreno ? 'FIN DEL ENTRENO' : (isSwiss ? 'FIN DEL SUIZO' : 'FIN DE LA AMERICANA');
+                modalSubtitle = `${eventName} • ${maxRound} RONDAS COMPLETADAS`;
+            } else {
+                badgeText = `<span class="sp-live-pulse-dot" style="width: 7px; height: 7px; border-radius: 50%; background: #00E36D; display: inline-block; box-shadow: 0 0 10px #00E36D;"></span> SOMOSPADEL BCN • EN VIVO`;
+                modalTitle = isEntreno ? 'ENTRENO EN VIVO' : (isSwiss ? 'TORNEO SUIZO EN VIVO' : 'AMERICANA EN VIVO');
+                modalSubtitle = `${eventName} • RONDA ${currentRound || maxRound} DE ${totalRounds}`;
+            }
+
+            // Pair Highlight Cards HTML (Court 1)
             let finalPairsSectionHTML = '';
 
             if (winningPair && winningPair.names && winningPair.names.length > 0) {
@@ -354,9 +418,13 @@
                     </span>`
                     : '';
 
+                const winnerBadgeTitle = isFinished
+                    ? '👑 PAREJA GANADORA • PISTA 1'
+                    : '🔥 LÍDERES • PISTA 1';
+
                 const winnerScoreText = (winningPair.score !== null && winningPair.rivalScore !== null)
-                    ? `Victoria ${winningPair.score} - ${winningPair.rivalScore} en Pista 1`
-                    : `Campeones de Pista 1 • Ronda Final`;
+                    ? (isFinished ? `Victoria ${winningPair.score} - ${winningPair.rivalScore} en Pista 1` : `Marcador ${winningPair.score} - ${winningPair.rivalScore} en Pista 1`)
+                    : (isFinished ? `Campeones de Pista 1 • Ronda Final` : `Líderes en Pista 1 • Ronda ${maxRound}`);
 
                 const winningCardHTML = `
                     <div class="sp-final-pair-card" style="
@@ -373,7 +441,7 @@
                                 border-radius: 6px; background: #CCFF00; color: #000000;
                                 font-size: 0.62rem; font-weight: 950; letter-spacing: 0.8px; text-transform: uppercase;
                             ">
-                                👑 PAREJA GANADORA • PISTA 1
+                                ${winnerBadgeTitle}
                             </span>
                             ${winnerScoreBadge}
                         </div>
@@ -412,6 +480,14 @@
                         </span>`
                         : '';
 
+                    const finalistBadgeTitle = isFinished
+                        ? '🥈 PAREJA FINALISTA • PISTA 1'
+                        : '⚡ ASPIRANTES • PISTA 1';
+
+                    const finalistSubText = isFinished
+                        ? 'Subcampeones de Pista 1 en la Gran Final'
+                        : `Disputando Pista 1 • Ronda ${maxRound}`;
+
                     finalistCardHTML = `
                         <div class="sp-final-pair-card" style="
                             padding: 12px 15px; border-radius: 18px; margin-bottom: 12px;
@@ -426,7 +502,7 @@
                                     border-radius: 6px; background: #94a3b8; color: #0f172a;
                                     font-size: 0.62rem; font-weight: 950; letter-spacing: 0.8px; text-transform: uppercase;
                                 ">
-                                    🥈 PAREJA FINALISTA • PISTA 1
+                                    ${finalistBadgeTitle}
                                 </span>
                                 ${finalistScoreBadge}
                             </div>
@@ -438,13 +514,16 @@
                                     </div>
                                     <div style="font-size: 0.68rem; color: #94a3b8; font-weight: 600; margin-top: 4px; display: flex; align-items: center; gap: 5px;">
                                         <i class="fas fa-medal" style="font-size: 0.7rem; color: #94a3b8;"></i>
-                                        <span>Subcampeones de Pista 1 en la Gran Final</span>
+                                        <span>${finalistSubText}</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     `;
                 }
+
+                const court1SectionTitle = isFinished ? '👑 GRAN FINAL • PISTA 1' : '🔥 PISTA 1 DESTACADA';
+                const court1SectionSubtitle = isFinished ? 'PAREJAS DESTACADAS' : 'LÍDERES EN VIVO';
 
                 finalPairsSectionHTML = `
                     <div style="margin-bottom: 4px;">
@@ -453,11 +532,11 @@
                             margin-bottom: 10px; padding: 0 4px;
                         ">
                             <div style="font-size: 0.68rem; color: #CCFF00; font-weight: 900; letter-spacing: 1.8px; text-transform: uppercase; display: flex; align-items: center; gap: 6px;">
-                                <span>👑 GRAN FINAL • PISTA 1</span>
+                                <span>${court1SectionTitle}</span>
                                 <span style="font-size: 0.58rem; background: rgba(204,255,0,0.15); color: #CCFF00; padding: 1px 6px; border-radius: 4px; border: 1px solid rgba(204,255,0,0.3);">RONDA ${maxRound}</span>
                             </div>
                             <div style="font-size: 0.62rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
-                                PAREJAS DESTACADAS
+                                ${court1SectionSubtitle}
                             </div>
                         </div>
                         ${winningCardHTML}
@@ -510,45 +589,71 @@
 
             const podiumHTML = rankingItems.slice(0, 3).map((p, i) => {
                 const tier = podiumTierStyles[i];
-                const playerLevel = resolvePlayerLevel(p, allPlayers);
-                const levelColor = getLevelColor(playerLevel);
-
                 const diff = (p.diff !== undefined) ? p.diff : ((p.points || 0) - (p.gamesLost || 0));
                 const diffStr = diff > 0 ? `+${diff}` : `${diff}`;
                 const diffColor = diff > 0 ? '#10b981' : (diff < 0 ? '#ef4444' : '#94a3b8');
 
-                const initials = getInitials(p.name);
+                // Primary metric according to event type
+                const isEntrenoType = (eventType === 'entreno');
+                const ptsValue = isEntrenoType ? (p.won || 0) : (p.points !== undefined ? p.points : (p.won || 0));
+                const ptsLabel = isEntrenoType ? 'VICTORIAS' : 'PTS';
 
-                // Court badge logic
-                const lastCourt = p.lastMatchCourt;
-                let courtBadgeHTML = '';
-                if (lastCourt && lastCourt < 90) {
-                    if (lastCourt === 1) {
-                        courtBadgeHTML = `
-                            <span style="display:inline-flex; align-items:center; gap:4px; padding:2px 7px; border-radius:6px; background:rgba(204,255,0,0.18); color:#CCFF00; border:1px solid rgba(204,255,0,0.5); font-size:0.62rem; font-weight:900; letter-spacing:0.5px;">
-                                👑 PISTA 1
-                            </span>`;
-                    } else {
-                        courtBadgeHTML = `
-                            <span style="display:inline-flex; align-items:center; gap:3px; padding:2px 7px; border-radius:6px; background:rgba(255,255,255,0.06); color:#cbd5e1; border:1px solid rgba(255,255,255,0.12); font-size:0.62rem; font-weight:800;">
-                                PISTA ${lastCourt}
-                            </span>`;
+                const isPairItem = isFixedPairs || (typeof p.name === 'string' && (p.name.includes(' & ') || p.name.includes(' / ')));
+                let avatarBlockHTML = '';
+                let nameBlockHTML = '';
+
+                if (isPairItem) {
+                    const pairNames = sanitizeTeamNames(p.name, p.name);
+                    avatarBlockHTML = renderDoubleAvatar(
+                        pairNames,
+                        tier.ringColor,
+                        tier.medalIcon,
+                        tier.medalBg,
+                        tier.border
+                    );
+                    nameBlockHTML = `
+                        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 2px;">
+                            <span style="
+                                font-size: 0.58rem; font-weight: 900; padding: 1px 6px;
+                                border-radius: 4px; background: ${tier.badgeBg}; color: ${tier.badgeText};
+                                letter-spacing: 0.5px;
+                            ">${tier.rankBadge}</span>
+                            <span style="
+                                font-size: 0.58rem; font-weight: 900; padding: 1px 6px;
+                                border-radius: 4px; background: rgba(255,255,255,0.08); color: #e2e8f0;
+                            ">PAREJA</span>
+                        </div>
+                        <div style="
+                            font-weight: 900; font-size: 0.90rem; color: ${tier.nameColor};
+                            text-transform: uppercase; white-space: nowrap; overflow: hidden;
+                            text-overflow: ellipsis; letter-spacing: 0.3px;
+                        ">
+                            ${p.name || 'Pareja'}
+                        </div>
+                    `;
+                } else {
+                    const initials = getInitials(p.name);
+                    const playerLevel = resolvePlayerLevel(p, allPlayers);
+                    const levelColor = getLevelColor(playerLevel);
+
+                    // Court badge logic
+                    const lastCourt = p.lastMatchCourt;
+                    let courtBadgeHTML = '';
+                    if (lastCourt && lastCourt < 90) {
+                        if (lastCourt === 1) {
+                            courtBadgeHTML = `
+                                <span style="display:inline-flex; align-items:center; gap:4px; padding:2px 7px; border-radius:6px; background:rgba(204,255,0,0.18); color:#CCFF00; border:1px solid rgba(204,255,0,0.5); font-size:0.62rem; font-weight:900; letter-spacing:0.5px;">
+                                    👑 PISTA 1
+                                </span>`;
+                        } else {
+                            courtBadgeHTML = `
+                                <span style="display:inline-flex; align-items:center; gap:3px; padding:2px 7px; border-radius:6px; background:rgba(255,255,255,0.06); color:#cbd5e1; border:1px solid rgba(255,255,255,0.12); font-size:0.62rem; font-weight:800;">
+                                    PISTA ${lastCourt}
+                                </span>`;
+                        }
                     }
-                }
 
-                // Primary Points/Wins
-                const ptsValue = isFixedPairs ? (p.won || 0) : (p.points || 0);
-                const ptsLabel = isFixedPairs ? 'VICTORIAS' : 'PTS';
-
-                return `
-                    <div class="sp-podium-card" style="
-                        display: flex; align-items: center; gap: 12px; padding: 13px 16px;
-                        border-radius: 18px; background: ${tier.cardBg}; border: 1px solid ${tier.border};
-                        margin-bottom: 9px; box-shadow: ${tier.accentGlow}; position: relative;
-                        animation: spSlideInRow 0.4s cubic-bezier(0.16, 1, 0.3, 1) ${(i + 1) * 0.1}s both;
-                        backdrop-filter: blur(8px);
-                    ">
-                        <!-- Left Medal & Avatar -->
+                    avatarBlockHTML = `
                         <div style="position: relative; flex-shrink: 0;">
                             <div style="
                                 width: 44px; height: 44px; border-radius: 50%;
@@ -568,32 +673,46 @@
                                 font-size: 0.72rem; line-height: 1;
                             ">${tier.medalIcon}</span>
                         </div>
+                    `;
 
-                        <!-- Player Info & Badges -->
+                    nameBlockHTML = `
+                        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 2px;">
+                            <span style="
+                                font-size: 0.58rem; font-weight: 900; padding: 1px 6px;
+                                border-radius: 4px; background: ${tier.badgeBg}; color: ${tier.badgeText};
+                                letter-spacing: 0.5px;
+                            ">${tier.rankBadge}</span>
+                            
+                            <span style="
+                                font-size: 0.58rem; font-weight: 900; padding: 1px 6px;
+                                border-radius: 4px; background: ${levelColor}; color: #ffffff;
+                            ">Nv ${playerLevel}</span>
+
+                            ${courtBadgeHTML}
+                        </div>
+
+                        <div style="
+                            font-weight: 900; font-size: 0.94rem; color: ${tier.nameColor};
+                            text-transform: uppercase; white-space: nowrap; overflow: hidden;
+                            text-overflow: ellipsis; letter-spacing: 0.3px;
+                        ">
+                            ${p.name || 'Jugador'}
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="sp-podium-card" style="
+                        display: flex; align-items: center; gap: 12px; padding: 13px 16px;
+                        border-radius: 18px; background: ${tier.cardBg}; border: 1px solid ${tier.border};
+                        margin-bottom: 9px; box-shadow: ${tier.accentGlow}; position: relative;
+                        animation: spSlideInRow 0.4s cubic-bezier(0.16, 1, 0.3, 1) ${(i + 1) * 0.1}s both;
+                        backdrop-filter: blur(8px);
+                    ">
+                        ${avatarBlockHTML}
+
                         <div style="flex: 1; min-width: 0;">
-                            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 2px;">
-                                <span style="
-                                    font-size: 0.58rem; font-weight: 900; padding: 1px 6px;
-                                    border-radius: 4px; background: ${tier.badgeBg}; color: ${tier.badgeText};
-                                    letter-spacing: 0.5px;
-                                ">${tier.rankBadge}</span>
-                                
-                                <span style="
-                                    font-size: 0.58rem; font-weight: 900; padding: 1px 6px;
-                                    border-radius: 4px; background: ${levelColor}; color: #ffffff;
-                                ">Nv ${playerLevel}</span>
-
-                                ${courtBadgeHTML}
-                            </div>
-
-                            <div style="
-                                font-weight: 900; font-size: 0.94rem; color: ${tier.nameColor};
-                                text-transform: uppercase; white-space: nowrap; overflow: hidden;
-                                text-overflow: ellipsis; letter-spacing: 0.3px;
-                            ">
-                                ${p.name || 'Jugador'}
-                            </div>
-
+                            ${nameBlockHTML}
                             <div style="display: flex; align-items: center; gap: 8px; font-size: 0.7rem; color: #94a3b8; font-weight: 600; margin-top: 2px;">
                                 <span style="color: #CCFF00; font-weight: 800;">${p.won || 0}V</span>
                                 <span>·</span>
@@ -603,7 +722,6 @@
                             </div>
                         </div>
 
-                        <!-- Right Metric Score -->
                         <div style="text-align: right; flex-shrink: 0; padding-left: 4px;">
                             <div style="
                                 font-size: 1.35rem; font-weight: 950; color: ${tier.ptsColor};
@@ -619,6 +737,8 @@
                 `;
             }).join('');
 
+            const podiumTitleText = isFixedPairs ? '🏆 PODIO PAREJAS' : '🏆 PODIO INDIVIDUAL';
+            const podiumSubtitleText = isFixedPairs ? 'TOP 3 DEL EVENTO' : 'TOP 3 DE LA JORNADA';
             const individualPodiumHeaderHTML = `
                 <div style="
                     display: flex; justify-content: space-between; align-items: center;
@@ -626,13 +746,47 @@
                     ${finalPairsSectionHTML ? 'border-top: 1px solid rgba(255, 255, 255, 0.08);' : ''}
                 ">
                     <div style="font-size: 0.68rem; color: #CCFF00; font-weight: 900; letter-spacing: 1.8px; text-transform: uppercase; display: flex; align-items: center; gap: 6px;">
-                        <span>🏆 PODIO INDIVIDUAL</span>
+                        <span>${podiumTitleText}</span>
                     </div>
                     <div style="font-size: 0.62rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
-                        TOP 3 DE LA JORNADA
+                        ${podiumSubtitleText}
                     </div>
                 </div>
             `;
+
+            // Helper to generate the official WhatsApp/social text message
+            const generateOfficialText = () => {
+                const medals = ['🥇', '🥈', '🥉'];
+                let pairShareText = '';
+                if (pairResults?.winningPair?.names?.length) {
+                    const winNames = pairResults.winningPair.names.join(' & ');
+                    const winScore = (pairResults.winningPair.score !== null && pairResults.winningPair.score !== undefined)
+                        ? ` (${pairResults.winningPair.score}-${pairResults.winningPair.rivalScore})`
+                        : '';
+                    pairShareText += isFinished
+                        ? `👑 PAREJA GANADORA (PISTA 1): ${winNames}${winScore}\n`
+                        : `🔥 LÍDERES EN PISTA 1: ${winNames}${winScore}\n`;
+                }
+                if (pairResults?.finalistPair?.names?.length) {
+                    const finNames = pairResults.finalistPair.names.join(' & ');
+                    pairShareText += isFinished
+                        ? `🥈 PAREJA FINALISTA (PISTA 1): ${finNames}\n`
+                        : `⚡ ASPIRANTES PISTA 1: ${finNames}\n`;
+                }
+                if (pairShareText) pairShareText += '\n';
+
+                const podTitle = isFixedPairs ? '🏆 PODIO PAREJAS (TOP 3):' : '🏆 PODIO INDIVIDUAL (TOP 3):';
+                const podiumText = rankingItems.slice(0, 3).map((p, i) => {
+                    const diff = (p.diff !== undefined) ? p.diff : ((p.points || 0) - (p.gamesLost || 0));
+                    const diffStr = diff > 0 ? `+${diff}` : `${diff}`;
+                    const val = (eventType === 'entreno') ? `${p.won || 0}V` : `${p.points || 0} PTS`;
+                    return `${medals[i]} ${(p.name || 'Jugador').toUpperCase()} — ${val} (${p.played || 0}PJ) • Dif: ${diffStr}`;
+                }).join('\n');
+
+                const statusHeader = isFinished ? '🏆 CLASIFICACIÓN FINAL SOMOSPADEL BCN' : '🔥 CLASIFICACIÓN EN VIVO • SOMOSPADEL BCN';
+                const eventLabel = isEntreno ? 'Entreno' : (isSwiss ? 'Torneo Suizo' : 'Americana');
+                return `${statusHeader}\n🎾 ${americanaDoc?.name || eventLabel}\n\n${pairShareText}${podTitle}\n${podiumText}\n\n🎯 Todos los partidos computan para tu Nivel Oficial SomosPadel.\n📲 Consulta cuadros y estadísticas en vivo en la app oficial de SomosPadel BCN 🔥`;
+            };
 
             const overlay = document.createElement('div');
             overlay.id = 'training-finished-modal';
@@ -663,30 +817,38 @@
                         20% { opacity: 0.9; }
                         100% { transform: translateY(160px) rotate(360deg); opacity: 0; }
                     }
+                    @keyframes pulseLive {
+                        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 227, 109, 0.7); }
+                        70% { transform: scale(1.15); box-shadow: 0 0 0 6px rgba(0, 227, 109, 0); }
+                        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 227, 109, 0); }
+                    }
+                    .sp-live-pulse-dot {
+                        animation: pulseLive 1.8s infinite;
+                    }
                     .sp-particle {
                         position: absolute; border-radius: 50%; pointer-events: none;
                         animation: spParticleDrift linear infinite;
                     }
-                    .sp-tf-btn-main:hover {
+                    .sp-tf-btn-social:hover {
                         transform: translateY(-2px);
-                        box-shadow: 0 10px 28px rgba(204, 255, 0, 0.45);
+                        filter: brightness(1.08);
                     }
-                    .sp-tf-btn-main:active {
+                    .sp-tf-btn-social:active {
                         transform: scale(0.98);
                     }
                     .sp-tf-tab-btn {
                         background: rgba(255, 255, 255, 0.04);
                         color: #cbd5e1;
                         border: 1px solid rgba(255, 255, 255, 0.1);
-                        padding: 10px 4px;
+                        padding: 9px 4px;
                         border-radius: 12px;
                         font-weight: 800;
-                        font-size: 0.68rem;
+                        font-size: 0.66rem;
                         cursor: pointer;
                         display: flex;
                         flex-direction: column;
                         align-items: center;
-                        gap: 4px;
+                        gap: 3px;
                         transition: all 0.2s ease;
                         letter-spacing: 0.5px;
                     }
@@ -697,7 +859,7 @@
                         transform: translateY(-1px);
                     }
                     .sp-tf-tab-btn i {
-                        font-size: 1rem;
+                        font-size: 0.95rem;
                         color: #CCFF00;
                     }
                     .sp-tf-menu-btn:hover {
@@ -724,7 +886,7 @@
 
                 <!-- Modal Container Card -->
                 <div style="
-                    background: linear-gradient(155deg, #0f172a 0%, #080d19 100%);
+                    background: #080d19;
                     width: 100%; max-width: 440px; border-radius: 26px;
                     border: 1px solid rgba(204, 255, 0, 0.35);
                     box-shadow: 0 25px 60px rgba(0,0,0,0.7), 0 0 35px rgba(204, 255, 0, 0.15);
@@ -734,75 +896,93 @@
                     <!-- Close button in top right -->
                     <button id="btn-close-training-modal" class="sp-close-icon-btn" style="
                         position: absolute; top: 16px; right: 16px; width: 34px; height: 34px;
-                        border-radius: 50%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+                        border-radius: 50%; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
                         color: #94a3b8; display: flex; align-items: center; justify-content: center;
-                        font-size: 1rem; cursor: pointer; transition: all 0.2s ease; z-index: 20;
+                        font-size: 1rem; cursor: pointer; transition: all 0.2s ease; z-index: 30;
                     ">
                         <i class="fas fa-times"></i>
                     </button>
 
                     <!-- Scrollable Content Body -->
-                    <div style="overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1; min-height: 0;">
-                        <!-- Olympic Header with Dark Tech Atmosphere -->
-                        <div style="
-                            padding: 26px 20px 18px; text-align: center;
-                            background: radial-gradient(circle at 50% 10%, rgba(204, 255, 0, 0.15) 0%, rgba(15, 23, 42, 0) 75%);
-                            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-                            position: relative;
+                    <div style="overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1; min-height: 0; padding-bottom: 8px;">
+                        <!-- Capturable Container for Flyer Export -->
+                        <div id="sp-flyer-capture-card" style="
+                            background: linear-gradient(155deg, #0f172a 0%, #080d19 100%);
+                            margin: 12px; border-radius: 22px; border: 1px solid rgba(204, 255, 0, 0.3);
+                            overflow: hidden; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
                         ">
-                            <!-- SomosPadel Session Badge -->
+                            <!-- Olympic Header -->
                             <div style="
-                                display: inline-flex; align-items: center; gap: 7px; padding: 4px 12px;
-                                border-radius: 999px; background: rgba(204, 255, 0, 0.12);
-                                border: 1px solid rgba(204, 255, 0, 0.3); color: #CCFF00;
-                                font-size: 0.65rem; font-weight: 900; letter-spacing: 1.5px;
-                                text-transform: uppercase; margin-bottom: 12px;
+                                padding: 24px 20px 16px; text-align: center;
+                                background: radial-gradient(circle at 50% 10%, rgba(204, 255, 0, 0.14) 0%, rgba(15, 23, 42, 0) 75%);
+                                border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+                                position: relative;
                             ">
-                                <span style="width: 6px; height: 6px; border-radius: 50%; background: #CCFF00; box-shadow: 0 0 8px #CCFF00;"></span>
-                                SOMOSPADEL BCN • SESIÓN COMPLETADA
+                                <!-- Status Badge -->
+                                <div style="
+                                    display: inline-flex; align-items: center; gap: 7px; padding: 4px 12px;
+                                    border-radius: 999px; background: rgba(204, 255, 0, 0.12);
+                                    border: 1px solid rgba(204, 255, 0, 0.3); color: #CCFF00;
+                                    font-size: 0.63rem; font-weight: 900; letter-spacing: 1.3px;
+                                    text-transform: uppercase; margin-bottom: 12px;
+                                ">
+                                    ${badgeText}
+                                </div>
+
+                                <!-- Floating Trophy -->
+                                <div style="
+                                    font-size: 3.1rem; line-height: 1; margin-bottom: 8px;
+                                    filter: drop-shadow(0 6px 14px rgba(204, 255, 0, 0.35));
+                                    animation: spFloatTrophy 3.5s ease-in-out infinite;
+                                ">🏆</div>
+
+                                <!-- Title & Event Info -->
+                                <h1 style="
+                                    font-size: 1.5rem; font-weight: 950; color: #ffffff;
+                                    letter-spacing: 1px; margin: 0 0 4px 0; text-transform: uppercase;
+                                ">
+                                    ${modalTitle}
+                                </h1>
+                                <div style="
+                                    font-size: 0.74rem; font-weight: 700; color: #94a3b8;
+                                    text-transform: uppercase; letter-spacing: 0.8px;
+                                    display: flex; align-items: center; justify-content: center; gap: 8px;
+                                ">
+                                    <span>${modalSubtitle}</span>
+                                </div>
                             </div>
 
-                            <!-- Floating Trophy -->
-                            <div style="
-                                font-size: 3.2rem; line-height: 1; margin-bottom: 8px;
-                                filter: drop-shadow(0 6px 14px rgba(204, 255, 0, 0.35));
-                                animation: spFloatTrophy 3.5s ease-in-out infinite;
-                            ">🏆</div>
-
-                            <!-- Title & Event Info -->
-                            <h1 style="
-                                font-size: 1.55rem; font-weight: 950; color: #ffffff;
-                                letter-spacing: 1px; margin: 0 0 4px 0; text-transform: uppercase;
-                            ">
-                                FIN DEL ENTRENO
-                            </h1>
-                            <div style="
-                                font-size: 0.76rem; font-weight: 700; color: #94a3b8;
-                                text-transform: uppercase; letter-spacing: 0.8px;
-                                display: flex; align-items: center; justify-content: center; gap: 8px;
-                            ">
-                                <span>${americanaDoc?.name || 'Entreno Dinámico'}</span>
-                                <span style="color: rgba(255,255,255,0.2);">•</span>
-                                <span style="color: #CCFF00;">${finalRound} RONDAS</span>
+                            <!-- Content Cards: Court 1 + Podium -->
+                            <div style="padding: 14px 14px 6px;">
+                                ${finalPairsSectionHTML}
+                                ${individualPodiumHeaderHTML}
+                                ${podiumHTML}
                             </div>
-                        </div>
 
-                        <!-- Content Cards: Gran Final Parejas + Podio Individual -->
-                        <div style="padding: 16px 18px 4px;">
-                            ${finalPairsSectionHTML}
-                            ${individualPodiumHeaderHTML}
-                            ${podiumHTML}
+                            <!-- Watermark / Footer Inside Captured Flyer -->
+                            <div style="
+                                padding: 9px 14px 10px; display: flex; justify-content: space-between; align-items: center;
+                                border-top: 1px solid rgba(255, 255, 255, 0.06); background: rgba(8, 13, 25, 0.75);
+                            ">
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <img src="img/logo_somospadel.png" style="width: 17px; height: 17px; border-radius: 50%; object-fit: cover;" onerror="this.style.display='none'">
+                                    <span style="font-size: 0.62rem; color: #CCFF00; font-weight: 900; letter-spacing: 0.8px;">SOMOSPADEL BCN</span>
+                                </div>
+                                <span style="font-size: 0.58rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    PÁDEL SOCIAL & COMPETITIVO
+                                </span>
+                            </div>
                         </div>
 
                         <!-- Fair Play & Level Compute Info Capsule -->
-                        <div style="padding: 0 18px; margin-top: 4px; margin-bottom: 12px;">
+                        <div style="padding: 0 16px; margin-top: 2px; margin-bottom: 8px;">
                             <div style="
                                 background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.07);
                                 border-radius: 12px; padding: 9px 12px; display: flex; align-items: center; gap: 8px;
                             ">
                                 <span style="font-size: 1rem; color: #CCFF00; flex-shrink: 0;">🎯</span>
                                 <span style="font-size: 0.65rem; color: #94a3b8; line-height: 1.35; font-weight: 600;">
-                                    <strong style="color: #ffffff;">Objetivo: Superación & Fair Play.</strong> Los partidos y juegos de este entreno ya se han registrado en tu Nivel Oficial SomosPadel.
+                                    <strong style="color: #ffffff;">Objetivo: Superación & Fair Play.</strong> Los partidos de este evento computan para tu Nivel Oficial SomosPadel.
                                 </span>
                             </div>
                         </div>
@@ -810,25 +990,51 @@
 
                     <!-- Interactive Action Buttons (Fixed at bottom) -->
                     <div style="
-                        padding: 14px 18px 18px; display: flex; flex-direction: column; gap: 10px;
-                        background: linear-gradient(180deg, rgba(15, 23, 42, 0.9) 0%, #080d19 100%);
+                        padding: 12px 14px 16px; display: flex; flex-direction: column; gap: 8px;
+                        background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, #080d19 100%);
                         border-top: 1px solid rgba(255, 255, 255, 0.08); flex-shrink: 0; z-index: 10;
                     ">
-                        <!-- Primary Share Button -->
-                        <button id="btn-tf-share" class="sp-tf-btn-main" style="
-                            background: linear-gradient(135deg, #CCFF00 0%, #b8f000 100%);
-                            color: #000000; border: none; padding: 14px 16px; border-radius: 16px;
-                            font-weight: 950; font-size: 0.92rem; cursor: pointer;
-                            display: flex; align-items: center; justify-content: center; gap: 10px;
-                            box-shadow: 0 6px 20px rgba(204, 255, 0, 0.35); transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-                            text-transform: uppercase; letter-spacing: 0.5px;
+                        <!-- Row 1: WhatsApp & Instagram (50% / 50%) -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <button id="btn-tf-whatsapp" class="sp-tf-btn-social" style="
+                                background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+                                color: #ffffff; border: none; padding: 12px 10px; border-radius: 14px;
+                                font-weight: 950; font-size: 0.82rem; cursor: pointer;
+                                display: flex; align-items: center; justify-content: center; gap: 8px;
+                                box-shadow: 0 4px 16px rgba(37, 211, 102, 0.35); transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+                                letter-spacing: 0.5px;
+                            ">
+                                <i class="fab fa-whatsapp" style="font-size: 1.15rem;"></i>
+                                <span>WHATSAPP</span>
+                            </button>
+
+                            <button id="btn-tf-instagram" class="sp-tf-btn-social" style="
+                                background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+                                color: #ffffff; border: none; padding: 12px 10px; border-radius: 14px;
+                                font-weight: 950; font-size: 0.82rem; cursor: pointer;
+                                display: flex; align-items: center; justify-content: center; gap: 8px;
+                                box-shadow: 0 4px 16px rgba(220, 39, 67, 0.35); transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+                                letter-spacing: 0.5px;
+                            ">
+                                <i class="fab fa-instagram" style="font-size: 1.15rem;"></i>
+                                <span>INSTAGRAM</span>
+                            </button>
+                        </div>
+
+                        <!-- Row 2: Guardar Flyer HD -->
+                        <button id="btn-tf-download-flyer" class="sp-tf-btn-social" style="
+                            background: rgba(204, 255, 0, 0.08); color: #CCFF00;
+                            border: 1px solid rgba(204, 255, 0, 0.4); padding: 9px 14px; border-radius: 12px;
+                            font-weight: 900; font-size: 0.76rem; cursor: pointer;
+                            display: flex; align-items: center; justify-content: center; gap: 7px;
+                            transition: all 0.2s ease;
                         ">
-                            <i class="fab fa-whatsapp" style="font-size: 1.25rem;"></i>
-                            <span>COMPARTIR CLASIFICACIÓN</span>
+                            <i class="fas fa-download" style="font-size: 0.85rem;"></i>
+                            <span>GUARDAR FLYER HD</span>
                         </button>
 
-                        <!-- Quick Navigation Tabs -->
-                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                        <!-- Row 3: Quick Navigation Tabs -->
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
                             <button id="btn-tf-tab-pos" class="sp-tf-tab-btn">
                                 <i class="fas fa-list-ol"></i>
                                 <span>POSICIONES</span>
@@ -843,11 +1049,11 @@
                             </button>
                         </div>
 
-                        <!-- Return Button -->
+                        <!-- Row 4: Return Button -->
                         <button id="btn-tf-menu" class="sp-tf-menu-btn" style="
                             width: 100%; background: transparent; color: #94a3b8;
-                            border: 1px solid rgba(255, 255, 255, 0.12); padding: 11px;
-                            border-radius: 14px; font-weight: 800; font-size: 0.78rem;
+                            border: 1px solid rgba(255, 255, 255, 0.12); padding: 8px;
+                            border-radius: 12px; font-weight: 800; font-size: 0.74rem;
                             cursor: pointer; transition: all 0.2s ease; display: flex;
                             align-items: center; justify-content: center; gap: 6px;
                         ">
@@ -868,39 +1074,178 @@
 
             document.getElementById('btn-close-training-modal').onclick = closeModal;
 
-            document.getElementById('btn-tf-share').onclick = () => {
-                if (onShare) {
-                    onShare(rankingItems, isFixedPairs, pairResults);
-                } else {
-                    const medals = ['🥇', '🥈', '🥉'];
-                    let pairShareText = '';
-                    if (pairResults?.winningPair?.names?.length) {
-                        const winNames = pairResults.winningPair.names.join(' & ');
-                        const winScore = (pairResults.winningPair.score !== null && pairResults.winningPair.score !== undefined)
-                            ? ` (${pairResults.winningPair.score}-${pairResults.winningPair.rivalScore})`
-                            : '';
-                        pairShareText += `👑 PAREJA GANADORA (PISTA 1): ${winNames}${winScore}\n`;
-                    }
-                    if (pairResults?.finalistPair?.names?.length) {
-                        const finNames = pairResults.finalistPair.names.join(' & ');
-                        pairShareText += `🥈 PAREJA FINALISTA (PISTA 1): ${finNames}\n`;
-                    }
-                    if (pairShareText) pairShareText += '\n';
+            // Cached flyer capture promise
+            let _cachedCanvas = null;
+            let _cachedBlob = null;
+            let _cachedFile = null;
+            let _cachedFileName = null;
 
-                    const podiumText = rankingItems.slice(0, 3).map((p, i) => {
-                        const diff = (p.diff !== undefined) ? p.diff : ((p.points || 0) - (p.gamesLost || 0));
-                        const diffStr = diff > 0 ? `+${diff}` : `${diff}`;
-                        return `${medals[i]} ${(p.name || 'Jugador').toUpperCase()} — ${p.won || 0}V (${p.played || 0}PJ) • ${p.points || 0} PTS (Dif: ${diffStr})`;
-                    }).join('\n');
+            const generateFlyerImage = async () => {
+                if (_cachedCanvas && _cachedBlob && _cachedFile) {
+                    return { canvas: _cachedCanvas, blob: _cachedBlob, file: _cachedFile, fileName: _cachedFileName };
+                }
 
-                    const fullText = `🏆 CLASIFICACIÓN OFICIAL SOMOSPADEL BCN\n🎾 ${americanaDoc?.name || 'Entreno'}\n\n${pairShareText}🏆 PODIO INDIVIDUAL (TOP 3):\n${podiumText}\n\n🎯 Todos los partidos y juegos computan para tu Nivel Oficial SomosPadel.\n📲 Consulta cuadros y estadísticas en la app oficial de SomosPadel BCN 🔥`;
-                    if (window.WhatsAppService?.shareText) {
-                        window.WhatsAppService.shareText(fullText);
-                    } else if (navigator.share) {
-                        navigator.share({ text: fullText }).catch(() => {});
-                    } else {
-                        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(fullText)}`, '_blank');
+                await ensureHtml2Canvas();
+
+                const captureEl = document.getElementById('sp-flyer-capture-card');
+                if (!captureEl) throw new Error('Flyer card element not found');
+
+                const canvas = await window.html2canvas(captureEl, {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#080d19',
+                    logging: false,
+                    scrollX: 0,
+                    scrollY: 0
+                });
+
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 0.95));
+                const safeName = (americanaDoc?.name || (isEntreno ? 'Entreno' : 'Americana')).replace(/[^a-zA-Z0-9]/g, '_');
+                const fileName = `SomosPadel_Flyer_${safeName}.png`;
+                const file = new File([blob], fileName, { type: 'image/png' });
+
+                _cachedCanvas = canvas;
+                _cachedBlob = blob;
+                _cachedFile = file;
+                _cachedFileName = fileName;
+
+                return { canvas, blob, file, fileName };
+            };
+
+            // WHATSAPP SHARE
+            document.getElementById('btn-tf-whatsapp').onclick = async () => {
+                const btn = document.getElementById('btn-tf-whatsapp');
+                const origHtml = btn.innerHTML;
+                try {
+                    btn.disabled = true;
+                    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> <span>GENERANDO...</span>`;
+
+                    const { canvas, file, fileName } = await generateFlyerImage();
+                    const shareText = generateOfficialText();
+
+                    // Check mobile Web Share API for direct image share
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        try {
+                            await navigator.share({
+                                files: [file],
+                                title: 'SomosPadel BCN',
+                                text: shareText
+                            });
+                            return;
+                        } catch (shareErr) {
+                            if (shareErr.name === 'AbortError') return;
+                            console.warn("navigator.share failed, fallback to direct download & wa:", shareErr);
+                        }
                     }
+
+                    // Desktop / fallback: Download image and open WhatsApp Web/App
+                    const a = document.createElement('a');
+                    a.href = canvas.toDataURL('image/png');
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+
+                    const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
+                    window.open(waUrl, '_blank');
+
+                    if (window.NotificationService?.showToast) {
+                        window.NotificationService.showToast('📸 Flyer HD descargado y abriendo WhatsApp', 'success');
+                    }
+                } catch (err) {
+                    console.error("Error al compartir en WhatsApp:", err);
+                    alert("No se pudo generar el flyer para WhatsApp. Revisa tu conexión.");
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = origHtml;
+                }
+            };
+
+            // INSTAGRAM SHARE
+            document.getElementById('btn-tf-instagram').onclick = async () => {
+                const btn = document.getElementById('btn-tf-instagram');
+                const origHtml = btn.innerHTML;
+                try {
+                    btn.disabled = true;
+                    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> <span>GENERANDO...</span>`;
+
+                    const { canvas, blob, file, fileName } = await generateFlyerImage();
+
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        try {
+                            await navigator.share({
+                                files: [file],
+                                title: 'SomosPadel BCN'
+                            });
+                            return;
+                        } catch (shareErr) {
+                            if (shareErr.name === 'AbortError') return;
+                            console.warn("navigator.share failed for Instagram, fallback:", shareErr);
+                        }
+                    }
+
+                    // Desktop / fallback: Download image and attempt clipboard copy
+                    const a = document.createElement('a');
+                    a.href = canvas.toDataURL('image/png');
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+
+                    let copied = false;
+                    if (navigator.clipboard && window.ClipboardItem) {
+                        try {
+                            await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                            copied = true;
+                        } catch (cErr) {
+                            console.warn("Clipboard copy not permitted:", cErr);
+                        }
+                    }
+
+                    if (window.NotificationService?.showToast) {
+                        window.NotificationService.showToast(
+                            copied
+                                ? '📸 Flyer HD descargado y copiado al portapapeles para Instagram'
+                                : '📸 Flyer HD descargado para tus Stories de Instagram',
+                            'success'
+                        );
+                    }
+                } catch (err) {
+                    console.error("Error al compartir en Instagram:", err);
+                    alert("No se pudo generar el flyer para Instagram. Revisa tu conexión.");
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = origHtml;
+                }
+            };
+
+            // DIRECT HD FLYER DOWNLOAD
+            document.getElementById('btn-tf-download-flyer').onclick = async () => {
+                const btn = document.getElementById('btn-tf-download-flyer');
+                const origHtml = btn.innerHTML;
+                try {
+                    btn.disabled = true;
+                    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> <span>GENERANDO...</span>`;
+
+                    const { canvas, fileName } = await generateFlyerImage();
+
+                    const a = document.createElement('a');
+                    a.href = canvas.toDataURL('image/png');
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+
+                    if (window.NotificationService?.showToast) {
+                        window.NotificationService.showToast('📸 Flyer HD guardado en tus descargas', 'success');
+                    }
+                } catch (err) {
+                    console.error("Error al descargar flyer:", err);
+                    alert("No se pudo descargar el flyer. Revisa tu conexión.");
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = origHtml;
                 }
             };
 
@@ -923,7 +1268,16 @@
                 closeModal();
                 if (onMenu) onMenu();
             };
+        },
+
+        /**
+         * Alias compatible method for opening the event summary flyer
+         */
+        showEventSummaryFlyerModal(finalRound, matches, americanaDoc, onShare, onTabChange, onMenu) {
+            return this.showTrainingFinishedModal(finalRound, matches, americanaDoc, onShare, onTabChange, onMenu);
         }
     };
+
+    window.EventModals.showEventSummaryFlyerModal = window.EventModals.showTrainingFinishedModal;
 })();
 

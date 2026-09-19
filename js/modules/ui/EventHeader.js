@@ -13,7 +13,7 @@
             const isMixed = (americanaDoc?.category === 'mixed');
             const isMale = (americanaDoc?.category === 'male');
 
-            const categoryLabel = isMale ? 'MASCULINO' : isFemale ? 'FEMENINO' : isMixed ? 'MIXTO' : 'CATEGORÍA PRO';
+            const categoryLabel = isMale ? 'MASCULINO' : isFemale ? 'FEMENINO' : isMixed ? 'MIXTO' : 'CATEGORÍA OPEN';
             const categoryEmoji = isFemale ? '♀️' : isMale ? '♂️' : isMixed ? '👥' : '🎾';
 
             // Theme dinámico de alta fidelidad deportiva
@@ -22,6 +22,11 @@
                 : 'linear-gradient(145deg, #042f2e 0%, #064e3b 50%, #0f172a 100%)';
             const heroAccent = isEntreno ? '#a855f7' : '#ccff00';
             const heroAccentText = isEntreno ? '#d8b4fe' : '#ccff00';
+
+            // Modo de juego: PAREJA FIJA, TWISTER o SUIZO
+            const isSwissEvent = !!(americanaDoc?.pair_mode === 'swiss' || (americanaDoc?.name || '').toUpperCase().includes('SUIZ'));
+            const isFixedEvent = !isSwissEvent && !!(americanaDoc?.is_fija || (americanaDoc?.pair_mode || '').toLowerCase().includes('fix') || (americanaDoc?.name || '').toUpperCase().includes('FIJA'));
+            const eventBadgeLabel = isSwissEvent ? 'SUIZO' : (isFixedEvent ? 'PAREJA FIJA' : 'TWISTER');
 
             return `
                 <div class="tour-header-context" style="background: ${heroBg}; padding: 26px 16px 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.08); position: relative; overflow: hidden; color: #ffffff;">
@@ -35,7 +40,7 @@
                         <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.12); padding: 5px 12px; border-radius: 20px;">
                             <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: ${heroAccent}; box-shadow: 0 0 10px ${heroAccent};"></span>
                             <span style="font-size: 0.65rem; font-weight: 900; letter-spacing: 0.8px; text-transform: uppercase; color: ${heroAccentText};">
-                                ${isEntreno ? 'ENTRENO PRO' : 'TORNEO AMERICANAS'}
+                                ${eventBadgeLabel}
                             </span>
                         </div>
 
@@ -52,6 +57,12 @@
                                     style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #ffffff; padding: 7px 13px; border-radius: 12px; font-weight: 900; font-size: 0.68rem; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.16); display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
                                 <i class="fas fa-broadcast-tower" style="color: #ef4444; font-size: 0.75rem;"></i>
                                 <span>EN VIVO / TV</span>
+                            </button>
+                            <button type="button" onclick="window.ControlTowerView ? window.ControlTowerView.openEventSummaryFlyer() : window.openSessionFlyer('${americanaDoc?.id}')" 
+                                    title="Ver resumen y flyer de clasificación para compartir en WhatsApp e Instagram"
+                                    style="background: linear-gradient(135deg, rgba(204, 255, 0, 0.2) 0%, rgba(204, 255, 0, 0.06) 100%); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #CCFF00; padding: 7px 12px; border-radius: 12px; font-weight: 900; font-size: 0.68rem; cursor: pointer; border: 1px solid rgba(204, 255, 0, 0.4); display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(204,255,0,0.15);">
+                                <i class="fas fa-trophy" style="color: #CCFF00; font-size: 0.75rem;"></i>
+                                <span>FLYER / PODIO</span>
                             </button>
                         </div>
                     </div>
@@ -91,19 +102,13 @@
                     </div>
                 </div>
 
-                <!-- Sub Navigation Bar (CALENDARIO | EN VIVO | POSICIONES | CUADROS | STATS) -->
+                <!-- Sub Navigation Bar (RESULTADOS | POSICIONES | RESUMEN) -->
                 <div class="tour-sub-nav" style="background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); padding: 8px 10px; display: flex; gap: 5px; border-bottom: 1px solid #e2e8f0; position: sticky; top: 50px; z-index: 1001; box-shadow: 0 4px 20px rgba(0,0,0,0.04); overflow-x: auto; scrollbar-width: none;">
                     <button class="tour-subnav-btn ${activeTab === 'results' ? 'active' : ''}" 
                             onclick="window.ControlTowerView.switchTab('results')"
                             style="${activeTab === 'results' ? 'background: #0f172a; color: #ffffff; border-color: #0f172a; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);' : 'background: #f1f5f9; color: #64748b; border-color: #e2e8f0;'}">
                         <i class="fas fa-clipboard-check" style="${activeTab === 'results' ? `color: ${heroAccent};` : ''}"></i>
                         <span>RESULTADOS</span>
-                    </button>
-                    <button class="tour-subnav-btn ${activeTab === 'live_feed' ? 'active' : ''}" 
-                            onclick="window.ControlTowerView.switchTab('live_feed')"
-                            style="${activeTab === 'live_feed' ? 'background: #0f172a; color: #ffffff; border-color: #0f172a; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);' : 'background: #f1f5f9; color: #64748b; border-color: #e2e8f0;'}">
-                        <i class="fas fa-broadcast-tower" style="color: #ef4444; animation: livePulseDot 1.8s infinite;"></i>
-                        <span>EN VIVO</span>
                     </button>
                     ${americanaDoc?.status !== 'scheduled' ? `
                         <button class="tour-subnav-btn ${activeTab === 'standings' ? 'active' : ''}" 
@@ -112,17 +117,11 @@
                             <i class="fas fa-trophy" style="${activeTab === 'standings' ? 'color: #fbbf24;' : ''}"></i>
                             <span>POSICIONES</span>
                         </button>
-                        <button class="tour-subnav-btn ${activeTab === 'brackets' ? 'active' : ''}" 
-                                onclick="window.ControlTowerView.switchTab('brackets')"
-                                style="${activeTab === 'brackets' ? 'background: #0f172a; color: #ffffff; border-color: #0f172a; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);' : 'background: #f1f5f9; color: #64748b; border-color: #e2e8f0;'}">
-                            <i class="fas fa-sitemap" style="${activeTab === 'brackets' ? 'color: #38bdf8;' : ''}"></i>
-                            <span>CUADROS</span>
-                        </button>
-                        <button class="tour-subnav-btn ${activeTab === 'summary' ? 'active' : ''}" 
-                                onclick="window.ControlTowerView.switchTab('summary')"
-                                style="${activeTab === 'summary' ? 'background: #0f172a; color: #ffffff; border-color: #0f172a; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);' : 'background: #f1f5f9; color: #64748b; border-color: #e2e8f0;'}">
-                            <i class="fas fa-chart-bar" style="${activeTab === 'summary' ? 'color: #ec4899;' : ''}"></i>
-                            <span>STATS</span>
+                        <button class="tour-subnav-btn ${(activeTab === 'resumen' || activeTab === 'summary' || activeTab === 'stats') ? 'active' : ''}" 
+                                onclick="window.ControlTowerView.switchTab('resumen')"
+                                style="${(activeTab === 'resumen' || activeTab === 'summary' || activeTab === 'stats') ? 'background: #0f172a; color: #ffffff; border-color: #0f172a; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);' : 'background: #f1f5f9; color: #64748b; border-color: #e2e8f0;'}">
+                            <i class="fas fa-chart-line" style="${(activeTab === 'resumen' || activeTab === 'summary' || activeTab === 'stats') ? 'color: #10b981;' : ''}"></i>
+                            <span>RESUMEN</span>
                         </button>
                     ` : ''}
                 </div>

@@ -767,6 +767,13 @@
                         </button>
                     `;
                 }).join('')}
+                        <button class="esm-pro-btn inactive"
+                            style="border: 1px solid rgba(204, 255, 0, 0.45); color: #CCFF00; background: rgba(204, 255, 0, 0.08);"
+                            onclick="if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(12); window.showPointsPolicyModal ? window.showPointsPolicyModal() : null;"
+                            aria-label="Sistema Oficial de Puntos">
+                            <i class="fas fa-balance-scale" style="font-size: 0.85rem; color: #CCFF00;"></i>
+                            <span style="text-transform: uppercase; font-weight: 950;">PUNTOS RANKING</span>
+                        </button>
                     </div>
                     <button id="esm-arrow-right" class="esm-nav-arrow" onclick="window.EventsController.scrollSubmenu('right')" title="Desplazar a la derecha" aria-label="Desplazar derecha">
                         <i class="fas fa-chevron-right" style="font-size: 0.8rem;"></i>
@@ -1497,13 +1504,23 @@
                                     3 FORMATOS
                                 </span>
                             </div>
-                            <button onclick="window.showGameModesModal ? window.showGameModesModal('comparativa') : null" 
-                                    style="background: #f8fafc; border: 1.5px solid #cbd5e1; color: #0f172a; font-size: 0.68rem; font-weight: 850; padding: 5px 11px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.2s;"
-                                    onmouseover="this.style.background='#0f172a'; this.style.borderColor='#0f172a'; this.style.color='#CCFF00';"
-                                    onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#cbd5e1'; this.style.color='#0f172a';">
-                                <span>Guía & Comparativa</span>
-                                <i class="fas fa-chevron-right" style="font-size: 0.6rem; color: #65a30d;"></i>
-                            </button>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <button onclick="window.showPointsPolicyModal ? window.showPointsPolicyModal() : null" 
+                                        title="Consultar Sistema Oficial de Puntos para el Ranking"
+                                        style="background: #0f172a; border: 1.5px solid rgba(204, 255, 0, 0.4); color: #CCFF00; font-size: 0.68rem; font-weight: 900; padding: 5px 10px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.12);"
+                                        onmouseover="this.style.background='#1e293b'; this.style.transform='scale(1.03)';"
+                                        onmouseout="this.style.background='#0f172a'; this.style.transform='scale(1)';">
+                                    <i class="fas fa-balance-scale"></i>
+                                    <span>Puntos Ranking</span>
+                                </button>
+                                <button onclick="window.showGameModesModal ? window.showGameModesModal('comparativa') : null" 
+                                        style="background: #f8fafc; border: 1.5px solid #cbd5e1; color: #0f172a; font-size: 0.68rem; font-weight: 850; padding: 5px 11px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.2s;"
+                                        onmouseover="this.style.background='#0f172a'; this.style.borderColor='#0f172a'; this.style.color='#CCFF00';"
+                                        onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#cbd5e1'; this.style.color='#0f172a';">
+                                    <span>Guía</span>
+                                    <i class="fas fa-chevron-right" style="font-size: 0.6rem; color: #65a30d;"></i>
+                                </button>
+                            </div>
                         </div>
                         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px;">
                             <!-- CHIP 1: PAREJA FIJA -->
@@ -1563,6 +1580,15 @@
                                 <span style="background: #e0f2fe; color: #0284c7; border: 1px solid #38bdf8; padding: 3px 8px; border-radius: 8px; font-size: 0.68rem; font-weight: 950;">👥 Pareja Fija</span>
                                 <span style="background: #fce7f3; color: #db2777; border: 1px solid #ec4899; padding: 3px 8px; border-radius: 8px; font-size: 0.68rem; font-weight: 950;">🌪️ Twister</span>
                                 <span style="background: #fee2e2; color: #dc2626; border: 1px solid #ef4444; padding: 3px 8px; border-radius: 8px; font-size: 0.68rem; font-weight: 950; display: inline-flex; align-items: center; gap: 3px;"><span style="background:#dc2626; color:#fff; border-radius:3px; padding:0 3px; font-size:0.58rem; font-weight:950;">✚</span> Suizo</span>
+                            </button>
+
+                            <!-- BOTÓN BANNER SISTEMA OFICIAL DE PUNTOS Y RANKING -->
+                            <button onclick="window.showPointsPolicyModal ? window.showPointsPolicyModal() : null" 
+                                    style="background: linear-gradient(135deg, #090e1a 0%, #0f172a 100%); color: #CCFF00; border: 1.5px solid rgba(204,255,0,0.45); padding: 12px 22px; border-radius: 999px; font-size: 0.78rem; font-weight: 950; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.35), 0 0 15px rgba(204,255,0,0.15); transition: all 0.22s ease;" 
+                                    onmouseover="this.style.transform='scale(1.03)'; this.style.borderColor='#CCFF00'; this.style.boxShadow='0 10px 28px rgba(204,255,0,0.3)';" 
+                                    onmouseout="this.style.transform='scale(1)'; this.style.borderColor='rgba(204,255,0,0.45)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.35), 0 0 15px rgba(204,255,0,0.15)';">
+                                <i class="fas fa-balance-scale" style="font-size: 1rem; color: #CCFF00;"></i>
+                                <span>⚖️ SISTEMA OFICIAL DE PUNTOS: ENTRENOS & AMERICANAS (100 PTS + 2 PTS/PG)</span>
                             </button>
 
                             ${(this.state.activeTab === 'events') ? `
@@ -1723,7 +1749,7 @@
                                         <div style="flex: 1; min-width: 0; background: white; border-radius: 20px; padding: 16px 18px; border: 1.5px solid ${isLive ? '#CCFF00' : '#e2e8f0'}; box-shadow: 0 8px 20px rgba(0,0,0,0.03); position: relative; overflow: hidden;">
                                             ${isLive ? `<div style="position: absolute; top: 0; right: 0; background: #FF2D55; color: white; padding: 3px 10px; font-size: 0.58rem; font-weight: 900; border-bottom-left-radius: 10px; animation: pulse 2s infinite;">LIVE NOW</div>` : ''}
                                             
-                                            <div style="font-size: 0.62rem; font-weight: 800; color: #84cc16; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.8px;">${evt.type === 'entreno' ? 'Entreno Pro' : 'Americana'}</div>
+                                            <div style="font-size: 0.62rem; font-weight: 800; color: #84cc16; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.8px;">${evt.type === 'entreno' ? 'Entreno' : 'Americana'}</div>
                                             <h3 style="margin: 0; font-size: 1.05rem; color: #0f172a; font-weight: 900; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${evt.name}</h3>
                                             
                                             <div style="display: flex; gap: 12px; margin: 10px 0 14px; color: #64748b; font-size: 0.76rem; font-weight: 600;">

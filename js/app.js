@@ -1080,6 +1080,15 @@
                             <div class="drawer-section">
                                 <div class="drawer-section-title"><span class="dot"></span> CLUB & COMUNIDAD</div>
                                 <div class="drawer-group-box">
+                                    <div class="drawer-nav-row" onclick="window.closeDrawer(); window.showPointsPolicyModal ? window.showPointsPolicyModal() : null">
+                                        <div class="drawer-row-icon" style="background: rgba(204, 255, 0, 0.18); color: #CCFF00; border: 1px solid rgba(204, 255, 0, 0.4);">
+                                            <i class="fas fa-balance-scale"></i>
+                                        </div>
+                                        <span class="drawer-row-title" style="color: #ffffff !important; font-weight: 800; font-size: 0.88rem; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">Sistema de Puntos & Ranking Oficial</span>
+                                        <span class="drawer-row-badge" style="background: rgba(204, 255, 0, 0.2); color: #CCFF00; border: 1px solid rgba(204, 255, 0, 0.35);">BAREMO</span>
+                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
+                                    </div>
+
                                     <div class="drawer-nav-row" onclick="window.closeDrawer(); window.showGameModesModal()">
                                         <div class="drawer-row-icon" style="background: rgba(204, 255, 0, 0.15); color: #CCFF00; border: 1px solid rgba(204, 255, 0, 0.3);">
                                             <i class="fas fa-gamepad"></i>

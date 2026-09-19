@@ -163,9 +163,18 @@
                         text-transform: uppercase;
                         letter-spacing: 0.5px;
                     }
+                    .sp-rules-toggle-action {
+                        transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+                        user-select: none;
+                    }
+                    .sp-rules-toggle-action:hover {
+                        background: #bae6fd !important;
+                        color: #0369a1 !important;
+                        transform: translateY(-1px);
+                    }
                     .sp-rules-toggle-icon {
                         font-size: 0.75rem;
-                        color: #64748b;
+                        color: inherit;
                         transition: transform 0.2s;
                     }
                     .sp-rules-body {
@@ -1045,9 +1054,13 @@
                             <span>VER RESULTADOS</span>
                         </button>
                         <div class="sp-standings-top-actions">
-                            <button class="sp-btn-rules" onclick="window.ControlTowerStandings.toggleRulesModal(true)">
+                            <button class="sp-btn-rules" onclick="window.ControlTowerStandings.toggleRulesBanner()">
                                 <i class="fas fa-book-open"></i>
                                 <span>${isEntreno ? 'NORMAS DEL ENTRENO' : 'REGLAS OFICIALES'}</span>
+                            </button>
+                            <button class="sp-btn-rules" style="background: #0f172a; color: #CCFF00; border: 1.5px solid rgba(204, 255, 0, 0.4);" onclick="window.showPointsPolicyModal ? window.showPointsPolicyModal() : null" title="Consultar Sistema Oficial de Puntos">
+                                <i class="fas fa-balance-scale"></i>
+                                <span>PUNTOS RANKING</span>
                             </button>
                             <button class="sp-btn-share-ranking" onclick="window.ControlTowerStandings.shareStandings(window.ControlTowerStandings.lastRankingData, window.ControlTowerView?.currentAmericanaDoc)">
                                 <i class="fas fa-share-alt"></i>
@@ -1063,11 +1076,9 @@
                                 <i class="fas fa-award" style="color:${isSwiss ? '#dc2626' : '#0284c7'};"></i>
                                 <span>${isSwiss ? 'NORMAS OFICIALES • SISTEMA SUIZO EXPRESS (6 RONDAS)' : (isEntreno ? 'NORMAS DEL ENTRENO Y REGLAS DE PUNTUACIÓN' : 'NORMAS OFICIALES DEL TORNEO')}</span>
                             </div>
-                            <div class="sp-rules-toggle-icon" id="sp-rules-toggle-icon">
-                                <i class="fas fa-chevron-up"></i>
-                            </div>
+                            <div class="sp-rules-toggle-action" id="sp-rules-toggle-btn" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.72rem; font-weight: 800; color: #0284c7; background: #e0f2fe; padding: 4px 10px; border-radius: 20px; cursor: pointer;"><span>Mostrar más</span> <i class="fas fa-chevron-down" id="sp-rules-toggle-icon"></i></div>
                         </div>
-                        <div class="sp-rules-body" id="sp-rules-body-content">
+                        <div class="sp-rules-body" id="sp-rules-body-content" style="display: none;">
                             ${isSwiss ? `
                                 <div class="sp-rule-box">
                                     <div class="sp-rule-box-header">
@@ -1260,7 +1271,92 @@
                                     </div>
                                 `}
 
-                                <button class="sp-btn-share-ranking" style="justify-content:center; padding:12px; margin-top:6px;" onclick="window.ControlTowerStandings.toggleRulesModal(false)">
+                                <!-- SECCIÓN DESTACADA: PUNTUACIÓN PARA EL RANKING GENERAL -->
+                                <div class="sp-rule-box" style="border-left: 4px solid #CCFF00; background: #0f172a; color: #ffffff; margin-top: 14px; border-radius: 16px; padding: 14px 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.25);">
+                                    <div class="sp-rule-box-header" style="color: #CCFF00; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px; margin-bottom: 8px;">
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <span style="font-size: 1.25rem;">📈</span>
+                                            <span style="font-size: 0.85rem; font-weight: 950; letter-spacing: 0.3px; color:#CCFF00;">PUNTUACIÓN PARA EL RANKING GENERAL</span>
+                                        </div>
+                                        <span style="background: rgba(204,255,0,0.18); color: #CCFF00; font-size: 0.60rem; font-weight: 900; padding: 2px 7px; border-radius: 6px;">OFICIAL</span>
+                                    </div>
+
+                                    <p class="sp-rule-box-desc" style="font-size: 0.76rem; color: #cbd5e1; margin-top: 4px; line-height: 1.45;">
+                                        Tanto los <strong>Entrenos</strong> como las <strong>Americanas</strong> otorgan exactamente los mismos puntos al ranking oficial de SomosPadel Barcelona (mismo peso 1:1):
+                                    </p>
+
+                                    <!-- Baremo resumido en tarjetas -->
+                                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 10px 0;">
+                                        <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(204,255,0,0.3); border-radius: 8px; padding: 6px 4px; text-align: center;">
+                                            <div style="color: #CCFF00; font-size: 0.82rem; font-weight: 950;">1º • 100p</div>
+                                            <div style="color: #94a3b8; font-size: 0.58rem;">👑 Campeón</div>
+                                        </div>
+                                        <div style="background: rgba(255,255,255,0.06); border-radius: 8px; padding: 6px 4px; text-align: center;">
+                                            <div style="color: #ffffff; font-size: 0.82rem; font-weight: 950;">2º • 80p</div>
+                                            <div style="color: #94a3b8; font-size: 0.58rem;">🥈 Subcampeón</div>
+                                        </div>
+                                        <div style="background: rgba(255,255,255,0.06); border-radius: 8px; padding: 6px 4px; text-align: center;">
+                                            <div style="color: #f59e0b; font-size: 0.82rem; font-weight: 950;">3º • 65p</div>
+                                            <div style="color: #94a3b8; font-size: 0.58rem;">🥉 Podio</div>
+                                        </div>
+                                        <div style="background: rgba(255,255,255,0.06); border-radius: 8px; padding: 6px 4px; text-align: center;">
+                                            <div style="color: #38bdf8; font-size: 0.82rem; font-weight: 950;">4º • 55p</div>
+                                            <div style="color: #94a3b8; font-size: 0.58rem;">Top 4</div>
+                                        </div>
+                                    </div>
+                                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 8px;">
+                                        <div style="background: rgba(255,255,255,0.04); border-radius: 8px; padding: 5px 3px; text-align: center; font-size: 0.68rem; color: #cbd5e1;">
+                                            <strong>5º:</strong> 45p
+                                        </div>
+                                        <div style="background: rgba(255,255,255,0.04); border-radius: 8px; padding: 5px 3px; text-align: center; font-size: 0.68rem; color: #cbd5e1;">
+                                            <strong>6º:</strong> 38p
+                                        </div>
+                                        <div style="background: rgba(255,255,255,0.04); border-radius: 8px; padding: 5px 3px; text-align: center; font-size: 0.68rem; color: #cbd5e1;">
+                                            <strong>7º:</strong> 32p
+                                        </div>
+                                        <div style="background: rgba(255,255,255,0.04); border-radius: 8px; padding: 5px 3px; text-align: center; font-size: 0.68rem; color: #cbd5e1;">
+                                            <strong>8º:</strong> 28p
+                                        </div>
+                                    </div>
+                                    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 10px;">
+                                        <div style="background: rgba(255,255,255,0.04); border-radius: 8px; padding: 5px 2px; text-align: center; font-size: 0.64rem; color: #cbd5e1;">
+                                            <strong>9º:</strong> 24p
+                                        </div>
+                                        <div style="background: rgba(255,255,255,0.04); border-radius: 8px; padding: 5px 2px; text-align: center; font-size: 0.64rem; color: #cbd5e1;">
+                                            <strong>10º:</strong> 20p
+                                        </div>
+                                        <div style="background: rgba(255,255,255,0.04); border-radius: 8px; padding: 5px 2px; text-align: center; font-size: 0.64rem; color: #cbd5e1;">
+                                            <strong>11º:</strong> 16p
+                                        </div>
+                                        <div style="background: rgba(255,255,255,0.04); border-radius: 8px; padding: 5px 2px; text-align: center; font-size: 0.64rem; color: #cbd5e1;">
+                                            <strong>12º:</strong> 12p
+                                        </div>
+                                        <div style="background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.3); border-radius: 8px; padding: 5px 2px; text-align: center; font-size: 0.64rem; color: #4ade80;">
+                                            <strong>13º+:</strong> 10p
+                                        </div>
+                                    </div>
+
+                                    <!-- Bonus por victoria -->
+                                    <div style="background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 10px; padding: 8px 12px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
+                                        <div style="font-size: 0.74rem; color: #e0f2fe;">
+                                            ⚡ <strong>Bonus por Victoria:</strong> +2 puntos extra por cada partido ganado (PG).
+                                        </div>
+                                        <span style="color: #38bdf8; font-weight: 950; font-size: 0.8rem; white-space: nowrap;">+2 pts/PG</span>
+                                    </div>
+
+                                    <!-- Reglas por modalidad -->
+                                    <div style="font-size: 0.72rem; color: #94a3b8; line-height: 1.45; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px;">
+                                        <p style="margin: 0 0 4px;"><strong style="color: #ec4899;">🌪️ TWISTER:</strong> Puesto individual + 2 pts por PG individual.</p>
+                                        <p style="margin: 0 0 4px;"><strong style="color: #ef4444;">✚ SUIZO:</strong> Puesto tras 6 rondas + 2 pts por victoria obtenida.</p>
+                                        <p style="margin: 0 0 6px;"><strong style="color: #38bdf8;">👥 PAREJA FIJA:</strong> Ambos jugadores reciben los puntos del puesto de la dupla + 2 pts por victoria de la pareja.</p>
+                                    </div>
+
+                                    <button type="button" onclick="window.showPointsPolicyModal ? window.showPointsPolicyModal() : null" style="width: 100%; margin-top: 8px; background: rgba(204, 255, 0, 0.15); border: 1px solid rgba(204, 255, 0, 0.4); color: #CCFF00; padding: 9px; border-radius: 10px; font-weight: 900; font-size: 0.74rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;" onmouseover="this.style.background='#CCFF00'; this.style.color='#000';" onmouseout="this.style.background='rgba(204, 255, 0, 0.15)'; this.style.color='#CCFF00';">
+                                        <i class="fas fa-calculator"></i> ABRIR SIMULADOR Y TABLA COMPLETA
+                                    </button>
+                                </div>
+
+                                <button class="sp-btn-share-ranking" style="justify-content:center; padding:12px; margin-top:12px;" onclick="window.ControlTowerStandings.toggleRulesModal(false)">
                                     <i class="fas fa-check"></i>
                                     <span>ENTENDIDO, ¡A POR EL PARTIDO!</span>
                                 </button>
@@ -1428,6 +1524,22 @@
                                 </tbody>
                             </table>
                         </div>
+                    </div>
+
+                    <!-- SECCIÓN INTEGRADA: CUADROS Y ESCALERA DE CRUCES -->
+                    <div class="sp-standings-brackets-section" id="sp-standings-brackets" style="margin-top: 26px; border-top: 1.5px dashed #cbd5e1; padding-top: 22px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding: 0 4px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div style="width: 32px; height: 32px; border-radius: 10px; background: #e0f2fe; color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; box-shadow: 0 2px 6px rgba(2,132,199,0.15);">
+                                    <i class="fas fa-sitemap"></i>
+                                </div>
+                                <div>
+                                    <h3 style="margin: 0; font-size: 0.95rem; font-weight: 950; color: #0f172a; letter-spacing: -0.3px;">CUADROS Y ESCALERA DE CRUCES</h3>
+                                    <span style="font-size: 0.68rem; font-weight: 700; color: #64748b;">Evolución de parejas y pistas por ronda</span>
+                                </div>
+                            </div>
+                        </div>
+                        ${window.ControlTowerBrackets ? window.ControlTowerBrackets.render(matches, eventDoc) : ''}
                     </div>
 
                     <!-- MODAL DE FICHA TÉCNICA DEL JUGADOR -->
@@ -1610,14 +1722,28 @@
 
         static toggleRulesBanner() {
             const body = document.getElementById('sp-rules-body-content');
+            const btn = document.getElementById('sp-rules-toggle-btn');
             const icon = document.getElementById('sp-rules-toggle-icon');
             if (!body) return;
-            if (body.style.display === 'none') {
+            const isHidden = body.style.display === 'none' || window.getComputedStyle(body).display === 'none';
+            if (isHidden) {
                 body.style.display = 'grid';
-                if (icon) icon.innerHTML = '<i class="fas fa-chevron-up"></i>';
+                if (btn) {
+                    const textSpan = btn.querySelector('span');
+                    if (textSpan) textSpan.textContent = 'Mostrar menos';
+                }
+                if (icon) {
+                    icon.className = 'fas fa-chevron-up';
+                }
             } else {
                 body.style.display = 'none';
-                if (icon) icon.innerHTML = '<i class="fas fa-chevron-down"></i>';
+                if (btn) {
+                    const textSpan = btn.querySelector('span');
+                    if (textSpan) textSpan.textContent = 'Mostrar más';
+                }
+                if (icon) {
+                    icon.className = 'fas fa-chevron-down';
+                }
             }
         }
 

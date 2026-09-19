@@ -26,105 +26,276 @@
         }
 
         /**
-         * Partido próximo (HOY)
+         * Partido próximo (HOY) - Versión Ultra Compacta, Llamativa e Interactiva
          */
         static renderUpcomingMatch(ctx) {
             const timeUntil = this.getTimeUntil(ctx.matchTime);
             const urgencyClass = timeUntil < 60 ? 'urgent' : timeUntil < 180 ? 'soon' : 'today';
-            const accentColor = urgencyClass === 'urgent' ? '#ef4444' : urgencyClass === 'soon' ? '#f59e0b' : '#72a800';
+            const accentColor = urgencyClass === 'urgent' ? '#ef4444' : urgencyClass === 'soon' ? '#f59e0b' : '#10b981';
+            const accentGradient = urgencyClass === 'urgent' 
+                ? 'linear-gradient(135deg, #ef4444 0%, #f43f5e 100%)' 
+                : urgencyClass === 'soon' 
+                ? 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)' 
+                : 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+
+            const badgeText = urgencyClass === 'urgent'
+                ? (timeUntil <= 0 ? '⚡ ¡ENTRAS EN PISTA YA!' : `⚡ ¡A PISTA EN ${timeUntil} MIN!`)
+                : urgencyClass === 'soon'
+                ? `🔥 ENTRAS EN ${timeUntil} MIN`
+                : `🎾 TU PARTIDO DE HOY`;
 
             return `
-                <div class="premium-glass-card upcoming fade-in" style="
-                    border-left: 5px solid ${accentColor};
-                    padding: 28px;
-                    margin: 0 0 20px 0;
-                    background: #ffffff;
-                    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+                <div class="hero-card-upcoming-compact fade-in" style="
+                    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+                    border: 1px solid rgba(0, 0, 0, 0.08);
+                    border-left: 4px solid ${accentColor};
+                    border-radius: 18px;
+                    padding: 12px 14px;
+                    margin: 0 0 14px 0;
+                    width: 100%;
+                    box-sizing: border-box;
+                    box-shadow: 0 8px 24px -4px ${accentColor}25, 0 2px 6px rgba(0,0,0,0.03);
                     position: relative;
                     overflow: hidden;
-                    animation: floatUp 0.6s ease-out;
-                ">
-                    <!-- Subtle Glow -->
-                    <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: radial-gradient(circle, ${accentColor}15 0%, transparent 70%); filter: blur(30px);"></div>
+                    font-family: 'Outfit', 'Inter', -apple-system, sans-serif;
+                    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 28px -4px ${accentColor}35, 0 4px 10px rgba(0,0,0,0.05)';"
+                   onmouseout="this.style.transform='none'; this.style.boxShadow='0 8px 24px -4px ${accentColor}25, 0 2px 6px rgba(0,0,0,0.03)';">
 
-                    ${urgencyClass === 'urgent' ? `
-                        <div class="neon-badge" style="background: #FF2D55; color: white; animation: pulse 2s infinite;">
-                            <i class="fas fa-bolt"></i> ¡ENTRAS EN PISTA EN ${timeUntil} MINUTOS!
-                        </div>
-                    ` : `
-                        <div class="neon-badge" style="color: ${accentColor}; border: 1px solid ${accentColor}40;">
-                            <i class="far fa-calendar-check"></i> TU PRÓXIMO PARTIDO
-                        </div>
-                    `}
-                    
-                    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px;">
-                        <div>
-                            <div class="wow-title" style="font-size: 2.8rem; line-height: 1; margin-bottom: 6px; text-shadow: 0 0 15px ${accentColor}40;">
-                                ${ctx.matchTime}
-                            </div>
-                            <div style="font-size: 1rem; color: #94a3b8; font-weight: 700; display: flex; align-items: center; gap: 6px;">
-                                <span style="color: #0a192f; opacity: 0.6;">HOY</span> • ${ctx.matchDay}
-                            </div>
-                        </div>
-                        <div style="background: rgba(255,255,255,0.03); padding: 12px 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.08); text-align: center;">
-                            <div style="font-size: 0.6rem; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 2px;">PISTA</div>
-                            <div class="stat-highlight" style="color: ${accentColor}; font-size: 2rem;">${ctx.court || '?'}</div>
-                        </div>
-                    </div>
+                    <style>
+                        @keyframes heroBadgePulse {
+                            0%, 100% { transform: scale(1); filter: brightness(1); }
+                            50% { transform: scale(1.02); filter: brightness(1.12); }
+                        }
+                        @keyframes heroShimmerAnim {
+                            0% { transform: translateX(-120%) skewX(-20deg); }
+                            100% { transform: translateX(250%) skewX(-20deg); }
+                        }
+                        .hero-shimmer-btn {
+                            position: relative;
+                            overflow: hidden;
+                        }
+                        .hero-shimmer-btn::after {
+                            content: '';
+                            position: absolute;
+                            top: 0; left: 0; width: 60%; height: 100%;
+                            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+                            transform: skewX(-20deg);
+                            animation: heroShimmerAnim 2.8s infinite;
+                        }
+                    </style>
 
-                    <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 18px; border-radius: 20px; margin-bottom: 24px;">
-                        <div style="display: flex; align-items: center; gap: 14px;">
-                            <div style="width: 44px; height: 44px; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
-                                🤝
-                            </div>
-                            <div style="flex: 1;">
-                                <div style="font-size: 0.65rem; color: #64748b; font-weight: 800; text-transform: uppercase;">Compañero</div>
-                                <div style="font-size: 1.1rem; font-weight: 950; color: #0a192f;">${ctx.partner || 'Por asignar'}</div>
-                            </div>
-                        </div>
-                        <div style="height: 1px; background: rgba(255,255,255,0.04); margin: 14px 0;"></div>
-                        <div style="display: flex; align-items: center; gap: 14px;">
-                            <div style="width: 44px; height: 44px; background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.2); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
-                                ⚔️
-                            </div>
-                            <div style="flex: 1;">
-                                <div style="font-size: 0.65rem; color: #64748b; font-weight: 800; text-transform: uppercase;">Rivales</div>
-                                <div style="font-size: 1.1rem; font-weight: 950; color: #0a192f;">${ctx.opponents || 'Por asignar'}</div>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- Glow de fondo decorativo -->
+                    <div style="position: absolute; top: -35px; right: -35px; width: 120px; height: 120px; background: radial-gradient(circle, ${accentColor}18 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-                        <button onclick="Router.navigate('live')" style="
-                            background: rgba(255,255,255,0.05);
-                            border: 1px solid rgba(255,255,255,0.1);
-                            color: white;
-                            padding: 16px;
-                            border-radius: 18px;
+                    <!-- Fila 1: Badges superiores (Cuenta atrás + Pista) -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; position: relative; z-index: 2;">
+                        <div style="
+                            background: ${accentGradient};
+                            color: #ffffff;
+                            font-size: 0.65rem;
                             font-weight: 900;
-                            font-size: 0.8rem;
-                            cursor: pointer;
-                            transition: all 0.3s;
+                            padding: 4px 10px;
+                            border-radius: 8px;
+                            letter-spacing: 0.6px;
                             text-transform: uppercase;
-                            letter-spacing: 1px;
-                        " onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.transform='translateY(-3px)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.transform='translateY(0)'">
-                            Detalles
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 5px;
+                            box-shadow: 0 3px 10px ${accentColor}40;
+                            ${urgencyClass === 'urgent' ? 'animation: heroBadgePulse 1.8s infinite ease-in-out;' : ''}
+                        ">
+                            ${badgeText}
+                        </div>
+
+                        <!-- Badge Pista -->
+                        <div style="
+                            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+                            border: 1px solid rgba(255, 255, 255, 0.12);
+                            border-radius: 9px;
+                            padding: 3px 9px;
+                            display: flex;
+                            align-items: center;
+                            gap: 5px;
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+                        ">
+                            <span style="font-size: 0.58rem; font-weight: 850; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1;">PISTA</span>
+                            <span style="font-size: 1.05rem; font-weight: 950; color: ${accentColor}; line-height: 1;">${ctx.court || '?'}</span>
+                        </div>
+                    </div>
+
+                    <!-- Fila 2: Hora destacada y Fecha/Ronda -->
+                    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; position: relative; z-index: 2;">
+                        <div style="display: flex; align-items: baseline; gap: 8px;">
+                            <div style="
+                                font-size: 1.85rem;
+                                font-weight: 950;
+                                color: #0f172a;
+                                line-height: 1;
+                                letter-spacing: -0.8px;
+                                font-family: 'Outfit', sans-serif;
+                            ">
+                                ${ctx.matchTime || '10:00'}
+                            </div>
+                            <div style="
+                                font-size: 0.76rem;
+                                font-weight: 750;
+                                color: #64748b;
+                                display: flex;
+                                align-items: center;
+                                gap: 5px;
+                            ">
+                                <span style="color: #0f172a; font-weight: 900;">HOY</span>
+                                <span style="opacity: 0.4;">•</span>
+                                <span>${ctx.matchDay || 'Partido'}</span>
+                                ${ctx.round ? `<span style="opacity: 0.4;">•</span><span style="background: rgba(15,23,42,0.06); padding: 1px 6px; border-radius: 5px; font-size: 0.68rem; font-weight: 800; color: #334155;">R${ctx.round}</span>` : ''}
+                            </div>
+                        </div>
+
+                        ${ctx.matchType ? `
+                            <span style="
+                                font-size: 0.64rem;
+                                font-weight: 850;
+                                color: #64748b;
+                                text-transform: uppercase;
+                                letter-spacing: 0.5px;
+                                background: rgba(0,0,0,0.04);
+                                padding: 2px 7px;
+                                border-radius: 6px;
+                            ">
+                                ${ctx.matchType === 'entreno' ? 'Pozo' : 'Americana'}
+                            </span>
+                        ` : ''}
+                    </div>
+
+                    <!-- Fila 3: Pareja vs Rivales (Ultra-compacto, estructurado y claro) -->
+                    <div style="
+                        background: #ffffff;
+                        border: 1px solid #e2e8f0;
+                        border-radius: 12px;
+                        padding: 7px 9px;
+                        margin-bottom: 10px;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 5px;
+                        box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+                        position: relative;
+                        z-index: 2;
+                    ">
+                        <!-- Fila Compañero -->
+                        <div style="display: flex; align-items: center; gap: 7px; min-width: 0;">
+                            <div style="
+                                width: 22px;
+                                height: 22px;
+                                border-radius: 7px;
+                                background: #eff6ff;
+                                border: 1px solid #bfdbfe;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 0.75rem;
+                                flex-shrink: 0;
+                            ">🤝</div>
+                            <div style="min-width: 0; flex: 1; display: flex; align-items: baseline; gap: 6px; overflow: hidden;">
+                                <span style="font-size: 0.58rem; font-weight: 850; color: #2563eb; text-transform: uppercase; letter-spacing: 0.5px; flex-shrink: 0;">COMPAÑERO</span>
+                                <span style="
+                                    font-size: 0.80rem;
+                                    font-weight: 900;
+                                    color: #0f172a;
+                                    white-space: nowrap;
+                                    overflow: hidden;
+                                    text-overflow: ellipsis;
+                                " title="${ctx.partner || 'Por asignar'}">${ctx.partner || 'Por asignar'}</span>
+                            </div>
+                        </div>
+
+                        <div style="height: 1px; background: #f1f5f9; margin: 0 2px;"></div>
+
+                        <!-- Fila Rivales -->
+                        <div style="display: flex; align-items: center; gap: 7px; min-width: 0;">
+                            <div style="
+                                width: 22px;
+                                height: 22px;
+                                border-radius: 7px;
+                                background: #fff1f2;
+                                border: 1px solid #fecdd3;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 0.75rem;
+                                flex-shrink: 0;
+                            ">⚔️</div>
+                            <div style="min-width: 0; flex: 1; display: flex; align-items: baseline; gap: 6px; overflow: hidden;">
+                                <span style="font-size: 0.58rem; font-weight: 850; color: #e11d48; text-transform: uppercase; letter-spacing: 0.5px; flex-shrink: 0;">RIVALES</span>
+                                <span style="
+                                    font-size: 0.80rem;
+                                    font-weight: 900;
+                                    color: #0f172a;
+                                    white-space: nowrap;
+                                    overflow: hidden;
+                                    text-overflow: ellipsis;
+                                " title="${ctx.opponents || 'Por asignar'}">${ctx.opponents || 'Por asignar'}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fila 4: Botones de Acción Interactivos -->
+                    <div style="display: grid; grid-template-columns: 1fr 1.3fr; gap: 8px; position: relative; z-index: 2;">
+                        <button 
+                            type="button"
+                            onclick="window.PlayerView?.haptic?.(10); Router.navigate('live')" 
+                            style="
+                                background: #ffffff;
+                                border: 1.5px solid #e2e8f0;
+                                color: #334155;
+                                padding: 8px 10px;
+                                border-radius: 11px;
+                                font-weight: 850;
+                                font-size: 0.74rem;
+                                cursor: pointer;
+                                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                                text-transform: uppercase;
+                                letter-spacing: 0.5px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                gap: 6px;
+                                box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+                            " 
+                            onmouseover="this.style.borderColor='#3b82f6'; this.style.color='#1d4ed8'; this.style.transform='translateY(-1px)';" 
+                            onmouseout="this.style.borderColor='#e2e8f0'; this.style.color='#334155'; this.style.transform='none';"
+                        >
+                            <i class="fas fa-eye" style="font-size: 0.72rem; opacity: 0.7;"></i>
+                            <span>Detalles</span>
                         </button>
-                        <button ${ctx.confirmed ? 'disabled' : ''} onclick="HeroCardActions.confirmAttendance('${ctx.matchId}', '${ctx.matchType}')" style="
-                            background: ${ctx.confirmed ? 'rgba(52,199,89,0.2)' : accentColor};
-                            border: ${ctx.confirmed ? '1px solid rgba(52,199,89,0.3)' : 'none'};
-                            color: ${ctx.confirmed ? '#34C759' : 'black'};
-                            padding: 16px;
-                            border-radius: 18px;
-                            font-weight: 950;
-                            font-size: 0.8rem;
-                            cursor: ${ctx.confirmed ? 'default' : 'pointer'};
-                            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                            text-transform: uppercase;
-                            letter-spacing: 1px;
-                            ${ctx.confirmed ? '' : `box-shadow: 0 10px 25px ${accentColor}60;`}
-                        " onmouseover="${ctx.confirmed ? '' : `this.style.transform='scale(1.05) translateY(-3px)'; this.style.boxShadow='0 15px 30px \${accentColor}80'`}" onmouseout="${ctx.confirmed ? '' : `this.style.transform='scale(1) translateY(0)'; this.style.boxShadow='0 10px 25px \${accentColor}60'`}">
-                            ${ctx.confirmed ? '✓ Confirmado' : 'Confirmar'}
+
+                        <button 
+                            type="button"
+                            ${ctx.confirmed ? 'disabled' : ''} 
+                            onclick="window.PlayerView?.haptic?.(20); HeroCardActions.confirmAttendance('${ctx.matchId || ''}', '${ctx.matchType || ''}')" 
+                            class="${ctx.confirmed ? '' : 'hero-shimmer-btn'}"
+                            style="
+                                background: ${ctx.confirmed ? '#dcfce7' : accentGradient};
+                                border: ${ctx.confirmed ? '1.5px solid #86efac' : 'none'};
+                                color: ${ctx.confirmed ? '#166534' : '#ffffff'};
+                                padding: 8px 12px;
+                                border-radius: 11px;
+                                font-weight: 950;
+                                font-size: 0.74rem;
+                                cursor: ${ctx.confirmed ? 'default' : 'pointer'};
+                                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                                text-transform: uppercase;
+                                letter-spacing: 0.6px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                gap: 6px;
+                                ${ctx.confirmed ? 'box-shadow: 0 1px 4px rgba(34, 197, 94, 0.15);' : `box-shadow: 0 4px 14px ${accentColor}50;`}
+                            " 
+                            ${ctx.confirmed ? '' : `onmouseover="this.style.transform='translateY(-1px) scale(1.02)'; this.style.boxShadow='0 6px 18px ${accentColor}70';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 14px ${accentColor}50';"`}
+                        >
+                            <i class="fas ${ctx.confirmed ? 'fa-check-circle' : 'fa-bolt'}" style="font-size: 0.75rem;"></i>
+                            <span>${ctx.confirmed ? 'Confirmado' : 'Confirmar'}</span>
                         </button>
                     </div>
                 </div>
@@ -489,6 +660,10 @@
     window.HeroCardActions = {
         confirmAttendance: async (matchId, matchType) => {
             try {
+                if (!matchId || matchId === 'undefined') {
+                    if (window.Router) window.Router.navigate('live');
+                    return;
+                }
                 const user = window.Store.getState('currentUser');
                 if (!user) throw new Error("Debes iniciar sesión");
 
@@ -504,11 +679,13 @@
                 console.log('✅ Attendance confirmed for:', matchId);
 
                 // Actualizar UI
-                window.PremiumModal.alert({
-                    title: "✅ ASISTENCIA CONFIRMADA",
-                    message: "¡Excelente! El capitán ya sabe que vienes. ¡A por todas! 🎾",
-                    type: 'success'
-                });
+                if (window.PremiumModal && window.PremiumModal.alert) {
+                    window.PremiumModal.alert({
+                        title: "✅ ASISTENCIA CONFIRMADA",
+                        message: "¡Excelente! El capitán ya sabe que vienes. ¡A por todas! 🎾",
+                        type: 'success'
+                    });
+                }
 
                 // Recargar dashboard forzando actualización de contexto
                 if (window.DashboardView && window.DashboardView.render) {
@@ -517,11 +694,13 @@
                 }
             } catch (e) {
                 console.error('Error confirming:', e);
-                window.PremiumModal.alert({
-                    title: "ERROR",
-                    message: "No se pudo confirmar la asistencia. Inténtalo de nuevo.",
-                    type: 'danger'
-                });
+                if (window.PremiumModal && window.PremiumModal.alert) {
+                    window.PremiumModal.alert({
+                        title: "ERROR",
+                        message: "No se pudo confirmar la asistencia. Inténtalo de nuevo.",
+                        type: 'danger'
+                    });
+                }
             }
         },
 
