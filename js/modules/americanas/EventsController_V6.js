@@ -82,6 +82,23 @@
         }
     };
 
+    // Global handlers for View Modes & Card Expansion
+    window.setViewMode = (mode) => {
+        if (window.EventsController && window.EventsController.setViewMode) {
+            window.EventsController.setViewMode(mode);
+        }
+    };
+    window.toggleCardExpansion = (evtId, e) => {
+        if (window.EventsController && window.EventsController.toggleCardExpansion) {
+            window.EventsController.toggleCardExpansion(evtId, e);
+        }
+    };
+    window.toggleAllCardsExpansion = (expandAll) => {
+        if (window.EventsController && window.EventsController.toggleAllCardsExpansion) {
+            window.EventsController.toggleAllCardsExpansion(expandAll);
+        }
+    };
+
     class EventsController {
         constructor() {
             this.state = {
@@ -101,6 +118,11 @@
                     category: 'all',
                     searchQuery: ''
                 },
+                viewMode: (() => {
+                    try { return localStorage.getItem('sp_events_view_mode') || 'compact'; } catch(e) { return 'compact'; }
+                })(),
+                expandedCards: new Set(),
+                collapsedCards: new Set(),
                 eventTabs: {},
                 matchCache: {} // { eventId: { matches: [], lastFetch: timestamp } }
             };
@@ -291,6 +313,40 @@
                         ` : ''}
                     </div>
 
+                    <!-- View Mode Toggle (Completa / Minimizada) -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 2px;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 0.64rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.6px;">
+                                <i class="fas fa-layer-group" style="color: #CCFF00; font-size: 0.65rem; margin-right: 3px;"></i> Vista:
+                            </span>
+                            <div style="background: rgba(255, 255, 255, 0.05); border: 1.5px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 2px; display: inline-flex; gap: 3px;">
+                                <button type="button" 
+                                        onclick="window.EventsController.setViewMode('detailed')" 
+                                        title="Vista Completa (Con cartel, fotos y detalles)"
+                                        style="padding: 5px 12px; border-radius: 9px; border: none; font-weight: 950; font-size: 0.66rem; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 5px; text-transform: uppercase; ${this.state.viewMode === 'detailed' ? 'background: #CCFF00; color: #000; box-shadow: 0 2px 8px rgba(204,255,0,0.35);' : 'background: transparent; color: #94a3b8;'}">
+                                    <i class="fas fa-th-large"></i> Completa
+                                </button>
+                                <button type="button" 
+                                        onclick="window.EventsController.setViewMode('compact')" 
+                                        title="Vista Minimizada (Ideal cuando hay muchos eventos)"
+                                        style="padding: 5px 12px; border-radius: 9px; border: none; font-weight: 950; font-size: 0.66rem; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 5px; text-transform: uppercase; ${this.state.viewMode === 'compact' ? 'background: #CCFF00; color: #000; box-shadow: 0 2px 8px rgba(204,255,0,0.35);' : 'background: transparent; color: #94a3b8;'}">
+                                    <i class="fas fa-bars"></i> Minimizada
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Quick Action: Ampliar / Minimizar Todo -->
+                        <button type="button" 
+                                onclick="window.EventsController.toggleAllCardsExpansion(${this.state.viewMode === 'compact'})" 
+                                title="${this.state.viewMode === 'compact' ? 'Ampliar todas las tarjetas' : 'Minimizar todas las tarjetas'}"
+                                style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12); color: #cbd5e1; padding: 5px 10px; border-radius: 9px; font-size: 0.62rem; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.15s;"
+                                onmouseover="this.style.color='#CCFF00'; this.style.borderColor='rgba(204,255,0,0.4)';"
+                                onmouseout="this.style.color='#cbd5e1'; this.style.borderColor='rgba(255,255,255,0.12)';">
+                            <i class="fas ${this.state.viewMode === 'compact' ? 'fa-expand-alt' : 'fa-compress-alt'}"></i>
+                            <span>${this.state.viewMode === 'compact' ? 'Ampliar Todo' : 'Minimizar Todo'}</span>
+                        </button>
+                    </div>
+
                     <!-- Month Filters -->
                     <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
                         <button onclick="window.EventsController.setFilter('month', 'all')" 
@@ -312,6 +368,80 @@
                     </div>
                 </div>
             `;
+        }
+
+        setViewMode(mode) {
+            try { window.PlayerView?.haptic?.(20); } catch (e) {}
+            this.state.viewMode = mode;
+            try { localStorage.setItem('sp_events_view_mode', mode); } catch (e) {}
+            if (this.state.expandedCards) this.state.expandedCards.clear();
+            if (this.state.collapsedCards) this.state.collapsedCards.clear();
+            this.render();
+        }
+
+        toggleCardExpansion(evtId, event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            try { window.PlayerView?.haptic?.(15); } catch (e) {}
+            if (!this.state.expandedCards) this.state.expandedCards = new Set();
+            if (!this.state.collapsedCards) this.state.collapsedCards = new Set();
+
+            const isCurrentlyExpanded = this.isCardExpanded(evtId);
+            if (this.state.viewMode === 'compact') {
+                if (isCurrentlyExpanded) {
+                    this.state.expandedCards.delete(evtId);
+                } else {
+                    this.state.expandedCards.add(evtId);
+                }
+            } else {
+                if (isCurrentlyExpanded) {
+                    this.state.collapsedCards.add(evtId);
+                } else {
+                    this.state.collapsedCards.delete(evtId);
+                }
+            }
+
+            // Quick in-place update if card DOM is present
+            const cardEl = document.getElementById(`event-card-${evtId}`);
+            if (cardEl) {
+                const allSorted = this.getAllSortedEvents();
+                const evt = allSorted.find(e => e.id === evtId);
+                if (evt) {
+                    const temp = document.createElement('div');
+                    temp.innerHTML = this.renderCard(evt, evt.status === 'finished');
+                    const newEl = temp.firstElementChild;
+                    if (newEl) {
+                        cardEl.replaceWith(newEl);
+                        return;
+                    }
+                }
+            }
+            this.render();
+        }
+
+        toggleAllCardsExpansion(expandAll) {
+            try { window.PlayerView?.haptic?.(25); } catch (e) {}
+            if (!this.state.expandedCards) this.state.expandedCards = new Set();
+            if (!this.state.collapsedCards) this.state.collapsedCards = new Set();
+
+            if (expandAll) {
+                this.state.viewMode = 'detailed';
+                this.state.collapsedCards.clear();
+            } else {
+                this.state.viewMode = 'compact';
+                this.state.expandedCards.clear();
+            }
+            try { localStorage.setItem('sp_events_view_mode', this.state.viewMode); } catch (e) {}
+            this.render();
+        }
+
+        isCardExpanded(evtId) {
+            if (this.state.viewMode === 'compact') {
+                return this.state.expandedCards ? this.state.expandedCards.has(evtId) : false;
+            } else {
+                return this.state.collapsedCards ? !this.state.collapsedCards.has(evtId) : true;
+            }
         }
 
         getTodayStr() {
@@ -2263,8 +2393,171 @@
                 urgencyHtml = `<span style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); padding: 2px 6px; border-radius: 6px; font-size: 0.55rem; font-weight: 950; letter-spacing: 0.4px; animation: pulse 1.5s infinite;">¡ÚLTIMAS ${remainingSpots}!</span>`;
             }
 
+            const isExpanded = this.isCardExpanded(evt.id);
+
+            // ==========================================
+            // 📑 1. VISTA MINIMIZADA / COMPACTA
+            // ==========================================
+            if (!isExpanded) {
+                return `
+                    <div id="event-card-${evt.id}" class="${cardClass} card-view-minimized" onclick="window.EventsController.toggleCardExpansion('${evt.id}', event)" style="
+                        background: ${cardBg};
+                        border-radius: 18px;
+                        overflow: hidden;
+                        margin-bottom: 9px;
+                        border: ${cardBorder};
+                        box-shadow: ${cardGlow};
+                        font-family: 'Outfit', sans-serif;
+                        position: relative;
+                        transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+                        cursor: pointer;
+                    "
+                    onmouseover="this.style.transform='translateY(-2px) scale(1.004)';"
+                    onmouseout="this.style.transform='translateY(0) scale(1)';"
+                    >
+                        <!-- ACCENT STRIPE -->
+                        <div style="height: 3px; background: ${themeColor}; opacity: 0.95;"></div>
+
+                        <div style="padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                            <!-- Left: Date & Time Badge -->
+                            <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                                <div style="background: rgba(15, 23, 42, 0.92); min-width: 44px; height: 48px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1.2px solid rgba(255,255,255,0.12); box-shadow: 0 4px 10px rgba(0,0,0,0.3); flex-shrink: 0;">
+                                    <span style="font-size: 0.52rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.4px;">${dayName}</span>
+                                    <span style="font-size: 1.22rem; font-weight: 950; color: #ffffff; line-height: 1;">${dayNum}</span>
+                                </div>
+                            </div>
+
+                            <!-- Middle: Main Information -->
+                            <div style="flex: 1; min-width: 0; overflow: hidden; display: flex; flex-direction: column; gap: 3px;">
+                                <!-- Tags row -->
+                                <div style="display: flex; align-items: center; gap: 4px; overflow: hidden; white-space: nowrap;">
+                                    ${isLive ? `
+                                        <span style="background: #FF2D55; color: #fff; padding: 2px 6px; border-radius: 6px; font-size: 0.54rem; font-weight: 950; text-transform: uppercase; animation: status-breathe 1.2s infinite; flex-shrink: 0;">LIVE</span>
+                                    ` : (evt.normDate === this.getTodayStr() ? `
+                                        <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; padding: 2px 6px; border-radius: 6px; font-size: 0.54rem; font-weight: 950; flex-shrink: 0;">¡HOY!</span>
+                                    ` : '')}
+
+                                    <span style="background: ${categoryColor}25; color: ${categoryColor}; border: 1px solid ${categoryColor}40; padding: 1.5px 6px; border-radius: 6px; font-size: 0.56rem; font-weight: 900; text-transform: uppercase; flex-shrink: 0;">
+                                        <i class="fas ${categoryIcon}" style="font-size: 0.52rem; margin-right: 2px;"></i> ${categoryLabel}
+                                    </span>
+
+                                    <span style="background: rgba(255,255,255,0.07); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.1); padding: 1.5px 6px; border-radius: 6px; font-size: 0.55rem; font-weight: 850; text-transform: uppercase; flex-shrink: 0;">
+                                        ${isSwiss ? '🇨🇭 SUIZO' : (isTwister ? '🌪️ TWISTER' : (isEntreno ? '🥋 ENTRENO' : '👥 PAREJA FIJA'))}
+                                    </span>
+
+                                    ${rawEventLevel ? `
+                                        <span style="background: rgba(255,255,255,0.06); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.08); padding: 1.5px 5px; border-radius: 6px; font-size: 0.55rem; font-weight: 800; flex-shrink: 0;">
+                                            NV ${rawEventLevel}
+                                        </span>
+                                    ` : ''}
+
+                                    ${levelFeedbackHtml}
+                                    ${isEventPrivate ? `
+                                        <span style="background: rgba(239,68,68,0.2); color: #f87171; border: 1px solid rgba(239,68,68,0.4); padding: 1.5px 5px; border-radius: 6px; font-size: 0.52rem; font-weight: 900; flex-shrink: 0;">
+                                            <i class="fas fa-lock" style="font-size: 0.5rem;"></i>
+                                        </span>
+                                    ` : ''}
+                                </div>
+
+                                <!-- Event Title -->
+                                <div style="font-size: 0.86rem; font-weight: 950; color: #ffffff; line-height: 1.2; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.2px;" title="${evt.name}">
+                                    ${evt.name}
+                                </div>
+
+                                <!-- Micro Meta: Time, Club, Plazas, Price -->
+                                <div style="display: flex; align-items: center; gap: 6px; font-size: 0.63rem; color: #94a3b8; font-weight: 600; white-space: nowrap; overflow: hidden;">
+                                    <span style="color: #f1f5f9; font-weight: 800; display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0;">
+                                        <i class="far fa-clock" style="color: ${timeIconColor}; font-size: 0.58rem;"></i> ${timeLabel}
+                                    </span>
+                                    <span style="color: rgba(255,255,255,0.2); flex-shrink: 0;">•</span>
+                                    <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; display: inline-flex; align-items: center; gap: 3px; flex-shrink: 1;">
+                                        <i class="fas fa-location-dot" style="color: #38bdf8; font-size: 0.58rem;"></i> ${evt.sede || evt.location || 'SomosPadel'}
+                                    </span>
+                                    <span style="color: rgba(255,255,255,0.2); flex-shrink: 0;">•</span>
+                                    <span id="event-players-label-${evt.id}" style="color: ${isFull ? '#ef4444' : '#CCFF00'}; font-weight: 900; flex-shrink: 0;">
+                                        ${playerCount}/${maxPlayers} ${isFull ? 'COMPLETO' : 'plz'}
+                                    </span>
+                                    <i id="event-players-icon-${evt.id}" style="display: none;"></i>
+                                    <span style="color: rgba(255,255,255,0.2); flex-shrink: 0;">•</span>
+                                    <span style="color: #ffffff; font-weight: 900; flex-shrink: 0;">
+                                        ${numSoc}€
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Right: Action Button + Expand Chevron -->
+                            <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                                <button id="event-fab-${evt.id}" 
+                                        onclick="event.stopPropagation(); ${fabAction}" 
+                                        aria-label="${btnLabel}"
+                                        style="
+                                            background: ${isLive ? '#FF2D55' : (isJoined ? '#00E36D' : (isFull ? '#eab308' : '#CCFF00'))} !important;
+                                            color: ${isLive ? '#ffffff' : '#000000'} !important;
+                                            padding: 8px 11px;
+                                            border-radius: 11px;
+                                            font-size: 0.68rem;
+                                            font-weight: 950;
+                                            border: none;
+                                            cursor: pointer;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                            display: flex;
+                                            align-items: center;
+                                            gap: 4px;
+                                            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+                                            transition: transform 0.15s ease;
+                                        "
+                                        onmouseover="this.style.transform='scale(1.04)';"
+                                        onmouseout="this.style.transform='scale(1)';"
+                                >
+                                    <i id="event-fab-icon-${evt.id}" class="fas ${btnIcon}" style="font-size: 0.65rem; color: ${isLive ? '#ffffff' : '#000000'} !important;"></i>
+                                    <span id="event-fab-label-${evt.id}" style="white-space: nowrap; color: ${isLive ? '#ffffff' : '#000000'} !important;">${btnLabel === 'CLAVE ACCESO 🔒' ? 'CLAVE' : (btnLabel === 'DENTRO' ? 'DENTRO' : (isFull && !isJoined ? 'ESPERA' : 'UNIRME'))}</span>
+                                </button>
+
+                                <!-- Chevron Button for Expand -->
+                                <button type="button" 
+                                        onclick="window.EventsController.toggleCardExpansion('${evt.id}', event)" 
+                                        title="Toca para ver el cartel oficial y todos los detalles"
+                                        aria-label="Ampliar detalles"
+                                        style="
+                                            width: 32px; 
+                                            height: 32px; 
+                                            border-radius: 10px; 
+                                            background: rgba(255, 255, 255, 0.08); 
+                                            border: 1px solid rgba(255, 255, 255, 0.12); 
+                                            color: #CCFF00; 
+                                            display: flex; 
+                                            align-items: center; 
+                                            justify-content: center; 
+                                            cursor: pointer; 
+                                            transition: all 0.2s;
+                                        "
+                                        onmouseover="this.style.background='rgba(204,255,0,0.18)'; this.style.borderColor='#CCFF00';"
+                                        onmouseout="this.style.background='rgba(255, 255, 255, 0.08)'; this.style.borderColor='rgba(255, 255, 255, 0.12)';"
+                                >
+                                    <i class="fas fa-chevron-down" style="font-size: 0.72rem;"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Mini Progress Bar -->
+                        <div style="width: 100%; height: 3px; background: rgba(255,255,255,0.06); overflow: hidden;">
+                            <div id="event-progress-bar-${evt.id}" style="width: ${progress}%; height: 100%; background: ${progressColor}; transition: width 0.3s ease;"></div>
+                        </div>
+
+                        <!-- Hidden compatibility anchors for smartUpdate -->
+                        <div id="event-waitlist-label-${evt.id}" style="display: none;"></div>
+                        <span id="event-status-badge-${evt.id}" style="display: none;"></span>
+                        <span id="event-status-capacity-${evt.id}" style="display: none;"></span>
+                    </div>
+                `;
+            }
+
+            // ==========================================
+            // 🗂️ 2. VISTA DETALLADA / COMPLETA
+            // ==========================================
             return `
-                <div id="event-card-${evt.id}" class="${cardClass}" onclick="${cardAction}" style="
+                <div id="event-card-${evt.id}" class="${cardClass} card-view-detailed" onclick="${cardAction}" style="
                     background: ${cardBg};
                     border-radius: 20px;
                     overflow: hidden;
@@ -2388,6 +2681,17 @@
                                             onmouseout="this.style.transform='scale(1)';"
                                             onmousedown="this.style.transform='scale(0.92)';">
                                         <i class="fab fa-instagram" style="font-size: 0.95rem; background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                                    </button>
+
+                                    <!-- Botón Minimizar Tarjeta -->
+                                    <button onclick="event.stopPropagation(); window.EventsController.toggleCardExpansion('${evt.id}', event)" 
+                                            title="Minimizar esta tarjeta" 
+                                            aria-label="Minimizar tarjeta"
+                                            style="background: rgba(15, 23, 42, 0.88); width: 30px; height: 30px; border-radius: 9px; border: 1px solid rgba(255, 255, 255, 0.2); color: #cbd5e1; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(10px); box-shadow: 0 3px 10px rgba(0,0,0,0.35); transition: transform 0.15s;"
+                                            onmouseover="this.style.transform='scale(1.08)'; this.style.color='#CCFF00'; this.style.borderColor='rgba(204,255,0,0.4)';"
+                                            onmouseout="this.style.transform='scale(1)'; this.style.color='#cbd5e1'; this.style.borderColor='rgba(255,255,255,0.2)';"
+                                            onmousedown="this.style.transform='scale(0.92)';">
+                                        <i class="fas fa-compress-alt" style="font-size: 0.82rem;"></i>
                                     </button>
                                 </div>
                             </div>
