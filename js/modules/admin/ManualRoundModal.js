@@ -632,8 +632,8 @@
             players.forEach(p => { playerMap[p.id] = p; });
 
             const matchesData = activeCourts.map(c => {
-                const teamA_names = [playerMap[c.teamA[0]]?.name || '?', playerMap[c.teamA[1]]?.name || '?'].join(' / ');
-                const teamB_names = [playerMap[c.teamB[0]]?.name || '?', playerMap[c.teamB[1]]?.name || '?'].join(' / ');
+                const teamA_names = [playerMap[c.teamA[0]]?.name || '?', playerMap[c.teamA[1]]?.name || '?'];
+                const teamB_names = [playerMap[c.teamB[0]]?.name || '?', playerMap[c.teamB[1]]?.name || '?'];
 
                 return {
                     court: c.courtNum,

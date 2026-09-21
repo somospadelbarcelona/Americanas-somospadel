@@ -22,7 +22,7 @@
                 'equipos': () => this.handleCommunityRoute('teams'),
                 'teams': () => this.handleCommunityRoute('teams'),
                 'tournaments': () => this.handleCommunityRoute('tournaments'),
-                'agenda': () => this.handleControllerTab('EventsController', 'agenda'),
+                'agenda': () => this.handleCommunityRoute('agenda'),
                 'results': () => this.handleControllerTab('EventsController', 'results'),
                 'entrenos': () => this.handleCommunityRoute('entrenos'),
                 'partidas_abiertas': () => this.handleCommunityRoute('entrenos'),
@@ -193,6 +193,12 @@
                     setTimeout(onDone, 60);
                     setTimeout(onDone, 200);
                 });
+            } else if (subTab === 'agenda') {
+                this.executeControllerInit('AgendaController', 'agenda', (c) => {
+                    c.init();
+                    setTimeout(onDone, 60);
+                    setTimeout(onDone, 200);
+                });
             } else if (subTab === 'inscriptions' || subTab === 'inscripciones') {
                 // 🔒 BLOQUEADO — En breves estará disponible para la nueva temporada
                 setTimeout(() => {
@@ -216,7 +222,7 @@
             const content = document.getElementById('content-area');
             if (!content) return;
 
-            // Determinar la subpestaña canónica activa (entrenos, teams, my_team, inscriptions, records)
+            // Determinar la subpestaña canónica activa (entrenos, teams, my_team, agenda, inscriptions, records)
             let currentTab = activeSubTab || window.activeCommunitySubTab || 'teams';
             if (['comunidad', 'community', 'equipos', 'teams'].includes(currentTab)) {
                 currentTab = 'teams';
@@ -224,6 +230,8 @@
                 currentTab = 'entrenos';
             } else if (['my_team'].includes(currentTab)) {
                 currentTab = 'my_team';
+            } else if (['agenda'].includes(currentTab)) {
+                currentTab = 'agenda';
             } else if (['records'].includes(currentTab)) {
                 currentTab = 'records';
             } else if (['inscriptions', 'inscripciones'].includes(currentTab)) {
@@ -259,7 +267,7 @@
             if (isAmericanasOnly) {
                 const blockedRoutes = [
                     'comunidad', 'community', 'entrenos', 'partidas_abiertas', 'live-entreno', 
-                    'agenda', 'results', 'equipos', 'teams', 'tournaments'
+                    'results', 'equipos', 'teams', 'tournaments'
                 ];
                 if (blockedRoutes.includes(route)) {
                     console.warn(`[Router] Acceso restringido para JUGADOR AMERICANAS a la ruta: ${route}`);
@@ -330,7 +338,7 @@
         cleanupPreviousRoute(newRoute) {
             if (this.currentRoute && this.currentRoute === newRoute) return;
 
-            const isCommunity = ['comunidad', 'community', 'equipos', 'teams', 'entrenos', 'partidas_abiertas', 'tournaments', 'my_team', 'records', 'inscriptions', 'inscripciones'].includes(newRoute);
+            const isCommunity = ['comunidad', 'community', 'equipos', 'teams', 'entrenos', 'partidas_abiertas', 'agenda', 'tournaments', 'my_team', 'records', 'inscriptions', 'inscripciones'].includes(newRoute);
             const isAmericanas = ['events', 'americanas', 'finished_americanas', 'agenda_americanas', 'help_americanas'].includes(newRoute);
 
             if (!isCommunity && !isAmericanas) {

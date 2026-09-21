@@ -748,11 +748,6 @@
                 ">
 
 
-                    <!-- 0. HERO CARD (CONTEXT AWARE) -->
-                    <div id="hero-card-root" style="animation: floatUp 0.8s ease-out forwards;">
-                        <!-- Content loaded via JS (HeroCard) -->
-                    </div>
-
 
 
                     <!-- 🔥 HERO CARD PREMIUM: TEMPORADA 2027 | EQUIPOS SOMOSPADEL -->
@@ -1013,32 +1008,61 @@
 
 
 
-                    <!-- 3. SOMOSPADEL SMART COMPACT EVENT STRIP -->
+                    <!-- 4. PULSE STORIES (Instagram Style) — DESTACADOS & EN VIVO -->
+                    <div id="story-feed-root" style="margin: 0 !important; padding: 0;">
+                        <!-- Cargado vía JS (StoryFeedWidget) -->
+                    </div>
+
+                    <!-- 4.1 MIS EVENTOS & PARTIDOS COMPACTOS (SIEMPRE DEBAJO DE DESTACADOS & EN VIVO) -->
                     <style>
                         @keyframes stripSkeletonShimmer {
                             0% { background-position: 200% 0; }
                             100% { background-position: -200% 0; }
                         }
+                        .dashboard-hero-duo-container {
+                            margin: 4px 15px 12px !important;
+                            display: flex;
+                            flex-direction: column;
+                            gap: 6px;
+                            animation: floatUp 0.6s ease-out forwards;
+                        }
+                        .dashboard-hero-duo-container #hero-card-root:empty {
+                            display: none !important;
+                        }
+                        .dashboard-hero-duo-container #registration-widget-root:empty {
+                            display: none !important;
+                        }
+                        @media (min-width: 680px) {
+                            .dashboard-hero-duo-container {
+                                display: grid !important;
+                                grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)) !important;
+                                gap: 10px !important;
+                                align-items: stretch;
+                            }
+                        }
                     </style>
-                    <div id="registration-widget-root" style="margin: 0 15px 14px !important; animation: floatUp 0.8s ease-out forwards;">
-                        <div id="live-scroller-inner">
-                            <!-- Skeleton 75px ultracompacto -->
-                            <div style="height: 75px; border-radius: 18px; background: linear-gradient(90deg, #131b2e 0%, #1e293b 50%, #131b2e 100%); background-size: 200% 100%; border: 1px solid rgba(255, 255, 255, 0.08); animation: stripSkeletonShimmer 1.8s infinite; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; box-sizing: border-box;">
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(255,255,255,0.06);"></div>
-                                    <div>
-                                        <div style="width: 120px; height: 13px; border-radius: 4px; background: rgba(255,255,255,0.08); margin-bottom: 6px;"></div>
-                                        <div style="width: 85px; height: 10px; border-radius: 4px; background: rgba(255,255,255,0.04);"></div>
+                    <div id="dashboard-hero-duo-container" class="dashboard-hero-duo-container">
+                        <!-- Tarjeta Blanca: Esta Semana / Próximo Entreno (HeroCard) -->
+                        <div id="hero-card-root" style="width: 100%;">
+                            <!-- Content loaded via JS (HeroCard) -->
+                        </div>
+
+                        <!-- Tarjeta Oscura: Partido Activo / Convocatoria Confirmada (Event Strip) -->
+                        <div id="registration-widget-root" style="width: 100%;">
+                            <div id="live-scroller-inner">
+                                <!-- Skeleton 58px compacto -->
+                                <div style="height: 58px; border-radius: 14px; background: linear-gradient(90deg, #131b2e 0%, #1e293b 50%, #131b2e 100%); background-size: 200% 100%; border: 1px solid rgba(255, 255, 255, 0.08); animation: stripSkeletonShimmer 1.8s infinite; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; box-sizing: border-box;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="width: 32px; height: 32px; border-radius: 9px; background: rgba(255,255,255,0.06);"></div>
+                                        <div>
+                                            <div style="width: 90px; height: 10px; border-radius: 4px; background: rgba(255,255,255,0.08); margin-bottom: 4px;"></div>
+                                            <div style="width: 60px; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.04);"></div>
+                                        </div>
                                     </div>
+                                    <div style="width: 60px; height: 24px; border-radius: 6px; background: rgba(255,255,255,0.08);"></div>
                                 </div>
-                                <div style="width: 75px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.08);"></div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- 4. PULSE STORIES (Instagram Style) -->
-                    <div id="story-feed-root" style="margin: 0 !important; padding: 0;">
-                        <!-- Cargado vía JS (StoryFeedWidget) -->
                     </div>
 
                     <!-- 3.5 NEWS BLOG WIDGET -->
@@ -3795,39 +3819,39 @@
 
                     stripHtml = `
                     <div onclick="window.dashNavigate('${targetRoute}', 'strip_my_match')" 
-                         style="background: linear-gradient(135deg, #091a33 0%, #0d284f 100%); border: 1px solid rgba(56, 189, 248, 0.45); border-radius: 18px; padding: 10px 14px; min-height: 76px; max-height: 82px; display: flex; align-items: center; justify-content: space-between; gap: 10px; position: relative; overflow: hidden; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
+                         style="background: linear-gradient(135deg, #091a33 0%, #0d284f 100%); border: 1px solid rgba(56, 189, 248, 0.45); border-radius: 14px; padding: 7px 12px; min-height: 56px; max-height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 8px; position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
                          onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
                         
                         <!-- Ambient Glow -->
-                        <div style="position: absolute; top: -30px; right: -30px; width: 90px; height: 90px; background: radial-gradient(circle, rgba(56, 189, 248, 0.2) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+                        <div style="position: absolute; top: -25px; right: -25px; width: 70px; height: 70px; background: radial-gradient(circle, rgba(56, 189, 248, 0.2) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
 
                         <!-- Left: Badge & Time -->
-                        <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; height: 56px; flex-shrink: 0; z-index: 2;">
-                            <span style="background: #0284c7; color: #ffffff; font-size: 0.58rem; font-weight: 950; padding: 2.5px 7px; border-radius: 6px; letter-spacing: 0.6px; text-transform: uppercase; box-shadow: 0 0 12px rgba(2, 132, 199, 0.5); display: inline-flex; align-items: center; gap: 3px;">
+                        <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; flex-shrink: 0; z-index: 2;">
+                            <span style="background: #0284c7; color: #ffffff; font-size: 0.54rem; font-weight: 950; padding: 1.5px 6px; border-radius: 5px; letter-spacing: 0.5px; text-transform: uppercase; box-shadow: 0 0 10px rgba(2, 132, 199, 0.4); display: inline-flex; align-items: center; gap: 2px;">
                                 🎾 ${isMyEntreno ? 'ENTRENO' : 'PARTIDO'}
                             </span>
-                            <span style="font-size: 0.62rem; color: #38bdf8; font-weight: 850; display: inline-flex; align-items: center; gap: 3px;">
-                                <i class="far fa-clock" style="font-size: 0.56rem;"></i> ${matchTime}
+                            <span style="font-size: 0.58rem; color: #38bdf8; font-weight: 850; display: inline-flex; align-items: center; gap: 2px;">
+                                <i class="far fa-clock" style="font-size: 0.52rem;"></i> ${matchTime}
                             </span>
                         </div>
 
                         <!-- Center: Match Info -->
-                        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; z-index: 2;">
-                            <div style="color: #ffffff; font-size: 0.84rem; font-weight: 900; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; z-index: 2; padding: 0 2px;">
+                            <div style="color: #ffffff; font-size: 0.78rem; font-weight: 900; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                 ${myMatchTitle}
                             </div>
-                            <div style="font-size: 0.62rem; color: #94a3b8; font-weight: 750; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 4px;">
+                            <div style="font-size: 0.58rem; color: #94a3b8; font-weight: 750; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;">
                                 <span style="color: #38bdf8; font-weight: 900;">🎾 ${courtText}</span> • Convocatoria confirmada
                             </div>
                         </div>
 
                         <!-- Right: Micro-clima & Direct CTA -->
-                        <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; height: 56px; flex-shrink: 0; z-index: 2;">
+                        <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 3px; flex-shrink: 0; z-index: 2;">
                             ${weatherPillHtml}
                             <button onclick="event.stopPropagation(); window.dashNavigate('${targetRoute}', 'strip_my_match')" 
-                                    style="background: #38bdf8; color: #071629; font-size: 0.64rem; font-weight: 950; padding: 5px 10px; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; letter-spacing: 0.4px; box-shadow: 0 2px 10px rgba(56, 189, 248, 0.4); white-space: nowrap; transition: transform 0.15s ease;"
+                                    style="background: #38bdf8; color: #071629; font-size: 0.58rem; font-weight: 950; padding: 3.5px 8px; border-radius: 7px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; letter-spacing: 0.3px; box-shadow: 0 2px 8px rgba(56, 189, 248, 0.35); white-space: nowrap; transition: transform 0.15s ease;"
                                     onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
-                                <span>VER PISTA</span> <i class="fas fa-arrow-right" style="font-size: 0.52rem;"></i>
+                                <span>VER PISTA</span> <i class="fas fa-arrow-right" style="font-size: 0.48rem;"></i>
                             </button>
                         </div>
                     </div>
@@ -3856,42 +3880,42 @@
 
                         return `
                         <div onclick="window.dashNavigate('${theme.targetRoute}', 'strip_card')" 
-                             style="min-width: 100%; max-width: 100%; flex-shrink: 0; scroll-snap-align: start; box-sizing: border-box; margin-right: 8px; background: ${theme.cardBg}; border: ${theme.cardBorder}; border-radius: 18px; padding: 10px 14px; min-height: 76px; max-height: 82px; display: flex; align-items: center; justify-content: space-between; gap: 10px; position: relative; overflow: hidden; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
+                             style="min-width: 100%; max-width: 100%; flex-shrink: 0; scroll-snap-align: start; box-sizing: border-box; margin-right: 8px; background: ${theme.cardBg}; border: ${theme.cardBorder}; border-radius: 14px; padding: 7px 12px; min-height: 56px; max-height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 8px; position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
                              onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
                             
                             <!-- Ambient Category Glow -->
-                            <div style="position: absolute; top: -25px; right: -25px; width: 80px; height: 80px; background: radial-gradient(circle, ${theme.accentColor}25 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+                            <div style="position: absolute; top: -20px; right: -20px; width: 60px; height: 60px; background: radial-gradient(circle, ${theme.accentColor}25 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
 
                             <!-- Left: Badge & Time -->
-                            <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; height: 56px; flex-shrink: 0; z-index: 2;">
-                                <span style="background: ${theme.badgeBg}; color: ${theme.badgeTextColor || '#ffffff'}; font-size: 0.58rem; font-weight: 950; padding: 2.5px 7px; border-radius: 6px; letter-spacing: 0.5px; text-transform: uppercase; ${theme.badgeShadow || ''} display: inline-flex; align-items: center; gap: 3px;">
+                            <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; flex-shrink: 0; z-index: 2;">
+                                <span style="background: ${theme.badgeBg}; color: ${theme.badgeTextColor || '#ffffff'}; font-size: 0.54rem; font-weight: 950; padding: 1.5px 6px; border-radius: 5px; letter-spacing: 0.5px; text-transform: uppercase; ${theme.badgeShadow || ''} display: inline-flex; align-items: center; gap: 2px;">
                                     ${theme.badgeText}
                                 </span>
-                                <span style="font-size: 0.62rem; color: #cbd5e1; font-weight: 800; display: inline-flex; align-items: center; gap: 3px;">
-                                    <i class="far fa-clock" style="font-size: 0.56rem; color: #94a3b8;"></i> ${timeDisplay}
+                                <span style="font-size: 0.58rem; color: #cbd5e1; font-weight: 800; display: inline-flex; align-items: center; gap: 2px;">
+                                    <i class="far fa-clock" style="font-size: 0.52rem; color: #94a3b8;"></i> ${timeDisplay}
                                 </span>
                             </div>
 
                             <!-- Center: Title & Subtitle -->
                             <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; z-index: 2; padding: 0 2px;">
-                                <div style="color: #ffffff; font-size: 0.82rem; font-weight: 900; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${eventNameText}">
+                                <div style="color: #ffffff; font-size: 0.78rem; font-weight: 900; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${eventNameText}">
                                     ${eventNameText}
                                 </div>
-                                <div style="font-size: 0.62rem; color: #94a3b8; font-weight: 750; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 4px;">
+                                <div style="font-size: 0.58rem; color: #94a3b8; font-weight: 750; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;">
                                     <span style="color: ${urgencyColor}; font-weight: 900;">⚡ ${urgencyText}</span> • <span style="color: #cbd5e1;">Nivel ${minLevel}-${maxLevel}</span>
                                 </div>
                             </div>
 
                             <!-- Right: Micro-clima & Button -->
-                            <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; height: 56px; flex-shrink: 0; z-index: 2;">
-                                <div style="display: inline-flex; align-items: center; gap: 4px;">
-                                    ${displayEvents.length > 1 ? `<span style="font-size: 0.50rem; color: #94a3b8; font-weight: 850; background: rgba(0,0,0,0.4); padding: 1px 4px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.08);">${idx + 1}/${displayEvents.length}</span>` : ''}
+                            <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 3px; flex-shrink: 0; z-index: 2;">
+                                <div style="display: inline-flex; align-items: center; gap: 3px;">
+                                    ${displayEvents.length > 1 ? `<span style="font-size: 0.48rem; color: #94a3b8; font-weight: 850; background: rgba(0,0,0,0.4); padding: 1px 4px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.08);">${idx + 1}/${displayEvents.length}</span>` : ''}
                                     ${weatherPillHtml}
                                 </div>
                                 <button onclick="event.stopPropagation(); window.dashNavigate('${theme.targetRoute}', 'strip_cta')" 
-                                        style="background: ${theme.ctaColor}; color: ${theme.categoryName === 'especial' ? '#0a192f' : '#ffffff'}; font-size: 0.64rem; font-weight: 950; padding: 5px 10px; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; letter-spacing: 0.4px; box-shadow: 0 2px 10px rgba(0,0,0,0.35); white-space: nowrap; transition: transform 0.15s ease;"
+                                        style="background: ${theme.ctaColor}; color: ${theme.categoryName === 'especial' ? '#0a192f' : '#ffffff'}; font-size: 0.58rem; font-weight: 950; padding: 3.5px 8px; border-radius: 7px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; letter-spacing: 0.3px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); white-space: nowrap; transition: transform 0.15s ease;"
                                         onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
-                                    <span>RESERVAR</span> <i class="fas fa-arrow-right" style="font-size: 0.52rem;"></i>
+                                    <span>RESERVAR</span> <i class="fas fa-arrow-right" style="font-size: 0.48rem;"></i>
                                 </button>
                             </div>
                         </div>
@@ -3907,28 +3931,28 @@
                     </div>
                     `;
                 } else {
-                    // CASE 3: SIN EVENTOS ABIERTOS (TIRA DELGADA ELEGANTE ~60px)
+                    // CASE 3: SIN EVENTOS ABIERTOS (TIRA DELGADA ELEGANTE ~50px)
                     stripHtml = `
                     <div onclick="window.dashNavigate('entrenos', 'strip_empty')" 
-                         style="background: linear-gradient(135deg, #0b1528 0%, #13223f 100%); border: 1px solid rgba(56, 189, 248, 0.28); border-radius: 16px; padding: 8px 14px; min-height: 60px; max-height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 10px; position: relative; overflow: hidden; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
+                         style="background: linear-gradient(135deg, #0b1528 0%, #13223f 100%); border: 1px solid rgba(56, 189, 248, 0.28); border-radius: 14px; padding: 6px 12px; min-height: 50px; max-height: 54px; display: flex; align-items: center; justify-content: space-between; gap: 8px; position: relative; overflow: hidden; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
                          onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
                         
-                        <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; z-index: 2;">
-                            <span style="background: rgba(2, 132, 199, 0.2); color: #38bdf8; font-size: 0.58rem; font-weight: 950; padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.35); letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap; flex-shrink: 0;">
+                        <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; z-index: 2;">
+                            <span style="background: rgba(2, 132, 199, 0.2); color: #38bdf8; font-size: 0.54rem; font-weight: 950; padding: 2px 6px; border-radius: 5px; border: 1px solid rgba(56, 189, 248, 0.35); letter-spacing: 0.4px; text-transform: uppercase; white-space: nowrap; flex-shrink: 0;">
                                 🎾 PRÓXIMOS EVENTOS
                             </span>
                             <div style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                <div style="color: #ffffff; font-size: 0.78rem; font-weight: 850; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Descubre próximos entrenos y americanas</div>
-                                <div style="color: #94a3b8; font-size: 0.58rem; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Consulta las fechas disponibles y resérvalas</div>
+                                <div style="color: #ffffff; font-size: 0.74rem; font-weight: 850; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Descubre próximos entrenos y americanas</div>
+                                <div style="color: #94a3b8; font-size: 0.54rem; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Consulta fechas disponibles y apúntate</div>
                             </div>
                         </div>
 
-                        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; z-index: 2;">
+                        <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0; z-index: 2;">
                             ${weatherPillHtml}
                             <button onclick="event.stopPropagation(); window.dashNavigate('entrenos', 'strip_empty')" 
-                                    style="background: #38bdf8; color: #071629; font-size: 0.64rem; font-weight: 950; padding: 5px 11px; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; letter-spacing: 0.4px; box-shadow: 0 2px 10px rgba(56, 189, 248, 0.35); white-space: nowrap; transition: transform 0.15s ease;"
+                                    style="background: #38bdf8; color: #071629; font-size: 0.58rem; font-weight: 950; padding: 4px 9px; border-radius: 7px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; letter-spacing: 0.3px; box-shadow: 0 2px 8px rgba(56, 189, 248, 0.3); white-space: nowrap; transition: transform 0.15s ease;"
                                     onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
-                                <span>VER</span> <i class="fas fa-arrow-right" style="font-size: 0.52rem;"></i>
+                                <span>VER</span> <i class="fas fa-arrow-right" style="font-size: 0.48rem;"></i>
                             </button>
                         </div>
                     </div>

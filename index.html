@@ -1289,8 +1289,9 @@
                             { id: 'entrenos', label: '🎾 1. ENTRENOS', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('entrenos');", activeBg: '#ff007f', glow: 'rgba(255,0,127,0.45)' },
                             { id: 'teams', label: '👥 2. EQUIPOS', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('equipos');", activeBg: '#ff5e00', glow: 'rgba(255,94,0,0.45)' },
                             { id: 'my_team', label: '🛡️ 3. MI EQUIPO', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('my_team');", activeBg: '#0ea5e9', glow: 'rgba(14,165,233,0.45)' },
-                            { id: 'inscriptions', label: `📝 4. INSCRIPCIONES ${isCampaignActive ? '🟢' : '🔴'}`, action: "window.PlayerView?.haptic?.(15); window.Router.navigate('inscriptions');", activeBg: isCampaignActive ? '#10b981' : '#475569', glow: isCampaignActive ? 'rgba(16,185,129,0.45)' : 'rgba(71,85,105,0.4)' },
-                            { id: 'records', label: '🏆 5. RÉCORDS TEMPORADA', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('records');", activeBg: '#a855f7', glow: 'rgba(168,85,247,0.45)' }
+                            { id: 'agenda', label: '📅 4. MI AGENDA', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('agenda');", activeBg: '#CCFF00', glow: 'rgba(204,255,0,0.45)', textColor: '#000000' },
+                            { id: 'inscriptions', label: `📝 5. INSCRIPCIONES ${isCampaignActive ? '🟢' : '🔴'}`, action: "window.PlayerView?.haptic?.(15); window.Router.navigate('inscriptions');", activeBg: isCampaignActive ? '#10b981' : '#475569', glow: isCampaignActive ? 'rgba(16,185,129,0.45)' : 'rgba(71,85,105,0.4)' },
+                            { id: 'records', label: '🏆 6. RÉCORDS TEMPORADA', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('records');", activeBg: '#a855f7', glow: 'rgba(168,85,247,0.45)' }
                         ];
 
                         bar.style.display = 'block';
@@ -1303,7 +1304,7 @@
                                     ${subtabs.map(tab => {
                                         const isActive = activeTab === tab.id;
                                         const bg = isActive ? tab.activeBg : 'rgba(255,255,255,0.05)';
-                                        const col = isActive ? '#ffffff' : '#94a3b8';
+                                        const col = isActive ? (tab.textColor || '#ffffff') : '#94a3b8';
                                         const border = isActive ? `1.5px solid ${tab.activeBg}` : '1.5px solid rgba(255,255,255,0.08)';
                                         const shadow = isActive ? `box-shadow: 0 4px 14px ${tab.glow};` : '';
                                         return `
@@ -2736,6 +2737,8 @@
                 transform: translateX(-50%);
                 width: calc(100% - 24px);
                 max-width: 360px;
+                max-height: calc(100vh - 110px);
+                overflow-y: auto;
                 background: rgba(15, 23, 42, 0.98);
                 backdrop-filter: blur(28px) saturate(190%);
                 -webkit-backdrop-filter: blur(28px) saturate(190%);
@@ -3012,13 +3015,25 @@
                     <i class="fas fa-chevron-right opt-arrow" style="color: #94a3b8;"></i>
                 </button>
 
-                <!-- 5. RÉCORDS TEMPORADA -->
+                <!-- 5. MI AGENDA -->
+                <button class="community-opt-btn" onclick="window.selectCommunityOption('agenda')">
+                    <div class="opt-icon-box" style="background: rgba(204, 255, 0, 0.15); border: 1px solid rgba(204, 255, 0, 0.35); color: #CCFF00;">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="opt-text-box">
+                        <div class="opt-title" style="color: #ffffff;">5. MI AGENDA</div>
+                        <div class="opt-desc">Tus convocatorias, partidos y avisos</div>
+                    </div>
+                    <i class="fas fa-chevron-right opt-arrow"></i>
+                </button>
+
+                <!-- 6. RÉCORDS TEMPORADA -->
                 <button class="community-opt-btn" onclick="window.selectCommunityOption('records')">
                     <div class="opt-icon-box" style="background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.35); color: #a855f7;">
                         <i class="fas fa-trophy"></i>
                     </div>
                     <div class="opt-text-box">
-                        <div class="opt-title">5. RÉCORDS TEMPORADA</div>
+                        <div class="opt-title">6. RÉCORDS TEMPORADA</div>
                         <div class="opt-desc">Líderes, MVP y mejores estadísticas</div>
                     </div>
                     <i class="fas fa-chevron-right opt-arrow"></i>
@@ -4650,7 +4665,7 @@
     <!-- Layer 4: Views & controllers -->
     <!-- Dashboard Components (NEW) -->
     <script src="js/modules/common/WeatherService.js" defer></script>
-    <script src="js/modules/dashboard/HeroCard.js?v=COMPACT_MATCH_v2" defer></script>
+    <script src="js/modules/dashboard/HeroCard.js?v=COMPACT_HERO_DUO_v1" defer></script>
     <script src="js/modules/dashboard/PowerLevelCard.js" defer></script>
     <script src="js/modules/dashboard/QuickStats.js" defer></script>
     <script src="js/modules/dashboard/ActionGrid.js?v=ACTION_GRID_FUT_v4" defer></script>
@@ -4661,7 +4676,7 @@
     <script src="js/modules/dashboard/TacticalCourt3D.js?v=2.0" defer></script>
     <script src="js/modules/dashboard/Tactical3DWidget.js?v=2.0" defer></script>
     <script src="js/modules/dashboard/NewsCatalog.js?v=1.2" defer></script>
-    <script src="js/modules/dashboard/DashboardView_hotfix.js?v=JOURNAL_NEWS_v9" defer></script>
+    <script src="js/modules/dashboard/DashboardView_hotfix.js?v=HERO_DUO_ORDER_v1" defer></script>
     <script src="js/modules/dashboard/DashboardController.js" defer></script>
     <script src="js/utils/RoleService.js?v=PLAYER_AMERICANAS_v1" defer></script>
     <script src="js/modules/players/PlayerView.js?v=401" defer></script>
@@ -5066,6 +5081,8 @@
         } else if (option === 'inscriptions') {
             // 🔒 INSCRIPCIONES BLOQUEADAS — Mostrar aviso de próxima apertura
             window.showInscriptionsComingSoon();
+        } else if (option === 'agenda') {
+            window.Router && window.Router.navigate('agenda');
         } else if (option === 'tournaments') {
             window.Router && window.Router.navigate('tournaments');
         } else if (option === 'records') {

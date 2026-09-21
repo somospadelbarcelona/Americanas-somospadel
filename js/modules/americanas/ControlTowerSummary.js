@@ -1,14 +1,14 @@
 /**
  * ControlTowerSummary.js
- * Módulo unificado "RESUMEN" en Torre de Control (Entrenos & Americanas).
- * Fusiona de forma armónica lo mejor de Stats y Summary:
- * - Cabecera oficial & Botonera de difusión rápida (WhatsApp & Flyer Instagram HD)
- * - Podio de Honor Estelar (1º Campeón, 2º Subcampeón, 3º Tercer puesto)
- * - Crónica Periodística Express & MVP de la Jornada
- * - 4 Métricas Globales del Evento
+ * MÃ³dulo unificado "RESUMEN" en Torre de Control (Entrenos & Americanas).
+ * Fusiona de forma armÃ³nica lo mejor de Stats y Summary:
+ * - Cabecera oficial & Botonera de difusiÃ³n rÃ¡pida (WhatsApp & Flyer Instagram HD)
+ * - Podio de Honor Estelar (1Âº CampeÃ³n, 2Âº SubcampeÃ³n, 3Âº Tercer puesto)
+ * - CrÃ³nica PeriodÃ­stica Express & MVP de la Jornada
+ * - 4 MÃ©tricas Globales del Evento
  * - "Datos que Nadie Ve" (8 Insignias y Premios Secretos)
- * - Gráficos Visuales Interactivos en SVG nativo y responsivo
- * - Centro de compartición y Generador de Flyer HD 1080x1920 para Instagram Stories
+ * - GrÃ¡ficos Visuales Interactivos en SVG nativo y responsivo
+ * - Centro de comparticiÃ³n y Generador de Flyer HD 1080x1920 para Instagram Stories
  * 
  * SomosPadel BCN - Pro Sports Edition
  */
@@ -26,7 +26,7 @@
         static activeCompetitivenessCategory = null; // null | 'tight' | 'medium' | 'blowout'
 
         /**
-         * Renderiza la vista unificada y completa del Resumen de Competición
+         * Renderiza la vista unificada y completa del Resumen de CompeticiÃ³n
          */
         static render(matches, eventDoc) {
             this.lastMatches = matches || [];
@@ -40,7 +40,7 @@
                 return this._renderEmptyState(eventDoc);
             }
 
-            // 1. Cálculos de Clasificación y Modalidad
+            // 1. CÃ¡lculos de ClasificaciÃ³n y Modalidad
             const isEntreno = !!eventDoc?.isEntreno;
             const isSwiss = !!(eventDoc?.pair_mode === 'swiss' || eventDoc?.isSwiss || (eventDoc?.name || '').toUpperCase().includes('SUIZ'));
             const isFija = !isSwiss && !!(eventDoc?.is_fija || (eventDoc?.pair_mode || '').toLowerCase().includes('fix') || (eventDoc?.name || '').toUpperCase().includes('FIJA'));
@@ -71,11 +71,12 @@
             const p2 = ranking[1] || { name: 'Por disputar', points: 0, diff: 0, won: 0, played: 0 };
             const p3 = ranking[2] || { name: 'Por disputar', points: 0, diff: 0, won: 0, played: 0 };
 
-            // Partidos en pista 1 para el campeón (MVP)
+            // Partidos en pista 1 para el campeÃ³n (MVP)
+            const _toArr = (raw) => Array.isArray(raw) ? raw : (typeof raw === 'string' && raw ? raw.split(/\s*\/\s*/) : []);
             let p1Court1Count = 0;
             finishedMatches.forEach(m => {
                 if (parseInt(m.court || 0) === 1) {
-                    const names = (m.team_a_names || []).concat(m.team_b_names || []);
+                    const names = _toArr(m.team_a_names).concat(_toArr(m.team_b_names));
                     if (names.some(n => n && (n === p1.name || String(n).includes(p1.name)))) {
                         p1Court1Count++;
                     }
@@ -83,7 +84,7 @@
             });
             const p1WinPct = p1.played > 0 ? Math.round((p1.won / p1.played) * 100) : 100;
 
-            // 3. Resumen y Métricas Globales
+            // 3. Resumen y MÃ©tricas Globales
             const totalGames = finishedMatches.reduce((acc, m) => acc + (parseInt(m.score_a || 0) + parseInt(m.score_b || 0)), 0);
             const totalMatches = finishedMatches.length;
             const avgGamesPerMatch = totalMatches > 0 ? (totalGames / totalMatches).toFixed(1) : '0.0';
@@ -91,24 +92,24 @@
             let intensityLevel = 'Equilibrada';
             let intensityColor = '#0ea5e9';
             if (parseFloat(avgGamesPerMatch) >= 6.4) {
-                intensityLevel = 'Frenética (Tensión Máxima)';
+                intensityLevel = 'FrenÃ©tica (TensiÃ³n MÃ¡xima)';
                 intensityColor = '#ef4444';
             } else if (parseFloat(avgGamesPerMatch) >= 5.2) {
                 intensityLevel = 'Alta Competitividad';
                 intensityColor = '#10b981';
             }
 
-            // 4. "DATOS QUE NADIE VE" (8 Insignias & Métricas Secretas)
+            // 4. "DATOS QUE NADIE VE" (8 Insignias & MÃ©tricas Secretas)
             const badges = this._calculateBadges(finishedMatches, ranking);
 
-            // 5. Preparar Crónica Periodística Express & Texto Compartible
+            // 5. Preparar CrÃ³nica PeriodÃ­stica Express & Texto Compartible
             const amName = eventDoc?.name || (isEntreno ? 'Entreno SomosPadel' : 'Americana SomosPadel');
             const eventDate = eventDoc?.date || 'Fecha por confirmar';
             const categoryLabel = (eventDoc?.category === 'female' ? 'FEMENINO' : eventDoc?.category === 'male' ? 'MASCULINO' : eventDoc?.category === 'mixed' ? 'MIXTO' : (eventDoc?.category || 'OPEN')).toUpperCase();
             const humanDate = this._formatHumanDate(eventDoc?.date || 'Hoy');
 
-            const chronicleHeadline = `¡${p1.name} reina en una jornada de máxima intensidad!`;
-            const chronicleSubheadline = `Crónica oficial de ${amName}: ${totalMatches} partidos al límite, ${totalGames} juegos disputados y podio definido con enorme entrega.`;
+            const chronicleHeadline = `Â¡${p1.name} reina en una jornada de mÃ¡xima intensidad!`;
+            const chronicleSubheadline = `CrÃ³nica oficial de ${amName}: ${totalMatches} partidos al lÃ­mite, ${totalGames} juegos disputados y podio definido con enorme entrega.`;
 
             // Construir texto optimizado para WhatsApp y guardarlo
             this._prepareShareTexts({
@@ -142,664 +143,340 @@
             };
 
             return `
-                <div class="sp-summary-container fade-in" style="font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif; padding: 14px 14px 45px; background: #0b1120; color: #ffffff; min-height: 100vh; box-sizing: border-box;">
-                    <style>
-                        .sp-summary-container * { box-sizing: border-box; }
-                        
-                        /* Hero & Cabecera */
-                        .sp-sum-hero {
-                            background: radial-gradient(circle at 85% 15%, rgba(204, 255, 0, 0.12) 0%, transparent 55%), radial-gradient(circle at 15% 85%, rgba(14, 165, 233, 0.12) 0%, transparent 50%), linear-gradient(145deg, #0f172a 0%, #1e293b 100%);
-                            border: 1.5px solid rgba(204, 255, 0, 0.28);
-                            border-radius: 22px;
-                            padding: 22px 18px;
-                            position: relative;
-                            overflow: hidden;
-                            box-shadow: 0 16px 40px rgba(0,0,0,0.45);
-                            margin-bottom: 20px;
-                        }
-                        .sp-sum-tag {
-                            display: inline-flex;
-                            align-items: center;
-                            gap: 6px;
-                            background: rgba(204, 255, 0, 0.12);
-                            border: 1px solid rgba(204, 255, 0, 0.35);
-                            color: #ccff00;
-                            padding: 5px 12px;
-                            border-radius: 20px;
-                            font-size: 0.66rem;
-                            font-weight: 900;
-                            letter-spacing: 0.8px;
-                            text-transform: uppercase;
-                        }
-                        
-                        /* Action Pill Buttons */
-                        .sp-sum-btn {
-                            flex: 1;
-                            min-width: 145px;
-                            padding: 12px 16px;
-                            border-radius: 14px;
-                            font-weight: 950;
-                            font-size: 0.78rem;
-                            letter-spacing: 0.4px;
-                            cursor: pointer;
-                            display: inline-flex;
-                            align-items: center;
-                            justify-content: center;
-                            gap: 8px;
-                            transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
-                            border: none;
-                            text-decoration: none;
-                        }
-                        .sp-sum-btn:hover {
-                            transform: translateY(-2px);
-                            box-shadow: 0 8px 25px rgba(0,0,0,0.35);
-                        }
-                        .sp-sum-btn:active {
-                            transform: scale(0.97);
-                        }
+                <div class="sp-sum2" style="font-family:'Outfit',-apple-system,sans-serif;padding:12px 12px 60px;background:#080e1a;color:#fff;min-height:100vh;box-sizing:border-box;">
+                <style>
+                  .sp-sum2*{box-sizing:border-box}
+                  @keyframes sp-fadeup{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+                  @keyframes sp-glow{0%,100%{box-shadow:0 0 18px rgba(204,255,0,.25)}50%{box-shadow:0 0 36px rgba(204,255,0,.5)}}
+                  @keyframes sp-bar{from{width:0}to{width:var(--w)}}
+                  .sp-s2-fade{animation:sp-fadeup .45s ease both}
+                  .sp-s2-fade:nth-child(2){animation-delay:.08s}
+                  .sp-s2-fade:nth-child(3){animation-delay:.16s}
+                  .sp-s2-fade:nth-child(4){animation-delay:.24s}
+                  .sp-s2-fade:nth-child(5){animation-delay:.32s}
+                  .sp-s2-fade:nth-child(6){animation-delay:.40s}
+                  .sp-s2-fade:nth-child(7){animation-delay:.48s}
 
-                        /* Section Header */
-                        .sp-sec-header {
-                            display: flex;
-                            align-items: center;
-                            justify-content: space-between;
-                            margin: 28px 0 14px;
-                        }
-                        .sp-sec-title {
-                            font-size: 0.92rem;
-                            font-weight: 1000;
-                            letter-spacing: 0.8px;
-                            text-transform: uppercase;
-                            color: #f1f5f9;
-                            display: flex;
-                            align-items: center;
-                            gap: 8px;
-                        }
+                  /* Hero Banner */
+                  .sp-hero2{background:radial-gradient(ellipse at 90% 10%,rgba(204,255,0,.14) 0,transparent 55%),radial-gradient(ellipse at 10% 90%,rgba(14,165,233,.13) 0,transparent 50%),linear-gradient(150deg,#0d1526 0%,#1a2540 100%);border:1.5px solid rgba(204,255,0,.3);border-radius:20px;padding:18px 16px 16px;margin-bottom:14px;position:relative;overflow:hidden;animation:sp-glow 4s ease-in-out infinite}
+                  .sp-hero2-tag{display:inline-flex;align-items:center;gap:5px;background:rgba(204,255,0,.12);border:1px solid rgba(204,255,0,.35);color:#ccff00;padding:3px 10px;border-radius:20px;font-size:.62rem;font-weight:900;letter-spacing:.8px;text-transform:uppercase}
+                  .sp-hero2-dot{width:6px;height:6px;border-radius:50%;background:#ccff00;box-shadow:0 0 7px #ccff00}
+                  .sp-hero2-title{font-size:1.35rem;font-weight:1000;letter-spacing:-.5px;line-height:1.2;margin:10px 0 4px;color:#fff}
+                  .sp-hero2-sub{font-size:.72rem;color:#8898b4;line-height:1.4}
+                  .sp-hero2-meta{font-size:.68rem;font-weight:800;color:#475569;display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px}
+                  .sp-hero2-meta b{color:#94a3b8}
+                  .sp-action-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+                  .sp-action-btn{flex:1;min-width:130px;padding:10px 14px;border-radius:13px;font-weight:900;font-size:.73rem;letter-spacing:.3px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;transition:transform .2s,box-shadow .2s;border:none;text-decoration:none}
+                  .sp-action-btn:hover{transform:translateY(-2px)}
+                  .sp-action-btn:active{transform:scale(.96)}
 
-                        /* Podio de Honor */
-                        .sp-podium-wrap {
-                            display: grid;
-                            grid-template-columns: repeat(3, 1fr);
-                            gap: 8px;
-                            align-items: flex-end;
-                            margin: 18px 0 24px;
-                        }
-                        .sp-podium-col {
-                            border-radius: 18px;
-                            padding: 16px 8px 14px;
-                            text-align: center;
-                            display: flex;
-                            flex-direction: column;
-                            align-items: center;
-                            justify-content: flex-end;
-                            position: relative;
-                            transition: transform 0.2s;
-                        }
-                        .sp-podium-col:hover {
-                            transform: translateY(-3px);
-                        }
-                        .sp-podium-avatar {
-                            width: 44px;
-                            height: 44px;
-                            border-radius: 50%;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            font-weight: 1000;
-                            font-size: 0.88rem;
-                            margin-bottom: 8px;
-                            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-                        }
+                  /* Section Label */
+                  .sp-s2-lbl{font-size:.68rem;font-weight:900;letter-spacing:.8px;text-transform:uppercase;color:#475569;margin:20px 0 10px;display:flex;align-items:center;gap:7px}
+                  .sp-s2-lbl i{width:18px;text-align:center}
 
-                        /* MVP & Crónica Express */
-                        .sp-mvp-card {
-                            background: linear-gradient(135deg, rgba(245, 158, 11, 0.16) 0%, rgba(15, 23, 42, 0.92) 55%, rgba(204, 255, 0, 0.08) 100%);
-                            border: 1.5px solid rgba(245, 158, 11, 0.45);
-                            border-radius: 20px;
-                            padding: 20px 18px;
-                            margin-bottom: 20px;
-                            box-shadow: 0 14px 35px rgba(0, 0, 0, 0.5), 0 0 20px rgba(245, 158, 11, 0.12);
-                            position: relative;
-                            overflow: hidden;
-                        }
-                        .sp-mvp-badge-pill {
-                            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-                            color: #000;
-                            font-size: 0.65rem;
-                            font-weight: 1000;
-                            padding: 4px 12px;
-                            border-radius: 12px;
-                            letter-spacing: 0.6px;
-                            text-transform: uppercase;
-                            display: inline-flex;
-                            align-items: center;
-                            gap: 6px;
-                            margin-bottom: 12px;
-                        }
-                        .sp-mvp-chip {
-                            display: inline-flex;
-                            align-items: center;
-                            gap: 5px;
-                            padding: 5px 11px;
-                            border-radius: 10px;
-                            font-size: 0.68rem;
-                            font-weight: 900;
-                            letter-spacing: 0.3px;
-                        }
+                  /* Podio */
+                  .sp-podium2{display:grid;grid-template-columns:1fr 1.18fr 1fr;gap:8px;align-items:flex-end;margin-bottom:14px}
+                  .sp-pod-col{border-radius:18px;padding:14px 8px 12px;text-align:center;display:flex;flex-direction:column;align-items:center;position:relative;transition:transform .2s}
+                  .sp-pod-col:hover{transform:translateY(-4px)}
+                  .sp-pod-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:1000;font-size:.84rem;margin-bottom:7px;flex-shrink:0}
+                  .sp-pod-pts{font-size:.7rem;font-weight:900;padding:3px 8px;border-radius:8px;margin-top:4px}
+                  .sp-pod-wl{font-size:.6rem;color:#64748b;font-weight:800;margin-top:3px}
 
-                        /* KPI Grid */
-                        .sp-sum-kpi-grid {
-                            display: grid;
-                            grid-template-columns: repeat(2, 1fr);
-                            gap: 10px;
-                            margin: 18px 0;
-                        }
-                        @media (min-width: 600px) {
-                            .sp-sum-kpi-grid {
-                                grid-template-columns: repeat(4, 1fr);
-                            }
-                        }
-                        .sp-sum-kpi-item {
-                            background: rgba(255, 255, 255, 0.04);
-                            border: 1px solid rgba(255, 255, 255, 0.08);
-                            border-radius: 16px;
-                            padding: 14px 12px;
-                            text-align: center;
-                        }
+                  /* Progress Bar */
+                  .sp-pbar-track{height:6px;background:rgba(255,255,255,.06);border-radius:6px;overflow:hidden;margin-top:6px}
+                  .sp-pbar-fill{height:100%;border-radius:6px;animation:sp-bar .8s ease both}
 
-                        /* Badges Grid (Datos que nadie ve) */
-                        .sp-badges-grid {
-                            display: grid;
-                            grid-template-columns: 1fr;
-                            gap: 12px;
-                        }
-                        @media (min-width: 640px) {
-                            .sp-badges-grid {
-                                grid-template-columns: repeat(2, 1fr);
-                            }
-                        }
-                        .sp-badge-card {
-                            background: linear-gradient(135deg, rgba(30, 41, 59, 0.75) 0%, rgba(15, 23, 42, 0.9) 100%);
-                            border: 1px solid rgba(255, 255, 255, 0.09);
-                            border-radius: 18px;
-                            padding: 15px;
-                            display: flex;
-                            align-items: flex-start;
-                            gap: 12px;
-                            transition: all 0.25s;
-                        }
-                        .sp-badge-card:hover {
-                            border-color: rgba(204, 255, 0, 0.35);
-                            background: linear-gradient(135deg, rgba(30, 41, 59, 0.92) 0%, rgba(15, 23, 42, 0.98) 100%);
-                            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-                        }
-                        .sp-badge-icon-box {
-                            width: 44px;
-                            height: 44px;
-                            border-radius: 13px;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            font-size: 1.35rem;
-                            flex-shrink: 0;
-                            border: 1px solid rgba(255,255,255,0.12);
-                        }
-                    </style>
+                  /* KPI Grid */
+                  .sp-kpi2{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:14px}
+                  @media(min-width:520px){.sp-kpi2{grid-template-columns:repeat(4,1fr)}}
+                  .sp-kpi2-card{background:rgba(255,255,255,.038);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:13px 10px;text-align:center;transition:border-color .2s}
+                  .sp-kpi2-card:hover{border-color:rgba(204,255,0,.3)}
+                  .sp-kpi2-num{font-size:1.5rem;font-weight:1000;line-height:1.1;margin:4px 0 2px}
+                  .sp-kpi2-lbl{font-size:.58rem;color:#64748b;font-weight:800;text-transform:uppercase;letter-spacing:.5px}
+                  .sp-kpi2-icon{font-size:.78rem;margin-bottom:2px}
 
-                    <!-- A) CABECERA & CENTRO DE ACCIONES DE DIFUSIÓN -->
-                    <div class="sp-sum-hero">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 8px;">
-                            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-width: 0;">
-                                <div class="sp-sum-tag">
-                                    <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #ccff00; box-shadow: 0 0 8px #ccff00;"></span>
-                                    <span>${isSwiss ? 'SUIZO' : (isFija ? 'PAREJA FIJA' : 'TWISTER')}</span>
-                                </div>
-                                <div style="font-size: 0.72rem; font-weight: 800; color: #94a3b8; display: inline-flex; align-items: center; gap: 4px;">
-                                    <i class="fas fa-calendar-alt" style="color: #38bdf8; font-size: 0.68rem;"></i>
-                                    <span>${eventDate}</span>
-                                    <span>•</span>
-                                    <span style="color: #ffffff;">${categoryLabel}</span>
-                                </div>
+                  /* MVP Card */
+                  .sp-mvp2{background:linear-gradient(135deg,rgba(245,158,11,.14) 0%,rgba(15,23,42,.95) 55%,rgba(204,255,0,.07) 100%);border:1.5px solid rgba(245,158,11,.4);border-radius:18px;padding:16px 15px;margin-bottom:14px}
+                  .sp-mvp2-pill{background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;font-size:.6rem;font-weight:1000;padding:3px 10px;border-radius:10px;display:inline-flex;align-items:center;gap:5px;text-transform:uppercase;letter-spacing:.5px}
+                  .sp-mvp2-name{font-size:1.05rem;font-weight:1000;color:#fff;margin:8px 0 3px}
+                  .sp-mvp2-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+                  .sp-chip2{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:9px;font-size:.64rem;font-weight:900;letter-spacing:.2px}
+
+                  /* Badges */
+                  .sp-badges2{display:grid;grid-template-columns:1fr;gap:9px;margin-bottom:14px}
+                  @media(min-width:520px){.sp-badges2{grid-template-columns:repeat(2,1fr)}}
+                  .sp-badge2{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:12px 13px;display:flex;align-items:center;gap:11px;transition:all .2s;cursor:default}
+                  .sp-badge2:hover{border-color:rgba(204,255,0,.3);background:rgba(204,255,0,.04);transform:translateX(3px)}
+                  .sp-badge2-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0}
+                  .sp-badge2-lbl{font-size:.58rem;font-weight:900;text-transform:uppercase;letter-spacing:.5px}
+                  .sp-badge2-name{font-size:.88rem;font-weight:1000;color:#fff;margin:2px 0}
+                  .sp-badge2-detail{font-size:.66rem;color:#94a3b8;line-height:1.3}
+
+                  /* Cronica */
+                  .sp-chronicle2{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:14px 15px;margin-bottom:14px}
+                  .sp-chronicle2-headline{font-size:1rem;font-weight:1000;color:#fff;line-height:1.3;margin-bottom:4px}
+                  .sp-chronicle2-sub{font-size:.72rem;color:#94a3b8;line-height:1.4}
+                  .sp-chronicle2-body{font-size:.72rem;color:#cbd5e1;line-height:1.5;margin-top:10px;border-top:1px solid rgba(255,255,255,.06);padding-top:10px}
+
+                  /* Charts */
+                  .sp-chart-card2{background:linear-gradient(145deg,#0d1526,#162035);border:1.5px solid rgba(255,255,255,.07);border-radius:18px;padding:16px 14px;margin-bottom:12px}
+                  .sp-chart-title2{font-size:.82rem;font-weight:1000;color:#fff;margin-bottom:3px;display:flex;align-items:center;gap:7px}
+                  .sp-chart-sub2{font-size:.65rem;color:#64748b;margin-bottom:12px}
+
+                  /* Share Footer */
+                  .sp-share2{background:linear-gradient(145deg,#0d1526,#111d3a);border:1.5px solid rgba(56,189,248,.28);border-radius:18px;padding:18px 16px;text-align:center;margin-top:10px}
+                  .sp-share2-title{font-size:.98rem;font-weight:1000;color:#fff;margin-bottom:6px}
+                  .sp-share2-sub{font-size:.72rem;color:#64748b;max-width:420px;margin:0 auto 14px;line-height:1.4}
+                  .sp-share2-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+                </style>
+
+                <!-- A: HEADER ANIMADO -->
+                <div class="sp-hero2 sp-s2-fade">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">
+                        <div>
+                            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+                                <div class="sp-hero2-tag"><span class="sp-hero2-dot"></span>${isSwiss ? 'SUIZO' : (isFija ? 'PAREJA FIJA' : 'TWISTER')}</div>
+                                <div style="font-size:.65rem;font-weight:800;color:#475569">${categoryLabel}</div>
                             </div>
-
-                            <!-- Botones rápidos (igual que en entrenos o americanas pequeños) -->
-                            <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
-                                <button type="button" onclick="window.ControlTowerSummary.shareWhatsApp()" 
-                                        title="Compartir por WhatsApp" 
-                                        aria-label="Compartir por WhatsApp"
-                                        style="background: rgba(15, 23, 42, 0.85); width: 30px; height: 30px; border-radius: 9px; border: 1px solid rgba(34, 197, 94, 0.35); color: #22c55e; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(10px); box-shadow: 0 3px 10px rgba(0,0,0,0.35); transition: transform 0.15s;"
-                                        onmouseover="this.style.transform='scale(1.08)';"
-                                        onmouseout="this.style.transform='scale(1)';"
-                                        onmousedown="this.style.transform='scale(0.92)';">
-                                    <i class="fab fa-whatsapp" style="font-size: 0.95rem;"></i>
-                                </button>
-
-                                <button type="button" onclick="window.ControlTowerSummary.openInstagramFlyerModal()" 
-                                        title="Generar Flyer Instagram HD" 
-                                        aria-label="Generar Flyer Instagram HD"
-                                        style="background: rgba(15, 23, 42, 0.85); width: 30px; height: 30px; border-radius: 9px; border: 1px solid rgba(225, 48, 108, 0.45); color: #E1306C; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(10px); box-shadow: 0 3px 10px rgba(0,0,0,0.35); transition: transform 0.15s;"
-                                        onmouseover="this.style.transform='scale(1.08)';"
-                                        onmouseout="this.style.transform='scale(1)';"
-                                        onmousedown="this.style.transform='scale(0.92)';">
-                                    <i class="fab fa-instagram" style="font-size: 0.95rem; background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
-                                </button>
+                            <div class="sp-hero2-title">${amName.toUpperCase()}</div>
+                            <div class="sp-hero2-meta">
+                                <i class="fas fa-calendar-alt" style="color:#38bdf8;font-size:.62rem"></i>
+                                <b>${eventDate}</b>
+                                <span>â€¢</span>
+                                <span>${totalMatches} partidos</span>
+                                <span>â€¢</span>
+                                <span>${totalGames} juegos</span>
                             </div>
                         </div>
-
-                        <h1 style="margin: 0 0 8px 0; font-size: 1.45rem; font-weight: 1000; color: #ffffff; letter-spacing: -0.5px; line-height: 1.2;">
-                            ${amName.toUpperCase()}
-                        </h1>
-                        <p style="margin: 0; font-size: 0.78rem; color: #94a3b8; line-height: 1.4;">
-                            Informe periodístico oficial, podio estelar, analítica interactiva y métricas secretas de la jornada.
-                        </p>
-                    </div>
-
-                    <!-- B) PODIO DE HONOR ESTELAR -->
-                    <div class="sp-sec-header">
-                        <div class="sp-sec-title">
-                            <i class="fas fa-medal" style="color: #facc15;"></i>
-                            <span>PODIO DE HONOR ESTELAR</span>
-                        </div>
-                        <button type="button" onclick="window.ControlTowerView.switchTab('standings')" 
-                                style="background: none; border: none; color: #38bdf8; font-size: 0.72rem; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
-                            <span>TABLA COMPLETA</span>
-                            <i class="fas fa-chevron-right" style="font-size: 0.65rem;"></i>
-                        </button>
-                    </div>
-
-                    <div class="sp-podium-wrap">
-                        <!-- 2º Puesto (Subcampeón) -->
-                        <div class="sp-podium-col" style="background: linear-gradient(180deg, rgba(203, 213, 225, 0.16) 0%, rgba(30, 41, 59, 0.85) 100%); border: 1.5px solid rgba(203, 213, 225, 0.35); min-height: 185px;">
-                            <div class="sp-podium-avatar" style="background: #cbd5e1; color: #0f172a;">
-                                ${this._getInitials(p2.name)}
-                            </div>
-                            <div style="font-size: 1.6rem; line-height: 1; margin-bottom: 4px;">🥈</div>
-                            <div style="font-size: 0.62rem; font-weight: 950; color: #cbd5e1; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 3px;">2º SUBCAMPEÓN</div>
-                            <div style="font-size: 0.85rem; font-weight: 1000; color: #ffffff; text-align: center; word-break: break-word; line-height: 1.2; margin-bottom: 6px;">
-                                ${p2.name}
-                            </div>
-                            <div style="background: rgba(203, 213, 225, 0.18); border-radius: 10px; padding: 4px 8px; font-size: 0.72rem; font-weight: 950; color: #f1f5f9; margin-bottom: 3px;">
-                                ${p2.points || 0} pts <span style="font-size: 0.62rem; color: #94a3b8;">(${p2.diff >= 0 ? '+' : ''}${p2.diff || 0})</span>
-                            </div>
-                            <div style="font-size: 0.62rem; color: #94a3b8; font-weight: 800;">
-                                ${p2.won || 0}V / ${p2.played || 0}P
-                            </div>
-                        </div>
-
-                        <!-- 1º Puesto (Campeón - Gran Centro Dorado) -->
-                        <div class="sp-podium-col" style="background: linear-gradient(180deg, rgba(250, 204, 21, 0.25) 0%, rgba(30, 41, 59, 0.98) 100%); border: 2px solid #facc15; min-height: 220px; box-shadow: 0 0 28px rgba(250, 204, 21, 0.28);">
-                            <div style="position: absolute; top: -12px; background: #facc15; color: #000; font-size: 0.6rem; font-weight: 1000; padding: 3px 10px; border-radius: 12px; letter-spacing: 0.6px; text-transform: uppercase; box-shadow: 0 2px 10px rgba(0,0,0,0.4);">
-                                👑 1º CAMPEÓN
-                            </div>
-                            <div class="sp-podium-avatar" style="background: linear-gradient(135deg, #facc15 0%, #f59e0b 100%); color: #000; width: 50px; height: 50px; font-size: 1rem; border: 2px solid #ffffff;">
-                                ${this._getInitials(p1.name)}
-                            </div>
-                            <div style="font-size: 2rem; line-height: 1; margin-bottom: 4px;">🥇</div>
-                            <div style="font-size: 0.65rem; font-weight: 1000; color: #facc15; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 3px;">CAMPEÓN OFICIAL</div>
-                            <div style="font-size: 0.96rem; font-weight: 1000; color: #ffffff; text-align: center; word-break: break-word; line-height: 1.2; margin-bottom: 6px;">
-                                ${p1.name}
-                            </div>
-                            <div style="background: rgba(250, 204, 21, 0.25); border: 1px solid rgba(250, 204, 21, 0.45); border-radius: 10px; padding: 5px 10px; font-size: 0.78rem; font-weight: 1000; color: #fef08a; margin-bottom: 3px;">
-                                ${p1.points || 0} pts <span style="font-size: 0.65rem; color: #facc15;">(${p1.diff >= 0 ? '+' : ''}${p1.diff || 0})</span>
-                            </div>
-                            <div style="font-size: 0.65rem; color: #facc15; font-weight: 900;">
-                                ${p1.won || 0}V / ${p1.played || 0}P (${p1WinPct}%)
-                            </div>
-                        </div>
-
-                        <!-- 3er Puesto (Tercer Puesto) -->
-                        <div class="sp-podium-col" style="background: linear-gradient(180deg, rgba(217, 119, 6, 0.18) 0%, rgba(30, 41, 59, 0.85) 100%); border: 1.5px solid rgba(217, 119, 6, 0.35); min-height: 175px;">
-                            <div class="sp-podium-avatar" style="background: #d97706; color: #ffffff;">
-                                ${this._getInitials(p3.name)}
-                            </div>
-                            <div style="font-size: 1.5rem; line-height: 1; margin-bottom: 4px;">🥉</div>
-                            <div style="font-size: 0.62rem; font-weight: 950; color: #fbbf24; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 3px;">3ER PUESTO</div>
-                            <div style="font-size: 0.85rem; font-weight: 1000; color: #ffffff; text-align: center; word-break: break-word; line-height: 1.2; margin-bottom: 6px;">
-                                ${p3.name}
-                            </div>
-                            <div style="background: rgba(217, 119, 6, 0.22); border-radius: 10px; padding: 4px 8px; font-size: 0.72rem; font-weight: 950; color: #fde68a; margin-bottom: 3px;">
-                                ${p3.points || 0} pts <span style="font-size: 0.62rem; color: #fbbf24;">(${p3.diff >= 0 ? '+' : ''}${p3.diff || 0})</span>
-                            </div>
-                            <div style="font-size: 0.62rem; color: #94a3b8; font-weight: 800;">
-                                ${p3.won || 0}V / ${p3.played || 0}P
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- C) CRÓNICA PERIODÍSTICA EXPRESS & MVP -->
-                    <div class="sp-sec-header">
-                        <div class="sp-sec-title">
-                            <i class="fas fa-newspaper" style="color: #38bdf8;"></i>
-                            <span>CRÓNICA PERIODÍSTICA EXPRESS & MVP</span>
-                        </div>
-                    </div>
-
-                    <div class="sp-mvp-card">
-                        <!-- Badge MVP -->
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-                            <div class="sp-mvp-badge-pill">
-                                <i class="fas fa-crown"></i>
-                                <span>MVP DE LA JORNADA</span>
-                            </div>
-                            <div style="font-size: 0.68rem; font-weight: 800; color: #94a3b8;">
-                                <i class="far fa-calendar-alt" style="color: #f59e0b; margin-right: 4px;"></i>${humanDate}
-                            </div>
-                        </div>
-
-                        <!-- Titular Inteligente Dinámico -->
-                        <div style="margin-bottom: 14px;">
-                            <div style="font-size: 1.18rem; font-weight: 1000; color: #ffffff; line-height: 1.3; letter-spacing: -0.3px; margin-bottom: 4px;">
-                                ${chronicleHeadline}
-                            </div>
-                            <div style="font-size: 0.75rem; color: #94a3b8; line-height: 1.4;">
-                                ${chronicleSubheadline}
-                            </div>
-                        </div>
-
-                        <!-- MVP Profile Row -->
-                        <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 16px; flex-wrap: wrap;">
-                            <div style="width: 54px; height: 54px; border-radius: 50%; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); display: flex; align-items: center; justify-content: center; font-size: 1.15rem; font-weight: 1000; color: #000; border: 2px solid #ffffff; box-shadow: 0 0 20px rgba(245, 158, 11, 0.4); flex-shrink: 0;">
-                                ${this._getInitials(p1.name)}
-                            </div>
-                            <div style="flex: 1; min-width: 190px;">
-                                <div style="font-size: 1.05rem; font-weight: 1000; color: #ffffff; margin-bottom: 2px;">
-                                    ${p1.name}
-                                </div>
-                                <div style="font-size: 0.73rem; color: #cbd5e1; line-height: 1.3;">
-                                    ${isEntreno 
-                                        ? 'Temple y dominio de hierro en la Pista 1. Supo gestionar cada bola caliente bajo máxima exigencia para coronar la primera plaza.' 
-                                        : 'Actuación formidable de principio a fin, manteniendo una regularidad sólida en cada turno para conquistar la cima.'}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- MVP Stats Chips -->
-                        <div style="display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 16px;">
-                            <div class="sp-mvp-chip" style="background: rgba(245, 158, 11, 0.18); border: 1px solid rgba(245, 158, 11, 0.4); color: #fbbf24;">
-                                <i class="fas fa-trophy"></i>
-                                <span>${p1.won} VICTORIAS</span>
-                            </div>
-                            <div class="sp-mvp-chip" style="background: rgba(204, 255, 0, 0.16); border: 1px solid rgba(204, 255, 0, 0.35); color: #ccff00;">
-                                <i class="fas fa-meteor"></i>
-                                <span>${p1.points} JUEGOS GANADOS</span>
-                            </div>
-                            <div class="sp-mvp-chip" style="background: rgba(56, 189, 248, 0.16); border: 1px solid rgba(56, 189, 248, 0.35); color: #38bdf8;">
-                                <i class="fas fa-chart-pie"></i>
-                                <span>${p1WinPct}% EFECTIVIDAD</span>
-                            </div>
-                            ${p1Court1Count > 0 ? `
-                                <div class="sp-mvp-chip" style="background: rgba(168, 85, 247, 0.18); border: 1px solid rgba(168, 85, 247, 0.4); color: #c084fc;">
-                                    <i class="fas fa-star"></i>
-                                    <span>${p1Court1Count} PARTIDOS EN PISTA 1</span>
-                                </div>
-                            ` : ''}
-                        </div>
-
-                        <!-- Narrativa deportiva concisa -->
-                        <div style="font-size: 0.76rem; color: #cbd5e1; line-height: 1.5; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 14px;">
-                            El ambiente vivido en <strong>${amName}</strong> fue puro espectáculo de pádel. A lo largo de los <strong>${totalMatches} partidos oficiales</strong> y los <strong>${totalGames} juegos disputados</strong> (media de <strong>${avgGamesPerMatch} juegos/partido</strong>), la paridad y la intensidad marcaron cada rotación de pista.
-                        </div>
-
-                        <!-- Desplegable opcional para leer crónica completa -->
-                        <div id="sp-chronicle-expanded-text" style="display: none; margin-top: 12px; font-size: 0.75rem; color: #94a3b8; line-height: 1.5; background: rgba(0,0,0,0.25); padding: 14px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.06);">
-                            <p style="margin: 0 0 10px 0;">
-                                La pugna por los puestos de escolta mantuvo en vilo a todo el club hasta la última bola. 
-                                ${p2.name !== 'Por disputar' ? `<strong>${p2.name}</strong> firmó una actuación soberbia conquistando la plata con ${p2.won} victorias y ${p2.points} puntos.` : ''}
-                                ${p3.name !== 'Por disputar' ? ` Mientras que <strong>${p3.name}</strong> completó el podio con ${p3.points} puntos tras resolver cruces de altísimo voltaje.` : ''}
-                            </p>
-                            <p style="margin: 0;">
-                                🤝 <strong>Espíritu SomosPadel BCN:</strong> Enhorabuena a todos los participantes por el compañerismo y el excelente nivel exhibido. Los tanteos de la jornada computan oficialmente en el sistema para la actualización del <strong>Nivel Oficial SomosPadel</strong>.
-                            </p>
-                        </div>
-
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; gap: 8px; flex-wrap: wrap;">
-                            <button type="button" id="sp-chronicle-toggle-btn" onclick="window.ControlTowerSummary.toggleChronicleFull()"
-                                    style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); color: #38bdf8; font-size: 0.72rem; font-weight: 900; padding: 6px 12px; border-radius: 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-                                <i class="fas fa-book-open"></i>
-                                <span>Leer crónica completa</span>
+                        <div style="display:flex;gap:6px;flex-shrink:0;margin-top:2px">
+                            <button type="button" onclick="window.ControlTowerSummary.shareWhatsApp()" title="WhatsApp"
+                                    style="background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.35);color:#22c55e;width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .15s;font-size:.9rem"
+                                    onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+                                <i class="fab fa-whatsapp"></i>
                             </button>
-                            <button type="button" onclick="window.ControlTowerSummary.copyChronicle(this)"
-                                    style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); color: #cbd5e1; font-size: 0.72rem; font-weight: 800; padding: 6px 12px; border-radius: 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-                                <i class="fas fa-copy"></i>
-                                <span>Copiar crónica</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- D) MÉTRICAS GLOBALES DEL EVENTO (4 Indicadores Clave) -->
-                    <div class="sp-sum-kpi-grid">
-                        <div class="sp-sum-kpi-item">
-                            <div style="font-size: 0.62rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
-                                <i class="fas fa-trophy" style="color: #facc15; margin-right: 4px;"></i>PARTIDOS
-                            </div>
-                            <div style="font-size: 1.45rem; font-weight: 1000; color: #ffffff;">${totalMatches}</div>
-                            <div style="font-size: 0.6rem; color: #64748b; margin-top: 2px;">Completados</div>
-                        </div>
-                        <div class="sp-sum-kpi-item">
-                            <div style="font-size: 0.62rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
-                                <i class="fas fa-baseball-ball" style="color: #ccff00; margin-right: 4px;"></i>JUEGOS
-                            </div>
-                            <div style="font-size: 1.45rem; font-weight: 1000; color: #ccff00;">${totalGames}</div>
-                            <div style="font-size: 0.6rem; color: #64748b; margin-top: 2px;">Puntos en pista</div>
-                        </div>
-                        <div class="sp-sum-kpi-item">
-                            <div style="font-size: 0.62rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
-                                <i class="fas fa-chart-line" style="color: #38bdf8; margin-right: 4px;"></i>PROMEDIO
-                            </div>
-                            <div style="font-size: 1.45rem; font-weight: 1000; color: #38bdf8;">${avgGamesPerMatch}</div>
-                            <div style="font-size: 0.6rem; color: #64748b; margin-top: 2px;">Juegos / Partido</div>
-                        </div>
-                        <div class="sp-sum-kpi-item">
-                            <div style="font-size: 0.62rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
-                                <i class="fas fa-tachometer-alt" style="color: ${intensityColor}; margin-right: 4px;"></i>INTENSIDAD
-                            </div>
-                            <div style="font-size: 0.92rem; font-weight: 1000; color: ${intensityColor}; margin-top: 6px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                ${intensityLevel.split(' ')[0]}
-                            </div>
-                            <div style="font-size: 0.6rem; color: #94a3b8; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${intensityLevel}</div>
-                        </div>
-                    </div>
-
-                    <!-- E) "DATOS QUE NADIE VE" (8 INSIGNIAS Y PREMIOS SECRETOS) -->
-                    <div class="sp-sec-header">
-                        <div class="sp-sec-title">
-                            <i class="fas fa-fingerprint" style="color: #ccff00;"></i>
-                            <span>DATOS QUE NADIE VE • PREMIOS SECRETOS</span>
-                        </div>
-                        <span style="font-size: 0.65rem; background: rgba(204,255,0,0.12); color: #ccff00; padding: 3px 8px; border-radius: 10px; font-weight: 900;">
-                            8 INSIGNIAS PRO
-                        </span>
-                    </div>
-
-                    <div class="sp-badges-grid">
-                        <!-- 1. Rey / Reina de la Pista 1 -->
-                        <div class="sp-badge-card">
-                            <div class="sp-badge-icon-box" style="background: rgba(250, 204, 21, 0.15); color: #facc15; border-color: rgba(250, 204, 21, 0.3);">
-                                👑
-                            </div>
-                            <div style="flex: 1; min-width: 0;">
-                                <div style="font-size: 0.64rem; font-weight: 900; color: #facc15; text-transform: uppercase; letter-spacing: 0.5px;">REY / REINA PISTA 1</div>
-                                <div style="font-size: 0.94rem; font-weight: 1000; color: #ffffff; margin: 2px 0 3px; word-break: break-word;">
-                                    ${badges.court1King.name}
-                                </div>
-                                <div style="font-size: 0.72rem; color: #cbd5e1; line-height: 1.3;">
-                                    ${badges.court1King.detail}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 2. Muralla Defensiva -->
-                        <div class="sp-badge-card">
-                            <div class="sp-badge-icon-box" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border-color: rgba(56, 189, 248, 0.3);">
-                                🛡️
-                            </div>
-                            <div style="flex: 1; min-width: 0;">
-                                <div style="font-size: 0.64rem; font-weight: 900; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px;">MURALLA DEFENSIVA</div>
-                                <div style="font-size: 0.94rem; font-weight: 1000; color: #ffffff; margin: 2px 0 3px; word-break: break-word;">
-                                    ${badges.defenseWall.name}
-                                </div>
-                                <div style="font-size: 0.72rem; color: #cbd5e1; line-height: 1.3;">
-                                    ${badges.defenseWall.detail}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 3. Racha Imbatible -->
-                        <div class="sp-badge-card">
-                            <div class="sp-badge-icon-box" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border-color: rgba(239, 68, 68, 0.3);">
-                                🔥
-                            </div>
-                            <div style="flex: 1; min-width: 0;">
-                                <div style="font-size: 0.64rem; font-weight: 900; color: #ef4444; text-transform: uppercase; letter-spacing: 0.5px;">RACHA IMBATIBLE</div>
-                                <div style="font-size: 0.94rem; font-weight: 1000; color: #ffffff; margin: 2px 0 3px; word-break: break-word;">
-                                    ${badges.unbeatableStreak.name}
-                                </div>
-                                <div style="font-size: 0.72rem; color: #cbd5e1; line-height: 1.3;">
-                                    ${badges.unbeatableStreak.detail}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 4. Partido Más Épico -->
-                        <div class="sp-badge-card">
-                            <div class="sp-badge-icon-box" style="background: rgba(168, 85, 247, 0.15); color: #a855f7; border-color: rgba(168, 85, 247, 0.3);">
-                                ⚔️
-                            </div>
-                            <div style="flex: 1; min-width: 0;">
-                                <div style="font-size: 0.64rem; font-weight: 900; color: #c084fc; text-transform: uppercase; letter-spacing: 0.5px;">PARTIDO MÁS ÉPICO</div>
-                                <div style="font-size: 0.92rem; font-weight: 1000; color: #ffffff; margin: 2px 0 3px; word-break: break-word;">
-                                    ${badges.epicMatch.title}
-                                </div>
-                                <div style="font-size: 0.72rem; color: #cbd5e1; line-height: 1.3;">
-                                    ${badges.epicMatch.detail}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 5. Tándem / Pareja Más Letal -->
-                        <div class="sp-badge-card">
-                            <div class="sp-badge-icon-box" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border-color: rgba(16, 185, 129, 0.3);">
-                                🎯
-                            </div>
-                            <div style="flex: 1; min-width: 0;">
-                                <div style="font-size: 0.64rem; font-weight: 900; color: #34d399; text-transform: uppercase; letter-spacing: 0.5px;">TÁNDEM MÁS LETAL</div>
-                                <div style="font-size: 0.94rem; font-weight: 1000; color: #ffffff; margin: 2px 0 3px; word-break: break-word;">
-                                    ${badges.deadlyTandem.name}
-                                </div>
-                                <div style="font-size: 0.72rem; color: #cbd5e1; line-height: 1.3;">
-                                    ${badges.deadlyTandem.detail}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 6. Efecto Diésel / Remontada -->
-                        <div class="sp-badge-card">
-                            <div class="sp-badge-icon-box" style="background: rgba(249, 115, 22, 0.15); color: #f97316; border-color: rgba(249, 115, 22, 0.3);">
-                                🚀
-                            </div>
-                            <div style="flex: 1; min-width: 0;">
-                                <div style="font-size: 0.64rem; font-weight: 900; color: #fb923c; text-transform: uppercase; letter-spacing: 0.5px;">EFECTO DIÉSEL / REMONTADA</div>
-                                <div style="font-size: 0.94rem; font-weight: 1000; color: #ffffff; margin: 2px 0 3px; word-break: break-word;">
-                                    ${badges.dieselEffect.name}
-                                </div>
-                                <div style="font-size: 0.72rem; color: #cbd5e1; line-height: 1.3;">
-                                    ${badges.dieselEffect.detail}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 7. Máximo Cañonero -->
-                        <div class="sp-badge-card">
-                            <div class="sp-badge-icon-box" style="background: rgba(204, 255, 0, 0.15); color: #ccff00; border-color: rgba(204, 255, 0, 0.3);">
-                                💣
-                            </div>
-                            <div style="flex: 1; min-width: 0;">
-                                <div style="font-size: 0.64rem; font-weight: 900; color: #ccff00; text-transform: uppercase; letter-spacing: 0.5px;">MÁXIMO CAÑONERO</div>
-                                <div style="font-size: 0.94rem; font-weight: 1000; color: #ffffff; margin: 2px 0 3px; word-break: break-word;">
-                                    ${badges.topScorer.name}
-                                </div>
-                                <div style="font-size: 0.72rem; color: #cbd5e1; line-height: 1.3;">
-                                    ${badges.topScorer.detail}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 8. Impacto ELO / Nivel -->
-                        <div class="sp-badge-card">
-                            <div class="sp-badge-icon-box" style="background: rgba(99, 102, 241, 0.15); color: #6366f1; border-color: rgba(99, 102, 241, 0.3);">
-                                📈
-                            </div>
-                            <div style="flex: 1; min-width: 0;">
-                                <div style="font-size: 0.64rem; font-weight: 900; color: #818cf8; text-transform: uppercase; letter-spacing: 0.5px;">IMPACTO ELO / NIVEL OFICIAL</div>
-                                <div style="font-size: 0.94rem; font-weight: 1000; color: #ffffff; margin: 2px 0 3px; word-break: break-word;">
-                                    ${badges.eloImpact.name}
-                                </div>
-                                <div style="font-size: 0.72rem; color: #cbd5e1; line-height: 1.3;">
-                                    ${badges.eloImpact.detail}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- F) GRÁFICOS VISUALES INTERACTIVOS (SVG NATIVO & RESPONSIVO) -->
-                    <div class="sp-sec-header">
-                        <div class="sp-sec-title">
-                            <i class="fas fa-chart-pie" style="color: #38bdf8;"></i>
-                            <span>ANÁLISIS GRÁFICO INTERACTIVO</span>
-                        </div>
-                    </div>
-
-                    <!-- 1. Gráfico: Evolución por Rondas (Top 4) -->
-                    <div id="sp-evolution-card" style="background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%); border: 1.5px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 18px 14px; margin-bottom: 16px; position: relative;">
-                        <div id="sp-evolution-chart-container">
-                            ${this._renderEvolutionChartSVG(finishedMatches, ranking)}
-                        </div>
-                    </div>
-
-                    <!-- 2 & 3. Dúo de Gráficos: Donut de Competitividad & Pistas -->
-                    <div style="display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 24px;">
-                        <!-- Termómetro Donut de Competitividad -->
-                        <div id="sp-competitiveness-card" style="background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%); border: 1.5px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 18px 16px;">
-                            <div id="sp-competitiveness-container">
-                                ${this._renderCompetitivenessDonutSVG(finishedMatches)}
-                            </div>
-                        </div>
-
-                        <!-- Actividad por Pistas -->
-                        <div style="background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 18px 16px;">
-                            <div style="margin-bottom: 14px;">
-                                <div style="font-size: 0.85rem; font-weight: 1000; color: #ffffff;">🏟️ ACTIVIDAD POR PISTAS (CENTRAL VS SECUNDARIAS)</div>
-                                <div style="font-size: 0.68rem; color: #94a3b8;">Volumen de juego y media de juegos por encuentro en cada pista</div>
-                            </div>
-                            ${this._renderCourtsActivityBars(finishedMatches)}
-                        </div>
-                    </div>
-
-                    <!-- G) BOTONES DE GENERACIÓN DE INFORME Y COMPARTICIÓN (AL PIE) -->
-                    <div style="margin-top: 30px; padding: 22px 18px; background: linear-gradient(145deg, #0f172a 0%, #172554 100%); border: 1.5px solid rgba(56, 189, 248, 0.3); border-radius: 20px; text-align: center;">
-                        <div style="font-size: 1.1rem; font-weight: 1000; color: #ffffff; margin-bottom: 6px;">
-                            🎾 ¡PRESUME DE TU TORNEO EN REDES!
-                        </div>
-                        <p style="font-size: 0.75rem; color: #94a3b8; max-width: 460px; margin: 0 auto 16px; line-height: 1.4;">
-                            Comparte el informe completo con el podio y las insignias por WhatsApp o genera tu Flyer HD oficial calibrado para Historias de Instagram.
-                        </p>
-                        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                            <button type="button" class="sp-sum-btn" onclick="window.ControlTowerSummary.shareWhatsApp()"
-                                    style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); color: #ffffff; box-shadow: 0 6px 20px rgba(37, 211, 102, 0.3);">
-                                <i class="fab fa-whatsapp" style="font-size: 1.15rem;"></i>
-                                <span>COMPARTIR EN WHATSAPP</span>
-                            </button>
-                            <button type="button" class="sp-sum-btn" onclick="window.ControlTowerSummary.openInstagramFlyerModal()"
-                                    style="background: linear-gradient(135deg, #e1306c 0%, #833ab4 50%, #fd1d1d 100%); color: #ffffff; box-shadow: 0 6px 20px rgba(225, 48, 108, 0.35);">
-                                <i class="fab fa-instagram" style="font-size: 1.15rem;"></i>
-                                <span>GENERAR FLYER INSTAGRAM HD</span>
+                            <button type="button" onclick="window.ControlTowerSummary.openInstagramFlyerModal()" title="Flyer HD"
+                                    style="background:rgba(225,48,108,.12);border:1px solid rgba(225,48,108,.4);color:#e1306c;width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .15s;font-size:.9rem"
+                                    onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+                                <i class="fab fa-instagram"></i>
                             </button>
                         </div>
                     </div>
                 </div>
+
+                <!-- B: KPIs GLOBALES -->
+                <div class="sp-s2-lbl sp-s2-fade"><i class="fas fa-chart-bar" style="color:#ccff00"></i> MÃ‰TRICAS DEL EVENTO</div>
+                <div class="sp-kpi2 sp-s2-fade">
+                    <div class="sp-kpi2-card">
+                        <div class="sp-kpi2-icon">ðŸŽ¾</div>
+                        <div class="sp-kpi2-num" style="color:#fff">${totalMatches}</div>
+                        <div class="sp-kpi2-lbl">Partidos</div>
+                    </div>
+                    <div class="sp-kpi2-card">
+                        <div class="sp-kpi2-icon">ðŸ’¥</div>
+                        <div class="sp-kpi2-num" style="color:#ccff00">${totalGames}</div>
+                        <div class="sp-kpi2-lbl">Juegos totales</div>
+                    </div>
+                    <div class="sp-kpi2-card">
+                        <div class="sp-kpi2-icon">ðŸ“Š</div>
+                        <div class="sp-kpi2-num" style="color:#38bdf8">${avgGamesPerMatch}</div>
+                        <div class="sp-kpi2-lbl">Media j/partido</div>
+                    </div>
+                    <div class="sp-kpi2-card">
+                        <div class="sp-kpi2-icon">âš¡</div>
+                        <div class="sp-kpi2-num" style="color:${intensityColor};font-size:1rem;margin-top:6px">${intensityLevel.split(' ')[0]}</div>
+                        <div class="sp-kpi2-lbl">Intensidad</div>
+                    </div>
+                </div>
+
+                <!-- C: PODIO VISUAL -->
+                <div class="sp-s2-lbl sp-s2-fade"><i class="fas fa-medal" style="color:#facc15"></i> PODIO DE HONOR</div>
+                <div class="sp-podium2 sp-s2-fade">
+                    <!-- 2Âº -->
+                    <div class="sp-pod-col" style="background:linear-gradient(180deg,rgba(203,213,225,.14) 0,rgba(20,30,50,.85) 100%);border:1.5px solid rgba(203,213,225,.3);min-height:170px">
+                        <div class="sp-pod-avatar" style="background:#cbd5e1;color:#0f172a">${this._getInitials(p2.name)}</div>
+                        <div style="font-size:1.5rem;line-height:1;margin-bottom:3px">ðŸ¥ˆ</div>
+                        <div style="font-size:.58rem;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px">2Âº SUBCAMPEÃ“N</div>
+                        <div style="font-size:.8rem;font-weight:1000;color:#fff;word-break:break-word;line-height:1.2;margin:4px 0">${p2.name}</div>
+                        <div class="sp-pod-pts" style="background:rgba(203,213,225,.15);color:#f1f5f9">${p2.points||0} pts</div>
+                        <div class="sp-pod-wl">${p2.won||0}V/${p2.played||0}P</div>
+                        <div class="sp-pbar-track" style="width:100%"><div class="sp-pbar-fill" style="--w:${p1.points>0?Math.round((p2.points||0)/p1.points*100):0}%;background:linear-gradient(90deg,#94a3b8,#cbd5e1)"></div></div>
+                    </div>
+                    <!-- 1Âº CAMPEÃ“N (mÃ¡s alto) -->
+                    <div class="sp-pod-col" style="background:linear-gradient(180deg,rgba(250,204,21,.22) 0,rgba(20,30,50,.98) 100%);border:2px solid #facc15;min-height:210px;box-shadow:0 0 30px rgba(250,204,21,.22)">
+                        <div style="position:absolute;top:-11px;background:#facc15;color:#000;font-size:.58rem;font-weight:1000;padding:2px 10px;border-radius:12px;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">ðŸ‘‘ 1Âº CAMPEÃ“N</div>
+                        <div class="sp-pod-avatar" style="background:linear-gradient(135deg,#facc15,#f59e0b);color:#000;width:48px;height:48px;font-size:.95rem;border:2px solid #fff">${this._getInitials(p1.name)}</div>
+                        <div style="font-size:1.9rem;line-height:1;margin-bottom:3px">ðŸ¥‡</div>
+                        <div style="font-size:.6rem;font-weight:1000;color:#facc15;text-transform:uppercase;letter-spacing:.5px">CAMPEÃ“N OFICIAL</div>
+                        <div style="font-size:.9rem;font-weight:1000;color:#fff;word-break:break-word;line-height:1.2;margin:4px 0">${p1.name}</div>
+                        <div class="sp-pod-pts" style="background:rgba(250,204,21,.22);border:1px solid rgba(250,204,21,.4);color:#fef08a">${p1.points||0} pts Â· ${p1.diff>=0?'+':''}${p1.diff||0}</div>
+                        <div style="font-size:.62rem;color:#facc15;font-weight:900;margin-top:3px">${p1.won||0}V Â· ${p1WinPct}% efect.</div>
+                        <div class="sp-pbar-track" style="width:100%"><div class="sp-pbar-fill" style="--w:100%;background:linear-gradient(90deg,#facc15,#ccff00)"></div></div>
+                    </div>
+                    <!-- 3Âº -->
+                    <div class="sp-pod-col" style="background:linear-gradient(180deg,rgba(217,119,6,.14) 0,rgba(20,30,50,.85) 100%);border:1.5px solid rgba(217,119,6,.3);min-height:160px">
+                        <div class="sp-pod-avatar" style="background:#d97706;color:#fff">${this._getInitials(p3.name)}</div>
+                        <div style="font-size:1.4rem;line-height:1;margin-bottom:3px">ðŸ¥‰</div>
+                        <div style="font-size:.58rem;font-weight:900;color:#fbbf24;text-transform:uppercase;letter-spacing:.5px">3ER PUESTO</div>
+                        <div style="font-size:.8rem;font-weight:1000;color:#fff;word-break:break-word;line-height:1.2;margin:4px 0">${p3.name}</div>
+                        <div class="sp-pod-pts" style="background:rgba(217,119,6,.2);color:#fde68a">${p3.points||0} pts</div>
+                        <div class="sp-pod-wl">${p3.won||0}V/${p3.played||0}P</div>
+                        <div class="sp-pbar-track" style="width:100%"><div class="sp-pbar-fill" style="--w:${p1.points>0?Math.round((p3.points||0)/p1.points*100):0}%;background:linear-gradient(90deg,#d97706,#fbbf24)"></div></div>
+                    </div>
+                </div>
+
+                <!-- D: MVP CARD -->
+                <div class="sp-s2-lbl sp-s2-fade"><i class="fas fa-crown" style="color:#f59e0b"></i> MVP DE LA JORNADA</div>
+                <div class="sp-mvp2 sp-s2-fade">
+                    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                        <div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#d97706);display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:1000;color:#000;border:2px solid #fff;box-shadow:0 0 18px rgba(245,158,11,.4);flex-shrink:0">${this._getInitials(p1.name)}</div>
+                        <div style="flex:1;min-width:160px">
+                            <div class="sp-mvp2-pill"><i class="fas fa-crown"></i> MVP DE LA JORNADA</div>
+                            <div class="sp-mvp2-name">${p1.name}</div>
+                            <div style="font-size:.7rem;color:#94a3b8;line-height:1.3">${isEntreno?'Temple y dominio en Pista 1. Supo gestionar cada bola caliente bajo mÃ¡xima exigencia.':'ActuaciÃ³n formidable de principio a fin. Regularidad sÃ³lida en cada turno para conquistar la cima.'}</div>
+                        </div>
+                    </div>
+                    <div class="sp-mvp2-chips">
+                        <div class="sp-chip2" style="background:rgba(245,158,11,.16);border:1px solid rgba(245,158,11,.38);color:#fbbf24"><i class="fas fa-trophy"></i>${p1.won} Victorias</div>
+                        <div class="sp-chip2" style="background:rgba(204,255,0,.14);border:1px solid rgba(204,255,0,.3);color:#ccff00"><i class="fas fa-meteor"></i>${p1.points} Juegos gan.</div>
+                        <div class="sp-chip2" style="background:rgba(56,189,248,.14);border:1px solid rgba(56,189,248,.3);color:#38bdf8"><i class="fas fa-percentage"></i>${p1WinPct}% Efectividad</div>
+                        ${p1Court1Count>0?`<div class="sp-chip2" style="background:rgba(168,85,247,.14);border:1px solid rgba(168,85,247,.35);color:#c084fc"><i class="fas fa-star"></i>${p1Court1Count} en Pista 1</div>`:''}
+                    </div>
+                </div>
+
+                <!-- E: GRÃFICOS INTERACTIVOS -->
+                <div class="sp-s2-lbl sp-s2-fade"><i class="fas fa-chart-line" style="color:#38bdf8"></i> EVOLUCIÃ“N POR RONDAS</div>
+                <div class="sp-chart-card2 sp-s2-fade">
+                    <div id="sp-evolution-chart-container">
+                        ${this._renderEvolutionChartSVG(finishedMatches, ranking)}
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:14px">
+                    <div class="sp-chart-card2 sp-s2-fade">
+                        <div class="sp-chart-title2"><i class="fas fa-fire" style="color:#f43f5e"></i> COMPETITIVIDAD</div>
+                        <div class="sp-chart-sub2">DistribuciÃ³n de los partidos por nivel de igualda</div>
+                        <div id="sp-competitiveness-container">
+                            ${this._renderCompetitivenessDonutSVG(finishedMatches)}
+                        </div>
+                    </div>
+                    <div class="sp-chart-card2 sp-s2-fade">
+                        <div class="sp-chart-title2"><i class="fas fa-table-tennis" style="color:#facc15"></i> ACTIVIDAD POR PISTAS</div>
+                        <div class="sp-chart-sub2">Volumen de juego y media por encuentro en cada pista</div>
+                        ${this._renderCourtsActivityBars(finishedMatches)}
+                    </div>
+                </div>
+
+                <!-- F: INSIGNIAS "DATOS QUE NADIE VE" -->
+                <div class="sp-s2-lbl sp-s2-fade"><i class="fas fa-fingerprint" style="color:#ccff00"></i> DATOS QUE NADIE VE <span style="font-size:.6rem;background:rgba(204,255,0,.1);color:#ccff00;padding:2px 7px;border-radius:8px;margin-left:4px;font-weight:900">8 INSIGNIAS</span></div>
+                <div class="sp-badges2 sp-s2-fade">
+                    <div class="sp-badge2">
+                        <div class="sp-badge2-icon" style="background:rgba(250,204,21,.13);color:#facc15">ðŸ‘‘</div>
+                        <div style="flex:1;min-width:0">
+                            <div class="sp-badge2-lbl" style="color:#facc15">REY / REINA PISTA 1</div>
+                            <div class="sp-badge2-name">${badges.court1King.name}</div>
+                            <div class="sp-badge2-detail">${badges.court1King.detail}</div>
+                        </div>
+                    </div>
+                    <div class="sp-badge2">
+                        <div class="sp-badge2-icon" style="background:rgba(56,189,248,.13);color:#38bdf8">ðŸ›¡ï¸</div>
+                        <div style="flex:1;min-width:0">
+                            <div class="sp-badge2-lbl" style="color:#38bdf8">MURALLA DEFENSIVA</div>
+                            <div class="sp-badge2-name">${badges.defenseWall.name}</div>
+                            <div class="sp-badge2-detail">${badges.defenseWall.detail}</div>
+                        </div>
+                    </div>
+                    <div class="sp-badge2">
+                        <div class="sp-badge2-icon" style="background:rgba(239,68,68,.13);color:#ef4444">ðŸ”¥</div>
+                        <div style="flex:1;min-width:0">
+                            <div class="sp-badge2-lbl" style="color:#ef4444">RACHA IMBATIBLE</div>
+                            <div class="sp-badge2-name">${badges.unbeatableStreak.name}</div>
+                            <div class="sp-badge2-detail">${badges.unbeatableStreak.detail}</div>
+                        </div>
+                    </div>
+                    <div class="sp-badge2">
+                        <div class="sp-badge2-icon" style="background:rgba(168,85,247,.13);color:#a855f7">âš”ï¸</div>
+                        <div style="flex:1;min-width:0">
+                            <div class="sp-badge2-lbl" style="color:#c084fc">PARTIDO MÃS Ã‰PICO</div>
+                            <div class="sp-badge2-name">${badges.epicMatch.title}</div>
+                            <div class="sp-badge2-detail">${badges.epicMatch.detail}</div>
+                        </div>
+                    </div>
+                    <div class="sp-badge2">
+                        <div class="sp-badge2-icon" style="background:rgba(16,185,129,.13);color:#10b981">ðŸŽ¯</div>
+                        <div style="flex:1;min-width:0">
+                            <div class="sp-badge2-lbl" style="color:#34d399">TÃNDEM MÃS LETAL</div>
+                            <div class="sp-badge2-name">${badges.deadlyTandem.name}</div>
+                            <div class="sp-badge2-detail">${badges.deadlyTandem.detail}</div>
+                        </div>
+                    </div>
+                    <div class="sp-badge2">
+                        <div class="sp-badge2-icon" style="background:rgba(249,115,22,.13);color:#f97316">ðŸš€</div>
+                        <div style="flex:1;min-width:0">
+                            <div class="sp-badge2-lbl" style="color:#fb923c">EFECTO DIÃ‰SEL</div>
+                            <div class="sp-badge2-name">${badges.dieselEffect.name}</div>
+                            <div class="sp-badge2-detail">${badges.dieselEffect.detail}</div>
+                        </div>
+                    </div>
+                    <div class="sp-badge2">
+                        <div class="sp-badge2-icon" style="background:rgba(204,255,0,.13);color:#ccff00">ðŸ’£</div>
+                        <div style="flex:1;min-width:0">
+                            <div class="sp-badge2-lbl" style="color:#ccff00">MÃXIMO CAÃ‘ONERO</div>
+                            <div class="sp-badge2-name">${badges.topScorer.name}</div>
+                            <div class="sp-badge2-detail">${badges.topScorer.detail}</div>
+                        </div>
+                    </div>
+                    <div class="sp-badge2">
+                        <div class="sp-badge2-icon" style="background:rgba(99,102,241,.13);color:#6366f1">ðŸ“ˆ</div>
+                        <div style="flex:1;min-width:0">
+                            <div class="sp-badge2-lbl" style="color:#818cf8">IMPACTO ELO</div>
+                            <div class="sp-badge2-name">${badges.eloImpact.name}</div>
+                            <div class="sp-badge2-detail">${badges.eloImpact.detail}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- G: CRÃ“NICA PERIODÃSTICA -->
+                <div class="sp-s2-lbl sp-s2-fade"><i class="fas fa-newspaper" style="color:#38bdf8"></i> CRÃ“NICA OFICIAL</div>
+                <div class="sp-chronicle2 sp-s2-fade">
+                    <div class="sp-chronicle2-headline">${chronicleHeadline}</div>
+                    <div class="sp-chronicle2-sub">${chronicleSubheadline}</div>
+                    <div class="sp-chronicle2-body">
+                        El ambiente vivido en <strong>${amName}</strong> fue puro espectÃ¡culo de pÃ¡del. A lo largo de los <strong>${totalMatches} partidos oficiales</strong> y los <strong>${totalGames} juegos disputados</strong> (media de <strong>${avgGamesPerMatch} j/partido</strong>), la paridad y la intensidad marcaron cada rotaciÃ³n de pista.
+                        ${p2.name!=='Por disputar'?`<strong>${p2.name}</strong> firmÃ³ una actuaciÃ³n soberbia conquistando la plata con ${p2.won} victorias y ${p2.points} puntos. `:''}
+                        ${p3.name!=='Por disputar'?`Mientras que <strong>${p3.name}</strong> completÃ³ el podio con ${p3.points} puntos. `:''}
+                        ðŸ¤ Â¡Gracias a todos por el compaÃ±erismo y nivel exhibido!
+                    </div>
+                    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px">
+                        <button type="button" onclick="window.ControlTowerSummary.copyChronicle(this)"
+                                style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);color:#94a3b8;font-size:.68rem;font-weight:900;padding:5px 11px;border-radius:9px;cursor:pointer;display:inline-flex;align-items:center;gap:5px">
+                            <i class="fas fa-copy"></i> Copiar para WhatsApp
+                        </button>
+                        <button type="button" onclick="window.ControlTowerView.switchTab('standings')"
+                                style="background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.25);color:#38bdf8;font-size:.68rem;font-weight:900;padding:5px 11px;border-radius:9px;cursor:pointer;display:inline-flex;align-items:center;gap:5px">
+                            <i class="fas fa-list-ol"></i> Ver clasificaciÃ³n completa
+                        </button>
+                    </div>
+                </div>
+
+                <!-- H: BOTONES COMPARTIR -->
+                <div class="sp-share2 sp-s2-fade">
+                    <div class="sp-share2-title">ðŸŽ¾ Â¡PRESUME DE TU TORNEO!</div>
+                    <div class="sp-share2-sub">Comparte el informe completo con podio e insignias, o genera tu Flyer HD para Instagram Stories.</div>
+                    <div class="sp-share2-btns">
+                        <button type="button" class="sp-action-btn" onclick="window.ControlTowerSummary.shareWhatsApp()"
+                                style="background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;box-shadow:0 5px 18px rgba(37,211,102,.28)">
+                            <i class="fab fa-whatsapp" style="font-size:1.05rem"></i> COMPARTIR EN WHATSAPP
+                        </button>
+                        <button type="button" class="sp-action-btn" onclick="window.ControlTowerSummary.openInstagramFlyerModal()"
+                                style="background:linear-gradient(135deg,#e1306c,#833ab4 50%,#fd1d1d);color:#fff;box-shadow:0 5px 18px rgba(225,48,108,.32)">
+                            <i class="fab fa-instagram" style="font-size:1.05rem"></i> FLYER INSTAGRAM HD
+                        </button>
+                    </div>
+                </div>
+
+                </div>
             `;
         }
-
         /**
          * Estado vacío cuando no hay partidos finalizados aún
          */
@@ -811,10 +488,10 @@
                         <i class="fas fa-chart-line" style="font-size: 2.2rem; color: #ccff00;"></i>
                     </div>
                     <h3 style="font-weight: 1000; color: #ffffff; font-size: 1.25rem; margin: 0 0 8px 0; letter-spacing: -0.3px;">
-                        RESUMEN DE COMPETICIÓN EN PREPARACIÓN
+                        RESUMEN DE COMPETICIÃ“N EN PREPARACIÃ“N
                     </h3>
                     <p style="font-size: 0.8rem; max-width: 360px; margin: 0 auto 20px; line-height: 1.4; color: #94a3b8;">
-                        El podio de honor, el MVP, los gráficos interactivos, las 8 insignias secretas y el flyer HD se generarán automáticamente en cuanto se confirmen los marcadores.
+                        El podio de honor, el MVP, los grÃ¡ficos interactivos, las 8 insignias secretas y el flyer HD se generarÃ¡n automÃ¡ticamente en cuanto se confirmen los marcadores.
                     </p>
                     <button type="button" onclick="window.ControlTowerView.switchTab('results')"
                             style="background: #0f172a; border: 1.5px solid #ccff00; color: #ccff00; padding: 11px 24px; border-radius: 14px; font-weight: 900; font-size: 0.76rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
@@ -830,7 +507,7 @@
          */
         static _getInitials(name) {
             if (!name || typeof name !== 'string') return 'SP';
-            const clean = name.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '').trim();
+            const clean = name.replace(/[^a-zA-ZÃ¡Ã©Ã­Ã³ÃºÃÃ‰ÃÃ“ÃšÃ±Ã‘\s]/g, '').trim();
             const parts = clean.split(/\s+/).filter(Boolean);
             if (parts.length === 0) return 'SP';
             if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
@@ -838,7 +515,7 @@
         }
 
         /**
-         * Despliegue de la crónica completa
+         * Despliegue de la crÃ³nica completa
          */
         static toggleChronicleFull() {
             const el = document.getElementById('sp-chronicle-expanded-text');
@@ -849,7 +526,7 @@
             if (btn) {
                 btn.innerHTML = isHidden 
                     ? '<i class="fas fa-chevron-up"></i> <span>Ocultar detalles</span>' 
-                    : '<i class="fas fa-book-open"></i> <span>Leer crónica completa</span>';
+                    : '<i class="fas fa-book-open"></i> <span>Leer crÃ³nica completa</span>';
             }
         }
 
@@ -858,7 +535,7 @@
         }
 
         /**
-         * Copiar crónica o resumen al portapapeles
+         * Copiar crÃ³nica o resumen al portapapeles
          */
         static copyChronicle(btnElement) {
             const text = this.lastChronicleText || '';
@@ -867,7 +544,7 @@
                 navigator.clipboard.writeText(text).then(() => {
                     if (btnElement) {
                         const originalHtml = btnElement.innerHTML;
-                        btnElement.innerHTML = '<i class="fas fa-check" style="color: #22c55e;"></i> <span style="color: #22c55e;">¡Copiado!</span>';
+                        btnElement.innerHTML = '<i class="fas fa-check" style="color: #22c55e;"></i> <span style="color: #22c55e;">Â¡Copiado!</span>';
                         setTimeout(() => {
                             if (btnElement) btnElement.innerHTML = originalHtml;
                         }, 2200);
@@ -910,44 +587,44 @@
          */
         static _prepareShareTexts(d) {
             const b = d.badges;
-            let wp = `🎾🔥 *INFORME OFICIAL SOMOSPADEL BCN • RESUMEN DE COMPETICIÓN* 🔥🎾\n`;
-            wp += `━━━━━━━━━━━━━━━━━━━━\n`;
-            wp += `🏆 *${d.amName.toUpperCase()}*\n`;
-            wp += `📅 *Fecha:* ${d.humanDate} | *Modalidad:* ${d.categoryLabel}\n`;
-            wp += `📊 *Balance:* ${d.totalMatches} partidos oficiales | ${d.totalGames} juegos disputados (Media: ${d.avgGamesPerMatch} j/p)\n\n`;
+            let wp = `ðŸŽ¾ðŸ”¥ *INFORME OFICIAL SOMOSPADEL BCN â€¢ RESUMEN DE COMPETICIÃ“N* ðŸ”¥ðŸŽ¾\n`;
+            wp += `â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n`;
+            wp += `ðŸ† *${d.amName.toUpperCase()}*\n`;
+            wp += `ðŸ“… *Fecha:* ${d.humanDate} | *Modalidad:* ${d.categoryLabel}\n`;
+            wp += `ðŸ“Š *Balance:* ${d.totalMatches} partidos oficiales | ${d.totalGames} juegos disputados (Media: ${d.avgGamesPerMatch} j/p)\n\n`;
 
-            wp += `👑 *MVP & LÍDER INDISCUTIBLE: ${d.p1.name.toUpperCase()}*\n`;
-            wp += `Exhibición magistral coronando la cima del evento con *${d.p1.points} puntos*, *${d.p1.won} victorias* (efectividad del *${d.p1WinPct}%*)${d.p1Court1Count > 0 ? ` y *${d.p1Court1Count} partidos en Pista 1*` : ''}.\n\n`;
+            wp += `ðŸ‘‘ *MVP & LÃDER INDISCUTIBLE: ${d.p1.name.toUpperCase()}*\n`;
+            wp += `ExhibiciÃ³n magistral coronando la cima del evento con *${d.p1.points} puntos*, *${d.p1.won} victorias* (efectividad del *${d.p1WinPct}%*)${d.p1Court1Count > 0 ? ` y *${d.p1Court1Count} partidos en Pista 1*` : ''}.\n\n`;
 
-            wp += `🥇🥈🥉 *PODIO DE HONOR ESTELAR*\n`;
-            wp += `• 🥇 1º Lugar: *${d.p1.name}* (${d.p1.points} pts | Dif: ${d.p1.diff >= 0 ? '+' : ''}${d.p1.diff})\n`;
-            wp += `• 🥈 2º Subcampeón: *${d.p2.name}* (${d.p2.points} pts | Dif: ${d.p2.diff >= 0 ? '+' : ''}${d.p2.diff})\n`;
-            wp += `• 🥉 3º Tercer puesto: *${d.p3.name}* (${d.p3.points} pts | Dif: ${d.p3.diff >= 0 ? '+' : ''}${d.p3.diff})\n\n`;
+            wp += `ðŸ¥‡ðŸ¥ˆðŸ¥‰ *PODIO DE HONOR ESTELAR*\n`;
+            wp += `â€¢ ðŸ¥‡ 1Âº Lugar: *${d.p1.name}* (${d.p1.points} pts | Dif: ${d.p1.diff >= 0 ? '+' : ''}${d.p1.diff})\n`;
+            wp += `â€¢ ðŸ¥ˆ 2Âº SubcampeÃ³n: *${d.p2.name}* (${d.p2.points} pts | Dif: ${d.p2.diff >= 0 ? '+' : ''}${d.p2.diff})\n`;
+            wp += `â€¢ ðŸ¥‰ 3Âº Tercer puesto: *${d.p3.name}* (${d.p3.points} pts | Dif: ${d.p3.diff >= 0 ? '+' : ''}${d.p3.diff})\n\n`;
 
-            wp += `⚡ *DATOS QUE NADIE VE (INSIGNIAS OFICIALES)*\n`;
-            wp += `👑 *Rey Pista 1:* ${b.court1King.name} (${b.court1King.detail})\n`;
-            wp += `🛡️ *Muralla Defensiva:* ${b.defenseWall.name} (${b.defenseWall.detail})\n`;
-            wp += `🔥 *Racha Imbatible:* ${b.unbeatableStreak.name} (${b.unbeatableStreak.detail})\n`;
-            wp += `⚔️ *Partido Más Épico:* ${b.epicMatch.title} (${b.epicMatch.detail})\n`;
-            wp += `🎯 *Tándem Más Letal:* ${b.deadlyTandem.name} (${b.deadlyTandem.detail})\n`;
-            wp += `🚀 *Efecto Diésel:* ${b.dieselEffect.name} (${b.dieselEffect.detail})\n`;
-            wp += `💣 *Máximo Cañonero:* ${b.topScorer.name} (${b.topScorer.detail})\n`;
-            wp += `📈 *Impacto ELO:* ${b.eloImpact.name} (${b.eloImpact.detail})\n\n`;
+            wp += `âš¡ *DATOS QUE NADIE VE (INSIGNIAS OFICIALES)*\n`;
+            wp += `ðŸ‘‘ *Rey Pista 1:* ${b.court1King.name} (${b.court1King.detail})\n`;
+            wp += `ðŸ›¡ï¸ *Muralla Defensiva:* ${b.defenseWall.name} (${b.defenseWall.detail})\n`;
+            wp += `ðŸ”¥ *Racha Imbatible:* ${b.unbeatableStreak.name} (${b.unbeatableStreak.detail})\n`;
+            wp += `âš”ï¸ *Partido MÃ¡s Ã‰pico:* ${b.epicMatch.title} (${b.epicMatch.detail})\n`;
+            wp += `ðŸŽ¯ *TÃ¡ndem MÃ¡s Letal:* ${b.deadlyTandem.name} (${b.deadlyTandem.detail})\n`;
+            wp += `ðŸš€ *Efecto DiÃ©sel:* ${b.dieselEffect.name} (${b.dieselEffect.detail})\n`;
+            wp += `ðŸ’£ *MÃ¡ximo CaÃ±onero:* ${b.topScorer.name} (${b.topScorer.detail})\n`;
+            wp += `ðŸ“ˆ *Impacto ELO:* ${b.eloImpact.name} (${b.eloImpact.detail})\n\n`;
 
-            wp += `━━━━━━━━━━━━━━━━━━━━\n`;
-            wp += `🤝 *Espíritu SomosPadel:* ¡Gracias a todos los jugadores por su entrega, deportividad y pasión en cada punto! Los marcadores ya computan para el *Nivel Oficial SomosPadel BCN*.\n\n`;
-            wp += `📲 *Consulta clasificaciones completas y fotos en:* https://somospadelbcn.com`;
+            wp += `â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n`;
+            wp += `ðŸ¤ *EspÃ­ritu SomosPadel:* Â¡Gracias a todos los jugadores por su entrega, deportividad y pasiÃ³n en cada punto! Los marcadores ya computan para el *Nivel Oficial SomosPadel BCN*.\n\n`;
+            wp += `ðŸ“² *Consulta clasificaciones completas y fotos en:* https://somospadelbcn.com`;
 
             this.lastChronicleText = wp;
         }
 
         /**
-         * Comparte el informe oficial con formato periodístico por WhatsApp
+         * Comparte el informe oficial con formato periodÃ­stico por WhatsApp
          */
         static shareWhatsApp() {
             const text = this.lastChronicleText;
             if (!text) {
-                alert('Aún no hay datos de partidos confirmados para compartir.');
+                alert('AÃºn no hay datos de partidos confirmados para compartir.');
                 return;
             }
 
@@ -960,7 +637,7 @@
         }
 
         /**
-         * Clasificación de emergencia si StandingsService no estuviese presente
+         * ClasificaciÃ³n de emergencia si StandingsService no estuviese presente
          */
         static _calculateFallbackRanking(matches) {
             const stats = {};
@@ -1002,7 +679,7 @@
         }
 
         /**
-         * Cálculo riguroso de las 8 Insignias Secretas
+         * CÃ¡lculo riguroso de las 8 Insignias Secretas
          */
         static _calculateBadges(matches, ranking) {
             const activeRanking = ranking.filter(p => (p.played || 0) > 0);
@@ -1054,7 +731,7 @@
             const avgConceded = ((wall.gamesLost || 0) / (wall.played || 1)).toFixed(1);
             const defenseWall = {
                 name: wall.name,
-                detail: `Solo encajó ${avgConceded} juegos/partido (${wall.gamesLost || 0} encajados en ${wall.played} partidos)`
+                detail: `Solo encajÃ³ ${avgConceded} juegos/partido (${wall.gamesLost || 0} encajados en ${wall.played} partidos)`
             };
 
             // 3. Racha Imbatible (mayor racha consecutiva de victorias)
@@ -1089,7 +766,7 @@
                 detail: `${topStreak.max} victorias consecutivas sin conocer la derrota`
             };
 
-            // 4. Partido Más Épico (menor diferencia de juegos y mayor total de juegos)
+            // 4. Partido MÃ¡s Ã‰pico (menor diferencia de juegos y mayor total de juegos)
             let epic = null;
             let bestEpicScore = 999;
             let maxEpicTotal = -1;
@@ -1108,18 +785,18 @@
 
             let epicMatch = {
                 title: 'Partido en disputa',
-                detail: 'Máxima igualdad en todas las pistas'
+                detail: 'MÃ¡xima igualdad en todas las pistas'
             };
             if (epic) {
                 const teamA = (Array.isArray(epic.team_a_names) ? epic.team_a_names.join(' & ') : epic.team_a_names) || 'Equipo A';
                 const teamB = (Array.isArray(epic.team_b_names) ? epic.team_b_names.join(' & ') : epic.team_b_names) || 'Equipo B';
                 epicMatch = {
                     title: `${epic.score_a} - ${epic.score_b} (Pista ${epic.court || 1})`,
-                    detail: `${teamA} vs ${teamB} • Batalla de ${parseInt(epic.score_a || 0) + parseInt(epic.score_b || 0)} juegos totales`
+                    detail: `${teamA} vs ${teamB} â€¢ Batalla de ${parseInt(epic.score_a || 0) + parseInt(epic.score_b || 0)} juegos totales`
                 };
             }
 
-            // 5. Tándem / Pareja Más Letal (mayor diferencial positivo conjunto)
+            // 5. TÃ¡ndem / Pareja MÃ¡s Letal (mayor diferencial positivo conjunto)
             let bestTandem = { name: 'Por definir', diff: -99, score: '0-0', round: 1 };
             matches.forEach(m => {
                 const scA = parseInt(m.score_a || 0);
@@ -1145,7 +822,7 @@
                     : `+${bestTandem.diff} juegos de diferencia (${bestTandem.score} en Ronda ${bestTandem.round})`
             };
 
-            // 6. Efecto Diésel / Remontada (mayor progresión 2ª mitad vs 1ª mitad)
+            // 6. Efecto DiÃ©sel / Remontada (mayor progresiÃ³n 2Âª mitad vs 1Âª mitad)
             const maxRound = Math.max(...matches.map(m => parseInt(m.round || 1)), 1);
             const midRound = Math.ceil(maxRound / 2);
             const playerHalfPoints = {};
@@ -1184,10 +861,10 @@
 
             const dieselEffect = {
                 name: bestDiesel.name,
-                detail: `+${bestDiesel.diff > 0 ? bestDiesel.diff.toFixed(1) : '1.5'} juegos de progresión en la segunda mitad del torneo`
+                detail: `+${bestDiesel.diff > 0 ? bestDiesel.diff.toFixed(1) : '1.5'} juegos de progresiÃ³n en la segunda mitad del torneo`
             };
 
-            // 7. Máximo Cañonero (mayor promedio y total anotado)
+            // 7. MÃ¡ximo CaÃ±onero (mayor promedio y total anotado)
             const sortedByPoints = [...activeRanking].sort((a, b) => b.points - a.points);
             const scorer = sortedByPoints[0] || { name: 'Por definir', points: 0, played: 1 };
             const avgScored = ((scorer.points || 0) / (scorer.played || 1)).toFixed(1);
@@ -1197,10 +874,10 @@
             };
 
             // 8. Impacto ELO / Nivel Oficial
-            const bestPerformer = ranking[0] || { name: 'Líder del Torneo' };
+            const bestPerformer = ranking[0] || { name: 'LÃ­der del Torneo' };
             const eloImpact = {
                 name: `${bestPerformer.name} (+24 pts ELO)`,
-                detail: `Rendimiento de Nivel Oficial Élite (+18 pts promedio en el Top Tier)`
+                detail: `Rendimiento de Nivel Oficial Ã‰lite (+18 pts promedio en el Top Tier)`
             };
 
             return {
@@ -1259,7 +936,7 @@
         }
 
         /**
-         * Selección de jugador interactivo en el gráfico de evolución
+         * SelecciÃ³n de jugador interactivo en el grÃ¡fico de evoluciÃ³n
          * @param {number|string} playerIndex 0..3 para Top 4, o -1/'all' para ver todos
          */
         static selectEvolutionPlayer(playerIndex) {
@@ -1268,7 +945,7 @@
         }
 
         /**
-         * Alterna el modo de visualización: 'accumulated' vs 'round'
+         * Alterna el modo de visualizaciÃ³n: 'accumulated' vs 'round'
          */
         static toggleEvolutionMode(mode) {
             if (mode === 'accumulated' || mode === 'round') {
@@ -1280,7 +957,7 @@
         }
 
         /**
-         * Muestra tooltip interactivo y actualiza el banner táctil
+         * Muestra tooltip interactivo y actualiza el banner tÃ¡ctil
          */
         static showEvolutionTooltip(dotEl, text, isClick = false) {
             const livePill = document.getElementById('sp-evolution-live-pill');
@@ -1312,7 +989,7 @@
         }
 
         /**
-         * Alterna la categoría de competitividad seleccionada ('tight' | 'medium' | 'blowout')
+         * Alterna la categorÃ­a de competitividad seleccionada ('tight' | 'medium' | 'blowout')
          */
         static toggleCompetitivenessCategory(cat) {
             if (this.activeCompetitivenessCategory === cat) {
@@ -1324,7 +1001,7 @@
         }
 
         /**
-         * Actualiza en caliente el DOM del gráfico de evolución
+         * Actualiza en caliente el DOM del grÃ¡fico de evoluciÃ³n
          */
         static _updateEvolutionDOM() {
             const container = document.getElementById('sp-evolution-chart-container');
@@ -1344,7 +1021,7 @@
         }
 
         /**
-         * 1. Gráfico SVG de Evolución Ronda a Ronda (Top 4) - 100% Interactivo y Legible
+         * 1. GrÃ¡fico SVG de EvoluciÃ³n Ronda a Ronda (Top 4) - 100% Interactivo y Legible
          */
         static _renderEvolutionChartSVG(matches, ranking) {
             matches = matches || this.lastMatches || [];
@@ -1355,7 +1032,7 @@
                 return `
                     <div style="text-align: center; padding: 25px 15px; color: #94a3b8; font-size: 0.78rem;">
                         <i class="fas fa-chart-line" style="font-size: 1.5rem; color: #64748b; margin-bottom: 8px; display: block;"></i>
-                        No hay suficientes partidos o clasificación disponible para trazar la evolución.
+                        No hay suficientes partidos o clasificaciÃ³n disponible para trazar la evoluciÃ³n.
                     </div>
                 `;
             }
@@ -1521,7 +1198,7 @@
 
                 pointsCoords.forEach(p => {
                     const rNum = rounds[p.rIdx];
-                    const tooltipText = `${s.name} • Ronda ${rNum}: +${p.roundData.ptsInRound} pts en este partido (Total acumulado: ${p.roundData.cumulative} pts)`;
+                    const tooltipText = `${s.name} â€¢ Ronda ${rNum}: +${p.roundData.ptsInRound} pts en este partido (Total acumulado: ${p.roundData.cumulative} pts)`;
                     const escapedTooltip = ControlTowerSummary._escapeAttr(tooltipText);
 
                     const dotRadius = isSelected ? (isAllSelected ? 6 : 7) : 4;
@@ -1529,7 +1206,7 @@
                     const dotStroke = '#0b1120';
                     const dotStrokeW = isSelected ? 2.5 : 1.5;
 
-                    // Etiqueta numérica sobre el punto para no tener que adivinar con el eje Y
+                    // Etiqueta numÃ©rica sobre el punto para no tener que adivinar con el eje Y
                     let numericLabel = '';
                     if (isSelected) {
                         const labelY = (p.cy - 12 < 14) ? p.cy + 18 : p.cy - 12;
@@ -1548,7 +1225,7 @@
                                     onmouseenter="window.ControlTowerSummary.showEvolutionTooltip(this, this.getAttribute('data-tooltip'))"
                                     onmouseleave="window.ControlTowerSummary.hideEvolutionTooltip()"
                                     onclick="window.ControlTowerSummary.showEvolutionTooltip(this, this.getAttribute('data-tooltip'), true)"/>
-                            <!-- Área táctil amplia para dispositivos móviles -->
+                            <!-- Ãrea tÃ¡ctil amplia para dispositivos mÃ³viles -->
                             <circle cx="${p.cx.toFixed(1)}" cy="${p.cy.toFixed(1)}" r="18" fill="transparent" style="cursor: pointer;"
                                     data-tooltip="${escapedTooltip}"
                                     onmouseenter="window.ControlTowerSummary.showEvolutionTooltip(this, this.getAttribute('data-tooltip'))"
@@ -1560,7 +1237,7 @@
                 });
             });
 
-            // SVG Defs para Glow Neón
+            // SVG Defs para Glow NeÃ³n
             const defsGlow = `
                 <defs>
                     ${playerSeries.map((s, idx) => `
@@ -1597,13 +1274,13 @@
                             </button>
                         `;
                     }).join('')}
-                    <!-- Botón Todos -->
+                    <!-- BotÃ³n Todos -->
                     <button type="button" onclick="window.ControlTowerSummary.selectEvolutionPlayer(-1)"
                             style="flex: 1 1 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 14px; border-radius: 14px; cursor: pointer; transition: all 0.2s ease;
                             ${isAllSelected 
                                 ? `border: 2px solid #ffffff; background: rgba(255, 255, 255, 0.12); box-shadow: 0 0 16px rgba(255,255,255,0.3); transform: translateY(-1px);` 
                                 : `border: 1px solid rgba(255, 255, 255, 0.08); background: rgba(15, 23, 42, 0.5); opacity: 0.72;`}">
-                        <span style="font-size: 0.85rem;">👥</span>
+                        <span style="font-size: 0.85rem;">ðŸ‘¥</span>
                         <span style="font-size: 0.76rem; font-weight: 900; color: #ffffff;">Comparar Todos (Top 4)</span>
                     </button>
                 </div>
@@ -1614,7 +1291,7 @@
                 <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
                     <div>
                         <div style="font-size: 0.85rem; font-weight: 1000; color: #ffffff; letter-spacing: 0.3px;">
-                            📊 EVOLUCIÓN DE PUNTOS RONDA A RONDA (TOP 4)
+                            ðŸ“Š EVOLUCIÃ“N DE PUNTOS RONDA A RONDA (TOP 4)
                         </div>
                         <div style="font-size: 0.68rem; color: #94a3b8;">
                             Haz tap en cualquier jugador para resaltar su trayectoria y ver su desglose
@@ -1627,14 +1304,14 @@
                                 ${currentMode === 'accumulated' 
                                     ? 'background: #0284c7; color: #ffffff; box-shadow: 0 2px 10px rgba(2,132,199,0.5);' 
                                     : 'background: transparent; color: #94a3b8;'}">
-                            📈 Puntos Acumulados
+                            ðŸ“ˆ Puntos Acumulados
                         </button>
                         <button type="button" onclick="window.ControlTowerSummary.toggleEvolutionMode('round')"
                                 style="border: none; border-radius: 9px; padding: 6px 12px; font-size: 0.7rem; font-weight: 950; cursor: pointer; transition: all 0.2s;
                                 ${currentMode === 'round' 
                                     ? 'background: #0284c7; color: #ffffff; box-shadow: 0 2px 10px rgba(2,132,199,0.5);' 
                                     : 'background: transparent; color: #94a3b8;'}">
-                            📊 Juegos por Ronda
+                            ðŸ“Š Juegos por Ronda
                         </button>
                     </div>
                 </div>
@@ -1643,7 +1320,7 @@
             // Banner interactivo para touch
             const liveBannerHTML = `
                 <div id="sp-evolution-live-pill" style="min-height: 32px; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.6); border: 1px dashed rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 5px 12px; margin-bottom: 12px; font-size: 0.72rem; color: #94a3b8; transition: all 0.25s;">
-                    <span>💡 Toca o pasa el cursor sobre cualquier punto del gráfico para ver detalles de la ronda</span>
+                    <span>ðŸ’¡ Toca o pasa el cursor sobre cualquier punto del grÃ¡fico para ver detalles de la ronda</span>
                 </div>
             `;
 
@@ -1661,7 +1338,7 @@
                                 </span>
                                 <div>
                                     <div style="font-size: 0.9rem; font-weight: 1000; color: #ffffff;">Desglose Ronda a Ronda de ${sel.name}</div>
-                                    <div style="font-size: 0.68rem; color: #94a3b8;">${sel.totalPoints} pts totales • ${sel.won}/${sel.played} partidos ganados (${winPct}%)</div>
+                                    <div style="font-size: 0.68rem; color: #94a3b8;">${sel.totalPoints} pts totales â€¢ ${sel.won}/${sel.played} partidos ganados (${winPct}%)</div>
                                 </div>
                             </div>
                             <span style="background: rgba(0,0,0,0.4); border: 1px solid ${sel.color}; color: ${sel.color}; font-size: 0.72rem; font-weight: 950; padding: 4px 10px; border-radius: 10px;">
@@ -1682,7 +1359,7 @@
 
                                 const tagColor = d.isWin ? '#22c55e' : (d.isTie ? '#38bdf8' : '#f59e0b');
                                 const tagBg = d.isWin ? 'rgba(34, 197, 94, 0.14)' : (d.isTie ? 'rgba(56, 189, 248, 0.14)' : 'rgba(245, 158, 11, 0.14)');
-                                const tagText = d.isWin ? '¡VICTORIA! 🏆' : (d.isTie ? 'EMPATE ⚖️' : 'DISPUTADO ⚔️');
+                                const tagText = d.isWin ? 'Â¡VICTORIA! ðŸ†' : (d.isTie ? 'EMPATE âš–ï¸' : 'DISPUTADO âš”ï¸');
 
                                 return `
                                     <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 10px 14px; display: flex; flex-direction: column; gap: 6px;">
@@ -1704,7 +1381,7 @@
                                         </div>
                                         <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.68rem; color: #94a3b8; flex-wrap: wrap; gap: 4px; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 4px;">
                                             <span>
-                                                ${d.partner ? `🎾 Pareja: <strong style="color: #cbd5e1;">${d.partner}</strong> • ` : ''}Rivales: <strong style="color: #cbd5e1;">${d.oppString}</strong>
+                                                ${d.partner ? `ðŸŽ¾ Pareja: <strong style="color: #cbd5e1;">${d.partner}</strong> â€¢ ` : ''}Rivales: <strong style="color: #cbd5e1;">${d.oppString}</strong>
                                             </span>
                                             <span style="color: #cbd5e1; font-weight: 800;">
                                                 Acumulado: <strong style="color: ${sel.color};">${d.cumulative} pts</strong>
@@ -1721,7 +1398,7 @@
                 breakdownHTML = `
                     <div style="margin-top: 16px; background: rgba(15, 23, 42, 0.85); border: 1.5px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 16px;">
                         <div style="font-size: 0.85rem; font-weight: 1000; color: #ffffff; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                            <span>👥</span> Resumen Comparativo Top 4 (Ronda a Ronda)
+                            <span>ðŸ‘¥</span> Resumen Comparativo Top 4 (Ronda a Ronda)
                         </div>
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); gap: 10px;">
                             ${playerSeries.map((s, idx) => {
@@ -1730,7 +1407,7 @@
                                 return `
                                     <div style="background: rgba(255,255,255,0.03); border: 1px solid ${s.color}44; border-radius: 12px; padding: 10px; text-align: center;">
                                         <span style="width: 24px; height: 24px; border-radius: 50%; background: ${s.color}; color: #0b1120; font-weight: 950; font-size: 0.65rem; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 4px;">
-                                            ${idx + 1}º
+                                            ${idx + 1}Âº
                                         </span>
                                         <div style="font-size: 0.75rem; font-weight: 900; color: #ffffff; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                             ${s.name}
@@ -1771,7 +1448,7 @@
         }
 
         /**
-         * 2. Gráfico Donut de Competitividad - 100% Interactivo, Práctico y Visual
+         * 2. GrÃ¡fico Donut de Competitividad - 100% Interactivo, PrÃ¡ctico y Visual
          */
         static _renderCompetitivenessDonutSVG(matches) {
             matches = matches || this.lastMatches || [];
@@ -1783,14 +1460,14 @@
                 return `
                     <div style="text-align: center; padding: 25px 15px; color: #94a3b8; font-size: 0.78rem;">
                         <i class="fas fa-chart-pie" style="font-size: 1.5rem; color: #64748b; margin-bottom: 8px; display: block;"></i>
-                        Aún no hay marcadores finalizados para calcular la competitividad.
+                        AÃºn no hay marcadores finalizados para calcular la competitividad.
                     </div>
                 `;
             }
 
             const tightMatches = []; // diff <= 2 (Partidos de Infarto)
             const mediumMatches = []; // diff 3-4 (Partidos Disputados)
-            const blowoutMatches = []; // diff >= 5 (Victorias Cómodas / Claros)
+            const blowoutMatches = []; // diff >= 5 (Victorias CÃ³modas / Claros)
 
             finishedMatches.forEach(m => {
                 const sA = parseInt(m.score_a || 0);
@@ -1830,7 +1507,7 @@
 
             const activeCat = this.activeCompetitivenessCategory; // null | 'tight' | 'medium' | 'blowout'
 
-            // Donut center label dinámico
+            // Donut center label dinÃ¡mico
             let centerCount = total;
             let centerLabel = 'PARTIDOS';
             let centerColor = '#ffffff';
@@ -1845,47 +1522,47 @@
                 centerColor = '#0ea5e9';
             } else if (activeCat === 'blowout') {
                 centerCount = blowoutMatches.length;
-                centerLabel = 'CÓMODOS';
+                centerLabel = 'CÃ“MODOS';
                 centerColor = '#10b981';
             }
 
             const categories = [
                 {
                     key: 'tight',
-                    icon: '⚡',
-                    title: 'Partidos de Infarto (≤2 dif)',
+                    icon: 'âš¡',
+                    title: 'Partidos de Infarto (â‰¤2 dif)',
                     badge: 'INFARTO',
-                    desc: 'Marcadores al límite: 6-5, 7-6, 6-4... Puntos de oro agónicos',
+                    desc: 'Marcadores al lÃ­mite: 6-5, 7-6, 6-4... Puntos de oro agÃ³nicos',
                     color: '#ef4444',
                     matches: tightMatches,
                     pct: pTight,
-                    tensionBadge: '¡FINAL DE INFARTO! ⚡',
+                    tensionBadge: 'Â¡FINAL DE INFARTO! âš¡',
                     tensionColor: '#ef4444',
                     tensionBg: 'rgba(239, 68, 68, 0.2)'
                 },
                 {
                     key: 'medium',
-                    icon: '⚔️',
+                    icon: 'âš”ï¸',
                     title: 'Partidos Disputados (3-4 dif)',
                     badge: 'DISPUTADOS',
-                    desc: 'Peleados y con buen intercambio táctico: 6-3, 6-2...',
+                    desc: 'Peleados y con buen intercambio tÃ¡ctico: 6-3, 6-2...',
                     color: '#0ea5e9',
                     matches: mediumMatches,
                     pct: pMedium,
-                    tensionBadge: '¡PARTIDO DISPUTADO! ⚔️',
+                    tensionBadge: 'Â¡PARTIDO DISPUTADO! âš”ï¸',
                     tensionColor: '#0ea5e9',
                     tensionBg: 'rgba(14, 165, 233, 0.2)'
                 },
                 {
                     key: 'blowout',
-                    icon: '🎯',
-                    title: 'Victorias Cómodas / Claros (≥5 dif)',
-                    badge: 'CÓMODOS',
+                    icon: 'ðŸŽ¯',
+                    title: 'Victorias CÃ³modas / Claros (â‰¥5 dif)',
+                    badge: 'CÃ“MODOS',
                     desc: 'Dominio contundente de pista: 6-1, 6-0...',
                     color: '#10b981',
                     matches: blowoutMatches,
                     pct: pBlowout,
-                    tensionBadge: '¡VICTORIA CLARA! 🎯',
+                    tensionBadge: 'Â¡VICTORIA CLARA! ðŸŽ¯',
                     tensionColor: '#10b981',
                     tensionBg: 'rgba(16, 185, 129, 0.2)'
                 }
@@ -1898,10 +1575,10 @@
                     <!-- Header -->
                     <div style="margin-bottom: 14px;">
                         <div style="font-size: 0.85rem; font-weight: 1000; color: #ffffff; letter-spacing: 0.3px;">
-                            ⚖️ TERMÓMETRO DONUT DE COMPETITIVIDAD
+                            âš–ï¸ TERMÃ“METRO DONUT DE COMPETITIVIDAD
                         </div>
                         <div style="font-size: 0.68rem; color: #94a3b8;">
-                            Tensión real de los partidos • Pulsa en el Donut o en las tarjetas para desplegar los partidos
+                            TensiÃ³n real de los partidos â€¢ Pulsa en el Donut o en las tarjetas para desplegar los partidos
                         </div>
                     </div>
 
@@ -1957,7 +1634,7 @@
                             </div>
                         </div>
 
-                        <!-- 3 Tarjetas Táctiles Interactivas -->
+                        <!-- 3 Tarjetas TÃ¡ctiles Interactivas -->
                         <div style="display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 220px;">
                             ${categories.map(cat => {
                                 const isOpen = activeCat === cat.key;
@@ -1983,10 +1660,10 @@
                                         <div style="height: 6px; border-radius: 4px; background: rgba(255, 255, 255, 0.08); overflow: hidden; margin-bottom: 6px;">
                                             <div style="height: 100%; width: ${cat.pct}%; background: ${cat.color}; border-radius: 4px; box-shadow: 0 0 8px ${cat.color};"></div>
                                         </div>
-                                        <!-- Botón interactivo: Ver partidos -->
+                                        <!-- BotÃ³n interactivo: Ver partidos -->
                                         <div style="display: flex; justify-content: flex-end;">
                                             <span style="font-size: 0.68rem; font-weight: 950; color: ${cat.color}; display: inline-flex; align-items: center; gap: 4px;">
-                                                ${isOpen ? 'Ocultar partidos ▴' : `Ver ${cat.matches.length} partidos ▾`}
+                                                ${isOpen ? 'Ocultar partidos â–´' : `Ver ${cat.matches.length} partidos â–¾`}
                                             </span>
                                         </div>
                                     </div>
@@ -2004,18 +1681,18 @@
                                         ${activeCategoryObj.icon} ${activeCategoryObj.title}
                                     </div>
                                     <div style="font-size: 0.68rem; color: #94a3b8;">
-                                        ${activeCategoryObj.matches.length} partidos disputados en esta categoría
+                                        ${activeCategoryObj.matches.length} partidos disputados en esta categorÃ­a
                                     </div>
                                 </div>
                                 <button type="button" onclick="window.ControlTowerSummary.toggleCompetitivenessCategory('${activeCategoryObj.key}')"
                                         style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #ffffff; padding: 4px 10px; border-radius: 8px; font-size: 0.68rem; font-weight: 900; cursor: pointer;">
-                                    Cerrar ✕
+                                    Cerrar âœ•
                                 </button>
                             </div>
 
                             ${activeCategoryObj.matches.length === 0 ? `
                                 <div style="text-align: center; padding: 20px; color: #94a3b8; font-size: 0.78rem;">
-                                    No se registraron partidos en esta categoría en esta jornada.
+                                    No se registraron partidos en esta categorÃ­a en esta jornada.
                                 </div>
                             ` : `
                                 <div style="display: flex; flex-direction: column; gap: 10px;">
@@ -2027,7 +1704,7 @@
                                                 <!-- Top Row: Court, Round, Tension Badge -->
                                                 <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
                                                     <span style="font-size: 0.72rem; font-weight: 900; color: #94a3b8;">
-                                                        Pista ${m.court} • Ronda ${m.round}
+                                                        Pista ${m.court} â€¢ Ronda ${m.round}
                                                     </span>
                                                     <span style="background: ${activeCategoryObj.tensionBg}; border: 1px solid ${activeCategoryObj.tensionColor}; color: ${activeCategoryObj.tensionColor}; padding: 2px 8px; border-radius: 8px; font-size: 0.65rem; font-weight: 950; letter-spacing: 0.5px; box-shadow: 0 0 8px ${activeCategoryObj.tensionColor}44;">
                                                         ${activeCategoryObj.tensionBadge}
@@ -2062,7 +1739,7 @@
 
                                                 <!-- Bottom Row: Difference & Total games -->
                                                 <div style="text-align: center; font-size: 0.66rem; color: #64748b; border-top: 1px dashed rgba(255,255,255,0.06); padding-top: 5px;">
-                                                    Diferencia de tan solo <strong style="color: ${activeCategoryObj.color}; font-weight: 900;">${m.diff} ${m.diff === 1 ? 'juego' : 'juegos'}</strong> • Total: ${m.scoreA + m.scoreB} juegos disputados
+                                                    Diferencia de tan solo <strong style="color: ${activeCategoryObj.color}; font-weight: 900;">${m.diff} ${m.diff === 1 ? 'juego' : 'juegos'}</strong> â€¢ Total: ${m.scoreA + m.scoreB} juegos disputados
                                                 </div>
                                             </div>
                                         `;
@@ -2076,7 +1753,7 @@
         }
 
         /**
-         * 3. Gráfico de Barras de Actividad por Pistas
+         * 3. GrÃ¡fico de Barras de Actividad por Pistas
          */
         static _renderCourtsActivityBars(matches) {
             const courts = {};
@@ -2100,10 +1777,10 @@
                             <div>
                                 <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; font-weight: 900; margin-bottom: 4px;">
                                     <span style="color: ${isC1 ? '#facc15' : '#e2e8f0'}; display: inline-flex; align-items: center; gap: 5px;">
-                                        ${isC1 ? '👑 PISTA 1 (CENTRAL)' : `PISTA ${c.court}`}
+                                        ${isC1 ? 'ðŸ‘‘ PISTA 1 (CENTRAL)' : `PISTA ${c.court}`}
                                     </span>
                                     <span style="color: #94a3b8;">
-                                        <b style="color: #ffffff;">${c.games}</b> juegos • ${avg} j/p (${c.matches} partidos)
+                                        <b style="color: #ffffff;">${c.games}</b> juegos â€¢ ${avg} j/p (${c.matches} partidos)
                                     </span>
                                 </div>
                                 <div style="width: 100%; height: 10px; background: rgba(255,255,255,0.06); border-radius: 10px; overflow: hidden;">
@@ -2117,12 +1794,12 @@
         }
 
         /**
-         * Abre el modal del Flyer deportivo de Alta Definición (HTML5 Canvas 1080x1920)
+         * Abre el modal del Flyer deportivo de Alta DefiniciÃ³n (HTML5 Canvas 1080x1920)
          */
         static openInstagramFlyerModal() {
             const data = this.lastSummaryData;
             if (!data) {
-                alert('Aún no hay datos de partidos confirmados para generar el flyer.');
+                alert('AÃºn no hay datos de partidos confirmados para generar el flyer.');
                 return;
             }
 
@@ -2143,12 +1820,12 @@
                     <!-- Modal Header -->
                     <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <span style="color: #ccff00; font-size: 1.2rem;">📸</span>
+                            <span style="color: #ccff00; font-size: 1.2rem;">ðŸ“¸</span>
                             <span style="font-weight: 1000; font-size: 0.95rem; letter-spacing: 0.5px;">FLYER OFICIAL INSTAGRAM HD</span>
                         </div>
                         <button type="button" onclick="window.ControlTowerSummary.closeInstagramFlyerModal()"
                                 style="background: rgba(255,255,255,0.1); border: none; color: #cbd5e1; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-weight: 900; font-size: 1rem; display: flex; align-items: center; justify-content: center;">
-                            ✕
+                            âœ•
                         </button>
                     </div>
 
@@ -2204,7 +1881,7 @@
             ctx.fillStyle = bgGrad;
             ctx.fillRect(0, 0, w, h);
 
-            // Resplandores Neón
+            // Resplandores NeÃ³n
             const glow1 = ctx.createRadialGradient(900, 200, 50, 900, 200, 600);
             glow1.addColorStop(0, 'rgba(204, 255, 0, 0.16)');
             glow1.addColorStop(1, 'transparent');
@@ -2217,7 +1894,7 @@
             ctx.fillStyle = glow2;
             ctx.fillRect(0, 0, w, h);
 
-            // Borde Neón Exterior
+            // Borde NeÃ³n Exterior
             ctx.strokeStyle = '#CCFF00';
             ctx.lineWidth = 10;
             this._roundRect(ctx, 35, 35, w - 70, h - 70, 36, false, true);
@@ -2226,18 +1903,18 @@
             ctx.fillStyle = '#CCFF00';
             ctx.font = '900 32px Outfit, sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText('SOMOSPADEL BCN • PRO TOUR', w / 2, 130);
+            ctx.fillText('SOMOSPADEL BCN â€¢ PRO TOUR', w / 2, 130);
 
-            // Categoría Tag Pill
+            // CategorÃ­a Tag Pill
             const categoryText = (data.eventDoc?.category || 'PRO').toUpperCase();
             ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
             this._roundRect(ctx, w / 2 - 130, 165, 260, 48, 24, true, false);
             ctx.fillStyle = '#38bdf8';
             ctx.font = '800 22px Outfit, sans-serif';
-            ctx.fillText(`CATEGORÍA ${categoryText}`, w / 2, 198);
+            ctx.fillText(`CATEGORÃA ${categoryText}`, w / 2, 198);
 
             // Nombre del Torneo / Entreno
-            const eventName = (data.eventDoc?.name || 'TORNEO DE PÁDEL').toUpperCase();
+            const eventName = (data.eventDoc?.name || 'TORNEO DE PÃDEL').toUpperCase();
             ctx.fillStyle = '#ffffff';
             ctx.font = '1000 52px Outfit, sans-serif';
             ctx.fillText(this._truncateText(ctx, eventName, 900), w / 2, 290);
@@ -2247,7 +1924,7 @@
             ctx.font = '700 26px Outfit, sans-serif';
             ctx.fillText(data.eventDoc?.date || 'Fecha Oficial SomosPadel', w / 2, 335);
 
-            // Línea divisoria Neón
+            // LÃ­nea divisoria NeÃ³n
             const lineGrad = ctx.createLinearGradient(150, 0, w - 150, 0);
             lineGrad.addColorStop(0, 'transparent');
             lineGrad.addColorStop(0.5, '#CCFF00');
@@ -2262,9 +1939,9 @@
             // 3. PODIO DE HONOR ESTELAR
             ctx.fillStyle = '#facc15';
             ctx.font = '900 32px Outfit, sans-serif';
-            ctx.fillText('🏆 PODIO DE HONOR', w / 2, 435);
+            ctx.fillText('ðŸ† PODIO DE HONOR', w / 2, 435);
 
-            // 1º Puesto Card (Gran Tarjeta Central Dorada)
+            // 1Âº Puesto Card (Gran Tarjeta Central Dorada)
             const p1 = data.p1;
             const goldGrad = ctx.createLinearGradient(100, 470, w - 100, 680);
             goldGrad.addColorStop(0, 'rgba(250, 204, 21, 0.22)');
@@ -2276,7 +1953,7 @@
 
             ctx.fillStyle = '#facc15';
             ctx.font = '1000 68px Outfit, sans-serif';
-            ctx.fillText('🥇 1º CAMPEÓN', w / 2, 550);
+            ctx.fillText('ðŸ¥‡ 1Âº CAMPEÃ“N', w / 2, 550);
 
             ctx.fillStyle = '#ffffff';
             ctx.font = '1000 48px Outfit, sans-serif';
@@ -2284,13 +1961,13 @@
 
             ctx.fillStyle = '#fef08a';
             ctx.font = '800 30px Outfit, sans-serif';
-            ctx.fillText(`${p1.points || 0} PUNTOS  •  DIF: ${p1.diff >= 0 ? '+' : ''}${p1.diff || 0}`, w / 2, 660);
+            ctx.fillText(`${p1.points || 0} PUNTOS  â€¢  DIF: ${p1.diff >= 0 ? '+' : ''}${p1.diff || 0}`, w / 2, 660);
 
-            // 2º y 3er Puesto (Lado a Lado)
+            // 2Âº y 3er Puesto (Lado a Lado)
             const p2 = data.p2;
             const p3 = data.p3;
 
-            // 2º Puesto Plata
+            // 2Âº Puesto Plata
             ctx.fillStyle = 'rgba(203, 213, 225, 0.12)';
             ctx.strokeStyle = '#cbd5e1';
             ctx.lineWidth = 3;
@@ -2298,7 +1975,7 @@
 
             ctx.fillStyle = '#cbd5e1';
             ctx.font = '900 36px Outfit, sans-serif';
-            ctx.fillText('🥈 2º PUESTO', 317, 770);
+            ctx.fillText('ðŸ¥ˆ 2Âº PUESTO', 317, 770);
             ctx.fillStyle = '#ffffff';
             ctx.font = '1000 32px Outfit, sans-serif';
             ctx.fillText(this._truncateText(ctx, p2.name, 370), 317, 825);
@@ -2314,7 +1991,7 @@
 
             ctx.fillStyle = '#fbbf24';
             ctx.font = '900 36px Outfit, sans-serif';
-            ctx.fillText('🥉 3º PUESTO', 762, 770);
+            ctx.fillText('ðŸ¥‰ 3Âº PUESTO', 762, 770);
             ctx.fillStyle = '#ffffff';
             ctx.font = '1000 32px Outfit, sans-serif';
             ctx.fillText(this._truncateText(ctx, p3.name, 370), 762, 825);
@@ -2325,14 +2002,14 @@
             // 4. Cuadro de Insignias Clave (Grid 2x2)
             ctx.fillStyle = '#CCFF00';
             ctx.font = '900 30px Outfit, sans-serif';
-            ctx.fillText('⚡ INSIGNIAS & DATOS DESTACADOS', w / 2, 940);
+            ctx.fillText('âš¡ INSIGNIAS & DATOS DESTACADOS', w / 2, 940);
 
             const b = data.badges;
             const bCards = [
-                { icon: '👑', title: 'REY PISTA 1', name: b.court1King.name, sub: b.court1King.detail, color: '#facc15' },
-                { icon: '🛡️', title: 'MURALLA', name: b.defenseWall.name, sub: b.defenseWall.detail, color: '#38bdf8' },
-                { icon: '🔥', title: 'RACHA IMBATIBLE', name: b.unbeatableStreak.name, sub: b.unbeatableStreak.detail, color: '#ef4444' },
-                { icon: '⚔️', title: 'PARTIDO ÉPICO', name: b.epicMatch.title, sub: b.epicMatch.detail, color: '#c084fc' }
+                { icon: 'ðŸ‘‘', title: 'REY PISTA 1', name: b.court1King.name, sub: b.court1King.detail, color: '#facc15' },
+                { icon: 'ðŸ›¡ï¸', title: 'MURALLA', name: b.defenseWall.name, sub: b.defenseWall.detail, color: '#38bdf8' },
+                { icon: 'ðŸ”¥', title: 'RACHA IMBATIBLE', name: b.unbeatableStreak.name, sub: b.unbeatableStreak.detail, color: '#ef4444' },
+                { icon: 'âš”ï¸', title: 'PARTIDO Ã‰PICO', name: b.epicMatch.title, sub: b.epicMatch.detail, color: '#c084fc' }
             ];
 
             const startY = 970;
@@ -2364,7 +2041,7 @@
                 ctx.fillText(this._truncateText(ctx, card.sub, bCardW - 50), x + 25, y + 125);
             });
 
-            // 5. Barra de Estadísticas Globales
+            // 5. Barra de EstadÃ­sticas Globales
             const barY = 1350;
             ctx.fillStyle = 'rgba(204, 255, 0, 0.08)';
             ctx.strokeStyle = 'rgba(204, 255, 0, 0.3)';
@@ -2396,7 +2073,7 @@
             ctx.font = '800 20px Outfit, sans-serif';
             ctx.fillText('PROMEDIO J/P', w - 240, barY + 98);
 
-            // 6. Pie de Página / Marca de Agua
+            // 6. Pie de PÃ¡gina / Marca de Agua
             ctx.textAlign = 'center';
             ctx.fillStyle = '#ffffff';
             ctx.font = '900 26px Outfit, sans-serif';
@@ -2404,11 +2081,11 @@
 
             ctx.fillStyle = '#ccff00';
             ctx.font = '800 22px Outfit, sans-serif';
-            ctx.fillText('SOMOSPADELBCN.COM • @SOMOSPADELBCN', w / 2, 1720);
+            ctx.fillText('SOMOSPADELBCN.COM â€¢ @SOMOSPADELBCN', w / 2, 1720);
 
             ctx.fillStyle = 'rgba(255,255,255,0.4)';
             ctx.font = '600 18px Outfit, sans-serif';
-            ctx.fillText('Tecnología Torre de Control v6.0 • Todos los derechos reservados', w / 2, 1765);
+            ctx.fillText('TecnologÃ­a Torre de Control v6.0 â€¢ Todos los derechos reservados', w / 2, 1765);
         }
 
         /**
@@ -2461,7 +2138,7 @@
         }
 
         /**
-         * Compartir historia de Instagram vía Web Share API
+         * Compartir historia de Instagram vÃ­a Web Share API
          */
         static shareFlyerToStory() {
             const canvas = document.getElementById('sp-flyer-canvas');
@@ -2481,14 +2158,14 @@
                         await navigator.share({
                             files: [file],
                             title: 'Flyer SomosPadel BCN',
-                            text: `¡Resultados oficiales de ${this.lastEventDoc?.name || 'SomosPadel'}!`
+                            text: `Â¡Resultados oficiales de ${this.lastEventDoc?.name || 'SomosPadel'}!`
                         });
                     } catch (e) {
                         console.log('Share cancelado o no soportado:', e);
                     }
                 } else {
                     this.downloadFlyer();
-                    alert('Tu navegador no soporta compartir imágenes directamente. El Flyer HD se ha descargado a tu galería para que puedas subirlo a tu historia de Instagram o WhatsApp.');
+                    alert('Tu navegador no soporta compartir imÃ¡genes directamente. El Flyer HD se ha descargado a tu galerÃ­a para que puedas subirlo a tu historia de Instagram o WhatsApp.');
                 }
             }, 'image/png');
         }

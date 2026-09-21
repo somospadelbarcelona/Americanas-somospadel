@@ -49,18 +49,18 @@
                     background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
                     border: 1px solid rgba(0, 0, 0, 0.08);
                     border-left: 4px solid ${accentColor};
-                    border-radius: 18px;
-                    padding: 12px 14px;
-                    margin: 0 0 14px 0;
+                    border-radius: 14px;
+                    padding: 8px 12px;
+                    margin: 0;
                     width: 100%;
                     box-sizing: border-box;
-                    box-shadow: 0 8px 24px -4px ${accentColor}25, 0 2px 6px rgba(0,0,0,0.03);
+                    box-shadow: 0 4px 16px -2px ${accentColor}20, 0 2px 4px rgba(0,0,0,0.02);
                     position: relative;
                     overflow: hidden;
                     font-family: 'Outfit', 'Inter', -apple-system, sans-serif;
                     transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
                 " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 28px -4px ${accentColor}35, 0 4px 10px rgba(0,0,0,0.05)';"
-                   onmouseout="this.style.transform='none'; this.style.boxShadow='0 8px 24px -4px ${accentColor}25, 0 2px 6px rgba(0,0,0,0.03)';">
+                   onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 16px -2px ${accentColor}20, 0 2px 4px rgba(0,0,0,0.02)';">
 
                     <style>
                         @keyframes heroBadgePulse {
@@ -463,48 +463,48 @@
                     background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
                     border: 1px solid rgba(59, 130, 246, 0.22);
                     border-left: 4px solid #3b82f6;
-                    border-radius: 18px;
-                    padding: 12px 14px;
-                    margin: 0 0 14px 0;
+                    border-radius: 14px;
+                    padding: 7px 10px;
+                    margin: 0;
                     width: 100%;
                     box-sizing: border-box;
-                    box-shadow: 0 8px 24px -4px rgba(59, 130, 246, 0.10), 0 2px 6px rgba(0,0,0,0.03);
+                    box-shadow: 0 4px 16px -2px rgba(59, 130, 246, 0.08), 0 2px 4px rgba(0,0,0,0.02);
                     position: relative;
                     overflow: hidden;
                     font-family: 'Outfit', 'Inter', -apple-system, sans-serif;
                 ">
                     <!-- Glow de fondo estético -->
-                    <div style="position: absolute; top: -30px; right: -30px; width: 100px; height: 100px; background: radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+                    <div style="position: absolute; top: -30px; right: -30px; width: 80px; height: 80px; background: radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
 
                     <!-- Fila 1: Header Compacto con Badges -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; position: relative; z-index: 2;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; position: relative; z-index: 2;">
                         <div style="display: flex; align-items: center; gap: 6px;">
                             <span style="
                                 background: #eff6ff;
                                 color: #1d4ed8;
                                 border: 1px solid #bfdbfe;
-                                font-size: 0.62rem;
+                                font-size: 0.54rem;
                                 font-weight: 850;
-                                padding: 2px 8px;
-                                border-radius: 7px;
-                                letter-spacing: 0.6px;
+                                padding: 1.5px 6px;
+                                border-radius: 6px;
+                                letter-spacing: 0.5px;
                                 text-transform: uppercase;
                                 display: inline-flex;
                                 align-items: center;
-                                gap: 4px;
+                                gap: 3px;
                             ">
-                                <span style="font-size: 0.70rem;">📅</span> ESTA SEMANA
+                                <span style="font-size: 0.62rem;">📅</span> ESTA SEMANA
                             </span>
                         </div>
                         <div style="
                             background: rgba(59, 130, 246, 0.10);
                             color: #2563eb;
                             border: 1px solid rgba(59, 130, 246, 0.22);
-                            font-size: 0.65rem;
+                            font-size: 0.56rem;
                             font-weight: 900;
-                            padding: 2px 8px;
-                            border-radius: 7px;
-                            letter-spacing: 0.4px;
+                            padding: 1.5px 6px;
+                            border-radius: 6px;
+                            letter-spacing: 0.3px;
                         ">
                             ⚡ ${matchesCount} ${matchesCount === 1 ? 'PARTIDO' : 'PARTIDOS'}
                         </div>
@@ -518,34 +518,34 @@
                             display: grid;
                             grid-template-columns: auto 1fr auto;
                             align-items: center;
-                            gap: 10px;
+                            gap: 8px;
                             background: #ffffff;
                             border: 1px solid #e2e8f0;
-                            border-radius: 13px;
-                            padding: 8px 10px;
+                            border-radius: 10px;
+                            padding: 5px 8px;
                             cursor: pointer;
                             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-                            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+                            box-shadow: 0 1px 4px rgba(0,0,0,0.02);
                             position: relative;
                             z-index: 2;
                         "
-                        onmouseover="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 4px 14px rgba(59,130,246,0.18)'; this.style.transform='translateY(-1px)';"
-                        onmouseout="this.style.borderColor='#e2e8f0'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.03)'; this.style.transform='none';"
+                        onmouseover="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 3px 10px rgba(59,130,246,0.15)'; this.style.transform='translateY(-1px)';"
+                        onmouseout="this.style.borderColor='#e2e8f0'; this.style.boxShadow='0 1px 4px rgba(0,0,0,0.02)'; this.style.transform='none';"
                     >
                         <!-- Badge Ticket Fecha / Hora -->
                         <div style="
                             background: linear-gradient(135deg, #090e1a 0%, #1e293b 100%);
                             border: 1px solid rgba(59, 130, 246, 0.35);
-                            border-radius: 9px;
-                            padding: 4px 8px;
+                            border-radius: 7px;
+                            padding: 2px 6px;
                             text-align: center;
-                            min-width: 52px;
+                            min-width: 44px;
                             box-sizing: border-box;
                         ">
-                            <div style="font-size: 0.58rem; font-weight: 900; color: #CCFF00; text-transform: uppercase; letter-spacing: 0.4px; line-height: 1;">
+                            <div style="font-size: 0.50rem; font-weight: 900; color: #CCFF00; text-transform: uppercase; letter-spacing: 0.3px; line-height: 1;">
                                 ${shortDay}
                             </div>
-                            <div style="font-size: 0.90rem; font-weight: 950; color: #ffffff; line-height: 1.1; margin-top: 2px;">
+                            <div style="font-size: 0.78rem; font-weight: 950; color: #ffffff; line-height: 1.1; margin-top: 1px;">
                                 ${timeStr}
                             </div>
                         </div>
@@ -553,24 +553,24 @@
                         <!-- Detalles del Partido -->
                         <div style="min-width: 0; display: flex; flex-direction: column; justify-content: center;">
                             <div style="
-                                font-size: 0.84rem;
+                                font-size: 0.76rem;
                                 font-weight: 900;
                                 color: #0f172a;
                                 white-space: nowrap;
                                 overflow: hidden;
                                 text-overflow: ellipsis;
-                                line-height: 1.25;
+                                line-height: 1.2;
                             ">
                                 ${matchTitle}
                             </div>
                             <div style="
-                                font-size: 0.70rem;
+                                font-size: 0.60rem;
                                 color: #64748b;
                                 font-weight: 600;
-                                margin-top: 2px;
+                                margin-top: 1px;
                                 display: flex;
                                 align-items: center;
-                                gap: 4px;
+                                gap: 3px;
                                 white-space: nowrap;
                                 overflow: hidden;
                                 text-overflow: ellipsis;
@@ -583,16 +583,16 @@
 
                         <!-- Botón Acción Directa -->
                         <div style="
-                            width: 32px;
-                            height: 32px;
+                            width: 26px;
+                            height: 26px;
                             background: #3b82f6;
                             color: #ffffff;
-                            border-radius: 9px;
+                            border-radius: 7px;
                             display: flex;
                             align-items: center;
                             justify-content: center;
-                            font-size: 0.75rem;
-                            box-shadow: 0 3px 9px rgba(59, 130, 246, 0.35);
+                            font-size: 0.65rem;
+                            box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
                             transition: transform 0.2s, background 0.2s;
                             flex-shrink: 0;
                         ">
