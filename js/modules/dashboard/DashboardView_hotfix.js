@@ -4949,18 +4949,6 @@
                     return;
                 }
 
-                // Guard: Si ya hay un modal emergente o drawer visible, no superponer
-                if (
-                    document.getElementById('sp-new-event-popup-overlay') ||
-                    document.getElementById('sp-push-promo-modal-overlay') ||
-                    document.querySelector('.sp-new-event-popup-overlay') ||
-                    document.querySelector('.sp-push-popup-overlay.show') ||
-                    document.querySelector('.modal.show') ||
-                    document.body.classList.contains('notif-drawer-open')
-                ) {
-                    return;
-                }
-
                 // 1. Consultar eventos activos (AmericanaService o fallback NotificationService)
                 let events = [];
                 if (window.AmericanaService && typeof window.AmericanaService.getAllActiveEvents === 'function') {
@@ -4979,9 +4967,44 @@
                                 time: n.time,
                                 location: n.sede || n.location,
                                 type: n.category === 'entrenos' ? 'entreno' : 'americana',
-                                createdAt: n.timestamp
+                                createdAt: n.timestamp,
+                                status: n.isCancelled || n.data?.isCancelled ? 'cancelled' : (n.status || '')
                             }));
                     }
+                }
+
+                // Si hubiera un popup de evento abierto y el evento resulta cancelado/eliminado, cerrarlo inmediatamente
+                const existingPopup = document.getElementById('sp-new-event-popup-overlay') || document.querySelector('.sp-new-event-popup-overlay');
+                if (existingPopup) {
+                    const activeEventId = existingPopup.getAttribute('data-event-id') || this._activeEventPopupId;
+                    if (activeEventId && Array.isArray(events)) {
+                        const activeEvt = events.find(e => String(e?.id) === String(activeEventId));
+                        if (activeEvt) {
+                            const actStatus = String(activeEvt.status || '').toLowerCase().trim();
+                            const actTitle = String(activeEvt.name || activeEvt.title || activeEvt.eventName || '').toLowerCase();
+                            const isNowCancelled = activeEvt.isCancelled || activeEvt.isDeleted ||
+                                ['cancelled', 'cancelado', 'suspendido', 'anulado', 'deleted'].includes(actStatus) ||
+                                actTitle.includes('cancelad') || actTitle.includes('suspendid') || actTitle.includes('eliminad') || actTitle.includes('anulad');
+
+                            if (isNowCancelled) {
+                                console.log(`[DashboardView] Cerrando popup de evento cancelado: ${activeEventId}`);
+                                existingPopup.classList.remove('show');
+                                setTimeout(() => existingPopup.remove(), 300);
+                                this._activeEventPopupId = null;
+                            }
+                        }
+                    }
+                    return;
+                }
+
+                // Guard: Si ya hay un modal emergente o drawer visible, no superponer
+                if (
+                    document.getElementById('sp-push-promo-modal-overlay') ||
+                    document.querySelector('.sp-push-popup-overlay.show') ||
+                    document.querySelector('.modal.show') ||
+                    document.body.classList.contains('notif-drawer-open')
+                ) {
+                    return;
                 }
 
                 if (!Array.isArray(events) || events.length === 0) return;
@@ -5004,9 +5027,14 @@
                         continue;
                     }
 
-                    // Estado del evento
+                    // Estado del evento: Asegurar que cualquier evento cancelado, suspendido, anulado, eliminado o finalizado sea ignorado
                     const status = String(evt.status || '').toLowerCase().trim();
-                    if (['finished', 'finalizado', 'completed', 'cancelled'].includes(status)) {
+                    const evtTitleLower = String(evt.name || evt.title || evt.eventName || '').toLowerCase();
+                    const isCancelledOrDeleted = evt.isCancelled || evt.isDeleted ||
+                        ['cancelled', 'cancelado', 'suspendido', 'anulado', 'deleted'].includes(status) ||
+                        evtTitleLower.includes('cancelad') || evtTitleLower.includes('suspendid') || evtTitleLower.includes('eliminad') || evtTitleLower.includes('anulad');
+
+                    if (isCancelledOrDeleted || ['finished', 'finalizado', 'completed'].includes(status)) {
                         continue;
                     }
 
@@ -5117,6 +5145,8 @@
             overlay.className = 'sp-new-event-popup-overlay';
             overlay.setAttribute('role', 'dialog');
             overlay.setAttribute('aria-modal', 'true');
+            overlay.setAttribute('data-event-id', eventId);
+            this._activeEventPopupId = eventId;
 
             overlay.innerHTML = `
                 <div class="sp-new-event-popup-card">
@@ -5165,6 +5195,9 @@
             const closeModal = (saveDismiss = false) => {
                 if (isClosed) return;
                 isClosed = true;
+                if (this._activeEventPopupId === eventId) {
+                    this._activeEventPopupId = null;
+                }
                 if (saveDismiss) {
                     try {
                         localStorage.setItem('sp_event_popup_dismissed_' + eventId, 'true');

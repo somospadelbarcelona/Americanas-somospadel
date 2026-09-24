@@ -419,6 +419,13 @@ window.loadAdminView = async function (rawViewName) {
             if (window.AdminTournaments) window.AdminTournaments.init();
             else throw new Error("Tournaments Module not loaded");
         }
+        else if (viewName === 'notifications_manager') {
+            if (window.AdminViews && window.AdminViews.notifications_manager) {
+                await window.AdminViews.notifications_manager();
+            } else {
+                throw new Error("Notifications Manager Module not loaded");
+            }
+        }
         else {
             // Fallback for Simulator or others not yet refactored logic
             if (window.AdminViews && window.AdminViews[viewName]) {

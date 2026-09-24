@@ -25,15 +25,21 @@ class NotificationUi {
     _bindService() {
         const attach = (service) => {
             if (service && typeof service.onUpdate === 'function') {
+                this.service = service;
                 service.onUpdate((data) => {
                     if (this.isOpen) {
                         this.renderList();
                     }
-                    this.updateBadge(data.count);
+                    const accurateCount = (typeof service.getMergedNotifications === 'function')
+                        ? service.getMergedNotifications().filter(n => !n.read).length
+                        : (typeof data.count === 'number' ? data.count : (service.unreadCount || 0));
+                    this.updateBadge(accurateCount);
                 });
-                if (typeof service.unreadCount === 'number') {
-                    this.updateBadge(service.unreadCount);
-                }
+
+                const initialCount = (typeof service.getMergedNotifications === 'function')
+                    ? service.getMergedNotifications().filter(n => !n.read).length
+                    : (typeof service.unreadCount === 'number' ? service.unreadCount : 0);
+                this.updateBadge(initialCount);
             }
         };
 
@@ -51,15 +57,20 @@ class NotificationUi {
     }
 
     updateBadge(count) {
-        if (typeof count === 'number') {
+        const s = this.service || window.NotificationService;
+        if (s && typeof s.getMergedNotifications === 'function') {
+            count = s.getMergedNotifications().filter(n => !n.read).length;
+        } else if (typeof count === 'number') {
             this.lastCount = count;
         } else if (typeof this.lastCount === 'number') {
             count = this.lastCount;
-        } else if (window.NotificationService && typeof window.NotificationService.unreadCount === 'number') {
-            count = window.NotificationService.unreadCount;
+        } else if (s && typeof s.unreadCount === 'number') {
+            count = s.unreadCount;
         } else {
             count = 0;
         }
+
+        this.lastCount = count;
 
         const badge = document.getElementById('notif-badge');
         const bell = document.getElementById('notif-bell-icon');
@@ -99,6 +110,18 @@ class NotificationUi {
         if (this._isTransitioning) return;
         if (this.isOpen) this.close();
         else this.open();
+    }
+
+    goToHome() {
+        this.close();
+        if (window.Router && typeof window.Router.navigate === 'function') {
+            window.Router.navigate('dashboard');
+        } else {
+            window.location.hash = '#dashboard';
+        }
+        try {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch (_) {}
     }
 
     open() {
@@ -146,6 +169,12 @@ class NotificationUi {
                 </div>
 
                 <div class="notif-header-actions-pro">
+                    <!-- Botón Inicio en Header -->
+                    <button type="button" class="notif-header-home-btn" onclick="window.NotificationUi.goToHome()" title="Volver al Inicio">
+                        <i class="fas fa-house"></i>
+                        <span>Inicio</span>
+                    </button>
+
                     <!-- Toggle Sonido -->
                     <button type="button" class="notif-icon-btn" id="btn-toggle-notif-sound" onclick="window.NotificationUi.toggleSound()" title="Silenciar / Activar sonido">
                         <i class="fas ${this._soundEnabled ? 'fa-volume-high' : 'fa-volume-xmark'}" style="${this._soundEnabled ? 'color:#0284c7;' : 'color:#94a3b8;'}"></i>
@@ -204,23 +233,12 @@ class NotificationUi {
                 </div>
             </div>
 
-            <!-- FOOTER CON SIMULADOR EN VIVO -->
-            <div class="notif-footer-sim">
-                <span class="notif-footer-sim-label">⚡ PROBAR EN VIVO:</span>
-                <div class="notif-footer-sim-btns">
-                    <button type="button" onclick="window.NotificationUi.testNotification('match')" class="notif-sim-chip match" title="Simular aviso de Americana">
-                        <i class="fas fa-trophy"></i> Americana
-                    </button>
-                    <button type="button" onclick="window.NotificationUi.testNotification('entreno')" class="notif-sim-chip entreno" title="Simular aviso de Entreno">
-                        ${PALA_ICON_SVG} Entreno
-                    </button>
-                    <button type="button" onclick="window.NotificationUi.testNotification('clima')" class="notif-sim-chip clima" title="Simular radar de pistas">
-                        <i class="fas fa-cloud-sun"></i> Clima
-                    </button>
-                    <button type="button" onclick="window.NotificationUi.testNotification('broadcast')" class="notif-sim-chip broadcast" title="Simular comunicado oficial">
-                        <i class="fas fa-bullhorn"></i> Aviso
-                    </button>
-                </div>
+            <!-- FOOTER FIJO: VOLVER AL INICIO -->
+            <div class="notif-drawer-bottom-bar">
+                <button type="button" class="btn-notif-go-home" onclick="window.NotificationUi.goToHome()">
+                    <i class="fas fa-house"></i>
+                    <span>VOLVER AL INICIO</span>
+                </button>
             </div>
         `;
 
@@ -638,14 +656,32 @@ class NotificationUi {
         }
 
         // -------------------------------------------------------------
-        // 2. CLASIFICACIÓN ESTRICTA: ENTRENOS vs AMERICANAS
+        // 2. CLASIFICACIÓN ESTRICTA: CANCELADOS, ENTRENOS vs AMERICANAS
         // -------------------------------------------------------------
-        
+        const isEnt = fullText.includes('entreno') || fullText.includes('entrenamiento') || fullText.includes('coach') || rawType === 'entreno' || rawUrl === 'entrenos';
+        const isCancelled = item.isCancelled || item.data?.isCancelled || fullText.includes('cancelad') || fullText.includes('suspendid') || fullText.includes('eliminad') || fullText.includes('anulad');
+
+        // PRIORIDAD MÁXIMA: EVENTOS CANCELADOS, SUSPENDIDOS O ELIMINADOS
+        if (isCancelled) {
+            category = isEnt ? 'entrenos' : 'matches';
+            tag = {
+                label: fullText.includes('suspend') ? 'SUSPENDIDO' : (fullText.includes('eliminad') ? 'ELIMINADO' : 'CANCELADO'),
+                icon: 'fa-calendar-xmark',
+                isSvg: false,
+                cssClass: 'tag-cancelled',
+                cardThemeClass: 'theme-cancelled'
+            };
+            actionLabel = isEnt ? '📅 CALENDARIO ENTRENOS' : '📅 CALENDARIO AMERICANAS';
+            actionUrl = isEnt ? 'entrenos' : 'americanas';
+            defaultTitle = isEnt ? '❌ Convocatoria de Entreno Anulada' : '❌ Torneo Americana Cancelado';
+            defaultBody = 'Esta convocatoria ha sido cancelada o eliminada del calendario del club.';
+            metaPills.push({ icon: 'fa-circle-exclamation', text: 'Convocatoria Anulada' });
+        }
         // A. PRIORIDAD 1: ENTRENOS (Usa Pala Oficial de Pádel)
-        if (fullText.includes('entreno') || fullText.includes('entrenamiento') || fullText.includes('coach') || rawType === 'entreno' || rawUrl === 'entrenos') {
+        else if (isEnt) {
             category = 'entrenos';
             tag = { label: 'ENTRENO', isSvg: true, svgIcon: PALA_ICON_SVG, cssClass: 'tag-entreno', cardThemeClass: 'theme-entreno' };
-            actionLabel = '💪 VER SESIÓN DE ENTRENO';
+            actionLabel = '💪 VER ENTRENO';
             actionUrl = 'entrenos';
             defaultTitle = '💪 Convocatoria de Entreno';
             defaultBody = 'Sesión técnica y táctica en pista para mejorar tu nivel.';
@@ -655,7 +691,7 @@ class NotificationUi {
         else if (fullText.includes('americana') || fullText.includes('torneo') || rawType === 'americana' || rawUrl === 'americanas' || rawUrl === 'live' || eventId) {
             category = 'matches';
             tag = { label: 'AMERICANAS', icon: 'fa-trophy', isSvg: false, cssClass: 'tag-americana', cardThemeClass: 'theme-americana' };
-            actionLabel = '🎾 VER TORNEO AMERICANAS';
+            actionLabel = '🎾 VER AMERICANA';
             actionUrl = 'americanas';
             defaultTitle = '🏆 Torneo Americana Confirmado';
             defaultBody = 'Inscripción activa y cuadro de pistas preparado para competir.';
@@ -665,7 +701,7 @@ class NotificationUi {
         else if (fullText.includes('clima') || fullText.includes('radar') || fullText.includes('viento') || fullText.includes('lluvia') || rawUrl === 'clima') {
             category = 'clima';
             tag = { label: 'RADAR & CLIMA', icon: 'fa-cloud-sun', isSvg: false, cssClass: 'tag-clima', cardThemeClass: 'theme-clima' };
-            actionLabel = '🌦️ VER RADAR PISTAS';
+            actionLabel = '🌦️ VER RADAR';
             actionUrl = 'clima';
             defaultTitle = '🌦️ Radar Táctico y Clima de Pistas';
             defaultBody = 'Telemetría de viento, lluvia y estado de pistas en Cornellà y El Prat.';
@@ -684,7 +720,7 @@ class NotificationUi {
         else if (fullText.includes('comunicado') || fullText.includes('aviso') || fullText.includes('oficial') || fullText.includes('urgente') || fullText.includes('noticia')) {
             category = 'broadcast';
             tag = { label: 'COMUNICADO', icon: 'fa-bullhorn', isSvg: false, cssClass: 'tag-broadcast', cardThemeClass: 'theme-broadcast' };
-            actionLabel = '📢 LEER COMUNICADO';
+            actionLabel = '📢 VER AVISO';
             actionUrl = 'dashboard';
             defaultTitle = '📢 Comunicado Oficial SomosPadel';
             defaultBody = 'Información importante de la organización y calendario del club.';
@@ -744,12 +780,19 @@ class NotificationUi {
         if (window.NotificationService) {
             window.NotificationService.deleteNotification(id);
         }
+        this.updateBadge();
+        if (this.isOpen) {
+            this.renderList();
+        }
     }
 
     markAllRead() {
         if (window.NotificationService) {
             window.NotificationService.markAllAsRead();
-            this.updateBadge(0);
+        }
+        this.updateBadge(0);
+        if (this.isOpen) {
+            this.renderList();
         }
     }
 
@@ -762,8 +805,11 @@ class NotificationUi {
             type: 'danger'
         });
         if (confirm) {
-            window.NotificationService.deleteAllMyNotifications(true);
+            await window.NotificationService.deleteAllMyNotifications(true);
             this.updateBadge(0);
+            if (this.isOpen) {
+                this.renderList();
+            }
         }
     }
 
@@ -780,37 +826,12 @@ class NotificationUi {
         }
     }
 
+    /**
+     * @deprecated Simulador de notificaciones falsas retirado de producción para evitar confusión.
+     * Para pruebas técnicas legítimas de conectividad Push, utilizar testPushAlert().
+     */
     testNotification(type = 'match') {
-        this.playNotificationSound();
-
-        let title = "🏆 Torneo Americana Confirmado";
-        let body = "Te has apuntado a Americana Noche en Cornellà. ¡Prepara la pala!";
-        let url = "americanas";
-
-        if (type === 'entreno') {
-            title = "💪 Nueva Sesión de Entreno";
-            body = "Te has apuntado a ENTRENO en El Prat. Nivel 3.0 - 4.2.";
-            url = "entrenos";
-        } else if (type === 'clima') {
-            title = "🌦️ Radar Pistas Cornellà";
-            body = "Cielo despejado, 21°C y viento óptimo para jugar hoy.";
-            url = "clima";
-        } else if (type === 'broadcast') {
-            title = "📢 Comunicado SomosPadel";
-            body = "¡Pistas cubiertas confirmadas y ranking semanal actualizado!";
-            url = "dashboard";
-        }
-
-        if (window.NotificationService?.showInAppToast) {
-            window.NotificationService.showInAppToast(title, body, 'info', { url });
-        }
-
-        const next = (this.lastCount || 0) + 1;
-        this.updateBadge(next);
-
-        if ('Notification' in window && Notification.permission === 'granted' && window.NotificationService?.showNativeNotification) {
-            window.NotificationService.showNativeNotification(title, body, { url });
-        }
+        console.warn('[NotificationUi] testNotification() está deshabilitado en producción para evitar avisos ficticios. Utiliza testPushAlert().');
     }
 
     parseTimestamp(ts) {

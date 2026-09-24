@@ -875,6 +875,34 @@
 
             return broadcastRef.id;
         }
+
+        /**
+         * Elimina una notificación globalmente en las cuentas de todos los jugadores delegando en NotificationService
+         * @param {string} notifId
+         * @param {object} meta
+         */
+        async deleteGlobal(notifId, meta = {}) {
+            if (window.NotificationService && typeof window.NotificationService.deleteNotificationGlobally === 'function') {
+                return await window.NotificationService.deleteNotificationGlobally(notifId, meta);
+            }
+            if (window.NotificationServiceClass && typeof window.NotificationServiceClass.deleteNotificationGlobally === 'function') {
+                return await window.NotificationServiceClass.deleteNotificationGlobally(notifId, meta);
+            }
+            throw new Error("NotificationService no está disponible para ejecutar la eliminación global.");
+        }
+
+        /**
+         * Obtiene la lista consolidada de notificaciones globales delegando en NotificationService
+         */
+        async fetchGlobalList() {
+            if (window.NotificationService && typeof window.NotificationService.fetchAllGlobalNotifications === 'function') {
+                return await window.NotificationService.fetchAllGlobalNotifications();
+            }
+            if (window.NotificationServiceClass && typeof window.NotificationServiceClass.fetchAllGlobalNotifications === 'function') {
+                return await window.NotificationServiceClass.fetchAllGlobalNotifications();
+            }
+            throw new Error("NotificationService no está disponible para obtener la lista global.");
+        }
     }
 
     window.AdminNotifications = new AdminNotificationsManager();

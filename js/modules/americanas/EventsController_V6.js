@@ -5462,12 +5462,29 @@
             const totalPlayers = uniqueRawList.length;
             const avgLevel = totalPlayers > 0 ? (dbPlayers.reduce((acc, p) => acc + parseFloat(p.level || 3.5), 0) / totalPlayers).toFixed(2) : '3.50';
             const slotsLeft = Math.max(0, maxPlayers - totalPlayers);
+            const fillPercent = maxPlayers > 0 ? Math.min(100, Math.round((totalPlayers / maxPlayers) * 100)) : 0;
             const pairsCount = finalGroups.filter(g => g.type === 'pair').length;
             const solosCount = finalGroups.filter(g => g.type !== 'pair').length;
             const levelsArr = dbPlayers.map(p => parseFloat(p.level || 3.5));
             const balanceScore = totalPlayers > 1 
                 ? Math.min(99, Math.max(82, Math.round(100 - (Math.abs(Math.max(...levelsArr) - Math.min(...levelsArr)) * 4.5)))) 
                 : 95;
+
+            // Stats breakdown (Drive vs Revés counts & Level Range)
+            let drivesCount = 0;
+            let revesCount = 0;
+            dbPlayers.forEach(p => {
+                const pos = (p.position || '').toLowerCase();
+                const lvl = parseFloat(p.level || 3.5);
+                if (pos.includes('rev') || (!pos.includes('dri') && lvl > 3.6)) {
+                    revesCount++;
+                } else {
+                    drivesCount++;
+                }
+            });
+            const minLvl = levelsArr.length ? Math.min(...levelsArr).toFixed(1) : '3.0';
+            const maxLvl = levelsArr.length ? Math.max(...levelsArr).toFixed(1) : '4.5';
+            const levelRange = levelsArr.length ? `${minLvl} - ${maxLvl}` : '3.0 - 4.5';
 
             // --- CLEANUP & AUDIO CUE ---
             if (window._battleReadyTimer) {
@@ -5780,6 +5797,396 @@
                 }
             };
 
+            // 🤝 Matchmaking Express: Proponer Pareja
+            window.proposePairChallenge = function(targetPlayerName, targetPlayerLevel) {
+                const safeName = targetPlayerName || 'Compañero';
+                const lvl = targetPlayerLevel || '3.5';
+                const eventName = (evt.name || (isEntrenoModal ? 'Entreno Oficial' : 'Torneo Americano')).toUpperCase();
+                const text = `🎾 *¡HOLA ${safeName.toUpperCase()}!* 🎾\n\n` +
+                    `Te he visto en la convocatoria de SomosPadel para el evento *${eventName}* (📍 ${eventLocation}).\n` +
+                    `Veo que estás buscando pareja (Nivel ${lvl} LVL). ¿Te gustaría que juguemos juntos como pareja? 🔥\n\n` +
+                    `¡Avísame y cerramos pareja oficial en la app! 🏆`;
+
+                if (navigator.share) {
+                    navigator.share({ title: 'Proponer Pareja SomosPadel', text }).catch(() => {});
+                } else if (navigator.clipboard) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        alert('¡Mensaje para proponer pareja copiado al portapapeles! Envíalo por WhatsApp 🚀');
+                    });
+                } else {
+                    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+                }
+            };
+
+            // 📸 2. GENERADOR OFICIAL DE CARTEL / STORY HD PARA REDES ("POSTER CREATOR")
+            window.generateConvocatoriaStory = function() {
+                const storyBtn = document.getElementById('battle-story-btn');
+                const storyTxt = document.getElementById('battle-story-text');
+                if (storyTxt) storyTxt.textContent = 'GENERANDO...';
+                if (storyBtn) storyBtn.style.opacity = '0.7';
+
+                window.playBattleAudio('tick');
+
+                setTimeout(() => {
+                    try {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 1080;
+                        canvas.height = 1920;
+                        const ctx = canvas.getContext('2d');
+
+                        // Safe roundRect helper
+                        const roundRect = (x, y, w, h, r) => {
+                            ctx.beginPath();
+                            ctx.moveTo(x + r, y);
+                            ctx.lineTo(x + w - r, y);
+                            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+                            ctx.lineTo(x + w, y + h - r);
+                            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+                            ctx.lineTo(x + r, y + h);
+                            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+                            ctx.lineTo(x, y + r);
+                            ctx.quadraticCurveTo(x, y, x + r, y);
+                            ctx.closePath();
+                        };
+
+                        // 1. Sport Gradient Background
+                        const bgGrad = ctx.createLinearGradient(0, 0, 0, 1920);
+                        bgGrad.addColorStop(0, '#040914');
+                        bgGrad.addColorStop(0.3, '#0b1d3a');
+                        bgGrad.addColorStop(0.7, '#07152b');
+                        bgGrad.addColorStop(1, '#020611');
+                        ctx.fillStyle = bgGrad;
+                        ctx.fillRect(0, 0, 1080, 1920);
+
+                        // Ambient Glow Top (Cyan)
+                        const topGlow = ctx.createRadialGradient(250, 200, 10, 250, 200, 600);
+                        topGlow.addColorStop(0, 'rgba(56, 189, 248, 0.18)');
+                        topGlow.addColorStop(1, 'rgba(56, 189, 248, 0)');
+                        ctx.fillStyle = topGlow;
+                        ctx.fillRect(0, 0, 1080, 700);
+
+                        // Ambient Glow Bottom (Emerald)
+                        const botGlow = ctx.createRadialGradient(850, 1700, 10, 850, 1700, 600);
+                        botGlow.addColorStop(0, 'rgba(16, 185, 129, 0.16)');
+                        botGlow.addColorStop(1, 'rgba(16, 185, 129, 0)');
+                        ctx.fillStyle = botGlow;
+                        ctx.fillRect(0, 1200, 1080, 720);
+
+                        // Subtle Outer Court Border Watermark
+                        ctx.save();
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+                        ctx.lineWidth = 4;
+                        roundRect(50, 50, 980, 1820, 32);
+                        ctx.stroke();
+                        ctx.restore();
+
+                        // 2. Header Top Badge
+                        roundRect(310, 70, 460, 44, 22);
+                        ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+                        ctx.fill();
+                        ctx.strokeStyle = '#38bdf8';
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+
+                        ctx.fillStyle = '#38bdf8';
+                        ctx.font = 'bold 18px Montserrat, sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('🎾 SOMOSPADEL BCN • CONVOCATORIA', 540, 98);
+
+                        // 3. Event Title
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = '900 46px Montserrat, sans-serif';
+                        ctx.textAlign = 'center';
+                        const rawTitle = (evt.name || (isEntrenoModal ? 'ENTRENO OFICIAL' : 'TORNEO AMERICANO')).toUpperCase();
+                        const displayTitle = rawTitle.length > 32 ? rawTitle.substring(0, 30) + '...' : rawTitle;
+                        ctx.fillText(displayTitle, 540, 165);
+
+                        // 4. Metadata Badges Row (Date, Club, Time, Price)
+                        const metaY = 205;
+                        const metaItems = [
+                            { icon: '📅', text: evt.date || 'HOY' },
+                            { icon: '🕒', text: evt.time || '16:30' },
+                            { icon: '📍', text: eventLocation.length > 20 ? eventLocation.substring(0, 18) + '...' : eventLocation },
+                            { icon: '💶', text: eventPriceText || '15€' }
+                        ];
+                        const metaWidth = 210;
+                        const metaGap = 16;
+                        const metaStartX = 540 - ((4 * metaWidth + 3 * metaGap) / 2);
+
+                        metaItems.forEach((m, idx) => {
+                            const mx = metaStartX + idx * (metaWidth + metaGap);
+                            roundRect(mx, metaY, metaWidth, 42, 10);
+                            ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+                            ctx.fill();
+                            ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+                            ctx.lineWidth = 1;
+                            ctx.stroke();
+
+                            ctx.fillStyle = '#e2e8f0';
+                            ctx.font = 'bold 16px Outfit, Montserrat, sans-serif';
+                            ctx.textAlign = 'center';
+                            ctx.fillText(`${m.icon} ${m.text}`, mx + metaWidth / 2, metaY + 26);
+                        });
+
+                        // 5. KPI Stats Strip (4 cards)
+                        const kpiY = 275;
+                        const kpis = [
+                            { label: 'NIVEL MEDIO', val: `${avgLevel} LVL`, color: '#10b981' },
+                            { label: 'EQUILIBRIO', val: `${balanceScore}% EQ`, color: '#38bdf8' },
+                            { label: 'INSCRITOS', val: `${totalPlayers}/${maxPlayers}`, color: '#f59e0b' },
+                            { label: 'PLAZAS', val: slotsLeft > 0 ? `${slotsLeft} LIBRES` : 'COMPLETO', color: slotsLeft > 0 ? '#4ade80' : '#f87171' }
+                        ];
+                        const kpiWidth = 210;
+                        const kpiGap = 16;
+                        const kpiStartX = 540 - ((4 * kpiWidth + 3 * kpiGap) / 2);
+
+                        kpis.forEach((k, idx) => {
+                            const kx = kpiStartX + idx * (kpiWidth + kpiGap);
+                            roundRect(kx, kpiY, kpiWidth, 70, 14);
+                            ctx.fillStyle = '#0f223d';
+                            ctx.fill();
+                            ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
+                            ctx.lineWidth = 1.5;
+                            ctx.stroke();
+
+                            ctx.fillStyle = '#94a3b8';
+                            ctx.font = 'bold 13px Montserrat, sans-serif';
+                            ctx.textAlign = 'center';
+                            ctx.fillText(k.label, kx + kpiWidth / 2, kpiY + 24);
+
+                            ctx.fillStyle = k.color;
+                            ctx.font = '900 22px Montserrat, sans-serif';
+                            ctx.fillText(k.val, kx + kpiWidth / 2, kpiY + 54);
+                        });
+
+                        // 6. Section Divider: JUGADORES CONFIRMADOS
+                        ctx.fillStyle = '#38bdf8';
+                        ctx.font = '900 24px Montserrat, sans-serif';
+                        ctx.textAlign = 'left';
+                        ctx.fillText(`⚔️ CUADRO DE JUGADORES (${totalPlayers}/${maxPlayers})`, 80, 385);
+
+                        ctx.strokeStyle = 'rgba(56, 189, 248, 0.3)';
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(80, 395);
+                        ctx.lineTo(1000, 395);
+                        ctx.stroke();
+
+                        // 7. Grid of Player Cards (2 Columns, up to 16-24 slots)
+                        const gridStartY = 415;
+                        const colWidth = 445;
+                        const cardHeight = 68;
+                        const rowGap = 12;
+                        const colGap = 30;
+                        const maxSlotsToShow = Math.min(24, Math.max(16, maxPlayers));
+
+                        for (let i = 0; i < maxSlotsToShow; i++) {
+                            const col = i % 2;
+                            const row = Math.floor(i / 2);
+                            const cx = 80 + col * (colWidth + colGap);
+                            const cy = gridStartY + row * (cardHeight + rowGap);
+
+                            if (cy + cardHeight > 1700) break;
+
+                            const player = dbPlayers[i];
+                            if (player) {
+                                // Confirmed Player Card
+                                roundRect(cx, cy, colWidth, cardHeight, 14);
+                                ctx.fillStyle = 'rgba(15, 34, 61, 0.9)';
+                                ctx.fill();
+                                ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+                                ctx.lineWidth = 1.5;
+                                ctx.stroke();
+
+                                // Number badge
+                                roundRect(cx + 8, cy + 14, 38, 38, 10);
+                                ctx.fillStyle = '#0f172a';
+                                ctx.fill();
+                                ctx.strokeStyle = '#38bdf8';
+                                ctx.lineWidth = 1.5;
+                                ctx.stroke();
+
+                                ctx.fillStyle = '#38bdf8';
+                                ctx.font = '900 16px Montserrat, sans-serif';
+                                ctx.textAlign = 'center';
+                                ctx.fillText(`${i + 1}`, cx + 27, cy + 39);
+
+                                // Player Name
+                                const pName = (player.name || 'Jugador').toUpperCase();
+                                const shortName = pName.length > 17 ? pName.substring(0, 15) + '..' : pName;
+                                ctx.fillStyle = '#ffffff';
+                                ctx.font = 'bold 20px Montserrat, sans-serif';
+                                ctx.textAlign = 'left';
+                                ctx.fillText(shortName, cx + 58, cy + 34);
+
+                                // Position
+                                const pPos = (player.position || (parseFloat(player.level || 3.5) > 3.6 ? 'Revés' : 'Drive')).toUpperCase();
+                                ctx.fillStyle = '#94a3b8';
+                                ctx.font = 'bold 13px Outfit, sans-serif';
+                                ctx.fillText(`${pPos.includes('REV') ? '⚡' : '🛡️'} ${pPos}`, cx + 58, cy + 54);
+
+                                // Level Badge
+                                const lvlVal = parseFloat(player.level || 3.5).toFixed(2);
+                                roundRect(cx + colWidth - 95, cy + 16, 85, 34, 8);
+                                ctx.fillStyle = '#064e3b';
+                                ctx.fill();
+                                ctx.strokeStyle = '#10b981';
+                                ctx.lineWidth = 1.5;
+                                ctx.stroke();
+
+                                ctx.fillStyle = '#34d399';
+                                ctx.font = '900 16px Montserrat, sans-serif';
+                                ctx.textAlign = 'center';
+                                ctx.fillText(`${lvlVal} LVL`, cx + colWidth - 52, cy + 39);
+                            } else {
+                                // Empty / Available Slot Card
+                                roundRect(cx, cy, colWidth, cardHeight, 14);
+                                ctx.fillStyle = 'rgba(16, 185, 129, 0.06)';
+                                ctx.fill();
+                                ctx.strokeStyle = 'rgba(52, 211, 153, 0.4)';
+                                ctx.lineWidth = 1.5;
+                                ctx.setLineDash([6, 4]);
+                                ctx.stroke();
+                                ctx.setLineDash([]);
+
+                                roundRect(cx + 8, cy + 14, 38, 38, 10);
+                                ctx.fillStyle = 'rgba(16, 185, 129, 0.2)';
+                                ctx.fill();
+                                ctx.fillStyle = '#34d399';
+                                ctx.font = 'bold 22px Montserrat, sans-serif';
+                                ctx.textAlign = 'center';
+                                ctx.fillText('+', cx + 27, cy + 41);
+
+                                ctx.fillStyle = '#a7f3d0';
+                                ctx.font = 'bold 18px Montserrat, sans-serif';
+                                ctx.textAlign = 'left';
+                                ctx.fillText(`PLAZA LIBRE #${i + 1}`, cx + 58, cy + 34);
+
+                                ctx.fillStyle = '#6ee7b7';
+                                ctx.font = 'bold 13px Outfit, sans-serif';
+                                ctx.fillText('¡TOCA PARA APUNTARTE!', cx + 58, cy + 54);
+                            }
+                        }
+
+                        // 8. Footer Call To Action Banner
+                        const footY = 1740;
+                        roundRect(80, footY, 920, 80, 20);
+                        const footGrad = ctx.createLinearGradient(80, footY, 1000, footY);
+                        if (slotsLeft > 0) {
+                            footGrad.addColorStop(0, '#059669');
+                            footGrad.addColorStop(1, '#0284c7');
+                        } else {
+                            footGrad.addColorStop(0, '#0284c7');
+                            footGrad.addColorStop(1, '#4f46e5');
+                        }
+                        ctx.fillStyle = footGrad;
+                        ctx.fill();
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = '900 26px Montserrat, sans-serif';
+                        ctx.textAlign = 'center';
+                        if (slotsLeft > 0) {
+                            ctx.fillText(`⚡ ¡QUEDAN ${slotsLeft} PLAZAS LIBRES! • APÚNTATE EN LA APP`, 540, footY + 49);
+                        } else {
+                            ctx.fillText(`🔥 ¡AFORO COMPLETO! • SOMOSPADEL BCN`, 540, footY + 49);
+                        }
+
+                        // Sub-footer text
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+                        ctx.font = 'bold 15px Montserrat, sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('SOMOSPADEL BARCELONA • www.somospadelbarcelona.com', 540, 1855);
+
+                        // Play fanfare cue
+                        window.playBattleAudio('fanfare');
+
+                        // Export to Image & Share / Download
+                        canvas.toBlob(async (blob) => {
+                            if (storyTxt) storyTxt.textContent = 'CARTEL STORY HD';
+                            if (storyBtn) storyBtn.style.opacity = '1';
+
+                            if (!blob) {
+                                alert('Error generando imagen de cartel');
+                                return;
+                            }
+
+                            const fileName = `Convocatoria-SomosPadel-${(evt.name || 'Torneo').replace(/[^a-zA-Z0-9]/g, '_')}.png`;
+                            const file = new File([blob], fileName, { type: 'image/png' });
+
+                            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                                try {
+                                    await navigator.share({
+                                        files: [file],
+                                        title: `Convocatoria SomosPadel - ${evt.name || 'Pádel'}`,
+                                        text: `🎾 Convocatoria oficial para ${evt.name || 'Torneo Americano'}. ¡Nos vemos en la pista!`
+                                    });
+                                    return;
+                                } catch (shareErr) {
+                                    if (shareErr.name === 'AbortError') return;
+                                }
+                            }
+
+                            // Direct download fallback
+                            const link = document.createElement('a');
+                            link.href = URL.createObjectURL(blob);
+                            link.download = fileName;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            setTimeout(() => URL.revokeObjectURL(link.href), 3000);
+                        }, 'image/png');
+
+                    } catch (err) {
+                        console.error('Error al crear cartel Story HD:', err);
+                        if (storyTxt) storyTxt.textContent = 'CARTEL STORY HD';
+                        if (storyBtn) storyBtn.style.opacity = '1';
+                        alert('No se pudo generar el cartel: ' + err.message);
+                    }
+                }, 100);
+            };
+
+            // 🏟️ 3. SELECTOR DE VISTA TÁCTICA: MODO TARJETAS vs MODO PISTAS
+            window._battleDisplayMode = 'cards';
+            window.setBattleDisplayMode = function(mode) {
+                window._battleDisplayMode = mode || 'cards';
+                const cardsEl = document.getElementById('battle-cards-container');
+                const courtsEl = document.getElementById('battle-courts-container');
+                const btnCards = document.getElementById('battle-mode-cards-btn');
+                const btnCourts = document.getElementById('battle-mode-courts-btn');
+
+                if (mode === 'courts') {
+                    if (cardsEl) cardsEl.style.display = 'none';
+                    if (courtsEl) courtsEl.style.display = 'block';
+                    if (btnCards) {
+                        btnCards.style.background = 'transparent';
+                        btnCards.style.color = '#64748b';
+                        btnCards.style.boxShadow = 'none';
+                    }
+                    if (btnCourts) {
+                        btnCourts.style.background = '#0f172a';
+                        btnCourts.style.color = '#ffffff';
+                        btnCourts.style.boxShadow = '0 2px 6px rgba(0,0,0,0.12)';
+                    }
+                } else {
+                    if (cardsEl) cardsEl.style.display = 'grid';
+                    if (courtsEl) courtsEl.style.display = 'none';
+                    if (btnCards) {
+                        btnCards.style.background = '#0f172a';
+                        btnCards.style.color = '#ffffff';
+                        btnCards.style.boxShadow = '0 2px 6px rgba(0,0,0,0.12)';
+                    }
+                    if (btnCourts) {
+                        btnCourts.style.background = 'transparent';
+                        btnCourts.style.color = '#64748b';
+                        btnCourts.style.boxShadow = 'none';
+                    }
+                }
+                window.playBattleAudio('tick');
+            };
+
             // Global Toggle Fullscreen TV Mode
             window.toggleBattleReadyFullscreen = function() {
                 const modalEl = document.getElementById('inscritos-modal');
@@ -5797,6 +6204,7 @@
 
             window.applyBattleReadyVisibility = function() {
                 const allCards = document.querySelectorAll('.battle-ready-item');
+                const allCourts = document.querySelectorAll('.battle-court-card');
                 const filter = window._battleFilter || 'all';
                 const query = (window._battleSearchQuery || '').trim().toLowerCase();
 
@@ -5812,6 +6220,16 @@
                         card.style.display = 'block';
                     } else {
                         card.style.display = 'none';
+                    }
+                });
+
+                allCourts.forEach(court => {
+                    const courtNames = (court.getAttribute('data-player-names') || '').toLowerCase();
+                    const matchesQuery = (!query || courtNames.includes(query));
+                    if (matchesQuery) {
+                        court.style.display = 'block';
+                    } else {
+                        court.style.display = 'none';
                     }
                 });
             };
@@ -5830,33 +6248,11 @@
                 window.applyBattleReadyVisibility();
             };
 
-            // 🎯 Quad Tab Switcher (Roster vs War Room vs Roulette vs Duel)
+            // 🎯 Battle Ready Tab Switcher (Safe handler / Direct Roster)
             window.switchBattleReadyTab = function(tab) {
-                window._currentBattleTab = tab;
-                const tabs = ['roster', 'warroom', 'roulette', 'duel'];
-
-                tabs.forEach(t => {
-                    const viewEl = document.getElementById(`battle-view-${t}`);
-                    const btnEl = document.getElementById(`battle-tab-btn-${t}`);
-                    if (viewEl) viewEl.style.display = (t === tab) ? 'block' : 'none';
-                    if (btnEl) {
-                        if (t === tab) {
-                            btnEl.style.background = '#0f172a';
-                            btnEl.style.color = '#ffffff';
-                            btnEl.style.borderColor = '#0f172a';
-                            btnEl.style.boxShadow = '0 4px 12px rgba(15,23,42,0.15)';
-                        } else {
-                            btnEl.style.background = '#ffffff';
-                            btnEl.style.color = '#475569';
-                            btnEl.style.borderColor = '#cbd5e1';
-                            btnEl.style.boxShadow = 'none';
-                        }
-                    }
-                });
-
-                if (tab === 'duel' && window.updateBattleDuel) {
-                    window.updateBattleDuel();
-                }
+                window._currentBattleTab = tab || 'roster';
+                const viewEl = document.getElementById('battle-view-roster');
+                if (viewEl) viewEl.style.display = 'block';
             };
 
             // Live Countdown Calculation
@@ -5905,31 +6301,36 @@
             window._battleReadyTimer = setInterval(window.updateBattleCountdown, 1000);
 
             const renderNeonPlayer = (player, badgeText, badgeColor = '#0284c7') => {
+                if (!player) return '';
                 const photo = player.photo_url || player.photoURL || 'img/logo_somospadel.png';
                 const level = parseFloat(player.level || 3.5).toFixed(2);
                 const teams = Array.isArray(player.team_somospadel) ? player.team_somospadel : (player.team_somospadel ? [player.team_somospadel] : []);
                 const position = player.position || (level > 3.6 ? 'Revés' : 'Drive');
                 const posIcon = position.toLowerCase().includes('rev') ? '⚡ Revés' : '🛡️ Drive';
                 const streak = player.streak || (parseFloat(level) > 3.5 ? 3 : 1);
+                const rawName = (player.name || 'Jugador').trim();
+                const displayName = rawName.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const safeNameAttr = rawName.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
                 return `
-                    <div style="display: flex; align-items: center; gap: 14px; padding: 14px; position: relative;">
-                        <div style="position: relative;">
-                            <div style="width: 54px; height: 54px; border-radius: 14px; background: url('${photo}') center/cover; border: 2px solid ${badgeColor}; box-shadow: 0 2px 8px rgba(0,0,0,0.08);"></div>
-                            <span style="position: absolute; bottom: -4px; right: -4px; background: #0f172a; color: #f59e0b; font-size: 0.55rem; font-weight: 950; padding: 1px 4px; border-radius: 4px; border: 1px solid #e2e8f0;">🔥${streak}W</span>
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; position: relative;">
+                        <div style="position: relative; flex-shrink: 0;">
+                            <div style="width: 44px; height: 44px; border-radius: 12px; background: url('${photo}') center/cover; border: 2px solid ${badgeColor}; box-shadow: 0 2px 6px rgba(0,0,0,0.06);"></div>
+                            <span style="position: absolute; bottom: -3px; right: -3px; background: #0f172a; color: #f59e0b; font-size: 0.52rem; font-weight: 950; padding: 1px 4px; border-radius: 4px; border: 1px solid #e2e8f0;">🔥${streak}W</span>
                         </div>
                         <div style="flex: 1; min-width: 0;">
-                            <div style="font-weight: 950; font-size: 0.98rem; color: #0f172a; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.3px;">${player.name}</div>
-                            <div style="display: flex; align-items: center; gap: 6px; margin-top: 4px; flex-wrap: wrap;">
-                                <span style="background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; font-weight: 950; font-size: 0.72rem; padding: 1px 6px; border-radius: 6px;">${level} <small style="font-weight: 800;">LVL</small></span>
-                                <span style="background: #f1f5f9; color: #334155; font-size: 0.62rem; font-weight: 800; padding: 2px 7px; border-radius: 6px; border: 1px solid #e2e8f0;">${posIcon}</span>
-                                ${teams.length > 0 ? `<span style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.55rem; font-weight: 900; padding: 1px 5px; border-radius: 4px;">${teams[0].toUpperCase()}</span>` : ''}
+                            <div style="font-weight: 950; font-size: 0.9rem; color: #0f172a; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.2px;">${displayName}</div>
+                            <div style="display: flex; align-items: center; gap: 5px; margin-top: 3px; flex-wrap: wrap;">
+                                <span style="background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; font-weight: 950; font-size: 0.68rem; padding: 1px 6px; border-radius: 5px;">${level} <small style="font-weight: 800;">LVL</small></span>
+                                <span style="background: #f1f5f9; color: #334155; font-size: 0.6rem; font-weight: 800; padding: 1px 6px; border-radius: 5px; border: 1px solid #e2e8f0;">${posIcon}</span>
+                                ${teams.length > 0 ? `<span style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.52rem; font-weight: 900; padding: 1px 5px; border-radius: 4px;">${teams[0].toUpperCase()}</span>` : ''}
                             </div>
                         </div>
-                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
-                            <div style="background: ${badgeColor}; color: #ffffff; font-size: 0.58rem; font-weight: 1000; padding: 3px 9px; border-radius: 6px; letter-spacing: 0.5px;">${badgeText}</div>
-                            <button onclick="event.stopPropagation(); window.PadelFutCard && window.PadelFutCard.open({ user: { id: '${player.id || player.uid}', name: '${player.name.replace(/'/g, "\\'")}', level: '${player.level || 3.5}', photo_url: '${photo}' } })" 
-                                    style="background: #fffbeb; border: 1px solid #fde68a; color: #b45309; font-size: 0.58rem; font-weight: 900; padding: 2px 7px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.2s;">
+                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0;">
+                            <div style="background: ${badgeColor}; color: #ffffff; font-size: 0.52rem; font-weight: 1000; padding: 2px 7px; border-radius: 5px; letter-spacing: 0.5px;">${badgeText}</div>
+                            <button onclick="event.stopPropagation(); window.PadelFutCard && window.PadelFutCard.open({ user: { id: '${player.id || player.uid}', name: '${safeNameAttr}', level: '${player.level || 3.5}', photo_url: '${photo}' } })" 
+                                    style="background: #fffbeb; border: 1px solid #fde68a; color: #b45309; font-size: 0.54rem; font-weight: 900; padding: 2px 6px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 3px; transition: all 0.2s;"
+                                    onmouseover="this.style.background='#fef3c7';" onmouseout="this.style.background='#fffbeb';">
                                 🎴 CARTA
                             </button>
                         </div>
@@ -5937,7 +6338,7 @@
                 `;
             };
 
-            // 🧬 4. QUÍMICA DE PAREJA (SYNERGY SCORE %) EN TARJETAS DE ROSTER
+            // 🧬 QUÍMICA DE PAREJA & TARJETAS DE ROSTER
             const cardsHtml = finalGroups.map((group, idx) => {
                 if (group.type === 'pair') {
                     const p1Name = (group.p1 && group.p1.name) || 'Jugador 1';
@@ -5972,36 +6373,36 @@
                         synergyScore = 75;
                         synergyBadge = '⚠️ QUÍMICA 75% • DOBLE DRIVE';
                         synergyColor = '#ea580c';
-                        synergyDesc = 'Doble especialista en derecha (rotación requerida)';
+                        synergyDesc = 'Doble especialista en derecha';
                     } else if (isRev1 && isRev2) {
                         synergyScore = 78;
                         synergyBadge = '⚠️ QUÍMICA 78% • DOBLE REVÉS';
                         synergyColor = '#e11d48';
-                        synergyDesc = 'Gran pegada aérea (atención al centro)';
+                        synergyDesc = 'Gran pegada aérea';
                     }
 
                     return `
                     <div class="battle-ready-item neon-pair-card" data-filter-type="pair" data-player-names="${pNames}" data-player-levels="${pLevels}" style="
                         background: #ffffff;
                         border: 1.5px solid #38bdf8;
-                        border-radius: 22px;
-                        padding: 6px;
+                        border-radius: 18px;
+                        padding: 4px;
                         position: relative;
                         overflow: hidden;
-                        box-shadow: 0 4px 20px rgba(56, 189, 248, 0.08);
-                        margin-bottom: 15px;
-                        animation: floatUp 0.4s ease-out forwards;
-                    ">
-                        <div style="position: absolute; top: 0; right: 0; background: #0284c7; color: #ffffff; font-size: 0.55rem; font-weight: 1000; padding: 3px 14px; border-bottom-left-radius: 12px; text-transform: uppercase; letter-spacing: 1px; z-index: 10;">👥 PAREJA CONFIRMADA</div>
+                        box-shadow: 0 3px 14px rgba(56, 189, 248, 0.08);
+                        margin-bottom: 12px;
+                        transition: transform 0.2s, box-shadow 0.2s;
+                    " onmouseover="this.style.boxShadow='0 6px 20px rgba(56, 189, 248, 0.18)'; this.style.transform='translateY(-2px)';" onmouseout="this.style.boxShadow='0 3px 14px rgba(56, 189, 248, 0.08)'; this.style.transform='none';">
+                        <div style="position: absolute; top: 0; right: 0; background: #0284c7; color: #ffffff; font-size: 0.52rem; font-weight: 1000; padding: 2px 10px; border-bottom-left-radius: 10px; text-transform: uppercase; letter-spacing: 0.5px; z-index: 10;">👥 PAREJA CONFIRMADA</div>
                         ${renderNeonPlayer(group.p1, 'JUGADOR 1', '#0284c7')}
                         
                         <!-- SYNERGY SCORE STRIP -->
-                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; margin: 4px 12px; padding: 8px 12px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                                <span style="font-size: 0.64rem; font-weight: 1000; color: ${synergyColor}; letter-spacing: 0.5px;">${synergyBadge}</span>
-                                <span style="font-size: 0.58rem; color: #64748b; font-weight: 800;">${synergyDesc}</span>
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; margin: 2px 10px; padding: 6px 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
+                                <span style="font-size: 0.6rem; font-weight: 1000; color: ${synergyColor}; letter-spacing: 0.4px;">${synergyBadge}</span>
+                                <span style="font-size: 0.55rem; color: #64748b; font-weight: 800;">${synergyDesc}</span>
                             </div>
-                            <div style="width: 100%; height: 5px; background: #e2e8f0; border-radius: 99px; overflow: hidden;">
+                            <div style="width: 100%; height: 4px; background: #e2e8f0; border-radius: 99px; overflow: hidden;">
                                 <div style="width: ${synergyScore}%; height: 100%; background: ${synergyColor}; border-radius: 99px;"></div>
                             </div>
                         </div>
@@ -6010,28 +6411,40 @@
                     </div>
                     `;
                 } else {
-                    const pNames = `${group.p1.name}`.replace(/"/g, '&quot;');
-                    const pLevels = `${group.p1.level || '3.5'}`;
+                    const p1Name = (group.p1 && group.p1.name) || 'Jugador';
+                    const pNames = String(p1Name).replace(/"/g, '&quot;');
+                    const pLevels = `${(group.p1 && group.p1.level) || '3.5'}`;
+                    const partnerSearchName = group.p1 && group.p1.partner_name ? String(group.p1.partner_name).replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+                    const rawP1Name = (group.p1 && group.p1.name) || 'Jugador';
+                    const safeP1NameAttr = rawP1Name.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    const p1Lvl = (group.p1 && group.p1.level) || '3.5';
+
                     return `
                     <div class="battle-ready-item neon-single-card" data-filter-type="solo" data-player-names="${pNames}" data-player-levels="${pLevels}" style="
                         background: #ffffff;
-                        border: 1.5px solid #eab308;
-                        border-radius: 22px;
-                        padding: 6px;
+                        border: 1.5px solid #f59e0b;
+                        border-radius: 18px;
+                        padding: 4px;
                         position: relative;
                         overflow: hidden;
-                        box-shadow: 0 4px 20px rgba(234, 179, 8, 0.08);
-                        margin-bottom: 15px;
-                        animation: floatUp 0.4s ease-out forwards;
-                    ">
-                        <div style="position: absolute; top: 0; right: 0; background: #fef9c3; color: #854d0e; border-left: 1px solid #fef08a; border-bottom: 1px solid #fef08a; font-size: 0.55rem; font-weight: 1000; padding: 3px 12px; border-bottom-left-radius: 12px; letter-spacing: 0.5px;">🔍 BUSCA PAREJA</div>
+                        box-shadow: 0 3px 14px rgba(245, 158, 11, 0.08);
+                        margin-bottom: 12px;
+                        transition: transform 0.2s, box-shadow 0.2s;
+                    " onmouseover="this.style.boxShadow='0 6px 20px rgba(245, 158, 11, 0.18)'; this.style.transform='translateY(-2px)';" onmouseout="this.style.boxShadow='0 3px 14px rgba(245, 158, 11, 0.08)'; this.style.transform='none';">
+                        <div style="position: absolute; top: 0; right: 0; background: #fef3c7; color: #92400e; border-left: 1px solid #fde68a; border-bottom: 1px solid #fde68a; font-size: 0.52rem; font-weight: 1000; padding: 2px 10px; border-bottom-left-radius: 10px; letter-spacing: 0.5px;">🔍 BUSCA PAREJA</div>
                         ${renderNeonPlayer(group.p1, `#${idx + 1}`, '#ca8a04')}
-                        ${group.p1.partner_name ? `
-                            <div style="padding: 8px 16px 10px; font-size: 0.68rem; color: #854d0e; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; justify-content: space-between; border-top: 1px dashed #fef08a; background: #fefce8; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;">
-                                <span><i class="fas fa-search" style="color: #ca8a04;"></i> Buscando a: <b style="color: #0f172a;">${group.p1.partner_name}</b></span>
-                                <a href="https://wa.me/?text=¡Hola!%20Te%20veo%20en%20la%20lista%20de%20SomosPadel%20para%20jugar%20juntos" target="_blank" style="background: #16a34a; color:#ffffff; padding:3px 10px; border-radius:6px; text-decoration:none; font-size:0.58rem; font-weight:900; box-shadow: 0 2px 6px rgba(22,163,74,0.25);">UNIRME</a>
-                            </div>
-                        ` : ''}
+                        
+                        <!-- PARTNER PROPOSAL STRIP -->
+                        <div style="padding: 6px 10px 8px; font-size: 0.65rem; color: #854d0e; font-weight: 800; display: flex; align-items: center; justify-content: space-between; border-top: 1px dashed #fef08a; background: #fefce8; border-bottom-left-radius: 14px; border-bottom-right-radius: 14px; gap: 6px; flex-wrap: wrap;">
+                            <span style="display: flex; align-items: center; gap: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 170px;">
+                                <i class="fas fa-search" style="color: #ca8a04;"></i> ${partnerSearchName ? `Busca a: <b style="color: #0f172a;">${partnerSearchName}</b>` : 'Busca compañero'}
+                            </span>
+                            <button onclick="event.stopPropagation(); window.proposePairChallenge('${safeP1NameAttr}', '${p1Lvl}')" 
+                                    style="background: #16a34a; color:#ffffff; border: none; padding: 3px 8px; border-radius: 6px; cursor: pointer; font-size: 0.58rem; font-weight: 950; box-shadow: 0 2px 6px rgba(22,163,74,0.25); display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;"
+                                    onmouseover="this.style.background='#15803d';" onmouseout="this.style.background='#16a34a';">
+                                <i class="fab fa-whatsapp"></i> PROPONER PAREJA
+                            </button>
+                        </div>
                     </div>
                     `;
                 }
@@ -6043,430 +6456,190 @@
                 const slotNum = totalPlayers + i + 1;
                 vacantSlotsHtml += `
                     <div class="battle-ready-item vacant-slot-card" data-filter-type="vacant" data-player-names="libre disponible vacante" data-player-levels="" onclick="document.getElementById('inscritos-modal').style.display = 'none'; if(window.EventsController) window.EventsController.registerInEvent('${evt.id}');" style="
-                        background: #ffffff;
-                        border: 2px dashed #94a3b8;
-                        border-radius: 22px;
-                        padding: 18px 16px;
+                        background: #f0fdf4;
+                        border: 1.5px dashed #22c55e;
+                        border-radius: 18px;
+                        padding: 12px 14px;
                         display: flex;
                         align-items: center;
                         justify-content: space-between;
-                        gap: 12px;
+                        gap: 10px;
                         cursor: pointer;
-                        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+                        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
                         position: relative;
                         overflow: hidden;
-                        margin-bottom: 15px;
-                        box-shadow: 0 2px 10px rgba(0,0,0,0.02);
-                    " onmouseover="this.style.background='#f0fdf4'; this.style.borderColor='#16a34a'; this.style.transform='translateY(-2px)';" onmouseout="this.style.background='#ffffff'; this.style.borderColor='#94a3b8'; this.style.transform='none';">
-                        <div style="display: flex; align-items: center; gap: 14px;">
-                            <div style="width: 48px; height: 48px; border-radius: 14px; background: #f0fdf4; border: 1.5px dashed #16a34a; display: flex; align-items: center; justify-content: center; color: #16a34a; font-size: 1.3rem;">
-                                <i class="fas fa-user-plus"></i>
+                        margin-bottom: 12px;
+                        box-shadow: 0 2px 8px rgba(34, 197, 94, 0.06);
+                    " onmouseover="this.style.background='#dcfce7'; this.style.borderColor='#16a34a'; this.style.transform='translateY(-2px)';" onmouseout="this.style.background='#f0fdf4'; this.style.borderColor='#22c55e'; this.style.transform='none';">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="width: 40px; height: 40px; border-radius: 12px; background: #ffffff; border: 1.5px dashed #16a34a; display: flex; align-items: center; justify-content: center; color: #16a34a; font-size: 1.1rem; flex-shrink: 0;">
+                                <i class="fas fa-plus"></i>
                             </div>
                             <div>
-                                <div style="font-weight: 950; font-size: 0.95rem; color: #0f172a; letter-spacing: 0.5px;">PLAZA LIBRE #${slotNum}</div>
-                                <div style="font-size: 0.68rem; color: #16a34a; font-weight: 800; margin-top: 2px;">¡Disponible! Toca para apuntarte</div>
+                                <div style="font-weight: 950; font-size: 0.88rem; color: #0f172a; letter-spacing: 0.3px;">PLAZA LIBRE #${slotNum}</div>
+                                <div style="font-size: 0.65rem; color: #15803d; font-weight: 800; margin-top: 2px;">¡Disponible ahora! Toca para apuntarte</div>
                             </div>
                         </div>
-                        <div style="background: #16a34a; color: #ffffff; font-size: 0.68rem; font-weight: 1000; padding: 7px 14px; border-radius: 8px; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(22,163,74,0.3);">
-                            ¡OCUPAR!
+                        <div style="background: #16a34a; color: #ffffff; font-size: 0.65rem; font-weight: 1000; padding: 6px 12px; border-radius: 8px; letter-spacing: 0.5px; box-shadow: 0 3px 10px rgba(22,163,74,0.3); white-space: nowrap;">
+                            ¡APUNTARME!
                         </div>
                     </div>
                 `;
             }
 
-            const tierStyles = [
-                { name: 'CENTRAL ORO', icon: '👑', color: '#b45309', border: '#f59e0b', bg: '#fffbeb', desc: 'Top Seed Tier' },
-                { name: 'PISTA PLATA', icon: '⚡', color: '#0369a1', border: '#0284c7', bg: '#f0f9ff', desc: 'High Competitive' },
-                { name: 'PISTA BRONCE', icon: '🛡️', color: '#c2410c', border: '#ea580c', bg: '#fff7ed', desc: 'Balanced Core' },
-                { name: 'PISTA DIAMANTE', icon: '💎', color: '#7e22ce', border: '#9333ea', bg: '#faf5ff', desc: 'Advanced Match' },
-                { name: 'PISTA NEÓN', icon: '🎾', color: '#15803d', border: '#16a34a', bg: '#f0fdf4', desc: 'Clutch Arena' },
-                { name: 'PISTA ESMERALDA', icon: '🌱', color: '#047857', border: '#059669', bg: '#ecfdf5', desc: 'Rising Players' }
-            ];
+            // 🏟️ PREMIER PADEL COURTS GENERATION
+            const totalCourtsNeeded = Math.max(1, Math.ceil(Math.max(totalPlayers + slotsLeft, maxPlayers) / 4));
+            const assignedPlayerSlots = [];
 
-            // AI War Room Court Simulation HTML
-            const courtSimulationsHtml = (() => {
-                if (dbPlayers.length === 0) {
+            finalGroups.filter(g => g.type === 'pair').forEach(pairGroup => {
+                assignedPlayerSlots.push({ player: pairGroup.p1, isPair: true, pairPartner: pairGroup.p2 });
+                assignedPlayerSlots.push({ player: pairGroup.p2, isPair: true, pairPartner: pairGroup.p1 });
+            });
+            finalGroups.filter(g => g.type !== 'pair').forEach(soloGroup => {
+                assignedPlayerSlots.push({ player: soloGroup.p1, isPair: false });
+            });
+
+            const renderCourtPlayerSlot = (slot, defaultPos, slotIndex) => {
+                if (slot && slot.player) {
+                    const p = slot.player;
+                    const photo = p.photo_url || p.photoURL || 'img/logo_somospadel.png';
+                    const rawName = (p.name || 'Jugador').trim();
+                    const displayName = rawName.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    const safeNameAttr = rawName.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    const level = parseFloat(p.level || 3.5).toFixed(2);
+                    const position = p.position || defaultPos;
+                    const posLabel = position.toLowerCase().includes('rev') ? '⚡ Revés' : '🛡️ Drive';
+
                     return `
-                        <div style="text-align: center; padding: 60px 20px; color: #64748b; background: #ffffff; border-radius: 20px; border: 1.5px dashed #cbd5e1;">
-                            <i class="fas fa-users-slash" style="font-size: 2.6rem; color: #0284c7; margin-bottom: 14px; display: block;"></i>
-                            <div style="font-weight: 950; font-size: 1.1rem; color: #0f172a;">Aún no hay suficientes inscritos para proyectar pistas</div>
-                            <div style="font-size: 0.82rem; margin-top: 6px; color: #475569;">Comparte la convocatoria para llenar las plazas y activar la estimación por nivel.</div>
+                        <div class="court-player-slot filled" onclick="event.stopPropagation(); window.PadelFutCard && window.PadelFutCard.open({ user: { id: '${p.id || p.uid}', name: '${safeNameAttr}', level: '${p.level || 3.5}', photo_url: '${photo}' } })" style="
+                            background: rgba(15, 23, 42, 0.9);
+                            backdrop-filter: blur(6px);
+                            border: 1px solid rgba(255,255,255,0.22);
+                            border-radius: 10px;
+                            padding: 6px 8px;
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                            cursor: pointer;
+                            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+                            transition: transform 0.15s, background 0.15s;
+                        " onmouseover="this.style.transform='scale(1.02)'; this.style.background='rgba(15,23,42,1)';" onmouseout="this.style.transform='scale(1)'; this.style.background='rgba(15,23,42,0.9)';">
+                            <div style="width: 32px; height: 32px; border-radius: 8px; background: url('${photo}') center/cover; border: 1.5px solid #38bdf8; flex-shrink: 0;"></div>
+                            <div style="min-width: 0; flex: 1;">
+                                <div style="font-size: 0.72rem; font-weight: 950; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase;">${displayName}</div>
+                                <div style="display: flex; align-items: center; gap: 4px; margin-top: 2px;">
+                                    <span style="background: #10b981; color: #ffffff; font-size: 0.55rem; font-weight: 950; padding: 0 4px; border-radius: 4px;">${level}</span>
+                                    <span style="color: rgba(255,255,255,0.75); font-size: 0.52rem; font-weight: 800;">${posLabel}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="court-player-slot vacant" onclick="document.getElementById('inscritos-modal').style.display = 'none'; if(window.EventsController) window.EventsController.registerInEvent('${evt.id}');" style="
+                            background: rgba(255, 255, 255, 0.12);
+                            border: 1.5px dashed rgba(255, 255, 255, 0.55);
+                            border-radius: 10px;
+                            padding: 8px 10px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 6px;
+                            cursor: pointer;
+                            color: #ffffff;
+                            font-size: 0.68rem;
+                            font-weight: 900;
+                            transition: all 0.15s;
+                        " onmouseover="this.style.background='rgba(34,197,94,0.3)'; this.style.borderColor='#4ade80';" onmouseout="this.style.background='rgba(255,255,255,0.12)'; this.style.borderColor='rgba(255,255,255,0.55)';">
+                            <i class="fas fa-plus-circle" style="color: #4ade80; font-size: 0.85rem;"></i>
+                            <span style="letter-spacing: 0.3px;">Plaza Libre</span>
                         </div>
                     `;
                 }
-
-                const sortedPlayers = [...dbPlayers].sort((a, b) => parseFloat(b.level || 3.5) - parseFloat(a.level || 3.5));
-                const courtsList = [];
-
-                for (let c = 0; c < maxCourts; c++) {
-                    const courtPlayers = sortedPlayers.slice(c * 4, (c + 1) * 4);
-                    if (courtPlayers.length === 0) break;
-                    const tier = tierStyles[c % tierStyles.length];
-                    const courtAvg = courtPlayers.length > 0 
-                        ? (courtPlayers.reduce((acc, p) => acc + parseFloat(p.level || 3.5), 0) / courtPlayers.length).toFixed(2)
-                        : '0.00';
-
-                    let playerSlotsHtml = '';
-                    for (let s = 0; s < 4; s++) {
-                        const player = courtPlayers[s];
-                        if (player) {
-                            const photo = player.photo_url || player.photoURL || 'img/logo_somospadel.png';
-                            const pos = player.position || (parseFloat(player.level || 3.5) > 3.6 ? 'Revés' : 'Drive');
-                            playerSlotsHtml += `
-                                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 10px; display: flex; align-items: center; gap: 10px; transition: transform 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.02);" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='none'">
-                                    <div style="width: 36px; height: 36px; border-radius: 10px; background: url('${photo}') center/cover; border: 1.5px solid ${tier.border}; flex-shrink: 0;"></div>
-                                    <div style="flex: 1; min-width: 0;">
-                                        <div style="font-size: 0.8rem; font-weight: 950; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${player.name}</div>
-                                        <div style="font-size: 0.65rem; color: ${tier.color}; font-weight: 800; margin-top: 2px;">
-                                            ${parseFloat(player.level || 3.5).toFixed(2)} LVL <span style="color: #64748b; font-size: 0.58rem; margin-left: 2px;">• ${pos}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                        } else {
-                            playerSlotsHtml += `
-                                <div style="background: #ffffff; border: 1px dashed #cbd5e1; border-radius: 14px; padding: 10px; display: flex; align-items: center; gap: 10px; opacity: 0.8;">
-                                    <div style="width: 36px; height: 36px; border-radius: 10px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 0.85rem; flex-shrink: 0;"><i class="fas fa-user-plus"></i></div>
-                                    <div>
-                                        <div style="font-size: 0.75rem; font-weight: 800; color: #64748b;">Pendiente...</div>
-                                        <div style="font-size: 0.6rem; color: #94a3b8;">Slot libre</div>
-                                    </div>
-                                </div>
-                            `;
-                        }
-                    }
-
-                    courtsList.push(`
-                        <div style="
-                            background: #ffffff;
-                            border: 1.5px solid #e2e8f0;
-                            border-top: 4px solid ${tier.border};
-                            border-radius: 24px;
-                            padding: 18px;
-                            position: relative;
-                            overflow: hidden;
-                            box-shadow: 0 4px 20px rgba(0,0,0,0.04);
-                            display: flex;
-                            flex-direction: column;
-                            gap: 14px;
-                        ">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <span style="font-size: 1.4rem;">${tier.icon}</span>
-                                    <div>
-                                        <div style="font-size: 0.95rem; font-weight: 1000; color: #0f172a; letter-spacing: 0.5px;">PISTA ${c + 1}: ${tier.name}</div>
-                                        <div style="font-size: 0.65rem; color: #64748b; font-weight: 800;">${tier.desc} • 4 Jugadores</div>
-                                    </div>
-                                </div>
-                                <div style="background: ${tier.bg}; border: 1px solid ${tier.border}; color: ${tier.color}; padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 1000; letter-spacing: 0.5px;">
-                                    ${courtAvg} <small style="font-size: 0.6rem;">AVG</small>
-                                </div>
-                            </div>
-
-                            <!-- 2x2 Mini Court Simulation Grid -->
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 16px; padding: 12px; position: relative;">
-                                <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #cbd5e1; z-index: 1;"></div>
-                                <div style="position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; background: #cbd5e1; z-index: 1;"></div>
-                                ${playerSlotsHtml}
-                            </div>
-                        </div>
-                    `);
-                }
-
-                return courtsList.join('');
-            })();
-
-            // 🎰 2. BATTLE ROULETTE / SORTEO CINEMÁTICO LOGIC
-            window.startBattleRoulette = function() {
-                if (dbPlayers.length < 2) {
-                    alert('Se necesitan al menos 2 jugadores para ejecutar el sorteo cinemático.');
-                    return;
-                }
-                const spinBtn = document.getElementById('battle-roulette-btn');
-                const displayCard = document.getElementById('battle-roulette-display');
-                const resultBox = document.getElementById('battle-roulette-results');
-                const confettiBox = document.getElementById('battle-roulette-confetti');
-
-                if (spinBtn) {
-                    spinBtn.disabled = true;
-                    spinBtn.style.opacity = '0.6';
-                    spinBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> SORTEANDO EN VIVO...`;
-                }
-                if (resultBox) resultBox.style.display = 'none';
-                if (confettiBox) confettiBox.innerHTML = '';
-
-                let steps = 0;
-                const maxSteps = 24;
-                let delay = 60;
-
-                if (window._battleRouletteTimer) {
-                    clearTimeout(window._battleRouletteTimer);
-                    window._battleRouletteTimer = null;
-                }
-
-                const spinStep = () => {
-                    const randIdx = Math.floor(Math.random() * dbPlayers.length);
-                    const p = dbPlayers[randIdx] || dbPlayers[0] || { name: 'Jugador', level: 3.5 };
-                    const photo = p.photo_url || p.photoURL || 'img/logo_somospadel.png';
-                    const numLvl = parseFloat(String(p.level || 3.5).replace(',', '.')) || 3.5;
-                    const lvl = numLvl.toFixed(2);
-                    const pName = p.name || 'Jugador';
-
-                    if (displayCard) {
-                        displayCard.innerHTML = `
-                            <div style="width: 80px; height: 80px; border-radius: 20px; background: url('${photo}') center/cover; border: 3px solid #0284c7; box-shadow: 0 4px 15px rgba(2,132,199,0.25); margin: 0 auto 10px; transition: transform 0.1s;"></div>
-                            <div style="font-weight: 1000; font-size: 1.25rem; color: #0f172a; text-transform: uppercase; letter-spacing: -0.5px;">${pName}</div>
-                            <div style="font-size: 0.8rem; color: #0284c7; font-weight: 950; margin-top: 4px;">NIVEL ${lvl} • ${p.position || (numLvl > 3.6 ? 'Revés' : 'Drive')}</div>
-                        `;
-                    }
-
-                    window.playBattleAudio('tick');
-                    steps++;
-
-                    if (steps < maxSteps) {
-                        delay += 14;
-                        window._battleRouletteTimer = setTimeout(spinStep, delay);
-                    } else {
-                        // Sorteo completado
-                        window._battleRouletteTimer = null;
-                        window.playBattleAudio('fanfare');
-                        if (spinBtn) {
-                            spinBtn.disabled = false;
-                            spinBtn.style.opacity = '1';
-                            spinBtn.innerHTML = `<i class="fas fa-redo"></i> RE-SORTEAR RULETA`;
-                        }
-
-                        // Confeti neón
-                        if (confettiBox) {
-                            let confettiHtml = '';
-                            const colors = ['#0284c7', '#16a34a', '#dc2626', '#f59e0b', '#9333ea'];
-                            for (let i = 0; i < 32; i++) {
-                                const left = Math.random() * 95;
-                                const c = colors[i % colors.length];
-                                const dur = 1.3 + Math.random() * 1.5;
-                                const delaySec = Math.random() * 0.3;
-                                const size = 6 + Math.random() * 8;
-                                confettiHtml += `<div style="position: absolute; left: ${left}%; top: -10px; width: ${size}px; height: ${size}px; background: ${c}; border-radius: 50%; opacity: 0.9; animation: confettiFall ${dur}s ease-out ${delaySec}s infinite; pointer-events: none; z-index: 20;"></div>`;
-                            }
-                            confettiBox.innerHTML = confettiHtml;
-                        }
-
-                        // Generar pistas con jugadores mezclados
-                        const shuffled = [...dbPlayers].sort(() => Math.random() - 0.5);
-                        let rouletteCourtsHtml = '';
-                        for (let c = 0; c < maxCourts; c++) {
-                            const cPlayers = shuffled.slice(c * 4, (c + 1) * 4);
-                            if (cPlayers.length === 0) break;
-                            const tier = tierStyles[c % tierStyles.length];
-                            const courtAvg = (cPlayers.reduce((acc, p) => acc + (parseFloat(String(p.level || 3.5).replace(',', '.')) || 3.5), 0) / cPlayers.length).toFixed(2);
-
-                            rouletteCourtsHtml += `
-                                <div style="background: #ffffff; border: 1.5px solid ${tier.border}; border-radius: 18px; padding: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.04);">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                        <div style="display: flex; align-items: center; gap: 8px;">
-                                            <span style="font-size: 1.2rem;">${tier.icon}</span>
-                                            <div>
-                                                <div style="font-weight: 1000; font-size: 0.85rem; color: #0f172a;">PISTA ${c + 1}: ${tier.name}</div>
-                                                <div style="font-size: 0.62rem; color: #64748b; font-weight: 800;">Sorteo Oficial • 4 Guerreros</div>
-                                            </div>
-                                        </div>
-                                        <span style="background: ${tier.bg}; border: 1px solid ${tier.border}; color: ${tier.color}; font-size: 0.7rem; font-weight: 1000; padding: 3px 8px; border-radius: 6px;">${courtAvg} LVL</span>
-                                    </div>
-                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                                        ${cPlayers.map((p) => {
-                                            const pFirstName = ((p.name || 'Jugador').split(' ')[0]).replace(/</g, '&lt;');
-                                            const pLvl = (parseFloat(String(p.level || 3.5).replace(',', '.')) || 3.5).toFixed(2);
-                                            return `
-                                            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px; display: flex; align-items: center; gap: 8px;">
-                                                <div style="width: 28px; height: 28px; border-radius: 8px; background: url('${p.photo_url || p.photoURL || 'img/logo_somospadel.png'}') center/cover; flex-shrink: 0; border: 1px solid ${tier.border};"></div>
-                                                <div style="min-width: 0; flex: 1;">
-                                                    <div style="font-size: 0.72rem; font-weight: 900; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${pFirstName}</div>
-                                                    <div style="font-size: 0.58rem; color: ${tier.color}; font-weight: 800;">LVL ${pLvl}</div>
-                                                </div>
-                                            </div>
-                                        `;}).join('')}
-                                    </div>
-                                </div>
-                            `;
-                        }
-
-                        if (resultBox) {
-                            resultBox.innerHTML = `
-                                <div style="text-align: center; margin-bottom: 16px;">
-                                    <span style="background: #0f172a; color: #ffffff; font-size: 0.75rem; font-weight: 1000; padding: 6px 18px; border-radius: 20px; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(15,23,42,0.15);">
-                                        🎉 ¡CUADRO DE PISTAS DEFINIDO!
-                                    </span>
-                                </div>
-                                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px;">
-                                    ${rouletteCourtsHtml}
-                                </div>
-                            `;
-                            resultBox.style.display = 'block';
-                        }
-                    }
-                };
-
-                spinStep();
             };
 
-            // ⚔️ 3. AI DUEL ARENA / CARA A CARA (HEAD-TO-HEAD) LOGIC
+            let courtsHtml = '';
+            for (let c = 0; c < totalCourtsNeeded; c++) {
+                const courtNum = c + 1;
+                const s1 = assignedPlayerSlots[c * 4 + 0] || null;
+                const s2 = assignedPlayerSlots[c * 4 + 1] || null;
+                const s3 = assignedPlayerSlots[c * 4 + 2] || null;
+                const s4 = assignedPlayerSlots[c * 4 + 3] || null;
+
+                const courtPlayers = [s1, s2, s3, s4].filter(s => s && s.player).map(s => s.player);
+                const courtPlayerNames = courtPlayers.map(p => p.name || '').join(' ').replace(/"/g, '&quot;');
+                const courtAvgLvl = courtPlayers.length > 0 
+                    ? (courtPlayers.reduce((acc, p) => acc + parseFloat(p.level || 3.5), 0) / courtPlayers.length).toFixed(2)
+                    : avgLevel;
+
+                courtsHtml += `
+                    <div class="battle-court-card" data-player-names="${courtPlayerNames}" style="
+                        background: #ffffff;
+                        border: 1.5px solid #cbd5e1;
+                        border-radius: 18px;
+                        padding: 14px;
+                        box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+                        margin-bottom: 16px;
+                    ">
+                        <!-- Court Header -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 2px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="background: #0f172a; color: #38bdf8; font-weight: 1000; font-size: 0.72rem; padding: 4px 10px; border-radius: 8px; letter-spacing: 0.5px;">
+                                    🎾 PISTA ${courtNum}
+                                </span>
+                                <span style="font-size: 0.65rem; color: #64748b; font-weight: 800;">CÉSPED PREMIER AZUL</span>
+                            </div>
+                            <div style="font-size: 0.62rem; color: #0284c7; font-weight: 950; background: #f0f9ff; border: 1px solid #bae6fd; padding: 3px 8px; border-radius: 6px;">
+                                NIVEL MEDIO: ${courtAvgLvl} LVL
+                            </div>
+                        </div>
+
+                        <!-- Court Simulation Box -->
+                        <div style="
+                            background: linear-gradient(180deg, #0284c7 0%, #0369a1 100%);
+                            border: 2px solid #ffffff;
+                            border-radius: 14px;
+                            position: relative;
+                            padding: 12px;
+                            box-shadow: inset 0 0 24px rgba(0,0,0,0.25);
+                        ">
+                            <!-- Center Net Divider Line -->
+                            <div style="position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: rgba(255,255,255,0.7); transform: translateX(-50%); z-index: 1;"></div>
+                            
+                            <!-- Center Net Pill -->
+                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #0f172a; color: #38bdf8; border: 1.5px solid #38bdf8; font-size: 0.52rem; font-weight: 1000; padding: 2px 7px; border-radius: 6px; z-index: 5; letter-spacing: 1px; box-shadow: 0 2px 8px rgba(0,0,0,0.4);">
+                                RED 🎾
+                            </div>
+
+                            <!-- 2 Teams Grid -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; position: relative; z-index: 2;">
+                                <!-- Team Left (Team A) -->
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <div style="font-size: 0.54rem; font-weight: 1000; color: rgba(255,255,255,0.9); text-transform: uppercase; letter-spacing: 0.5px;">PAREJA A</div>
+                                    ${renderCourtPlayerSlot(s1, '⚡ Revés', 1)}
+                                    ${renderCourtPlayerSlot(s2, '🛡️ Drive', 2)}
+                                </div>
+
+                                <!-- Team Right (Team B) -->
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <div style="font-size: 0.54rem; font-weight: 1000; color: rgba(255,255,255,0.9); text-transform: uppercase; letter-spacing: 0.5px; text-align: right;">PAREJA B</div>
+                                    ${renderCourtPlayerSlot(s3, '⚡ Revés', 3)}
+                                    ${renderCourtPlayerSlot(s4, '🛡️ Drive', 4)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 🎰 Sorteo / Ruleta (Safe Handler)
+            window.startBattleRoulette = function() {
+                console.log('Battle Roulette safe handler');
+            };
+
+            // ⚔️ AI Duel Arena (Safe Handlers)
             window.renderDuelArena = window.updateBattleDuel = function() {
-                const sel1 = document.getElementById('duel-player-1-select');
-                const sel2 = document.getElementById('duel-player-2-select');
-                if (!sel1 || !sel2 || dbPlayers.length === 0) return;
-
-                const id1 = sel1.value;
-                const id2 = sel2.value;
-
-                const p1 = dbPlayers.find(p => (p.id || p.uid) === id1) || dbPlayers[0];
-                const p2 = dbPlayers.find(p => (p.id || p.uid) === id2) || dbPlayers[1] || dbPlayers[0];
-
-                if (!p1 || !p2) return;
-
-                const lvl1 = parseFloat(String(p1.level || 3.5).replace(',', '.')) || 3.5;
-                const lvl2 = parseFloat(String(p2.level || 3.5).replace(',', '.')) || 3.5;
-
-                const baseP1 = Math.round(lvl1 * 16.5);
-                const baseP2 = Math.round(lvl2 * 16.5);
-
-                const pos1 = ((p1.position || (lvl1 > 3.6 ? 'Revés' : 'Drive')) || '').toLowerCase();
-                const pos2 = ((p2.position || (lvl2 > 3.6 ? 'Revés' : 'Drive')) || '').toLowerCase();
-
-                const pwr1 = Math.min(99, Math.max(45, baseP1 + (pos1.includes('rev') ? 6 : 0)));
-                const pwr2 = Math.min(99, Math.max(45, baseP2 + (pos2.includes('rev') ? 6 : 0)));
-
-                const def1 = Math.min(99, Math.max(45, baseP1 + (pos1.includes('dri') ? 5 : 1)));
-                const def2 = Math.min(99, Math.max(45, baseP2 + (pos2.includes('dri') ? 5 : 1)));
-
-                const reg1 = Math.min(99, Math.max(45, baseP1 + 2));
-                const reg2 = Math.min(99, Math.max(45, baseP2 + 2));
-
-                const streak1 = parseInt(p1.streak || (lvl1 > 3.5 ? 3 : 1), 10) || 1;
-                const streak2 = parseInt(p2.streak || (lvl2 > 3.5 ? 3 : 1), 10) || 1;
-                const clt1 = Math.min(99, Math.max(50, 60 + (streak1 * 7)));
-                const clt2 = Math.min(99, Math.max(50, 60 + (streak2 * 7)));
-
-                const diff = lvl1 - lvl2;
-                let winRate1 = Math.round(50 + (diff * 26) + ((streak1 - streak2) * 2));
-                winRate1 = Math.max(12, Math.min(88, winRate1));
-                if (isNaN(winRate1)) winRate1 = 50;
-                let winRate2 = 100 - winRate1;
-
-                const name1 = p1.name || 'Jugador 1';
-                const name2 = p2.name || 'Jugador 2';
-
-                let verdict = `🤖 IA VERDICT: Duelo ultra igualado. Máxima tensión en los puntos de oro y juego rasante.`;
-                if (winRate1 >= 60) {
-                    verdict = `🤖 IA VERDICT: Clara ventaja predictiva para <b>${name1}</b> (${winRate1}%). Su ritmo de bola y agresividad aérea marcan la pauta.`;
-                } else if (winRate2 >= 60) {
-                    verdict = `🤖 IA VERDICT: Clara ventaja predictiva para <b>${name2}</b> (${winRate2}%). Mayor solidez defensiva y juego de contragolpe.`;
-                }
-
-                const container = document.getElementById('duel-comparison-card');
-                if (container) {
-                    const photo1 = p1.photo_url || p1.photoURL || 'img/logo_somospadel.png';
-                    const photo2 = p2.photo_url || p2.photoURL || 'img/logo_somospadel.png';
-
-                    const renderStatRow = (label, v1, v2) => {
-                        const safeV1 = isNaN(v1) ? 50 : v1;
-                        const safeV2 = isNaN(v2) ? 50 : v2;
-                        const is1Higher = safeV1 >= safeV2;
-                        const is2Higher = safeV2 >= safeV1;
-                        return `
-                            <div style="margin-bottom: 12px;">
-                                <div style="display: flex; justify-content: space-between; font-size: 0.72rem; font-weight: 900; margin-bottom: 4px;">
-                                    <span style="color: ${is1Higher ? '#0284c7' : '#64748b'}; font-weight: 950;">${safeV1}</span>
-                                    <span style="color: #334155; text-transform: uppercase; font-size: 0.62rem; letter-spacing: 0.5px; font-weight: 900;">${label}</span>
-                                    <span style="color: ${is2Higher ? '#16a34a' : '#64748b'}; font-weight: 950;">${safeV2}</span>
-                                </div>
-                                <div style="display: flex; gap: 6px; height: 6px;">
-                                    <div style="flex: 1; background: #e2e8f0; border-radius: 4px; overflow: hidden; display: flex; justify-content: flex-end;">
-                                        <div style="width: ${safeV1}%; background: ${is1Higher ? '#0284c7' : '#93c5fd'}; border-radius: 4px;"></div>
-                                    </div>
-                                    <div style="flex: 1; background: #e2e8f0; border-radius: 4px; overflow: hidden;">
-                                        <div style="width: ${safeV2}%; background: ${is2Higher ? '#16a34a' : '#86efac'}; border-radius: 4px;"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    };
-
-                    const name1Escaped = name1.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-                    const name2Escaped = name2.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-
-                    container.innerHTML = `
-                        <!-- HEADERS WITH AVATARS -->
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 20px;">
-                            <!-- JUGADOR 1 -->
-                            <div style="flex: 1; text-align: center; background: #f0f9ff; border: 1.5px solid #0284c7; border-radius: 18px; padding: 14px 10px;">
-                                <div style="width: 62px; height: 62px; border-radius: 16px; background: url('${photo1}') center/cover; border: 2px solid #0284c7; margin: 0 auto 8px; box-shadow: 0 4px 12px rgba(2,132,199,0.2);"></div>
-                                <div style="font-weight: 1000; font-size: 0.95rem; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${name1}</div>
-                                <div style="font-size: 0.68rem; color: #0284c7; font-weight: 900; margin-top: 2px;">${lvl1.toFixed(2)} LVL</div>
-                                <div style="margin-top: 6px; font-size: 1.4rem; font-weight: 1000; color: #0284c7;">${winRate1}%</div>
-                                <div style="font-size: 0.55rem; color: #64748b; font-weight: 900; letter-spacing: 0.5px;">PROBABILIDAD IA</div>
-                            </div>
-
-                            <!-- VS BADGE -->
-                            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;">
-                                <div style="background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; font-size: 0.95rem; font-weight: 1000; padding: 8px 12px; border-radius: 12px; box-shadow: 0 4px 12px rgba(220,38,38,0.25); letter-spacing: 1px;">
-                                    VS
-                                </div>
-                                <span style="font-size: 0.55rem; color: #64748b; font-weight: 900;">H2H ARENA</span>
-                            </div>
-
-                            <!-- JUGADOR 2 -->
-                            <div style="flex: 1; text-align: center; background: #f0fdf4; border: 1.5px solid #16a34a; border-radius: 18px; padding: 14px 10px;">
-                                <div style="width: 62px; height: 62px; border-radius: 16px; background: url('${photo2}') center/cover; border: 2px solid #16a34a; margin: 0 auto 8px; box-shadow: 0 4px 12px rgba(22,163,74,0.2);"></div>
-                                <div style="font-weight: 1000; font-size: 0.95rem; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${name2}</div>
-                                <div style="font-size: 0.68rem; color: #16a34a; font-weight: 900; margin-top: 2px;">${lvl2.toFixed(2)} LVL</div>
-                                <div style="margin-top: 6px; font-size: 1.4rem; font-weight: 1000; color: #16a34a;">${winRate2}%</div>
-                                <div style="font-size: 0.55rem; color: #64748b; font-weight: 900; letter-spacing: 0.5px;">PROBABILIDAD IA</div>
-                            </div>
-                        </div>
-
-                        <!-- PROBABILITY DUAL BAR -->
-                        <div style="margin-bottom: 20px;">
-                            <div style="width: 100%; height: 8px; background: #e2e8f0; border-radius: 99px; overflow: hidden; display: flex;">
-                                <div style="width: ${winRate1}%; background: #0284c7;"></div>
-                                <div style="width: ${winRate2}%; background: #16a34a;"></div>
-                            </div>
-                        </div>
-
-                        <!-- COMPARATIVE STATS BARS -->
-                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px; margin-bottom: 18px;">
-                            ${renderStatRow('POTENCIA / REMATE', pwr1, pwr2)}
-                            ${renderStatRow('DEFENSA / PAREDES', def1, def2)}
-                            ${renderStatRow('REGULARIDAD / CONTROL', reg1, reg2)}
-                            ${renderStatRow('CLUTCH & RACHA', clt1, clt2)}
-                        </div>
-
-                        <!-- AI VERDICT BADGE -->
-                        <div style="background: #f1f5f9; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 12px 16px; margin-bottom: 18px; font-size: 0.82rem; color: #0f172a; font-weight: 800; line-height: 1.4;">
-                            ${verdict}
-                        </div>
-
-                        <!-- WHATSAPP RETO BUTTON -->
-                        <div style="text-align: center;">
-                            <button onclick="window.sendBattleDuelChallenge('${name1Escaped}', '${name2Escaped}', ${winRate1}, ${winRate2})" style="
-                                background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
-                                color: #fff;
-                                border: none;
-                                padding: 12px 24px;
-                                border-radius: 14px;
-                                font-size: 0.82rem;
-                                font-weight: 950;
-                                cursor: pointer;
-                                display: inline-flex;
-                                align-items: center;
-                                gap: 8px;
-                                box-shadow: 0 6px 20px rgba(37,211,102,0.35);
-                                transition: transform 0.2s;
-                            " onmouseover="this.style.transform='scale(1.02)';" onmouseout="this.style.transform='scale(1)';">
-                                <i class="fab fa-whatsapp" style="font-size: 1.1rem;"></i> RETAR POR WHATSAPP (DESAFÍO IA)
-                            </button>
-                        </div>
-                    `;
-                }
+                console.log('Battle Duel safe handler');
             };
 
             window.sendBattleDuelChallenge = function(name1, name2, prob1, prob2) {
@@ -6475,9 +6648,8 @@
                 const safeProb1 = (prob1 !== undefined && !isNaN(prob1)) ? prob1 : 50;
                 const safeProb2 = (prob2 !== undefined && !isNaN(prob2)) ? prob2 : (100 - safeProb1);
 
-                const text = `⚔️ *¡DESAFÍO SOMOSPADEL BCN (AI DUEL)!* ⚔️\n\n` +
-                    `Hola *${safeName2}*, la Inteligencia Artificial nos ha emparejado para un cara a cara en *${(evt.name || 'Torneo').toUpperCase()}*:\n\n` +
-                    `📊 *Probabilidad de Victoria Estimada:*\n` +
+                const text = `⚔️ *¡DESAFÍO SOMOSPADEL BCN!* ⚔️\n\n` +
+                    `Hola *${safeName2}*, reto directo en *${(evt.name || 'Torneo').toUpperCase()}*:\n\n` +
                     `🎾 ${safeName1}: ${safeProb1}%\n` +
                     `🎾 ${safeName2}: ${safeProb2}%\n\n` +
                     `¿Te atreves a resolverlo en la pista? ¡Prepara la pala! 🔥🏆`;
@@ -6486,7 +6658,7 @@
                     navigator.share({ title: 'Desafío SomosPadel', text }).catch(() => {});
                 } else if (navigator.clipboard) {
                     navigator.clipboard.writeText(text).then(() => {
-                        alert('¡Mensaje de reto copiado al portapapeles! Pégalo en WhatsApp. 🚀');
+                        alert('¡Mensaje copiado al portapapeles! 🚀');
                     });
                 } else {
                     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
@@ -6495,58 +6667,70 @@
 
             modal.innerHTML = `
                 <style>
-                    @import url('https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Montserrat:wght@900&display=swap');
+                    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900;1000&family=Outfit:wght@600;700;800;900&display=swap');
+                    
+                    .battle-stats-grid {
+                        display: grid;
+                        grid-template-columns: repeat(2, 1fr);
+                        gap: 8px;
+                        margin-bottom: 12px;
+                    }
+                    @media (min-width: 640px) {
+                        .battle-stats-grid {
+                            grid-template-columns: repeat(4, 1fr);
+                        }
+                    }
+
                     .battle-filter-pill {
                         background: #ffffff;
                         border: 1.5px solid #cbd5e1;
                         color: #475569;
-                        padding: 7px 15px;
-                        border-radius: 12px;
-                        font-size: 0.75rem;
+                        padding: 6px 13px;
+                        border-radius: 10px;
+                        font-size: 0.72rem;
                         font-weight: 900;
                         cursor: pointer;
-                        transition: all 0.2s;
+                        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
                         white-space: nowrap;
-                        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 6px;
                     }
                     .battle-filter-pill:hover {
                         color: #0f172a;
-                        background: #f1f5f9;
+                        background: #f8fafc;
                         border-color: #94a3b8;
                     }
                     .battle-filter-pill.active {
                         background: #0f172a !important;
                         color: #ffffff !important;
                         border-color: #0f172a !important;
-                        box-shadow: 0 4px 12px rgba(15,23,42,0.15) !important;
+                        box-shadow: 0 3px 10px rgba(15,23,42,0.18) !important;
                     }
-                    .battle-tab-btn {
-                        padding: 10px 18px;
-                        border-radius: 12px;
-                        font-size: 0.78rem;
-                        font-weight: 950;
-                        cursor: pointer;
-                        transition: all 0.2s;
-                        border: 1.5px solid #cbd5e1;
+
+                    .battle-pills-row {
                         display: flex;
                         align-items: center;
-                        gap: 8px;
-                        background: #ffffff;
-                        color: #475569;
+                        gap: 6px;
+                        overflow-x: auto;
+                        overflow-y: hidden;
+                        scrollbar-width: none !important;
+                        -ms-overflow-style: none !important;
+                        -webkit-overflow-scrolling: touch;
+                        padding-bottom: 2px;
                     }
-                    .battle-tab-btn:hover {
-                        color: #0f172a;
-                        border-color: #94a3b8;
+                    .battle-pills-row::-webkit-scrollbar {
+                        display: none !important;
+                        width: 0 !important;
+                        height: 0 !important;
                     }
                     .scrolling-text { display: inline-block; animation: marquee 35s linear infinite; }
                     @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
                     #inscritos-modal::-webkit-scrollbar { width: 6px; }
                     #inscritos-modal::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
                     #inscritos-modal::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-                    .neon-pair-card, .neon-single-card { transition: transform 0.2s, box-shadow 0.2s; }
-                    .neon-pair-card:hover, .neon-single-card:hover { transform: translateY(-3px); }
-
-                    /* Ecualizador animado CSS para Locución IA */
+                    
                     @keyframes soundWave {
                         0%, 100% { height: 4px; }
                         50% { height: 14px; }
@@ -6554,7 +6738,7 @@
                     .eq-bar {
                         width: 3px;
                         height: 4px;
-                        background: #dc2626;
+                        background: #38bdf8;
                         border-radius: 2px;
                         display: inline-block;
                         animation: soundWave 0.7s ease-in-out infinite;
@@ -6563,101 +6747,60 @@
                     .eq-bar:nth-child(3) { animation-delay: 0.3s; }
                     .eq-bar:nth-child(4) { animation-delay: 0.45s; }
 
-                    #battle-top-bar {
-                        background: #ffffff !important;
-                    }
-                    .battle-tabs-wrapper {
-                        display: flex;
-                        gap: 8px;
-                        margin-bottom: 18px;
-                        background: #e2e8f0;
-                        padding: 5px;
-                        border-radius: 16px;
-                        border: 1px solid #cbd5e1;
-                        width: fit-content;
-                        max-width: 100%;
-                        box-sizing: border-box;
-                    }
-                    @media (max-width: 640px) {
-                        .battle-tabs-wrapper {
-                            display: grid !important;
-                            grid-template-columns: 1fr 1fr !important;
-                            gap: 6px !important;
-                            width: 100% !important;
-                        }
-                        .battle-tabs-wrapper .battle-tab-btn {
-                            justify-content: center !important;
-                            padding: 10px 8px !important;
-                            font-size: 0.72rem !important;
-                            width: 100% !important;
-                            box-sizing: border-box !important;
-                        }
-                    }
-                    .battle-pills-row {
-                        display: flex;
-                        align-items: center;
-                        gap: 8px;
-                        overflow-x: auto;
-                        overflow-y: hidden;
-                        scrollbar-width: none !important;
-                        -ms-overflow-style: none !important;
-                        -webkit-overflow-scrolling: touch;
-                        padding-bottom: 4px;
-                    }
-                    .battle-pills-row::-webkit-scrollbar {
-                        display: none !important;
-                        width: 0 !important;
-                        height: 0 !important;
-                    }
                     @keyframes confettiFall {
                         0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
                         100% { transform: translateY(240px) rotate(480deg); opacity: 0; }
                     }
+                    @keyframes pulseBadge {
+                        0%, 100% { transform: scale(1); opacity: 1; }
+                        50% { transform: scale(1.06); opacity: 0.85; }
+                    }
                 </style>
 
-                <!-- STICKY TOP NAVIGATION BAR -->
-                <div id="battle-top-bar" style="position: sticky; top: 0; z-index: 30010; background: #ffffff !important; border-bottom: 1px solid #e2e8f0; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; gap: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.06);">
-                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                        <span style="background: #0f172a; color: #ccff00; padding: 4px 10px; border-radius: 8px; font-weight: 950; font-size: 0.68rem; letter-spacing: 1.5px;">BROADCAST</span>
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <div style="width: 8px; height: 8px; background: #dc2626; border-radius: 50%; animation: pulse 1s infinite;"></div>
-                            <span style="font-size: 0.65rem; font-weight: 950; color: #dc2626; letter-spacing: 1px;">PRE-PARTY LIVE</span>
+                <!-- STICKY TOP NAVIGATION BAR (COMPACT BROADCAST BAR) -->
+                <div id="battle-top-bar" style="position: sticky; top: 0; z-index: 30010; background: #ffffff !important; border-bottom: 1px solid #e2e8f0; padding: 8px 14px; display: flex; justify-content: space-between; align-items: center; gap: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.04);">
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <span style="background: #0f172a; color: #38bdf8; padding: 3px 8px; border-radius: 6px; font-weight: 950; font-size: 0.64rem; letter-spacing: 1px;">BROADCAST</span>
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <div style="width: 7px; height: 7px; background: #dc2626; border-radius: 50%; animation: pulseBadge 1.2s infinite;"></div>
+                            <span style="font-size: 0.62rem; font-weight: 950; color: #dc2626; letter-spacing: 0.5px;">LIVE</span>
                         </div>
-                        <div id="battle-countdown-badge" style="background: #ffffff; border: 1.5px solid #cbd5e1; padding: 4px 10px; border-radius: 8px; font-size: 0.68rem; font-weight: 900; color: #0f172a; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
+                        <div id="battle-countdown-badge" style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 3px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 900; color: #0f172a; display: flex; align-items: center; gap: 5px;">
                             <i class="far fa-clock" style="color:#0284c7;"></i> CALCULANDO...
                         </div>
                     </div>
 
-                        <!-- 📢 SPEAKER OFICIAL DE ESTADIO (ÚNICO Y HUMANO) -->
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <!-- 📢 SPEAKER OFICIAL DE ESTADIO -->
                         <button id="battle-voice-btn" onclick="window.toggleBattleVoiceBroadcast()" title="Megafonía Oficial de Pista" style="
                             background: #0f172a;
-                            border: 1.5px solid #0f172a;
+                            border: 1px solid #0f172a;
                             color: #ffffff;
-                            padding: 8px 16px;
-                            border-radius: 20px;
-                            font-size: 0.74rem;
+                            padding: 6px 12px;
+                            border-radius: 12px;
+                            font-size: 0.7rem;
                             font-weight: 950;
                             cursor: pointer;
                             display: flex;
                             align-items: center;
-                            gap: 8px;
+                            gap: 6px;
                             transition: all 0.2s;
-                            box-shadow: 0 4px 14px rgba(15,23,42,0.18);
+                            box-shadow: 0 2px 8px rgba(15,23,42,0.15);
                         ">
-                            <i class="fas fa-bullhorn" id="battle-voice-icon" style="color: #38bdf8;"></i>
-                            <span id="battle-voice-text">📢 SPEAKER DE PISTA</span>
-                            <div id="battle-voice-eq" style="display: none; align-items: flex-end; gap: 2px; height: 14px;">
-                                <span class="eq-bar" style="background: #38bdf8;"></span>
-                                <span class="eq-bar" style="background: #38bdf8;"></span>
-                                <span class="eq-bar" style="background: #38bdf8;"></span>
-                                <span class="eq-bar" style="background: #38bdf8;"></span>
+                            <i class="fas fa-bullhorn" id="battle-voice-icon" style="color: #38bdf8; font-size: 0.75rem;"></i>
+                            <span id="battle-voice-text">SPEAKER</span>
+                            <div id="battle-voice-eq" style="display: none; align-items: flex-end; gap: 2px; height: 12px;">
+                                <span class="eq-bar"></span>
+                                <span class="eq-bar"></span>
+                                <span class="eq-bar"></span>
+                                <span class="eq-bar"></span>
                             </div>
                         </button>
 
-                        <button onclick="window.toggleBattleReadyFullscreen()" title="Pantalla Completa TV" style="background: #ffffff; border: 1.5px solid #cbd5e1; color: #0f172a; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
+                        <button onclick="window.toggleBattleReadyFullscreen()" title="Pantalla Completa TV" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">
                             <i class="fas fa-expand"></i>
                         </button>
-                        <button onclick="window.closeBattleReadyModal()" title="Cerrar" style="background: #fee2e2; border: 1.5px solid #fca5a5; color: #dc2626; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1rem; transition: all 0.2s; box-shadow: 0 2px 6px rgba(220,38,38,0.15);"
+                        <button onclick="window.closeBattleReadyModal()" title="Cerrar" style="background: #fee2e2; border: 1px solid #fca5a5; color: #dc2626; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.95rem; transition: all 0.2s;"
                                 onmouseover="this.style.background='#dc2626'; this.style.color='#fff';"
                                 onmouseout="this.style.background='#fee2e2'; this.style.color='#dc2626';">
                             <i class="fas fa-times"></i>
@@ -6665,167 +6808,232 @@
                     </div>
                 </div>
 
-                <div class="broadcast-container" style="padding: 20px 16px 80px; max-width: 1400px; margin: 0 auto; width: 100%; box-sizing: border-box;">
+                <div class="broadcast-container" style="padding: 12px 14px 60px; max-width: 1400px; margin: 0 auto; width: 100%; box-sizing: border-box;">
                     
-                    <!-- HERO HEADER -->
+                    <!-- COMPACT SPORT HERO BANNER & CAPACITY BAR -->
                     <div class="broadcast-header" style="
-                        background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%); 
+                        background: #ffffff; 
                         border: 1.5px solid #e2e8f0;
-                        border-radius: 26px; 
-                        padding: 24px; 
-                        margin-bottom: 22px;
-                        box-shadow: 0 10px 30px rgba(0,0,0,0.04);
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                        flex-wrap: wrap;
-                        gap: 20px;
+                        border-radius: 18px; 
+                        padding: 14px 16px; 
+                        margin-bottom: 12px;
+                        box-shadow: 0 4px 16px rgba(0,0,0,0.03);
                     ">
-                        <div style="flex: 1; min-width: 260px;">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
-                                <span style="background: #0284c7; color: #ffffff; font-size: 0.68rem; font-weight: 950; padding: 4px 10px; border-radius: 8px; letter-spacing: 1px;">
+                        <!-- TOP ROW: BADGES & METADATA CHIPS -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 6px;">
+                            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                                <span style="background: #0f172a; color: #38bdf8; font-size: 0.62rem; font-weight: 950; padding: 3px 8px; border-radius: 6px; letter-spacing: 0.5px;">
                                     ${isEntrenoModal ? '🎾 ENTRENO OFICIAL' : '🏆 TORNEO AMERICANO'}
                                 </span>
-                                <span style="background: rgba(15,23,42,0.06); color: #0f172a; font-size: 0.68rem; font-weight: 900; padding: 4px 10px; border-radius: 8px; letter-spacing: 1px;">
-                                    INSCRITOS BATTLE READY
+                                <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.68rem; font-weight: 800; color: #334155; background: #f1f5f9; padding: 3px 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                                    <i class="far fa-clock" style="color: #0284c7;"></i> ${evt.time || '16:30'}
+                                </span>
+                                <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.68rem; font-weight: 800; color: #334155; background: #f1f5f9; padding: 3px 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                                    <i class="fas fa-map-marker-alt" style="color: #dc2626;"></i> ${eventLocation}
+                                </span>
+                                <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.68rem; font-weight: 800; color: #334155; background: #f1f5f9; padding: 3px 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                                    <i class="fas fa-euro-sign" style="color: #d97706;"></i> ${eventPriceText}
                                 </span>
                             </div>
-                            <h1 style="
-                                margin: 0; 
-                                font-family: 'Montserrat', sans-serif; 
-                                font-size: clamp(1.8rem, 4.2vw, 2.7rem); 
-                                font-weight: 1000; 
-                                text-transform: uppercase; 
-                                letter-spacing: -1px; 
-                                line-height: 1.05;
-                                color: #0f172a;
-                            ">
-                                ${eventTitle}
-                            </h1>
-                            <p style="margin: 6px 0 0 0; color: #64748b; font-weight: 900; font-size: 0.86rem; text-transform: uppercase; letter-spacing: 0.5px;">
-                                CONVOCATORIA OFICIAL Y ASIGNACIÓN DE PISTAS
-                            </p>
-                            <div style="display: flex; align-items: center; gap: 16px; color: #475569; font-size: 0.84rem; font-weight: 800; margin-top: 10px; flex-wrap: wrap;">
-                                <span><i class="far fa-clock" style="color: #0284c7;"></i> ${evt.time || '16:30'}</span>
-                                <span><i class="fas fa-map-marker-alt" style="color: #dc2626;"></i> ${eventLocation}</span>
-                                <span><i class="fas fa-euro-sign" style="color: #d97706;"></i> ${eventPriceText}</span>
-                            </div>
+
+                            <span style="font-size: 0.62rem; font-weight: 900; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase;">
+                                SOMOSPADEL BCN
+                            </span>
                         </div>
 
-                        <!-- BIG PLAYER COUNT BADGE -->
-                        <div style="text-align: center; background: #0f172a; border: 2px solid #0f172a; padding: 14px 28px; border-radius: 20px; box-shadow: 0 6px 20px rgba(15,23,42,0.15); min-width: 140px;">
-                            <div style="font-size: 0.62rem; font-weight: 950; color: #38bdf8; margin-bottom: 4px; letter-spacing: 2px; text-transform: uppercase;">PLAYER COUNT</div>
-                            <div style="font-size: 2.7rem; font-weight: 1000; color: #fff; line-height: 0.9;">
-                                ${totalPlayers}<span style="color: rgba(255,255,255,0.4); font-size: 1.4rem; font-weight: 700; margin-left: 2px;">/${maxPlayers}</span>
-                            </div>
-                            <div style="margin-top: 6px; font-size: 0.65rem; color: ${slotsLeft > 0 ? '#38bdf8' : '#f87171'}; font-weight: 900;">
-                                ${slotsLeft > 0 ? `FALTAN ${slotsLeft} PLAZAS` : '¡AFORO COMPLETO!'}
-                            </div>
-                        </div>
-                    </div>
+                        <!-- EVENT TITLE -->
+                        <h1 style="
+                            margin: 2px 0 10px 0; 
+                            font-family: 'Montserrat', sans-serif; 
+                            font-size: clamp(1.15rem, 2.6vw, 1.6rem); 
+                            font-weight: 1000; 
+                            text-transform: uppercase; 
+                            letter-spacing: -0.4px; 
+                            line-height: 1.15;
+                            color: #0f172a;
+                        ">
+                            ${eventTitle}
+                        </h1>
 
-                    <!-- BATTLE INTELLIGENCE STATS BAR -->
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 22px;">
-                        <div style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
-                            <div style="width: 40px; height: 40px; border-radius: 10px; background: #f0fdf4; color: #16a34a; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;"><i class="fas fa-chart-line"></i></div>
-                            <div>
-                                <div style="font-size: 0.65rem; color: #64748b; font-weight: 900; text-transform: uppercase;">NIVEL MEDIO</div>
-                                <div style="font-size: 1.3rem; font-weight: 1000; color: #0f172a;">${avgLevel} <small style="font-size: 0.65rem; color: #16a34a; font-weight: 900;">LVL</small></div>
+                        <!-- CAPACITY METER (COMPACT & NEON STYLIZED) -->
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 8px 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <i class="fas fa-users" style="color: #0284c7; font-size: 0.8rem;"></i>
+                                    <span style="font-size: 0.78rem; font-weight: 950; color: #0f172a;">
+                                        ${totalPlayers}/${maxPlayers} <span style="color: #64748b; font-weight: 800; font-size: 0.72rem;">Inscritos (${fillPercent}%)</span>
+                                    </span>
+                                </div>
+                                <div>
+                                    ${slotsLeft > 0 ? `
+                                        <span style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #047857; font-size: 0.62rem; font-weight: 1000; padding: 2px 8px; border-radius: 6px; letter-spacing: 0.5px;">
+                                            ⚡ ¡FALTAN ${slotsLeft} PLAZAS!
+                                        </span>
+                                    ` : `
+                                        <span style="background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; font-size: 0.62rem; font-weight: 1000; padding: 2px 8px; border-radius: 6px; letter-spacing: 0.5px;">
+                                            🔥 ¡AFORO COMPLETO!
+                                        </span>
+                                    `}
+                                </div>
                             </div>
-                        </div>
-
-                        <div style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
-                            <div style="width: 40px; height: 40px; border-radius: 10px; background: #f0f9ff; color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;"><i class="fas fa-scale-balanced"></i></div>
-                            <div>
-                                <div style="font-size: 0.65rem; color: #64748b; font-weight: 900; text-transform: uppercase;">COMPETITIVIDAD</div>
-                                <div style="font-size: 1.3rem; font-weight: 1000; color: #0f172a;">${balanceScore}% <small style="font-size: 0.65rem; color: #0284c7; font-weight: 900;">EQUILIBRIO</small></div>
-                            </div>
-                        </div>
-
-                        <div style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
-                            <div style="width: 40px; height: 40px; border-radius: 10px; background: #fefce8; color: #ca8a04; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;"><i class="fas fa-users-viewfinder"></i></div>
-                            <div>
-                                <div style="font-size: 0.65rem; color: #64748b; font-weight: 900; text-transform: uppercase;">DISTRIBUCIÓN</div>
-                                <div style="font-size: 1.1rem; font-weight: 1000; color: #0f172a;">${pairsCount} Parejas <span style="font-size: 0.72rem; color: #64748b; font-weight: 800;">• ${solosCount} Solos</span></div>
-                            </div>
-                        </div>
-
-                        <div style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
-                            <div style="width: 40px; height: 40px; border-radius: 10px; background: #fef2f2; color: #dc2626; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;"><i class="fas fa-ticket"></i></div>
-                            <div>
-                                <div style="font-size: 0.65rem; color: #64748b; font-weight: 900; text-transform: uppercase;">PLAZAS VACANTES</div>
-                                <div style="font-size: 1.3rem; font-weight: 1000; color: ${slotsLeft > 0 ? '#16a34a' : '#dc2626'};">${slotsLeft > 0 ? `${slotsLeft} LIBRES` : 'AGOTADAS'}</div>
+                            <div style="width: 100%; height: 6px; background: #e2e8f0; border-radius: 99px; overflow: hidden;">
+                                <div style="width: ${fillPercent}%; height: 100%; background: linear-gradient(90deg, #10b981 0%, #06b6d4 100%); border-radius: 99px; box-shadow: 0 0 8px rgba(16,185,129,0.35); transition: width 0.3s ease;"></div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- ACTION BAR: SHARE WHATSAPP & TV MODE -->
-                    <div style="display: flex; gap: 10px; margin-bottom: 22px; flex-wrap: wrap;">
+                    <!-- 1. SYMMETRIC DASHBOARD STATS STRIP (2x2 MOBILE, 4-COL DESKTOP) -->
+                    <div class="battle-stats-grid">
+                        <!-- KPI 1: Nivel Medio & Rango -->
+                        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 8px 10px; display: flex; align-items: center; gap: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.02);">
+                            <div style="width: 32px; height: 32px; border-radius: 8px; background: #ecfdf5; color: #059669; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0;"><i class="fas fa-chart-line"></i></div>
+                            <div style="min-width: 0; flex: 1;">
+                                <div style="font-size: 0.54rem; color: #64748b; font-weight: 900; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">NIVEL MEDIO</div>
+                                <div style="font-size: 0.95rem; font-weight: 1000; color: #0f172a; line-height: 1.1; margin-top: 1px;">
+                                    ${avgLevel} <small style="font-size: 0.55rem; color: #059669; font-weight: 900;">LVL</small>
+                                </div>
+                                <div style="font-size: 0.52rem; color: #64748b; font-weight: 800; margin-top: 2px;">Rango ${levelRange}</div>
+                            </div>
+                        </div>
+
+                        <!-- KPI 2: Equilibrio & Tensión -->
+                        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 8px 10px; display: flex; align-items: center; gap: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.02);">
+                            <div style="width: 32px; height: 32px; border-radius: 8px; background: #f0f9ff; color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0;"><i class="fas fa-scale-balanced"></i></div>
+                            <div style="min-width: 0; flex: 1;">
+                                <div style="font-size: 0.54rem; color: #64748b; font-weight: 900; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">EQUILIBRIO</div>
+                                <div style="font-size: 0.95rem; font-weight: 1000; color: #0f172a; line-height: 1.1; margin-top: 1px;">
+                                    ${balanceScore}% <small style="font-size: 0.55rem; color: #0284c7; font-weight: 900;">EQ</small>
+                                </div>
+                                <div style="width: 100%; height: 3px; background: #e2e8f0; border-radius: 99px; margin-top: 4px; overflow: hidden;">
+                                    <div style="width: ${balanceScore}%; height: 100%; background: #0284c7; border-radius: 99px;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- KPI 3: Formato & Táctica -->
+                        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 8px 10px; display: flex; align-items: center; gap: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.02);">
+                            <div style="width: 32px; height: 32px; border-radius: 8px; background: #fefce8; color: #ca8a04; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0;"><i class="fas fa-users-viewfinder"></i></div>
+                            <div style="min-width: 0; flex: 1;">
+                                <div style="font-size: 0.54rem; color: #64748b; font-weight: 900; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">FORMATO</div>
+                                <div style="font-size: 0.92rem; font-weight: 1000; color: #0f172a; line-height: 1.1; margin-top: 1px; white-space: nowrap;">
+                                    ${pairsCount}P <small style="font-size: 0.65rem; color: #64748b; font-weight: 800;">• ${solosCount}S</small>
+                                </div>
+                                <div style="font-size: 0.52rem; color: #64748b; font-weight: 800; margin-top: 2px;">🛡️${drivesCount}D • ⚡${revesCount}R</div>
+                            </div>
+                        </div>
+
+                        <!-- KPI 4: Plazas Disponibles -->
+                        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 8px 10px; display: flex; align-items: center; gap: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.02);">
+                            <div style="width: 32px; height: 32px; border-radius: 8px; background: ${slotsLeft > 0 ? '#f0fdf4' : '#fef2f2'}; color: ${slotsLeft > 0 ? '#16a34a' : '#dc2626'}; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0;"><i class="fas fa-ticket"></i></div>
+                            <div style="min-width: 0; flex: 1;">
+                                <div style="font-size: 0.54rem; color: #64748b; font-weight: 900; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">PLAZAS</div>
+                                <div style="font-size: 0.9rem; font-weight: 1000; color: ${slotsLeft > 0 ? '#16a34a' : '#dc2626'}; line-height: 1.1; margin-top: 1px;">
+                                    ${slotsLeft > 0 ? `${slotsLeft} LIBRES` : 'COMPLETO'}
+                                </div>
+                                <div style="display: inline-flex; align-items: center; gap: 3px; font-size: 0.52rem; color: ${slotsLeft > 0 ? '#15803d' : '#b91c1c'}; font-weight: 900; margin-top: 2px;">
+                                    <span style="width: 5px; height: 5px; border-radius: 50%; background: ${slotsLeft > 0 ? '#22c55e' : '#ef4444'}; animation: pulseBadge 1.2s infinite;"></span>
+                                    ${slotsLeft > 0 ? 'DISPONIBLES' : 'AGOTADAS'}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ACTION ROW: WHATSAPP SHARE + INSTAGRAM / STORY POSTER CREATOR -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
                         <button onclick="window.shareConvocatoriaBattleReady()" style="
-                            flex: 1;
-                            min-width: 200px;
                             background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
                             color: #ffffff;
                             border: none;
-                            padding: 13px 20px;
+                            padding: 11px 10px;
                             border-radius: 14px;
                             font-weight: 950;
-                            font-size: 0.85rem;
+                            font-size: 0.76rem;
+                            letter-spacing: 0.3px;
                             cursor: pointer;
                             display: flex;
                             align-items: center;
                             justify-content: center;
-                            gap: 8px;
-                            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.35);
-                            transition: transform 0.2s;
-                        " onmouseover="this.style.transform='scale(1.02)';" onmouseout="this.style.transform='scale(1)';">
-                            <i class="fab fa-whatsapp" style="font-size: 1.1rem;"></i> COMPARTIR CONVOCATORIA
+                            gap: 6px;
+                            box-shadow: 0 4px 14px rgba(37, 211, 102, 0.25);
+                            transition: transform 0.2s, box-shadow 0.2s;
+                        " onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 18px rgba(37, 211, 102, 0.35)';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 14px rgba(37, 211, 102, 0.25)';">
+                            <i class="fab fa-whatsapp" style="font-size: 1.05rem;"></i>
+                            <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">COMPARTIR CONVOCATORIA</span>
                         </button>
 
-                        <button onclick="window.toggleBattleReadyFullscreen()" style="
-                            background: #ffffff;
-                            border: 1.5px solid #cbd5e1;
-                            color: #0f172a;
-                            padding: 13px 18px;
+                        <button id="battle-story-btn" onclick="window.generateConvocatoriaStory()" style="
+                            background: linear-gradient(135deg, #833ab4 0%, #fd1d1d 50%, #fcb045 100%);
+                            color: #ffffff;
+                            border: none;
+                            padding: 11px 10px;
                             border-radius: 14px;
-                            font-weight: 900;
-                            font-size: 0.85rem;
+                            font-weight: 950;
+                            font-size: 0.76rem;
+                            letter-spacing: 0.3px;
                             cursor: pointer;
                             display: flex;
                             align-items: center;
-                            gap: 8px;
-                            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+                            justify-content: center;
+                            gap: 6px;
+                            box-shadow: 0 4px 14px rgba(253, 29, 29, 0.25);
+                            transition: transform 0.2s, box-shadow 0.2s;
+                        " onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 18px rgba(253, 29, 29, 0.35)';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 14px rgba(253, 29, 29, 0.25)';">
+                            <i class="fas fa-camera-retro" style="font-size: 1rem;"></i>
+                            <span id="battle-story-text" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">CARTEL STORY HD</span>
+                        </button>
+                    </div>
+
+                    <!-- TACTICAL VIEW TOGGLE: CARDS vs COURTS -->
+                    <div style="display: flex; background: #f1f5f9; padding: 3px; border-radius: 12px; border: 1px solid #cbd5e1; margin-bottom: 12px;">
+                        <button id="battle-mode-cards-btn" class="battle-view-mode-btn active" onclick="window.setBattleDisplayMode('cards')" style="
+                            flex: 1;
+                            padding: 7px 10px;
+                            border-radius: 9px;
+                            font-weight: 950;
+                            font-size: 0.72rem;
+                            cursor: pointer;
+                            border: none;
+                            transition: all 0.2s;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 6px;
+                            background: #0f172a;
+                            color: #ffffff;
+                            box-shadow: 0 2px 6px rgba(0,0,0,0.12);
                         ">
-                            <i class="fas fa-tv"></i> MODO PANTALLA COMPLETA
+                            <span>🃏</span> <span>MODO TARJETAS</span>
+                        </button>
+                        <button id="battle-mode-courts-btn" class="battle-view-mode-btn" onclick="window.setBattleDisplayMode('courts')" style="
+                            flex: 1;
+                            padding: 7px 10px;
+                            border-radius: 9px;
+                            font-weight: 950;
+                            font-size: 0.72rem;
+                            cursor: pointer;
+                            border: none;
+                            transition: all 0.2s;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 6px;
+                            background: transparent;
+                            color: #64748b;
+                        ">
+                            <span>🎾</span> <span>MODO PISTAS</span>
                         </button>
                     </div>
 
-                    <!-- 🎛️ QUAD TAB SWITCHER: ROSTER VS AI WAR ROOM VS ROULETTE VS DUEL ARENA -->
-                    <div class="battle-tabs-wrapper">
-                        <button id="battle-tab-btn-roster" class="battle-tab-btn" onclick="window.switchBattleReadyTab('roster')" style="background: #0f172a; color: #ffffff; border-color: #0f172a; box-shadow: 0 4px 12px rgba(15,23,42,0.15);">
-                            <i class="fas fa-users"></i> ROSTER (${totalPlayers + slotsLeft})
-                        </button>
-                        <button id="battle-tab-btn-warroom" class="battle-tab-btn" onclick="window.switchBattleReadyTab('warroom')" style="background: #ffffff; color: #475569; border-color: #cbd5e1;">
-                            <i class="fas fa-chess-board"></i> PISTAS ESTIMADAS
-                        </button>
-                        <button id="battle-tab-btn-roulette" class="battle-tab-btn" onclick="window.switchBattleReadyTab('roulette')" style="background: #ffffff; color: #475569; border-color: #cbd5e1;">
-                            <i class="fas fa-dharmachakra"></i> 🎰 LIVE ROULETTE
-                        </button>
-                        <button id="battle-tab-btn-duel" class="battle-tab-btn" onclick="window.switchBattleReadyTab('duel')" style="background: #ffffff; color: #475569; border-color: #cbd5e1;">
-                            <i class="fas fa-bolt"></i> ⚔️ DUEL ARENA H2H
-                        </button>
-                    </div>
-
-                    <!-- VIEW 1: ROSTER VIEW -->
+                    <!-- ROSTER DIRECT VIEW (SEARCH, FILTERS, CARDS GRID & COURTS SIMULATION) -->
                     <div id="battle-view-roster" style="display: block;">
                         <!-- SEARCH BAR & FILTER PILLS -->
-                        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 18px;">
+                        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px;">
                             <div style="position: relative; width: 100%;">
-                                <i class="fas fa-search" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #64748b; font-size: 0.9rem;"></i>
-                                <input type="text" id="battle-search-input" placeholder="Buscar jugador por nombre o nivel..." oninput="window.searchBattleReady(this.value)" 
-                                       style="width: 100%; box-sizing: border-box; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 12px 16px 12px 44px; color: #0f172a; font-size: 0.85rem; font-weight: 800; outline: none; transition: all 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.02);"
-                                       onfocus="this.style.borderColor='#0284c7'; this.style.boxShadow='0 0 0 3px rgba(2,132,199,0.15)';"
-                                       onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.02)';">
+                                <i class="fas fa-search" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #64748b; font-size: 0.8rem;"></i>
+                                <input type="text" id="battle-search-input" placeholder="Buscar jugador o nivel..." oninput="window.searchBattleReady(this.value)" 
+                                       style="width: 100%; box-sizing: border-box; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; padding: 9px 14px 9px 38px; color: #0f172a; font-size: 0.82rem; font-weight: 800; outline: none; transition: all 0.2s;"
+                                       onfocus="this.style.borderColor='#0284c7'; this.style.boxShadow='0 0 0 3px rgba(2,132,199,0.12)';"
+                                       onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none';">
                             </div>
 
                             <div class="battle-pills-row">
@@ -6836,131 +7044,27 @@
                             </div>
                         </div>
 
-                        <!-- HIGH DENSITY GRID -->
-                        <div class="broadcast-grid" style="
+                        <!-- CARDS VIEW CONTAINER -->
+                        <div id="battle-cards-container" class="broadcast-grid" style="
                             display: grid; 
                             grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); 
-                            gap: 14px; 
-                            margin-bottom: 40px;
+                            gap: 12px; 
+                            margin-bottom: 30px;
                         ">
                             ${cardsHtml}
                             ${vacantSlotsHtml}
                         </div>
-                    </div>
 
-                    <!-- VIEW 2: AI WAR ROOM PISTAS VIEW -->
-                    <div id="battle-view-warroom" style="display: none; margin-bottom: 40px;">
-                        <div style="background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 16px; padding: 14px 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
-                            <i class="fas fa-brain" style="font-size: 1.4rem; color: #0284c7;"></i>
-                            <div style="font-size: 0.82rem; color: #1e293b; font-weight: 700;">
-                                <b>Proyección Algorítmica de Pistas:</b> Los jugadores se asignan ordenados por ranking y nivel para asegurar la máxima competitividad en cada pista. Esta distribución es provisional hasta el inicio del evento.
-                            </div>
-                        </div>
-
-                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 16px;">
-                            ${courtSimulationsHtml}
-                        </div>
-                    </div>
-
-                    <!-- VIEW 3: 🎰 BATTLE ROULETTE / LIVE ROULETTE VIEW -->
-                    <div id="battle-view-roulette" style="display: none; margin-bottom: 40px;">
-                        <div style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 24px; padding: 26px 20px; text-align: center; position: relative; overflow: hidden; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.04);">
-                            
-                            <!-- Confetti Particle Container -->
-                            <div id="battle-roulette-confetti" style="position: absolute; inset: 0; pointer-events: none; overflow: hidden;"></div>
-
-                            <div style="display: inline-flex; align-items: center; gap: 8px; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 5px 14px; border-radius: 20px; margin-bottom: 14px;">
-                                <i class="fas fa-dharmachakra" style="color: #16a34a; font-size: 0.85rem;"></i>
-                                <span style="font-size: 0.68rem; font-weight: 1000; color: #15803d; letter-spacing: 1px; text-transform: uppercase;">CINEMATIC DRAW ARENA</span>
-                            </div>
-
-                            <h2 style="margin: 0 0 6px 0; font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 1000; color: #0f172a; text-transform: uppercase; letter-spacing: -0.5px;">
-                                SORTEO CINEMÁTICO <span style="color: #0284c7;">EN VIVO</span>
-                            </h2>
-                            <p style="margin: 0 0 20px 0; color: #475569; font-size: 0.85rem; font-weight: 700; max-width: 600px; margin-left: auto; margin-right: auto;">
-                                Gira la ruleta interactiva para generar el sorteo oficial con ambientación de audio y suspense en tiempo real.
-                            </p>
-
-                            <!-- SLOT DISPLAY SCREEN -->
-                            <div style="max-width: 440px; margin: 0 auto 22px; background: #f8fafc; border: 2px solid #0284c7; border-radius: 20px; padding: 24px 18px; box-shadow: 0 4px 20px rgba(2,132,199,0.1); min-height: 160px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                                <div id="battle-roulette-display">
-                                    <div style="width: 72px; height: 72px; border-radius: 20px; background: #e0f2fe; border: 2px dashed #0284c7; display: flex; align-items: center; justify-content: center; color: #0284c7; font-size: 2rem; margin: 0 auto 10px;">
-                                        <i class="fas fa-play"></i>
-                                    </div>
-                                    <div style="font-weight: 1000; font-size: 1.1rem; color: #0f172a; text-transform: uppercase;">¿LISTOS PARA EL SORTEO?</div>
-                                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px; font-weight: 800;">Pulsa el botón para iniciar el suspense</div>
-                                </div>
-                            </div>
-
-                            <!-- ACTION SPIN BUTTON -->
-                            <button id="battle-roulette-btn" onclick="window.startBattleRoulette()" style="
-                                background: #0f172a;
-                                color: #ffffff;
-                                border: none;
-                                padding: 15px 36px;
-                                border-radius: 16px;
-                                font-weight: 1000;
-                                font-size: 0.95rem;
-                                cursor: pointer;
-                                display: inline-flex;
-                                align-items: center;
-                                gap: 10px;
-                                letter-spacing: 0.5px;
-                                box-shadow: 0 6px 20px rgba(15,23,42,0.2);
-                                transition: transform 0.2s;
-                            " onmouseover="this.style.transform='scale(1.03)';" onmouseout="this.style.transform='scale(1)';">
-                                <i class="fas fa-dice" style="color: #38bdf8;"></i> 🎲 INICIAR SORTEO CINEMÁTICO
-                            </button>
-                        </div>
-
-                        <!-- RESULTS OF ROULETTE DRAW -->
-                        <div id="battle-roulette-results" style="display: none;"></div>
-                    </div>
-
-                    <!-- VIEW 4: ⚔️ AI DUEL ARENA / CARA A CARA (H2H) VIEW -->
-                    <div id="battle-view-duel" style="display: none; margin-bottom: 40px;">
-                        <div style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 24px; padding: 24px 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); margin-bottom: 24px;">
-                            
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
-                                <div>
-                                    <div style="display: inline-flex; align-items: center; gap: 8px; background: #f0f9ff; border: 1px solid #bfdbfe; padding: 4px 12px; border-radius: 20px; margin-bottom: 6px;">
-                                        <i class="fas fa-crosshairs" style="color: #0284c7; font-size: 0.75rem;"></i>
-                                        <span style="font-size: 0.65rem; font-weight: 1000; color: #0284c7; letter-spacing: 1px;">HEAD TO HEAD SIMULATOR</span>
-                                    </div>
-                                    <h2 style="margin: 0; font-size: clamp(1.3rem, 3vw, 1.8rem); font-weight: 1000; color: #0f172a; text-transform: uppercase;">
-                                        SIMULADOR DE DUELOS <span style="color: #0284c7;">H2H</span>
-                                    </h2>
-                                </div>
-                                <div style="font-size: 0.75rem; color: #64748b; font-weight: 800;">
-                                    Compara 2 jugadores con atributos calculados por IA
-                                </div>
-                            </div>
-
-                            <!-- PLAYER SELECTORS -->
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px;">
-                                <div>
-                                    <label style="font-size: 0.7rem; color: #0284c7; font-weight: 950; text-transform: uppercase; margin-bottom: 6px; display: block; letter-spacing: 0.5px;">LUCHADOR 1 (AZUL):</label>
-                                    <select id="duel-player-1-select" onchange="window.updateBattleDuel()" style="width: 100%; box-sizing: border-box; background: #ffffff; border: 1.5px solid #0284c7; border-radius: 12px; color: #0f172a; padding: 11px; font-weight: 900; font-size: 0.85rem; outline: none; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
-                                        ${dbPlayers.map((p, i) => `<option value="${p.id || p.uid}" ${i === 0 ? 'selected' : ''}>${p.name} (LVL ${parseFloat(p.level || 3.5).toFixed(2)})</option>`).join('')}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label style="font-size: 0.7rem; color: #16a34a; font-weight: 950; text-transform: uppercase; margin-bottom: 6px; display: block; letter-spacing: 0.5px;">LUCHADOR 2 (VERDE):</label>
-                                    <select id="duel-player-2-select" onchange="window.updateBattleDuel()" style="width: 100%; box-sizing: border-box; background: #ffffff; border: 1.5px solid #16a34a; border-radius: 12px; color: #0f172a; padding: 11px; font-weight: 900; font-size: 0.85rem; outline: none; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
-                                        ${dbPlayers.map((p, i) => `<option value="${p.id || p.uid}" ${i === (dbPlayers.length > 1 ? 1 : 0) ? 'selected' : ''}>${p.name} (LVL ${parseFloat(p.level || 3.5).toFixed(2)})</option>`).join('')}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <!-- DYNAMIC COMPARISON CARD -->
-                            <div id="duel-comparison-card"></div>
+                        <!-- COURTS VIEW CONTAINER (CÉSPED PREMIER PADEL) -->
+                        <div id="battle-courts-container" style="display: none; margin-bottom: 30px;">
+                            ${courtsHtml}
                         </div>
                     </div>
 
                     <!-- FOOTER CLOSE BUTTON -->
-                    <div style="display: flex; justify-content: center; gap: 20px; padding-bottom: 40px;">
+                    <div style="display: flex; justify-content: center; gap: 14px; padding-bottom: 30px;">
                         <button onclick="window.closeBattleReadyModal()" 
-                                style="background: #0f172a; color: #ffffff; border: 2px solid #0f172a; padding: 14px 45px; border-radius: 14px; font-weight: 950; cursor: pointer; text-transform: uppercase; font-size: 0.85rem; box-shadow: 0 4px 15px rgba(15,23,42,0.15); transition: all 0.2s;"
+                                style="background: #0f172a; color: #ffffff; border: 1.5px solid #0f172a; padding: 11px 36px; border-radius: 12px; font-weight: 950; cursor: pointer; text-transform: uppercase; font-size: 0.8rem; box-shadow: 0 4px 14px rgba(15,23,42,0.15); transition: all 0.2s;"
                                 onmouseover="this.style.background='#1e293b';"
                                 onmouseout="this.style.background='#0f172a';">
                             CERRAR VISTA
@@ -6969,9 +7073,13 @@
                 </div>
 
                 <!-- TICKER INFERIOR MARQUEE -->
-                <div style="position: fixed; bottom: 0; left: 0; width: 100%; height: 38px; background: #0f172a; border-top: 1px solid #1e293b; display: flex; align-items: center; overflow: hidden; z-index: 30001; box-shadow: 0 -4px 20px rgba(0,0,0,0.15);">
-                    <div class="scrolling-text" style="white-space: nowrap; font-weight: 900; font-size: 0.78rem; color: #ffffff; text-transform: uppercase; letter-spacing: 0.5px;">
-                        ${dbPlayers.map(p => `• <span style="color: #ffffff;">${p.name}</span> (<span style="color: #38bdf8;">LVL ${p.level || 3.5}</span>)`).join('  &nbsp;&nbsp;&nbsp;&nbsp;  ')} 
+                <div style="position: fixed; bottom: 0; left: 0; width: 100%; height: 34px; background: #0f172a; border-top: 1px solid #1e293b; display: flex; align-items: center; overflow: hidden; z-index: 30001; box-shadow: 0 -4px 16px rgba(0,0,0,0.12);">
+                    <div class="scrolling-text" style="white-space: nowrap; font-weight: 900; font-size: 0.74rem; color: #ffffff; text-transform: uppercase; letter-spacing: 0.5px;">
+                        ${dbPlayers.map(p => {
+                            const tickerName = String(p.name || 'Jugador').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                            const tickerLvl = parseFloat(p.level || 3.5).toFixed(2);
+                            return `• <span style="color: #ffffff;">${tickerName}</span> (<span style="color: #38bdf8;">LVL ${tickerLvl}</span>)`;
+                        }).join('  &nbsp;&nbsp;&nbsp;&nbsp;  ')} 
                         &nbsp;&nbsp;&nbsp;&nbsp; 🎾 <span style="color: #38bdf8; font-weight: 950;">SOMOSPADEL BCN</span> • <span style="color: ${slotsLeft > 0 ? '#4ade80' : '#f87171'}; font-weight: 950;">${slotsLeft > 0 ? `¡QUEDAN ${slotsLeft} PLAZAS LIBRES!` : '¡EVENTO COMPLETO!'}</span> • INSCRIPCIONES ABIERTAS EN LA APP &nbsp;&nbsp;&nbsp;&nbsp;
                     </div>
                 </div>

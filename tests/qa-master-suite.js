@@ -46,6 +46,9 @@ runSubtest("Simulación completa Twister 6 Rondas", "test-twister-full.js");
 // 5. Smart Ticker & Season Campaign Integration
 runSubtest("Smart Ticker & Campaña Equipos", "test-smart-ticker-season-campaign.test.js");
 
+// 6. Battle Ready Modal QA
+runSubtest("Battle Ready Modal QA", "test-battle-ready-qa.js");
+
 console.log("\n================================================================");
 console.log(" RESUMEN GLOBAL DE CALIDAD:");
 reports.forEach(r => {

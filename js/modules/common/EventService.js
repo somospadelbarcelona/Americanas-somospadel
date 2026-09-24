@@ -74,6 +74,25 @@ window.EventService = {
                 }
             }
 
+            // Si updates.status === 'cancelled' o similar, avisar a NotificationService
+            const status = String(cleanUpdates.status || '').toLowerCase().trim();
+            const isCancelled = ['cancelled', 'cancelado', 'suspendido', 'anulado', 'suspended', 'postponed'].includes(status);
+            if (isCancelled) {
+                const notifService = window.NotificationService || (window.NotificationServiceClass ? (window.NotificationService = new window.NotificationServiceClass()) : null);
+                if (notifService && typeof notifService.handleEventCancelled === 'function') {
+                    try {
+                        let evtData = null;
+                        try {
+                            evtData = await collection.getById(id);
+                        } catch (_) {}
+                        const fullData = { ...(evtData || {}), ...cleanUpdates, id };
+                        notifService.handleEventCancelled(type, id, fullData, status);
+                    } catch (notifErr) {
+                        console.warn("[EventService] Error avisando cancelación a NotificationService:", notifErr);
+                    }
+                }
+            }
+
             await collection.update(id, cleanUpdates);
             console.log(`✅ [EventService] ${type} updated: ${id}`);
             if (window.clearDatabaseCache) window.clearDatabaseCache(type === 'entreno' ? 'entrenos' : 'americanas');
@@ -94,6 +113,21 @@ window.EventService = {
         const collection = type === AppConstants.EVENT_TYPES.AMERICANA ? FirebaseDB.americanas : FirebaseDB.entrenos;
 
         try {
+            // Antes de eliminar de Firestore, si window.NotificationService existe, avisar con NotificationService.handleEventDeleted
+            let evtData = null;
+            try {
+                evtData = await collection.getById(id);
+            } catch (_) {}
+
+            const notifService = window.NotificationService || (window.NotificationServiceClass ? (window.NotificationService = new window.NotificationServiceClass()) : null);
+            if (notifService && typeof notifService.handleEventDeleted === 'function') {
+                try {
+                    notifService.handleEventDeleted(type, id, evtData || { id });
+                } catch (notifErr) {
+                    console.warn("[EventService] Error avisando borrado a NotificationService:", notifErr);
+                }
+            }
+
             await collection.delete(id);
             // TODO: Optional - delete associated matches?
             console.log(`✅ [EventService] ${type} deleted: ${id}`);

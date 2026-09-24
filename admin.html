@@ -998,6 +998,24 @@
             background: #ffffff !important;
         }
 
+        /* 🔔 Purgar Alertas (SuperAdmin) */
+        .nav-item-pro.btn-notif-cleaner {
+            border: 1px solid rgba(239, 68, 68, 0.3) !important;
+            background: rgba(239, 68, 68, 0.04) !important;
+        }
+        .nav-item-pro.btn-notif-cleaner:hover,
+        .nav-item-pro.btn-notif-cleaner.active {
+            background: #ef4444 !important;
+            color: #ffffff !important;
+            border-color: #ef4444 !important;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.25) !important;
+        }
+        .nav-item-pro.btn-notif-cleaner.active .nav-text,
+        .nav-item-pro.btn-notif-cleaner.active .icon-box,
+        .nav-item-pro.btn-notif-cleaner.active i {
+            color: #ffffff !important;
+        }
+
         /* --- 📏 HOMOGENEIZACIÓN DE DISTANCIAS DE SEPARACIÓN UNIFORMES --- */
         
         /* Margen de los bloques y botones en Escritorio */
@@ -1340,6 +1358,13 @@
                         </button>
                     </div>
                 </div>
+
+                <!-- 🔔 Gestor Global de Notificaciones (SuperAdmin) -->
+                <button class="nav-item-pro btn-notif-cleaner" data-view="notifications_manager" onclick="loadAdminView('notifications_manager')" style="position: relative; border-left: 3px solid #ef4444;">
+                    <span class="icon-box" style="color: #ef4444; background: rgba(239, 68, 68, 0.12);"><i class="fas fa-bell-slash"></i></span>
+                    <span class="nav-text" style="font-weight: 800;">Purgar Alertas</span>
+                    <span style="background: #ef4444; color: #fff; font-size: 0.58rem; font-weight: 950; padding: 2px 6px; border-radius: 6px; margin-left: auto;">SUPERADMIN</span>
+                </button>
 
                 <!-- Robot Summapadel inline script (conservamos el script existente para que no se rompa la lógica!) -->
                 <script>
@@ -3435,6 +3460,7 @@
             setTimeout(() => clearInterval(checkRouterInterval), 15000);
         })();
     </script>
+    <script src="js/modules/admin-notifications-manager.js"></script>
 </body>
 
 </html>
