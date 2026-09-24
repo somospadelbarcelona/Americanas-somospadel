@@ -1023,6 +1023,15 @@
                                         <span class="drawer-row-title" style="color: #ffffff !important; font-weight: 800; font-size: 0.88rem; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">Mis Resultados & Stats</span>
                                         <i class="fas fa-chevron-right drawer-row-chevron"></i>
                                     </div>
+
+                                    <div class="drawer-nav-row" onclick="window.closeDrawer(); window.PlayerView?.haptic?.(15); window.NotificationUi && window.NotificationUi.open();">
+                                        <div class="drawer-row-icon" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">
+                                            <i class="fas fa-bell" id="drawer-notif-bell-icon"></i>
+                                        </div>
+                                        <span class="drawer-row-title" style="color: #ffffff !important; font-weight: 800; font-size: 0.88rem; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">Notificaciones</span>
+                                        <span id="drawer-notif-badge" class="drawer-row-badge" style="display: none; background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.4); font-weight: 900;">0</span>
+                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1234,6 +1243,11 @@
                             </div>
                         </div>
                     `;
+
+                    // Sincronizar badge de notificaciones en el drawer recién renderizado
+                    if (window.NotificationUi && typeof window.NotificationUi.updateBadge === 'function') {
+                        window.NotificationUi.updateBadge();
+                    }
                 }
 
                 // B. Render Bottom Dock (Index Navigation) - Solo si aún no existe en el DOM

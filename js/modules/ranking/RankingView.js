@@ -281,6 +281,11 @@
                         ${this.renderTop10Elite(rankedData)}
                     </div>
 
+                    <!-- 2.2 ESPN FACEOFF: SIMULADOR 1VS1 -->
+                    <div id="ranking-faceoff-widget-root" style="padding: 0 clamp(12px, 3.5vw, 25px) 20px; position: relative; z-index: 4;">
+                        ${this.renderFaceoffWidget(rankedData)}
+                    </div>
+
                     <!-- 2.5 COMPARACIÓN DE RENDIMIENTO (Powerful Radar Chart) -->
                     <div id="ranking-performance-chart-container" style="padding: 0 clamp(12px, 3.5vw, 25px) 20px; position: relative; z-index: 4; display: none;">
                         <div style="
@@ -353,6 +358,36 @@
                                             <div style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.65rem; color: #1e293b; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 2px 7px; border-radius: 6px; font-weight: 900; margin-top: 4px;">
                                                 <i class="fas fa-fire" style="color: #ef4444; font-size: 0.65rem;"></i> ${displayStats.won}V / ${displayStats.played - displayStats.won}D
                                             </div>
+                                        </div>
+
+                                        <div style="grid-column: 1 / -1; margin-top: 14px; padding-top: 14px; border-top: 1px dashed #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                                            <span style="font-size: 0.65rem; color: #64748b; font-weight: 800; display: flex; align-items: center; gap: 5px;">
+                                                <i class="fas fa-award" style="color: #eab308;"></i> Tu carta coleccionable oficial
+                                            </span>
+                                            <button 
+                                                type="button"
+                                                onclick="window.RankingView?.openPlayerCard('${currentUser.uid || currentUser.id}');"
+                                                title="Ver mi carta coleccionable FIFA Ultimate Team de Pádel"
+                                                style="
+                                                    background: #0f172a;
+                                                    color: #CCFF00;
+                                                    border: 1.2px solid rgba(204,255,0,0.4);
+                                                    border-radius: 10px;
+                                                    padding: 6px 12px;
+                                                    font-size: 0.68rem;
+                                                    font-weight: 950;
+                                                    cursor: pointer;
+                                                    display: inline-flex;
+                                                    align-items: center;
+                                                    gap: 6px;
+                                                    transition: transform 0.2s ease, box-shadow 0.2s ease;
+                                                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                                                "
+                                                onmouseover="this.style.transform='scale(1.04)'; this.style.borderColor='#CCFF00';"
+                                                onmouseout="this.style.transform='scale(1)'; this.style.borderColor='rgba(204,255,0,0.4)';"
+                                            >
+                                                <i class="fas fa-id-card"></i> VER MI CARTA FUT
+                                            </button>
                                         </div>
                                     `;
                 })()}
@@ -455,6 +490,9 @@
 
             // Initialize the powerful radar chart comparing user vs MVP vs average
             this.initPerformanceChart(rankedData);
+
+            // Initialize ESPN Faceoff 1vs1 Simulator
+            this.initFaceoffWidget(rankedData);
         }
 
         initPerformanceChart(rankedData) {
@@ -1025,18 +1063,19 @@
                                         </div>
 
                                         <!-- Center: Player Avatar Frame -->
-                                        <div style="position: relative;">
+                                        <div style="position: relative; cursor: pointer;" onclick="event.stopPropagation(); window.RankingView?.openPlayerCard('${mvp.id}');" title="Toca para ver la Carta FUT Oficial de ${mvp.name.replace(/"/g, '&quot;')}">
                                             <div style="
                                                 width: 76px; height: 76px; border-radius: 18px;
                                                 border: 2px solid #fbbf24;
                                                 background: ${mvp.photo_url ? `url('${mvp.photo_url}') center/cover` : '#27272a'};
                                                 box-shadow: 0 8px 20px rgba(0,0,0,0.5), 0 0 15px rgba(234, 179, 8, 0.15);
                                                 overflow: hidden;
-                                                display: flex; align-items: center; justify-content: center;">
+                                                display: flex; align-items: center; justify-content: center;
+                                                transition: transform 0.2s ease;">
                                                 ${!mvp.photo_url ? `<span style="font-size: 2.2rem; font-weight: 1000; color: #fbbf24; font-family: 'Outfit';">${mvp.name.charAt(0).toUpperCase()}</span>` : ''}
                                             </div>
-                                            <div style="position: absolute; bottom: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: #fbbf24; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 8px #fbbf24;">
-                                                <i class="fas fa-star" style="font-size: 0.55rem; color: #000;"></i>
+                                            <div style="position: absolute; bottom: -6px; right: -6px; width: 22px; height: 22px; border-radius: 50%; background: #fbbf24; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 8px #fbbf24;" title="Ver Carta FUT">
+                                                <i class="fas fa-id-card" style="font-size: 0.6rem; color: #000;"></i>
                                             </div>
                                         </div>
 
@@ -1085,9 +1124,19 @@
                                         </div>
                                     </div>
 
-                                    <!-- HINT TO FLIP -->
-                                    <div style="text-align: center; margin-top: 10px; font-size: 0.55rem; color: rgba(251, 191, 36, 0.6); font-weight: 900; letter-spacing: 0.5px; animation: pulse-soft 2s infinite; display: flex; align-items: center; justify-content: center; gap: 4px; position: relative; z-index: 5;">
-                                        <i class="fas fa-sync-alt"></i> TOCAR PARA ESTADÍSTICAS REALES
+                                    <!-- ACTIONS & HINT TO FLIP -->
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; position: relative; z-index: 5;">
+                                        <button 
+                                            type="button" 
+                                            onclick="event.stopPropagation(); window.RankingView?.openPlayerCard('${mvp.id}');"
+                                            title="Abrir Carta FUT interactiva"
+                                            style="background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); color: #000; font-weight: 1000; font-size: 0.6rem; padding: 4px 10px; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 4px 10px rgba(251, 191, 36, 0.35);"
+                                        >
+                                            <i class="fas fa-id-card"></i> VER CARTA FUT
+                                        </button>
+                                        <div style="text-align: right; font-size: 0.55rem; color: rgba(251, 191, 36, 0.7); font-weight: 900; letter-spacing: 0.5px; animation: pulse-soft 2s infinite; display: flex; align-items: center; gap: 4px;">
+                                            <i class="fas fa-sync-alt"></i> VOLTEAR DATOS
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1144,8 +1193,15 @@
                                             </div>
                                         </div>
 
-                                        <div style="background: rgba(234, 179, 8, 0.05); border: 1px dashed rgba(234, 179, 8, 0.2); border-radius: 12px; padding: 6px 8px; font-size: 0.55rem; color: #e2e8f0; line-height: 1.3; text-align: center;">
-                                            <span style="color: #fbbf24; font-weight: 950;"><i class="fas fa-check-double"></i> FICHA OFICIAL:</span> Clasificado <strong>Rank #1</strong> en <strong>${modeLabelUpper}</strong> con Rango <strong>${rankBadge.label}</strong>.
+                                        <div style="background: rgba(234, 179, 8, 0.05); border: 1px dashed rgba(234, 179, 8, 0.2); border-radius: 12px; padding: 7px 8px; font-size: 0.55rem; color: #e2e8f0; line-height: 1.3; text-align: center; display: flex; flex-direction: column; gap: 6px; align-items: center;">
+                                            <div><span style="color: #fbbf24; font-weight: 950;"><i class="fas fa-check-double"></i> FICHA OFICIAL:</span> Clasificado <strong>Rank #1</strong> en <strong>${modeLabelUpper}</strong> con Rango <strong>${rankBadge.label}</strong>.</div>
+                                            <button 
+                                                type="button" 
+                                                onclick="event.stopPropagation(); window.RankingView?.openPlayerCard('${mvp.id}');"
+                                                style="background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); color: #000; font-weight: 1000; font-size: 0.6rem; padding: 4px 10px; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 4px 10px rgba(251, 191, 36, 0.35);"
+                                            >
+                                                <i class="fas fa-id-card"></i> ABRIR CARTA FUT FULLSCREEN
+                                            </button>
                                         </div>
                                     </div>
 
@@ -1331,19 +1387,27 @@
             const trendIcon = trend === 'up' ? '<i class="fas fa-caret-up" style="color:#16a34a; font-size:0.75rem;"></i>' : (trend === 'down' ? '<i class="fas fa-caret-down" style="color:#dc2626; font-size:0.75rem;"></i>' : '');
 
             return `
-                <div style="
-                    background: #ffffff;
-                    border-radius: 18px;
-                    padding: 12px 14px;
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    border: 1px solid #e2e8f0;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
-                    animation: floatUp ${0.3 + (index * 0.05)}s ease-out both;
-                    position: relative;
-                    overflow: hidden;
-                ">
+                <div 
+                    onclick="window.RankingView?.openPlayerCard('${p.id}');"
+                    title="Toca para ver la Carta FUT oficial de ${p.name.replace(/"/g, '&quot;')}"
+                    style="
+                        background: #ffffff;
+                        border-radius: 18px;
+                        padding: 12px 14px;
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                        border: 1px solid #e2e8f0;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+                        animation: floatUp ${0.3 + (index * 0.05)}s ease-out both;
+                        position: relative;
+                        overflow: hidden;
+                        cursor: pointer;
+                        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+                    "
+                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.06)'; this.style.borderColor='#cbd5e1';"
+                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.02)'; this.style.borderColor='#e2e8f0';"
+                >
                     <!-- Rank & Trend -->
                     <div style="width: 26px; min-width: 26px; flex-shrink: 0; text-align: center; z-index: 2;">
                         <div style="font-weight: 950; font-size: ${isTop3 ? '1.15rem' : '0.92rem'}; color: ${rankColor}; line-height: 1;">
@@ -1352,7 +1416,7 @@
                         <div style="font-size: 0.65rem; margin-top: 2px;">${trendIcon}</div>
                     </div>
 
-                    <!-- Avatar Card -->
+                    <!-- Avatar Card with FUT Badge -->
                     <div style="position: relative; z-index: 2; flex-shrink: 0;">
                         <div style="
                             width: 46px; height: 46px; min-width: 46px;
@@ -1365,6 +1429,9 @@
                         ">
                             ${!p.photo_url ? `<span style="font-weight:950; color:#334155; font-size:1rem;">${p.name.substring(0, 2).toUpperCase()}</span>` : ''}
                         </div>
+                        <div style="position: absolute; bottom: -3px; right: -3px; background: #0f172a; color: #CCFF00; font-size: 0.5rem; width: 17px; height: 17px; border-radius: 6px; display: flex; align-items: center; justify-content: center; border: 1.2px solid #CCFF00; box-shadow: 0 2px 6px rgba(0,0,0,0.35);" title="Carta FUT Oficial">
+                            <i class="fas fa-id-card"></i>
+                        </div>
                         ${isTop3 ? `<div style="position:absolute; top:-7px; left:-7px; font-size:0.95rem; filter: drop-shadow(0 0 5px ${rankColor});">👑</div>` : ''}
                     </div>
 
@@ -1375,7 +1442,7 @@
                             ${p.name}
                         </div>
                         
-                        <!-- Level, Tier Badge & Role Subtitle -->
+                        <!-- Level, Tier Badge, FUT Tag & Role Subtitle -->
                         <div style="margin-top: 4px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                             <div style="font-size: 0.52rem; font-weight: 950; padding: 2px 6px; border-radius: 5px; background: ${badgeBg}; color: ${badgeColor}; border: 1px solid ${badgeBorder}; text-transform: uppercase; letter-spacing: 0.4px; flex-shrink: 0;">
                                 ${badge.label}
@@ -1383,6 +1450,9 @@
                             <span style="font-size: 0.68rem; color: #475569; font-weight: 900; text-transform: uppercase;">
                                 LVL ${p.level.toFixed(2)}
                             </span>
+                            <div style="font-size: 0.52rem; font-weight: 950; padding: 2px 6px; border-radius: 5px; background: #0f172a; color: #CCFF00; border: 1px solid rgba(204,255,0,0.35); text-transform: uppercase; letter-spacing: 0.4px; flex-shrink: 0; display: inline-flex; align-items: center; gap: 3px;">
+                                <i class="fas fa-id-card" style="font-size: 0.52rem;"></i> CARTA
+                            </div>
                             <div style="display: inline-flex; align-items: center;">${starsHtml}</div>
                             ${window.RoleService ? window.RoleService.getBadgeHtml(p.role, true) : ''}
                         </div>
@@ -1394,13 +1464,43 @@
                         ` : ''}
                     </div>
 
-                    <!-- Score Card -->
-                    <div style="flex-shrink: 0; text-align: center; background: ${isTop3 ? '#fefce8' : '#f8fafc'}; padding: 8px 10px; border-radius: 14px; min-width: 62px; border: 1.5px solid ${isTop3 ? '#fef08a' : '#e2e8f0'}; z-index: 2; box-shadow: ${isTop3 ? '0 4px 12px rgba(250, 204, 21, 0.12)' : 'none'};">
-                        <div style="font-weight: 950; font-size: 1.25rem; color: #0a192f; line-height: 1;">
-                            ${pStats.points}
-                        </div>
-                        <div style="font-size: 0.58rem; color: ${isTop3 ? '#854d0e' : '#64748b'}; font-weight: 950; letter-spacing: 0.7px; text-transform: uppercase; margin-top: 3px;">
-                            PUNTOS
+                    <!-- Score Card & VS Duel Button -->
+                    <div style="flex-shrink: 0; display: flex; align-items: center; gap: 8px; z-index: 2;">
+                        <button 
+                            type="button"
+                            onclick="event.stopPropagation(); window.RankingView?.compareWithPlayer('${p.id}');"
+                            title="Desafiar en ESPN Faceoff 1vs1"
+                            style="
+                                background: #0f172a;
+                                color: #CCFF00;
+                                border: 1.5px solid rgba(204, 255, 0, 0.4);
+                                border-radius: 12px;
+                                padding: 7px 9px;
+                                font-weight: 950;
+                                font-size: 0.68rem;
+                                cursor: pointer;
+                                display: inline-flex;
+                                flex-direction: column;
+                                align-items: center;
+                                justify-content: center;
+                                gap: 2px;
+                                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                                box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+                            "
+                            onmouseover="this.style.background='#CCFF00'; this.style.color='#0f172a'; this.style.transform='scale(1.06)';"
+                            onmouseout="this.style.background='#0f172a'; this.style.color='#CCFF00'; this.style.transform='scale(1)';"
+                        >
+                            <i class="fas fa-bolt" style="font-size: 0.62rem;"></i>
+                            <span style="letter-spacing: 0.5px; font-size: 0.6rem; font-weight: 1000;">VS</span>
+                        </button>
+
+                        <div style="text-align: center; background: ${isTop3 ? '#fefce8' : '#f8fafc'}; padding: 8px 10px; border-radius: 14px; min-width: 60px; border: 1.5px solid ${isTop3 ? '#fef08a' : '#e2e8f0'}; box-shadow: ${isTop3 ? '0 4px 12px rgba(250, 204, 21, 0.12)' : 'none'};">
+                            <div style="font-weight: 950; font-size: 1.25rem; color: #0a192f; line-height: 1;">
+                                ${pStats.points}
+                            </div>
+                            <div style="font-size: 0.58rem; color: ${isTop3 ? '#854d0e' : '#64748b'}; font-weight: 950; letter-spacing: 0.7px; text-transform: uppercase; margin-top: 3px;">
+                                PUNTOS
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1442,13 +1542,16 @@
         handleSearch(query) {
             const listContainer = document.getElementById('ranking-list-body');
             const podiumRow = document.getElementById('ranking-podium-root');
+            const faceoffRow = document.getElementById('ranking-faceoff-widget-root');
             this.isSearching = query.length >= 2;
 
             if (this.isSearching) {
                 if (podiumRow) podiumRow.style.display = 'none';
+                if (faceoffRow) faceoffRow.style.display = 'none';
                 if (listContainer) listContainer.innerHTML = this.renderRankingList(query);
             } else {
                 if (podiumRow) podiumRow.style.display = 'block';
+                if (faceoffRow) faceoffRow.style.display = 'block';
                 if (listContainer) listContainer.innerHTML = this.renderRankingList('');
             }
         }
@@ -1572,6 +1675,546 @@
             ];
 
             return sampleActivities.sort((a, b) => b.timestamp - a.timestamp);
+        }
+
+        // ==========================================
+        // ESPN FACEOFF: SIMULADOR 1VS1 EN RANKING
+        // ==========================================
+
+        renderFaceoffWidget(rankedData) {
+            if (!rankedData || rankedData.length < 2) {
+                return '';
+            }
+
+            const isCollapsed = localStorage.getItem('sp_ranking_faceoff_collapsed') === 'true';
+            const currentUser = window.Store?.getState('currentUser') || 
+                (() => {
+                    try { return JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch (e) { return {}; }
+                })();
+
+            const playerA = rankedData.find(p => p.id === (currentUser?.uid || currentUser?.id)) || rankedData[0];
+            const playerB = rankedData[0]?.id === playerA?.id ? (rankedData[1] || rankedData[0]) : rankedData[0];
+
+            const sortedPlayers = [...rankedData].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'es', { sensitivity: 'base' }));
+
+            const modalityLabel = this.currentView === 'entrenos' ? 'ENTRENOS' : 'AMERICANAS';
+
+            return `
+                <style>
+                    .ranking-faceoff-card {
+                        background: linear-gradient(135deg, #0a1128 0%, #151c38 50%, #0d1527 100%);
+                        border: 1.5px solid rgba(204, 255, 0, 0.3);
+                        border-radius: 28px;
+                        padding: 18px 20px;
+                        position: relative;
+                        overflow: hidden;
+                        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4), 0 0 25px rgba(204, 255, 0, 0.08);
+                        color: white;
+                        font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+                    }
+                    .ranking-faceoff-glow {
+                        position: absolute;
+                        inset: 0;
+                        background: radial-gradient(circle at 50% -10%, rgba(204, 255, 0, 0.12) 0%, transparent 60%);
+                        pointer-events: none;
+                    }
+                    .ranking-faceoff-select {
+                        background: rgba(255, 255, 255, 0.07);
+                        border: 1px solid rgba(255, 255, 255, 0.18);
+                        border-radius: 14px;
+                        color: white;
+                        font-size: 0.78rem;
+                        font-weight: 800;
+                        padding: 8px 10px;
+                        width: 100%;
+                        outline: none;
+                        text-align: center;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                    }
+                    .ranking-faceoff-select:focus {
+                        border-color: #CCFF00;
+                        background: rgba(204, 255, 0, 0.1);
+                    }
+                    .ranking-faceoff-select option {
+                        background: #0f172a;
+                        color: white;
+                    }
+                    .ranking-faceoff-stat-row {
+                        margin: 12px 0;
+                    }
+                    .ranking-faceoff-stat-label-container {
+                        display: flex;
+                        justify-content: space-between;
+                        font-size: 0.65rem;
+                        font-weight: 950;
+                        text-transform: uppercase;
+                        color: rgba(255, 255, 255, 0.6);
+                        margin-bottom: 5px;
+                        letter-spacing: 0.5px;
+                    }
+                    .ranking-faceoff-bar-outer {
+                        height: 9px;
+                        background: rgba(255, 255, 255, 0.08);
+                        border-radius: 6px;
+                        overflow: hidden;
+                        display: flex;
+                        position: relative;
+                    }
+                    .ranking-faceoff-bar-left {
+                        height: 100%;
+                        background: linear-gradient(to right, #3b82f6, #60a5fa);
+                        transition: width 0.4s ease-out;
+                    }
+                    .ranking-faceoff-bar-right {
+                        height: 100%;
+                        background: linear-gradient(to left, #CCFF00, #a3e635);
+                        transition: width 0.4s ease-out;
+                        margin-left: auto;
+                    }
+                    .ranking-faceoff-avatar {
+                        width: 58px;
+                        height: 58px;
+                        border-radius: 50%;
+                        border: 2.5px solid #CCFF00;
+                        background-size: cover;
+                        background-position: center;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin: 0 auto 8px;
+                        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+                        transition: transform 0.3s;
+                    }
+                    .ranking-faceoff-vs {
+                        font-family: 'Outfit', sans-serif;
+                        font-size: 1.6rem;
+                        font-weight: 1000;
+                        color: #CCFF00;
+                        text-shadow: 0 0 12px rgba(204, 255, 0, 0.5);
+                        font-style: italic;
+                        align-self: center;
+                        text-align: center;
+                        line-height: 1;
+                    }
+                    .ranking-faceoff-btn {
+                        background: linear-gradient(135deg, #CCFF00 0%, #84cc16 100%);
+                        color: #0a192f;
+                        border: none;
+                        border-radius: 16px;
+                        padding: 12px 18px;
+                        font-size: 0.82rem;
+                        font-weight: 1000;
+                        width: 100%;
+                        margin-top: 14px;
+                        cursor: pointer;
+                        box-shadow: 0 4px 18px rgba(204, 255, 0, 0.35);
+                        transition: all 0.2s ease;
+                        letter-spacing: 0.5px;
+                    }
+                    .ranking-faceoff-btn:active {
+                        transform: scale(0.98);
+                    }
+                    .ranking-faceoff-results {
+                        margin-top: 14px;
+                        background: rgba(0, 0, 0, 0.35);
+                        border: 1px solid rgba(204, 255, 0, 0.3);
+                        border-radius: 16px;
+                        padding: 14px;
+                        display: none;
+                        animation: rankingFadeIn 0.35s ease-out forwards;
+                    }
+                    @keyframes rankingFadeIn {
+                        from { opacity: 0; transform: translateY(6px); }
+                        to { opacity: 1; transform: translateY(0); }
+                    }
+                </style>
+
+                <div class="ranking-faceoff-card">
+                    <div class="ranking-faceoff-glow"></div>
+                    
+                    <!-- HEADER & TOGGLE -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:10px;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-size:0.78rem; font-weight:1000; letter-spacing:1px; color:#CCFF00; display:flex; align-items:center; gap:6px;">
+                                <i class="fas fa-bolt" style="color:#CCFF00;"></i> ESPN FACEOFF: SIMULADOR 1VS1
+                            </span>
+                            <span style="font-size:0.55rem; background:rgba(204,255,0,0.15); color:#CCFF00; border:1px solid rgba(204,255,0,0.3); padding:2px 7px; border-radius:6px; font-weight:900;">
+                                ${modalityLabel}
+                            </span>
+                        </div>
+                        <button 
+                            id="faceoff-toggle-btn"
+                            type="button"
+                            onclick="window.RankingView?.toggleFaceoffCollapse();"
+                            title="Minimizar / Expandir simulador"
+                            style="background:rgba(255,255,255,0.08); border:none; border-radius:8px; color:rgba(255,255,255,0.8); width:28px; height:28px; display:flex; align-items:center; justify-content:center; cursor:pointer;"
+                        >
+                            <i id="faceoff-toggle-icon" class="fas fa-chevron-${isCollapsed ? 'down' : 'up'}" style="font-size:0.7rem;"></i>
+                        </button>
+                    </div>
+
+                    <!-- COLLAPSIBLE BODY -->
+                    <div id="faceoff-collapsible-body" style="display: ${isCollapsed ? 'none' : 'block'};">
+                        <!-- SELECTORS & AVATARS -->
+                        <div style="display:grid; grid-template-columns: 1fr 48px 1fr; gap:12px; margin-bottom:16px; align-items:center;">
+                            <!-- Player A -->
+                            <div style="text-align:center;">
+                                <div id="ranking-faceoff-avatar-a" class="ranking-faceoff-avatar" onclick="window.RankingView?.openActiveFaceoffPlayer('a');" title="Toca para ver la Carta FUT" style="background-image: ${playerA?.photo_url ? `url('${playerA.photo_url}')` : 'none'}; background-color: #1e293b; cursor: pointer;">
+                                    ${!playerA?.photo_url ? `<span style="font-size:1.4rem; font-weight:1000; color:#38bdf8;">${(playerA?.name || 'A').charAt(0).toUpperCase()}</span>` : ''}
+                                </div>
+                                <select id="ranking-faceoff-select-a" class="ranking-faceoff-select">
+                                    ${sortedPlayers.map(p => `<option value="${p.id}" ${p.id === playerA?.id ? 'selected' : ''}>${p.name}</option>`).join('')}
+                                </select>
+                            </div>
+
+                            <!-- VS Emblem -->
+                            <div class="ranking-faceoff-vs">VS</div>
+
+                            <!-- Player B -->
+                            <div style="text-align:center;">
+                                <div id="ranking-faceoff-avatar-b" class="ranking-faceoff-avatar" onclick="window.RankingView?.openActiveFaceoffPlayer('b');" title="Toca para ver la Carta FUT" style="background-image: ${playerB?.photo_url ? `url('${playerB.photo_url}')` : 'none'}; background-color: #1e293b; cursor: pointer;">
+                                    ${!playerB?.photo_url ? `<span style="font-size:1.4rem; font-weight:1000; color:#CCFF00;">${(playerB?.name || 'B').charAt(0).toUpperCase()}</span>` : ''}
+                                </div>
+                                <select id="ranking-faceoff-select-b" class="ranking-faceoff-select">
+                                    ${sortedPlayers.map(p => `<option value="${p.id}" ${p.id === playerB?.id ? 'selected' : ''}>${p.name}</option>`).join('')}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- STATS COMPARISON BARS -->
+                        <div id="ranking-faceoff-stats-container">
+                            <!-- Nivel -->
+                            <div class="ranking-faceoff-stat-row">
+                                <div class="ranking-faceoff-stat-label-container">
+                                    <span id="ranking-faceoff-val-a-nivel" style="color:#60a5fa;">${parseFloat(playerA?.level || 3.5).toFixed(2)} NIV</span>
+                                    <span>NIVEL DE JUEGO</span>
+                                    <span id="ranking-faceoff-val-b-nivel" style="color:#CCFF00;">${parseFloat(playerB?.level || 3.5).toFixed(2)} NIV</span>
+                                </div>
+                                <div class="ranking-faceoff-bar-outer">
+                                    <div id="ranking-faceoff-bar-a-nivel" class="ranking-faceoff-bar-left"></div>
+                                    <div id="ranking-faceoff-bar-b-nivel" class="ranking-faceoff-bar-right"></div>
+                                </div>
+                            </div>
+
+                            <!-- Puntos de Ranking -->
+                            <div class="ranking-faceoff-stat-row">
+                                <div class="ranking-faceoff-stat-label-container">
+                                    <span id="ranking-faceoff-val-a-puntos" style="color:#60a5fa;">${this.getPlayerFaceoffPoints(playerA)} PTS</span>
+                                    <span>PUNTOS EN RANKING</span>
+                                    <span id="ranking-faceoff-val-b-puntos" style="color:#CCFF00;">${this.getPlayerFaceoffPoints(playerB)} PTS</span>
+                                </div>
+                                <div class="ranking-faceoff-bar-outer">
+                                    <div id="ranking-faceoff-bar-a-puntos" class="ranking-faceoff-bar-left"></div>
+                                    <div id="ranking-faceoff-bar-b-puntos" class="ranking-faceoff-bar-right"></div>
+                                </div>
+                            </div>
+
+                            <!-- Racha de Victorias -->
+                            <div class="ranking-faceoff-stat-row">
+                                <div class="ranking-faceoff-stat-label-container">
+                                    <span id="ranking-faceoff-val-a-racha" style="color:#60a5fa;">${this.getPlayerFaceoffWon(playerA)} VIC</span>
+                                    <span>VICTORIAS TOTALES</span>
+                                    <span id="ranking-faceoff-val-b-racha" style="color:#CCFF00;">${this.getPlayerFaceoffWon(playerB)} VIC</span>
+                                </div>
+                                <div class="ranking-faceoff-bar-outer">
+                                    <div id="ranking-faceoff-bar-a-racha" class="ranking-faceoff-bar-left"></div>
+                                    <div id="ranking-faceoff-bar-b-racha" class="ranking-faceoff-bar-right"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SIMULATE BUTTON -->
+                        <button id="ranking-faceoff-btn-simulate" type="button" class="ranking-faceoff-btn">
+                            ⚡ SIMULAR DUELO TÁCTICO
+                        </button>
+
+                        <!-- SIMULATION RESULTS -->
+                        <div id="ranking-faceoff-results-box" class="ranking-faceoff-results">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                                <div style="font-size:0.8rem; font-weight:1000; color:#CCFF00; display:flex; align-items:center; gap:6px;">
+                                    <i class="fas fa-chart-line"></i> PREDICCIÓN DE VICTORIA
+                                </div>
+                                <div id="ranking-faceoff-pct-winner" style="font-size:1.15rem; font-weight:1000; color:white;">--%</div>
+                            </div>
+                            <div id="ranking-faceoff-winner-banner" style="background:rgba(204,255,0,0.14); border:1px solid #CCFF00; border-radius:12px; padding:7px 12px; font-weight:950; font-size:0.8rem; color:#CCFF00; text-align:center; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px;">
+                                GANADOR ESTIMADO: --
+                            </div>
+                            <div id="ranking-faceoff-analysis-text" style="font-size:0.7rem; color:rgba(255,255,255,0.9); line-height:1.45; border-top:1px solid rgba(255,255,255,0.08); padding-top:8px;">
+                                Calculando modelo predictivo...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        getPlayerFaceoffPoints(player) {
+            if (!player) return 0;
+            const s = player.stats?.[this.currentView] || { points: 0, played: 0, won: 0 };
+            if (this.currentCategory === 'todas') {
+                return s.points || 0;
+            }
+            return s.categories?.[this.currentCategory]?.points || 0;
+        }
+
+        getPlayerFaceoffWon(player) {
+            if (!player) return 0;
+            const s = player.stats?.[this.currentView] || { points: 0, played: 0, won: 0 };
+            if (this.currentCategory === 'todas') {
+                return s.won || 0;
+            }
+            return s.categories?.[this.currentCategory]?.won || 0;
+        }
+
+        toggleFaceoffCollapse(forceOpen = null) {
+            const body = document.getElementById('faceoff-collapsible-body');
+            const icon = document.getElementById('faceoff-toggle-icon');
+            if (!body) return;
+
+            const shouldOpen = forceOpen !== null ? forceOpen : (body.style.display === 'none');
+            body.style.display = shouldOpen ? 'block' : 'none';
+            if (icon) {
+                icon.className = `fas fa-chevron-${shouldOpen ? 'up' : 'down'}`;
+            }
+            localStorage.setItem('sp_ranking_faceoff_collapsed', (!shouldOpen).toString());
+        }
+
+        compareWithPlayer(playerId) {
+            try { window.PlayerView?.haptic?.(25); } catch (e) {}
+
+            // Expand faceoff if collapsed
+            this.toggleFaceoffCollapse(true);
+
+            const selectA = document.getElementById('ranking-faceoff-select-a');
+            const selectB = document.getElementById('ranking-faceoff-select-b');
+            const root = document.getElementById('ranking-faceoff-widget-root');
+
+            if (selectA && selectB) {
+                // If target player is already selected in A, switch A to someone else
+                if (selectA.value === playerId) {
+                    const altOption = Array.from(selectA.options).find(opt => opt.value !== playerId);
+                    if (altOption) selectA.value = altOption.value;
+                }
+                selectB.value = playerId;
+
+                // Dispatch changes
+                selectA.dispatchEvent(new Event('change'));
+                selectB.dispatchEvent(new Event('change'));
+            }
+
+            if (root) {
+                root.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        initFaceoffWidget(rankedData) {
+            if (!rankedData || rankedData.length < 2) return;
+
+            const currentUser = window.Store?.getState('currentUser') || 
+                (() => {
+                    try { return JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch (e) { return {}; }
+                })();
+
+            const playerA = rankedData.find(p => p.id === (currentUser?.uid || currentUser?.id)) || rankedData[0];
+            const playerB = rankedData[0]?.id === playerA?.id ? (rankedData[1] || rankedData[0]) : rankedData[0];
+
+            this._initFaceoffListeners(rankedData, playerA, playerB);
+        }
+
+        _initFaceoffListeners(players, pA, pB) {
+            const selectA = document.getElementById('ranking-faceoff-select-a');
+            const selectB = document.getElementById('ranking-faceoff-select-b');
+            const btnSim = document.getElementById('ranking-faceoff-btn-simulate');
+            const resBox = document.getElementById('ranking-faceoff-results-box');
+
+            if (!selectA || !selectB || !btnSim || !resBox) return;
+
+            let activeA = pA;
+            let activeB = pB;
+
+            const formatShort = (name) => {
+                if (!name) return 'Jugador';
+                const parts = name.trim().split(/\s+/);
+                return parts.length > 1 ? `${parts[0]} ${parts[1][0]}.` : parts[0];
+            };
+
+            const updateStatsUI = () => {
+                resBox.style.display = 'none';
+                btnSim.innerHTML = '⚡ SIMULAR DUELO TÁCTICO';
+                btnSim.disabled = false;
+
+                // Update Avatars
+                const avatarA = document.getElementById('ranking-faceoff-avatar-a');
+                if (avatarA) {
+                    avatarA.style.backgroundImage = activeA.photo_url ? `url('${activeA.photo_url}')` : 'none';
+                    avatarA.innerHTML = activeA.photo_url ? '' : `<span style="font-size:1.4rem; font-weight:1000; color:#38bdf8;">${(activeA.name || 'A').charAt(0).toUpperCase()}</span>`;
+                }
+
+                const avatarB = document.getElementById('ranking-faceoff-avatar-b');
+                if (avatarB) {
+                    avatarB.style.backgroundImage = activeB.photo_url ? `url('${activeB.photo_url}')` : 'none';
+                    avatarB.innerHTML = activeB.photo_url ? '' : `<span style="font-size:1.4rem; font-weight:1000; color:#CCFF00;">${(activeB.name || 'B').charAt(0).toUpperCase()}</span>`;
+                }
+
+                // Stats calculation
+                const ptsA = this.getPlayerFaceoffPoints(activeA);
+                const ptsB = this.getPlayerFaceoffPoints(activeB);
+
+                const wonA = this.getPlayerFaceoffWon(activeA);
+                const wonB = this.getPlayerFaceoffWon(activeB);
+
+                // Update text values
+                const valANivel = document.getElementById('ranking-faceoff-val-a-nivel');
+                const valBNivel = document.getElementById('ranking-faceoff-val-b-nivel');
+                if (valANivel) valANivel.innerText = `${parseFloat(activeA.level || 3.5).toFixed(2)} NIV`;
+                if (valBNivel) valBNivel.innerText = `${parseFloat(activeB.level || 3.5).toFixed(2)} NIV`;
+
+                const valAPuntos = document.getElementById('ranking-faceoff-val-a-puntos');
+                const valBPuntos = document.getElementById('ranking-faceoff-val-b-puntos');
+                if (valAPuntos) valAPuntos.innerText = `${ptsA} PTS`;
+                if (valBPuntos) valBPuntos.innerText = `${ptsB} PTS`;
+
+                const valARacha = document.getElementById('ranking-faceoff-val-a-racha');
+                const valBRacha = document.getElementById('ranking-faceoff-val-b-racha');
+                if (valARacha) valARacha.innerText = `${wonA} VIC`;
+                if (valBRacha) valBRacha.innerText = `${wonB} VIC`;
+
+                // Calculate bar widths
+                const lvlA = parseFloat(activeA.level || 3.5);
+                const lvlB = parseFloat(activeB.level || 3.5);
+                const lvlSum = (lvlA + lvlB) || 1;
+                const lvlPctA = (lvlA / lvlSum) * 100;
+                const barANivel = document.getElementById('ranking-faceoff-bar-a-nivel');
+                const barBNivel = document.getElementById('ranking-faceoff-bar-b-nivel');
+                if (barANivel) barANivel.style.width = `${lvlPctA}%`;
+                if (barBNivel) barBNivel.style.width = `${100 - lvlPctA}%`;
+
+                const ptsSum = (ptsA + ptsB) || 1;
+                const ptsPctA = ptsSum === 1 && ptsA === 0 && ptsB === 0 ? 50 : (ptsA / ptsSum) * 100;
+                const barAPuntos = document.getElementById('ranking-faceoff-bar-a-puntos');
+                const barBPuntos = document.getElementById('ranking-faceoff-bar-b-puntos');
+                if (barAPuntos) barAPuntos.style.width = `${ptsPctA}%`;
+                if (barBPuntos) barBPuntos.style.width = `${100 - ptsPctA}%`;
+
+                const wonSum = (wonA + wonB) || 1;
+                const wonPctA = wonSum === 1 && wonA === 0 && wonB === 0 ? 50 : (wonA / wonSum) * 100;
+                const barARacha = document.getElementById('ranking-faceoff-bar-a-racha');
+                const barBRacha = document.getElementById('ranking-faceoff-bar-b-racha');
+                if (barARacha) barARacha.style.width = `${wonPctA}%`;
+                if (barBRacha) barBRacha.style.width = `${100 - wonPctA}%`;
+            };
+
+            setTimeout(updateStatsUI, 150);
+
+            selectA.addEventListener('change', (e) => {
+                const selVal = e.target.value;
+                activeA = players.find(p => p.id === selVal) || activeA;
+                updateStatsUI();
+            });
+
+            selectB.addEventListener('change', (e) => {
+                const selVal = e.target.value;
+                activeB = players.find(p => p.id === selVal) || activeB;
+                updateStatsUI();
+            });
+
+            btnSim.addEventListener('click', () => {
+                try { window.PlayerView?.haptic?.(30); } catch (e) {}
+
+                if (activeA.id === activeB.id) {
+                    alert("Selecciona dos jugadores diferentes para simular el duelo.");
+                    return;
+                }
+
+                btnSim.disabled = true;
+                btnSim.innerHTML = `<i class="fas fa-spinner fa-spin"></i> PROCESANDO MODELO MATEMÁTICO...`;
+                resBox.style.display = 'none';
+
+                setTimeout(() => {
+                    btnSim.innerHTML = '⚡ DUELO CALCULADO';
+
+                    const wonA = this.getPlayerFaceoffWon(activeA);
+                    const wonB = this.getPlayerFaceoffWon(activeB);
+
+                    // Dynamic algorithmic scoring based on level and win counts
+                    const valA = parseFloat(activeA.level || 3.5) + (Math.min(wonA, 10) * 0.08);
+                    const valB = parseFloat(activeB.level || 3.5) + (Math.min(wonB, 10) * 0.08);
+
+                    const totalVal = valA + valB;
+                    let probA = Math.round((valA / totalVal) * 100);
+                    probA = Math.min(92, Math.max(8, probA));
+                    const probB = 100 - probA;
+
+                    const winner = probA >= probB ? activeA : activeB;
+                    const loser = probA >= probB ? activeB : activeA;
+                    const winPct = probA >= probB ? probA : probB;
+
+                    const levelDiff = Math.abs(parseFloat(activeA.level || 3.5) - parseFloat(activeB.level || 3.5));
+
+                    let clave = '';
+                    if (Math.abs(wonA - wonB) >= 4) {
+                        clave = `La experiencia y rodaje en victorias de ${formatShort(winner.name)} (${winner === activeA ? wonA : wonB} victorias acumuladas) otorga un factor determinante en los momentos decisivos bajo presión de punto de oro.`;
+                    } else if (levelDiff > 0.35) {
+                        clave = `Ventaja en el escalafón técnico. La consistencia en el fondo y la definición aérea de ${formatShort(winner.name)} (Nivel ${parseFloat(winner.level || 3.5).toFixed(2)}) inclinan la balanza del enfrentamiento.`;
+                    } else {
+                        clave = `Duelo de máxima paridad entre dos estilos competitivos. La clave del triunfo estará en la solidez con los globos de salida de pared y la efectividad en las transiciones a la volea.`;
+                    }
+
+                    const pctWinner = document.getElementById('ranking-faceoff-pct-winner');
+                    const winnerBanner = document.getElementById('ranking-faceoff-winner-banner');
+                    const analysisText = document.getElementById('ranking-faceoff-analysis-text');
+
+                    if (pctWinner) pctWinner.innerText = `${winPct}%`;
+                    if (winnerBanner) winnerBanner.innerText = `PROBABILIDAD A FAVOR DE: ${winner.name.toUpperCase()}`;
+                    if (analysisText) analysisText.innerText = clave;
+                    resBox.style.display = 'block';
+
+                }, 1000);
+            });
+        }
+
+        /**
+         * 🎴 Abrir la carta FUT oficial e interactiva de cualquier jugador del ranking
+         * @param {string} playerId ID o UID del jugador
+         */
+        openPlayerCard(playerId) {
+            try { window.PlayerView?.haptic?.(20); } catch (e) {}
+            if (!playerId) return;
+
+            let p = this.playersData?.find(pl => (pl.id === playerId || pl.uid === playerId));
+            if (!p) {
+                p = window.RankingController?._cachedRanking?.find(pl => (pl.id === playerId || pl.uid === playerId));
+            }
+
+            if (!p) {
+                console.warn("[RankingView] Jugador no encontrado para carta:", playerId);
+                return;
+            }
+
+            const payload = {
+                user: p,
+                stats: p.stats || {}
+            };
+
+            if (window.PadelFutCard && typeof window.PadelFutCard.open === 'function') {
+                window.PadelFutCard.open(payload);
+            } else if (typeof window.openFutCardFromPlayer === 'function') {
+                window.openFutCardFromPlayer(p);
+            } else {
+                console.warn("[RankingView] PadelFutCard no está inicializado");
+            }
+        }
+
+        /**
+         * 🎴 Abrir la carta del jugador actualmente seleccionado en el Faceoff 1vs1
+         * @param {'a' | 'b'} side Lado 'a' o 'b' del selector Faceoff
+         */
+        openActiveFaceoffPlayer(side) {
+            const select = document.getElementById(`ranking-faceoff-select-${side}`);
+            if (select && select.value) {
+                this.openPlayerCard(select.value);
+            }
         }
     }
 

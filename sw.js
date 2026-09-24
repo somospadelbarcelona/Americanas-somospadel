@@ -266,6 +266,96 @@ async function handleStaleWhileRevalidate(request) {
         return freshResponse;
     }
 
-    return new Response('', { status: 503, statusText: 'Service Unavailable Offline' });
 }
 
+// ============================================================================
+// PUSH NOTIFICATIONS & INTERACCIÓN (Fallback si el navegador usa sw.js principal)
+// ============================================================================
+
+self.addEventListener('push', (event) => {
+    console.log('📬 [SW Principal] Evento PUSH recibido.');
+
+    let payload = {};
+    if (event.data) {
+        try {
+            payload = event.data.json();
+        } catch (e) {
+            try {
+                payload = { notification: { body: event.data.text() } };
+            } catch (err) {
+                payload = {};
+            }
+        }
+    }
+
+    const notification = payload.notification || {};
+    const data = payload.data || {};
+
+    const title = notification.title || data.title || 'SomosPadel BCN 🎾';
+    const body = notification.body || data.body || 'Tienes una nueva notificación.';
+    const icon = notification.icon || data.icon || './img/logo_somospadel.png';
+    const tag = data.id || data.tag || ('somospadel-notif-' + Date.now());
+
+    const options = {
+        body: body,
+        icon: icon,
+        badge: './img/logo_somospadel.png',
+        data: data,
+        tag: tag,
+        vibrate: [200, 100, 200],
+        renotify: true
+    };
+
+    event.waitUntil(
+        self.registration.showNotification(title, options)
+    );
+});
+
+self.addEventListener('notificationclick', (event) => {
+    console.log('🔔 [SW Principal] Clic en notificación push:', event.notification);
+    event.notification.close();
+
+    const data = event.notification.data || {};
+    let targetPath = data.url || data.link || './';
+
+    let urlToOpen;
+    try {
+        if (targetPath.startsWith('http://') || targetPath.startsWith('https://')) {
+            urlToOpen = targetPath;
+        } else if (targetPath.startsWith('/') || targetPath.startsWith('./')) {
+            urlToOpen = new URL(targetPath, self.location.origin).href;
+        } else {
+            // Asumir hash de sección (ej: 'live', 'americanas', 'dashboard')
+            urlToOpen = new URL('./#' + targetPath, self.location.origin).href;
+        }
+    } catch (e) {
+        urlToOpen = self.location.origin;
+    }
+
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true })
+            .then((clientList) => {
+                // 1. Si ya existe una pestaña abierta con el mismo origen, enfocarla
+                for (const client of clientList) {
+                    if (client.url && client.url.includes(self.location.origin) && 'focus' in client) {
+                        if ('navigate' in client && urlToOpen) {
+                            client.navigate(urlToOpen);
+                        }
+                        if (client.postMessage) {
+                            client.postMessage({
+                                type: 'NOTIFICATION_CLICKED',
+                                data: data,
+                                url: urlToOpen
+                            });
+                        }
+                        return client.focus();
+                    }
+                }
+
+                // 2. Si no hay pestaña abierta, abrir nueva ventana
+                if (clients.openWindow) {
+                    return clients.openWindow(urlToOpen);
+                }
+            })
+    );
+});

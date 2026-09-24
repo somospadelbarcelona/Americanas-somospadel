@@ -765,6 +765,17 @@
                 <!-- DESTACADOS & EN VIVO (2 ESFERAS DINÁMICAS AUTO-ROTATIVAS EN EL HEADER) -->
                 <div id="header-story-rotator" class="header-story-rotator"></div>
 
+                <!-- CENTRO DE NOTIFICACIONES (OFICIAL SOMOSPADEL CYBER-PADEL) -->
+                <button type="button"
+                    class="header-notif-btn haptic-feedback"
+                    id="btn-header-notifications"
+                    title="Centro de Notificaciones"
+                    aria-label="Abrir centro de notificaciones"
+                    onclick="window.PlayerView?.haptic?.(15); window.NotificationUi && window.NotificationUi.toggle();">
+                    <i class="fas fa-bell" id="notif-bell-icon"></i>
+                    <span id="notif-badge" class="notif-header-badge" style="display: none;">0</span>
+                </button>
+
                 <!-- USER PROFILE DROPDOWN (PRO ATHLETE EDITION) -->
                 <div class="user-dropdown-backdrop" id="user-dropdown-backdrop" onclick="window._toggleUserDropdown(event)"></div>
                 <div class="user-dropdown-container" id="user-dropdown-container">
@@ -2152,11 +2163,6 @@
                             style="background: linear-gradient(135deg,#F59E0B,#D97706); color:#fff; border:none; border-radius:12px; padding:10px 8px; font-size:0.65rem; font-weight:800; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px; transition:transform 0.15s;"
                             onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
                         <i class="fas fa-user-circle" style="font-size:1rem;"></i> Mi Perfil
-                    </button>
-                    <button onclick="window.DashboardView.openTacticalWarRoom()"
-                            style="grid-column: span 2; background: linear-gradient(135deg, #0f172a, #1e293b); color: #CCFF00; border: 1px solid rgba(204, 255, 0, 0.3); border-radius: 12px; padding: 10px 8px; font-size: 0.65rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.15s;"
-                            onmouseover="this.style.transform='scale(1.02)'; this.style.background='rgba(204, 255, 0, 0.05)'" onmouseout="this.style.transform='scale(1)'; this.style.background='linear-gradient(135deg, #0f172a, #1e293b)'">
-                        <i class="fas fa-cubes" style="font-size: 1rem; color: #CCFF00;"></i> Pizarra Táctica 3D
                     </button>
                 </div>
             </div>
@@ -4692,8 +4698,6 @@
     <script src="js/modules/dashboard/GeoRadarWidget.js" defer></script>
     <script src="js/modules/dashboard/StoryFeedWidget.js?v=FAST_SWIPE_v3" defer></script>
     <script src="js/modules/dashboard/PadelPulse.js?v=6.2" defer></script>
-    <script src="js/modules/dashboard/TacticalCourt3D.js?v=2.0" defer></script>
-    <script src="js/modules/dashboard/Tactical3DWidget.js?v=2.0" defer></script>
     <script src="js/modules/dashboard/NewsCatalog.js?v=1.2" defer></script>
     <script src="js/modules/dashboard/DashboardView_hotfix.js?v=SOMOSPADEL_CLEAN_v4" defer></script>
     <script src="js/modules/dashboard/DashboardController.js" defer></script>
@@ -4711,7 +4715,7 @@
     <script src="js/modules/chat/ChatService.js?v=1.1" defer></script>
     <script src="js/modules/chat/ChatView.js?v=1.2" defer></script>
     <script src="js/modules/americanas/EntrenoLiveView.js" defer></script>
-    <script src="js/modules/americanas/EventsController_V6.js?v=SUBNAV_MATE_ENTRENOS_LIGHT_GRAY_V5" defer></script>
+    <script src="js/modules/americanas/EventsController_V6.js?v=SUBNAV_MATE_ENTRENOS_LIGHT_GRAY_V6" defer></script>
     <script src="js/modules/common/SocialShareService.js" defer></script>
     <script src="js/modules/admin/SocialShareView.js" defer></script>
 

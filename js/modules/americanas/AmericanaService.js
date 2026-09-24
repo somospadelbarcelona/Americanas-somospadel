@@ -144,16 +144,53 @@
          */
         async getAllActiveEvents() {
             try {
-                const results = await this._withTimeout(
-                    Promise.all([
-                        this._getCollectionService('americana')?.getAll() || [],
-                        this._getCollectionService('entreno')?.getAll() || []
-                    ]),
-                    4000,
-                    [[], []]
-                );
+                let ams = [];
+                let ents = [];
 
-                const [ams, ents] = results;
+                // 1. Prioridad: Si EventsController ya tiene cargados entrenos y americanas en memoria en tiempo real
+                if (window.EventsController?.state) {
+                    if (Array.isArray(window.EventsController.state.americanas) && window.EventsController.state.americanas.length > 0) {
+                        ams = [...window.EventsController.state.americanas];
+                    }
+                    if (Array.isArray(window.EventsController.state.entrenos) && window.EventsController.state.entrenos.length > 0) {
+                        ents = [...window.EventsController.state.entrenos];
+                    }
+                }
+
+                // 2. Si alguna colección falta o está vacía, consultar a través de servicio o direct firestore
+                if (!ams.length || !ents.length) {
+                    try {
+                        const firestore = window.db || (window.firebase && typeof window.firebase.firestore === 'function' ? window.firebase.firestore() : null);
+                        if (firestore) {
+                            const [amSnap, entSnap] = await Promise.all([
+                                (!ams.length) ? firestore.collection('americanas').get() : Promise.resolve({ docs: [] }),
+                                (!ents.length) ? firestore.collection('entrenos').get() : Promise.resolve({ docs: [] })
+                            ]);
+                            if (!ams.length && amSnap?.docs) {
+                                ams = amSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                            }
+                            if (!ents.length && entSnap?.docs) {
+                                ents = entSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                            }
+                        }
+                    } catch (dbErr) {
+                        console.warn("⚠️ [AmericanaService] Fallo consulta directa Firestore:", dbErr);
+                    }
+                }
+
+                // 3. Fallback a CollectionService si todavía faltan datos
+                if (!ams.length || !ents.length) {
+                    const fetchAms = !ams.length ? (this._getCollectionService('americana')?.getAll({ forceRefresh: true }) || []) : Promise.resolve(ams);
+                    const fetchEnts = !ents.length ? (this._getCollectionService('entreno')?.getAll({ forceRefresh: true }) || []) : Promise.resolve(ents);
+
+                    const results = await this._withTimeout(
+                        Promise.all([fetchAms, fetchEnts]),
+                        4000,
+                        [ams, ents]
+                    );
+                    ams = results[0] || ams;
+                    ents = results[1] || ents;
+                }
 
                 const all = [
                     ...ams.map(e => {
@@ -165,7 +202,15 @@
                     ...ents.map(e => ({ ...e, type: 'entreno' }))
                 ];
 
-                const isFinished = (e) => window.EventService ? window.EventService.isEventFinished(e) : (e.status === 'finished');
+                const isFinished = (e) => {
+                    if (!e) return true;
+                    const st = (e.status || '').toLowerCase().trim();
+                    if (['finished', 'finalizado', 'completed', 'cancelled'].includes(st)) return true;
+                    if (window.EventService && typeof window.EventService.isEventFinished === 'function') {
+                        return window.EventService.isEventFinished(e);
+                    }
+                    return false;
+                };
 
                 return all
                     .filter(e => !isFinished(e))

@@ -334,7 +334,41 @@ window.NotificationServiceClass = class NotificationService {
     }
 
     /**
-     * Solicita permiso para Push Notifications
+     * Obtiene o genera un identificador único persistente para este navegador/dispositivo
+     */
+    getDeviceId() {
+        let deviceId = null;
+        try {
+            deviceId = localStorage.getItem('sp_device_id');
+        } catch (e) {}
+
+        if (!deviceId) {
+            deviceId = 'dev_' + (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : (Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 9)));
+            try {
+                localStorage.setItem('sp_device_id', deviceId);
+            } catch (e) {
+                console.warn("⚠️ [NotificationService] No se pudo guardar sp_device_id en localStorage:", e);
+            }
+        }
+        return deviceId;
+    }
+
+    /**
+     * Detecta la plataforma del dispositivo actual ('ios', 'android', 'desktop')
+     */
+    getDevicePlatform() {
+        const ua = navigator.userAgent || '';
+        if (/iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+            return 'ios';
+        }
+        if (/android/i.test(ua)) {
+            return 'android';
+        }
+        return 'desktop';
+    }
+
+    /**
+     * Solicita permiso para Push Notifications asociando el Service Worker activo
      */
     async requestPushPermission() {
         if (!window.messaging) {
@@ -347,11 +381,13 @@ window.NotificationServiceClass = class NotificationService {
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
         if (isIOS && !isStandalone) {
-            window.PremiumModal.alert({
-                title: "📲 INSTALAR EN IPHONE",
-                message: "Para recibir avisos en tu iPhone, añade esta App a tu pantalla de inicio:<br><br>1. Pulsa el botón <strong>'Compartir'</strong> (cuadrado con flecha)<br>2. Selecciona <strong>'Añadir a pantalla de inicio'</strong>",
-                type: 'info'
-            });
+            if (window.PremiumModal) {
+                window.PremiumModal.alert({
+                    title: "📲 INSTALAR EN IPHONE",
+                    message: "Para recibir avisos en tu iPhone, añade esta App a tu pantalla de inicio:<br><br>1. Pulsa el botón <strong>'Compartir'</strong> (cuadrado con flecha)<br>2. Selecciona <strong>'Añadir a pantalla de inicio'</strong>",
+                    type: 'info'
+                });
+            }
             return false;
         }
 
@@ -366,16 +402,30 @@ window.NotificationServiceClass = class NotificationService {
             const permission = await Notification.requestPermission();
 
             if (permission === 'granted') {
-                console.log("✅ Permiso concedido. Obteniendo Token FCM...");
+                console.log("✅ Permiso concedido. Obteniendo Token FCM con Service Worker listo...");
 
-                // VAPID KEY REAL para el proyecto americanas-somospadel
+                // VAPID KEY para el proyecto americanas-somospadel
                 const VAPID_KEY = "BD-Ue7u-m6m999_placeholder_pon_tu_clave_aqui";
-                // Nota: El usuario debería reemplazar este placeholder con su clave pública FCM Cloud Messaging
 
                 try {
-                    const currentToken = await window.messaging.getToken({
-                        vapidKey: VAPID_KEY.includes('placeholder') ? undefined : VAPID_KEY
-                    });
+                    let swRegistration = undefined;
+                    if ('serviceWorker' in navigator) {
+                        try {
+                            swRegistration = await navigator.serviceWorker.ready;
+                        } catch (swErr) {
+                            console.warn("⚠️ [NotificationService] Error esperando serviceWorker.ready:", swErr);
+                        }
+                    }
+
+                    const tokenOptions = {};
+                    if (VAPID_KEY && !VAPID_KEY.includes('placeholder')) {
+                        tokenOptions.vapidKey = VAPID_KEY;
+                    }
+                    if (swRegistration) {
+                        tokenOptions.serviceWorkerRegistration = swRegistration;
+                    }
+
+                    const currentToken = await window.messaging.getToken(tokenOptions);
 
                     if (currentToken) {
                         this.token = currentToken;
@@ -390,11 +440,13 @@ window.NotificationServiceClass = class NotificationService {
                 }
             } else {
                 console.log("🚫 Permiso denegado por el usuario.");
-                window.PremiumModal.alert({
-                    title: "AVISO BLOCK",
-                    message: "Has denegado las notificaciones. No podrás recibir avisos de nuevos partidos en tiempo real.",
-                    type: 'warning'
-                });
+                if (window.PremiumModal) {
+                    window.PremiumModal.alert({
+                        title: "AVISO BLOCK",
+                        message: "Has denegado las notificaciones. No podrás recibir avisos de nuevos partidos en tiempo real.",
+                        type: 'warning'
+                    });
+                }
             }
         } catch (e) {
             console.error("🚨 Error en el flujo de permisos:", e);
@@ -403,22 +455,86 @@ window.NotificationServiceClass = class NotificationService {
     }
 
     async checkPermissionStatus() {
-        if (!('Notification' in window)) return;
+        if (!('Notification' in window) || !window.messaging) return;
 
-        if (Notification.permission === 'granted' && window.messaging) {
-            const token = await window.messaging.getToken();
-            if (token) this.saveTokenToProfile(token);
+        if (Notification.permission === 'granted') {
+            try {
+                let swRegistration = undefined;
+                if ('serviceWorker' in navigator) {
+                    try {
+                        swRegistration = await navigator.serviceWorker.ready;
+                    } catch (swErr) {
+                        // Fallback silencioso
+                    }
+                }
+
+                const VAPID_KEY = "BD-Ue7u-m6m999_placeholder_pon_tu_clave_aqui";
+                const tokenOptions = {};
+                if (VAPID_KEY && !VAPID_KEY.includes('placeholder')) {
+                    tokenOptions.vapidKey = VAPID_KEY;
+                }
+                if (swRegistration) {
+                    tokenOptions.serviceWorkerRegistration = swRegistration;
+                }
+
+                const token = await window.messaging.getToken(tokenOptions);
+                if (token) {
+                    this.token = token;
+                    await this.saveTokenToProfile(token);
+                }
+            } catch (e) {
+                console.warn("⚠️ [NotificationService] Error al sincronizar token existente al inicio:", e);
+            }
         }
     }
 
-    async saveTokenToProfile(token) {
-        const user = window.auth.currentUser;
-        if (!user) return;
+    /**
+     * Sincroniza el token del dispositivo (alias explícito)
+     */
+    async syncDeviceToken(token) {
+        return this.saveTokenToProfile(token);
+    }
 
-        await window.db.collection('players').doc(user.uid).set({
-            fcm_token: token,
-            last_token_update: new Date().toISOString()
-        }, { merge: true });
+    /**
+     * Registra o actualiza el dispositivo en la subcolección players/{userId}/devices/{deviceId}
+     * y mantiene fcm_token en el perfil del jugador para compatibilidad.
+     */
+    async saveTokenToProfile(token) {
+        if (!token) return;
+
+        const uid = this.currentUserUid || (window.auth && window.auth.currentUser?.uid) || (window.Store ? window.Store.getState('currentUser')?.uid : null);
+        if (!uid || !window.db) {
+            console.warn("⚠️ [NotificationService] No se puede guardar token: Usuario no autenticado o Firestore no inicializado.");
+            return;
+        }
+
+        const deviceId = this.getDeviceId();
+        const platform = this.getDevicePlatform();
+        const nowIso = new Date().toISOString();
+
+        try {
+            // 1. Registrar en subcolección multi-dispositivo players/{userId}/devices/{deviceId}
+            await window.db.collection('players').doc(uid)
+                .collection('devices').doc(deviceId).set({
+                    token: token,
+                    deviceId: deviceId,
+                    platform: platform,
+                    userAgent: navigator.userAgent || '',
+                    updated_at: firebase.firestore.FieldValue.serverTimestamp(),
+                    last_active: nowIso
+                }, { merge: true });
+
+            // 2. Actualizar campo de compatibilidad en documento raíz de jugador
+            await window.db.collection('players').doc(uid).set({
+                fcm_token: token,
+                last_token_update: nowIso,
+                last_platform: platform
+            }, { merge: true });
+
+            console.log(`📱 [NotificationService] Dispositivo registrado con éxito [${platform} / ${deviceId}]`);
+        } catch (err) {
+            console.error("❌ [NotificationService] Error registrando dispositivo en Firestore:", err);
+        }
     }
 
     /**

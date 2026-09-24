@@ -1396,10 +1396,6 @@
                         </div>
                     </div>
 
-                    <!-- 📡 ESPN FACEOFF COMPARATOR -->
-                    <div id="player-faceoff-widget-root" style="margin: 0 15px 12px !important; animation: floatUp 0.8s ease-out forwards;"></div>
-                    <!-- 🎾 WAR ROOM 3D TACTICAL BOARD PREVIEW -->
-                    <div id="tactical-3d-widget-root" style="animation: floatUp 0.8s ease-out forwards;"></div>
 
                     <!-- (Old Partner Synergy root removed to favor the new Predictive AI Engine) -->
 
@@ -1514,35 +1510,6 @@
                 console.error("Error rendering StoryFeedWidget:", e);
             }
 
-            // 🎾 WAR ROOM 3D TACTICAL WIDGET
-            try {
-                const tacticalRoot = document.getElementById('tactical-3d-widget-root');
-                if (tacticalRoot && window.Tactical3DWidget) {
-                    tacticalRoot.innerHTML = window.Tactical3DWidget.renderHTML();
-                    
-                    const startWidget = () => {
-                        setTimeout(() => {
-                            if (document.getElementById('three-tactical-canvas') && window.Tactical3DWidget) {
-                                window.Tactical3DWidget.init('three-tactical-canvas');
-                            }
-                        }, 50);
-                    };
-
-                    if (!window.THREE) {
-                        console.log("🌐 [DashboardView] Three.js no está en window, cargando dinámicamente...");
-                        window.loadExternalScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', 'THREE')
-                            .then(() => {
-                                console.log("✅ [DashboardView] Three.js cargado dinámicamente con éxito para el widget táctico.");
-                                startWidget();
-                            })
-                            .catch(err => console.error("❌ [DashboardView] Error al cargar Three.js para Tactical3DWidget:", err));
-                    } else {
-                        startWidget();
-                    }
-                }
-            } catch (e) {
-                console.error("Error rendering Tactical3DWidget:", e);
-            }
         } catch (renderError) {
             console.error("❌ [DashboardView] Fatal render error:", renderError);
         } finally {
@@ -2649,6 +2616,7 @@
         }
 
         openTacticalWarRoom() {
+            return;
             try {
                 // Si ya existe el modal, lo eliminamos primero
                 const existingModal = document.getElementById('tactical-war-room-modal');
@@ -3523,6 +3491,56 @@
                 combined.includes('pozo') || combined.includes('clase') ||
                 combined.includes('tecnica') || combined.includes('técnica')
             ) {
+                const isFem = combined.includes('femenin') || combined.includes('chicas') || cat === 'female' || gender === 'f';
+                const isMix = combined.includes('mixt') || cat === 'mixed' || gender === 'mxt';
+                const isMasc = combined.includes('masculin') || combined.includes('chicos') || cat === 'male' || gender === 'm';
+
+                if (isFem) {
+                    return {
+                        categoryName: 'entreno',
+                        badgeText: '🌸 ENTRENO FEM',
+                        badgeBg: '#d946ef',
+                        badgeTextColor: '#ffffff',
+                        badgeShadow: 'box-shadow: 0 0 14px rgba(217, 70, 239, 0.5);',
+                        iconHtml: '<i class="fas fa-crown" style="color: #d946ef;"></i>',
+                        cardBg: 'linear-gradient(145deg, #190a24 0%, #2a0e3a 100%)',
+                        cardBorder: '1px solid rgba(217, 70, 239, 0.3)',
+                        ctaColor: '#f472b6',
+                        targetRoute: 'entrenos',
+                        accentColor: '#d946ef'
+                    };
+                }
+                if (isMix) {
+                    return {
+                        categoryName: 'entreno',
+                        badgeText: '⚡ ENTRENO MIXTO',
+                        badgeBg: '#f97316',
+                        badgeTextColor: '#ffffff',
+                        badgeShadow: 'box-shadow: 0 0 14px rgba(249, 115, 22, 0.5);',
+                        iconHtml: '<i class="fas fa-bolt" style="color: #f97316;"></i>',
+                        cardBg: 'linear-gradient(145deg, #1f1205 0%, #331e08 100%)',
+                        cardBorder: '1px solid rgba(249, 115, 22, 0.3)',
+                        ctaColor: '#fb923c',
+                        targetRoute: 'entrenos',
+                        accentColor: '#f97316'
+                    };
+                }
+                if (isMasc) {
+                    return {
+                        categoryName: 'entreno',
+                        badgeText: '🎾 ENTRENO MASC',
+                        badgeBg: '#0284c7',
+                        badgeTextColor: '#ffffff',
+                        badgeShadow: 'box-shadow: 0 0 14px rgba(2, 132, 199, 0.5);',
+                        iconHtml: '<i class="fas fa-trophy" style="color: #38bdf8;"></i>',
+                        cardBg: 'linear-gradient(145deg, #071629 0%, #0e2746 100%)',
+                        cardBorder: '1px solid rgba(56, 189, 248, 0.3)',
+                        ctaColor: '#38bdf8',
+                        targetRoute: 'entrenos',
+                        accentColor: '#38bdf8'
+                    };
+                }
+
                 return {
                     categoryName: 'entreno',
                     badgeText: '🎾 ENTRENO',
@@ -3696,10 +3714,38 @@
                 const weatherIcon = (w && w.icon) ? w.icon : '☀️';
                 const weatherCity = (w && w.name) ? w.name : 'EL PRAT';
 
-                // Open active events sorted by date
+                const isFinishedEvt = (e) => {
+                    if (!e) return true;
+                    const st = (e.status || '').toLowerCase().trim();
+                    if (['finished', 'finalizado', 'completed', 'cancelled'].includes(st)) return true;
+                    if (window.EventService && typeof window.EventService.isEventFinished === 'function') {
+                        return window.EventService.isEventFinished(e);
+                    }
+                    return false;
+                };
+
+                const normalizeDate = (d) => {
+                    if (!d) return '9999-99-99';
+                    if (d.includes('/')) {
+                        const parts = d.split('/').map(p => p.trim());
+                        if (parts.length >= 2) {
+                            const day = parts[0].padStart(2, '0');
+                            const month = parts[1].padStart(2, '0');
+                            const year = parts[2] ? (parts[2].length === 2 ? '20' + parts[2] : parts[2]) : String(new Date().getFullYear());
+                            return `${year}-${month}-${day}`;
+                        }
+                    }
+                    return d;
+                };
+
+                // Open active events sorted by date (todos los eventos activos sin filtros restrictivos)
                 const openEvents = allEvents
-                    .filter(a => ['open', 'upcoming', 'scheduled'].includes(a.status))
-                    .sort((a, b) => new Date(a.date) - new Date(b.date));
+                    .filter(a => !isFinishedEvt(a))
+                    .sort((a, b) => {
+                        const dateA = normalizeDate(a.date);
+                        const dateB = normalizeDate(b.date);
+                        return new Date(dateA + 'T' + (a.time || '00:00')) - new Date(dateB + 'T' + (b.time || '00:00'));
+                    });
 
                 let stripHtml = '';
 
@@ -3763,12 +3809,12 @@
                     </div>
                     `;
                 } else if (openEvents.length > 0) {
-                    // CASE 2: EVENTOS DISPONIBLES (SMART COMPACT EVENT STRIP - OPTON A: CYBER NEON / PADEL PRO SPORT)
+                    // CASE 2: RESUMEN DE EVENTOS ACTIVOS (TODOS VISIBLES DIRECTAMENTE)
                     const displayEvents = openEvents.slice(0, 6);
 
-                    const slidesHtml = displayEvents.map((evt, idx) => {
+                    const cardsHtml = displayEvents.map((evt, idx) => {
                         const theme = this.getEventCategoryTheme(evt);
-                        const eventNameText = (evt.name || evt.title || (theme.categoryName === 'entreno' ? 'Entreno Mixto' : 'Americana Oficial')).trim();
+                        const eventNameText = (evt.name || evt.title || (theme.categoryName === 'entreno' ? 'Entreno Pistas' : 'Americana Oficial')).trim();
                         const dateText = this.formatDateShort ? this.formatDateShort(evt.date) : 'Hoy';
                         const timeStr = evt.time || '19:30';
                         const timeDisplay = `${dateText === 'HOY' ? 'Hoy' : dateText} ${timeStr}`;
@@ -3788,7 +3834,7 @@
 
                         return `
                         <div onclick="window.dashNavigate('${theme.targetRoute}', 'strip_card')" 
-                             style="min-width: 100%; max-width: 100%; flex-shrink: 0; scroll-snap-align: start; box-sizing: border-box; margin-right: 8px; background: rgba(13, 20, 36, 0.88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.1); border-left: 3.5px solid ${theme.accentColor}; border-radius: 14px; padding: 7px 12px; min-height: 56px; max-height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 8px; position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
+                             style="width: 100%; box-sizing: border-box; background: rgba(13, 20, 36, 0.88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.1); border-left: 3.5px solid ${theme.accentColor}; border-radius: 14px; padding: 7px 12px; min-height: 56px; max-height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 8px; position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
                              onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
                             
                             <!-- Ambient Cyber Halo Glow -->
@@ -3820,12 +3866,9 @@
                                 </div>
                             </div>
 
-                            <!-- Right: Micro-clima, Paginator & Neon CTA Button -->
+                            <!-- Right: Micro-clima & Neon CTA Button -->
                             <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 3px; flex-shrink: 0; z-index: 2;">
-                                <div style="display: inline-flex; align-items: center; gap: 3px;">
-                                    ${displayEvents.length > 1 ? `<span style="font-size: 0.48rem; color: #cbd5e1; font-weight: 850; background: rgba(0,0,0,0.5); padding: 1px 4px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.12);">${idx + 1}/${displayEvents.length}</span>` : ''}
-                                    ${weatherPillHtml}
-                                </div>
+                                ${weatherPillHtml}
                                 <button onclick="event.stopPropagation(); window.dashNavigate('${theme.targetRoute}', 'strip_cta')" 
                                         style="background: linear-gradient(135deg, ${theme.accentColor} 0%, ${theme.ctaColor} 100%); color: ${ctaTextColor}; font-size: 0.58rem; font-weight: 950; padding: 3.5px 9px; border-radius: 7px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; letter-spacing: 0.3px; box-shadow: 0 2px 10px ${theme.accentColor}44; white-space: nowrap; transition: transform 0.15s ease;"
                                         onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
@@ -3836,12 +3879,26 @@
                         `;
                     }).join('');
 
+                    const headerHtml = displayEvents.length > 1 ? `
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; padding: 0 2px;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 0.62rem; font-weight: 950; color: #000000; letter-spacing: 0.5px; text-transform: uppercase;">
+                                🎾 ENTRENOS Y AMERICANAS ACTIVOS
+                            </span>
+                            <span style="background: rgba(0, 0, 0, 0.15); color: #000000; border: 1px solid rgba(0, 0, 0, 0.3); font-size: 0.52rem; font-weight: 950; padding: 1px 6px; border-radius: 10px;">
+                                ${displayEvents.length}
+                            </span>
+                        </div>
+                        <div onclick="window.dashNavigate('entrenos', 'strip_view_all')" style="font-size: 0.58rem; color: #38bdf8; font-weight: 850; cursor: pointer; display: flex; align-items: center; gap: 3px;">
+                            <span>Ver todos</span> <i class="fas fa-chevron-right" style="font-size: 0.5rem;"></i>
+                        </div>
+                    </div>
+                    ` : '';
+
                     stripHtml = `
-                    <style>
-                        .compact-strip-track::-webkit-scrollbar { display: none !important; }
-                    </style>
-                    <div class="compact-strip-track" style="display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; width: 100%; gap: 0;">
-                        ${slidesHtml}
+                    <div style="display: flex; flex-direction: column; width: 100%; gap: 8px;">
+                        ${headerHtml}
+                        ${cardsHtml}
                     </div>
                     `;
                 } else {
@@ -4431,8 +4488,7 @@
                     // 4. Load Trending Players (MVP + Elite list)
                     this.renderTrendingPlayers();
 
-                    // 5. Load ESPN Player Faceoff (1vs1 comparison simulator)
-                    this.renderPlayerFaceoff();
+
                 } catch (e) {
                     console.error('❌ [DashboardView] Error in core widget loading:', e);
                 }

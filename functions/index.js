@@ -307,46 +307,510 @@ exports.secureRecalcLevel = functions.https.onCall(async (data, context) => {
 });
 
 // ==========================================
-// 3. NOTIFICACIONES PUSH SERVER-SIDE
+// 3. NOTIFICACIONES PUSH SERVER-SIDE (MULTI-DISPOSITIVO)
 // ==========================================
+
+const sendPushNotificationHandler = async (snapshot, context) => {
+    const { userId } = context.params;
+    const notification = snapshot.data();
+
+    if (!notification) {
+        return null;
+    }
+
+    // Omitir si la notificación fue generada internamente por un evento de Topic ya notificado
+    if (notification.skipPush) {
+        console.log(`✉️ [Push] Notificación interna con skipPush=true para ${userId}, omitiendo push.`);
+        return null;
+    }
+
+    // 1. Obtener todos los dispositivos registrados en la subcolección 'devices'
+    const devicesSnap = await db.collection('players').doc(userId).collection('devices').get();
+    
+    // 2. Obtener documento del usuario para posible fallback legacy
+    const userDoc = await db.collection('players').doc(userId).get();
+    const userData = userDoc.exists ? userDoc.data() : null;
+
+    const devices = [];
+    devicesSnap.forEach(doc => {
+        const d = doc.data();
+        if (d && d.token && typeof d.token === 'string' && d.token.trim()) {
+            devices.push({ id: doc.id, token: d.token.trim(), isLegacy: false });
+        }
+    });
+
+    // Fallback: Si no tiene subcolección pero sí fcm_token raíz legacy
+    if (devices.length === 0 && userData && userData.fcm_token && typeof userData.fcm_token === 'string') {
+        devices.push({ id: 'legacy_device', token: userData.fcm_token.trim(), isLegacy: true });
+    }
+
+    // Deduplicar tokens
+    const uniqueDevices = [];
+    const seenTokens = new Set();
+    for (const dev of devices) {
+        if (!seenTokens.has(dev.token)) {
+            seenTokens.add(dev.token);
+            uniqueDevices.push(dev);
+        }
+    }
+
+    if (uniqueDevices.length === 0) {
+        console.log(`✉️ [Push] No hay tokens FCM válidos para usuario ${userId}, omitiendo push.`);
+        return null;
+    }
+
+    const title = notification.title || 'SomosPadel BCN 🎾';
+    const body = notification.body || 'Tienes una nueva notificación en SomosPadel';
+    const notifData = notification.data || {};
+    const targetUrl = notifData.url || notifData.link || 'dashboard';
+
+    // Generar enlace webpush completo
+    let fullLink = 'https://americanas-somospadel.firebaseapp.com/';
+    if (targetUrl) {
+        if (targetUrl.startsWith('http://') || targetUrl.startsWith('https://')) {
+            fullLink = targetUrl;
+        } else if (targetUrl.startsWith('/')) {
+            fullLink = `https://americanas-somospadel.firebaseapp.com${targetUrl}`;
+        } else {
+            fullLink = `https://americanas-somospadel.firebaseapp.com/#${targetUrl}`;
+        }
+    }
+
+    // Normalizar datos: en FCM data payload, todos los valores deben ser Strings
+    const dataPayload = {
+        url: String(targetUrl),
+        notificationId: String(snapshot.id || ''),
+        title: String(title),
+        body: String(body)
+    };
+
+    for (const [key, val] of Object.entries(notifData)) {
+        if (val !== undefined && val !== null) {
+            dataPayload[key] = typeof val === 'object' ? JSON.stringify(val) : String(val);
+        }
+    }
+
+    // Payload optimizado con soporte webpush completo (icono, badge, fcmOptions.link)
+    const multicastMessage = {
+        tokens: uniqueDevices.map(d => d.token),
+        notification: {
+            title: title,
+            body: body
+        },
+        data: dataPayload,
+        webpush: {
+            notification: {
+                title: title,
+                body: body,
+                icon: '/img/logo_somospadel.png',
+                badge: '/img/logo_somospadel.png',
+                tag: notification.tag || snapshot.id,
+                renotify: true
+            },
+            fcmOptions: {
+                link: fullLink
+            }
+        }
+    };
+
+    try {
+        const response = await admin.messaging().sendEachForMulticast(multicastMessage);
+        console.log(`🚀 [Push] Enviado a ${userId}: ${response.successCount} éxitos, ${response.failureCount} fallos de ${uniqueDevices.length} dispositivo(s).`);
+
+        // Identificar tokens inválidos o expirados para eliminarlos
+        const tokensToDelete = [];
+        response.responses.forEach((res, index) => {
+            if (!res.success && res.error) {
+                const errorCode = res.error.code;
+                console.warn(`⚠️ [Push] Error en dispositivo ${uniqueDevices[index].id} (${errorCode}):`, res.error.message);
+                if (
+                    errorCode === 'messaging/invalid-registration-token' ||
+                    errorCode === 'messaging/registration-token-not-registered' ||
+                    errorCode === 'messaging/mismatched-credential'
+                ) {
+                    tokensToDelete.push(uniqueDevices[index]);
+                }
+            }
+        });
+
+        // Limpiar tokens obsoletos en Firestore
+        if (tokensToDelete.length > 0) {
+            console.log(`🧹 [Push] Eliminando ${tokensToDelete.length} token(s) expirados para usuario ${userId}...`);
+            const batch = db.batch();
+            tokensToDelete.forEach(dev => {
+                if (!dev.isLegacy) {
+                    const devRef = db.collection('players').doc(userId).collection('devices').doc(dev.id);
+                    batch.delete(devRef);
+                }
+                if (userData && userData.fcm_token === dev.token) {
+                    const userRef = db.collection('players').doc(userId);
+                    batch.update(userRef, { fcm_token: admin.firestore.FieldValue.delete() });
+                }
+            });
+            await batch.commit();
+            console.log(`✅ [Push] Limpieza de dispositivos obsoletos completada.`);
+        }
+
+        return {
+            successCount: response.successCount,
+            failureCount: response.failureCount
+        };
+    } catch (error) {
+        console.error(`❌ [Push] Error general al enviar multicast a ${userId}:`, error);
+        return null;
+    }
+};
 
 exports.sendPushNotification = functions.firestore
     .document('players/{userId}/notifications/{notificationId}')
-    .onCreate(async (snapshot, context) => {
-        const { userId } = context.params;
-        const notification = snapshot.data();
+    .onCreate(sendPushNotificationHandler);
 
-        const userDoc = await db.collection('players').doc(userId).get();
-        const userData = userDoc.data();
-        const fcmToken = userData ? userData.fcm_token : null;
+exports.dispatchPushNotification = exports.sendPushNotification;
 
-        if (!fcmToken) {
-            console.log(`✉️ No FCM token found for user ${userId}, skipping push.`);
-            return null;
+// ==========================================
+// 4. HELPERS PARA NOTIFICACIONES MULTICAST Y TOPICS
+// ==========================================
+
+/**
+ * Genera el enlace webpush completo compatible con PWA y navegador
+ */
+function buildFullLink(targetUrl) {
+    const baseUrl = 'https://americanas-somospadel.firebaseapp.com/';
+    if (!targetUrl) return baseUrl;
+    if (targetUrl.startsWith('http://') || targetUrl.startsWith('https://')) {
+        return targetUrl;
+    }
+    if (targetUrl.startsWith('/')) {
+        return `https://americanas-somospadel.firebaseapp.com${targetUrl}`;
+    }
+    return `https://americanas-somospadel.firebaseapp.com/#${targetUrl}`;
+}
+
+/**
+ * Envía una notificación push vía FCM Topic
+ */
+async function sendTopicNotification(topic, title, body, targetUrl, customData = {}, tag = '') {
+    const fullLink = buildFullLink(targetUrl);
+    const dataPayload = {
+        url: String(targetUrl || 'dashboard'),
+        title: String(title),
+        body: String(body),
+        topic: String(topic)
+    };
+
+    for (const [key, val] of Object.entries(customData)) {
+        if (val !== undefined && val !== null) {
+            dataPayload[key] = typeof val === 'object' ? JSON.stringify(val) : String(val);
+        }
+    }
+
+    const message = {
+        topic: topic,
+        notification: {
+            title: title,
+            body: body
+        },
+        data: dataPayload,
+        webpush: {
+            notification: {
+                title: title,
+                body: body,
+                icon: '/img/logo_somospadel.png',
+                badge: '/img/logo_somospadel.png',
+                tag: tag || `topic_${topic}_${Date.now()}`,
+                renotify: true
+            },
+            fcmOptions: {
+                link: fullLink
+            }
+        }
+    };
+
+    try {
+        const response = await admin.messaging().send(message);
+        console.log(`🚀 [FCM Topic] Push enviada con éxito a topic '${topic}':`, response);
+        return { success: true, messageId: response };
+    } catch (err) {
+        console.error(`❌ [FCM Topic] Error enviando mensaje a topic '${topic}':`, err);
+        return { success: false, error: err.message };
+    }
+}
+
+/**
+ * Guarda una notificación interna en el cajón ('notifications') de todos los jugadores activos.
+ * Utiliza batches atómicos respetando el límite de 500 operaciones de Firestore.
+ */
+async function saveInAppNotificationForActivePlayers(notifPayload) {
+    try {
+        const playersSnap = await db.collection('players').get();
+        const activePlayers = playersSnap.docs.filter(doc => {
+            const data = doc.data();
+            return data && data.status !== 'inactive' && data.status !== 'blocked';
+        });
+
+        if (activePlayers.length === 0) {
+            console.log('ℹ️ [InAppNotif] No se encontraron jugadores activos para notificar.');
+            return 0;
         }
 
-        const message = {
-            notification: {
-                title: notification.title || 'Somospadel BCN',
-                body: notification.body || 'Tienes una nueva notificación'
-            },
-            data: {
-                ...notification.data,
-                click_action: 'FLUTTER_NOTIFICATION_CLICK',
-                url: notification.data ? notification.data.url : 'dashboard'
-            },
-            token: fcmToken
-        };
+        const BATCH_SIZE = 400;
+        let count = 0;
+        for (let i = 0; i < activePlayers.length; i += BATCH_SIZE) {
+            const chunk = activePlayers.slice(i, i + BATCH_SIZE);
+            const batch = db.batch();
+            for (const playerDoc of chunk) {
+                const notifRef = db.collection('players').doc(playerDoc.id).collection('notifications').doc();
+                batch.set(notifRef, {
+                    ...notifPayload,
+                    read: false,
+                    skipPush: true, // Se omite el push individual porque ya fue emitido por FCM Topic
+                    timestamp: admin.firestore.FieldValue.serverTimestamp()
+                });
+                count++;
+            }
+            await batch.commit();
+        }
+        console.log(`✅ [InAppNotif] Notificación guardada en el cajón de ${count} jugadores activos.`);
+        return count;
+    } catch (err) {
+        console.error('❌ [InAppNotif] Error guardando notificaciones masivas en Firestore:', err);
+        return 0;
+    }
+}
 
-        try {
-            const response = await admin.messaging().send(message);
-            console.log(`🚀 Push sent successfully to ${userId}:`, response);
-            return response;
-        } catch (error) {
-            console.error(`❌ Error sending push to ${userId}:`, error);
-            if (error.code === 'messaging/registration-token-not-registered') {
-                await db.collection('players').doc(userId).update({ fcm_token: admin.firestore.FieldValue.delete() });
+// ==========================================
+// 5. GESTIÓN AUTOMÁTICA DE TOPICS FCM POR DISPOSITIVO
+// ==========================================
+
+/**
+ * Trigger: onDeviceRegistered
+ * Cada vez que se registra o actualiza un token en un dispositivo (players/{userId}/devices/{deviceId}),
+ * suscribe automáticamente dicho token a los Topics oficiales: 'all_players', 'americanas', 'entrenos', 'news'.
+ */
+exports.onDeviceRegistered = functions.firestore
+    .document('players/{userId}/devices/{deviceId}')
+    .onWrite(async (change, context) => {
+        const { userId, deviceId } = context.params;
+        const topics = ['all_players', 'americanas', 'entrenos', 'news'];
+
+        // Si el dispositivo fue eliminado
+        if (!change.after.exists) {
+            const beforeData = change.before.data();
+            const oldToken = beforeData && beforeData.token ? String(beforeData.token).trim() : null;
+            if (oldToken) {
+                console.log(`🔌 [FCM Device] Desuscribiendo token de topics al borrar dispositivo (${userId}/${deviceId})`);
+                await Promise.allSettled(topics.map(t => admin.messaging().unsubscribeFromTopic([oldToken], t)));
             }
             return null;
         }
+
+        const data = change.after.data();
+        const token = data && data.token ? String(data.token).trim() : null;
+
+        if (!token) {
+            console.log(`ℹ️ [FCM Device] Dispositivo ${userId}/${deviceId} sin token FCM válido.`);
+            return null;
+        }
+
+        // Si cambió el token respecto al anterior, desuscribir el token previo
+        if (change.before.exists) {
+            const beforeToken = change.before.data()?.token ? String(change.before.data().token).trim() : null;
+            if (beforeToken && beforeToken !== token) {
+                console.log(`🔄 [FCM Device] Token actualizado. Desuscribiendo token previo (${userId}/${deviceId})...`);
+                await Promise.allSettled(topics.map(t => admin.messaging().unsubscribeFromTopic([beforeToken], t)));
+            }
+        }
+
+        console.log(`📡 [FCM Device] Suscribiendo dispositivo ${userId}/${deviceId} a topics [${topics.join(', ')}]...`);
+        const subResults = await Promise.allSettled(topics.map(t => admin.messaging().subscribeToTopic([token], t)));
+        subResults.forEach((res, idx) => {
+            if (res.status === 'fulfilled') {
+                console.log(`✅ [FCM Device] Suscrito a topic '${topics[idx]}' (${userId}/${deviceId})`);
+            } else {
+                console.warn(`⚠️ [FCM Device] Error al suscribir a topic '${topics[idx]}':`, res.reason);
+            }
+        });
+
+        return { success: true };
     });
+
+// ==========================================
+// 6. TRIGGERS AUTOMÁTICOS DE EVENTOS DEL CLUB
+// ==========================================
+
+/**
+ * Trigger: onNewAmericanaPublished
+ * Al crearse una americana, enviar automáticamente notificación push a todos los jugadores
+ * por Topic 'americanas' y registrarla en el cajón de notificaciones de jugadores activos.
+ */
+exports.onNewAmericanaPublished = functions.firestore
+    .document('americanas/{id}')
+    .onCreate(async (snapshot, context) => {
+        const { id } = context.params;
+        const data = snapshot.data() || {};
+
+        const title = '🎾 ¡NUEVA AMERICANA PUBLICADA!';
+        const body = `${data.name || 'Torneo de Pádel'}: Inscripciones abiertas. ¡Reserva tu plaza!`;
+        const targetUrl = 'americanas';
+
+        console.log(`🎾 [onNewAmericanaPublished] Notificando nueva americana ${id} - "${data.name || ''}"`);
+
+        // 1. Enviar push masiva por topic 'americanas'
+        await sendTopicNotification('americanas', title, body, targetUrl, {
+            id: String(id),
+            americanaId: String(id),
+            type: 'new_americana'
+        }, `americana_${id}`);
+
+        // 2. Guardar en subcolección 'notifications' de cada jugador activo (in-app drawer con badge)
+        await saveInAppNotificationForActivePlayers({
+            title: title,
+            body: body,
+            icon: 'trophy',
+            data: {
+                url: targetUrl,
+                id: id,
+                americanaId: id,
+                type: 'new_americana'
+            }
+        });
+
+        return { success: true, id };
+    });
+
+/**
+ * Trigger: onNewEntrenoPublished
+ * Al crearse un entreno, enviar push a todos los jugadores por Topic 'entrenos'
+ * y registrarla en el cajón de notificaciones de jugadores activos.
+ */
+exports.onNewEntrenoPublished = functions.firestore
+    .document('entrenos/{id}')
+    .onCreate(async (snapshot, context) => {
+        const { id } = context.params;
+        const data = snapshot.data() || {};
+
+        const title = '💪 ¡NUEVO ENTRENO TÁCTICO!';
+        const body = `${data.name || 'Sesión de Entrenamiento'}: Plazas abiertas. ¡Mejora tu juego!`;
+        const targetUrl = 'entrenos';
+
+        console.log(`💪 [onNewEntrenoPublished] Notificando nuevo entreno ${id} - "${data.name || ''}"`);
+
+        // 1. Enviar push masiva por topic 'entrenos'
+        await sendTopicNotification('entrenos', title, body, targetUrl, {
+            id: String(id),
+            entrenoId: String(id),
+            type: 'new_entreno'
+        }, `entreno_${id}`);
+
+        // 2. Guardar en subcolección 'notifications' de cada jugador activo
+        await saveInAppNotificationForActivePlayers({
+            title: title,
+            body: body,
+            icon: 'dumbbell',
+            data: {
+                url: targetUrl,
+                id: id,
+                entrenoId: id,
+                type: 'new_entreno'
+            }
+        });
+
+        return { success: true, id };
+    });
+
+/**
+ * Trigger: onBroadcastNoticeCreated
+ * Al crear el administrador un comunicado urgente o noticia ('broadcasts/{id}'),
+ * enviar push a todos los jugadores por Topic y registrar en el cajón interno.
+ */
+exports.onBroadcastNoticeCreated = functions.firestore
+    .document('broadcasts/{id}')
+    .onCreate(async (snapshot, context) => {
+        const { id } = context.params;
+        const data = snapshot.data() || {};
+
+        const title = `📢 ${data.title || 'COMUNICADO SOMOSPADEL'}`;
+        const body = `${data.body || data.message || 'Nuevo aviso importante en la app.'}`;
+        const targetUrl = `${data.url || 'dashboard'}`;
+        const topic = data.topic || 'all_players';
+
+        console.log(`📢 [onBroadcastNoticeCreated] Publicando aviso oficial ${id}: "${title}"`);
+
+        // 1. Enviar push por Topic (por defecto 'all_players' o el configurado)
+        await sendTopicNotification(topic, title, body, targetUrl, {
+            id: String(id),
+            broadcastId: String(id),
+            type: 'broadcast'
+        }, `broadcast_${id}`);
+
+        // 2. Guardar en subcolección 'notifications' de los jugadores activos
+        await saveInAppNotificationForActivePlayers({
+            title: title,
+            body: body,
+            icon: data.icon || 'bullhorn',
+            data: {
+                url: targetUrl,
+                id: id,
+                broadcastId: id,
+                type: 'broadcast'
+            }
+        });
+
+        return { success: true, id };
+    });
+
+// ==========================================
+// 7. HTTPS CALLABLE: EMISIÓN GLOBAL DE COMUNICADOS DEL CLUB (ADMIN)
+// ==========================================
+
+/**
+ * Callable HTTPS: sendClubBroadcast
+ * Permite a organizadores y administradores emitir un aviso global con 1 clic desde el panel de control.
+ */
+exports.sendClubBroadcast = functions.https.onCall(async (data, context) => {
+    // 1. Validar autenticación
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'Acceso denegado: solo usuarios autenticados.');
+    }
+
+    // 2. Validar rol de organizador / administrador
+    const callerDoc = await db.collection('players').doc(context.auth.uid).get();
+    const callerData = callerDoc.exists ? callerDoc.data() : null;
+    const callerRole = callerData ? callerData.role : null;
+    const isAuthorized = ['admin', 'super_admin', 'admin_player', 'organizador', 'captain'].includes(callerRole);
+
+    if (!isAuthorized) {
+        throw new functions.https.HttpsError('permission-denied', 'No tienes permisos de administrador para emitir comunicados del club.');
+    }
+
+    const { title, body, message, url, topic, icon } = data || {};
+    const notifTitle = title ? String(title).trim() : 'COMUNICADO SOMOSPADEL';
+    const notifBody = (body || message) ? String(body || message).trim() : 'Nuevo aviso importante en la app.';
+    const targetUrl = url ? String(url).trim() : 'dashboard';
+    const targetTopic = topic ? String(topic).trim() : 'all_players';
+    const notifIcon = icon ? String(icon).trim() : 'bullhorn';
+
+    // 3. Crear documento en 'broadcasts', lo que dispara automáticamente onBroadcastNoticeCreated
+    const broadcastRef = await db.collection('broadcasts').add({
+        title: notifTitle,
+        body: notifBody,
+        url: targetUrl,
+        topic: targetTopic,
+        icon: notifIcon,
+        author_uid: context.auth.uid,
+        author_name: callerData ? (callerData.name || callerData.nickname || 'Administración') : 'Administración',
+        created_at: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    console.log(`📢 [sendClubBroadcast] Comunicado creado con ID ${broadcastRef.id} por admin ${context.auth.uid}`);
+
+    return {
+        success: true,
+        broadcastId: broadcastRef.id,
+        title: notifTitle,
+        body: notifBody,
+        url: targetUrl,
+        topic: targetTopic
+    };
+});
+

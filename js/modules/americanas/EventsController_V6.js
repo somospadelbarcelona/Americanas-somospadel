@@ -116,6 +116,7 @@
                 filters: {
                     month: 'all',
                     category: 'all',
+                    status: 'all',
                     searchQuery: ''
                 },
                 viewMode: (() => {
@@ -137,6 +138,7 @@
             this._currentInscritosEventId = null;
             this._currentInscritosType = null;
             this._visibilityBound = false;
+            this._forceFullRender = false;
 
             // AUTO-INIT: Start Background Services Immediately
             this.startBackgroundService();
@@ -268,28 +270,74 @@
         }
 
         setFilter(type, value) {
-            if (this.state.filters[type] === value) return;
+            try { window.PlayerView?.haptic?.(15); } catch (e) {}
+            if (!this.state.filters) {
+                this.state.filters = { month: 'all', category: 'all', status: 'all', searchQuery: '' };
+            }
+            if (this.state.filters[type] === value) {
+                // Si el usuario toca el filtro ya activo (que no sea 'all' ni 'searchQuery'), lo deselecciona alternando a 'all'
+                if (type !== 'searchQuery' && value !== 'all') {
+                    this.state.filters[type] = 'all';
+                    this._forceFullRender = true;
+                    this.render();
+                    return;
+                }
+                return;
+            }
             this.state.filters[type] = value;
+            this._forceFullRender = true;
             this.render();
+        }
+
+        resetFilters() {
+            try { window.PlayerView?.haptic?.(20); } catch (e) {}
+            this.state.filters = { month: 'all', category: 'all', status: 'all', searchQuery: '' };
+            this._forceFullRender = true;
+            this.render();
+        }
+
+        hasActiveFilters() {
+            const f = this.state.filters;
+            if (!f) return false;
+            return (f.month && f.month !== 'all') || 
+                   (f.category && f.category !== 'all') || 
+                   (f.status && f.status !== 'all') ||
+                   (f.searchQuery && f.searchQuery.trim() !== '');
         }
 
         getAvailableMonths(events) {
             const months = new Set();
-            events.forEach(e => {
+            (events || []).forEach(e => {
                 if (!e.normDate || e.normDate === '9999-99-99') return;
                 const [y, m] = e.normDate.split('-');
-                months.add(`${y}-${m}`);
+                if (y && m) months.add(`${y}-${m}`);
             });
             return Array.from(months).sort();
         }
 
         renderFilterBar(events) {
-            const months = this.getAvailableMonths(events);
-            const currentMonth = this.state.filters.month;
-            const currentCat = this.state.filters.category;
+            const evList = events || [];
+            const months = this.getAvailableMonths(evList);
+            const currentMonth = this.state.filters.month || 'all';
+            const currentCat = this.state.filters.category || 'all';
+            const currentStatus = this.state.filters.status || 'all';
+            const currentSearch = this.state.filters.searchQuery || '';
             const monthLabels = { '01': 'ENE', '02': 'FEB', '03': 'MAR', '04': 'ABR', '05': 'MAY', '06': 'JUN', '07': 'JUL', '08': 'AGO', '09': 'SEP', '10': 'OCT', '11': 'NOV', '12': 'DIC' };
 
-            const currentSearch = this.state.filters.searchQuery || '';
+            // Dynamic counts
+            const totalCount = evList.length;
+            const maleCount = evList.filter(e => this.getNormalizedCategory(e) === 'male').length;
+            const femaleCount = evList.filter(e => this.getNormalizedCategory(e) === 'female').length;
+            const mixedCount = evList.filter(e => this.getNormalizedCategory(e) === 'mixed').length;
+
+            const liveCount = evList.filter(e => e.status === 'live').length;
+            const availableCount = evList.filter(e => {
+                const players = e.players || e.registeredPlayers || [];
+                const maxCourts = parseInt(e.max_courts || e.courts || 4);
+                return players.length < (maxCourts * 4);
+            }).length;
+
+            const isFiltered = this.hasActiveFilters();
 
             return `
                 <div class="filters-container" style="padding: 10px 12px 18px; display: flex; flex-direction: column; gap: 10px; background: transparent;">
@@ -313,7 +361,7 @@
                         ` : ''}
                     </div>
 
-                    <!-- View Mode Toggle (Completa / Minimizada) -->
+                    <!-- View Mode Toggle & Reset Chips -->
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 2px;">
                         <div style="display: flex; align-items: center; gap: 6px;">
                             <span style="font-size: 0.64rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.6px;">
@@ -335,36 +383,71 @@
                             </div>
                         </div>
 
-                        <!-- Quick Action: Ampliar / Minimizar Todo -->
-                        <button type="button" 
-                                onclick="window.EventsController.toggleAllCardsExpansion(${this.state.viewMode === 'compact'})" 
-                                title="${this.state.viewMode === 'compact' ? 'Ampliar todas las tarjetas' : 'Minimizar todas las tarjetas'}"
-                                style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12); color: #cbd5e1; padding: 5px 10px; border-radius: 9px; font-size: 0.62rem; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.15s;"
-                                onmouseover="this.style.color='#CCFF00'; this.style.borderColor='rgba(204,255,0,0.4)';"
-                                onmouseout="this.style.color='#cbd5e1'; this.style.borderColor='rgba(255,255,255,0.12)';">
-                            <i class="fas ${this.state.viewMode === 'compact' ? 'fa-expand-alt' : 'fa-compress-alt'}"></i>
-                            <span>${this.state.viewMode === 'compact' ? 'Ampliar Todo' : 'Minimizar Todo'}</span>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            ${isFiltered ? `
+                                <button type="button"
+                                        onclick="window.EventsController.resetFilters()"
+                                        title="Quitar todos los filtros"
+                                        style="background: rgba(204, 255, 0, 0.12); border: 1px solid rgba(204, 255, 0, 0.4); color: #CCFF00; padding: 5px 10px; border-radius: 9px; font-size: 0.62rem; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.15s;">
+                                    <i class="fas fa-rotate-left"></i>
+                                    <span>LIMPIAR</span>
+                                </button>
+                            ` : ''}
+
+                            <!-- Quick Action: Ampliar / Minimizar Todo -->
+                            <button type="button" 
+                                    onclick="window.EventsController.toggleAllCardsExpansion(${this.state.viewMode === 'compact'})" 
+                                    title="${this.state.viewMode === 'compact' ? 'Ampliar todas las tarjetas' : 'Minimizar todas las tarjetas'}"
+                                    style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12); color: #cbd5e1; padding: 5px 10px; border-radius: 9px; font-size: 0.62rem; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.15s;"
+                                    onmouseover="this.style.color='#CCFF00'; this.style.borderColor='rgba(204,255,0,0.4)';"
+                                    onmouseout="this.style.color='#cbd5e1'; this.style.borderColor='rgba(255,255,255,0.12)';">
+                                <i class="fas ${this.state.viewMode === 'compact' ? 'fa-expand-alt' : 'fa-compress-alt'}"></i>
+                                <span>${this.state.viewMode === 'compact' ? 'Ampliar' : 'Minimizar'}</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Status Filters (Activos, Plazas, En Directo) -->
+                    <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
+                        <button onclick="window.EventsController.setFilter('status', 'all')" 
+                                style="white-space: nowrap; padding: 6px 14px; border-radius: 12px; font-size: 0.66rem; font-weight: 900; border: 1.5px solid ${currentStatus === 'all' ? '#CCFF00' : 'rgba(255,255,255,0.08)'}; cursor: pointer; transition: all 0.2s; 
+                                ${currentStatus === 'all' ? 'background: #CCFF00; color: #000; box-shadow: 0 0 10px rgba(204,255,0,0.3);' : 'background: rgba(255,255,255,0.04); color: #94a3b8;'}">
+                            <i class="fas fa-layer-group" style="font-size: 0.6rem; margin-right: 4px;"></i>TODOS (${totalCount})
                         </button>
+                        <button onclick="window.EventsController.setFilter('status', 'available')" 
+                                style="white-space: nowrap; padding: 6px 14px; border-radius: 12px; font-size: 0.66rem; font-weight: 900; border: 1.5px solid ${currentStatus === 'available' ? '#22c55e' : 'rgba(255,255,255,0.08)'}; cursor: pointer; transition: all 0.2s; 
+                                ${currentStatus === 'available' ? 'background: #22c55e; color: #000; box-shadow: 0 0 10px rgba(34,197,94,0.35);' : 'background: rgba(255,255,255,0.04); color: #94a3b8;'}">
+                            <i class="fas fa-user-plus" style="font-size: 0.6rem; margin-right: 4px;"></i>CON PLAZAS (${availableCount})
+                        </button>
+                        ${liveCount > 0 ? `
+                            <button onclick="window.EventsController.setFilter('status', 'live')" 
+                                    style="white-space: nowrap; padding: 6px 14px; border-radius: 12px; font-size: 0.66rem; font-weight: 900; border: 1.5px solid ${currentStatus === 'live' ? '#ef4444' : 'rgba(255,255,255,0.08)'}; cursor: pointer; transition: all 0.2s; 
+                                    ${currentStatus === 'live' ? 'background: #ef4444; color: #fff; box-shadow: 0 0 10px rgba(239,68,68,0.4);' : 'background: rgba(255,255,255,0.04); color: #94a3b8;'}">
+                                <i class="fas fa-broadcast-tower" style="font-size: 0.6rem; margin-right: 4px; animation: pulse 1.5s infinite;"></i>EN JUEGO (${liveCount})
+                            </button>
+                        ` : ''}
                     </div>
 
                     <!-- Month Filters -->
-                    <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
+                    <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
                         <button onclick="window.EventsController.setFilter('month', 'all')" 
                                 style="white-space: nowrap; padding: 7px 16px; border-radius: 12px; font-size: 0.68rem; font-weight: 900; border: 1.5px solid ${currentMonth === 'all' ? '#CCFF00' : 'rgba(255,255,255,0.08)'}; cursor: pointer; transition: all 0.2s; 
                                 ${currentMonth === 'all' ? 'background: #CCFF00; color: #000; box-shadow: 0 0 12px rgba(204,255,0,0.3);' : 'background: rgba(255,255,255,0.04); color: #94a3b8;'}">TODO</button>
                         ${months.map(m => {
-                const [year, month] = m.split('-');
-                const label = `${monthLabels[month]} '${year.slice(2)}`;
-                const isActive = currentMonth === m;
-                return `<button onclick="window.EventsController.setFilter('month', '${m}')" style="white-space: nowrap; padding: 7px 16px; border-radius: 12px; font-size: 0.68rem; font-weight: 900; border: 1.5px solid ${isActive ? '#CCFF00' : 'rgba(255,255,255,0.08)'}; cursor: pointer; transition: all 0.2s; ${isActive ? 'background: #CCFF00; color: #000; box-shadow: 0 0 12px rgba(204,255,0,0.3);' : 'background: rgba(255,255,255,0.04); color: #94a3b8;'}">${label}</button>`;
-            }).join('')}
+                            const [year, month] = m.split('-');
+                            const label = `${monthLabels[month] || month} '${year.slice(2)}`;
+                            const countInMonth = evList.filter(e => e.normDate && e.normDate.startsWith(m)).length;
+                            const isActive = currentMonth === m;
+                            return `<button onclick="window.EventsController.setFilter('month', '${m}')" style="white-space: nowrap; padding: 7px 16px; border-radius: 12px; font-size: 0.68rem; font-weight: 900; border: 1.5px solid ${isActive ? '#CCFF00' : 'rgba(255,255,255,0.08)'}; cursor: pointer; transition: all 0.2s; ${isActive ? 'background: #CCFF00; color: #000; box-shadow: 0 0 12px rgba(204,255,0,0.3);' : 'background: rgba(255,255,255,0.04); color: #94a3b8;'}">${label} (${countInMonth})</button>`;
+                        }).join('')}
                     </div>
+
                     <!-- Category Filters -->
                     <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
-                        <button onclick="window.EventsController.setFilter('category', 'all')" style="white-space: nowrap; padding: 7px 16px; border-radius: 12px; font-size: 0.68rem; font-weight: 900; border: 1.5px solid ${currentCat === 'all' ? '#CCFF00' : 'rgba(255,255,255,0.08)'}; cursor: pointer; transition: all 0.2s; ${currentCat === 'all' ? 'background: #CCFF00; color: #000; box-shadow: 0 0 12px rgba(204,255,0,0.3);' : 'background: rgba(255,255,255,0.04); color: #94a3b8;'}">TODAS</button>
-                        <button onclick="window.EventsController.setFilter('category', 'male')" style="white-space: nowrap; padding: 7px 16px; border-radius: 12px; font-size: 0.68rem; font-weight: 900; border: 1.5px solid ${currentCat === 'male' ? '#0ea5e9' : 'rgba(255,255,255,0.08)'}; cursor: pointer; transition: all 0.2s; ${currentCat === 'male' ? 'background: #0ea5e9; color: #fff; box-shadow: 0 0 12px rgba(14,165,233,0.35);' : 'background: rgba(255,255,255,0.04); color: #94a3b8;'}">MASCULINO</button>
-                        <button onclick="window.EventsController.setFilter('category', 'female')" style="white-space: nowrap; padding: 7px 16px; border-radius: 12px; font-size: 0.68rem; font-weight: 900; border: 1.5px solid ${currentCat === 'female' ? '#ec4899' : 'rgba(255,255,255,0.08)'}; cursor: pointer; transition: all 0.2s; ${currentCat === 'female' ? 'background: #ec4899; color: #fff; box-shadow: 0 0 12px rgba(236,72,153,0.35);' : 'background: rgba(255,255,255,0.04); color: #94a3b8;'}">FEMENINO</button>
-                        <button onclick="window.EventsController.setFilter('category', 'mixed')" style="white-space: nowrap; padding: 7px 16px; border-radius: 12px; font-size: 0.68rem; font-weight: 900; border: 1.5px solid ${currentCat === 'mixed' ? '#eab308' : 'rgba(255,255,255,0.08)'}; cursor: pointer; transition: all 0.2s; ${currentCat === 'mixed' ? 'background: #eab308; color: #000; box-shadow: 0 0 12px rgba(234,179,8,0.35);' : 'background: rgba(255,255,255,0.04); color: #94a3b8;'}">MIXTA</button>
+                        <button onclick="window.EventsController.setFilter('category', 'all')" style="white-space: nowrap; padding: 7px 16px; border-radius: 12px; font-size: 0.68rem; font-weight: 900; border: 1.5px solid ${currentCat === 'all' ? '#CCFF00' : 'rgba(255,255,255,0.08)'}; cursor: pointer; transition: all 0.2s; ${currentCat === 'all' ? 'background: #CCFF00; color: #000; box-shadow: 0 0 12px rgba(204,255,0,0.3);' : 'background: rgba(255,255,255,0.04); color: #94a3b8;'}">TODAS (${totalCount})</button>
+                        <button onclick="window.EventsController.setFilter('category', 'male')" style="white-space: nowrap; padding: 7px 16px; border-radius: 12px; font-size: 0.68rem; font-weight: 900; border: 1.5px solid ${currentCat === 'male' ? '#0ea5e9' : 'rgba(255,255,255,0.08)'}; cursor: pointer; transition: all 0.2s; ${currentCat === 'male' ? 'background: #0ea5e9; color: #fff; box-shadow: 0 0 12px rgba(14,165,233,0.35);' : 'background: rgba(255,255,255,0.04); color: #94a3b8;'}">MASCULINO (${maleCount})</button>
+                        <button onclick="window.EventsController.setFilter('category', 'female')" style="white-space: nowrap; padding: 7px 16px; border-radius: 12px; font-size: 0.68rem; font-weight: 900; border: 1.5px solid ${currentCat === 'female' ? '#ec4899' : 'rgba(255,255,255,0.08)'}; cursor: pointer; transition: all 0.2s; ${currentCat === 'female' ? 'background: #ec4899; color: #fff; box-shadow: 0 0 12px rgba(236,72,153,0.35);' : 'background: rgba(255,255,255,0.04); color: #94a3b8;'}">FEMENINO (${femaleCount})</button>
+                        <button onclick="window.EventsController.setFilter('category', 'mixed')" style="white-space: nowrap; padding: 7px 16px; border-radius: 12px; font-size: 0.68rem; font-weight: 900; border: 1.5px solid ${currentCat === 'mixed' ? '#eab308' : 'rgba(255,255,255,0.08)'}; cursor: pointer; transition: all 0.2s; ${currentCat === 'mixed' ? 'background: #eab308; color: #000; box-shadow: 0 0 12px rgba(234,179,8,0.35);' : 'background: rgba(255,255,255,0.04); color: #94a3b8;'}">MIXTA (${mixedCount})</button>
                     </div>
                 </div>
             `;
@@ -445,33 +528,42 @@
         }
 
         getNormalizedCategory(evt) {
-            const rawCat = (evt?.category || '').toLowerCase().trim();
-            const rawName = (evt?.name || '').toLowerCase().trim();
+            const rawCat = (evt?.category || evt?.categoria || '').toLowerCase().trim();
+            const rawGender = (evt?.gender || evt?.gender_type || evt?.sex || '').toLowerCase().trim();
+            const rawName = (evt?.name || evt?.title || '').toLowerCase().trim();
+            const combined = `${rawCat} ${rawGender} ${rawName}`;
 
             if (
-                ['female', 'femenina', 'femenino', 'chicas', 'mujeres'].includes(rawCat) ||
+                ['female', 'femenina', 'femenino', 'chicas', 'mujeres', 'f'].includes(rawCat) ||
+                ['female', 'femenina', 'femenino', 'chicas', 'mujeres', 'f'].includes(rawGender) ||
+                combined.includes('femenin') ||
+                combined.includes('chicas') ||
+                combined.includes('mujeres') ||
                 rawCat.includes('fem') ||
-                rawName.includes('femenin') ||
-                rawName.includes('chicas')
+                rawGender.includes('fem')
             ) {
                 return 'female';
             }
             if (
-                ['mixed', 'mixto', 'mixta'].includes(rawCat) ||
-                rawCat.includes('mix') ||
-                rawName.includes('mixt')
+                ['mixed', 'mixto', 'mixta', 'mix'].includes(rawCat) ||
+                ['mixed', 'mixto', 'mixta', 'mix'].includes(rawGender) ||
+                combined.includes('mixt') ||
+                combined.includes('mix')
             ) {
                 return 'mixed';
             }
             if (
-                ['male', 'masculino', 'masculina', 'chicos', 'hombres'].includes(rawCat) ||
+                ['male', 'masculino', 'masculina', 'chicos', 'hombres', 'm'].includes(rawCat) ||
+                ['male', 'masculino', 'masculina', 'chicos', 'hombres', 'm'].includes(rawGender) ||
+                combined.includes('masculin') ||
+                combined.includes('chicos') ||
+                combined.includes('hombres') ||
                 rawCat.includes('masc') ||
-                rawName.includes('masculin') ||
-                rawName.includes('chicos')
+                rawGender.includes('masc')
             ) {
                 return 'male';
             }
-            if (rawCat === 'open' || rawName.includes('open')) {
+            if (rawCat === 'open' || rawCat === 'abierta' || rawCat === 'abierto' || combined.includes('open') || combined.includes('abiert')) {
                 return 'open';
             }
             return 'male';
@@ -707,6 +799,7 @@
         async setTab(tabName) {
             console.log("🎯 [EventsController_V6] setTab called with:", tabName);
             this.state.activeTab = tabName;
+            this._forceFullRender = true;
 
             if (window.navigator && window.navigator.vibrate) {
                 window.navigator.vibrate(15);
@@ -875,7 +968,10 @@
 
             // --- ZERO-LATENCY SMART PATCHING (Audit Point 1) ---
             const currentTab = this.state.activeTab;
-            if (!this.state.loading && (currentTab === 'events' || currentTab === 'entrenos')) {
+            const shouldForce = this._forceFullRender;
+            this._forceFullRender = false;
+
+            if (!shouldForce && !this.hasActiveFilters() && !this.state.loading && (currentTab === 'events' || currentTab === 'entrenos')) {
                 const todayStr = this.getTodayStr();
                 const events = this.getAllSortedEvents().filter(e => {
                     const isCorrectType = (currentTab === 'entrenos' ? e.type === 'entreno' : e.type === 'americana');
@@ -884,7 +980,7 @@
                 });
 
                 // Check if we already have the grid rendered
-                if (document.getElementById(`event-card-${events[0]?.id}`)) {
+                if (events.length > 0 && document.getElementById(`event-card-${events[0]?.id}`)) {
                     if (this.smartUpdate(events)) {
                         console.log("⚡ [EventsController] Zero-Latency Update Applied.");
                         return; // Successfully updated DOM without full re-render
@@ -1144,7 +1240,21 @@
                 }
             }
 
+            const searchInput = document.getElementById('events-live-search-input');
+            const wasSearchFocused = (document.activeElement === searchInput);
+            const cursorPosition = searchInput ? searchInput.selectionStart : null;
+
             container.innerHTML = `<div class="fade-in">${entrenosSubmenuHtml}${contentHtml}</div>`;
+
+            if (wasSearchFocused) {
+                const newSearchInput = document.getElementById('events-live-search-input');
+                if (newSearchInput) {
+                    newSearchInput.focus();
+                    if (cursorPosition !== null) {
+                        try { newSearchInput.setSelectionRange(cursorPosition, cursorPosition); } catch (e) {}
+                    }
+                }
+            }
 
             // TRIGGER ASYNC CONTENT
             this.loadGeoRadarWidget();
@@ -1509,16 +1619,31 @@
                 });
             }
 
-            if (month !== 'all') events = events.filter(e => e.normDate && e.normDate.startsWith(month));
-            if (category !== 'all') {
+            // 1. Filtrado por mes
+            if (month && month !== 'all') {
+                events = events.filter(e => e.normDate && e.normDate.startsWith(month));
+            }
+
+            // 2. Filtrado robusto por categoría
+            if (category && category !== 'all') {
                 events = events.filter(e => {
-                    const cat = (e.category || '').toLowerCase();
-                    const name = (e.name || '').toLowerCase();
-                    if (category === 'male') return ['male', 'masculina', 'masculino', 'chicos', 'hombres'].includes(cat) || name.includes('masculin') || name.includes('chicos');
-                    if (category === 'female') return ['female', 'femenina', 'femenino', 'chicas', 'mujeres'].includes(cat) || name.includes('femenin') || name.includes('chicas');
-                    if (category === 'mixed') return ['mixed', 'mixta', 'mixto'].includes(cat) || name.includes('mixt');
-                    return cat === category;
+                    const normCat = this.getNormalizedCategory(e);
+                    return normCat === category;
                 });
+            }
+
+            // 3. Filtrado por estado (todos / con plazas / en juego)
+            const statusFilter = this.state.filters.status || 'all';
+            if (statusFilter === 'available') {
+                events = events.filter(e => {
+                    const players = e.players || e.registeredPlayers || [];
+                    const maxCourts = parseInt(e.max_courts || e.courts || 4);
+                    return players.length < (maxCourts * 4);
+                });
+            } else if (statusFilter === 'live') {
+                events = events.filter(e => e.status === 'live');
+            } else if (statusFilter === 'open') {
+                events = events.filter(e => e.status === 'open' || !e.status);
             }
 
             // Filtrado dinámico por búsqueda de texto
@@ -1705,7 +1830,14 @@
             ` : '';
 
             const eventsHtml = events.map(evt => this.renderCard(evt)).join('');
-            const filterBarHtml = !onlyMine ? this.renderFilterBar(this.getAllSortedEvents().filter(e => e.status !== 'finished' && (e.status === 'live' || e.normDate >= todayStr))) : '';
+
+            // Filtrar eventos activos específicamente para la pestaña actual (Entrenos vs Americanas)
+            const activeTypeEvents = this.getAllSortedEvents().filter(e => {
+                const isCorrectType = showBothTypes ? true : (onlyEntrenos ? e.type === 'entreno' : e.type === 'americana');
+                if (this.isEventFinished(e)) return false;
+                return isCorrectType;
+            });
+            const filterBarHtml = !onlyMine ? this.renderFilterBar(activeTypeEvents) : '';
 
             return `
                 <div style="min-height: 80vh; padding-top: 5px;">
@@ -1835,8 +1967,34 @@
                             <span id="events-total-badge" style="color:#0f172a;">${events.length}</span>
                         </div>
                     </div>
+                    <!-- LISTADO DE EVENTOS (ENTRENOS Y AMERICANAS DIRECTAMENTE A CONTINUACIÓN DE LA CABECERA) -->
+                    <div style="padding-left:10px; padding-right:10px; margin-top: 4px;">
+                        ${events.length === 0 ? `
+                            <div style="padding: 55px 20px; text-align: center; background: rgba(255,255,255,0.03); border: 1.5px dashed rgba(255,255,255,0.12); border-radius: 24px; margin: 15px 0;">
+                                <div style="width: 54px; height: 54px; border-radius: 50%; background: rgba(204,255,0,0.12); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; box-shadow: 0 0 20px rgba(204,255,0,0.2);">
+                                    <i class="fas fa-filter" style="font-size: 1.4rem; color: #CCFF00;"></i>
+                                </div>
+                                <h3 style="color: #ffffff; font-weight: 900; margin: 0; font-size: 1.05rem; letter-spacing: -0.3px;">${this.hasActiveFilters() ? `SIN ${this.state.activeTab === 'events' ? 'AMERICANAS' : 'ENTRENOS'} CON ESTOS FILTROS` : `NO HAY ${this.state.activeTab === 'events' ? 'AMERICANAS' : 'ENTRENOS'} ACTIVOS`}</h3>
+                                <p style="color: #94a3b8; font-size: 0.78rem; margin: 6px 0 16px;">${this.hasActiveFilters() ? 'Prueba a seleccionar otro mes, categoría o limpiar los filtros.' : 'Pronto abriremos nuevas convocatorias en tiempo real.'}</p>
+                                ${this.hasActiveFilters() ? `
+                                    <button onclick="window.EventsController.resetFilters()" style="background: #CCFF00; color: #000; border: none; font-weight: 950; font-size: 0.74rem; padding: 10px 22px; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 14px rgba(204,255,0,0.35); display: inline-flex; align-items: center; gap: 6px;">
+                                        <i class="fas fa-rotate-left"></i> REINICIAR FILTROS
+                                    </button>
+                                ` : ''}
+                            </div>
+                        ` : eventsHtml}
+                    </div>
+
+                    <!-- BARRA DE BÚSQUEDA Y FILTROS -->
+                    ${filterBarHtml}
+
+                    <!-- ESPACIO CLUBES & ORGANIZADORES (SI APLICA) -->
+                    <div style="padding-left:10px; padding-right:10px;">
+                        ${organizerBannerHtml}
+                    </div>
+
                     <!-- SELECTOR VISUAL PREMIUM DE MODOS DE JUEGO (FONDO BLANCO, ALTO CONTRASTE Y 3 BLOQUES CLAROS) -->
-                    <div style="margin: 0 10px 10px 10px; background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 20px; padding: 12px 14px; box-shadow: 0 8px 24px -4px rgba(0,0,0,0.06), 0 2px 6px -1px rgba(0,0,0,0.04);">
+                    <div style="margin: 10px 10px 10px 10px; background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 20px; padding: 12px 14px; box-shadow: 0 8px 24px -4px rgba(0,0,0,0.06), 0 2px 6px -1px rgba(0,0,0,0.04);">
                         <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
                             <div style="display: flex; align-items: center; gap: 7px;">
                                 <span style="display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 8px; background: #0f172a; color: #CCFF00; font-size: 0.8rem; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
@@ -1905,10 +2063,8 @@
                             </div>
                         </div>
                     </div>
-                    ${filterBarHtml}
+
                     <div style="padding-bottom: 80px; padding-left:10px; padding-right:10px;">
-                        ${organizerBannerHtml}
-                        ${events.length === 0 ? `<div style="padding:100px 40px; text-align:center; color:#444;"><i class="fas fa-filter" style="font-size: 4rem; opacity: 0.1;"></i><h3 style="color:#666;">SIN RESULTADOS</h3></div>` : eventsHtml}
                         <div style="margin-top: 25px; display: flex; flex-direction: column; align-items: center; padding-bottom: 20px; gap: 14px;">
                             
                             <!-- GEOLOCALIZACIÓN RADAR -->
@@ -2662,8 +2818,8 @@
 
             // Time Formatting
             const times = this._parseDate(evt.date, evt.time);
-            let timeLabel = evt.time;
-            if (times && !evt.time.includes('-')) {
+            let timeLabel = evt.time || '10:00';
+            if (times && evt.time && !evt.time.includes('-')) {
                 const pad = n => n.toString().padStart(2, '0');
                 timeLabel = `${pad(times.start.getHours())}:${pad(times.start.getMinutes())} - ${pad(times.end.getHours())}:${pad(times.end.getMinutes())}`;
             }
