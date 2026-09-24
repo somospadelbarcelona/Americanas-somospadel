@@ -118,19 +118,40 @@ window.NotificationServiceClass = class NotificationService {
                 return timeB - timeA;
             });
 
-            // Deduplicar por contenido (Título + Cuerpo) para evitar spam en la ticketera
+            // Enriquecer y Deduplicar contenido para evitar spam repetitivo
             const seen = new Set();
-            const deduplicated = sorted.filter(item => {
-                if (!item) return false;
-                const title = String(item.title || '');
-                const body = String(item.body || '');
-                const signature = `${title}|${body}`.toLowerCase().trim();
-                if (seen.has(signature)) return false;
-                seen.add(signature);
-                return true;
-            });
+            const deduplicated = [];
 
-            return deduplicated.slice(0, 50);
+            for (const rawItem of sorted) {
+                if (!rawItem) continue;
+
+                let title = String(rawItem.title || rawItem.name || '').trim();
+                let body = String(rawItem.body || rawItem.text || rawItem.message || '').trim();
+
+                // Normalización de títulos repetitivos antiguos
+                if (title === 'Inscripción OK' || title === 'Inscripcion OK') {
+                    title = '✅ Inscripción Confirmada';
+                    if (!body) body = 'Tu plaza está reservada para el próximo evento. ¡Nos vemos en la pista!';
+                } else if (title === 'Baja Confirmada') {
+                    title = '📋 Baja de Torneo Tramitada';
+                    if (!body) body = 'Has liberado tu plaza para el evento correctamente.';
+                } else if (title.includes('PLAZA LIBRE') || title.includes('Plaza Libre')) {
+                    title = '⚡ ¡Plaza Libre Disponible!';
+                    if (!body) body = 'Hay una plaza vacante en el torneo de hoy. Entra y resérvala antes de que se agote.';
+                }
+
+                const signature = `${title}|${body}`.toLowerCase().trim();
+                if (seen.has(signature)) continue;
+                seen.add(signature);
+
+                deduplicated.push({
+                    ...rawItem,
+                    title: title || 'Aviso SomosPadel',
+                    body: body || 'Nueva actualización disponible en tu cuenta.'
+                });
+            }
+
+            return deduplicated.slice(0, 40);
         } catch (e) {
             console.error("❌ [NotificationService] Merging failed:", e);
             return this.notifications.slice(0, 20);

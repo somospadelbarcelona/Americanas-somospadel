@@ -326,7 +326,7 @@
 
     <!-- CSS Dependencies -->
     <link rel="stylesheet" href="css/theme-playtomic.css?v=804">
-    <link rel="stylesheet" href="css/notifications.css?v=1.0">
+    <link rel="stylesheet" href="css/notifications.css?v=PRO_CLEAN_WHITE_v8">
     <link rel="stylesheet" href="css/nav-mobile.css?v=WOW_DOCK_v2">
     <link rel="stylesheet" href="css/glassmorphism.css?v=1.0">
     <link rel="stylesheet" href="css/dashboard-premium.css?v=1.0">
@@ -771,7 +771,7 @@
                     id="btn-header-notifications"
                     title="Centro de Notificaciones"
                     aria-label="Abrir centro de notificaciones"
-                    onclick="window.PlayerView?.haptic?.(15); window.NotificationUi && window.NotificationUi.toggle();">
+                    onclick="if(window.NotificationUi) window.NotificationUi.toggle();">
                     <i class="fas fa-bell" id="notif-bell-icon"></i>
                     <span id="notif-badge" class="notif-header-badge" style="display: none;">0</span>
                 </button>
@@ -4670,8 +4670,8 @@
     <script src="js/modules/common/LevelService.js" defer></script>
     <script src="js/modules/common/ShuffleAnimator.js?v=4.2" defer></script>
     <!-- NOTIFICATIONS -->
-    <script src="js/modules/common/NotificationService.js?v=1.1" defer></script>
-    <script src="js/modules/ui/NotificationUi.js" defer></script>
+    <script src="js/modules/common/NotificationService.js?v=PRO_CLEAN_WHITE_v8" defer></script>
+    <script src="js/modules/ui/NotificationUi.js?v=PRO_CLEAN_WHITE_v8" defer></script>
     <script src="js/modules/logic/MatchMakingService.js?v=5011" defer></script>
     <script src="js/modules/americanas/AmericanaLogic.js" defer></script>
     <script src="js/modules/americanas/AmericanaService.js?v=1014" defer></script>
