@@ -382,17 +382,24 @@ class NotificationUi {
     async requestPushActivation() {
         if (window.NotificationService) {
             try {
-                const ok = await window.NotificationService.requestPushPermission();
-                if (ok) {
+                await window.NotificationService.requestPushPermission();
+            } catch (err) {
+                console.error('[NotifUI] Error solicitando permisos push:', err);
+            }
+            // Siempre re-renderizar tras cualquier respuesta (granted, denied, dismissed)
+            setTimeout(() => {
+                this.renderPushPermissionBox();
+                if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
                     this.playNotificationSound();
-                    this.renderPushPermissionBox();
-                    if (window.NotificationService.showInAppToast) {
-                        window.NotificationService.showInAppToast("🔔 ¡Alertas Push Activadas!", "Recibirás avisos en tu móvil incluso con la app cerrada.", "success");
+                    if (window.NotificationService && window.NotificationService.showInAppToast) {
+                        window.NotificationService.showInAppToast(
+                            '🔔 ¡Alertas Activadas!',
+                            'Recibirás avisos incluso con la app cerrada.',
+                            'success'
+                        );
                     }
                 }
-            } catch (err) {
-                console.error("Error solicitando permisos push:", err);
-            }
+            }, 400);
         }
     }
 
