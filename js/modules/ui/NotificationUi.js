@@ -17,6 +17,9 @@ class NotificationUi {
         this._audioCtx = null;
         this._soundEnabled = (typeof localStorage !== 'undefined' && localStorage.getItem('sp_notif_sound_enabled') === 'false') ? false : true;
         this._bindService();
+        if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+            window.addEventListener('sp_push_permission_changed', () => this.renderPushPermissionBox());
+        }
     }
 
     _bindService() {
@@ -330,9 +333,12 @@ class NotificationUi {
         if (!box) return;
 
         const notificationSupported = 'Notification' in window;
-        const permission = notificationSupported ? Notification.permission : 'default';
+        const rawPermission = notificationSupported ? Notification.permission : 'default';
+        const pushStoredEnabled = typeof localStorage !== 'undefined' && localStorage.getItem('somospadel_push_enabled') === 'true';
+        const isGranted = rawPermission === 'granted' || (pushStoredEnabled && rawPermission !== 'denied');
+        const isDenied = rawPermission === 'denied';
 
-        if (permission === 'granted') {
+        if (isGranted) {
             box.className = 'notif-perm-box-granted';
             box.innerHTML = `
                 <div class="notif-perm-status-row">
@@ -340,8 +346,34 @@ class NotificationUi {
                         <i class="fas fa-circle-check"></i>
                         <span>ALERTAS PUSH ACTIVADAS EN ESTE MÓVIL</span>
                     </div>
-                    <span class="notif-perm-pill">🟢 ONLINE</span>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="notif-perm-pill">🟢 ONLINE</span>
+                        <button type="button" class="notif-perm-test-btn" onclick="window.NotificationUi.testPushAlert()" title="Lanzar aviso de prueba">
+                            <i class="fas fa-paper-plane"></i> Probar aviso
+                        </button>
+                    </div>
                 </div>
+            `;
+            return;
+        }
+
+        if (isDenied) {
+            box.className = 'notif-perm-box-prompt notif-perm-box-denied';
+            box.innerHTML = `
+                <div class="notif-perm-header">
+                    <div class="notif-perm-title" style="color: #dc2626;">
+                        <i class="fas fa-lock"></i>
+                        <span>PERMISO BLOQUEADO</span>
+                    </div>
+                    <span class="notif-perm-denied-tag">⚠️ Permiso Bloqueado en Navegador</span>
+                </div>
+                <div class="notif-perm-body">
+                    Las notificaciones están bloqueadas en tu navegador.<br>
+                    Para activarlas: pulsa el icono de <strong>candado 🔒</strong> en la barra de direcciones superior, cambia <em>Notificaciones</em> a <strong>'Permitir'</strong> y recarga la página.
+                </div>
+                <button type="button" class="notif-perm-btn-activate" style="background: #475569;" onclick="window.location.reload()">
+                    <i class="fas fa-rotate-right"></i> RECARGAR TRAS DESBLOQUEAR
+                </button>
             `;
             return;
         }
@@ -356,11 +388,7 @@ class NotificationUi {
                     <i class="fas fa-bolt"></i>
                     <span>RECIBE AVISOS EN TU MÓVIL</span>
                 </div>
-                ${permission === 'denied' ? `
-                    <span class="notif-perm-denied-tag">⚠️ Permiso Bloqueado</span>
-                ` : `
-                    <span class="notif-perm-off-tag">🔴 Desactivado</span>
-                `}
+                <span class="notif-perm-off-tag">🔴 Desactivado</span>
             </div>
 
             <div class="notif-perm-body">
@@ -372,34 +400,74 @@ class NotificationUi {
                     <i class="fas fa-arrow-up-from-bracket"></i> AÑADIR A PANTALLA DE INICIO (IPHONE)
                 </button>
             ` : `
-                <button type="button" class="notif-perm-btn-activate" onclick="window.NotificationUi.requestPushActivation()">
+                <button type="button" class="notif-perm-btn-activate" id="btn-activate-push-notif" onclick="window.NotificationUi.requestPushActivation(this)">
                     <i class="fas fa-bell"></i> ACTIVAR NOTIFICACIONES PUSH AHORA
                 </button>
             `}
         `;
     }
 
-    async requestPushActivation() {
+    async requestPushActivation(btn = null) {
+        const targetBtn = btn || document.getElementById('btn-activate-push-notif');
+        if (targetBtn) {
+            targetBtn.disabled = true;
+            targetBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> ACTIVANDO...';
+            targetBtn.style.opacity = '0.85';
+            targetBtn.style.pointerEvents = 'none';
+        }
+
         if (window.NotificationService) {
             try {
                 await window.NotificationService.requestPushPermission();
             } catch (err) {
                 console.error('[NotifUI] Error solicitando permisos push:', err);
             }
-            // Siempre re-renderizar tras cualquier respuesta (granted, denied, dismissed)
-            setTimeout(() => {
-                this.renderPushPermissionBox();
-                if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-                    this.playNotificationSound();
-                    if (window.NotificationService && window.NotificationService.showInAppToast) {
-                        window.NotificationService.showInAppToast(
-                            '🔔 ¡Alertas Activadas!',
-                            'Recibirás avisos incluso con la app cerrada.',
-                            'success'
-                        );
-                    }
-                }
-            }, 400);
+        }
+
+        // Re-renderizado inmediato de la caja de permisos
+        this.renderPushPermissionBox();
+
+        const notificationSupported = 'Notification' in window;
+        const rawPermission = notificationSupported ? Notification.permission : 'default';
+        const pushStoredEnabled = typeof localStorage !== 'undefined' && localStorage.getItem('somospadel_push_enabled') === 'true';
+        const isGranted = rawPermission === 'granted' || (pushStoredEnabled && rawPermission !== 'denied');
+
+        if (isGranted) {
+            this.playNotificationSound();
+            if (window.NotificationService && window.NotificationService.showInAppToast) {
+                window.NotificationService.showInAppToast(
+                    '🔔 ¡Alertas Activadas!',
+                    'Recibirás avisos incluso con la app cerrada.',
+                    'success'
+                );
+            } else if (window.Toast) {
+                window.Toast.show('🔔 ¡Alertas Activadas!', 'success');
+            }
+        }
+    }
+
+    async testPushAlert() {
+        try {
+            if (this._soundEnabled) {
+                this.playNotificationSound();
+            }
+            if (window.PlayerView?.haptic) {
+                window.PlayerView.haptic(15);
+            }
+            if (window.NotificationService && window.NotificationService.showInAppToast) {
+                window.NotificationService.showInAppToast(
+                    '🎾 Notificación de prueba enviada',
+                    'Comprueba el panel de notificaciones de tu dispositivo.',
+                    'success'
+                );
+            } else if (window.Toast) {
+                window.Toast.show('🎾 Notificación de prueba enviada', 'success');
+            }
+            if (window.NotificationService && typeof window.NotificationService.sendWelcomeNotification === 'function') {
+                await window.NotificationService.sendWelcomeNotification();
+            }
+        } catch (err) {
+            console.warn('[NotificationUi] Error al enviar notificación de prueba:', err);
         }
     }
 

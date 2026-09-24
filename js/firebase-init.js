@@ -113,15 +113,23 @@ if (typeof window.FIREBASE_CONFIG === 'undefined') {
         }
         db = firebase.firestore();
 
-        // Enable offline persistence (Premium UX: Works in subways/low signal)
+        // Enable offline persistence (Resilient single-tab mode to prevent mobile assertion failures)
         // Debe ser llamado INMEDIATAMENTE después de crear la instancia db y ANTES de cualquier consulta.
         try {
-            db.enablePersistence({ synchronizeTabs: true })
+            db.enablePersistence()
                 .then(() => {
-                    console.log("📦 Firestore persistence enabled");
+                    console.log("📦 Firestore persistence enabled (resilient mode)");
                 })
                 .catch((err) => {
-                    console.warn("⚠️ Firestore persistence fallback:", err.message);
+                    console.warn("⚠️ Firestore persistence fallback:", err.code, err.message);
+                    if (err.message && err.message.includes('INTERNAL ASSERTION FAILED')) {
+                        console.warn("🚨 [FirebaseInit] Cache corrupta en IndexedDB. Purgando base de datos local...");
+                        try {
+                            if (window.indexedDB && window.indexedDB.deleteDatabase) {
+                                window.indexedDB.deleteDatabase('firestore/[DEFAULT]/americanas-somospadel/main');
+                            }
+                        } catch (_) {}
+                    }
                 });
         } catch (e) {
             console.warn("⚠️ Sync error enabling Firestore persistence:", e);
@@ -316,7 +324,16 @@ const FirebaseDB = {
         },
 
         async getById(id) {
-            const doc = await db.collection('players').doc(id).get();
+            let doc;
+            try {
+                doc = await db.collection('players').doc(id).get();
+            } catch (err) {
+                if (err.message && err.message.includes('INTERNAL ASSERTION FAILED')) {
+                    doc = await db.collection('players').doc(id).get({ source: 'server' });
+                } else {
+                    throw err;
+                }
+            }
             if (!doc.exists) return null;
             return { id: doc.id, ...doc.data() };
         },
@@ -324,17 +341,46 @@ const FirebaseDB = {
         async getByPhone(phone) {
             if (!phone) return null;
             const cleanPhone = String(phone).trim();
-            let snapshot = await db.collection('players')
-                .where('phone', '==', cleanPhone)
-                .limit(1)
-                .get();
+            let snapshot;
+            try {
+                snapshot = await db.collection('players')
+                    .where('phone', '==', cleanPhone)
+                    .limit(1)
+                    .get();
+            } catch (err) {
+                if (err.message && err.message.includes('INTERNAL ASSERTION FAILED')) {
+                    console.warn("⚠️ [getByPhone] Fallo de aserción en caché local. Consultando directamente al servidor...");
+                    try {
+                        if (window.indexedDB && window.indexedDB.deleteDatabase) {
+                            window.indexedDB.deleteDatabase('firestore/[DEFAULT]/americanas-somospadel/main');
+                        }
+                    } catch (_) {}
+                    snapshot = await db.collection('players')
+                        .where('phone', '==', cleanPhone)
+                        .limit(1)
+                        .get({ source: 'server' });
+                } else {
+                    throw err;
+                }
+            }
 
             // Fallback: If not found and it's a number, try querying as type Number
             if (snapshot.empty && !isNaN(cleanPhone) && cleanPhone !== '') {
-                snapshot = await db.collection('players')
-                    .where('phone', '==', Number(cleanPhone))
-                    .limit(1)
-                    .get();
+                try {
+                    snapshot = await db.collection('players')
+                        .where('phone', '==', Number(cleanPhone))
+                        .limit(1)
+                        .get();
+                } catch (err) {
+                    if (err.message && err.message.includes('INTERNAL ASSERTION FAILED')) {
+                        snapshot = await db.collection('players')
+                            .where('phone', '==', Number(cleanPhone))
+                            .limit(1)
+                            .get({ source: 'server' });
+                    } else {
+                        throw err;
+                    }
+                }
             }
 
             if (snapshot.empty) return null;

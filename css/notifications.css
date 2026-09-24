@@ -326,6 +326,39 @@ body.notif-drawer-open {
     border-radius: 6px;
 }
 
+.notif-perm-test-btn {
+    background: #ffffff;
+    border: 1px solid #10b981;
+    color: #047857;
+    padding: 3px 9px;
+    border-radius: 8px;
+    font-size: 0.65rem;
+    font-weight: 850;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 1px 3px rgba(16, 185, 129, 0.15);
+    font-family: 'Outfit', sans-serif;
+}
+
+.notif-perm-test-btn:hover {
+    background: #10b981;
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(16, 185, 129, 0.25);
+}
+
+.notif-perm-test-btn:active {
+    transform: scale(0.95);
+}
+
+.notif-perm-box-denied {
+    background: #fef2f2 !important;
+    border-color: #fecaca !important;
+}
+
 .notif-perm-box-prompt {
     margin: 10px 16px 0;
     padding: 12px 14px;
@@ -999,3 +1032,468 @@ body.notif-drawer-open {
         font-size: 1.05rem;
     }
 }
+
+/* ============================================================================
+   📢 11. PUSH NOTIFICATION PROMOTION BANNER & POPUP MODAL
+   ============================================================================ */
+.sp-push-discovery-banner {
+    margin: 0 15px 16px !important;
+    background: linear-gradient(135deg, rgba(8, 25, 48, 0.97) 0%, rgba(15, 23, 42, 0.98) 100%);
+    border: 1.5px solid rgba(204, 255, 0, 0.45);
+    border-radius: 20px;
+    padding: 14px 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35), 0 0 25px rgba(204, 255, 0, 0.15);
+    position: relative;
+    overflow: hidden;
+    animation: floatUp 0.35s ease-out forwards;
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.sp-push-discovery-banner.active-mode {
+    border-color: rgba(16, 185, 129, 0.5);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35), 0 0 25px rgba(16, 185, 129, 0.15);
+}
+
+.sp-push-banner-glow {
+    position: absolute;
+    top: -30px;
+    right: -30px;
+    width: 120px;
+    height: 120px;
+    background: radial-gradient(circle, rgba(204, 255, 0, 0.22) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.sp-push-banner-glow.green {
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.22) 0%, transparent 70%);
+}
+
+.sp-push-banner-content {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    position: relative;
+    z-index: 2;
+}
+
+.sp-push-banner-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #090e1a 0%, #17243c 100%);
+    border: 1.5px solid rgba(204, 255, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 14px rgba(204, 255, 0, 0.2);
+    font-size: 1.25rem;
+    color: #CCFF00;
+}
+
+.sp-push-banner-icon.green {
+    border-color: rgba(16, 185, 129, 0.5);
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+    color: #10b981;
+}
+
+.sp-push-banner-close {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #94a3b8;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.82rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.sp-push-banner-close:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    transform: scale(1.05);
+}
+
+.sp-push-banner-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    position: relative;
+    z-index: 2;
+}
+
+.sp-push-btn-main {
+    flex: 1;
+    background: #CCFF00;
+    color: #000000;
+    border: none;
+    padding: 9px 14px;
+    border-radius: 12px;
+    font-size: 0.76rem;
+    font-weight: 950;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-shadow: 0 4px 14px rgba(204, 255, 0, 0.35);
+    transition: all 0.2s ease;
+    font-family: 'Outfit', sans-serif;
+}
+
+.sp-push-btn-main:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 18px rgba(204, 255, 0, 0.45);
+}
+
+.sp-push-btn-subtle {
+    background: rgba(255, 255, 255, 0.08);
+    color: #cbd5e1;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 9px 14px;
+    border-radius: 12px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Outfit', sans-serif;
+}
+
+.sp-push-btn-subtle:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+}
+
+/* MODAL POPUP */
+.sp-push-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(8, 15, 28, 0.75);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    box-sizing: border-box;
+    opacity: 0;
+    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sp-push-popup-overlay.show {
+    opacity: 1;
+}
+
+.sp-push-popup-modal {
+    width: 100%;
+    max-width: 440px;
+    background: linear-gradient(150deg, #090e1a 0%, #0f172a 40%, #152238 100%);
+    border: 1.5px solid rgba(204, 255, 0, 0.45);
+    border-radius: 26px;
+    padding: 24px 22px;
+    box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.8), 0 0 40px rgba(204, 255, 0, 0.18);
+    color: #ffffff;
+    position: relative;
+    overflow: hidden;
+    transform: scale(0.92) translateY(10px);
+    transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+    box-sizing: border-box;
+}
+
+.sp-push-popup-overlay.show .sp-push-popup-modal {
+    transform: scale(1) translateY(0);
+}
+
+.sp-push-popup-feature-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    margin-bottom: 8px;
+    text-align: left;
+}
+
+.sp-push-popup-feature-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1rem;
+}
+
+/* ============================================================================
+   🎾 POPUP / MODAL EMERGENTE DE NUEVO EVENTO / PLAZAS LIBRES (DASHBOARD)
+   ============================================================================ */
+.sp-new-event-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    background: rgba(8, 15, 28, 0.78);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 1000000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    box-sizing: border-box;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sp-new-event-popup-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.sp-new-event-popup-card {
+    width: 100%;
+    max-width: 440px;
+    background: linear-gradient(150deg, #090e1a 0%, #0f172a 45%, #152238 100%);
+    border: 1.5px solid rgba(204, 255, 0, 0.5);
+    border-radius: 26px;
+    padding: 24px 22px;
+    box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.85), 0 0 40px rgba(204, 255, 0, 0.2);
+    color: #ffffff;
+    position: relative;
+    overflow: hidden;
+    transform: scale(0.92) translateY(12px);
+    transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+    box-sizing: border-box;
+}
+
+.sp-new-event-popup-overlay.show .sp-new-event-popup-card {
+    transform: scale(1) translateY(0);
+}
+
+.sp-new-event-popup-glow-1 {
+    position: absolute;
+    top: -50px;
+    right: -50px;
+    width: 170px;
+    height: 170px;
+    background: radial-gradient(circle, rgba(204, 255, 0, 0.22) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.sp-new-event-popup-glow-2 {
+    position: absolute;
+    bottom: -50px;
+    left: -50px;
+    width: 150px;
+    height: 150px;
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.2) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.sp-new-event-popup-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 5;
+    padding: 0;
+    outline: none;
+}
+
+.sp-new-event-popup-close:hover {
+    background: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    transform: scale(1.05);
+}
+
+.sp-new-event-popup-header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    margin-bottom: 12px;
+    position: relative;
+    z-index: 2;
+    padding-right: 36px;
+}
+
+.sp-new-event-badge {
+    background: #CCFF00;
+    color: #000000;
+    font-size: 0.68rem;
+    font-weight: 950;
+    padding: 5px 12px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    box-shadow: 0 2px 14px rgba(204, 255, 0, 0.45);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    line-height: 1.2;
+}
+
+.sp-new-event-title {
+    margin: 4px 0 16px;
+    font-size: 1.32rem;
+    font-weight: 950;
+    color: #ffffff;
+    letter-spacing: -0.4px;
+    line-height: 1.25;
+    position: relative;
+    z-index: 2;
+    text-transform: uppercase;
+    word-break: break-word;
+}
+
+.sp-new-event-meta-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 2;
+}
+
+.sp-new-event-meta-chip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 14px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #e2e8f0;
+}
+
+.sp-new-event-meta-chip i {
+    font-size: 0.95rem;
+    color: #38bdf8;
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.sp-new-event-meta-chip.sp-new-event-spots-chip {
+    background: rgba(204, 255, 0, 0.08);
+    border-color: rgba(204, 255, 0, 0.35);
+    color: #f1f5f9;
+}
+
+.sp-new-event-meta-chip.sp-new-event-spots-chip i {
+    color: #CCFF00;
+}
+
+.sp-new-event-spots-highlight {
+    color: #CCFF00;
+    font-weight: 850;
+}
+
+.sp-new-event-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+    z-index: 2;
+}
+
+.sp-new-event-btn-action {
+    width: 100%;
+    padding: 14px 18px;
+    background: #CCFF00;
+    color: #000000;
+    border: none;
+    border-radius: 14px;
+    font-weight: 950;
+    font-size: 0.88rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 18px rgba(204, 255, 0, 0.4);
+    font-family: 'Outfit', sans-serif;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.sp-new-event-btn-action:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 24px rgba(204, 255, 0, 0.6);
+}
+
+.sp-new-event-btn-action:active {
+    transform: scale(0.98);
+}
+
+.sp-new-event-btn-dismiss {
+    width: 100%;
+    padding: 10px 16px;
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+    transition: color 0.2s ease;
+    text-align: center;
+}
+
+.sp-new-event-btn-dismiss:hover {
+    color: #ffffff;
+}
+
+@media (max-width: 480px) {
+    .sp-new-event-popup-card {
+        padding: 20px 16px;
+        border-radius: 22px;
+    }
+    .sp-new-event-title {
+        font-size: 1.18rem;
+    }
+    .sp-new-event-meta-chip {
+        padding: 8px 12px;
+        font-size: 0.78rem;
+    }
+    .sp-new-event-btn-action {
+        padding: 13px 16px;
+        font-size: 0.82rem;
+    }
+}
+

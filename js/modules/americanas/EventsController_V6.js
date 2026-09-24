@@ -1655,7 +1655,13 @@
                     const format = (e.pair_mode || e.format || '').toLowerCase();
                     const cat = (e.category || '').toLowerCase();
                     const club = (e.club || e.organizer || (e.is_external ? 'externa' : 'somospadel')).toLowerCase();
-                    return name.includes(q) || sede.includes(q) || format.includes(q) || cat.includes(q) || club.includes(q);
+                    // Nivel: buscar en todos los campos posibles de nivel
+                    const level = (e.level || '').toString().toLowerCase();
+                    const levelMin = (e.level_min || e.min_level || '').toString().toLowerCase();
+                    const levelMax = (e.level_max || e.max_level || '').toString().toLowerCase();
+                    const levelRange = (levelMin && levelMax) ? `${levelMin} - ${levelMax}` : (levelMin || levelMax);
+                    return name.includes(q) || sede.includes(q) || format.includes(q) || cat.includes(q) || club.includes(q)
+                        || level.includes(q) || levelMin.includes(q) || levelMax.includes(q) || levelRange.includes(q);
                 });
             }
 

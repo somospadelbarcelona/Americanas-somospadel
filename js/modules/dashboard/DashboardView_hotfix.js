@@ -528,6 +528,31 @@
                 }
             };
 
+            // Helper para cerrar y descartar el banner de notificaciones push
+            window.dismissPushBanner = (e) => {
+                if (e) {
+                    try { e.stopPropagation(); } catch (_) {}
+                }
+                try { localStorage.setItem('sp_push_banner_dismissed_v1', 'true'); } catch (_) {}
+                const card = document.getElementById('sp-push-discovery-card');
+                if (card) {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(-10px)';
+                    card.style.transition = 'all 0.25s ease';
+                    setTimeout(() => card.remove(), 260);
+                }
+            };
+
+            // Escuchar cambios de permiso push en tiempo real para refrescar banner
+            if (!this._pushPermissionListenerAttached) {
+                this._pushPermissionListenerAttached = true;
+                window.addEventListener('sp_push_permission_changed', () => {
+                    try {
+                        this.renderPushDiscoveryBanner();
+                    } catch (_) {}
+                });
+            }
+
             // Helpers de Categoría y Centro de Juego
             window.getEventCategoryTheme = (evt) => this.getEventCategoryTheme(evt);
             window.filterCommandCenterCategory = (cat) => this.filterCommandCenterCategory(cat);
@@ -557,10 +582,6 @@
                             if (currentUser && typeof this.buildContext === 'function') {
                                 this.buildContext(currentUser).then(freshContext => {
                                     this.renderLiveWidget(freshContext, true);
-                                    if (window.HeroCard) {
-                                        const heroRoot = document.getElementById('hero-card-root');
-                                        if (heroRoot) heroRoot.innerHTML = window.HeroCard.render(freshContext);
-                                    }
                                 }).catch(() => {
                                     this.renderLiveWidget(window._lastDashboardContext || {}, true);
                                 });
@@ -872,6 +893,9 @@
                     <!-- 🌦️ BANNER SPOTLIGHT: NUEVO RADAR Y CLIMA DE PISTAS -->
                     <div id="radar-clima-notification-banner-root"></div>
 
+                    <!-- 🔔 BANNER PROMO: NOTIFICACIONES PUSH EN TIEMPO REAL -->
+                    <div id="push-notification-promo-banner-root"></div>
+
                     <!-- 🔥 HERO CARD PREMIUM: TEMPORADA 2027 | EQUIPOS SOMOSPADEL -->
                     <div id="season-campaign-banner-root" style="margin: 0 15px 20px !important; animation: floatUp 0.5s ease-out forwards;">
                         <div style="
@@ -1148,9 +1172,6 @@
                             gap: 6px;
                             animation: floatUp 0.6s ease-out forwards;
                         }
-                        .dashboard-hero-duo-container #hero-card-root:empty {
-                            display: none !important;
-                        }
                         .dashboard-hero-duo-container #registration-widget-root:empty {
                             display: none !important;
                         }
@@ -1164,10 +1185,7 @@
                         }
                     </style>
                     <div id="dashboard-hero-duo-container" class="dashboard-hero-duo-container">
-                        <!-- Tarjeta Blanca: Esta Semana / Próximo Entreno (HeroCard) -->
-                        <div id="hero-card-root" style="width: 100%;">
-                            <!-- Content loaded via JS (HeroCard) -->
-                        </div>
+                        <!-- HeroCard eliminado -->
 
                         <!-- Tarjeta Oscura: Partido Activo / Convocatoria Confirmada (Event Strip) -->
                         <div id="registration-widget-root" style="width: 100%;">
@@ -1445,12 +1463,8 @@
 
             // 4. ASYNC LOADING OF DATA-DEPENDENT COMPONENTS
             try {
-                // INSTANT PAINT (0ms): Pintar HeroCard y ActionGrid inmediatamente con el contexto inicial rápido/persistido
+                // INSTANT PAINT (0ms): Pintar ActionGrid inmediatamente con el contexto inicial rápido/persistido
                 const fastContext = this.getFastInitialContext(user);
-                const heroRoot = document.getElementById('hero-card-root');
-                if (heroRoot && window.HeroCard) {
-                    heroRoot.innerHTML = window.HeroCard.render(fastContext);
-                }
                 const actionGridRoot = document.getElementById('action-grid-root');
                 if (actionGridRoot && window.ActionGrid) {
                     actionGridRoot.innerHTML = window.ActionGrid.render(fastContext);
@@ -4433,25 +4447,24 @@
                     console.warn("⚠️ [DashboardView] Radar discovery banner error:", e);
                 }
 
-                // 0.1 Render Hero Card — GUARD: solo actualiza si el HTML cambia
+                // 0.05 Render Push Discovery Banner & Check Push Promo Popup
                 try {
-                    const heroRoot = document.getElementById('hero-card-root');
-                    if (heroRoot && window.HeroCard) {
-                        const newHeroHtml = window.HeroCard.render(context);
-                        if (heroRoot.innerHTML !== newHeroHtml) {
-                            heroRoot.innerHTML = newHeroHtml;
-                        }
-                        if (context.hasOpenTournament) {
-                            const currentUser = window.Store?.getState('currentUser') || (() => { try { return JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) { return {}; } })();
-                            const isExternalPlayer = currentUser?.role === 'player_americanas';
-                            if (isExternalPlayer) {
-                                this._injectExternalInscriptionBanner(context);
-                            }
-                        }
-                    }
+                    this.renderPushDiscoveryBanner();
+                    this.checkAndShowPushPopup();
                 } catch (e) {
-                    console.error("❌ HeroCard render failed:", e);
+                    console.warn("⚠️ [DashboardView] Push discovery promo error:", e);
                 }
+
+                // 0.06 Check New Event / Open Spots Popup (Con delay para suavidad)
+                try {
+                    setTimeout(() => {
+                        this.checkAndShowNewEventPopup();
+                    }, 800);
+                } catch (e) {
+                    console.warn("⚠️ [DashboardView] New event popup error:", e);
+                }
+
+                // HeroCard eliminado
 
                 // 0.2 Render Action Grid — GUARD: solo actualiza si el HTML cambia
                 try {
@@ -4619,6 +4632,679 @@
             } catch (err) {
                 console.warn("[DashboardView] Error renderRadarDiscoveryBanner:", err);
             }
+        }
+
+        /**
+         * 🔔 BANNER SPOTLIGHT — Promoción y Estado de Notificaciones Push en Vivo
+         * Muestra una tarjeta destacada con degradado nocturno y acentos neón en el Inicio.
+         */
+        renderPushDiscoveryBanner() {
+            try {
+                const noticeDismissed = localStorage.getItem('sp_push_banner_dismissed_v1') === 'true';
+                const bannerRoot = document.getElementById('push-notification-promo-banner-root');
+                if (!bannerRoot) return;
+
+                if (noticeDismissed) {
+                    bannerRoot.innerHTML = '';
+                    return;
+                }
+
+                const notificationSupported = 'Notification' in window;
+                const rawPermission = notificationSupported ? Notification.permission : 'default';
+                const pushStoredEnabled = typeof localStorage !== 'undefined' && localStorage.getItem('somospadel_push_enabled') === 'true';
+                const isGranted = rawPermission === 'granted' || (pushStoredEnabled && rawPermission !== 'denied');
+
+                if (isGranted) {
+                    bannerRoot.innerHTML = `
+                        <div id="sp-push-discovery-card" class="sp-push-discovery-banner active-mode">
+                            <div class="sp-push-banner-glow green"></div>
+                            <div class="sp-push-banner-content">
+                                <div style="display: flex; gap: 12px; align-items: flex-start;">
+                                    <div class="sp-push-banner-icon green">
+                                        <i class="fas fa-bell"></i>
+                                    </div>
+                                    <div>
+                                        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px; flex-wrap: wrap;">
+                                            <span style="background: #10b981; color: #021327; font-size: 0.58rem; font-weight: 950; padding: 2px 7px; border-radius: 5px; text-transform: uppercase; letter-spacing: 0.5px;">🟢 ONLINE</span>
+                                            <span style="color: #f8fafc; font-size: 0.88rem; font-weight: 900; font-family: 'Outfit', sans-serif;">Alertas Push Activas en tu Móvil</span>
+                                        </div>
+                                        <p style="margin: 0; font-size: 0.74rem; color: #cbd5e1; line-height: 1.4; font-weight: 500;">
+                                            Recibirás avisos en vivo cuando se publiquen americanas, entrenos de tu nivel o queden plazas libres.
+                                        </p>
+                                    </div>
+                                </div>
+                                <button type="button" class="sp-push-banner-close" onclick="window.dismissPushBanner(event)" title="Cerrar aviso">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="sp-push-banner-actions">
+                                <button type="button" class="sp-push-btn-main" style="background:#10b981; color:#ffffff;" onclick="window.NotificationUi && window.NotificationUi.open()">
+                                    <i class="fas fa-inbox"></i>
+                                    <span>VER BANDEJA DE ALERTAS</span>
+                                </button>
+                                <button type="button" class="sp-push-btn-subtle" onclick="window.NotificationUi && window.NotificationUi.testPushAlert()">
+                                    <i class="fas fa-paper-plane"></i>
+                                    <span>Probar aviso</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    bannerRoot.innerHTML = `
+                        <div id="sp-push-discovery-card" class="sp-push-discovery-banner">
+                            <div class="sp-push-banner-glow"></div>
+                            <div class="sp-push-banner-content">
+                                <div style="display: flex; gap: 12px; align-items: flex-start;">
+                                    <div class="sp-push-banner-icon">
+                                        <i class="fas fa-bell"></i>
+                                    </div>
+                                    <div>
+                                        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px; flex-wrap: wrap;">
+                                            <span style="background: #CCFF00; color: #021327; font-size: 0.58rem; font-weight: 950; padding: 2px 7px; border-radius: 5px; text-transform: uppercase; letter-spacing: 0.5px;">⚡ NUEVA FUNCIÓN</span>
+                                            <span style="color: #f8fafc; font-size: 0.88rem; font-weight: 900; font-family: 'Outfit', sans-serif;">Alertas Push en Vivo en tu Móvil</span>
+                                        </div>
+                                        <p style="margin: 0; font-size: 0.74rem; color: #cbd5e1; line-height: 1.4; font-weight: 500;">
+                                            Entérate al instante de <strong>nuevas americanas</strong>, <strong>entrenos de tu nivel</strong> y <strong>plazas libres de última hora</strong> directamente en tu pantalla.
+                                        </p>
+                                    </div>
+                                </div>
+                                <button type="button" class="sp-push-banner-close" onclick="window.dismissPushBanner(event)" title="Cerrar aviso">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="sp-push-banner-actions">
+                                <button type="button" class="sp-push-btn-main" onclick="window.NotificationUi ? window.NotificationUi.requestPushActivation() : (window.NotificationService && window.NotificationService.requestPushPermission())">
+                                    <i class="fas fa-bell"></i>
+                                    <span>ACTIVAR NOTIFICACIONES PUSH AHORA</span>
+                                </button>
+                                <button type="button" class="sp-push-btn-subtle" onclick="window.dismissPushBanner(event)">
+                                    <span>Más tarde</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                console.warn("[DashboardView] Error renderPushDiscoveryBanner:", err);
+            }
+        }
+
+        /**
+         * Comprueba y muestra el popup de promoción de notificaciones Push si no está activado
+         */
+        checkAndShowPushPopup() {
+            try {
+                const notificationSupported = 'Notification' in window;
+                const rawPermission = notificationSupported ? Notification.permission : 'default';
+                const pushStoredEnabled = typeof localStorage !== 'undefined' && localStorage.getItem('somospadel_push_enabled') === 'true';
+                const isGranted = rawPermission === 'granted' || (pushStoredEnabled && rawPermission !== 'denied');
+
+                if (isGranted || rawPermission === 'denied') return;
+
+                const dismissedAt = localStorage.getItem('sp_push_popup_dismissed_at');
+                if (dismissedAt) {
+                    const elapsed = Date.now() - parseInt(dismissedAt, 10);
+                    if (elapsed < 3 * 24 * 60 * 60 * 1000) {
+                        return;
+                    }
+                }
+
+                if (document.getElementById('sp-push-promo-modal-overlay')) return;
+
+                setTimeout(() => {
+                    this.showPushNotificationPopup();
+                }, 1200);
+            } catch (err) {
+                console.warn("[DashboardView] Error in checkAndShowPushPopup:", err);
+            }
+        }
+
+        /**
+         * Renderiza el modal emergente moderno de activación de notificaciones Push
+         */
+        showPushNotificationPopup() {
+            if (document.getElementById('sp-push-promo-modal-overlay')) return;
+
+            const overlay = document.createElement('div');
+            overlay.id = 'sp-push-promo-modal-overlay';
+            overlay.className = 'sp-push-popup-overlay';
+
+            overlay.innerHTML = `
+                <div class="sp-push-popup-modal" role="dialog" aria-modal="true">
+                    <div style="position: absolute; top: -50px; right: -50px; width: 160px; height: 160px; background: radial-gradient(circle, rgba(204, 255, 0, 0.25) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+                    <div style="position: absolute; bottom: -50px; left: -50px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(56, 189, 248, 0.2) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; position: relative; z-index: 2;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="
+                                width: 48px;
+                                height: 48px;
+                                border-radius: 16px;
+                                background: linear-gradient(135deg, #090e1a 0%, #17243c 100%);
+                                border: 1.5px solid rgba(204, 255, 0, 0.5);
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 1.4rem;
+                                color: #CCFF00;
+                                box-shadow: 0 4px 18px rgba(204, 255, 0, 0.3);
+                            ">
+                                <i class="fas fa-bell shake-animation"></i>
+                            </div>
+                            <div>
+                                <span style="background: #CCFF00; color: #000; font-size: 0.60rem; font-weight: 950; padding: 2px 7px; border-radius: 5px; text-transform: uppercase; letter-spacing: 0.5px;">¡NOVEDAD EXCLUSIVA!</span>
+                                <h3 style="margin: 4px 0 0; font-size: 1.22rem; font-weight: 950; color: #ffffff; letter-spacing: -0.3px; line-height: 1.2;">
+                                    Alertas Push en Vivo
+                                </h3>
+                            </div>
+                        </div>
+                        <button type="button" id="btn-close-push-popup" style="
+                            background: rgba(255, 255, 255, 0.08);
+                            border: 1px solid rgba(255, 255, 255, 0.15);
+                            color: #94a3b8;
+                            width: 32px;
+                            height: 32px;
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 0.9rem;
+                            cursor: pointer;
+                        " title="Cerrar">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <p style="margin: 0 0 16px; font-size: 0.82rem; color: #cbd5e1; line-height: 1.45; font-weight: 500; position: relative; z-index: 2;">
+                        Sé el primero en enterarte de todo lo que ocurre en SomosPadel Barcelona sin necesidad de tener la app abierta.
+                    </p>
+
+                    <div style="margin-bottom: 20px; position: relative; z-index: 2;">
+                        <div class="sp-push-popup-feature-row">
+                            <div class="sp-push-popup-feature-icon" style="background: rgba(204, 255, 0, 0.15); color: #CCFF00; border: 1px solid rgba(204, 255, 0, 0.3);">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.78rem; font-weight: 850; color: #ffffff;">Nuevas Americanas y Torneos</div>
+                                <div style="font-size: 0.68rem; color: #94a3b8;">Asegura tu plaza en cuanto se abren las inscripciones.</div>
+                            </div>
+                        </div>
+
+                        <div class="sp-push-popup-feature-row">
+                            <div class="sp-push-popup-feature-icon" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.78rem; font-weight: 850; color: #ffffff;">Entrenos Adaptados a tu Nivel</div>
+                                <div style="font-size: 0.68rem; color: #94a3b8;">Avisos prioritarios cuando Alex publique sesiones para ti.</div>
+                            </div>
+                        </div>
+
+                        <div class="sp-push-popup-feature-row">
+                            <div class="sp-push-popup-feature-icon" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);">
+                                <i class="fas fa-person-running"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.78rem; font-weight: 850; color: #ffffff;">Plazas Libres y Bajas de Última Hora</div>
+                                <div style="font-size: 0.68rem; color: #94a3b8;">Entra como reserva al instante antes de que vuele el puesto.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 8px; position: relative; z-index: 2;">
+                        <button type="button" id="btn-popup-activate-push" style="
+                            width: 100%;
+                            padding: 13px 18px;
+                            background: #CCFF00;
+                            color: #000000;
+                            border: none;
+                            border-radius: 14px;
+                            font-weight: 950;
+                            font-size: 0.85rem;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 8px;
+                            box-shadow: 0 4px 18px rgba(204, 255, 0, 0.4);
+                            font-family: 'Outfit', sans-serif;
+                            transition: transform 0.2s ease;
+                        ">
+                            <i class="fas fa-bell"></i>
+                            <span>ACTIVAR NOTIFICACIONES PUSH AHORA</span>
+                        </button>
+
+                        <button type="button" id="btn-popup-dismiss-push" style="
+                            width: 100%;
+                            padding: 10px 16px;
+                            background: transparent;
+                            border: none;
+                            color: #94a3b8;
+                            font-size: 0.76rem;
+                            font-weight: 700;
+                            cursor: pointer;
+                            font-family: 'Outfit', sans-serif;
+                        ">
+                            Más tarde
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            const closePopup = () => {
+                try {
+                    localStorage.setItem('sp_push_popup_dismissed_at', String(Date.now()));
+                } catch (_) {}
+                overlay.classList.remove('show');
+                setTimeout(() => {
+                    overlay.remove();
+                }, 280);
+            };
+
+            const activatePush = async () => {
+                const actBtn = overlay.querySelector('#btn-popup-activate-push');
+                if (actBtn) {
+                    actBtn.disabled = true;
+                    actBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> ACTIVANDO...';
+                }
+                if (window.NotificationUi) {
+                    await window.NotificationUi.requestPushActivation();
+                } else if (window.NotificationService) {
+                    await window.NotificationService.requestPushPermission();
+                }
+                closePopup();
+            };
+
+            overlay.querySelector('#btn-close-push-popup')?.addEventListener('click', closePopup);
+            overlay.querySelector('#btn-popup-dismiss-push')?.addEventListener('click', closePopup);
+            overlay.querySelector('#btn-popup-activate-push')?.addEventListener('click', activatePush);
+
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) closePopup();
+            });
+
+            const onEsc = (e) => {
+                if (e.key === 'Escape') {
+                    closePopup();
+                    document.removeEventListener('keydown', onEsc);
+                }
+            };
+            document.addEventListener('keydown', onEsc);
+
+            document.body.appendChild(overlay);
+            requestAnimationFrame(() => {
+                overlay.classList.add('show');
+            });
+        }
+
+        /**
+         * 🎾 POPUP / MODAL EMERGENTE — Nuevos Entrenos y Americanas recién publicados o con plazas libres
+         * Comprueba si hay un evento relevante no descartado en localStorage ('sp_event_popup_dismissed_${eventId}')
+         * y lo muestra de forma atractiva en el Dashboard.
+         */
+        async checkAndShowNewEventPopup() {
+            try {
+                // Verificar que estemos en la vista Dashboard
+                if (window.Router && window.Router.currentRoute && window.Router.currentRoute !== 'dashboard') {
+                    return;
+                }
+
+                // Guard: Si ya hay un modal emergente o drawer visible, no superponer
+                if (
+                    document.getElementById('sp-new-event-popup-overlay') ||
+                    document.getElementById('sp-push-promo-modal-overlay') ||
+                    document.querySelector('.sp-new-event-popup-overlay') ||
+                    document.querySelector('.sp-push-popup-overlay.show') ||
+                    document.querySelector('.modal.show') ||
+                    document.body.classList.contains('notif-drawer-open')
+                ) {
+                    return;
+                }
+
+                // 1. Consultar eventos activos (AmericanaService o fallback NotificationService)
+                let events = [];
+                if (window.AmericanaService && typeof window.AmericanaService.getAllActiveEvents === 'function') {
+                    events = await window.AmericanaService.getAllActiveEvents();
+                }
+
+                if ((!Array.isArray(events) || events.length === 0) && window.NotificationService) {
+                    if (Array.isArray(window.NotificationService.eventNotifications) && window.NotificationService.eventNotifications.length > 0) {
+                        events = window.NotificationService.eventNotifications
+                            .filter(n => n && n.data && n.data.eventId)
+                            .map(n => ({
+                                id: n.data.eventId,
+                                name: n.title,
+                                title: n.title,
+                                date: n.date,
+                                time: n.time,
+                                location: n.sede || n.location,
+                                type: n.category === 'entrenos' ? 'entreno' : 'americana',
+                                createdAt: n.timestamp
+                            }));
+                    }
+                }
+
+                if (!Array.isArray(events) || events.length === 0) return;
+
+                // Obtener datos del usuario actual para no molestar si ya está apuntado
+                const currentUser = window.Store?.getState('currentUser') || (() => {
+                    try { return JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch (_) { return {}; }
+                })();
+                const currentUid = currentUser?.uid || currentUser?.id;
+
+                const now = Date.now();
+                const candidates = [];
+
+                for (const evt of events) {
+                    if (!evt || !evt.id) continue;
+                    const eventId = String(evt.id);
+
+                    // Descartado por el usuario previamente
+                    if (localStorage.getItem('sp_event_popup_dismissed_' + eventId) === 'true') {
+                        continue;
+                    }
+
+                    // Estado del evento
+                    const status = String(evt.status || '').toLowerCase().trim();
+                    if (['finished', 'finalizado', 'completed', 'cancelled'].includes(status)) {
+                        continue;
+                    }
+
+                    // Cálculo de jugadores y plazas disponibles
+                    const courts = Number(evt.courts || evt.max_courts || 3);
+                    const maxPlayers = Number(evt.max_players || evt.maxPlayers || (courts * 4));
+                    const playersList = Array.isArray(evt.players)
+                        ? evt.players
+                        : (Array.isArray(evt.registeredPlayers) ? evt.registeredPlayers : []);
+                    const registeredCount = playersList.length;
+                    const openSpots = Math.max(0, maxPlayers - registeredCount);
+
+                    // Si el usuario actual ya está inscrito, omitir
+                    if (currentUid && playersList.some(p => p && (p.uid === currentUid || p.id === currentUid))) {
+                        continue;
+                    }
+
+                    // 1. Recién publicado en las últimas 48 horas
+                    const createdTime = this._extractEventCreatedTimestamp(evt);
+                    const isRecentlyCreated = createdTime > 0 && (now - createdTime) >= 0 && (now - createdTime) <= (48 * 60 * 60 * 1000);
+
+                    // 2. Evento próximo con plazas libres
+                    const eventDateTime = this._extractEventDateTime(evt);
+                    const isUpcoming = eventDateTime ? (eventDateTime >= (now - 30 * 60 * 1000)) : true;
+                    const hasOpenSpots = openSpots > 0 && isUpcoming;
+
+                    if (isRecentlyCreated || hasOpenSpots) {
+                        const titleLower = String(evt.name || evt.title || evt.eventName || '').toLowerCase();
+                        const formatLower = String(evt.format || evt.mode || '').toLowerCase();
+                        const isEntreno = evt.type === 'entreno' ||
+                            titleLower.includes('entreno') ||
+                            titleLower.includes('pozo') ||
+                            titleLower.includes('clase') ||
+                            formatLower.includes('entreno') ||
+                            formatLower.includes('pozo');
+
+                        candidates.push({
+                            event: evt,
+                            eventId,
+                            isEntreno,
+                            isRecentlyCreated,
+                            hasOpenSpots,
+                            openSpots,
+                            maxPlayers,
+                            courts,
+                            createdTime,
+                            eventDateTime
+                        });
+                    }
+                }
+
+                if (candidates.length === 0) return;
+
+                // Ordenar: primero los creados en las últimas 48h (más recientes), luego los próximos con plazas
+                candidates.sort((a, b) => {
+                    if (a.isRecentlyCreated && !b.isRecentlyCreated) return -1;
+                    if (!a.isRecentlyCreated && b.isRecentlyCreated) return 1;
+                    if (a.isRecentlyCreated && b.isRecentlyCreated) {
+                        return b.createdTime - a.createdTime;
+                    }
+                    return (a.eventDateTime || 0) - (b.eventDateTime || 0);
+                });
+
+                const target = candidates[0];
+
+                // Verificar de nuevo tras la espera que no haya modal abierto
+                if (
+                    document.getElementById('sp-new-event-popup-overlay') ||
+                    document.getElementById('sp-push-promo-modal-overlay') ||
+                    document.querySelector('.modal.show')
+                ) {
+                    return;
+                }
+
+                this.showNewEventPopup(target);
+            } catch (err) {
+                console.warn("[DashboardView] Error in checkAndShowNewEventPopup:", err);
+            }
+        }
+
+        /**
+         * Renderiza el popup elegante y deportivo en el centro de la pantalla
+         */
+        showNewEventPopup(target) {
+            if (document.getElementById('sp-new-event-popup-overlay')) return;
+
+            const evt = target.event;
+            const eventId = target.eventId;
+            const isEntreno = target.isEntreno;
+            const badgeText = isEntreno ? '💪 NUEVO ENTRENO CONVOCADO' : '🏆 NUEVA AMERICANA';
+            const eventName = (evt.name || evt.title || evt.eventName || (isEntreno ? 'ENTRENO OFICIAL SOMOSPADEL' : 'AMERICANA SOMOSPADEL')).toUpperCase();
+
+            const sede = evt.location || evt.club || evt.venue || evt.sede || 'Delfos Cornellà';
+            const courts = target.courts || 3;
+            const sedeText = `${sede} · ${courts} ${courts === 1 ? 'pista' : 'pistas'}`;
+
+            const dateText = this._formatEventDate(evt.date);
+            const timeText = evt.time ? `${evt.time}h` : '';
+            const dateTimeText = [dateText, timeText].filter(Boolean).join(' · ');
+
+            const openSpots = target.openSpots;
+            const spotsText = openSpots > 0
+                ? `${openSpots} ${openSpots === 1 ? 'vacante libre' : 'vacantes libres'}`
+                : 'Últimas plazas disponibles';
+
+            const overlay = document.createElement('div');
+            overlay.id = 'sp-new-event-popup-overlay';
+            overlay.className = 'sp-new-event-popup-overlay';
+            overlay.setAttribute('role', 'dialog');
+            overlay.setAttribute('aria-modal', 'true');
+
+            overlay.innerHTML = `
+                <div class="sp-new-event-popup-card">
+                    <div class="sp-new-event-popup-glow-1"></div>
+                    <div class="sp-new-event-popup-glow-2"></div>
+
+                    <button type="button" class="sp-new-event-popup-close" id="btn-close-new-event-popup" title="Cerrar aviso" aria-label="Cerrar">
+                        <i class="fas fa-times"></i>
+                    </button>
+
+                    <div class="sp-new-event-popup-header">
+                        <div class="sp-new-event-badge">
+                            ${badgeText}
+                        </div>
+                    </div>
+
+                    <h3 class="sp-new-event-title">${eventName}</h3>
+
+                    <div class="sp-new-event-meta-grid">
+                        <div class="sp-new-event-meta-chip">
+                            <i class="fas fa-calendar-days"></i>
+                            <span>${dateTimeText || 'Próxima convocatoria'}</span>
+                        </div>
+                        <div class="sp-new-event-meta-chip">
+                            <i class="fas fa-location-dot"></i>
+                            <span>${sedeText}</span>
+                        </div>
+                        <div class="sp-new-event-meta-chip sp-new-event-spots-chip">
+                            <i class="fas fa-bolt"></i>
+                            <span><strong class="sp-new-event-spots-highlight">${spotsText}</strong></span>
+                        </div>
+                    </div>
+
+                    <div class="sp-new-event-actions">
+                        <button type="button" id="btn-popup-join-event" class="sp-new-event-btn-action">
+                            <span>🎾 APUNTARME / VER PLAZAS</span>
+                        </button>
+                        <button type="button" id="btn-popup-dismiss-event" class="sp-new-event-btn-dismiss">
+                            Ver más tarde
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            let isClosed = false;
+            const closeModal = (saveDismiss = false) => {
+                if (isClosed) return;
+                isClosed = true;
+                if (saveDismiss) {
+                    try {
+                        localStorage.setItem('sp_event_popup_dismissed_' + eventId, 'true');
+                    } catch (_) {}
+                }
+                overlay.classList.remove('show');
+                setTimeout(() => {
+                    overlay.remove();
+                }, 300);
+            };
+
+            const onJoin = () => {
+                closeModal(true);
+                const route = isEntreno ? 'entrenos' : 'americanas';
+                if (window.Router) {
+                    window.Router.navigate(route);
+                } else {
+                    window.location.hash = `#${route}`;
+                }
+                if (window.EventsController && typeof window.EventsController.openLiveEvent === 'function') {
+                    setTimeout(() => {
+                        try {
+                            window.EventsController.openLiveEvent(eventId, isEntreno ? 'entreno' : 'americana');
+                        } catch (err) {
+                            console.warn('[DashboardView] Error opening live event from popup:', err);
+                        }
+                    }, 200);
+                }
+            };
+
+            overlay.querySelector('#btn-popup-join-event')?.addEventListener('click', onJoin);
+            overlay.querySelector('#btn-popup-dismiss-event')?.addEventListener('click', () => closeModal(true));
+            overlay.querySelector('#btn-close-new-event-popup')?.addEventListener('click', () => closeModal(true));
+
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    closeModal(true);
+                }
+            });
+
+            const onEsc = (e) => {
+                if (e.key === 'Escape') {
+                    closeModal(true);
+                    document.removeEventListener('keydown', onEsc);
+                }
+            };
+            document.addEventListener('keydown', onEsc);
+
+            document.body.appendChild(overlay);
+            requestAnimationFrame(() => {
+                overlay.classList.add('show');
+            });
+        }
+
+        /**
+         * Extrae el timestamp numérico de creación de un evento
+         */
+        _extractEventCreatedTimestamp(evt) {
+            if (!evt) return 0;
+            const raw = evt.createdAt || evt.created_at || evt.timestamp || evt.publishedAt || evt.updatedAt;
+            if (raw) {
+                if (typeof raw.toMillis === 'function') return raw.toMillis();
+                if (typeof raw.toDate === 'function') return raw.toDate().getTime();
+                if (raw instanceof Date) return raw.getTime();
+                if (typeof raw === 'number') return raw < 10000000000 ? raw * 1000 : raw;
+                if (typeof raw === 'string') {
+                    const parsed = Date.parse(raw);
+                    if (!isNaN(parsed)) return parsed;
+                }
+            }
+            return 0;
+        }
+
+        /**
+         * Infiere la fecha y hora de celebración de un evento en milisegundos
+         */
+        _extractEventDateTime(evt) {
+            if (!evt) return 0;
+            if (evt.date) {
+                try {
+                    const dateStr = String(evt.date).trim();
+                    const timeStr = String(evt.time || '10:00').trim();
+                    let y, m, d;
+                    if (dateStr.includes('-')) {
+                        const parts = dateStr.split('-');
+                        if (parts[0].length === 4) {
+                            y = parseInt(parts[0], 10);
+                            m = parseInt(parts[1], 10) - 1;
+                            d = parseInt(parts[2], 10);
+                        } else {
+                            d = parseInt(parts[0], 10);
+                            m = parseInt(parts[1], 10) - 1;
+                            y = parseInt(parts[2], 10);
+                        }
+                    } else if (dateStr.includes('/')) {
+                        const parts = dateStr.split('/');
+                        d = parseInt(parts[0], 10);
+                        m = parseInt(parts[1], 10) - 1;
+                        y = parseInt(parts[2], 10);
+                    }
+                    const [hh, mm] = timeStr.split(':').map(n => parseInt(n, 10) || 0);
+                    if (y && !isNaN(m) && d) {
+                        return new Date(y, m, d, hh, mm).getTime();
+                    }
+                } catch (_) {}
+            }
+            return 0;
+        }
+
+        /**
+         * Formatea la fecha de evento para presentación amigable
+         */
+        _formatEventDate(dateStr) {
+            if (!dateStr) return '';
+            try {
+                const raw = String(dateStr).trim();
+                let y, m, d;
+                if (raw.includes('-')) {
+                    const parts = raw.split('-');
+                    if (parts[0].length === 4) {
+                        y = parseInt(parts[0], 10);
+                        m = parseInt(parts[1], 10);
+                        d = parseInt(parts[2], 10);
+                    } else {
+                        d = parseInt(parts[0], 10);
+                        m = parseInt(parts[1], 10);
+                        y = parseInt(parts[2], 10);
+                    }
+                } else if (raw.includes('/')) {
+                    const parts = raw.split('/');
+                    d = parseInt(parts[0], 10);
+                    m = parseInt(parts[1], 10);
+                    y = parseInt(parts[2], 10);
+                }
+                if (d && m) {
+                    const pad = (n) => String(n).padStart(2, '0');
+                    return `${pad(d)}/${pad(m)}${y ? '/' + y : ''}`;
+                }
+            } catch (_) {}
+            return String(dateStr);
         }
 
         /**
@@ -5777,11 +6463,6 @@
 
                         console.log("⚡ [Telemetry] Live update received for active match");
                         context.activeMatch = { ...context.activeMatch, ...updatedMatch };
-
-                        const heroRoot = document.getElementById('hero-card-root');
-                        if (heroRoot && window.HeroCard) {
-                            heroRoot.innerHTML = window.HeroCard.render(context);
-                        }
                     }
                 }, err => {
                     console.error("🛑 [Telemetry] Active match listener failed:", err);

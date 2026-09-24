@@ -93,6 +93,27 @@
 
     // Catálogo masivo de artículos curados y especializados de pádel
     const ARTICLES_DATABASE = [
+        // ── 🚀 NOVEDADES APP ──────────────────────────────────────────────────
+        {
+            id: 'app-noticia-notificaciones-push-movil',
+            title: '¡Llegan las Notificaciones Push en Vivo a SomosPadel Barcelona!',
+            category: '🚀 NOVEDADES APP',
+            catColor: '#0284c7',
+            theme: 'tournaments',
+            emoji: '🔔',
+            imgGrad: 'linear-gradient(135deg, #0284c7 0%, #10b981 100%)',
+            readTime: '2 min',
+            snippet: 'Activa las alertas en tu móvil y entérate al instante de nuevas americanas, entrenos de tu nivel y plazas libres antes que nadie.',
+            contentTemplate: `¡Gran avance en la plataforma de <strong>SomosPadel Barcelona</strong>! Ya están disponibles las <strong>Notificaciones Push en tiempo real</strong> directamente en tu móvil y navegador.<br><br>
+            <strong>¿Qué ventajas obtendrás al activarlas?</strong><br>
+            • <strong>Nuevas Americanas y Torneos:</strong> Sé el primero en enterarte en cuanto se abran las inscripciones para asegurar tu plaza sin esperas.<br>
+            • <strong>Entrenos Especializados por Nivel:</strong> Recibe avisos directos cuando Alex publique sesiones de pádel adaptadas a tu nivel y objetivo técnico.<br>
+            • <strong>Radar de Plazas Libres y Bajas de Última Hora:</strong> Cuando alguien cause baja en un partido o americana, recibirás una alerta instantánea para apuntarte en un solo toque.<br>
+            • <strong>Avisos Oficiales del Club:</strong> Cambios de pista por climatología, eventos especiales y novedades de la comunidad al instante.<br><br>
+            <strong>¿Cómo activarlas en 1 clic?</strong><br>
+            Solo tienes que pulsar el icono de campana 🔔 en la barra superior o en el banner de novedades del Inicio y hacer clic en <strong>'ACTIVAR NOTIFICACIONES PUSH AHORA'</strong>. Una vez activadas, puedes usar el botón <strong>'PROBAR AVISO'</strong> para comprobar la vibración y el sonido en tu teléfono al instante.<br><br>
+            El capitán <strong>{PLAYER1}</strong> destaca: <em>'Ahora ya no te quedas fuera de ninguna americana por no mirar el grupo de WhatsApp a tiempo. Te salta la alerta al móvil y reservas tu plaza al momento'</em>. Su compañero <strong>{PLAYER2}</strong> aconseja tenerlas activas para no perderse los entrenos tácticos.`
+        },
         // ── 🎮 MODOS DE JUEGO SOMOSPADEL BCN ──────────────────────────────────
         {
             id: 'modos-juego-pareja-fija-vs-twister',
@@ -817,7 +838,7 @@
             if (t.includes('salud') || t.includes('codo') || t.includes('lesi') || t.includes('hombro') || t.includes('calambres')) return 'health';
             if (t.includes('nutrici') || t.includes('hidrat') || t.includes('comida') || t.includes('recupera')) return 'nutrition';
             if (t.includes('mental') || t.includes('oro') || t.includes('concentra') || t.includes('nervios')) return 'mental';
-            if (t.includes('torneo') || t.includes('americana') || t.includes('ranking') || t.includes('elo')) return 'tournaments';
+            if (t.includes('torneo') || t.includes('americana') || t.includes('ranking') || t.includes('elo') || t.includes('novedad') || t.includes('push')) return 'tournaments';
             if (t.includes('comunidad') || t.includes('equipo') || t.includes('pareja')) return 'community';
             if (t.includes('smash') || t.includes('bandeja') || t.includes('víbora') || t.includes('remate') || t.includes('volea')) return 'action';
             return 'courts';

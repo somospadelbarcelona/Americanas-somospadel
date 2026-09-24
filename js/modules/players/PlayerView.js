@@ -524,8 +524,6 @@
                 setTimeout(() => {
                     this.initAttributesCharts(data, user);
                     const context = data?.context || { status: 'EMPTY' };
-                    const heroRoot = document.getElementById('profile-hero-root');
-                    if (heroRoot && window.HeroCard) heroRoot.innerHTML = window.HeroCard.render(context);
 
                     const pLevelRoot = document.getElementById('profile-power-level-root');
                     if (pLevelRoot && window.PowerLevelCard) pLevelRoot.innerHTML = window.PowerLevelCard.render(user);
@@ -1587,8 +1585,6 @@
             const stats = data?.stats || { matches: 0, won: 0, winRate: 0 };
             return `
                 <div style="display:flex; flex-direction:column; gap:22px;">
-                    <!-- DASHBOARD HERO INTEGRATION -->
-                    <div id="profile-hero-root"></div>
 
                     <!-- ⚡ POWER LEVEL STATUS CARD -->
                     <div id="profile-power-level-root"></div>

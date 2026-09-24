@@ -283,6 +283,18 @@
 
                 } catch (localError) {
                     console.error("Local auth also failed:", localError);
+                    if (localError.message && localError.message.includes('INTERNAL ASSERTION FAILED')) {
+                        console.warn("🚨 [AuthService] Firestore assertion detectado. Purgando caché de IndexedDB...");
+                        try {
+                            if (window.indexedDB && window.indexedDB.deleteDatabase) {
+                                window.indexedDB.deleteDatabase('firestore/[DEFAULT]/americanas-somospadel/main');
+                            }
+                        } catch (_) {}
+                        return { 
+                            success: false, 
+                            error: "Conexión reiniciada con éxito. Por favor, pulsa 'INICIAR SESIÓN' de nuevo." 
+                        };
+                    }
                     return { success: false, error: localError.message || "Credenciales incorrectas" };
                 }
             }

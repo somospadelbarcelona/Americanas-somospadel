@@ -318,18 +318,26 @@ self.addEventListener('notificationclick', (event) => {
     const data = event.notification.data || {};
     let targetPath = data.url || data.link || './';
 
+    // Normalizar destino relativo al scope del Service Worker (evita 404 en GitHub Pages)
     let urlToOpen;
     try {
+        const baseScope = (self.registration && self.registration.scope) 
+            ? self.registration.scope 
+            : (self.location.origin + self.location.pathname.replace(/\/[^/]*$/, '/'));
+
         if (targetPath.startsWith('http://') || targetPath.startsWith('https://')) {
             urlToOpen = targetPath;
-        } else if (targetPath.startsWith('/') || targetPath.startsWith('./')) {
-            urlToOpen = new URL(targetPath, self.location.origin).href;
+        } else if (targetPath.startsWith('#')) {
+            urlToOpen = new URL(targetPath, baseScope).href;
+        } else if (targetPath.startsWith('./')) {
+            urlToOpen = new URL(targetPath, baseScope).href;
+        } else if (targetPath.startsWith('/')) {
+            urlToOpen = new URL('.' + targetPath, baseScope).href;
         } else {
-            // Asumir hash de sección (ej: 'live', 'americanas', 'dashboard')
-            urlToOpen = new URL('./#' + targetPath, self.location.origin).href;
+            urlToOpen = new URL('#' + targetPath.replace(/^#/, ''), baseScope).href;
         }
     } catch (e) {
-        urlToOpen = self.location.origin;
+        urlToOpen = (self.registration && self.registration.scope) ? self.registration.scope : self.location.href;
     }
 
     event.waitUntil(
