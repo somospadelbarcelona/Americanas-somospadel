@@ -73,14 +73,20 @@
          * Normaliza fechas de DD/MM/YYYY a YYYY-MM-DD para comparaciones/sorting
          */
         _normalizeDate(d) {
+            if (window.EventService && typeof window.EventService.normalizeDate === 'function') {
+                return window.EventService.normalizeDate(d);
+            }
             if (!d) return '9999-99-99';
             if (d.includes('/')) {
-                const parts = d.split('/');
-                if (parts[2]?.length === 4) { // DD/MM/YYYY
-                    return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                const parts = d.split('/').map(p => p.trim());
+                if (parts.length >= 2) {
+                    const day = parts[0].padStart(2, '0');
+                    const month = parts[1].padStart(2, '0');
+                    const year = parts[2] ? (parts[2].length === 2 ? '20' + parts[2] : parts[2]) : String(new Date().getFullYear());
+                    return `${year}-${month}-${day}`;
                 }
             }
-            return d; // Asumimos YYYY-MM-DD
+            return d;
         }
 
         /**
@@ -99,9 +105,9 @@
             try {
                 if (!this.db) return [];
                 const all = await this.db.getAll();
-                const today = new Date().toISOString().split('T')[0];
+                const isFinished = (e) => window.EventService ? window.EventService.isEventFinished(e) : (e.status === 'finished');
                 return all
-                    .filter(a => a.status !== 'finished' && (this._normalizeDate(a.date) >= today || a.status === 'live'))
+                    .filter(a => !isFinished(a))
                     .sort((a, b) => {
                         const dateA = this._normalizeDate(a.date);
                         const dateB = this._normalizeDate(b.date);
@@ -159,10 +165,10 @@
                     ...ents.map(e => ({ ...e, type: 'entreno' }))
                 ];
 
-                const today = new Date().toISOString().split('T')[0];
+                const isFinished = (e) => window.EventService ? window.EventService.isEventFinished(e) : (e.status === 'finished');
 
                 return all
-                    .filter(e => e.status !== 'finished' && (this._normalizeDate(e.date) >= today || e.status === 'live'))
+                    .filter(e => !isFinished(e))
                     .sort((a, b) => {
                         const dateA = this._normalizeDate(a.date);
                         const dateB = this._normalizeDate(b.date);

@@ -496,16 +496,35 @@
 
             // Helper to show weather details on click
             window.showWeatherDetails = () => {
-                console.log("🌦️ [Weather Details] Scrolling to weather widget...");
-                const target = document.getElementById('weather-widget-root');
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    // Find the toggle button for El Prat or the first card and click it to expand
-                    const btn = document.querySelector('[id^="weather-btn-"]');
-                    const details = document.querySelector('[id^="weather-details-"]');
-                    if (details && details.style.display === 'none' && btn) {
-                        btn.click();
-                    }
+                console.log("🌦️ [Weather Details] Navegando a clima & radar...");
+                if (window.Router) {
+                    window.Router.navigate('clima');
+                } else if (window.EventsController) {
+                    window.EventsController.setTab('meteo');
+                }
+            };
+
+            // Helpers para el banner de descubrimiento del nuevo Radar y Clima
+            window.dismissRadarNotice = (e) => {
+                if (e) {
+                    try { e.stopPropagation(); } catch (_) {}
+                }
+                try { localStorage.setItem('sp_radar_relocated_notice_v1', 'true'); } catch (_) {}
+                const card = document.getElementById('sp-radar-announcement-card');
+                if (card) {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(-10px)';
+                    card.style.transition = 'all 0.25s ease';
+                    setTimeout(() => card.remove(), 260);
+                }
+            };
+
+            window.openRadarFromNotice = (e) => {
+                window.dismissRadarNotice(e);
+                if (window.Router) {
+                    window.Router.navigate('clima');
+                } else if (window.EventsController) {
+                    window.EventsController.setTab('meteo');
                 }
             };
 
@@ -574,6 +593,13 @@
                 this.unsubUser = window.Store.subscribe('currentUser', (user) => {
                     if (!user || !window.Router || window.Router.currentRoute !== 'dashboard') return;
 
+                    // GUARD: si el uid no cambió, no re-renderizar (AuthService emite el mismo user en cada snapshot)
+                    const incomingUid = user.id || user.uid || user.email || '';
+                    if (incomingUid && incomingUid === this._lastSyncedUserUid) {
+                        return;
+                    }
+                    this._lastSyncedUserUid = incomingUid;
+
                     const now = Date.now();
                     // Evitar doble ejecución en login si render() está activo o terminó hace menos de 500ms
                     if (this._isRendering || (now - (this._lastRenderTime || 0) < 500)) {
@@ -612,13 +638,16 @@
                 // 1. Get Real User Data
                 const user = window.Store ? window.Store.getState('currentUser') : null;
                 const userLevel = user ? (user.level || "3.5") : "3.5";
+                const userFirstName = user ? ((user.name || user.displayName || 'Jugador').split(' ')[0]) : 'Jugador';
 
                 // Soft Refresh if elements already exist in the DOM (prevents flickering and keeps WebGL/Three.js context alive)
                 const isAlreadyRendered = document.getElementById('hero-card-root') !== null;
             if (isAlreadyRendered) {
                 console.log("⚡ [DashboardView] Already rendered, performing soft refresh...");
                 try {
-                    // Update user stats dynamically
+                    // Update user stats and greeting dynamically
+                    const nameEl = document.getElementById('sp-playtomic-user-name');
+                    if (nameEl) nameEl.innerText = userFirstName;
                     const lvlEl = document.getElementById('user-level-val');
                     if (lvlEl) lvlEl.innerText = userLevel;
                     const rnkEl = document.getElementById('user-ranking-val');
@@ -636,81 +665,6 @@
                     // Build fresh context and load dynamic widgets
                     const context = await this.buildContext(user);
                     await this.loadLiveWidgetContent(context);
-
-                    // Refresh Weather & Windy Radar in background
-                    let weatherData = [];
-                    if (window.WeatherService) {
-                        try {
-                            weatherData = await window.WeatherService.getDashboardWeather();
-                        } catch (e) { console.error("Weather fetch failed during soft refresh", e); }
-                    }
-                    const weatherRoot = document.getElementById('weather-widget-root');
-                    if (weatherRoot && weatherData && weatherData.length > 0) {
-                        let weatherHtml = `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">`;
-                        weatherData.forEach(w => {
-                            weatherHtml += this.renderWeatherCard(
-                                w.name,
-                                `${w.temp}°C`,
-                                w.icon,
-                                {
-                                    wind: `${w.wind} km/h`,
-                                    hum: `${w.humidity}%`,
-                                    rain: `${w.rainProb}%`,
-                                    uv: w.uv,
-                                    pressure: w.pressure,
-                                    visibility: w.visibility,
-                                    intel: w.intelligence
-                                },
-                                w.isPropitious
-                            );
-                        });
-                        weatherHtml += `</div>`;
-                        
-                        weatherHtml += `
-                            <style>
-                                @keyframes livePulse {
-                                    0% { box-shadow: 0 0 0 0 rgba(0, 227, 109, 0.7); transform: scale(1); opacity: 1; }
-                                    70% { box-shadow: 0 0 0 8px rgba(0, 227, 109, 0); transform: scale(1.2); opacity: 0.8; }
-                                    100% { box-shadow: 0 0 0 0 rgba(0, 227, 109, 0); transform: scale(1); opacity: 1; }
-                                }
-                                @keyframes borderFlow {
-                                    0% { border-color: rgba(255, 255, 255, 0.1); }
-                                    50% { border-color: rgba(255, 255, 255, 0.25); }
-                                    100% { border-color: rgba(255, 255, 255, 0.1); }
-                                }
-                            </style>
-                            <div style="position: relative; border-radius: 32px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); background: #0f172a; animation: borderFlow 4s infinite;">
-                                <div style="background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%); padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                                    <div style="display:flex; align-items:center; gap:10px;">
-                                        <span style="font-size:0.75rem; font-weight:950; color:white; letter-spacing:0.5px;">RADAR TÁCTICO <span style="color:#CCFF00;">WAR ROOM</span></span>
-                                    </div>
-                                    <div style="display:flex; align-items:center; gap:8px;">
-                                        <button onclick="window.DashboardView.toggleTacticalHUD()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.3s; pointer-events: auto;">
-                                            <i class="fas fa-eye"></i> TACTICAL HUD
-                                        </button>
-                                        <span style="width:8px; height:8px; background:#00E36D; border-radius:50%; animation: livePulse 2s infinite;"></span>
-                                        <span style="font-size:0.6rem; color: #00E36D; font-weight: 900; letter-spacing:1px;">SCANNING</span>
-                                    </div>
-                                </div>
-                                <div style="width: 100%; height: 280px; position: relative;">
-                                    <iframe width="100%" height="100%" src="https://embed.windy.com/embed2.html?lat=41.320&lon=2.040&zoom=10&level=surface&overlay=radar&product=radar&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1" frameborder="0" style="filter: contrast(1.1) brightness(0.8) grayscale(0.3);" loading="lazy"></iframe>
-                                    <div style="pointer-events:none; position:absolute; inset:0; box-shadow: inset 0 0 50px rgba(0,0,0,0.8); background: radial-gradient(circle at 50% 50%, transparent 60%, rgba(204,255,0,0.03) 100%);"></div>
-                                    <div id="tactical-hud-grip" style="position:absolute; top:15px; left:15px; background:rgba(0,0,0,0.85); backdrop-filter:blur(15px); padding:8px 12px; border-radius:8px; border-left:3px solid #00E36D; pointer-events:none; display: none; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-                                        <div style="font-size:0.5rem; color:#888; font-weight:900; text-transform:uppercase; letter-spacing:1px;">ESTADO DE PISTA</div>
-                                        <div style="font-size:0.75rem; color:#fff; font-weight:1000;">GRIP: <span style="color:#00E36D;">ÓPTIMO (92%)</span></div>
-                                        <div style="font-size:0.45rem; color:rgba(255,255,255,0.4); font-weight:700; margin-top:2px;">Prob. Pista resbaladiza: 12%</div>
-                                    </div>
-                                    <div id="tactical-hud-bounce" style="position:absolute; top:15px; right:15px; background:rgba(0,0,0,0.85); backdrop-filter:blur(15px); padding:8px 12px; border-radius:8px; border-right:3px solid #CCFF00; pointer-events:none; text-align:right; display: none; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-                                        <div style="font-size:0.5rem; color:#888; font-weight:900; text-transform:uppercase; letter-spacing:1px;">INTELIGENCIA BOLA</div>
-                                        <div style="font-size:0.75rem; color:#fff; font-weight:1000;">REBOTE: <span style="color:#CCFF00;">ALTO (+15%)</span></div>
-                                        <div style="font-size:0.45rem; color:rgba(255,255,255,0.4); font-weight:700; margin-top:2px;">Bola rápida + Presión detectada</div>
-                                    </div>
-                                    <div style="position:absolute; bottom:0; left:0; width:100%; height:1px; background:#CCFF00; opacity:0.3; box-shadow: 0 0 10px #CCFF00; animation: scannerSlide 4s linear infinite;"></div>
-                                </div>
-                            </div>
-                        `;
-                        weatherRoot.innerHTML = weatherHtml;
-                    }
 
                     // Refresh News Blog
                     const blogRoot = document.getElementById('blog-news-widget-root');
@@ -744,11 +698,179 @@
                 <div class="dashboard-v2-container fade-in full-width-mobile" style="
                     background: radial-gradient(circle at 50% 0%, rgba(15, 23, 42, 0.08) 0%, transparent 70%);
                     min-height: 100vh;
-                    padding-top: 0;
+                    padding-top: 6px;
                 ">
 
+                    <!-- ⭐ SOMOSPADEL ARENA: PRO ATHLETE QUICK ACCESS HUB ⭐ -->
+                    <div class="sp-playtomic-hub" style="
+                        margin: 8px 15px 16px !important;
+                        background: #ffffff;
+                        border-radius: 26px;
+                        border: 1px solid #e2e8f0;
+                        padding: 18px 16px 16px;
+                        box-shadow: 0 8px 30px rgba(10, 25, 47, 0.05);
+                        animation: floatUp 0.35s ease-out forwards;
+                        position: relative;
+                        overflow: hidden;
+                    ">
+                        <!-- Línea decorativa superior estilo pista SomosPadel -->
+                        <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #CCFF00 0%, #38bdf8 50%, #CCFF00 100%);"></div>
 
+                        <!-- Header SomosPadel: Saludo Directo -->
+                        <div style="margin-bottom: 16px; padding: 4px 2px 0; position: relative; z-index: 2;">
+                            <h2 style="
+                                margin: 0;
+                                font-size: 1.30rem;
+                                font-weight: 950;
+                                color: #0a192f;
+                                letter-spacing: -0.5px;
+                                line-height: 1.2;
+                                display: flex;
+                                align-items: center;
+                                gap: 6px;
+                            ">
+                                <span>¡A la pista, <span id="sp-playtomic-user-name">${userFirstName}</span>!</span>
+                                <span style="font-size: 1.25rem;">🔥</span>
+                            </h2>
+                            <div style="font-size: 0.78rem; color: #64748b; font-weight: 600; margin-top: 3px;">
+                                Elige tu juego y suma victorias esta semana:
+                            </div>
+                        </div>
 
+                        <!-- 4 Botones de Acción con Estilo SomosPadel Pro (Athletic Pods) -->
+                        <div style="
+                            display: grid;
+                            grid-template-columns: repeat(4, 1fr);
+                            gap: 8px;
+                            align-items: start;
+                            text-align: center;
+                            position: relative;
+                            z-index: 2;
+                        ">
+                            <!-- 1. Americanas -->
+                            <div class="sp-playtomic-pill haptic-feedback" 
+                                onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('americanas');"
+                                style="display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative;">
+                                <div style="
+                                    width: 58px;
+                                    height: 58px;
+                                    border-radius: 19px;
+                                    background: linear-gradient(145deg, #090e1a 0%, #17243c 100%);
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    box-shadow: 0 6px 18px rgba(9, 14, 26, 0.25), 0 0 12px rgba(204, 255, 0, 0.15);
+                                    border: 1.5px solid rgba(204, 255, 0, 0.45);
+                                    transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.16s;
+                                    position: relative;
+                                "
+                                onmouseover="this.style.transform='scale(1.08)'; this.style.borderColor='#CCFF00';"
+                                onmouseout="this.style.transform='none'; this.style.borderColor='rgba(204, 255, 0, 0.45)';"
+                                onmousedown="this.style.transform='scale(0.92)';"
+                                onmouseup="this.style.transform='scale(1.08)';">
+                                    <i class="fas fa-trophy" style="font-size: 1.25rem; color: #CCFF00; filter: drop-shadow(0 0 6px rgba(204,255,0,0.4));"></i>
+                                    <span style="position: absolute; top: -5px; right: -5px; background: #ef4444; color: #fff; font-size: 0.50rem; font-weight: 950; padding: 1px 4px; border-radius: 5px; border: 1.5px solid #ffffff; letter-spacing: 0.4px;">TOP</span>
+                                </div>
+                                <span style="margin-top: 7px; font-size: 0.72rem; font-weight: 900; color: #0a192f; line-height: 1.1;">
+                                    Americanas
+                                </span>
+                                <span style="font-size: 0.60rem; color: #64748b; font-weight: 700; margin-top: 1px;">Torneos</span>
+                            </div>
+
+                            <!-- 2. Entrenos -->
+                            <div class="sp-playtomic-pill haptic-feedback" 
+                                onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('entrenos');"
+                                style="display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative;">
+                                <div style="
+                                    width: 58px;
+                                    height: 58px;
+                                    border-radius: 19px;
+                                    background: linear-gradient(145deg, #090e1a 0%, #17243c 100%);
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    box-shadow: 0 6px 18px rgba(9, 14, 26, 0.25), 0 0 12px rgba(56, 189, 248, 0.15);
+                                    border: 1.5px solid rgba(56, 189, 248, 0.45);
+                                    transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.16s;
+                                    position: relative;
+                                "
+                                onmouseover="this.style.transform='scale(1.08)'; this.style.borderColor='#38bdf8';"
+                                onmouseout="this.style.transform='none'; this.style.borderColor='rgba(56, 189, 248, 0.45)';"
+                                onmousedown="this.style.transform='scale(0.92)';"
+                                onmouseup="this.style.transform='scale(1.08)';">
+                                    <i class="fas fa-graduation-cap" style="font-size: 1.25rem; color: #38bdf8; filter: drop-shadow(0 0 6px rgba(56,189,248,0.4));"></i>
+                                    <span style="position: absolute; top: -5px; right: -5px; background: #38bdf8; color: #000; font-size: 0.50rem; font-weight: 950; padding: 1px 4px; border-radius: 5px; border: 1.5px solid #ffffff; letter-spacing: 0.4px;">PISTAS</span>
+                                </div>
+                                <span style="margin-top: 7px; font-size: 0.72rem; font-weight: 900; color: #0a192f; line-height: 1.1;">
+                                    Entrenos
+                                </span>
+                                <span style="font-size: 0.60rem; color: #64748b; font-weight: 700; margin-top: 1px;">Partidos</span>
+                            </div>
+
+                            <!-- 3. Ranking -->
+                            <div class="sp-playtomic-pill haptic-feedback" 
+                                onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('ranking');"
+                                style="display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative;">
+                                <div style="
+                                    width: 58px;
+                                    height: 58px;
+                                    border-radius: 19px;
+                                    background: linear-gradient(145deg, #090e1a 0%, #17243c 100%);
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    box-shadow: 0 6px 18px rgba(9, 14, 26, 0.25), 0 0 12px rgba(251, 191, 36, 0.15);
+                                    border: 1.5px solid rgba(251, 191, 36, 0.45);
+                                    transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.16s;
+                                    position: relative;
+                                "
+                                onmouseover="this.style.transform='scale(1.08)'; this.style.borderColor='#fbbf24';"
+                                onmouseout="this.style.transform='none'; this.style.borderColor='rgba(251, 191, 36, 0.45)';"
+                                onmousedown="this.style.transform='scale(0.92)';"
+                                onmouseup="this.style.transform='scale(1.08)';">
+                                    <i class="fas fa-medal" style="font-size: 1.25rem; color: #fbbf24; filter: drop-shadow(0 0 6px rgba(251,191,36,0.4));"></i>
+                                    <span style="position: absolute; top: -5px; right: -5px; background: #fbbf24; color: #000; font-size: 0.50rem; font-weight: 950; padding: 1px 4px; border-radius: 5px; border: 1.5px solid #ffffff; letter-spacing: 0.4px;">FIP</span>
+                                </div>
+                                <span style="margin-top: 7px; font-size: 0.72rem; font-weight: 900; color: #0a192f; line-height: 1.1;">
+                                    Ranking
+                                </span>
+                                <span style="font-size: 0.60rem; color: #64748b; font-weight: 700; margin-top: 1px;">Puntos</span>
+                            </div>
+
+                            <!-- 4. Mi Equipo -->
+                            <div class="sp-playtomic-pill haptic-feedback" 
+                                onclick="window.PlayerView?.haptic?.(20); window.openMyTeam ? window.openMyTeam() : (window.Router && window.Router.navigate('my_team'));"
+                                style="display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative;">
+                                <div style="
+                                    width: 58px;
+                                    height: 58px;
+                                    border-radius: 19px;
+                                    background: linear-gradient(145deg, #090e1a 0%, #17243c 100%);
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    box-shadow: 0 6px 18px rgba(9, 14, 26, 0.25), 0 0 12px rgba(192, 132, 252, 0.15);
+                                    border: 1.5px solid rgba(192, 132, 252, 0.45);
+                                    transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.16s;
+                                    position: relative;
+                                "
+                                onmouseover="this.style.transform='scale(1.08)'; this.style.borderColor='#c084fc';"
+                                onmouseout="this.style.transform='none'; this.style.borderColor='rgba(192, 132, 252, 0.45)';"
+                                onmousedown="this.style.transform='scale(0.92)';"
+                                onmouseup="this.style.transform='scale(1.08)';">
+                                    <i class="fas fa-users" style="font-size: 1.25rem; color: #c084fc; filter: drop-shadow(0 0 6px rgba(192,132,252,0.4));"></i>
+                                    <span style="position: absolute; top: -5px; right: -5px; background: #CCFF00; color: #000; font-size: 0.50rem; font-weight: 950; padding: 1px 4px; border-radius: 5px; border: 1.5px solid #ffffff; letter-spacing: 0.4px;">2027</span>
+                                </div>
+                                <span style="margin-top: 7px; font-size: 0.72rem; font-weight: 900; color: #0a192f; line-height: 1.1;">
+                                    Mi Equipo
+                                </span>
+                                <span style="font-size: 0.60rem; color: #64748b; font-weight: 700; margin-top: 1px;">Liga Summa</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 🌦️ BANNER SPOTLIGHT: NUEVO RADAR Y CLIMA DE PISTAS -->
+                    <div id="radar-clima-notification-banner-root"></div>
 
                     <!-- 🔥 HERO CARD PREMIUM: TEMPORADA 2027 | EQUIPOS SOMOSPADEL -->
                     <div id="season-campaign-banner-root" style="margin: 0 15px 20px !important; animation: floatUp 0.5s ease-out forwards;">
@@ -1008,9 +1130,9 @@
 
 
 
-                    <!-- 4. PULSE STORIES (Instagram Style) — DESTACADOS & EN VIVO -->
-                    <div id="story-feed-root" style="margin: 0 !important; padding: 0;">
-                        <!-- Cargado vía JS (StoryFeedWidget) -->
+                    <!-- 4. PULSE STORIES TRASLADADO AL HEADER (#header-story-rotator) -->
+                    <div id="story-feed-root" style="display: none !important; margin: 0 !important; padding: 0;">
+                        <!-- Trasladado al header superior: #header-story-rotator -->
                     </div>
 
                     <!-- 4.1 MIS EVENTOS & PARTIDOS COMPACTOS (SIEMPRE DEBAJO DE DESTACADOS & EN VIVO) -->
@@ -1075,60 +1197,7 @@
                         <!-- Content loaded via JS -->
                     </div>
 
-                    <!-- 🏆 RANKING SPOTLIGHT -->
-                    <div id="ranking-spotlight-root" style="margin:0 15px 16px; animation:floatUp 0.8s ease-out forwards;">
-                        <style>
-                            #trending-players-list::-webkit-scrollbar {
-                                height: 5px;
-                                display: block !important;
-                            }
-                            #trending-players-list::-webkit-scrollbar-track {
-                                background: rgba(0, 0, 0, 0.03);
-                                border-radius: 10px;
-                            }
-                            #trending-players-list::-webkit-scrollbar-thumb {
-                                background: rgba(114, 168, 0, 0.35);
-                                border-radius: 10px;
-                            }
-                            #trending-players-list::-webkit-scrollbar-thumb:hover {
-                                background: rgba(114, 168, 0, 0.6);
-                            }
-                        </style>
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding:0 4px;">
-                            <div style="font-weight:950; font-size:0.85rem; color:#0a192f; letter-spacing:1px; text-transform:uppercase; display:flex; align-items:center; gap:8px;">
-                                <i class="fas fa-trophy" style="color: #fbbf24; font-size: 1rem;"></i> TOP 10 ELITE
-                            </div>
-                            <div id="dashboard-ranking-see-all" style="font-size:0.65rem; color:#72a800; font-weight:950; cursor:pointer;" onclick="window.navigateFromDashboardRanking && window.navigateFromDashboardRanking()">
-                                VER RANKING COMPLETO <i class="fas fa-chevron-right" style="font-size:0.55rem;"></i>
-                            </div>
-                        </div>
 
-                        <!-- SELECTOR DE MODALIDAD: ENTRENOS VS AMERICANAS -->
-                        <div id="dashboard-ranking-mode-tabs" style="display: flex; background: #e2e8f0; padding: 4px; border-radius: 14px; margin-bottom: 12px; gap: 4px; border: 1px solid #cbd5e1;">
-                            <button type="button" id="tab-dashboard-entrenos" onclick="window.switchDashboardRankingMode && window.switchDashboardRankingMode('entrenos')" style="flex: 1; padding: 8px 12px; border-radius: 10px; border: none; font-weight: 950; font-size: 0.7rem; letter-spacing: 0.5px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s ease; background: #0f172a; color: #CCFF00; box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2);">
-                                <i class="fas fa-dumbbell"></i> ENTRENOS
-                            </button>
-                            <button type="button" id="tab-dashboard-americanas" onclick="window.switchDashboardRankingMode && window.switchDashboardRankingMode('americanas')" style="flex: 1; padding: 8px 12px; border-radius: 10px; border: none; font-weight: 950; font-size: 0.7rem; letter-spacing: 0.5px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s ease; background: transparent; color: #64748b;">
-                                <i class="fas fa-trophy"></i> AMERICANAS
-                            </button>
-                        </div>
-
-                        <!-- 1. MVP ORO #1 -->
-                        <div id="mvp-spotlight-container" style="margin-bottom:12px;"></div>
-                        <!-- 2. DUPLA DE HONOR: #2 PLATA Y #3 BRONCE -->
-                        <div id="podium-runners-container" style="margin-bottom:12px;"></div>
-                        
-                        <!-- 3. CARRUSEL DE ASPIRANTES (#4 AL #10) -->
-                        <div id="trending-section-header" style="display:flex; justify-content:space-between; align-items:center; margin: 12px 4px 8px;">
-                            <div style="font-size:0.68rem; font-weight:950; color:#475569; letter-spacing:0.8px; text-transform:uppercase; display:flex; align-items:center; gap:6px;">
-                                <i class="fas fa-fire" style="color:#f97316;"></i> ASPIRANTES AL TOP 10 (#4 - #10)
-                            </div>
-                            <div style="font-size:0.58rem; color:#64748b; font-weight:800; text-transform:uppercase;"><i class="fas fa-id-card" style="color:#72a800;"></i> CARTA INTERACTIVA</div>
-                        </div>
-                        <div id="trending-players-list" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:12px; scrollbar-width:thin; scrollbar-color:rgba(114,168,0,0.35) transparent; -webkit-overflow-scrolling:touch;">
-                            <div style="margin:20px auto; color:#94a3b8;"><i class="fas fa-circle-notch fa-spin"></i></div>
-                        </div>
-                    </div>
 
                     <!-- ⚖️ TARJETA OFICIAL: SISTEMA DE PUNTOS Y PONDERACIÓN DEL RANKING -->
                     <div id="points-policy-card-root" style="margin: 0 15px 16px !important; animation: floatUp 0.8s ease-out forwards;">
@@ -1332,11 +1401,6 @@
                     <!-- 🎾 WAR ROOM 3D TACTICAL BOARD PREVIEW -->
                     <div id="tactical-3d-widget-root" style="animation: floatUp 0.8s ease-out forwards;"></div>
 
-                    <!-- 3. WEATHER WIDGET -->
-                    <div id="weather-widget-root" style="margin: 0 15px 8px !important; animation: floatUp 0.8s ease-out forwards;">
-                        <!-- Content loaded via JS -->
-                    </div>
-
                     <!-- (Old Partner Synergy root removed to favor the new Predictive AI Engine) -->
 
                     <!-- 4. ACTIVIDAD RECIENTE -->
@@ -1406,168 +1470,6 @@
                 this.initHeaderTickerSync();
 
                 window.scrollTo(0, 0);
-
-
-
-
-                // 2. Fetch Real Data for Weather Cards
-                let weatherData = [];
-                try {
-                    if (window.WeatherService) {
-                        weatherData = await window.WeatherService.getDashboardWeather();
-                    }
-                } catch (e) { console.error("Weather fetch failed", e); }
-
-                // 2.2 Populate Weather Widget (Cards + Radar)
-                const weatherRoot = document.getElementById('weather-widget-root');
-                if (weatherRoot) {
-                    let weatherHtml = '';
-
-                    // Render Cards first
-                    if (weatherData && weatherData.length > 0) {
-                        weatherHtml += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">`;
-                        weatherData.forEach(w => {
-                            weatherHtml += this.renderWeatherCard(
-                                w.name,
-                                `${w.temp}°C`,
-                                w.icon,
-                                {
-                                    wind: `${w.wind} km/h`,
-                                    hum: `${w.humidity}%`,
-                                    rain: `${w.rainProb}%`,
-                                    uv: w.uv,
-                                    pressure: w.pressure,
-                                    visibility: w.visibility,
-                                    intel: w.intelligence
-                                },
-                                w.isPropitious
-                            );
-                        });
-                        weatherHtml += `</div>`;
-                    } else {
-                        weatherHtml += `
-                            <div onclick="Router.navigate('entrenos')" style="
-                                text-align: center;
-                                padding: 50px 20px;
-                                background: #111;
-                                border-radius: 24px;
-                                border: 1px solid rgba(204,255,0,0.1);
-                                position: relative;
-                                overflow: hidden;
-                                box-shadow: 0 15px 35px rgba(0,0,0,0.5);
-                                cursor: pointer;
-                            ">
-                                <!-- Tech Radar Animation -->
-                                <div style="
-                                    position: absolute; top: 0; left: 0; width: 200%; height: 2px;
-                                    background: linear-gradient(90deg, transparent, #CCFF00, transparent);
-                                    animation: scannerMove 4s linear infinite;
-                                    opacity: 0.3;
-                                "></div>
-                                
-                                <i class="fas fa-radar-scan fa-spin" style="
-                                    font-size: 3.5rem;
-                                    color: #CCFF00;
-                                    margin-bottom: 20px;
-                                    opacity: 0.2;
-                                    display: block;
-                                "></i>
-                                
-                                <div style="
-                                    color: white;
-                                    font-size: 1.1rem;
-                                    font-weight: 950;
-                                    letter-spacing: -0.5px;
-                                    text-transform: uppercase;
-                                ">RADAR DE COMPATIBILIDAD <span style="color:#CCFF00;">EN ESPERA</span></div>
-                                
-                                <div style="
-                                    color: rgba(255,255,255,0.4);
-                                    font-size: 0.8rem;
-                                    margin-top: 10px;
-                                    font-weight: 600;
-                                    max-width: 240px;
-                                    margin: 10px auto 0;
-                                ">Necesitamos más datos de nivel y victorias para calcular tu pareja perfecta.</div>
-
-                                <style>
-                                    @keyframes scannerMove {
-                                        0% { transform: translateY(-50px); opacity: 0; }
-                                        50% { opacity: 0.5; }
-                                        100% { transform: translateY(200px); opacity: 0; }
-                                    }
-                                </style>
-                            </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-                                ${this.renderWeatherCard('EL PRAT', '--', '...', { wind: '--', hum: '--', rain: '--' })}
-                                ${this.renderWeatherCard('CORNELLÀ', '--', '...', { wind: '--', hum: '--', rain: '--' })}
-                            </div>`;
-                    }
-
-                    // Append Radar below
-                    weatherHtml += `
-                        <style>
-                            @keyframes livePulse {
-                                0% { box-shadow: 0 0 0 0 rgba(0, 227, 109, 0.7); transform: scale(1); opacity: 1; }
-                                70% { box-shadow: 0 0 0 8px rgba(0, 227, 109, 0); transform: scale(1.2); opacity: 0.8; }
-                                100% { box-shadow: 0 0 0 0 rgba(0, 227, 109, 0); transform: scale(1); opacity: 1; }
-                            }
-                            @keyframes borderFlow {
-                                0% { border-color: rgba(255, 255, 255, 0.1); }
-                                50% { border-color: rgba(255, 255, 255, 0.25); }
-                                100% { border-color: rgba(255, 255, 255, 0.1); }
-                            }
-                        </style>
-                        <div style="position: relative; border-radius: 32px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); background: #0f172a; animation: borderFlow 4s infinite;">
-                            <div style="background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%); padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                                <div style="display:flex; align-items:center; gap:10px;">
-                                    <span style="font-size:0.75rem; font-weight:950; color:white; letter-spacing:0.5px;">RADAR TÁCTICO <span style="color:#CCFF00;">WAR ROOM</span></span>
-                                </div>
-                                <div style="display:flex; align-items:center; gap:8px;">
-                                    <button onclick="window.DashboardView.toggleTacticalHUD()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.3s; pointer-events: auto;">
-                                        <i class="fas fa-eye"></i> TACTICAL HUD
-                                    </button>
-                                    <span style="width:8px; height:8px; background:#00E36D; border-radius:50%; animation: livePulse 2s infinite;"></span>
-                                    <span style="font-size:0.6rem; color: #00E36D; font-weight: 900; letter-spacing:1px;">SCANNING</span>
-                                </div>
-                            </div>
-                            <div style="width: 100%; height: 280px; position: relative;">
-                                <iframe width="100%" height="100%" src="https://embed.windy.com/embed2.html?lat=41.320&lon=2.040&zoom=10&level=surface&overlay=radar&product=radar&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1" frameborder="0" style="filter: contrast(1.1) brightness(0.8) grayscale(0.3);" loading="lazy"></iframe>
-                                
-                                <!-- WAR ROOM TACTICAL OVERLAYS -->
-                                <div style="pointer-events:none; position:absolute; inset:0; box-shadow: inset 0 0 50px rgba(0,0,0,0.8); background: radial-gradient(circle at 50% 50%, transparent 60%, rgba(204,255,0,0.03) 100%);"></div>
-                                
-                                <!-- HUD TOP LEFT: Pista Status -->
-                                <div id="tactical-hud-grip" style="position:absolute; top:15px; left:15px; background:rgba(0,0,0,0.85); backdrop-filter:blur(15px); padding:8px 12px; border-radius:8px; border-left:3px solid #00E36D; pointer-events:none; animation: floatUp 0.8s ease-out; display: none; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-                                    <div style="font-size:0.5rem; color:#888; font-weight:900; text-transform:uppercase; letter-spacing:1px;">ESTADO DE PISTA</div>
-                                    <div style="font-size:0.75rem; color:#fff; font-weight:1000;">GRIP: <span style="color:#00E36D;">ÓPTIMO (92%)</span></div>
-                                    <div style="font-size:0.45rem; color:rgba(255,255,255,0.4); font-weight:700; margin-top:2px;">Prob. Pista resbaladiza: 12%</div>
-                                </div>
-
-                                <!-- HUD TOP RIGHT: Rebote/Presión -->
-                                <div id="tactical-hud-bounce" style="position:absolute; top:15px; right:15px; background:rgba(0,0,0,0.85); backdrop-filter:blur(15px); padding:8px 12px; border-radius:8px; border-right:3px solid #CCFF00; pointer-events:none; text-align:right; animation: floatUp 0.8s ease-out 0.2s both; display: none; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-                                    <div style="font-size:0.5rem; color:#888; font-weight:900; text-transform:uppercase; letter-spacing:1px;">INTELIGENCIA BOLA</div>
-                                    <div style="font-size:0.75rem; color:#fff; font-weight:1000;">REBOTE: <span style="color:#CCFF00;">ALTO (+15%)</span></div>
-                                    <div style="font-size:0.45rem; color:rgba(255,255,255,0.4); font-weight:700; margin-top:2px;">Bola rápida + Presión detectada</div>
-                                </div>
-
-                                <!-- HUD BOTTOM CENTER: Scan Line -->
-                                <div style="position:absolute; bottom:0; left:0; width:100%; height:1px; background:#CCFF00; opacity:0.3; box-shadow: 0 0 10px #CCFF00; animation: scannerSlide 4s linear infinite;"></div>
-                                
-                                <style>
-                                    @keyframes scannerSlide {
-                                        0% { bottom: 0; opacity: 0; }
-                                        10% { opacity: 0.5; }
-                                        90% { opacity: 0.5; }
-                                        100% { bottom: 100%; opacity: 0; }
-                                    }
-                                </style>
-                            </div>
-                        </div>
-                    `;
-                    weatherRoot.innerHTML = weatherHtml;
-                    weatherRoot.style.display = 'block';
-                }
 
                 // Load Blog News Widget
                 const blogRoot = document.getElementById('blog-news-widget-root');
@@ -3746,9 +3648,10 @@
 
                 if (!window.showWeatherDetails) {
                     window.showWeatherDetails = function() {
-                        const weatherWidget = document.getElementById('weather-widget-root');
-                        if (weatherWidget) {
-                            weatherWidget.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        if (window.Router) {
+                            window.Router.navigate('clima');
+                        } else if (window.EventsController) {
+                            window.EventsController.setTab('meteo');
                         }
                     };
                 }
@@ -3802,10 +3705,11 @@
 
                 // Weather micro-pill HTML component
                 const weatherPillHtml = `
-                    <div onclick="event.stopPropagation(); if(window.showWeatherDetails){window.showWeatherDetails();}else if(window.DashboardView&&window.DashboardView.toggleWeatherDetails){window.DashboardView.toggleWeatherDetails('EL_PRAT');}" 
-                         style="cursor: pointer; display: inline-flex; align-items: center; gap: 3px; font-size: 0.58rem; font-weight: 800; color: #cbd5e1; background: rgba(0, 0, 0, 0.4); padding: 1.5px 6px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.08); user-select: none; -webkit-tap-highlight-color: transparent;" 
-                         title="Meteo ${weatherCity}: ${weatherTemp}">
+                    <div onclick="event.stopPropagation(); window.showWeatherDetails ? window.showWeatherDetails() : (window.Router && window.Router.navigate('clima'));" 
+                         style="cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-size: 0.58rem; font-weight: 800; color: #cbd5e1; background: rgba(0, 0, 0, 0.4); padding: 1.5px 6px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.35); user-select: none; -webkit-tap-highlight-color: transparent;" 
+                         title="Meteo ${weatherCity}: ${weatherTemp} (¡Nuevo Radar Táctico de Pistas!)">
                         <span>${weatherIcon}</span> <span>${weatherTemp}</span>
+                        <span style="background: #38bdf8; color: #021327; font-size: 0.50rem; font-weight: 950; padding: 1px 4px; border-radius: 4px; margin-left: 2px; letter-spacing: 0.3px;">RADAR</span>
                     </div>
                 `;
 
@@ -3816,32 +3720,34 @@
                     const myMatchTitle = (context.eventName || (isMyEntreno ? 'Entreno Programado' : 'Tu Partido Hoy')).trim();
                     const matchTime = context.matchTime || '19:30';
                     const courtText = context.court ? `Pista ${context.court}` : 'Pista 3';
+                    const matchAccent = isMyEntreno ? '#ef4444' : '#38bdf8';
+                    const matchCta = isMyEntreno ? '#ff7a59' : '#0284c7';
 
                     stripHtml = `
                     <div onclick="window.dashNavigate('${targetRoute}', 'strip_my_match')" 
-                         style="background: linear-gradient(135deg, #091a33 0%, #0d284f 100%); border: 1px solid rgba(56, 189, 248, 0.45); border-radius: 14px; padding: 7px 12px; min-height: 56px; max-height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 8px; position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
+                         style="background: rgba(13, 20, 36, 0.88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.1); border-left: 3.5px solid ${matchAccent}; border-radius: 14px; padding: 7px 12px; min-height: 56px; max-height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 8px; position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
                          onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
                         
-                        <!-- Ambient Glow -->
-                        <div style="position: absolute; top: -25px; right: -25px; width: 70px; height: 70px; background: radial-gradient(circle, rgba(56, 189, 248, 0.2) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+                        <!-- Ambient Cyber Halo Glow -->
+                        <div style="position: absolute; top: -15px; right: -15px; width: 65px; height: 65px; background: radial-gradient(circle, ${matchAccent} 0%, transparent 70%); filter: blur(25px); opacity: 0.35; border-radius: 50%; pointer-events: none;"></div>
 
                         <!-- Left: Badge & Time -->
                         <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; flex-shrink: 0; z-index: 2;">
-                            <span style="background: #0284c7; color: #ffffff; font-size: 0.54rem; font-weight: 950; padding: 1.5px 6px; border-radius: 5px; letter-spacing: 0.5px; text-transform: uppercase; box-shadow: 0 0 10px rgba(2, 132, 199, 0.4); display: inline-flex; align-items: center; gap: 2px;">
+                            <span style="background: ${matchAccent}22; border: 1px solid ${matchAccent}66; color: ${matchAccent}; font-size: 0.54rem; font-weight: 950; padding: 1.5px 6px; border-radius: 5px; letter-spacing: 0.5px; text-transform: uppercase; display: inline-flex; align-items: center; gap: 2px; box-shadow: 0 0 10px ${matchAccent}33;">
                                 🎾 ${isMyEntreno ? 'ENTRENO' : 'PARTIDO'}
                             </span>
-                            <span style="font-size: 0.58rem; color: #38bdf8; font-weight: 850; display: inline-flex; align-items: center; gap: 2px;">
-                                <i class="far fa-clock" style="font-size: 0.52rem;"></i> ${matchTime}
+                            <span style="font-size: 0.58rem; color: #cbd5e1; font-weight: 850; display: inline-flex; align-items: center; gap: 3px;">
+                                <i class="far fa-clock" style="font-size: 0.52rem; color: ${matchAccent};"></i> ${matchTime}
                             </span>
                         </div>
 
                         <!-- Center: Match Info -->
-                        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; z-index: 2; padding: 0 2px;">
-                            <div style="color: #ffffff; font-size: 0.78rem; font-weight: 900; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; z-index: 2; padding: 0 4px;">
+                            <div style="color: #ffffff; font-size: 0.78rem; font-weight: 850; letter-spacing: -0.2px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                 ${myMatchTitle}
                             </div>
                             <div style="font-size: 0.58rem; color: #94a3b8; font-weight: 750; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;">
-                                <span style="color: #38bdf8; font-weight: 900;">🎾 ${courtText}</span> • Convocatoria confirmada
+                                <span style="color: ${matchAccent}; font-weight: 900;">🎾 ${courtText}</span> • Convocatoria confirmada
                             </div>
                         </div>
 
@@ -3849,7 +3755,7 @@
                         <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 3px; flex-shrink: 0; z-index: 2;">
                             ${weatherPillHtml}
                             <button onclick="event.stopPropagation(); window.dashNavigate('${targetRoute}', 'strip_my_match')" 
-                                    style="background: #38bdf8; color: #071629; font-size: 0.58rem; font-weight: 950; padding: 3.5px 8px; border-radius: 7px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; letter-spacing: 0.3px; box-shadow: 0 2px 8px rgba(56, 189, 248, 0.35); white-space: nowrap; transition: transform 0.15s ease;"
+                                    style="background: linear-gradient(135deg, ${matchAccent} 0%, ${matchCta} 100%); color: #ffffff; font-size: 0.58rem; font-weight: 950; padding: 3.5px 9px; border-radius: 7px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; letter-spacing: 0.3px; box-shadow: 0 2px 10px ${matchAccent}55; white-space: nowrap; transition: transform 0.15s ease;"
                                     onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
                                 <span>VER PISTA</span> <i class="fas fa-arrow-right" style="font-size: 0.48rem;"></i>
                             </button>
@@ -3857,7 +3763,7 @@
                     </div>
                     `;
                 } else if (openEvents.length > 0) {
-                    // CASE 2: EVENTOS DISPONIBLES (SMART COMPACT EVENT STRIP)
+                    // CASE 2: EVENTOS DISPONIBLES (SMART COMPACT EVENT STRIP - OPTON A: CYBER NEON / PADEL PRO SPORT)
                     const displayEvents = openEvents.slice(0, 6);
 
                     const slidesHtml = displayEvents.map((evt, idx) => {
@@ -3873,47 +3779,55 @@
                         const playersList = (evt.players && evt.players.length > 0) ? evt.players : (evt.registeredPlayers || []);
                         const current = playersList.length;
                         const spotsLeft = Math.max(0, max - current);
-                        const urgencyColor = spotsLeft <= 2 ? '#ef4444' : (spotsLeft <= 4 ? '#f59e0b' : '#34d399');
-                        const urgencyText = spotsLeft > 0 ? `${spotsLeft} plazas libres` : 'Completo';
+                        const urgencyColor = spotsLeft <= 2 ? '#ef4444' : (spotsLeft <= 4 ? '#f59e0b' : '#10b981');
+                        const urgencyText = spotsLeft > 0 ? `⚡ ${spotsLeft} libres` : 'Completo';
                         const minLevel = evt.min_level || evt.minLevel || '2.5';
                         const maxLevel = evt.max_level || evt.maxLevel || '4.5';
+                        const capacityPercent = max > 0 ? Math.min(100, Math.round((current / max) * 100)) : 0;
+                        const ctaTextColor = (theme.accentColor === '#CCFF00' || theme.ctaColor === '#CCFF00') ? '#071629' : '#ffffff';
 
                         return `
                         <div onclick="window.dashNavigate('${theme.targetRoute}', 'strip_card')" 
-                             style="min-width: 100%; max-width: 100%; flex-shrink: 0; scroll-snap-align: start; box-sizing: border-box; margin-right: 8px; background: ${theme.cardBg}; border: ${theme.cardBorder}; border-radius: 14px; padding: 7px 12px; min-height: 56px; max-height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 8px; position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
+                             style="min-width: 100%; max-width: 100%; flex-shrink: 0; scroll-snap-align: start; box-sizing: border-box; margin-right: 8px; background: rgba(13, 20, 36, 0.88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.1); border-left: 3.5px solid ${theme.accentColor}; border-radius: 14px; padding: 7px 12px; min-height: 56px; max-height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 8px; position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
                              onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
                             
-                            <!-- Ambient Category Glow -->
-                            <div style="position: absolute; top: -20px; right: -20px; width: 60px; height: 60px; background: radial-gradient(circle, ${theme.accentColor}25 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+                            <!-- Ambient Cyber Halo Glow -->
+                            <div style="position: absolute; top: -15px; right: -15px; width: 65px; height: 65px; background: radial-gradient(circle, ${theme.accentColor} 0%, transparent 70%); filter: blur(25px); opacity: 0.35; border-radius: 50%; pointer-events: none;"></div>
 
                             <!-- Left: Badge & Time -->
                             <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; flex-shrink: 0; z-index: 2;">
-                                <span style="background: ${theme.badgeBg}; color: ${theme.badgeTextColor || '#ffffff'}; font-size: 0.54rem; font-weight: 950; padding: 1.5px 6px; border-radius: 5px; letter-spacing: 0.5px; text-transform: uppercase; ${theme.badgeShadow || ''} display: inline-flex; align-items: center; gap: 2px;">
+                                <span style="background: ${theme.accentColor}22; border: 1px solid ${theme.accentColor}66; color: ${theme.accentColor}; font-size: 0.54rem; font-weight: 950; padding: 1.5px 6px; border-radius: 5px; letter-spacing: 0.5px; text-transform: uppercase; display: inline-flex; align-items: center; gap: 2px; box-shadow: 0 0 10px ${theme.accentColor}33;">
                                     ${theme.badgeText}
                                 </span>
-                                <span style="font-size: 0.58rem; color: #cbd5e1; font-weight: 800; display: inline-flex; align-items: center; gap: 2px;">
-                                    <i class="far fa-clock" style="font-size: 0.52rem; color: #94a3b8;"></i> ${timeDisplay}
+                                <span style="font-size: 0.58rem; color: #cbd5e1; font-weight: 850; display: inline-flex; align-items: center; gap: 3px;">
+                                    <i class="far fa-clock" style="font-size: 0.52rem; color: ${theme.accentColor};"></i> ${timeDisplay}
                                 </span>
                             </div>
 
-                            <!-- Center: Title & Subtitle -->
-                            <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; z-index: 2; padding: 0 2px;">
-                                <div style="color: #ffffff; font-size: 0.78rem; font-weight: 900; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${eventNameText}">
+                            <!-- Center: Title, Progress Bar & Urgency -->
+                            <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; z-index: 2; padding: 0 4px;">
+                                <div style="color: #ffffff; font-size: 0.78rem; font-weight: 850; letter-spacing: -0.2px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${eventNameText}">
                                     ${eventNameText}
                                 </div>
-                                <div style="font-size: 0.58rem; color: #94a3b8; font-weight: 750; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;">
-                                    <span style="color: ${urgencyColor}; font-weight: 900;">⚡ ${urgencyText}</span> • <span style="color: #cbd5e1;">Nivel ${minLevel}-${maxLevel}</span>
+                                <div style="display: flex; align-items: center; gap: 6px; margin-top: 3px;">
+                                    <!-- Mini Progress Bar de Ocupación -->
+                                    <div style="width: 38px; height: 4.5px; background: rgba(255, 255, 255, 0.12); border-radius: 3px; overflow: hidden; flex-shrink: 0;" title="${current}/${max} inscritos">
+                                        <div style="width: ${capacityPercent}%; height: 100%; background: ${urgencyColor}; border-radius: 3px; transition: width 0.3s ease;"></div>
+                                    </div>
+                                    <div style="font-size: 0.58rem; color: #94a3b8; font-weight: 750; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        <span style="color: ${urgencyColor}; font-weight: 900;">${urgencyText}</span> • <span style="color: #cbd5e1;">Nv. ${minLevel}-${maxLevel}</span>
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- Right: Micro-clima & Button -->
+                            <!-- Right: Micro-clima, Paginator & Neon CTA Button -->
                             <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 3px; flex-shrink: 0; z-index: 2;">
                                 <div style="display: inline-flex; align-items: center; gap: 3px;">
-                                    ${displayEvents.length > 1 ? `<span style="font-size: 0.48rem; color: #94a3b8; font-weight: 850; background: rgba(0,0,0,0.4); padding: 1px 4px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.08);">${idx + 1}/${displayEvents.length}</span>` : ''}
+                                    ${displayEvents.length > 1 ? `<span style="font-size: 0.48rem; color: #cbd5e1; font-weight: 850; background: rgba(0,0,0,0.5); padding: 1px 4px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.12);">${idx + 1}/${displayEvents.length}</span>` : ''}
                                     ${weatherPillHtml}
                                 </div>
                                 <button onclick="event.stopPropagation(); window.dashNavigate('${theme.targetRoute}', 'strip_cta')" 
-                                        style="background: ${theme.ctaColor}; color: ${theme.categoryName === 'especial' ? '#0a192f' : '#ffffff'}; font-size: 0.58rem; font-weight: 950; padding: 3.5px 8px; border-radius: 7px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; letter-spacing: 0.3px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); white-space: nowrap; transition: transform 0.15s ease;"
+                                        style="background: linear-gradient(135deg, ${theme.accentColor} 0%, ${theme.ctaColor} 100%); color: ${ctaTextColor}; font-size: 0.58rem; font-weight: 950; padding: 3.5px 9px; border-radius: 7px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; letter-spacing: 0.3px; box-shadow: 0 2px 10px ${theme.accentColor}44; white-space: nowrap; transition: transform 0.15s ease;"
                                         onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
                                     <span>RESERVAR</span> <i class="fas fa-arrow-right" style="font-size: 0.48rem;"></i>
                                 </button>
@@ -4445,73 +4359,308 @@
         }
 
         async loadLiveWidgetContent(context) {
+            // ANTI-PARPADEO: mutex simple — si ya hay una ejecución activa, guardar la última
+            // petición y procesarla al terminar (no acumular múltiples)
+            if (this._loadLiveRunning) {
+                this._loadLivePendingContext = context;
+                return;
+            }
+            this._loadLiveRunning = true;
             console.log("🧠 [DashboardView] loadLiveWidgetContent started");
 
-            // 0. Render Hero Card (Priority Sync)
             try {
-                const heroRoot = document.getElementById('hero-card-root');
-                if (heroRoot && window.HeroCard) {
-                    heroRoot.innerHTML = window.HeroCard.render(context);
+                // 0. Render Radar Discovery Banner (solo si no existe ya en DOM)
+                try {
+                    this.renderRadarDiscoveryBanner();
+                } catch (e) {
+                    console.warn("⚠️ [DashboardView] Radar discovery banner error:", e);
+                }
 
-                    // POPUP ALERT: Torneo (Solo ventana emergente)
-                    if (context.hasOpenTournament && !context.isSignedUp && window.PremiumModal) {
-                        const sessionKey = `popup_tournament_${context.tournamentId}`;
-                        if (!sessionStorage.getItem(sessionKey)) {
-                            sessionStorage.setItem(sessionKey, 'true');
-                            setTimeout(() => {
-                                window.PremiumModal.confirm({
-                                    title: "INSCRIPCIÓN ABIERTA",
-                                    message: `El evento <b>${context.tournamentName}</b> está disponible.<br>¿Quieres ver los detalles y apuntarte?`,
-                                    confirmText: "VER DETALLES",
-                                    cancelText: "LUEGO",
-                                    type: 'success'
-                                }).then(res => {
-                                    if (res) window.Router.navigate('entrenos');
-                                });
-                            }, 800);
+                // 0.1 Render Hero Card — GUARD: solo actualiza si el HTML cambia
+                try {
+                    const heroRoot = document.getElementById('hero-card-root');
+                    if (heroRoot && window.HeroCard) {
+                        const newHeroHtml = window.HeroCard.render(context);
+                        if (heroRoot.innerHTML !== newHeroHtml) {
+                            heroRoot.innerHTML = newHeroHtml;
+                        }
+                        if (context.hasOpenTournament) {
+                            const currentUser = window.Store?.getState('currentUser') || (() => { try { return JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) { return {}; } })();
+                            const isExternalPlayer = currentUser?.role === 'player_americanas';
+                            if (isExternalPlayer) {
+                                this._injectExternalInscriptionBanner(context);
+                            }
                         }
                     }
-                }
-            } catch (e) {
-                console.error("❌ HeroCard render failed:", e);
-            }
-
-            // 0.1 Render Action Grid (Accesos Rápidos: Marcador Pista LIVE & Carta FUT PRO)
-            try {
-                const actionGridRoot = document.getElementById('action-grid-root');
-                if (actionGridRoot && window.ActionGrid) {
-                    actionGridRoot.innerHTML = window.ActionGrid.render(context);
-                }
-            } catch (e) {
-                console.error("❌ ActionGrid render failed:", e);
-            }
-            try {
-                await this.renderLiveWidget(context);
-            } catch (e) {
-                console.error("❌ renderLiveWidget failed:", e);
-            }
-
-
-
-            try {
-                // 3. Load Activity Feed
-                const activityContainer = document.getElementById('activity-feed-content');
-                if (activityContainer) {
-                    this.renderActivityFeed().then(html => {
-                        activityContainer.innerHTML = html;
-                    }).catch(e => {
-                        console.error("Activity Feed failed", e);
-                    });
+                } catch (e) {
+                    console.error("❌ HeroCard render failed:", e);
                 }
 
-                // 4. Load Trending Players (MVP + Elite list)
-                this.renderTrendingPlayers();
+                // 0.2 Render Action Grid — GUARD: solo actualiza si el HTML cambia
+                try {
+                    const actionGridRoot = document.getElementById('action-grid-root');
+                    if (actionGridRoot && window.ActionGrid) {
+                        const newGridHtml = window.ActionGrid.render(context);
+                        if (actionGridRoot.innerHTML !== newGridHtml) {
+                            actionGridRoot.innerHTML = newGridHtml;
+                        }
+                    }
+                } catch (e) {
+                    console.error("❌ ActionGrid render failed:", e);
+                }
 
-                // 5. Load ESPN Player Faceoff (1vs1 comparison simulator)
-                this.renderPlayerFaceoff();
-            } catch (e) {
-                console.error('❌ [DashboardView] Error in core widget loading:', e);
+                try {
+                    await this.renderLiveWidget(context);
+                } catch (e) {
+                    console.error("❌ renderLiveWidget failed:", e);
+                }
+
+                try {
+                    // 3. Load Activity Feed
+                    const activityContainer = document.getElementById('activity-feed-content');
+                    if (activityContainer) {
+                        this.renderActivityFeed().then(html => {
+                            if (activityContainer.innerHTML !== html) {
+                                activityContainer.innerHTML = html;
+                            }
+                        }).catch(e => {
+                            console.error("Activity Feed failed", e);
+                        });
+                    }
+
+                    // 4. Load Trending Players (MVP + Elite list)
+                    this.renderTrendingPlayers();
+
+                    // 5. Load ESPN Player Faceoff (1vs1 comparison simulator)
+                    this.renderPlayerFaceoff();
+                } catch (e) {
+                    console.error('❌ [DashboardView] Error in core widget loading:', e);
+                }
+            } finally {
+                this._loadLiveRunning = false;
+                // Si llegó otra petición mientras ejecutábamos, procesarla ahora
+                if (this._loadLivePendingContext) {
+                    const pendingCtx = this._loadLivePendingContext;
+                    this._loadLivePendingContext = null;
+                    this.loadLiveWidgetContent(pendingCtx);
+                }
             }
+        }
+
+        /**
+         * 🌦️ BANNER SPOTLIGHT — Descubrimiento del nuevo Radar Táctico y Clima de Pistas
+         * Muestra una tarjeta elegante informativa en INICIO hasta que el usuario la acepte o cierre.
+         */
+        renderRadarDiscoveryBanner() {
+            try {
+                const noticeDismissed = localStorage.getItem('sp_radar_relocated_notice_v1') === 'true';
+                const bannerRoot = document.getElementById('radar-clima-notification-banner-root');
+                if (!bannerRoot) return;
+
+                // Guard: si ya existe el card en el DOM, no re-renderizar (evita parpadeo)
+                if (!noticeDismissed && document.getElementById('sp-radar-announcement-card')) return;
+
+                if (noticeDismissed) {
+                    bannerRoot.innerHTML = '';
+                    return;
+                }
+
+
+                bannerRoot.innerHTML = `
+                    <div id="sp-radar-announcement-card" style="
+                        margin: 0 15px 16px !important;
+                        background: linear-gradient(135deg, rgba(8, 25, 48, 0.96) 0%, rgba(15, 23, 42, 0.96) 100%);
+                        border: 1.5px solid rgba(56, 189, 248, 0.5);
+                        border-radius: 20px;
+                        padding: 14px 16px;
+                        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35), 0 0 22px rgba(56, 189, 248, 0.2);
+                        position: relative;
+                        overflow: hidden;
+                        animation: floatUp 0.35s ease-out forwards;
+                    ">
+                        <!-- Glow decorativo de fondo -->
+                        <div style="position: absolute; top: -30px; right: -30px; width: 110px; height: 110px; background: radial-gradient(circle, rgba(56, 189, 248, 0.28) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; position: relative; z-index: 2;">
+                            <div style="display: flex; gap: 12px; align-items: flex-start;">
+                                <div style="
+                                    width: 44px;
+                                    height: 44px;
+                                    border-radius: 14px;
+                                    background: linear-gradient(135deg, #0284c7 0%, #06b6d4 100%);
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    flex-shrink: 0;
+                                    box-shadow: 0 4px 14px rgba(6, 182, 212, 0.4);
+                                ">
+                                    <i class="fas fa-satellite-dish" style="color: #ffffff; font-size: 1.25rem;"></i>
+                                </div>
+                                <div>
+                                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px; flex-wrap: wrap;">
+                                        <span style="background: #38bdf8; color: #021327; font-size: 0.58rem; font-weight: 950; padding: 2px 7px; border-radius: 5px; text-transform: uppercase; letter-spacing: 0.5px;">¡NOVEDAD!</span>
+                                        <span style="color: #f8fafc; font-size: 0.88rem; font-weight: 900; font-family: 'Outfit', sans-serif;">Radar Táctico & Clima de Pistas</span>
+                                    </div>
+                                    <p style="margin: 0; font-size: 0.74rem; color: #cbd5e1; line-height: 1.4; font-weight: 500;">
+                                        Hemos reubicado el radar meteorológico y las condiciones de pista a <strong style="color: #38bdf8;">Americanas</strong> y <strong style="color: #38bdf8;">Entrenos</strong> (pestaña <span style="color: #38bdf8; font-weight: 800;">CLIMA & RADAR</span>).
+                                    </p>
+                                </div>
+                            </div>
+                            <button type="button" onclick="window.dismissRadarNotice(event)" style="
+                                background: rgba(255, 255, 255, 0.08);
+                                border: 1px solid rgba(255, 255, 255, 0.12);
+                                color: #94a3b8;
+                                width: 28px;
+                                height: 28px;
+                                border-radius: 50%;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 0.82rem;
+                                cursor: pointer;
+                                flex-shrink: 0;
+                            " title="Cerrar aviso">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+
+                        <!-- Botones de Acción -->
+                        <div style="display: flex; gap: 8px; margin-top: 12px; position: relative; z-index: 2;">
+                            <button type="button" onclick="window.openRadarFromNotice(event)" style="
+                                flex: 1;
+                                background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+                                color: #021327;
+                                border: none;
+                                padding: 9px 14px;
+                                border-radius: 12px;
+                                font-size: 0.76rem;
+                                font-weight: 950;
+                                cursor: pointer;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                gap: 6px;
+                                box-shadow: 0 4px 12px rgba(56, 189, 248, 0.35);
+                            ">
+                                <i class="fas fa-eye"></i>
+                                <span>VER RADAR Y PISTAS AHORA</span>
+                            </button>
+                            <button type="button" onclick="window.dismissRadarNotice(event)" style="
+                                background: rgba(255, 255, 255, 0.08);
+                                color: #cbd5e1;
+                                border: 1px solid rgba(255, 255, 255, 0.12);
+                                padding: 9px 14px;
+                                border-radius: 12px;
+                                font-size: 0.74rem;
+                                font-weight: 700;
+                                cursor: pointer;
+                            ">
+                                <span>Entendido</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } catch (err) {
+                console.warn("[DashboardView] Error renderRadarDiscoveryBanner:", err);
+            }
+        }
+
+        /**
+         * 🎾 BANNER EXPRESS — Jugador Externo (player_americanas) en INICIO
+         * Muestra una tarjeta informativa no intrusiva con el evento abierto.
+         * El usuario puede cerrarlo (queda oculto por la sesión) o ir a VER DETALLES.
+         */
+        _injectExternalInscriptionBanner(context) {
+            const bannerKey = `banner_inscription_dismissed_${context.tournamentId}`;
+            if (sessionStorage.getItem(bannerKey)) return; // Ya fue cerrado en esta sesión
+
+            // Buscar el contenedor — lo insertamos debajo del hero-card-root
+            const heroRoot = document.getElementById('hero-card-root');
+            if (!heroRoot) return;
+
+            // Evitar doble render
+            const existing = document.getElementById('inscription-express-banner');
+            if (existing) return;
+
+            const spotsLeft = Math.max(0, (context.maxPlayers || 16) - (context.currentPlayers || 0));
+            const isUrgent = spotsLeft <= 4 && spotsLeft > 0;
+            const accentColor = isUrgent ? '#f97316' : '#CCFF00';
+            const accentColorDark = isUrgent ? '#ea580c' : '#a3e635';
+
+            const banner = document.createElement('div');
+            banner.id = 'inscription-express-banner';
+            banner.style.cssText = `
+                margin: 0 15px 12px;
+                border-radius: 18px;
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+                border: 1.5px solid ${accentColor}55;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.35), 0 0 0 1px ${accentColor}22;
+                overflow: hidden;
+                animation: floatUp 0.5s ease-out forwards;
+                position: relative;
+            `;
+            banner.innerHTML = `
+                <div style="display: flex; align-items: center; padding: 14px 16px; gap: 14px; position: relative;">
+                    <!-- Icono express -->
+                    <div style="
+                        width: 48px; height: 48px; flex-shrink: 0;
+                        background: ${accentColor}22;
+                        border: 1.5px solid ${accentColor}55;
+                        border-radius: 14px;
+                        display: flex; align-items: center; justify-content: center;
+                        font-size: 1.4rem;
+                    ">${isUrgent ? '🔥' : '🎾'}</div>
+
+                    <!-- Texto -->
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="
+                            color: ${accentColor};
+                            font-size: 0.6rem; font-weight: 900;
+                            letter-spacing: 1.5px; text-transform: uppercase;
+                            margin-bottom: 2px;
+                        ">${isUrgent ? '¡ÚLTIMAS PLAZAS!' : 'INSCRIPCIÓN ABIERTA'}</div>
+                        <div style="
+                            color: #f1f5f9; font-size: 0.85rem; font-weight: 800;
+                            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                        ">${context.tournamentName || 'Americana Open'}</div>
+                        <div style="color: #64748b; font-size: 0.72rem; font-weight: 600; margin-top: 1px;">
+                            ${context.tournamentDate || ''} · ${spotsLeft > 0 ? `${spotsLeft} plazas libres` : 'Completo'}
+                        </div>
+                    </div>
+
+                    <!-- Botón VER DETALLES -->
+                    <button onclick="window.Router.navigate('entrenos'); document.getElementById('inscription-express-banner')?.remove();" style="
+                        background: ${accentColor};
+                        color: #000;
+                        border: none; border-radius: 10px;
+                        padding: 8px 14px;
+                        font-size: 0.7rem; font-weight: 950;
+                        letter-spacing: 0.5px;
+                        cursor: pointer;
+                        white-space: nowrap;
+                        flex-shrink: 0;
+                        box-shadow: 0 0 12px ${accentColor}55;
+                    ">VER →</button>
+
+                    <!-- Botón cerrar -->
+                    <button onclick="
+                        sessionStorage.setItem('${bannerKey}', 'true');
+                        const b = document.getElementById('inscription-express-banner');
+                        if(b) { b.style.opacity='0'; b.style.transform='translateY(-8px)'; b.style.transition='all 0.25s ease'; setTimeout(()=>b.remove(), 260); }
+                    " style="
+                        position: absolute; top: 8px; right: 8px;
+                        background: rgba(255,255,255,0.08);
+                        border: none; border-radius: 50%;
+                        width: 22px; height: 22px;
+                        display: flex; align-items: center; justify-content: center;
+                        color: #94a3b8; font-size: 0.75rem; cursor: pointer;
+                        line-height: 1;
+                    ">✕</button>
+                </div>
+            `;
+
+            // Insertar después del hero-card-root
+            heroRoot.parentNode.insertBefore(banner, heroRoot.nextSibling);
         }
 
         async renderTrendingPlayers() {

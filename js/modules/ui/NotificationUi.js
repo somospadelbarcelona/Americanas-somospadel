@@ -126,6 +126,15 @@ class NotificationUi {
     handleItemClick(id, actionUrl, eventId, action) {
         if (window.NotificationService) window.NotificationService.markAsRead(id);
 
+        if (actionUrl) {
+            this.close();
+            console.log(`🚀 [NotificationUi] Navigating to URL: ${actionUrl}`);
+            if (window.Router) {
+                window.Router.navigate(actionUrl);
+            }
+            return;
+        }
+
         if (eventId) {
             this.close();
             console.log(`🚀 [NotificationUi] Opening event ${eventId} with action: ${action}`);

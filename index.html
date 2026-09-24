@@ -762,6 +762,9 @@
                     </div>
                 </div>
 
+                <!-- DESTACADOS & EN VIVO (2 ESFERAS DINÁMICAS AUTO-ROTATIVAS EN EL HEADER) -->
+                <div id="header-story-rotator" class="header-story-rotator"></div>
+
                 <!-- USER PROFILE DROPDOWN (PRO ATHLETE EDITION) -->
                 <div class="user-dropdown-backdrop" id="user-dropdown-backdrop" onclick="window._toggleUserDropdown(event)"></div>
                 <div class="user-dropdown-container" id="user-dropdown-container">
@@ -928,6 +931,9 @@
                             }
                             if (isOpen) {
                                 window.PlayerView?.haptic?.(20);
+                                if (window.AppInstance && typeof window.AppInstance.updateGlobalHeader === 'function') {
+                                    window.AppInstance.updateGlobalHeader(window.Store ? window.Store.getState('currentUser') : null);
+                                }
                                 if (typeof window.closeDrawer === 'function') {
                                     window.closeDrawer();
                                 } else {
@@ -1235,6 +1241,7 @@
                             { id: 'events', label: 'AMERICANAS', icon: 'fa-trophy' },
                             { id: 'agenda_americanas', label: 'AGENDA', icon: 'fa-calendar-check' },
                             { id: 'help_americanas', label: 'INFO', icon: 'fa-info-circle' },
+                            { id: 'meteo', label: 'CLIMA & RADAR', icon: 'fa-cloud-sun' },
                             { id: 'finished_americanas', label: 'FINALIZADAS', icon: 'fa-history' }
                         ];
 
@@ -2038,8 +2045,8 @@
 
 
             <!-- === WIDGET 2: CONDICIONES / CLIMA === -->
-            <div class="dsb-card">
-                <p class="dsb-card-title"><i class="fas fa-cloud-sun"></i> Condiciones de Juego</p>
+            <div class="dsb-card" onclick="if(window.Router) window.Router.navigate('clima');" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'" title="Ver Radar Táctico y Clima Completo">
+                <p class="dsb-card-title"><i class="fas fa-cloud-sun"></i> Condiciones de Juego <span style="font-size: 0.65rem; color: #38bdf8; margin-left: 6px;"><i class="fas fa-arrow-right"></i></span></p>
                 <div class="dsb-weather-bar">
                     <div>
                         <div style="font-size:1.6rem; font-weight:950; line-height:1;">24°C</div>
@@ -2472,6 +2479,10 @@
                 --item-color: #CCFF00;
                 --item-color-rgb: 204, 255, 0;
             }
+            #nav-entrenos {
+                --item-color: #ff007f;
+                --item-color-rgb: 255, 0, 127;
+            }
             #nav-ranking {
                 --item-color: #ffd700;
                 --item-color-rgb: 255, 215, 0;
@@ -2531,7 +2542,7 @@
             }
 
             .nav-item span {
-                font-size: 0.60rem !important;
+                font-size: 0.54rem !important;
                 font-weight: 850 !important;
                 text-transform: uppercase !important;
                 letter-spacing: 0.35px !important;
@@ -2964,7 +2975,7 @@
                 <!-- 1. ENTRENOS -->
                 <button class="community-opt-btn" onclick="window.selectCommunityOption('entrenos')">
                     <div class="opt-icon-box" style="background: rgba(255, 0, 127, 0.15); border: 1px solid rgba(255, 0, 127, 0.35); color: #ff007f;">
-                        <i class="fas fa-dumbbell"></i>
+                        <i class="nav-pala-icon" style="display:flex;align-items:center;justify-content:center;line-height:1;"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" style="display:inline-block;vertical-align:middle;"><g transform="rotate(35, 12, 12)"><path fill-rule="evenodd" d="M 12 1.2 C 6.5 1.2 4.2 4.6 4.2 9.2 C 4.2 12.3 6.3 14.7 9.2 15.6 L 9.2 16.5 L 10.4 16.5 L 10.4 22.0 L 9.6 22.0 C 9.1 22.0 8.8 22.3 8.8 22.8 C 8.8 23.3 9.1 23.7 9.6 23.7 L 14.4 23.7 C 14.9 23.7 15.2 23.3 15.2 22.8 C 15.2 22.3 14.9 22.0 14.4 22.0 L 13.6 22.0 L 13.6 16.5 L 14.8 16.5 L 14.8 15.6 C 17.7 14.7 19.8 12.3 19.8 9.2 C 19.8 4.6 17.5 1.2 12 1.2 Z M 12 13.2 L 10.4 15.4 L 13.6 15.4 Z M 12 5.0 m -0.75,0 a 0.75,0.75 0 1,0 1.5,0 a 0.75,0.75 0 1,0 -1.5,0 M 9.8 7.1 m -0.75,0 a 0.75,0.75 0 1,0 1.5,0 a 0.75,0.75 0 1,0 -1.5,0 M 12 7.1 m -0.75,0 a 0.75,0.75 0 1,0 1.5,0 a 0.75,0.75 0 1,0 -1.5,0 M 14.2 7.1 m -0.75,0 a 0.75,0.75 0 1,0 1.5,0 a 0.75,0.75 0 1,0 -1.5,0 M 8.4 9.2 m -0.75,0 a 0.75,0.75 0 1,0 1.5,0 a 0.75,0.75 0 1,0 -1.5,0 M 10.8 9.2 m -0.75,0 a 0.75,0.75 0 1,0 1.5,0 a 0.75,0.75 0 1,0 -1.5,0 M 13.2 9.2 m -0.75,0 a 0.75,0.75 0 1,0 1.5,0 a 0.75,0.75 0 1,0 -1.5,0 M 15.6 9.2 m -0.75,0 a 0.75,0.75 0 1,0 1.5,0 a 0.75,0.75 0 1,0 -1.5,0 M 9.8 11.3 m -0.75,0 a 0.75,0.75 0 1,0 1.5,0 a 0.75,0.75 0 1,0 -1.5,0 M 12 11.3 m -0.75,0 a 0.75,0.75 0 1,0 1.5,0 a 0.75,0.75 0 1,0 -1.5,0 M 14.2 11.3 m -0.75,0 a 0.75,0.75 0 1,0 1.5,0 a 0.75,0.75 0 1,0 -1.5,0"/><path d="M 11.2 23.7 C 11.2 25.2 12.8 25.2 12.8 23.7" fill="none" stroke="currentColor" stroke-width="0.8" stroke-linecap="round"/></g></svg></i>
                     </div>
                     <div class="opt-text-box">
                         <div class="opt-title">1. ENTRENOS</div>
@@ -3059,7 +3070,15 @@
                 <span>Americanas</span>
             </div>
 
-            <!-- 3. RANKING (ELO y Clasificación Oficial) -->
+            <!-- 3. ENTRENOS (Convocatorias y sesiones) -->
+            <div class="nav-item haptic-feedback"
+                onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('entrenos')"
+                id="nav-entrenos">
+                <i class="nav-pala-icon" style="display:flex;align-items:center;justify-content:center;line-height:1;"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" style="display:inline-block;vertical-align:middle;"><g transform="rotate(35, 12, 12)"><path fill-rule="evenodd" d="M 12 1.2 C 6.5 1.2 4.2 4.6 4.2 9.2 C 4.2 12.3 6.3 14.7 9.2 15.6 L 9.2 16.5 L 10.4 16.5 L 10.4 22.0 L 9.6 22.0 C 9.1 22.0 8.8 22.3 8.8 22.8 C 8.8 23.3 9.1 23.7 9.6 23.7 L 14.4 23.7 C 14.9 23.7 15.2 23.3 15.2 22.8 C 15.2 22.3 14.9 22.0 14.4 22.0 L 13.6 22.0 L 13.6 16.5 L 14.8 16.5 L 14.8 15.6 C 17.7 14.7 19.8 12.3 19.8 9.2 C 19.8 4.6 17.5 1.2 12 1.2 Z M 12 13.2 L 10.4 15.4 L 13.6 15.4 Z M 12 5.0 m -0.75,0 a 0.75,0.75 0 1,0 1.5,0 a 0.75,0.75 0 1,0 -1.5,0 M 9.8 7.1 m -0.75,0 a 0.75,0.75 0 1,0 1.5,0 a 0.75,0.75 0 1,0 -1.5,0 M 12 7.1 m -0.75,0 a 0.75,0.75 0 1,0 1.5,0 a 0.75,0.75 0 1,0 -1.5,0 M 14.2 7.1 m -0.75,0 a 0.75,0.75 0 1,0 1.5,0 a 0.75,0.75 0 1,0 -1.5,0 M 8.4 9.2 m -0.75,0 a 0.75,0.75 0 1,0 1.5,0 a 0.75,0.75 0 1,0 -1.5,0 M 10.8 9.2 m -0.75,0 a 0.75,0.75 0 1,0 1.5,0 a 0.75,0.75 0 1,0 -1.5,0 M 13.2 9.2 m -0.75,0 a 0.75,0.75 0 1,0 1.5,0 a 0.75,0.75 0 1,0 -1.5,0 M 15.6 9.2 m -0.75,0 a 0.75,0.75 0 1,0 1.5,0 a 0.75,0.75 0 1,0 -1.5,0 M 9.8 11.3 m -0.75,0 a 0.75,0.75 0 1,0 1.5,0 a 0.75,0.75 0 1,0 -1.5,0 M 12 11.3 m -0.75,0 a 0.75,0.75 0 1,0 1.5,0 a 0.75,0.75 0 1,0 -1.5,0 M 14.2 11.3 m -0.75,0 a 0.75,0.75 0 1,0 1.5,0 a 0.75,0.75 0 1,0 -1.5,0"/><path d="M 11.2 23.7 C 11.2 25.2 12.8 25.2 12.8 23.7" fill="none" stroke="currentColor" stroke-width="0.8" stroke-linecap="round"/></g></svg></i>
+                <span>Entrenos</span>
+            </div>
+
+            <!-- 4. RANKING (ELO y Clasificación Oficial) -->
             <div class="nav-item haptic-feedback" 
                 onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('ranking')"
                 id="nav-ranking">
@@ -4633,7 +4652,7 @@
     <script src="js/core/CacheService.js" defer></script>
     <script src="js/core/DatabaseService.js" defer></script>
     <script src="js/core/AuthService.js?v=12.4" defer></script>
-    <script src="js/core/Router.js?v=6.8_FIXED_SUBNAV_MANAGER" defer></script>
+    <script src="js/core/Router.js?v=ENTRENOS_NAV_v2" defer></script>
     <script src="js/core/SmartTicker.js?v=3" defer></script>
     <script src="js/core/UpdateManager.js" defer></script>
 
@@ -4654,8 +4673,8 @@
     <script src="js/app.js?v=3007_NO_FLICKER" defer></script>
     <script src="js/modules/common/WhatsAppService.js?v=9.2_SYNC_COURTS" defer charset="UTF-8"></script>
     <script src="js/fixed-pairs-logic.js?v=5013" defer></script>
-    <script src="js/rotating-pozo-logic.js?v=5013" defer></script>
-    <script src="js/modules/logic/LevelAdjustmentService.js" defer></script>
+    <script src="js/modules/common/LevelService.js?v=3000_CANONICAL" defer></script>
+    <script src="js/modules/logic/LevelAdjustmentService.js?v=3000_CANONICAL" defer></script>
     <script src="js/modules/auth/AuthController.js?v=12.3" defer></script>
     <script src="js/modules/common/PartnerSynergyService.js" defer></script>
     <script src="js/modules/common/PartnerSynergyWidget.js" defer></script>
@@ -4665,7 +4684,7 @@
     <!-- Layer 4: Views & controllers -->
     <!-- Dashboard Components (NEW) -->
     <script src="js/modules/common/WeatherService.js" defer></script>
-    <script src="js/modules/dashboard/HeroCard.js?v=COMPACT_HERO_DUO_v1" defer></script>
+    <script src="js/modules/dashboard/HeroCard.js?v=COMPACT_HERO_DUO_v2" defer></script>
     <script src="js/modules/dashboard/PowerLevelCard.js" defer></script>
     <script src="js/modules/dashboard/QuickStats.js" defer></script>
     <script src="js/modules/dashboard/ActionGrid.js?v=ACTION_GRID_FUT_v4" defer></script>
@@ -4676,10 +4695,10 @@
     <script src="js/modules/dashboard/TacticalCourt3D.js?v=2.0" defer></script>
     <script src="js/modules/dashboard/Tactical3DWidget.js?v=2.0" defer></script>
     <script src="js/modules/dashboard/NewsCatalog.js?v=1.2" defer></script>
-    <script src="js/modules/dashboard/DashboardView_hotfix.js?v=HERO_DUO_ORDER_v1" defer></script>
+    <script src="js/modules/dashboard/DashboardView_hotfix.js?v=SOMOSPADEL_CLEAN_v4" defer></script>
     <script src="js/modules/dashboard/DashboardController.js" defer></script>
     <script src="js/utils/RoleService.js?v=PLAYER_AMERICANAS_v1" defer></script>
-    <script src="js/modules/players/PlayerView.js?v=401" defer></script>
+    <script src="js/modules/players/PlayerView.js?v=402_PADELPULSE" defer></script>
     <script src="js/modules/players/PlayerController.js?v=400" defer></script>
     <script src="js/modules/ui/EventModals.js?v=5.2" defer></script>
     <script src="js/modules/americanas/ControlTowerStandings.js?v=5.3" defer></script>
@@ -4712,8 +4731,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 
     <!-- Ranking Module -->
-    <script src="js/modules/ranking/RankingView.js?v=OFFICIAL_RECALC_V4" defer></script>
-    <script src="js/modules/ranking/RankingController.js?v=OFFICIAL_RECALC_V4" defer></script>
+    <script src="js/modules/ranking/RankingView.js?v=TOP10_ELITE_v2" defer></script>
+    <script src="js/modules/ranking/RankingController.js?v=TOP10_ELITE_v2" defer></script>
 
     <!-- Teams Module -->
     <script src="js/modules/teams/teams_data.js?v=13" defer></script>

@@ -18,7 +18,15 @@
     display: flex !important;
     align-items: center !important;
     min-width: 0 !important; /* Allow shrinking */
-    flex: 1 !important;
+    flex: 0 1 auto !important;
+}
+
+.header-story-rotator {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    margin: 0 auto !important;
 }
 
 .cmd-avatar-container {
@@ -98,13 +106,100 @@
         font-size: 0.85rem !important;
         border-radius: 8px !important;
     }
+    /* Header Story Rotator Capsule (Phones <= 600px) */
+    .header-story-rotator {
+        height: 38px !important;
+        padding: 0 6px !important;
+        border-radius: 12px !important;
+        margin: 0 2px !important;
+        border: 1px solid #e2e8f0 !important;
+        background: #ffffff !important;
+        box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05) !important;
+        box-sizing: border-box !important;
+    }
+    .header-rotator-inner {
+        gap: 6px !important;
+    }
+    .header-rotator-stage {
+        gap: 6px !important;
+        height: 100% !important;
+    }
+    .header-rotator-item {
+        gap: 4px !important;
+        padding: 1px 2px !important;
+    }
+    .header-rotator-sphere-wrap {
+        width: 26px !important;
+        height: 26px !important;
+        padding: 1.5px !important;
+    }
+    .header-rotator-sphere-core i {
+        font-size: 0.68rem !important;
+    }
+    .header-rotator-badge {
+        font-size: 0.38rem !important;
+        padding: 0.5px 2.5px !important;
+        bottom: -2px !important;
+        border-radius: 4px !important;
+    }
+    .header-rotator-label {
+        font-size: 0.58rem !important;
+        max-width: 48px !important;
+        font-weight: 750 !important;
+    }
+    .header-rotator-dots {
+        gap: 2px !important;
+        padding-left: 2px !important;
+        margin-left: 1px !important;
+    }
+    .header-rotator-dot {
+        width: 3px !important;
+        height: 3px !important;
+    }
+    .header-rotator-dot.active {
+        height: 6px !important;
+    }
 }
 
-/* SMALL PHONES (PORTRAIT) */
+/* SMALL PHONES (PORTRAIT <= 414px) */
 @media (max-width: 414px) {
     .cmd-bar {
         padding: 0 8px !important;
         gap: 5px !important;
+    }
+
+    /* Compact Rotator Capsule for small phones */
+    .header-story-rotator {
+        height: 36px !important;
+        padding: 0 5px !important;
+        border-radius: 10px !important;
+        margin: 0 !important;
+    }
+    .header-rotator-inner {
+        gap: 4px !important;
+    }
+    .header-rotator-stage {
+        gap: 5px !important;
+    }
+    .header-rotator-item {
+        gap: 3px !important;
+    }
+    .header-rotator-sphere-wrap {
+        width: 24px !important;
+        height: 24px !important;
+    }
+    .header-rotator-sphere-core i {
+        font-size: 0.62rem !important;
+    }
+    .header-rotator-badge {
+        display: none !important; /* Ocultar micro-badge en <= 414px para máxima pureza */
+    }
+    .header-rotator-label {
+        font-size: 0.52rem !important;
+        max-width: 38px !important;
+    }
+    .header-rotator-dots {
+        display: none !important;
     }
 
     /* Hide redundant badges (flame, trophy) as requested for ultra-polish */
@@ -130,7 +225,25 @@
     }
 }
 
-/* ULTRA TINY SCREENS (iPhone SE, etc.) */
+/* VERY NARROW PHONES (<= 380px) */
+@media (max-width: 380px) {
+    .header-rotator-label {
+        display: none !important; /* Ocultar texto y dejar solo las 2 esferas limpias */
+    }
+    .header-story-rotator {
+        padding: 0 6px !important;
+        gap: 4px !important;
+    }
+    .header-rotator-stage {
+        gap: 6px !important;
+    }
+    .header-rotator-sphere-wrap {
+        width: 24px !important;
+        height: 24px !important;
+    }
+}
+
+/* ULTRA TINY SCREENS (iPhone SE, etc. <= 340px) */
 @media (max-width: 340px) {
     .cmd-brand span[style*="font-size: 1.1rem"] {
         display: none !important; /* Hide "SOMOSPADEL BCN" on tiny screens to fit slogan */
@@ -141,6 +254,28 @@
         font-size: 0.4rem !important;
     }
     
+    .header-story-rotator {
+        height: 34px !important;
+        padding: 0 4px !important;
+        border-radius: 8px !important;
+    }
+    .header-rotator-label {
+        display: none !important; /* Minimal footprint on ultra tiny screens */
+    }
+    .header-rotator-dots {
+        display: none !important;
+    }
+    .header-rotator-stage {
+        gap: 4px !important;
+    }
+    .header-rotator-sphere-wrap {
+        width: 22px !important;
+        height: 22px !important;
+    }
+    .header-rotator-sphere-core i {
+        font-size: 0.58rem !important;
+    }
+
     .cmd-avatar-container #header-user-name {
         max-width: 55px !important;
         font-size: 0.7rem !important;

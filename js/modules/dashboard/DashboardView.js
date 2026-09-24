@@ -42,6 +42,7 @@ console.log("âœ… [v40] DashboardView Loaded Correctly");
             // 1. Get Real User Data
             const user = window.Store ? window.Store.getState('currentUser') : null;
             const userLevel = user ? (user.level || "3.5") : "3.5";
+            const userFirstName = user ? ((user.name || user.displayName || 'Jugador').split(' ')[0]) : 'Jugador';
 
             // Header is updated globally by AppInstance in app.js on user change.
             // We just ensure we have visibility on the level here.
@@ -52,7 +53,175 @@ console.log("âœ… [v40] DashboardView Loaded Correctly");
                 <div class="dashboard-v2-container fade-in full-width-mobile" style="
                     background: #f1f5f9 !important;
                     min-height: 100vh;
-                    padding-top: 0px !important;">
+                    padding-top: 6px !important;">
+
+                    <!-- ⭐ SOMOSPADEL ARENA: PRO ATHLETE QUICK ACCESS HUB ⭐ -->
+                    <div class="sp-playtomic-hub" style="
+                        margin: 8px 15px 16px !important;
+                        background: #ffffff;
+                        border-radius: 26px;
+                        border: 1px solid #e2e8f0;
+                        padding: 18px 16px 16px;
+                        box-shadow: 0 8px 30px rgba(10, 25, 47, 0.05);
+                        animation: floatUp 0.35s ease-out forwards;
+                        position: relative;
+                        overflow: hidden;
+                    ">
+                        <!-- Línea decorativa superior estilo pista SomosPadel -->
+                        <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #CCFF00 0%, #38bdf8 50%, #CCFF00 100%);"></div>
+
+                        <!-- Header SomosPadel: Saludo Directo -->
+                        <div style="margin-bottom: 16px; padding: 4px 2px 0; position: relative; z-index: 2;">
+                            <h2 style="
+                                margin: 0;
+                                font-size: 1.30rem;
+                                font-weight: 950;
+                                color: #0a192f;
+                                letter-spacing: -0.5px;
+                                line-height: 1.2;
+                                display: flex;
+                                align-items: center;
+                                gap: 6px;
+                            ">
+                                <span>¡A la pista, <span id="sp-playtomic-user-name">${userFirstName}</span>!</span>
+                                <span style="font-size: 1.25rem;">🔥</span>
+                            </h2>
+                            <div style="font-size: 0.77rem; color: #64748b; font-weight: 600; margin-top: 3px;">
+                                Elige tu juego y suma victorias esta semana:
+                            </div>
+                        </div>
+
+                        <!-- 4 Botones de Acción con Estilo SomosPadel Pro (Athletic Pods) -->
+                        <div style="
+                            display: grid;
+                            grid-template-columns: repeat(4, 1fr);
+                            gap: 8px;
+                            align-items: start;
+                            text-align: center;
+                            position: relative;
+                            z-index: 2;
+                        ">
+                            <!-- 1. Americanas -->
+                            <div class="sp-playtomic-pill haptic-feedback" 
+                                onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('americanas');"
+                                style="display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative;">
+                                <div style="
+                                    width: 58px;
+                                    height: 58px;
+                                    border-radius: 19px;
+                                    background: linear-gradient(145deg, #090e1a 0%, #17243c 100%);
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    box-shadow: 0 6px 18px rgba(9, 14, 26, 0.25), 0 0 12px rgba(204, 255, 0, 0.15);
+                                    border: 1.5px solid rgba(204, 255, 0, 0.45);
+                                    transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.16s;
+                                    position: relative;
+                                "
+                                onmouseover="this.style.transform='scale(1.08)'; this.style.borderColor='#CCFF00';"
+                                onmouseout="this.style.transform='none'; this.style.borderColor='rgba(204, 255, 0, 0.45)';"
+                                onmousedown="this.style.transform='scale(0.92)';"
+                                onmouseup="this.style.transform='scale(1.08)';">
+                                    <i class="fas fa-trophy" style="font-size: 1.25rem; color: #CCFF00; filter: drop-shadow(0 0 6px rgba(204,255,0,0.4));"></i>
+                                    <span style="position: absolute; top: -5px; right: -5px; background: #ef4444; color: #fff; font-size: 0.50rem; font-weight: 950; padding: 1px 4px; border-radius: 5px; border: 1.5px solid #ffffff; letter-spacing: 0.4px;">TOP</span>
+                                </div>
+                                <span style="margin-top: 7px; font-size: 0.72rem; font-weight: 900; color: #0a192f; line-height: 1.1;">
+                                    Americanas
+                                </span>
+                                <span style="font-size: 0.60rem; color: #64748b; font-weight: 700; margin-top: 1px;">Torneos</span>
+                            </div>
+
+                            <!-- 2. Entrenos -->
+                            <div class="sp-playtomic-pill haptic-feedback" 
+                                onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('entrenos');"
+                                style="display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative;">
+                                <div style="
+                                    width: 58px;
+                                    height: 58px;
+                                    border-radius: 19px;
+                                    background: linear-gradient(145deg, #090e1a 0%, #17243c 100%);
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    box-shadow: 0 6px 18px rgba(9, 14, 26, 0.25), 0 0 12px rgba(56, 189, 248, 0.15);
+                                    border: 1.5px solid rgba(56, 189, 248, 0.45);
+                                    transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.16s;
+                                    position: relative;
+                                "
+                                onmouseover="this.style.transform='scale(1.08)'; this.style.borderColor='#38bdf8';"
+                                onmouseout="this.style.transform='none'; this.style.borderColor='rgba(56, 189, 248, 0.45)';"
+                                onmousedown="this.style.transform='scale(0.92)';"
+                                onmouseup="this.style.transform='scale(1.08)';">
+                                    <i class="fas fa-graduation-cap" style="font-size: 1.25rem; color: #38bdf8; filter: drop-shadow(0 0 6px rgba(56,189,248,0.4));"></i>
+                                    <span style="position: absolute; top: -5px; right: -5px; background: #38bdf8; color: #000; font-size: 0.50rem; font-weight: 950; padding: 1px 4px; border-radius: 5px; border: 1.5px solid #ffffff; letter-spacing: 0.4px;">PISTAS</span>
+                                </div>
+                                <span style="margin-top: 7px; font-size: 0.72rem; font-weight: 900; color: #0a192f; line-height: 1.1;">
+                                    Entrenos
+                                </span>
+                                <span style="font-size: 0.60rem; color: #64748b; font-weight: 700; margin-top: 1px;">Partidos</span>
+                            </div>
+
+                            <!-- 3. Ranking -->
+                            <div class="sp-playtomic-pill haptic-feedback" 
+                                onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('ranking');"
+                                style="display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative;">
+                                <div style="
+                                    width: 58px;
+                                    height: 58px;
+                                    border-radius: 19px;
+                                    background: linear-gradient(145deg, #090e1a 0%, #17243c 100%);
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    box-shadow: 0 6px 18px rgba(9, 14, 26, 0.25), 0 0 12px rgba(251, 191, 36, 0.15);
+                                    border: 1.5px solid rgba(251, 191, 36, 0.45);
+                                    transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.16s;
+                                    position: relative;
+                                "
+                                onmouseover="this.style.transform='scale(1.08)'; this.style.borderColor='#fbbf24';"
+                                onmouseout="this.style.transform='none'; this.style.borderColor='rgba(251, 191, 36, 0.45)';"
+                                onmousedown="this.style.transform='scale(0.92)';"
+                                onmouseup="this.style.transform='scale(1.08)';">
+                                    <i class="fas fa-medal" style="font-size: 1.25rem; color: #fbbf24; filter: drop-shadow(0 0 6px rgba(251,191,36,0.4));"></i>
+                                    <span style="position: absolute; top: -5px; right: -5px; background: #fbbf24; color: #000; font-size: 0.50rem; font-weight: 950; padding: 1px 4px; border-radius: 5px; border: 1.5px solid #ffffff; letter-spacing: 0.4px;">FIP</span>
+                                </div>
+                                <span style="margin-top: 7px; font-size: 0.72rem; font-weight: 900; color: #0a192f; line-height: 1.1;">
+                                    Ranking
+                                </span>
+                                <span style="font-size: 0.60rem; color: #64748b; font-weight: 700; margin-top: 1px;">Puntos</span>
+                            </div>
+
+                            <!-- 4. Mi Equipo -->
+                            <div class="sp-playtomic-pill haptic-feedback" 
+                                onclick="window.PlayerView?.haptic?.(20); window.openMyTeam ? window.openMyTeam() : (window.Router && window.Router.navigate('my_team'));"
+                                style="display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative;">
+                                <div style="
+                                    width: 58px;
+                                    height: 58px;
+                                    border-radius: 19px;
+                                    background: linear-gradient(145deg, #090e1a 0%, #17243c 100%);
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    box-shadow: 0 6px 18px rgba(9, 14, 26, 0.25), 0 0 12px rgba(192, 132, 252, 0.15);
+                                    border: 1.5px solid rgba(192, 132, 252, 0.45);
+                                    transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.16s;
+                                    position: relative;
+                                "
+                                onmouseover="this.style.transform='scale(1.08)'; this.style.borderColor='#c084fc';"
+                                onmouseout="this.style.transform='none'; this.style.borderColor='rgba(192, 132, 252, 0.45)';"
+                                onmousedown="this.style.transform='scale(0.92)';"
+                                onmouseup="this.style.transform='scale(1.08)';">
+                                    <i class="fas fa-users" style="font-size: 1.25rem; color: #c084fc; filter: drop-shadow(0 0 6px rgba(192,132,252,0.4));"></i>
+                                    <span style="position: absolute; top: -5px; right: -5px; background: #CCFF00; color: #000; font-size: 0.50rem; font-weight: 950; padding: 1px 4px; border-radius: 5px; border: 1.5px solid #ffffff; letter-spacing: 0.4px;">2027</span>
+                                </div>
+                                <span style="margin-top: 7px; font-size: 0.72rem; font-weight: 900; color: #0a192f; line-height: 1.1;">
+                                    Mi Equipo
+                                </span>
+                                <span style="font-size: 0.60rem; color: #64748b; font-weight: 700; margin-top: 1px;">Liga Summa</span>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- ① WELCOME HERO — PadelPulse -->
                     <div id="padel-pulse-widget-root" style="animation: floatUp 0.4s ease-out forwards;"></div>
@@ -351,19 +520,7 @@ console.log("âœ… [v40] DashboardView Loaded Correctly");
                         <div id="activity-feed-content" style="display:flex; flex-direction:column; gap:10px;"></div>
                     </div>
 
-                    <!-- â‘¥ RANKING SPOTLIGHT -->
-                    <div id="ranking-spotlight-root" style="margin:0 15px 16px; animation:floatUp 0.8s ease-out forwards;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 4px;">
-                            <div style="font-weight:950; font-size:0.8rem; color:#0a192f; letter-spacing:1px; text-transform:uppercase; display:flex; align-items:center; gap:8px;">
-                                <span style="font-size:1rem;">ðŸ†</span> TOP 10 ELITE
-                            </div>
-                            <div style="font-size:0.65rem; color:#5a8a00; font-weight:950; cursor:pointer;" onclick="window.Router.navigate('ranking')">VER RANKING <i class="fas fa-chevron-right" style="font-size:0.55rem;"></i></div>
-                        </div>
-                        <div id="mvp-spotlight-container" style="margin-bottom:12px;"></div>
-                        <div id="trending-players-list" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:8px; scrollbar-width:none;">
-                            <div style="margin:20px auto; color:#94a3b8;"><i class="fas fa-circle-notch fa-spin"></i></div>
-                        </div>
-                    </div>
+
 
                     <!-- ⚖️ TARJETA OFICIAL: SISTEMA DE PUNTOS Y PONDERACIÓN DEL RANKING -->
                     <div id="points-policy-card-root" style="margin: 0 15px 16px !important; animation: floatUp 0.8s ease-out forwards;">
@@ -459,11 +616,8 @@ console.log("âœ… [v40] DashboardView Loaded Correctly");
                         </div>
                     </div>
 
-                    <!-- â‘¦ STORIES -->
-                    <div id="story-feed-root" style="margin:0 !important; animation:floatUp 0.8s ease-out forwards; padding-top:2px;"></div>
-
-                    <!-- â‘§ CLIMA -->
-                    <div id="weather-widget-root" style="margin:0 15px 12px !important; animation:floatUp 0.9s ease-out forwards;"></div>
+                    <!-- STORIES TRASLADADO AL HEADER (#header-story-rotator) -->
+                    <div id="story-feed-root" style="display:none !important; margin:0 !important; animation:floatUp 0.8s ease-out forwards; padding-top:2px;"></div>
 
                     <!-- â‘¨ POWER LEVEL -->
                     <div id="power-level-root" style="animation:floatUp 0.9s ease-out forwards;"></div>
@@ -574,9 +728,9 @@ console.log("âœ… [v40] DashboardView Loaded Correctly");
                     }
                 } catch (e) { console.error("Weather fetch failed", e); }
 
-                // 2.2 Populate Weather Widget (Cards + Radar)
+                // 2.2 Populate Weather Widget (Reubicado a la seccion Clima & Radar)
                 const weatherRoot = document.getElementById('weather-widget-root');
-                if (weatherRoot) {
+                if (false && weatherRoot) {
                     let weatherHtml = '';
 
                     // Render Cards first

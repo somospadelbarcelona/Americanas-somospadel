@@ -107,10 +107,15 @@
          * Stats generales (sin torneo activo)
          */
         static renderGeneralStats(player) {
+            const stats = (window.Store && typeof window.Store.getState === 'function') ? window.Store.getState('playerStats') : null;
             const level = player.level || player.self_rate_level || '3.5';
-            const matchesPlayed = player.matches_played || 0;
-            const wins = player.wins || 0;
-            const winRate = player.win_rate || (matchesPlayed > 0 ? Math.round((wins / matchesPlayed) * 100) : 0);
+            const matchesPlayed = (stats?.stats?.matches !== undefined && Number(stats?.stats?.matches) > 0)
+                ? stats.stats.matches
+                : (player.matches_played ?? player.total_matches ?? 0);
+            const wins = (stats?.stats?.won !== undefined) ? stats.stats.won : (player.wins || 0);
+            const winRate = (stats?.stats?.winRate !== undefined && stats?.stats?.winRate !== null)
+                ? stats.stats.winRate
+                : (player.win_rate || (matchesPlayed > 0 ? Math.round((wins / matchesPlayed) * 100) : 0));
 
             return `
                 <div style="padding: 0 20px; margin-bottom: 20px;">

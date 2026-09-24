@@ -202,9 +202,13 @@
             if (this.updateInterval) clearInterval(this.updateInterval);
             this.updateInterval = setInterval(() => this.update(), 240000);
 
-            // Escuchar notificaciones en tiempo real
+            // Escuchar notificaciones en tiempo real (debounced 2s para evitar parpadeo)
             if (window.NotificationService && typeof window.NotificationService.onUpdate === 'function') {
-                window.NotificationService.onUpdate(() => this.update());
+                let _tickerNotifDebounce = null;
+                window.NotificationService.onUpdate(() => {
+                    clearTimeout(_tickerNotifDebounce);
+                    _tickerNotifDebounce = setTimeout(() => this.update(), 2000);
+                });
             }
 
             // Escuchar el evento de cambio de campaña
@@ -472,31 +476,32 @@
                 }
             });
 
-            // 4. CLIMA PISTAS (WEATHER & COURT CONDITION)
+            // 4. CLIMA PISTAS (WEATHER & COURT CONDITION - NOVEDAD)
             insights.push({
                 id: 'clima-pistas',
                 category: 'clima',
-                label: 'CLIMA PISTAS',
+                label: '¡NOVEDAD! RADAR & CLIMA',
                 icon: 'fa-cloud-sun',
                 class: 'tag-clima',
-                title: 'Condición de Pistas & Rebote de Bola en Barcelona',
-                text: 'Pistas de Barcelona: humedad controlada, rebote vivo en cristales y juego rápido.',
-                detail: 'El estado meteorológico en Barcelona influye directamente en el comportamiento de la bola y el cristal. Hoy las pistas presentan un bote reactivo óptimo para el juego ofensivo y bajadas de pared agresivas.',
+                title: 'Nuevo Radar Táctico y Clima de Pistas en Americanas & Entrenos',
+                text: 'Nuevo radar en vivo y telemetría de pistas en El Prat y Cornellà. ¡Toca para explorar!',
+                detail: 'Hemos reubicado el radar interactivo de viento y lluvia y la telemetría de pistas a una sección especializada dentro de Americanas y Entrenos, optimizada para consultar las condiciones antes de jugar.',
                 tacticalTip: [
+                    'Ahora accesible en la pestaña CLIMA & RADAR de Americanas y Entrenos.',
                     'Con humedad >70%: la bola cae pesada en el cristal, usa tiros más planos.',
                     'Con temperatura templada (>20°C): la bola vuela más, aprovecha el remate por 3.',
-                    'Vigila la condensación en los cristales en pistas descubiertas al atardecer.'
+                    'Telemetría en tiempo real de pistas centrales en El Prat y Cornellà.'
                 ],
                 action: {
-                    label: 'VER METEO DE PISTAS',
-                    icon: 'fa-temperature-half',
+                    label: 'ABRIR RADAR Y CLIMA',
+                    icon: 'fa-satellite-dish',
                     handler: () => {
-                        if (window.showWeatherDetails) {
+                        if (window.Router) {
+                            window.Router.navigate('clima');
+                        } else if (window.showWeatherDetails) {
                             window.showWeatherDetails();
-                        } else if (window.DashboardView && window.DashboardView.toggleWeatherDetails) {
-                            window.DashboardView.toggleWeatherDetails('EL_PRAT');
-                        } else if (window.NotificationService && window.NotificationService.showToast) {
-                            window.NotificationService.showToast('🌤️ Condiciones en Barcelona ideales para juego ofensivo', 'info');
+                        } else if (window.EventsController) {
+                            window.EventsController.setTab('meteo');
                         }
                     }
                 }

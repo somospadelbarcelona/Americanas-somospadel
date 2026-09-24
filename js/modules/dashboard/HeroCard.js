@@ -21,7 +21,7 @@
             } else if (context.hasMatchThisWeek) {
                 return this.renderWeekPreview(context);
             } else {
-                return this.renderEmptyIcon(context);
+                return '';
             }
         }
 
@@ -608,30 +608,7 @@
          * Reemplaza la tarjeta grande por un indicador discreto
          */
         static renderEmptyIcon(ctx) {
-            return `
-                <div onclick="window.Router.navigate('entrenos')" style="
-                    position: fixed;
-                    bottom: 90px;
-                    right: 20px;
-                    width: 50px;
-                    height: 50px;
-                    background: rgba(255, 255, 255, 0.95);
-                    border: 1px solid rgba(59,130,246,0.3);
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-                    z-index: 999;
-                    backdrop-filter: blur(10px);
-                    animation: floatUp 0.5s ease-out;
-                    cursor: pointer;
-                ">
-                    <div style="font-size: 1.2rem; animation: pulse 3s infinite;">📡</div>
-                    <!-- Badge Notification Dot -->
-                    <div style="position: absolute; top: 0; right: 0; width: 12px; height: 12px; background: #3b82f6; border-radius: 50%; border: 2px solid #0f172a;"></div>
-                </div>
-            `;
+            return '';
         }
 
         /**

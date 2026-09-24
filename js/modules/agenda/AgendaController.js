@@ -61,6 +61,21 @@
                     });
                 });
 
+                // Auto-detectar eventos que ya terminaron y actualizar en Firestore silenciosamente
+                if (window.EventService && typeof window.EventService.autoCheckAndFinishEvents === 'function') {
+                    window.EventService.autoCheckAndFinishEvents(allEvents);
+                }
+
+                // Helper para saber si un evento ha acabado
+                const isFinished = (ev) => {
+                    if (window.EventService && typeof window.EventService.isEventFinished === 'function') {
+                        return window.EventService.isEventFinished(ev);
+                    }
+                    const st = (ev.status || '').toLowerCase();
+                    if (st === 'finished' || st === 'finalizado' || st === 'cancelled') return true;
+                    return false;
+                };
+
                 // Helper para saber si el usuario está inscrito
                 const isUserInEvent = (ev) => {
                     const players = ev.players || ev.registeredPlayers || [];
@@ -78,39 +93,61 @@
                     });
                 };
 
-                const todayStr = new Date().toISOString().split('T')[0];
+                // Normalizar fechas para ordenación fiable
+                allEvents.forEach(ev => {
+                    ev.normDate = window.EventService ? window.EventService.normalizeDate(ev.date) : (ev.date || '');
+                    ev.isFinished = isFinished(ev);
+                });
 
-                // Mis Eventos (Apuntado, hoy o futuros, no finalizados)
-                const myEvents = allEvents.filter(ev => {
-                    if (ev.status === 'finished') return false;
-                    if (ev.date && ev.date < todayStr && ev.status !== 'live') return false;
+                // 1. Mis Eventos Próximos (Apuntado, hoy o futuros, no finalizados)
+                const myUpcomingEvents = allEvents.filter(ev => {
+                    if (ev.isFinished) return false;
                     return isUserInEvent(ev);
-                }).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+                }).sort((a, b) => {
+                    const diffDate = (a.normDate || '').localeCompare(b.normDate || '');
+                    if (diffDate !== 0) return diffDate;
+                    return (a.time || '').localeCompare(b.time || '');
+                });
 
-                // Próximos recomendados (a los que no estoy apuntado aún)
+                // 2. Historial de Mis Eventos Finalizados (Apuntado y ya concluidos)
+                const myFinishedEvents = allEvents.filter(ev => {
+                    if (!ev.isFinished) return false;
+                    return isUserInEvent(ev);
+                }).sort((a, b) => {
+                    // Orden inverso: los más recientes primero
+                    const diffDate = (b.normDate || '').localeCompare(a.normDate || '');
+                    if (diffDate !== 0) return diffDate;
+                    return (b.time || '').localeCompare(a.time || '');
+                });
+
+                // 3. Próximos recomendados (a los que no estoy apuntado aún y NO están acabados)
                 const upcoming = allEvents.filter(ev => {
-                    if (ev.status === 'finished') return false;
-                    if (ev.date && ev.date < todayStr) return false;
+                    if (ev.isFinished) return false;
                     if (isUserInEvent(ev)) return false;
-                    // Si es jugador solo americanas, no recomendar entrenos exclusivos
+                    // Si es jugador solo americanas, no recomendar entrenos exclusivos de equipo
                     if (!isTeamMember && ev.type === 'entreno') return false;
                     return true;
-                }).sort((a, b) => (a.date || '').localeCompare(b.date || '')).slice(0, 4);
+                }).sort((a, b) => {
+                    const diffDate = (a.normDate || '').localeCompare(b.normDate || '');
+                    if (diffDate !== 0) return diffDate;
+                    return (a.time || '').localeCompare(b.time || '');
+                }).slice(0, 4);
 
-                this.activeEvents = myEvents;
+                this.activeEvents = myUpcomingEvents;
+                this.finishedEvents = myFinishedEvents;
 
                 // Renderizar la vista
                 if (window.AgendaView) {
-                    window.AgendaView.render(myEvents, upcoming, user);
+                    window.AgendaView.render(myUpcomingEvents, upcoming, user, myFinishedEvents);
                 }
 
                 // Disparar comprobación de notificaciones automáticas (Push + Pop-up In-App)
-                this.checkEventReminders(myEvents, user);
+                this.checkEventReminders(myUpcomingEvents, user);
 
             } catch (error) {
                 console.error("[AgendaController] Error cargando la agenda:", error);
                 if (window.AgendaView) {
-                    window.AgendaView.render([], [], user);
+                    window.AgendaView.render([], [], user, []);
                 }
             }
         }
@@ -133,17 +170,26 @@
                 const isAmericana = evType === 'americana';
 
                 // Filtrar según el perfil requerido por el usuario:
-                // "si soy de los equipos -> entrenos; americana si soy externo"
                 if (isTeamMember && !isEntreno) {
                     // Puede avisar de ambos, pero prioriza entreno
                 }
 
-                if (!ev.date) continue;
-                const evDate = new Date(`${ev.date}T${ev.time || '10:00'}:00`);
+                let evDate = null;
+                if (window.EventService && typeof window.EventService.getEventTimes === 'function') {
+                    const times = window.EventService.getEventTimes(ev.date, ev.time, ev.time_end);
+                    if (times) evDate = times.start;
+                }
+                if (!evDate) {
+                    const normDate = window.EventService ? window.EventService.normalizeDate(ev.date) : ev.date;
+                    if (!normDate) continue;
+                    evDate = new Date(`${normDate}T${ev.time || '10:00'}:00`);
+                }
+                if (isNaN(evDate.getTime())) continue;
+
                 const diffHours = (evDate - now) / (1000 * 60 * 60);
 
                 // Si es un evento en las próximas 48 horas (o que es hoy)
-                if (diffHours >= -2 && diffHours <= 48) {
+                if (diffHours >= -1 && diffHours <= 48) {
                     const sessionKey = `sp_agenda_popup_${ev.id}_${ev.date}`;
                     if (!sessionStorage.getItem(sessionKey)) {
                         sessionStorage.setItem(sessionKey, 'shown');

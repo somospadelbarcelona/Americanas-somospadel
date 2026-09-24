@@ -19,6 +19,15 @@
             this.hideTimeout = null;
             this._keyListenerAttached = false;
 
+            // Variables de control para el rotador de historias del Header (1 esfera dinámica compacta)
+            this.headerRotatorContainerId = 'header-story-rotator';
+            this.headerCurrentIndex = 0;
+            this.headerRotationTimer = null;
+            this.headerRotationInterval = 3800; // 3.8 segundos por rotación automática
+            this.isHeaderHovered = false;
+            this.isHeaderModalOpen = false;
+            this._headerInitialized = false;
+
             // Historial de historias vistas en la sesión actual
             try {
                 const stored = sessionStorage.getItem('somospadel_viewed_stories');
@@ -29,6 +38,15 @@
 
             // Historias base con paleta de clase mundial y badges icónicos
             this.stories = [
+                {
+                    id: 'clima',
+                    label: 'Radar Clima',
+                    icon: 'fa-cloud-sun',
+                    color: '#06b6d4',
+                    ringGradient: 'linear-gradient(135deg, #38bdf8 0%, #06b6d4 50%, #0284c7 100%)',
+                    coreTint: 'rgba(6, 182, 212, 0.12)',
+                    badge: { text: 'NUEVO', bg: 'linear-gradient(135deg, #0284c7, #06b6d4)', isPulse: true }
+                },
                 {
                     id: 'noticias',
                     label: 'Noticias',
@@ -96,15 +114,22 @@
                     sessionStorage.setItem('somospadel_viewed_stories', JSON.stringify([...this.viewedStories]));
                 } catch (_) {}
 
-                const itemEl = document.querySelector(`.story-v3-item[data-story-id="${storyId}"]`);
-                if (itemEl) {
-                    itemEl.classList.add('story-is-viewed');
-                }
+                const items = document.querySelectorAll(`[data-story-id="${storyId}"]`);
+                items.forEach(el => el.classList.add('story-is-viewed'));
             }
         }
 
         async loadDynamicStories() {
             const dynamicStories = [
+                {
+                    id: 'clima',
+                    label: 'Radar Clima',
+                    icon: 'fa-cloud-sun',
+                    color: '#06b6d4',
+                    ringGradient: 'linear-gradient(135deg, #38bdf8 0%, #06b6d4 50%, #0284c7 100%)',
+                    coreTint: 'rgba(6, 182, 212, 0.12)',
+                    badge: { text: 'NUEVO', bg: 'linear-gradient(135deg, #0284c7, #06b6d4)', isPulse: true }
+                },
                 {
                     id: 'noticias',
                     label: 'Noticias',
@@ -226,13 +251,152 @@
         async render(containerId) {
             this.containerId = containerId || this.containerId;
             const container = document.getElementById(this.containerId);
-            if (!container) return;
 
             await this.loadDynamicStories();
 
             this.injectStyles();
-            this.updateUI();
-            this.setupScrollFade();
+            if (container) {
+                this.updateUI();
+                this.setupScrollFade();
+            }
+
+            // Inicializar y renderizar automáticamente el rotador del header
+            this.renderHeaderRotator();
+        }
+
+        /**
+         * Renderiza e inicializa la esfera auto-rotativa en el header (#header-story-rotator)
+         */
+        renderHeaderRotator(targetId) {
+            const rotRoot = document.getElementById(targetId || this.headerRotatorContainerId);
+            if (!rotRoot) return;
+
+            this.injectStyles();
+
+            // Si aún no se inicializó el listener de hover para el contenedor
+            if (!this._headerInitialized) {
+                rotRoot.addEventListener('mouseenter', () => {
+                    this.isHeaderHovered = true;
+                });
+                rotRoot.addEventListener('mouseleave', () => {
+                    this.isHeaderHovered = false;
+                });
+                this._headerInitialized = true;
+            }
+
+            this.updateHeaderRotatorUI(false);
+            this.startHeaderRotation();
+        }
+
+        /**
+         * Obtiene la historia actual para la esfera del header
+         */
+        getHeaderCurrentStory() {
+            if (!this.stories || this.stories.length === 0) return null;
+            const idx = Math.abs(this.headerCurrentIndex) % this.stories.length;
+            return this.stories[idx];
+        }
+
+        /**
+         * Actualiza el HTML de la esfera única del header con animación pop elástica
+         */
+        updateHeaderRotatorUI(animate = true) {
+            const rotRoot = document.getElementById(this.headerRotatorContainerId);
+            if (!rotRoot) return;
+
+            const story = this.getHeaderCurrentStory();
+            if (!story) return;
+
+            const isViewed = this.viewedStories.has(story.id);
+            const ringGradient = story.ringGradient || 'linear-gradient(135deg, #0ea5e9, #0284c7)';
+            const innerBg = `radial-gradient(circle at 35% 28%, #ffffff 0%, #f8fafc 55%, ${story.coreTint || 'rgba(0,0,0,0.03)'} 100%)`;
+            const badge = story.badge;
+
+            const rawLabel = (story.label || '').split(' ')[0] || '';
+            const displayLabel = rawLabel ? (rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1).toLowerCase()) : '';
+
+            const animClass = animate ? 'header-rotator-anim-enter' : '';
+
+            rotRoot.innerHTML = `
+                <div class="header-rotator-inner">
+                    <div class="header-rotator-stage ${animClass}">
+                        <div class="header-rotator-item ${isViewed ? 'story-is-viewed' : ''}" 
+                             data-story-id="${story.id}"
+                             role="button" 
+                             tabindex="0" 
+                             onclick="window.StoryFeedWidget.onHeaderSphereClick('${story.id}')" 
+                             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.StoryFeedWidget.onHeaderSphereClick('${story.id}');}" 
+                             title="${story.label || displayLabel} - Ver Historia">
+                            
+                            <div class="header-rotator-sphere-wrap" style="background: ${ringGradient};">
+                                <div class="header-rotator-sphere-core" style="background: ${innerBg};">
+                                    <i class="fas ${story.icon}" style="color: ${story.color};"></i>
+                                </div>
+
+                                ${badge ? `
+                                    <div class="header-rotator-badge" style="background: ${badge.bg};">
+                                        ${badge.isPulse ? `<span class="header-rotator-badge-pulse"></span>` : ''}
+                                        ${badge.icon ? `<i class="fas ${badge.icon}" style="font-size:0.42rem;"></i>` : ''}
+                                        <span>${badge.text}</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+
+                            <span class="header-rotator-label">${displayLabel}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        /**
+         * Maneja el clic en la esfera del header
+         */
+        onHeaderSphereClick(storyId) {
+            try {
+                if (navigator.vibrate) navigator.vibrate(15);
+            } catch (_) {}
+            this.showStory(storyId);
+        }
+
+        /**
+         * Inicia el ciclo de auto-rotación cada ~3.8 segundos
+         */
+        startHeaderRotation() {
+            if (this.headerRotationTimer) {
+                clearInterval(this.headerRotationTimer);
+            }
+
+            this.headerRotationTimer = setInterval(() => {
+                // Pausar si el cursor está encima o el modal de historias está abierto
+                if (this.isHeaderHovered || this.isHeaderModalOpen) {
+                    return;
+                }
+
+                this.rotateToNextHeaderStory();
+            }, this.headerRotationInterval);
+        }
+
+        /**
+         * Rota fluidamente a la siguiente historia (1 esfera a la vez)
+         */
+        rotateToNextHeaderStory() {
+            const rotRoot = document.getElementById(this.headerRotatorContainerId);
+            if (!rotRoot || !this.stories || this.stories.length <= 1) return;
+
+            const stage = rotRoot.querySelector('.header-rotator-stage');
+            if (stage) {
+                stage.classList.remove('header-rotator-anim-enter');
+                stage.classList.add('header-rotator-anim-exit');
+
+                setTimeout(() => {
+                    this.headerCurrentIndex = (this.headerCurrentIndex + 1) % this.stories.length;
+                    this.updateHeaderRotatorUI(true);
+                }, 260);
+            } else {
+                this.headerCurrentIndex = (this.headerCurrentIndex + 1) % this.stories.length;
+                this.updateHeaderRotatorUI(true);
+            }
         }
 
         injectStyles() {
@@ -642,6 +806,265 @@
                     from { opacity: 0; transform: translateY(16px); }
                     to { opacity: 1; transform: translateY(0); }
                 }
+
+                /* ══════════════════════════════════════════════════════════════
+                   HEADER STORY ROTATOR - 2 ESFERAS DINÁMICAS AUTO-ROTATIVAS
+                   ══════════════════════════════════════════════════════════════ */
+                /* ══════════════════════════════════════════════════════════════
+                   HEADER STORY ROTATOR - CÁPSULA ARMÓNICA CON 2 ESFERAS DINÁMICAS
+                   ══════════════════════════════════════════════════════════════ */
+                .header-story-rotator {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    position: relative;
+                    flex-shrink: 0;
+                    user-select: none;
+                    -webkit-user-select: none;
+                    height: 46px;
+                    padding: 0 10px;
+                    box-sizing: border-box;
+                    background: #ffffff;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 14px;
+                    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+                    z-index: 100;
+                    overflow: visible;
+                    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+                }
+
+                .header-story-rotator:hover {
+                    border-color: #cbd5e1;
+                    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.09);
+                }
+
+                .header-rotator-inner {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100%;
+                    position: relative;
+                    gap: 8px;
+                }
+
+                .header-rotator-stage {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 10px;
+                    position: relative;
+                    height: 100%;
+                }
+
+                /* Cada elemento es un chip/pill horizontal interactivo */
+                .header-rotator-item {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    text-decoration: none;
+                    cursor: pointer;
+                    outline: none;
+                    -webkit-tap-highlight-color: transparent;
+                    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+                    padding: 2px 4px;
+                    border-radius: 999px;
+                }
+
+                .header-rotator-item:hover {
+                    transform: translateY(-1px) scale(1.04);
+                }
+
+                .header-rotator-item:active {
+                    transform: scale(0.94);
+                    transition: transform 0.12s ease;
+                }
+
+                /* Transiciones de rotación: pop-in y pop-out elásticos */
+                .header-rotator-anim-enter {
+                    animation: headerStoryPopIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+                }
+
+                .header-rotator-anim-exit {
+                    animation: headerStoryPopOut 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
+                }
+
+                @keyframes headerStoryPopIn {
+                    0% {
+                        opacity: 0;
+                        transform: scale(0.75) translateY(6px);
+                        filter: blur(3px);
+                    }
+                    70% {
+                        opacity: 1;
+                        transform: scale(1.03) translateY(-1px);
+                        filter: blur(0);
+                    }
+                    100% {
+                        opacity: 1;
+                        transform: scale(1) translateY(0);
+                    }
+                }
+
+                @keyframes headerStoryPopOut {
+                    0% {
+                        opacity: 1;
+                        transform: scale(1) translateY(0);
+                    }
+                    100% {
+                        opacity: 0;
+                        transform: scale(0.75) translateY(-6px);
+                        filter: blur(3px);
+                    }
+                }
+
+                /* Aro 3D perfectamente dimensionado (30px en desktop) */
+                .header-rotator-sphere-wrap {
+                    position: relative;
+                    width: 30px;
+                    height: 30px;
+                    border-radius: 50%;
+                    padding: 1.8px;
+                    box-sizing: border-box;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.6);
+                    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+                    animation: headerRingBreathe 3.5s ease-in-out infinite alternate;
+                }
+
+                @keyframes headerRingBreathe {
+                    0% {
+                        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+                        filter: brightness(1);
+                    }
+                    100% {
+                        box-shadow: 0 3px 12px rgba(16, 185, 129, 0.25);
+                        filter: brightness(1.06);
+                    }
+                }
+
+                .header-rotator-item:hover .header-rotator-sphere-wrap {
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+                    filter: brightness(1.1);
+                }
+
+                /* Si la historia ya fue vista */
+                .header-rotator-item.story-is-viewed .header-rotator-sphere-wrap {
+                    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 50%, #94a3b8 100%) !important;
+                    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05) !important;
+                    animation: none !important;
+                }
+
+                /* Núcleo esférico con icono centrado */
+                .header-rotator-sphere-core {
+                    width: 100%;
+                    height: 100%;
+                    border-radius: 50%;
+                    background: #ffffff;
+                    border: 1.4px solid #ffffff;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    position: relative;
+                    box-sizing: border-box;
+                    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.9), inset 0 -1px 2px rgba(0, 0, 0, 0.06);
+                    overflow: visible;
+                }
+
+                .header-rotator-sphere-core i {
+                    font-size: 0.78rem;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
+                    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+                }
+
+                .header-rotator-item:hover .header-rotator-sphere-core i {
+                    transform: scale(1.15);
+                }
+
+                /* Micro badge flotante ultra-compacto */
+                .header-rotator-badge {
+                    position: absolute;
+                    bottom: -2.5px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    color: #ffffff;
+                    font-size: 0.42rem;
+                    font-weight: 950;
+                    letter-spacing: 0.2px;
+                    padding: 0.8px 3.5px;
+                    border-radius: 6px;
+                    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 2px;
+                    white-space: nowrap;
+                    z-index: 5;
+                    border: 1px solid #ffffff;
+                    text-transform: uppercase;
+                    line-height: 1;
+                    font-family: 'Outfit', sans-serif;
+                }
+
+                .header-rotator-badge-pulse {
+                    width: 3.5px;
+                    height: 3.5px;
+                    border-radius: 50%;
+                    background: #ffffff;
+                    display: inline-block;
+                    animation: pulseLiveDot 1.2s infinite ease-in-out;
+                }
+
+                /* Micro etiqueta al lado de la esfera (formato chip horizontal) */
+                .header-rotator-label {
+                    font-size: 0.68rem;
+                    font-weight: 800;
+                    color: #0f172a;
+                    letter-spacing: -0.2px;
+                    white-space: nowrap;
+                    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+                    max-width: 68px;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    -webkit-font-smoothing: antialiased;
+                    line-height: 1.1;
+                    transition: color 0.18s ease;
+                }
+
+                .header-rotator-item:hover .header-rotator-label {
+                    color: #0284c7;
+                }
+
+                /* Indicadores de paginación sutiles en la cápsula */
+                .header-rotator-dots {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 3px;
+                    padding-left: 2px;
+                    margin-left: 2px;
+                    border-left: 1px solid #f1f5f9;
+                }
+
+                .header-rotator-dot {
+                    width: 3.5px;
+                    height: 3.5px;
+                    border-radius: 50%;
+                    background: #cbd5e1;
+                    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+                }
+
+                .header-rotator-dot.active {
+                    background: #0ea5e9;
+                    height: 8px;
+                    border-radius: 3px;
+                    box-shadow: 0 0 5px rgba(14, 165, 233, 0.5);
+                }
             `;
             document.head.appendChild(style);
         }
@@ -757,6 +1180,7 @@
             modal.style.pointerEvents = 'auto';
             modal.style.animation = 'storyModalEnter 0.32s both cubic-bezier(0.19, 1, 0.22, 1)';
             modal.style.display = 'flex';
+            this.isHeaderModalOpen = true;
 
             const index = this.stories.findIndex(s => s.id === id);
             if (index === -1) return;
@@ -1212,6 +1636,51 @@
                         </div>
                     `;
                     break;
+                case 'clima':
+                    contentHtml = `
+                        <div style="color: white; width: 100%; max-width: 420px; display: flex; flex-direction: column; animation: enterStoryCard 0.35s ease-out;">
+                            <div style="text-align: center; margin-bottom: 16px;">
+                                <span style="background: rgba(6,182,212,0.18); color: #38bdf8; border: 1px solid rgba(56,189,248,0.35); padding: 4px 14px; border-radius: 50px; font-weight: 950; font-size: 0.65rem; letter-spacing: 0.8px;">TELEMETRÍA & PISTAS</span>
+                                <h2 style="font-size: 1.85rem; font-weight: 950; margin: 8px 0 4px; font-family: 'Outfit', sans-serif;">NUEVO RADAR <span style="color: #38bdf8;">TÁCTICO</span></h2>
+                                <p style="color: rgba(255,255,255,0.6); font-size: 0.75rem; margin: 0; font-weight: 600;">Ahora disponible en Americanas y Entrenos</p>
+                            </div>
+
+                            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;">
+                                <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(56,189,248,0.25); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; gap: 12px;">
+                                    <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(6,182,212,0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <i class="fas fa-satellite-dish" style="color: #38bdf8; font-size: 1.1rem;"></i>
+                                    </div>
+                                    <div>
+                                        <h4 style="margin: 0; font-size: 0.86rem; font-weight: 850; color: white;">Radar Interactivo en Vivo</h4>
+                                        <span style="font-size: 0.68rem; color: rgba(255,255,255,0.6);">Capas de viento, lluvia y presión atmosférica en Barcelona.</span>
+                                    </div>
+                                </div>
+
+                                <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(56,189,248,0.25); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; gap: 12px;">
+                                    <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(6,182,212,0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <i class="fas fa-table-tennis" style="color: #38bdf8; font-size: 1.1rem;"></i>
+                                    </div>
+                                    <div>
+                                        <h4 style="margin: 0; font-size: 0.86rem; font-weight: 850; color: white;">Condiciones de Pistas El Prat & Cornellà</h4>
+                                        <span style="font-size: 0.68rem; color: rgba(255,255,255,0.6);">Humedad en cristal, bote de bola y recomendaciones tácticas.</span>
+                                    </div>
+                                </div>
+
+                                <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(56,189,248,0.25); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; gap: 12px;">
+                                    <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(6,182,212,0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <i class="fas fa-location-arrow" style="color: #38bdf8; font-size: 1.1rem;"></i>
+                                    </div>
+                                    <div>
+                                        <h4 style="margin: 0; font-size: 0.86rem; font-weight: 850; color: white;">¿Dónde encontrarlo?</h4>
+                                        <span style="font-size: 0.68rem; color: rgba(255,255,255,0.6);">En la pestaña <strong>CLIMA & RADAR</strong> de Americanas o Entrenos, y en el menú lateral.</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button onclick="event.stopPropagation(); window.StoryFeedWidget.hideStory(); if (window.Router) { window.Router.navigate('clima'); } else if (window.EventsController) { window.EventsController.setTab('meteo'); }" style="width: 100%; background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%); color: #000; border: none; padding: 13px; border-radius: 14px; font-size: 0.84rem; font-weight: 950; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 14px rgba(56,189,248,0.35);">VER RADAR & CONDICIONES AHORA</button>
+                        </div>
+                    `;
+                    break;
             }
 
             modal.innerHTML = `
@@ -1465,6 +1934,8 @@
                 this.storyTimeout = null;
             }
 
+            this.isHeaderModalOpen = false;
+
             const modal = document.getElementById('story-v3-modal');
             if (modal) {
                 modal.style.pointerEvents = 'none';
@@ -1518,4 +1989,23 @@
 
     window.StoryFeedWidget = new StoryFeedWidget();
     console.log('💎 StoryFeedWidget Pro Elite Edition cargado con éxito');
+
+    // Inicialización automática del Header Story Rotator
+    function initHeaderRotatorAuto() {
+        if (window.StoryFeedWidget && typeof window.StoryFeedWidget.renderHeaderRotator === 'function') {
+            const rotEl = document.getElementById('header-story-rotator');
+            if (rotEl) {
+                window.StoryFeedWidget.renderHeaderRotator('header-story-rotator');
+            }
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initHeaderRotatorAuto);
+    } else {
+        initHeaderRotatorAuto();
+    }
+    // NOTA: NO añadir listener en 'load' — ya se llama arriba si el DOM está listo,
+    // o en DOMContentLoaded si no. Duplicarlo causaría dos setInterval en el rotador.
 })();
+

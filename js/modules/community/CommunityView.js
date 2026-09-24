@@ -242,6 +242,72 @@
                         </div>
                     </div>
 
+                    <!-- 🏆 BANNER INSCRIPCIÓN — Solo jugadores del club (no player_americanas) -->
+                    ${(() => {
+                        try {
+                            const ctx = window._lastDashboardContext;
+                            if (!ctx || !ctx.hasOpenTournament) return '';
+                            const isExternalPlayer = (user?.role === 'player_americanas');
+                            if (isExternalPlayer) return ''; // El externo lo ve en INICIO
+
+                            const spotsLeft = Math.max(0, (ctx.maxPlayers || 16) - (ctx.currentPlayers || 0));
+                            const isUrgent = spotsLeft <= 4 && spotsLeft > 0;
+                            const accentColor = isUrgent ? '#f97316' : '#0ea5e9';
+
+                            return `
+                                <div id="community-inscription-banner" style="
+                                    margin: 14px 16px 4px;
+                                    border-radius: 16px;
+                                    background: linear-gradient(135deg, ${isUrgent ? '#fff7ed' : '#eff6ff'} 0%, ${isUrgent ? '#fed7aa' : '#bfdbfe'} 100%);
+                                    border: 1.5px solid ${accentColor}55;
+                                    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+                                    overflow: hidden;
+                                    position: relative;
+                                ">
+                                    <div style="display: flex; align-items: center; padding: 14px 16px; gap: 12px;">
+                                        <!-- Icono -->
+                                        <div style="
+                                            width: 44px; height: 44px; flex-shrink: 0;
+                                            background: ${accentColor}22;
+                                            border: 1.5px solid ${accentColor}55;
+                                            border-radius: 12px;
+                                            display: flex; align-items: center; justify-content: center;
+                                            font-size: 1.3rem;
+                                        ">${isUrgent ? '🔥' : '🏆'}</div>
+
+                                        <!-- Info -->
+                                        <div style="flex: 1; min-width: 0;">
+                                            <div style="
+                                                color: ${accentColor};
+                                                font-size: 0.58rem; font-weight: 900;
+                                                letter-spacing: 1.5px; text-transform: uppercase;
+                                                margin-bottom: 2px;
+                                            ">${isUrgent ? '¡ÚLTIMAS PLAZAS!' : 'INSCRIPCIÓN ABIERTA'}</div>
+                                            <div style="
+                                                color: #0f172a; font-size: 0.82rem; font-weight: 800;
+                                                white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                                            ">${ctx.tournamentName || 'Americana Open'}</div>
+                                            <div style="color: #64748b; font-size: 0.68rem; font-weight: 600; margin-top: 1px;">
+                                                ${ctx.tournamentDate || ''} · ${spotsLeft > 0 ? `${spotsLeft} plazas libres` : 'Completo'}
+                                            </div>
+                                        </div>
+
+                                        <!-- Botón -->
+                                        <button onclick="window.Router.navigate('entrenos'); document.getElementById('community-inscription-banner')?.remove();" style="
+                                            background: ${accentColor};
+                                            color: white;
+                                            border: none; border-radius: 10px;
+                                            padding: 8px 14px;
+                                            font-size: 0.68rem; font-weight: 950;
+                                            cursor: pointer; white-space: nowrap; flex-shrink: 0;
+                                            box-shadow: 0 4px 12px ${accentColor}44;
+                                        ">VER →</button>
+                                    </div>
+                                </div>
+                            `;
+                        } catch(e) { return ''; }
+                    })()}
+
                     <div id="matches-list" style="padding: 20px;">
                         ${matches.length === 0 ? `
                             <div style="text-align: center; padding: 60px 20px; color: #94a3b8;">

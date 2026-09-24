@@ -88,8 +88,9 @@
                         this.handleGuest();
                     }
                 });
-                window.Store.subscribe('playerStats', () => {
-                    this.loadSideMenu();
+                window.Store.subscribe('playerStats', (stats) => {
+                    const curUser = window.Store ? window.Store.getState('currentUser') : null;
+                    this.updateGlobalHeader(curUser);
                 });
             } else {
                 console.error("❌ Critical: Window.Store not found");
@@ -118,6 +119,7 @@
 
         handleAuthorized() {
             const user = window.Store.getState('currentUser');
+            if (!user) return;
 
             // UPDATE GLOBAL HEADER
             this.updateGlobalHeader(user);
@@ -134,8 +136,26 @@
             const appShell = document.getElementById('app-shell');
             if (appShell) appShell.classList.remove('hidden');
 
-            // NEW: Load Side Menu from DB
-            this.loadSideMenu();
+            // NEW: Load Side Menu from DB (solo una vez)
+            if (!this._sideMenuLoaded) {
+                this._sideMenuLoaded = true;
+                this.loadSideMenu();
+            }
+
+            // Sincronizar estadísticas reales del jugador en segundo plano (con debounce de 30s)
+            const uid = user?.id || user?.uid;
+            const now = Date.now();
+            if (uid && (!this._lastFetchedPlayerDataUid || this._lastFetchedPlayerDataUid !== uid || (now - (this._lastFetchedPlayerDataTime || 0) > 30000))) {
+                this._lastFetchedPlayerDataUid = uid;
+                this._lastFetchedPlayerDataTime = now;
+                try {
+                    if (window.PlayerController && typeof window.PlayerController.fetchPlayerData === 'function') {
+                        window.PlayerController.fetchPlayerData(uid).catch(e => console.warn("Player data preload:", e));
+                    }
+                } catch (e) {
+                    console.warn("PlayerController fetch silent err:", e);
+                }
+            }
 
             // Solo navegar a la ruta inicial si el Router no tiene una ruta activa ya renderizada
             if (window.Router && !window.Router.currentRoute) {
@@ -890,7 +910,9 @@
                     const rawName = currentUser ? (currentUser.name || currentUser.displayName || "Jugador Pro") : "Invitado";
                     const level = currentUser ? parseFloat(currentUser.level || 3.5).toFixed(2) : "3.50";
                     const streak = currentUser ? (currentUser.streak || 0) : 0;
-                    const matches = currentUser ? (currentUser.matches_played || (stats?.stats?.matches) || 0) : 0;
+                    const matches = (stats?.stats?.matches !== undefined && stats?.stats?.matches !== null && Number(stats?.stats?.matches) > 0)
+                        ? stats.stats.matches
+                        : (currentUser ? (currentUser.matches_played ?? currentUser.total_matches ?? 0) : 0);
                     const photoUrl = currentUser ? (currentUser.photo_url || currentUser.photoURL) : null;
                     const initials = rawName.substring(0, 2).toUpperCase();
 
@@ -1039,6 +1061,15 @@
                                         </div>
                                         <span class="drawer-row-title" style="color: #ffffff !important; font-weight: 800; font-size: 0.88rem; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">Marcador de Pista</span>
                                         <span class="drawer-row-badge" style="background: rgba(204, 255, 0, 0.2); color: #CCFF00; border: 1px solid rgba(204, 255, 0, 0.4);">LIVE</span>
+                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
+                                    </div>
+
+                                    <div class="drawer-nav-row" onclick="window.smartNavigate('clima', null)">
+                                        <div class="drawer-row-icon" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.3);">
+                                            <i class="fas fa-cloud-sun"></i>
+                                        </div>
+                                        <span class="drawer-row-title" style="color: #ffffff !important; font-weight: 800; font-size: 0.88rem; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">Clima & Radar de Pistas</span>
+                                        <span class="drawer-row-badge" style="background: rgba(14, 165, 233, 0.2); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.4);">RADAR</span>
                                         <i class="fas fa-chevron-right drawer-row-chevron"></i>
                                     </div>
 
@@ -1205,28 +1236,30 @@
                     `;
                 }
 
-                // B. Render Bottom Dock (Index Navigation)
+                // B. Render Bottom Dock (Index Navigation) - Solo si aún no existe en el DOM
                 if (dockContainer) {
-                    dockContainer.innerHTML = `
-                        <nav class="nav-dock">
-                            <button class="p-nav-item" data-view="dashboard" onclick="window.Router.navigate('dashboard', false, true)">
-                                <div class="nav-icon-box"><i class="fas fa-home"></i></div>
-                                <span>INICIO</span>
-                            </button>
-                            <button class="p-nav-item" data-view="americanas" onclick="window.Router.navigate('americanas')">
-                                <div class="nav-icon-box"><i class="fas fa-trophy"></i></div>
-                                <span>AMERICANAS</span>
-                            </button>
-                            <button class="p-nav-item" data-view="ranking" onclick="window.Router.navigate('ranking')">
-                                <div class="nav-icon-box"><i class="fas fa-chart-line"></i></div>
-                                <span>RANKING</span>
-                            </button>
-                            <button class="p-nav-item" data-view="profile" onclick="window.Router.navigate('profile')">
-                                <div class="nav-icon-box"><i class="fas fa-user"></i></div>
-                                <span>MI PERFIL</span>
-                            </button>
-                        </nav>
-                    `;
+                    if (!dockContainer.querySelector('.nav-dock')) {
+                        dockContainer.innerHTML = `
+                            <nav class="nav-dock">
+                                <button class="p-nav-item" data-view="dashboard" onclick="window.Router.navigate('dashboard', false, true)">
+                                    <div class="nav-icon-box"><i class="fas fa-home"></i></div>
+                                    <span>INICIO</span>
+                                </button>
+                                <button class="p-nav-item" data-view="americanas" onclick="window.Router.navigate('americanas')">
+                                    <div class="nav-icon-box"><i class="fas fa-trophy"></i></div>
+                                    <span>AMERICANAS</span>
+                                </button>
+                                <button class="p-nav-item" data-view="ranking" onclick="window.Router.navigate('ranking')">
+                                    <div class="nav-icon-box"><i class="fas fa-chart-line"></i></div>
+                                    <span>RANKING</span>
+                                </button>
+                                <button class="p-nav-item" data-view="profile" onclick="window.Router.navigate('profile')">
+                                    <div class="nav-icon-box"><i class="fas fa-user"></i></div>
+                                    <span>MI PERFIL</span>
+                                </button>
+                            </nav>
+                        `;
+                    }
                     // Re-trigger visual active state update from Router
                     if (window.Router) window.Router.updateNavUI(window.Router.currentRoute);
                 }
@@ -1502,13 +1535,17 @@
             }
 
             if (headerMatches) {
-                const matches = user ? (user.matches_played || (stats?.stats?.matches) || 0) : 0;
+                const matches = (stats?.stats?.matches !== undefined && stats?.stats?.matches !== null && Number(stats?.stats?.matches) > 0)
+                    ? stats.stats.matches
+                    : (user ? (user.matches_played ?? user.total_matches ?? 0) : 0);
                 headerMatches.innerText = `🎾 ${matches}`;
             }
 
             if (headerWinRate) {
-                const wr = stats?.stats?.winRate || (user?.win_rate) || "--";
-                headerWinRate.innerText = wr !== "--" ? `${wr}%` : "--";
+                const wr = (stats?.stats?.winRate !== undefined && stats?.stats?.winRate !== null)
+                    ? stats.stats.winRate
+                    : ((user?.win_rate !== undefined && user?.win_rate !== null) ? user.win_rate : "--");
+                headerWinRate.innerText = (wr !== "--" && wr !== undefined) ? `${wr}%` : "--";
             }
 
             const updateAvatar = (el) => {

@@ -29,6 +29,18 @@
         }
 
         setState(key, value) {
+            // Guardia de idempotencia: si el valor no ha cambiado, no disparar listeners
+            const prev = this.state[key];
+            if (prev !== undefined && value !== undefined) {
+                try {
+                    if (JSON.stringify(prev) === JSON.stringify(value)) {
+                        return; // Sin cambios reales, omitir propagación
+                    }
+                } catch (e) {
+                    if (prev === value) return;
+                }
+            }
+
             this.state[key] = value;
             if (key === 'currentUser') {
                 window.currentUser = value; // Sincronización global
@@ -44,7 +56,13 @@
             }
             // Notificar suscriptores
             if (this.listeners[key]) {
-                this.listeners[key].forEach(callback => callback(value));
+                this.listeners[key].forEach(callback => {
+                    try {
+                        callback(value);
+                    } catch (err) {
+                        console.error(`[StateManager] Error en listener de ${key}:`, err);
+                    }
+                });
             }
         }
 

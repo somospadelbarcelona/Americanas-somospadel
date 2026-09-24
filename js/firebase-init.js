@@ -26,9 +26,10 @@ window.onerror = function (msg, url, line, col, error) {
 window.addEventListener('unhandledrejection', function (event) {
     const reason = event.reason;
     const msg = (reason && (reason.message || (typeof reason === 'string' ? reason : reason.toString()))) || '';
-    const lowerMsg = msg.toLowerCase();
+    const name = (reason && reason.name) || '';
+    const lowerMsg = (msg + ' ' + name + ' ' + String(reason)).toLowerCase();
 
-    // Silenciar errores benignos propios del ciclo de vida móvil, suspensión de pestañas en iOS Safari o cancelaciones de usuario
+    // Silenciar errores benignos propios del ciclo de vida móvil, suspensión de pestañas en iOS Safari, cuotas de almacenamiento o cancelaciones de usuario
     if (
         lowerMsg.includes('the client has already been terminated') ||
         lowerMsg.includes('failed-precondition') ||
@@ -38,10 +39,27 @@ window.addEventListener('unhandledrejection', function (event) {
         lowerMsg.includes('networkerror') ||
         lowerMsg.includes('failed to fetch') ||
         lowerMsg.includes('load failed') ||
-        lowerMsg.includes('quotaexceedederror')
+        lowerMsg.includes('quota') ||
+        lowerMsg.includes('quotaexceedederror') ||
+        lowerMsg.includes('setitem') ||
+        lowerMsg.includes('storage') ||
+        lowerMsg.includes('exceeded the quota')
     ) {
-        console.warn("⚠️ [unhandledrejection] Error benigno o de ciclo de vida móvil suprimido:", msg);
+        console.warn("⚠️ [unhandledrejection] Error benigno o de storage/red suprimido:", msg);
         if (typeof event.preventDefault === 'function') event.preventDefault();
+
+        // Limpieza de emergencia de localStorage si se agota la cuota
+        if (lowerMsg.includes('quota') || lowerMsg.includes('setitem') || lowerMsg.includes('storage')) {
+            try {
+                for (let i = localStorage.length - 1; i >= 0; i--) {
+                    const key = localStorage.key(i);
+                    if (key && (key.startsWith('firestore_') || (key.startsWith('sp_') && !key.includes('currentUser') && !key.includes('admin')))) {
+                        localStorage.removeItem(key);
+                    }
+                }
+                console.log("🧹 [LocalStorage] Liberada cuota eliminando claves temporales de Firestore/Cache.");
+            } catch (e) { }
+        }
         return;
     }
 
@@ -53,6 +71,16 @@ window.addEventListener('unhandledrejection', function (event) {
         });
     }
 });
+
+// Proactive startup cleanup of stale Firestore target entries in LocalStorage to prevent QuotaExceededError
+try {
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('firestore_targets_') || key.startsWith('firestore_mutations_') || key.startsWith('firestore_clients_'))) {
+            localStorage.removeItem(key);
+        }
+    }
+} catch (e) { }
 
 // Auto-recuperación de Firestore si la pestaña vuelve del segundo plano (ej: tras abrir WhatsApp)
 document.addEventListener('visibilitychange', () => {
@@ -93,7 +121,7 @@ if (typeof window.FIREBASE_CONFIG === 'undefined') {
                     console.log("📦 Firestore persistence enabled");
                 })
                 .catch((err) => {
-                    console.warn("⚠️ Firestore persistence failed to enable (expected under file:// protocol):", err.message);
+                    console.warn("⚠️ Firestore persistence fallback:", err.message);
                 });
         } catch (e) {
             console.warn("⚠️ Sync error enabling Firestore persistence:", e);

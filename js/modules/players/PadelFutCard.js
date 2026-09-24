@@ -32,9 +32,9 @@
             }
 
             // Win rate
-            const matchesCount = stats.matches || (stats.won || 0) + (stats.lost || 0) || 10;
-            const winsCount = stats.won || Math.round(matchesCount * 0.55);
-            const winRate = stats.winRate !== undefined ? stats.winRate : Math.round((winsCount / Math.max(1, matchesCount)) * 100);
+            const matchesCount = stats.matches || (stats.won || 0) + (stats.lost || 0) || user.matches_played || user.total_matches || 10;
+            const winsCount = stats.won !== undefined ? stats.won : (user.wins || Math.round(matchesCount * 0.55));
+            const winRate = stats.winRate !== undefined ? stats.winRate : (user.win_rate !== undefined ? user.win_rate : Math.round((winsCount / Math.max(1, matchesCount)) * 100));
 
             // Cálculo del OVR (Overall Rating entre 60 y 99)
             // Nivel 2.0 = 62, 3.0 = 74, 4.0 = 85, 5.0 = 93, 6.0 = 98

@@ -17,6 +17,9 @@
                 'live': () => this.executeControllerInit('ControlTowerView', 'live', (c) => c.handleLiveRoute()),
                 'live-entreno': () => this.executeControllerInit('EntrenoLiveView', 'live-entreno', (c) => c.handleRoute()),
                 'ranking': () => this.executeControllerInit('RankingController', 'ranking'),
+                'clima': () => this.handleControllerTab('EventsController', 'meteo'),
+                'weather': () => this.handleControllerTab('EventsController', 'meteo'),
+                'meteo': () => this.handleControllerTab('EventsController', 'meteo'),
                 'comunidad': () => this.handleCommunityRoute('teams'),
                 'community': () => this.handleCommunityRoute('teams'),
                 'equipos': () => this.handleCommunityRoute('teams'),
@@ -42,7 +45,7 @@
                 targetRoute = 'equipos';
             }
 
-            this.currentRoute = null; // No bloquear la primera navegación
+            this.currentRoute = targetRoute; // Inicializar con la ruta objetivo (nunca null transitorio)
 
             // Handle browser navigation
             window.onpopstate = (event) => {
@@ -266,7 +269,7 @@
 
             if (isAmericanasOnly) {
                 const blockedRoutes = [
-                    'comunidad', 'community', 'entrenos', 'partidas_abiertas', 'live-entreno', 
+                    'comunidad', 'community', 'partidas_abiertas',
                     'results', 'equipos', 'teams', 'tournaments'
                 ];
                 if (blockedRoutes.includes(route)) {
@@ -298,10 +301,11 @@
             }
 
             console.log(`[Router] Transitioning: ${this.currentRoute} -> ${route} (force: ${force})`);
+            const prevRoute = this.currentRoute;
             this.currentRoute = route;
 
             // === MEMORY & RESOURCE CLEANUP ===
-            this.cleanupPreviousRoute(route);
+            this.cleanupPreviousRoute(prevRoute, route);
 
             // Update UI State
             this.updateNavUI(route);
@@ -335,11 +339,11 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        cleanupPreviousRoute(newRoute) {
-            if (this.currentRoute && this.currentRoute === newRoute) return;
+        cleanupPreviousRoute(prevRoute, newRoute) {
+            if (prevRoute && prevRoute === newRoute) return;
 
             const isCommunity = ['comunidad', 'community', 'equipos', 'teams', 'entrenos', 'partidas_abiertas', 'agenda', 'tournaments', 'my_team', 'records', 'inscriptions', 'inscripciones'].includes(newRoute);
-            const isAmericanas = ['events', 'americanas', 'finished_americanas', 'agenda_americanas', 'help_americanas'].includes(newRoute);
+            const isAmericanas = ['events', 'americanas', 'finished_americanas', 'agenda_americanas', 'help_americanas', 'meteo', 'clima', 'weather'].includes(newRoute);
 
             if (!isCommunity && !isAmericanas) {
                 if (window.SubnavManager) window.SubnavManager.hide();
@@ -350,7 +354,7 @@
             const controllersToCleanup = [
                 { name: 'DashboardView', routes: ['dashboard'] },
                 { name: 'DashboardController', routes: ['dashboard'] },
-                { name: 'EventsController', routes: ['events', 'americanas', 'finished_americanas', 'agenda_americanas', 'help_americanas', 'finished', 'agenda', 'results', 'entrenos', 'partidas_abiertas'] },
+                { name: 'EventsController', routes: ['events', 'americanas', 'finished_americanas', 'agenda_americanas', 'help_americanas', 'finished', 'agenda', 'results', 'entrenos', 'partidas_abiertas', 'meteo', 'clima', 'weather'] },
                 { name: 'ControlTowerView', routes: ['live'] },
                 { name: 'TVView', routes: ['tv'] },
                 { name: 'PlayerController', routes: ['profile'] },
@@ -361,13 +365,13 @@
             ];
 
             // Asegurar que el polling de EventsController se detiene al navegar a cualquier otra sección (ranking, perfil, etc.)
-            const eventsRoutes = ['events', 'americanas', 'finished_americanas', 'agenda_americanas', 'help_americanas', 'finished', 'agenda', 'results', 'entrenos', 'partidas_abiertas'];
+            const eventsRoutes = ['events', 'americanas', 'finished_americanas', 'agenda_americanas', 'help_americanas', 'finished', 'agenda', 'results', 'entrenos', 'partidas_abiertas', 'meteo', 'clima', 'weather'];
             if (!eventsRoutes.includes(newRoute) && window.EventsController && typeof window.EventsController.stopAutoRefreshPolling === 'function') {
                 window.EventsController.stopAutoRefreshPolling();
             }
 
             controllersToCleanup.forEach(ctrl => {
-                if (ctrl.routes.includes(this.currentRoute) && !ctrl.routes.includes(newRoute)) {
+                if (prevRoute && ctrl.routes.includes(prevRoute) && !ctrl.routes.includes(newRoute)) {
                     // Mantener el servicio de fondo de EventsController activo para transiciones instantáneas
                     if (ctrl.name === 'EventsController') {
                         const instance = window.EventsController;
@@ -403,9 +407,11 @@
             document.querySelectorAll('.nav-item').forEach(btn => {
                 const navRoute = btn.id.replace('nav-', '');
                 let effectiveRoute = route;
-                if (['events', 'americanas', 'finished_americanas', 'agenda_americanas', 'help_americanas'].includes(route)) {
+                if (['events', 'americanas', 'finished_americanas', 'agenda_americanas', 'help_americanas', 'meteo', 'clima', 'weather'].includes(route)) {
                     effectiveRoute = 'americanas';
-                } else if (['comunidad', 'community', 'entrenos', 'agenda', 'help', 'finished', 'partidas_abiertas', 'equipos', 'teams', 'tournaments', 'my_team', 'records', 'inscriptions', 'inscripciones'].includes(route)) {
+                } else if (['entrenos', 'live-entreno'].includes(route)) {
+                    effectiveRoute = 'entrenos';
+                } else if (['comunidad', 'community', 'agenda', 'help', 'finished', 'partidas_abiertas', 'equipos', 'teams', 'tournaments', 'my_team', 'records', 'inscriptions', 'inscripciones'].includes(route)) {
                     effectiveRoute = 'community';
                 }
                 const isActive = navRoute === effectiveRoute;
@@ -505,7 +511,7 @@
             try {
                 // 1. Mapeo a secciones principales de negocio
                 let section = route;
-                if (['events', 'americanas', 'finished_americanas', 'agenda_americanas', 'help_americanas'].includes(route)) {
+                if (['events', 'americanas', 'finished_americanas', 'agenda_americanas', 'help_americanas', 'meteo', 'clima', 'weather'].includes(route)) {
                     section = 'americanas';
                 } else if (['entrenos', 'agenda', 'help', 'finished', 'partidas_abiertas'].includes(route)) {
                     section = 'entrenos';

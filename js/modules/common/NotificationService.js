@@ -78,9 +78,11 @@ window.NotificationServiceClass = class NotificationService {
     }
 
     notifySubscribers() {
+        const items = this.getMergedNotifications();
+        this.unreadCount = items.filter(n => !n.read).length;
         const data = {
             count: this.unreadCount,
-            items: this.getMergedNotifications()
+            items: items
         };
         this.callbacks.forEach(cb => cb(data));
     }
@@ -91,6 +93,23 @@ window.NotificationServiceClass = class NotificationService {
     getMergedNotifications() {
         try {
             const combined = [...this.notifications, ...this.chatNotifications];
+
+            // Inyectar notificación de sistema del nuevo Radar & Clima (si no ha sido eliminada por el usuario)
+            const isRadarDeleted = localStorage.getItem('sp_radar_relocated_notif_deleted') === 'true';
+            if (!isRadarDeleted) {
+                const isRadarRead = localStorage.getItem('sp_radar_relocated_notif_read') === 'true';
+                combined.unshift({
+                    id: 'system_radar_clima_relocated',
+                    title: '🌦️ Radar Táctico y Clima de Pistas',
+                    body: 'Nuevo mapa de viento/lluvia y telemetría de pistas en El Prat y Cornellà. ¡Disponible en Americanas y Entrenos!',
+                    timestamp: new Date().toISOString(),
+                    read: isRadarRead,
+                    icon: 'cloud-sun',
+                    data: {
+                        url: 'clima'
+                    }
+                });
+            }
 
             // Ordenar por tiempo (descendente)
             const sorted = combined.sort((a, b) => {
@@ -148,8 +167,11 @@ window.NotificationServiceClass = class NotificationService {
 
                 console.log(`🔔 [NotificationService] Updated: ${this.unreadCount} unread`);
 
-                // NEW: Iniciar observación de chats al cargar notificaciones
-                this.initChatObserver();
+                // Iniciar observación de chats al cargar notificaciones (solo la primera vez)
+                if (!this._chatObserverStarted) {
+                    this._chatObserverStarted = true;
+                    this.initChatObserver();
+                }
 
                 // NEW: Visual feedback for local/dev environment
                 let isFirstLoad = !this.hasLoadedInitialBatch;
@@ -288,8 +310,8 @@ window.NotificationServiceClass = class NotificationService {
                 this.chatUnsubscribes.set(evt.id, unsub);
             });
 
-            // Forzar actualización inicial por si ya había mensajes
-            this.notifySubscribers();
+            // No llamamos notifySubscribers() aquí incondicionalmente — 
+            // solo se notifica dentro del snapshot cuando hay mensajes realmente nuevos (hasNew=true).
         } catch (e) {
             console.warn("💬 [NotificationService] Chat observation failed:", e);
         }
@@ -403,6 +425,12 @@ window.NotificationServiceClass = class NotificationService {
      * Marca una notificación como leída
      */
     async markAsRead(notificationId) {
+        if (notificationId === 'system_radar_clima_relocated') {
+            try { localStorage.setItem('sp_radar_relocated_notif_read', 'true'); } catch (_) {}
+            this.notifySubscribers();
+            return;
+        }
+
         const user = window.auth.currentUser;
         if (!user) return;
 
@@ -424,6 +452,15 @@ window.NotificationServiceClass = class NotificationService {
 
     async deleteNotification(notificationId) {
         console.log("🗑️ [NotificationService] Deleting notification:", notificationId);
+
+        if (notificationId === 'system_radar_clima_relocated') {
+            try {
+                localStorage.setItem('sp_radar_relocated_notif_read', 'true');
+                localStorage.setItem('sp_radar_relocated_notif_deleted', 'true');
+            } catch (_) {}
+            this.notifySubscribers();
+            return;
+        }
 
         // Soporte para borrar chats (solo local)
         if (notificationId.startsWith('chat_')) {
@@ -476,6 +513,10 @@ window.NotificationServiceClass = class NotificationService {
             // Local cleanup
             this.notifications = [];
             this.unreadCount = 0;
+            try {
+                localStorage.setItem('sp_radar_relocated_notif_read', 'true');
+                localStorage.setItem('sp_radar_relocated_notif_deleted', 'true');
+            } catch (_) {}
             this.clearAllNativeNotifications();
             this.notifySubscribers();
         } catch (e) {
@@ -484,8 +525,12 @@ window.NotificationServiceClass = class NotificationService {
     }
 
     async markAllAsRead() {
+        try { localStorage.setItem('sp_radar_relocated_notif_read', 'true'); } catch (_) {}
         const user = window.auth.currentUser;
-        if (!user) return;
+        if (!user) {
+            this.notifySubscribers();
+            return;
+        }
 
         const batch = window.db.batch();
         const unread = this.notifications.filter(n => !n.read);
@@ -499,6 +544,7 @@ window.NotificationServiceClass = class NotificationService {
 
         // Limpiar TODA la bandeja de entrada nativa
         this.clearAllNativeNotifications();
+        this.notifySubscribers();
     }
 
     /**

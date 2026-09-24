@@ -543,12 +543,34 @@
             return `${year}-${month}-${day}`;
         }
 
+        isEventFinished(evt) {
+            if (!evt) return false;
+            if (window.EventService && typeof window.EventService.isEventFinished === 'function') {
+                return window.EventService.isEventFinished(evt);
+            }
+            const st = (evt.status || '').toLowerCase().trim();
+            if (st === 'finished' || st === 'finalizado' || st === 'completed' || st === 'cancelled') return true;
+            const times = this.getEventTimes(evt.date, evt.time, evt.time_end);
+            if (!times) return false;
+            const now = new Date();
+            const todayStr = this.getTodayStr();
+            return (times.normDate && times.normDate < todayStr) || (now >= times.end);
+        }
+
         getAllSortedEvents() {
             const normalize = (d) => {
+                if (window.EventService && typeof window.EventService.normalizeDate === 'function') {
+                    return window.EventService.normalizeDate(d);
+                }
                 if (!d) return '9999-99-99';
                 if (d.includes('/')) {
-                    const [day, month, year] = d.split('/');
-                    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                    const parts = d.split('/').map(p => p.trim());
+                    if (parts.length >= 2) {
+                        const day = parts[0].padStart(2, '0');
+                        const month = parts[1].padStart(2, '0');
+                        const year = parts[2] ? (parts[2].length === 2 ? '20' + parts[2] : parts[2]) : String(new Date().getFullYear());
+                        return `${year}-${month}-${day}`;
+                    }
                 }
                 return d;
             };
@@ -564,24 +586,38 @@
             });
         }
 
-        _parseDate(dateStr, timeStr) {
+        _parseDate(dateStr, timeStr, timeEndStr) {
+            if (window.EventService && typeof window.EventService.getEventTimes === 'function') {
+                return window.EventService.getEventTimes(dateStr, timeStr, timeEndStr);
+            }
             if (!dateStr) return null;
             try {
                 let dateBase = dateStr;
                 if (dateStr.includes('/')) {
-                    const [d, m, y] = dateStr.split('/');
-                    dateBase = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+                    const parts = dateStr.split('/').map(p => p.trim());
+                    if (parts.length >= 2) {
+                        const d = parts[0].padStart(2, '0');
+                        const m = parts[1].padStart(2, '0');
+                        const y = parts[2] ? (parts[2].length === 2 ? '20' + parts[2] : parts[2]) : String(new Date().getFullYear());
+                        dateBase = `${y}-${m}-${d}`;
+                    }
                 }
 
-                const start = timeStr ?
-                    new Date(`${dateBase}T${timeStr.split('-')[0].trim()}:00`) :
-                    new Date(`${dateBase}T00:00:00`);
+                const rawTime = (timeStr || '').split('-')[0].replace(/[^\d:]/g, '').trim() || '10:00';
+                const start = new Date(`${dateBase}T${rawTime.includes(':') ? rawTime : rawTime + ':00'}:00`);
 
-                const end = (timeStr && timeStr.includes('-')) ?
-                    new Date(`${dateBase}T${timeStr.split('-')[1].trim()}:00`) :
-                    new Date(start.getTime() + 120 * 60000);
+                let end;
+                if (timeEndStr) {
+                    const rawEnd = timeEndStr.replace(/[^\d:]/g, '').trim();
+                    end = new Date(`${dateBase}T${rawEnd.includes(':') ? rawEnd : rawEnd + ':00'}:00`);
+                } else if (timeStr && timeStr.includes('-')) {
+                    const rawEnd = timeStr.split('-')[1].replace(/[^\d:]/g, '').trim();
+                    end = new Date(`${dateBase}T${rawEnd.includes(':') ? rawEnd : rawEnd + ':00'}:00`);
+                } else {
+                    end = new Date(start.getTime() + 105 * 60000);
+                }
 
-                return { start, end };
+                return { start, end, normDate: dateBase };
             } catch (e) {
                 console.error("Error parsing date:", dateStr, timeStr, e);
                 return null;
@@ -593,8 +629,8 @@
             return times ? new Date() >= times.start : false;
         }
 
-        getEventTimes(dateStr, timeStr) {
-            return this._parseDate(dateStr, timeStr);
+        getEventTimes(dateStr, timeStr, timeEndStr) {
+            return this._parseDate(dateStr, timeStr, timeEndStr);
         }
 
         checkAutoStartEvents() {
@@ -605,9 +641,10 @@
             ];
 
             const now = new Date();
+            const todayStr = this.getTodayStr();
 
             allEvents.forEach(evt => {
-                const times = this.getEventTimes(evt.date, evt.time);
+                const times = this.getEventTimes(evt.date, evt.time, evt.time_end);
                 if (!times) return;
 
                 const players = evt.players || evt.registeredPlayers || [];
@@ -616,11 +653,11 @@
                 const requiredPlayers = maxCourts * 4;
                 const isFull = players.length >= requiredPlayers;
 
+                // 1. OPEN -> PAIRING (3h antes si está lleno)
                 if (evt.status === 'open' && isFull) {
                     const diffMs = times.start - now;
                     const diffHours = diffMs / (1000 * 60 * 60);
 
-                    // Changed from 4 to 3 hours as per user request
                     if (diffHours <= 3 && diffHours > 0) {
                         console.log(`⏰ [AutoAutomation] OPEN -> PAIRING (3h trigger): ${evt.name}`);
                         if (window.EventService && window.AmericanaService) {
@@ -631,6 +668,7 @@
                     }
                 }
 
+                // 2. OPEN/PAIRING -> LIVE (a la hora de inicio si está lleno)
                 if (evt.status === 'open' || evt.status === 'pairing') {
                     if (now >= times.start && now < times.end) {
                         if (isFull) {
@@ -644,17 +682,20 @@
                     }
                 }
 
-                if (evt.status === 'live' && now >= times.end) {
-                    console.log(`🏁 [AutoAutomation] LIVE -> FINISHED: ${evt.name}`);
+                // 3. CUALQUIER ESTADO ACTIVO (live, open, pairing) -> FINISHED si ya concluyó su horario o fecha
+                const isExpired = (now >= times.end) || (times.normDate && times.normDate < todayStr);
+                if (isExpired && evt.status !== 'finished' && evt.status !== 'cancelled') {
+                    console.log(`🏁 [AutoAutomation] ${evt.status.toUpperCase()} -> FINISHED (horario/fecha superada): ${evt.name}`);
+                    evt.status = 'finished'; // Actualizar de inmediato en memoria
                     if (window.EventService) {
                         window.EventService.updateEvent(evt.type, evt.id, { status: 'finished' })
                             .then(() => {
-                                // 🤖 TRIGGER CAPTAIN ANALYSIS FOR ENTRENOS
+                                // Trigger captain analysis para entrenos
                                 if (evt.type === 'entreno' && window.CaptainView) {
                                     console.log(`🤖 [Captain] Auto-launching post-event analysis for: ${evt.name}`);
                                     setTimeout(() => {
                                         window.CaptainView.open(evt);
-                                    }, 2000); // Small delay to ensure data is synced
+                                    }, 2000);
                                 }
                             })
                             .catch(e => console.error(e));
@@ -671,11 +712,17 @@
                 window.navigator.vibrate(15);
             }
 
-            const isAmericanasSection = ['events', 'agenda_americanas', 'help_americanas', 'finished_americanas'].includes(tabName);
+            if (['events', 'agenda_americanas', 'help_americanas', 'finished_americanas'].includes(tabName)) {
+                this.state.lastSubnavContext = 'americanas';
+            } else if (['entrenos', 'agenda', 'help', 'finished'].includes(tabName)) {
+                this.state.lastSubnavContext = 'entrenos';
+            }
+
+            const isAmericanasSection = ['events', 'agenda_americanas', 'help_americanas', 'finished_americanas'].includes(tabName) || (tabName === 'meteo' && this.state.lastSubnavContext !== 'entrenos');
             if (isAmericanasSection && window.SubnavManager) {
                 window.SubnavManager.renderAmericanas(tabName);
             }
-            const isEntrenosSection = ['entrenos', 'agenda', 'help', 'finished'].includes(tabName);
+            const isEntrenosSection = ['entrenos', 'agenda', 'help', 'finished'].includes(tabName) || (tabName === 'meteo' && this.state.lastSubnavContext === 'entrenos');
             if (isEntrenosSection && window.SubnavManager) {
                 window.SubnavManager.renderCommunity('entrenos');
             }
@@ -832,8 +879,8 @@
                 const todayStr = this.getTodayStr();
                 const events = this.getAllSortedEvents().filter(e => {
                     const isCorrectType = (currentTab === 'entrenos' ? e.type === 'entreno' : e.type === 'americana');
-                    if (e.status === 'finished' || e.status === 'cancelled') return false;
-                    return isCorrectType && (e.status === 'live' || e.normDate >= todayStr);
+                    if (this.isEventFinished(e)) return false;
+                    return isCorrectType;
                 });
 
                 // Check if we already have the grid rendered
@@ -845,12 +892,13 @@
                 }
             }
 
-            const isAmericanasSection = ['events', 'agenda_americanas', 'help_americanas', 'finished_americanas'].includes(this.state.activeTab);
+            const isAmericanasSection = ['events', 'agenda_americanas', 'help_americanas', 'finished_americanas'].includes(this.state.activeTab) || (this.state.activeTab === 'meteo' && this.state.lastSubnavContext !== 'entrenos');
 
             const tabs = isAmericanasSection ? [
                 { id: 'events', label: 'AMERICANAS', icon: 'fa-trophy' },
                 { id: 'agenda_americanas', label: 'AGENDA', icon: 'fa-calendar-check' },
                 { id: 'help_americanas', label: 'INFO', icon: 'fa-info-circle' },
+                { id: 'meteo', label: 'CLIMA & RADAR', icon: 'fa-cloud-sun' },
                 { id: 'finished_americanas', label: 'FINALIZADAS', icon: 'fa-history' }
             ] : [];
 
@@ -1002,16 +1050,18 @@
                     case 'finished_americanas': contentHtml = this.renderFinishedView('americana'); break;
                     case 'help': contentHtml = window.ControlTowerView ? window.ControlTowerView.renderHelpContent() : '<div style="padding:40px; color:white;">Cargando ayuda...</div>'; break;
                     case 'help_americanas': contentHtml = window.ControlTowerView ? window.ControlTowerView.renderHelpContent() : '<div style="padding:40px; color:white;">Cargando ayuda...</div>'; break;
+                    case 'meteo': contentHtml = await this.renderWeatherAndRadarView(); break;
                 }
             }
 
-            const isEntrenosSection = ['entrenos', 'agenda', 'help', 'finished'].includes(this.state.activeTab);
+            const isEntrenosSection = ['entrenos', 'agenda', 'help', 'finished'].includes(this.state.activeTab) || (this.state.activeTab === 'meteo' && this.state.lastSubnavContext === 'entrenos');
             let entrenosSubmenuHtml = '';
             if (isEntrenosSection) {
                 const entrenosTabs = [
                     { id: 'entrenos', label: 'ENTRENOS', icon: 'fa-table-tennis' },
                     { id: 'agenda', label: 'AGENDA', icon: 'fa-calendar-check' },
                     { id: 'help', label: 'INFO', icon: 'fa-info-circle' },
+                    { id: 'meteo', label: 'CLIMA & RADAR', icon: 'fa-cloud-sun' },
                     { id: 'finished', label: 'FINALIZADAS', icon: 'fa-history' }
                 ];
                 entrenosSubmenuHtml = `
@@ -1446,11 +1496,10 @@
                 events = events.filter(e => {
                     const isCorrectType = showBothTypes ? true : (onlyEntrenos ? e.type === 'entreno' : e.type === 'americana');
 
-                    // Si el evento está finalizado o anulado, no va en esta pestaña
-                    if (e.status === 'finished' || e.status === 'cancelled') return false;
+                    // Si el evento está finalizado o vencido por fecha/horario, no va en eventos activos
+                    if (this.isEventFinished(e)) return false;
 
-                    if (e.status === 'live') return isCorrectType;
-                    return e.normDate >= todayStr && isCorrectType;
+                    return isCorrectType;
                 });
             } else if (onlyMine) {
                 if (!uid) return '<div style="text-align:center; padding:40px; color:#888;">Debes iniciar sesión.</div>';
@@ -1917,16 +1966,15 @@
                         : (e.type === 'entreno' || e.name?.toUpperCase().includes('ENTRENO'));
                     if (!isType) return false;
                 }
-                if (e.status === 'finished') return false;
-                if (e.normDate < todayStr && e.status !== 'live') return false;
+                if (this.isEventFinished(e)) return false;
                 const players = e.players || e.registeredPlayers || [];
                 return players.some(p => p.uid === uid || p.id === uid);
             });
 
-            // Eventos con plazas abiertas recomendados si la agenda está libre
+            // Eventos con plazas abiertas recomendados si la agenda está libre (solo activos y no finalizados)
             const availableEvents = allSorted.filter(e => {
+                if (this.isEventFinished(e)) return false;
                 if (!['open', 'upcoming', 'scheduled'].includes(e.status)) return false;
-                if (e.normDate < todayStr) return false;
                 const players = e.players || e.registeredPlayers || [];
                 return !players.some(p => p.uid === uid || p.id === uid);
             }).slice(0, 3);
@@ -2072,12 +2120,265 @@
             `;
         }
 
+        async renderWeatherAndRadarView() {
+            let weatherData = [];
+            if (window.WeatherService) {
+                try {
+                    weatherData = await window.WeatherService.getDashboardWeather();
+                } catch (e) {
+                    console.error("[EventsController] Error obteniendo datos del tiempo:", e);
+                }
+            }
+
+            if (!weatherData || weatherData.length === 0) {
+                weatherData = [
+                    {
+                        name: 'EL PRAT',
+                        temp: 22,
+                        icon: '🌙',
+                        condition: 'Despejado',
+                        wind: 12,
+                        humidity: 58,
+                        rainProb: 0,
+                        uv: 0,
+                        pressure: 1016,
+                        visibility: 10,
+                        isPropitious: true,
+                        intelligence: {
+                            score: 100,
+                            ballSpeed: 'RÁPIDA (+12%)',
+                            gripStatus: 'ÓPTIMO (92%)',
+                            recommendation: 'Condiciones excelentes en El Prat. Bote vivo y cristales secos ideales para remates x3 y salidas de pared agresivas.'
+                        }
+                    },
+                    {
+                        name: 'CORNELLÀ',
+                        temp: 20,
+                        icon: '🌙',
+                        condition: 'Despejado',
+                        wind: 10,
+                        humidity: 62,
+                        rainProb: 0,
+                        uv: 0,
+                        pressure: 1016,
+                        visibility: 10,
+                        isPropitious: true,
+                        intelligence: {
+                            score: 100,
+                            ballSpeed: 'MEDIA-ALTA (+8%)',
+                            gripStatus: 'ÓPTIMO (95%)',
+                            recommendation: 'Excelente temperatura y agarre en Cornellà. La bola mantiene buena presión y el césped ofrece tracción máxima.'
+                        }
+                    }
+                ];
+            }
+
+            let cardsHtml = '';
+            weatherData.forEach(w => {
+                const safeCityId = (w.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "-");
+                const intel = w.intelligence || { score: 100, ballSpeed: 'Óptima', gripStatus: 'Óptimo', recommendation: 'Condiciones de pista favorables para jugar.' };
+                const isPropitious = w.isPropitious !== false;
+                const statusLabel = isPropitious ? 'ÓPTIMO' : 'ADVERSO';
+                const statusColor = isPropitious ? '#00E36D' : '#FF2D55';
+                const rainProb = parseInt(w.rainProb) || 0;
+                const isRaining = rainProb > 30;
+
+                let cardBg = isRaining 
+                    ? 'linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%)' 
+                    : (isPropitious ? 'linear-gradient(135deg, #2d4f13 0%, #063122 100%)' : 'linear-gradient(135deg, #334155 0%, #0f172a 100%)');
+
+                cardsHtml += `
+                    <div style="
+                        background: ${cardBg};
+                        border: 1px solid rgba(255,255,255,0.12);
+                        border-radius: 28px;
+                        padding: 22px 18px;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 12px;
+                        box-shadow: 0 16px 36px rgba(0,0,0,0.5);
+                        position: relative;
+                        overflow: hidden;
+                        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+                    ">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 2;">
+                            <div style="font-size: 3.2rem; line-height: 1; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));">${w.icon || '☀️'}</div>
+                            <div style="text-align: right;">
+                                <div style="background: rgba(0,0,0,0.4); color: ${statusColor}; padding: 5px 12px; border-radius: 10px; font-size: 0.65rem; font-weight: 950; border: 1px solid ${statusColor}50; margin-bottom: 4px; display: inline-block;">${statusLabel}</div>
+                                <div style="font-size: 0.62rem; color: #ffffff; opacity: 0.75; font-weight: 800; letter-spacing: 0.8px;">SCORE ${intel.score || 100}%</div>
+                            </div>
+                        </div>
+
+                        <div style="position: relative; z-index: 2; margin-top: 6px; display: flex; justify-content: space-between; align-items: flex-end;">
+                            <div>
+                                <div style="color: #ffffff; font-weight: 950; font-size: 2.6rem; line-height: 0.95; letter-spacing: -1.5px;">${w.temp}°C</div>
+                                <div style="color: rgba(255,255,255,0.8); font-size: 0.78rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 6px;">${w.name}</div>
+                            </div>
+                            <button onclick="event.stopPropagation(); window.toggleWeatherDetails('${safeCityId}')" 
+                                    id="weather-btn-${safeCityId}" 
+                                    style="background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.25); color: white; border-radius: 12px; padding: 7px 12px; font-size: 0.65rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.2s; backdrop-filter: blur(6px);">
+                                Ver más <i class="fas fa-chevron-down" id="weather-icon-${safeCityId}"></i>
+                            </button>
+                        </div>
+
+                        <div id="weather-details-${safeCityId}" style="display: none; flex-direction: column; gap: 8px; margin-top: 10px; background: rgba(0, 0, 0, 0.35); border-radius: 16px; padding: 12px 14px; border: 1px solid rgba(255,255,255,0.08); position: relative; z-index: 2;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 6px;">
+                                <span style="font-size: 0.58rem; color: rgba(255,255,255,0.65); font-weight: 800; text-transform: uppercase; display:flex; align-items:center; gap:5px;"><i class="fas fa-bolt" style="color:#fbbf24;"></i> VELOCIDAD BOLA</span>
+                                <span style="font-size: 0.68rem; color: #fbbf24; font-weight: 950;">${intel.ballSpeed || '--'}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 6px;">
+                                <span style="font-size: 0.58rem; color: rgba(255,255,255,0.65); font-weight: 800; text-transform: uppercase; display:flex; align-items:center; gap:5px;"><i class="fas fa-wind" style="color:#0ea5e9;"></i> VIENTO</span>
+                                <span style="font-size: 0.68rem; color: white; font-weight: 900;">${w.wind} km/h</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 6px;">
+                                <span style="font-size: 0.58rem; color: rgba(255,255,255,0.65); font-weight: 800; text-transform: uppercase; display:flex; align-items:center; gap:5px;"><i class="fas fa-tint" style="color:#38bdf8;"></i> HUMEDAD</span>
+                                <span style="font-size: 0.68rem; color: white; font-weight: 900;">${w.humidity}%</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 0.58rem; color: rgba(255,255,255,0.65); font-weight: 800; text-transform: uppercase; display:flex; align-items:center; gap:5px;"><i class="fas fa-hand-rock" style="color:#00E36D;"></i> AGARRE PISTA</span>
+                                <span style="font-size: 0.68rem; color: #00E36D; font-weight: 950;">${intel.gripStatus || 'ÓPTIMO'}</span>
+                            </div>
+                        </div>
+
+                        <div id="weather-insight-${safeCityId}" style="display: none; margin-top: 8px; padding: 10px 12px; background: rgba(0,0,0,0.3); border-radius: 12px; border-left: 3px solid ${statusColor};">
+                            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                                <i class="fas fa-brain" style="font-size: 0.6rem; color: ${statusColor};"></i>
+                                <span style="font-size: 0.55rem; font-weight: 950; color: ${statusColor}; letter-spacing: 0.5px; text-transform: uppercase;">INSIGHT TÁCTICO</span>
+                            </div>
+                            <p style="margin: 0; font-size: 0.68rem; color: rgba(255,255,255,0.8); font-weight: 600; line-height: 1.4;">
+                                ${intel.recommendation || ''}
+                            </p>
+                        </div>
+                    </div>
+                `;
+            });
+
+            return `
+                <div class="weather-and-radar-container" style="max-width: 1000px; margin: 0 auto; padding: 0 16px 40px; box-sizing: border-box; animation: fadeIn 0.3s ease-out;">
+                    <!-- Cabecera de Sección -->
+                    <div style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%); border: 1.5px solid rgba(255, 255, 255, 0.1); border-radius: 24px; padding: 20px 22px; margin-bottom: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.35); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                                <span style="background: rgba(204, 255, 0, 0.15); color: #CCFF00; padding: 4px 10px; border-radius: 8px; font-size: 0.65rem; font-weight: 950; letter-spacing: 0.5px; text-transform: uppercase;">
+                                    <i class="fas fa-satellite-dish" style="margin-right: 4px;"></i> LIVE TELEMETRY
+                                </span>
+                                <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.62rem; color: #00E36D; font-weight: 900;">
+                                    <span style="width: 7px; height: 7px; background: #00E36D; border-radius: 50%; box-shadow: 0 0 8px #00E36D;"></span> TIEMPO REAL
+                                </span>
+                            </div>
+                            <h2 style="margin: 0; color: #ffffff; font-size: 1.35rem; font-weight: 950; letter-spacing: -0.5px;">Condiciones de Pista & Radar</h2>
+                            <p style="margin: 4px 0 0 0; color: #94a3b8; font-size: 0.78rem; font-weight: 600;">Sedes oficiales SomosPadel: El Prat de Llobregat y Cornellà</p>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button onclick="window.Router?.navigate('americanas')" style="background: rgba(204,255,0,0.12); border: 1px solid rgba(204,255,0,0.35); color: #CCFF00; padding: 8px 14px; border-radius: 12px; font-size: 0.72rem; font-weight: 900; cursor: pointer; transition: all 0.2s;">
+                                🏆 Americanas
+                            </button>
+                            <button onclick="window.Router?.navigate('entrenos')" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #ffffff; padding: 8px 14px; border-radius: 12px; font-size: 0.72rem; font-weight: 900; cursor: pointer; transition: all 0.2s;">
+                                🎾 Entrenos
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tarjetas de las 2 Sedes -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-bottom: 22px;">
+                        ${cardsHtml}
+                    </div>
+
+                    <!-- Radar Táctico WAR ROOM Windy -->
+                    <div style="position: relative; border-radius: 28px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.12); background: #0f172a; box-shadow: 0 20px 45px rgba(0,0,0,0.6); margin-bottom: 22px;">
+                        <div style="background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%); padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <i class="fas fa-radar" style="color: #CCFF00; font-size: 0.9rem;"></i>
+                                <span style="font-size:0.8rem; font-weight:950; color:white; letter-spacing:0.5px;">RADAR METEOROLÓGICO <span style="color:#CCFF00;">WAR ROOM</span></span>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <button onclick="window.toggleTacticalHUD()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.22); color: #fff; padding: 6px 12px; border-radius: 10px; font-size: 0.65rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;">
+                                    <i class="fas fa-eye"></i> TACTICAL HUD
+                                </button>
+                                <span style="width:8px; height:8px; background:#00E36D; border-radius:50%; box-shadow: 0 0 10px #00E36D;"></span>
+                                <span style="font-size:0.62rem; color: #00E36D; font-weight: 900; letter-spacing:1px;">SCANNING</span>
+                            </div>
+                        </div>
+
+                        <div style="width: 100%; height: 350px; position: relative;">
+                            <iframe width="100%" height="100%" src="https://embed.windy.com/embed2.html?lat=41.320&lon=2.040&zoom=10&level=surface&overlay=radar&product=radar&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1" frameborder="0" style="filter: contrast(1.1) brightness(0.85) grayscale(0.2);" loading="lazy"></iframe>
+                            
+                            <!-- Overlay oscuro y viñeteado -->
+                            <div style="pointer-events:none; position:absolute; inset:0; box-shadow: inset 0 0 60px rgba(0,0,0,0.85); background: radial-gradient(circle at 50% 50%, transparent 65%, rgba(204,255,0,0.03) 100%);"></div>
+
+                            <!-- HUD Grip -->
+                            <div id="tactical-hud-grip" style="position:absolute; top:16px; left:16px; background:rgba(10,15,28,0.92); backdrop-filter:blur(16px); padding:10px 14px; border-radius:12px; border-left:3.5px solid #00E36D; pointer-events:none; display: none; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
+                                <div style="font-size:0.52rem; color:#94a3b8; font-weight:900; text-transform:uppercase; letter-spacing:1px;">ESTADO DE PISTA</div>
+                                <div style="font-size:0.82rem; color:#fff; font-weight:1000;">GRIP: <span style="color:#00E36D;">ÓPTIMO (92%)</span></div>
+                                <div style="font-size:0.5rem; color:rgba(255,255,255,0.5); font-weight:700; margin-top:3px;">Riesgo pista húmeda: Bajo (&lt;10%)</div>
+                            </div>
+
+                            <!-- HUD Bounce -->
+                            <div id="tactical-hud-bounce" style="position:absolute; top:16px; right:16px; background:rgba(10,15,28,0.92); backdrop-filter:blur(16px); padding:10px 14px; border-radius:12px; border-right:3.5px solid #CCFF00; pointer-events:none; text-align:right; display: none; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
+                                <div style="font-size:0.52rem; color:#94a3b8; font-weight:900; text-transform:uppercase; letter-spacing:1px;">INTELIGENCIA BOLA</div>
+                                <div style="font-size:0.82rem; color:#fff; font-weight:1000;">REBOTE: <span style="color:#CCFF00;">VIVO (+12%)</span></div>
+                                <div style="font-size:0.5rem; color:rgba(255,255,255,0.5); font-weight:700; margin-top:3px;">Presión y reactividad en cristal</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Consejos Tácticos de Pádel según Clima -->
+                    <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: 22px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.3);">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                            <i class="fas fa-lightbulb" style="color: #CCFF00; font-size: 0.9rem;"></i>
+                            <span style="color: #ffffff; font-weight: 950; font-size: 0.85rem; letter-spacing: 0.3px; text-transform: uppercase;">
+                                Claves de Juego según el Clima en Barcelona
+                            </span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px;">
+                            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 14px; padding: 12px 14px;">
+                                <div style="color: #38bdf8; font-weight: 900; font-size: 0.75rem; margin-bottom: 4px;">💧 Humedad y Cristales</div>
+                                <div style="color: #94a3b8; font-size: 0.7rem; line-height: 1.45; font-weight: 600;">
+                                    Si la humedad supera el 70%, la bola resbala en los cristales y cae más rápido. Juega con golpes más planos y anticipa la bajada.
+                                </div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 14px; padding: 12px 14px;">
+                                <div style="color: #facc15; font-weight: 900; font-size: 0.75rem; margin-bottom: 4px;">☀️ Temperatura y Presión</div>
+                                <div style="color: #94a3b8; font-size: 0.7rem; line-height: 1.45; font-weight: 600;">
+                                    Con temperaturas templadas (&gt;20°C) la goma de la pala y el aire interno de la bola se expanden, facilitando remates por 3 y mayor pegada.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        toggleWeatherDetails(safeCityId) {
+            const details = document.getElementById(`weather-details-${safeCityId}`);
+            const insight = document.getElementById(`weather-insight-${safeCityId}`);
+            const icon = document.getElementById(`weather-icon-${safeCityId}`);
+            if (details) {
+                const isHidden = details.style.display === 'none' || !details.style.display;
+                details.style.display = isHidden ? 'flex' : 'none';
+                if (insight) insight.style.display = isHidden ? 'block' : 'none';
+                if (icon) {
+                    icon.className = isHidden ? 'fas fa-chevron-up' : 'fas fa-chevron-down';
+                }
+            }
+        }
+
+        toggleTacticalHUD() {
+            const grip = document.getElementById('tactical-hud-grip');
+            const bounce = document.getElementById('tactical-hud-bounce');
+            if (grip && bounce) {
+                const isVisible = grip.style.display === 'block';
+                grip.style.display = isVisible ? 'none' : 'block';
+                bounce.style.display = isVisible ? 'none' : 'block';
+            }
+        }
+
         renderFinishedView(typeFilter = null) {
             const todayStr = this.getTodayStr();
             const { month, category } = this.state.filters;
             const isAmericana = typeFilter === 'americana';
             
-            // ✅ Logic: Archive includes explicitly finished/cancelled events OR events that have passed the today marker
+            // ✅ Logic: Archive includes explicitly finished/cancelled events OR events that have passed date/time
             let finishedEvents = this.getAllSortedEvents().filter(e => {
                 if (typeFilter) {
                     const isType = isAmericana 
@@ -2085,9 +2386,7 @@
                         : (e.type === 'entreno' || e.name?.toUpperCase().includes('ENTRENO'));
                     if (!isType) return false;
                 }
-                const isPast = e.normDate && e.normDate < todayStr && e.normDate !== '9999-99-99';
-                const isExplicitlyFinished = e.status === 'finished' || e.status === 'cancelled';
-                return isExplicitlyFinished || isPast;
+                return this.isEventFinished(e);
             });
             
             const totalCount = finishedEvents.length;
@@ -2112,7 +2411,7 @@
             });
 
             // Custom Dark Filter Bar for Premium View
-            const monthsRaw = this.getAvailableMonths(this.getAllSortedEvents().filter(e => e.status === 'finished' || e.status === 'cancelled' || (e.normDate && e.normDate < todayStr)));
+            const monthsRaw = this.getAvailableMonths(this.getAllSortedEvents().filter(e => this.isEventFinished(e)));
             // ✅ Reorder: Newest month first (so it appears 2nd after 'Historial Completo')
             const months = monthsRaw.sort((a, b) => b.localeCompare(a));
             
@@ -7067,4 +7366,13 @@
 
     window.EventsController = new EventsController();
     window.renderClubBenefitsModal = () => window.EventsController?.renderClubBenefitsModal();
+
+    window.toggleWeatherDetails = (id) => {
+        if (window.EventsController?.toggleWeatherDetails) window.EventsController.toggleWeatherDetails(id);
+        else if (window.DashboardView?.toggleWeatherDetails) window.DashboardView.toggleWeatherDetails(id);
+    };
+    window.toggleTacticalHUD = () => {
+        if (window.EventsController?.toggleTacticalHUD) window.EventsController.toggleTacticalHUD();
+        else if (window.DashboardView?.toggleTacticalHUD) window.DashboardView.toggleTacticalHUD();
+    };
 })();

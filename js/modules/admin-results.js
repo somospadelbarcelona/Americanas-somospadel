@@ -957,13 +957,16 @@ window.Actions = {
     },
 
     async recalculateLevels() {
-        if (!confirm("⚠️ ¿Recalcular niveles ELO de TODOS los jugadores?\n\nEste proceso escanea todos los partidos finalizados y ajusta los niveles para corregir posibles desviaciones.")) return;
-
-        if (window.LevelAdjustmentService && window.LevelAdjustmentService.recalculateAllLevels) {
-            await window.LevelAdjustmentService.recalculateAllLevels();
-        } else {
-            alert("Error: LevelAdjustmentService no disponible.");
+        if (!window.LevelService || !window.LevelService.recalculateAllLevels) {
+            if (window.PremiumModal) {
+                window.PremiumModal.alert({ title: "❌ ERROR", message: "Motor de niveles ELO Pro no disponible. Recarga la página.", type: 'error' });
+            } else {
+                alert("Error: Motor de niveles no disponible.");
+            }
+            return;
         }
+        // Delegar en el motor canónico (incluye su propio diálogo de confirmación)
+        await window.LevelService.recalculateAllLevels({ silent: false });
     },
 
     async simulateRound() {
@@ -1267,11 +1270,11 @@ window.Actions = {
     },
 
     async recalculateLevels() {
-        if (window.LevelAdjustmentService) {
-            await LevelAdjustmentService.recalculateAllLevels();
-        } else {
-            alert("Error: LevelAdjustmentService no disponible.");
+        if (!window.LevelService || !window.LevelService.recalculateAllLevels) {
+            alert("Error: Motor de niveles ELO Pro no disponible.");
+            return;
         }
+        await window.LevelService.recalculateAllLevels({ silent: false });
     },
 
     switchRound(r) {

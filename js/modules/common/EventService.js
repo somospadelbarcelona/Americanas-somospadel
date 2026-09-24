@@ -151,6 +151,170 @@ window.EventService = {
         if (type !== 'americana' && type !== 'entreno') {
             throw new Error(`Invalid Event Type: ${type}`);
         }
+    },
+
+    /**
+     * Normaliza cualquier formato de fecha a 'YYYY-MM-DD'
+     * Soporta: '2026-09-24', '24/09/2026', '24/09/26', '24/09'
+     */
+    normalizeDate(d) {
+        if (!d) return '';
+        if (typeof d !== 'string') {
+            try {
+                if (d.toDate && typeof d.toDate === 'function') {
+                    d = d.toDate().toISOString().split('T')[0];
+                } else if (d instanceof Date) {
+                    d = d.toISOString().split('T')[0];
+                } else {
+                    d = String(d);
+                }
+            } catch (err) {
+                return '';
+            }
+        }
+        d = d.trim();
+        if (d.includes('/')) {
+            const parts = d.split('/').map(p => p.trim());
+            if (parts.length >= 2) {
+                const day = parts[0].padStart(2, '0');
+                const month = parts[1].padStart(2, '0');
+                let year = parts[2];
+                if (!year) {
+                    year = String(new Date().getFullYear());
+                } else if (year.length === 2) {
+                    year = '20' + year;
+                }
+                return `${year}-${month}-${day}`;
+            }
+        }
+        return d;
+    },
+
+    /**
+     * Calcula fechas Date de inicio y fin para un evento
+     */
+    getEventTimes(dateStr, timeStr = '', timeEndStr = '') {
+        const normDate = this.normalizeDate(dateStr);
+        if (!normDate || !/^\d{4}-\d{2}-\d{2}$/.test(normDate)) return null;
+
+        let startH = 10, startM = 0;
+        let endH = null, endM = null;
+
+        const rawTime = (timeStr || '').trim();
+        const rawTimeEnd = (timeEndStr || '').trim();
+
+        if (rawTime.includes('-')) {
+            const parts = rawTime.split('-');
+            const sClean = parts[0].replace(/[^\d:]/g, '').trim();
+            const eClean = parts[1].replace(/[^\d:]/g, '').trim();
+            if (sClean) {
+                const [h, m = 0] = sClean.split(':').map(Number);
+                if (!isNaN(h)) { startH = h; startM = isNaN(m) ? 0 : m; }
+            }
+            if (eClean) {
+                const [h, m = 0] = eClean.split(':').map(Number);
+                if (!isNaN(h)) { endH = h; endM = isNaN(m) ? 0 : m; }
+            }
+        } else if (rawTime.toLowerCase().includes(' a ')) {
+            const parts = rawTime.toLowerCase().split(' a ');
+            const sClean = parts[0].replace(/[^\d:]/g, '').trim();
+            const eClean = parts[1].replace(/[^\d:]/g, '').trim();
+            if (sClean) {
+                const [h, m = 0] = sClean.split(':').map(Number);
+                if (!isNaN(h)) { startH = h; startM = isNaN(m) ? 0 : m; }
+            }
+            if (eClean) {
+                const [h, m = 0] = eClean.split(':').map(Number);
+                if (!isNaN(h)) { endH = h; endM = isNaN(m) ? 0 : m; }
+            }
+        } else if (rawTime) {
+            const sClean = rawTime.replace(/[^\d:]/g, '').trim();
+            if (sClean) {
+                const [h, m = 0] = sClean.split(':').map(Number);
+                if (!isNaN(h)) { startH = h; startM = isNaN(m) ? 0 : m; }
+            }
+        }
+
+        if (rawTimeEnd && endH === null) {
+            const eClean = rawTimeEnd.replace(/[^\d:]/g, '').trim();
+            if (eClean) {
+                const [h, m = 0] = eClean.split(':').map(Number);
+                if (!isNaN(h)) { endH = h; endM = isNaN(m) ? 0 : m; }
+            }
+        }
+
+        const [y, mo, da] = normDate.split('-').map(Number);
+        const start = new Date(y, mo - 1, da, startH, startM, 0);
+
+        let end;
+        if (endH !== null) {
+            end = new Date(y, mo - 1, da, endH, endM !== null ? endM : 0, 0);
+            if (end < start) {
+                end = new Date(end.getTime() + 24 * 60 * 60 * 1000);
+            }
+        } else {
+            // Duración estándar para americana o entreno: 105 minutos (1h 45m)
+            end = new Date(start.getTime() + 105 * 60 * 1000);
+        }
+
+        return { start, end, normDate };
+    },
+
+    /**
+     * Determina con exactitud si un evento (americana o entreno) ya ha acabado
+     * @param {object} evt 
+     * @returns {boolean}
+     */
+    isEventFinished(evt) {
+        if (!evt) return false;
+        const status = (evt.status || '').toLowerCase().trim();
+        if (status === 'finished' || status === 'finalizado' || status === 'completed' || status === 'cancelled') {
+            return true;
+        }
+
+        const times = this.getEventTimes(evt.date, evt.time, evt.time_end);
+        if (!times) return false;
+
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+        // 1. Si la fecha ya es anterior a hoy -> acabado sin duda
+        if (times.normDate < todayStr) {
+            return true;
+        }
+
+        // 2. Si es de hoy pero la hora de fin ya transcurrió -> acabado
+        if (now >= times.end) {
+            return true;
+        }
+
+        return false;
+    },
+
+    /**
+     * Auto-detecta eventos vencidos y los actualiza silenciosamente en Firestore
+     * para mantener la base de datos limpia y sincronizada para todos los usuarios.
+     */
+    autoCheckAndFinishEvents(events) {
+        if (!Array.isArray(events) || events.length === 0) return;
+        const now = new Date();
+
+        events.forEach(evt => {
+            if (!evt || !evt.id) return;
+            const currentStatus = (evt.status || '').toLowerCase().trim();
+            if (currentStatus === 'finished' || currentStatus === 'finalizado' || currentStatus === 'cancelled') return;
+
+            if (this.isEventFinished(evt)) {
+                console.log(`🏁 [EventService] Auto-detectado evento acabado: ${evt.name || evt.id} (${evt.date} ${evt.time})`);
+                evt.status = 'finished'; // Mutar en memoria local inmediata
+                const eventType = evt.type === 'entreno' ? 'entreno' : 'americana';
+                
+                // Actualizar en base de datos en segundo plano
+                this.updateEvent(eventType, evt.id, { status: 'finished' }).catch(err => {
+                    console.warn(`[EventService] No se pudo persistir status finished para ${evt.id}:`, err);
+                });
+            }
+        });
     }
 };
 console.log("🚀 EventService Loaded");
