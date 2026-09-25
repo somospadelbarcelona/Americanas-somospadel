@@ -1,13 +1,13 @@
 // ============================================================================
 // 🎾 SOMOSPADEL PWA SERVICE WORKER
-// Versión: somospadel-pwa-v2.0.4
+// Versión: somospadel-pwa-v2.0.5
 // Estrategias:
 //  - Documentos de navegación: Network First con fallback a caché offline
 //  - Recursos estáticos pesados (fuentes, imágenes, CSS, JS): Stale-While-Revalidate / Cache First
 //  - Firestore y APIs externas: Excluidas de caché (conexión directa)
 // ============================================================================
 
-const CACHE_NAME = 'somospadel-pwa-v2.0.4';
+const CACHE_NAME = 'somospadel-pwa-v2.0.5';
 
 // Recursos críticos para el funcionamiento offline básico (App Shell)
 const PRECACHE_ASSETS = [
@@ -333,11 +333,56 @@ async function handleStaleWhileRevalidate(request) {
 }
 
 // ============================================================================
-// PUSH NOTIFICATIONS & INTERACCIÓN (Fallback si el navegador usa sw.js principal)
+// PUSH NOTIFICATIONS & INTERACCIÓN (Dual FCM + Web Push Nativo)
 // ============================================================================
 
+// Soporte oficial Firebase Cloud Messaging en segundo plano (app cerrada en Android/iOS PWA)
+try {
+    importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js');
+    importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js');
+
+    if (typeof firebase !== 'undefined' && firebase.initializeApp) {
+        if (!firebase.apps || !firebase.apps.length) {
+            firebase.initializeApp({
+                apiKey: "AIzaSyBCy8nN4wKL2Cqvxp_mkmYpsA923N1g5iE",
+                authDomain: "americanas-somospadel.firebaseapp.com",
+                projectId: "americanas-somospadel",
+                storageBucket: "americanas-somospadel.firebasestorage.app",
+                messagingSenderId: "486590022834",
+                appId: "1:486590022834:web:069bc96e1e11c0edb75ab"
+            });
+        }
+        const swMessaging = firebase.messaging();
+        swMessaging.onBackgroundMessage((payload) => {
+            console.log('📬 [FCM SW] Push recibido con app en segundo plano/cerrada:', payload);
+            const title = (payload.notification && payload.notification.title) ||
+                          (payload.data && payload.data.title) ||
+                          'SomosPadel BCN 🎾';
+            const body = (payload.notification && payload.notification.body) ||
+                         (payload.data && payload.data.body) ||
+                         'Tienes una nueva actualización en SomosPadel.';
+            const data = payload.data || {};
+            const icon = (payload.notification && payload.notification.icon) || data.icon || './img/logo_somospadel.png';
+            const tag = data.id || data.tag || ('somospadel-fcm-' + Date.now());
+
+            return self.registration.showNotification(title, {
+                body,
+                icon,
+                badge: './img/logo_somospadel.png',
+                tag,
+                data,
+                vibrate: [200, 100, 200],
+                renotify: true
+            });
+        });
+        console.log('🎾 [SW] Firebase Messaging integrado con éxito en Service Worker principal.');
+    }
+} catch (swFcmErr) {
+    console.warn('ℹ️ [SW] Firebase Messaging SDK no cargado en SW, operando mediante Push API estándar:', swFcmErr);
+}
+
 self.addEventListener('push', (event) => {
-    console.log('📬 [SW Principal] Evento PUSH recibido.');
+    console.log('📬 [SW Principal] Evento PUSH nativo recibido.');
 
     let payload = {};
     if (event.data) {

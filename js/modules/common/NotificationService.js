@@ -80,8 +80,58 @@ window.NotificationServiceClass = class NotificationService {
                 }
             });
         }
+
+        // 4. Iniciar receptor FCM en primer plano (Push en vivo mientras el usuario navega)
+        this.initFcmForegroundListener();
     }
-    // ... rest of the methods remain same ...
+
+    /**
+     * Conecta el receptor en primer plano de Firebase Cloud Messaging para que,
+     * si llega un mensaje Push mientras el jugador tiene la app abierta, aparezca
+     * el aviso dinámico Toast y se actualice el contador en vivo.
+     */
+    initFcmForegroundListener() {
+        if (this._fcmForegroundListenerAttached) return;
+
+        const attach = (msgInstance) => {
+            if (msgInstance && typeof msgInstance.onMessage === 'function' && !this._fcmForegroundListenerAttached) {
+                this._fcmForegroundListenerAttached = true;
+                try {
+                    msgInstance.onMessage((payload) => {
+                        console.log("📬 [FCM In-App] Mensaje push en primer plano recibido:", payload);
+                        const title = payload.notification?.title || payload.data?.title || 'SomosPadel BCN 🎾';
+                        const body = payload.notification?.body || payload.data?.body || 'Nueva notificación recibida';
+                        const url = payload.data?.url || payload.data?.link || '';
+                        const type = payload.data?.type || 'match';
+
+                        // 1. Mostrar Toast in-app interactivo y elegante
+                        this.showInAppToast(title, body, type, url);
+
+                        // 2. Notificar actualización de lista / badge
+                        this.notifySubscribers();
+                    });
+                    console.log("✅ [NotificationService] FCM Foreground Push Listener activo.");
+                } catch (e) {
+                    console.warn("⚠️ [NotificationService] Error configurando onMessage:", e);
+                }
+            }
+        };
+
+        if (window.messaging) {
+            attach(window.messaging);
+        } else {
+            let attempts = 0;
+            const timer = setInterval(() => {
+                attempts++;
+                if (window.messaging) {
+                    clearInterval(timer);
+                    attach(window.messaging);
+                } else if (attempts > 30) {
+                    clearInterval(timer);
+                }
+            }, 300);
+        }
+    }
 
 
     /**
@@ -2242,9 +2292,10 @@ window.NotificationServiceClass = class NotificationService {
     }
 
     /**
-     * Muestra un aviso visual dentro de la app con sistema de apilado (Stacking) Premium
+     * Muestra un aviso visual interactivo dentro de la app con sistema de apilado (Stacking) Premium,
+     * sonido opcional, cuerpo de mensaje y navegación directa al pulsar.
      */
-    showInAppToast(title, body) {
+    showInAppToast(title, body, type = 'info', actionUrl = null) {
         // 1. Asegurar contenedor de Toasts
         let container = document.getElementById('toast-stack-container');
         if (!container) {
@@ -2256,27 +2307,90 @@ window.NotificationServiceClass = class NotificationService {
         const toast = document.createElement('div');
         toast.className = 'premium-toast';
 
+        // Icono y etiqueta según tipo
+        let iconHtml = '<i class="fas fa-bell"></i>';
+        let labelText = 'AVISO RECIENTE';
+        if (type === 'match' || type === 'americana') {
+            iconHtml = '<i class="fas fa-trophy"></i>';
+            labelText = '🎾 AMERICANA';
+        } else if (type === 'entreno') {
+            iconHtml = '<i class="fas fa-dumbbell"></i>';
+            labelText = '🎾 ENTRENO';
+        } else if (type === 'broadcast') {
+            iconHtml = '<i class="fas fa-bullhorn"></i>';
+            labelText = '📢 COMUNICADO CLUB';
+        } else if (type === 'news') {
+            iconHtml = '<i class="fas fa-newspaper"></i>';
+            labelText = '📰 DIARIO SOMOSPADEL';
+        } else if (type === 'success') {
+            iconHtml = '<i class="fas fa-check-circle"></i>';
+            labelText = 'SISTEMA';
+        }
+
+        const safeTitle = (title || 'Aviso SomosPadel').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const safeBody = body ? (body.length > 120 ? body.substring(0, 117) + '...' : body).replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+
         toast.innerHTML = `
             <div class="toast-icon">
-                <i class="fas fa-bell"></i>
+                ${iconHtml}
             </div>
             <div class="toast-content">
-                <div class="toast-label">AVISO RECIENTE</div>
-                <div class="toast-title">${title}</div>
+                <div class="toast-label">${labelText}</div>
+                <div class="toast-title">${safeTitle}</div>
+                ${safeBody ? `<div class="toast-body">${safeBody}</div>` : ''}
             </div>
+            <button class="toast-close" type="button" aria-label="Cerrar">
+                <i class="fas fa-times"></i>
+            </button>
         `;
 
-        container.appendChild(toast);
-
-        // Auto-remove
-        setTimeout(() => {
+        let isRemoved = false;
+        const removeToast = () => {
+            if (isRemoved) return;
+            isRemoved = true;
             toast.style.opacity = '0';
-            toast.style.transform = 'translateX(20px) scale(0.95)';
+            toast.style.transform = 'translateY(-20px) scale(0.95)';
             setTimeout(() => {
                 toast.remove();
                 if (container.children.length === 0) container.remove();
             }, 300);
-        }, 5000);
+        };
+
+        // Interacción al hacer clic en el toast
+        toast.addEventListener('click', (e) => {
+            if (e.target.closest('.toast-close')) {
+                e.stopPropagation();
+                removeToast();
+                return;
+            }
+            if (actionUrl) {
+                if (actionUrl.startsWith('#') || actionUrl.startsWith('/#')) {
+                    window.location.hash = actionUrl.replace(/^\/?#/, '');
+                } else if (actionUrl.includes('?')) {
+                    window.location.href = actionUrl;
+                }
+            } else if (window.NotificationUi && typeof window.NotificationUi.openDrawer === 'function') {
+                window.NotificationUi.openDrawer();
+            }
+            removeToast();
+        });
+
+        // Reproducir sonido sutil y vibración
+        try {
+            if (window.NotificationUi && typeof window.NotificationUi.playNotificationSound === 'function') {
+                window.NotificationUi.playNotificationSound();
+            }
+            if (navigator.vibrate) {
+                navigator.vibrate([80, 50, 80]);
+            }
+        } catch (_) {}
+
+        container.appendChild(toast);
+
+        // Auto-remove a los 6 segundos
+        setTimeout(() => {
+            removeToast();
+        }, 6000);
     }
 
     /**
