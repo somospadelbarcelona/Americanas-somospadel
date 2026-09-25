@@ -1218,6 +1218,23 @@ window.NotificationServiceClass = class NotificationService {
     }
 
     /**
+     * Convierte una clave VAPID Base64 URL-safe a Uint8Array (estándar W3C Push API)
+     */
+    _urlB64ToUint8Array(base64String) {
+        if (!base64String || typeof base64String !== 'string') return new Uint8Array(0);
+        const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+        const base64 = (base64String + padding)
+            .replace(/\-/g, '+')
+            .replace(/_/g, '/');
+        const rawData = (typeof window !== 'undefined' && window.atob) ? window.atob(base64) : Buffer.from(base64, 'base64').toString('binary');
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+    }
+
+    /**
      * Solicita permiso para Push Notifications.
      * IMPORTANTE: El permiso nativo del navegador se solicita SIEMPRE con soporte Promise y callback,
      * independientemente de si FCM/messaging está disponible.
@@ -1304,32 +1321,62 @@ window.NotificationServiceClass = class NotificationService {
                 console.warn("⚠️ Error en notificación de bienvenida:", err);
             });
 
-            // 4. Tareas en segundo plano (Firestore y FCM) sin bloquear la respuesta al usuario
+            // 4. Tareas en segundo plano (Firestore, Web Push nativo y FCM) sin bloquear al usuario
             (async () => {
                 try {
                     // Persistir en Firestore en perfil del usuario y subcolección devices
                     await this.savePushSubscriptionStatus(true);
 
-                    // Intentar registrar FCM token si messaging está soportado
+                    let swReg = null;
+                    if ('serviceWorker' in navigator) {
+                        try { swReg = await navigator.serviceWorker.ready; } catch (_) {}
+                    }
+
+                    const VAPID_KEY = "BCQ_YjYrpwremCwo-xQhtP1x5TDi39LWQ2fuwnBAcyjxN3bJTD8WtXNYsFM7IDxHd3hzEPn2z7JRsLdT0l2L87E";
+                    let nativePushSub = null;
+
+                    // A. Suscripción nativa Web Push mediante W3C PushManager (funciona aunque FCM falle)
+                    if (swReg && swReg.pushManager && VAPID_KEY && !VAPID_KEY.includes('placeholder')) {
+                        try {
+                            const convertedKey = this._urlB64ToUint8Array(VAPID_KEY);
+                            nativePushSub = await swReg.pushManager.getSubscription();
+                            if (!nativePushSub) {
+                                nativePushSub = await swReg.pushManager.subscribe({
+                                    userVisibleOnly: true,
+                                    applicationServerKey: convertedKey
+                                });
+                            }
+                            console.log("📡 [PushManager] Suscripción nativa Web Push OK:", nativePushSub.endpoint);
+                        } catch (subErr) {
+                            console.warn("⚠️ [PushManager] Aviso en suscripción nativa:", subErr);
+                        }
+                    }
+
+                    // B. Registro de Token FCM si Firebase Messaging está activo
+                    let currentFcmToken = null;
                     if (window.messaging) {
-                        let swReg = null;
-                        if ('serviceWorker' in navigator) {
-                            try { swReg = await navigator.serviceWorker.ready; } catch (_) {}
+                        try {
+                            const tokenOptions = {};
+                            if (VAPID_KEY && !VAPID_KEY.includes('placeholder')) {
+                                tokenOptions.vapidKey = VAPID_KEY;
+                            }
+                            if (swReg) {
+                                tokenOptions.serviceWorkerRegistration = swReg;
+                            }
+                            currentFcmToken = await window.messaging.getToken(tokenOptions);
+                            if (currentFcmToken) {
+                                this.token = currentFcmToken;
+                                console.log("🔑 FCM Token Registrado:", currentFcmToken);
+                            }
+                        } catch (fcmErr) {
+                            console.warn("⚠️ [FCM] Aviso obteniendo token FCM:", fcmErr.message || fcmErr);
                         }
-                        const VAPID_KEY = "BCQ_YjYrpwremCwo-xQhtP1x5TDi39LWQ2fuwnBAcyjxN3bJTD8WtXNYsFM7IDxHd3hzEPn2z7JRsLdT0l2L87E";
-                        const tokenOptions = {};
-                        if (VAPID_KEY && !VAPID_KEY.includes('placeholder')) {
-                            tokenOptions.vapidKey = VAPID_KEY;
-                        }
-                        if (swReg) {
-                            tokenOptions.serviceWorkerRegistration = swReg;
-                        }
-                        const currentToken = await window.messaging.getToken(tokenOptions);
-                        if (currentToken) {
-                            this.token = currentToken;
-                            console.log("🔑 FCM Token Registrado en segundo plano:", currentToken);
-                            await this.saveTokenToProfile(currentToken);
-                        }
+                    }
+
+                    // C. Guardar en el perfil del jugador en Firestore con dualidad token / pushSubscription
+                    const primaryToken = currentFcmToken || (nativePushSub ? nativePushSub.endpoint : null);
+                    if (primaryToken || nativePushSub) {
+                        await this.saveTokenToProfile(primaryToken, nativePushSub);
                     }
                 } catch (bgErr) {
                     console.warn("⚠️ Sincronización push en segundo plano:", bgErr.message || bgErr);
@@ -1542,8 +1589,8 @@ window.NotificationServiceClass = class NotificationService {
      * Registra o actualiza el dispositivo en la subcolección players/{userId}/devices/{deviceId}
      * y mantiene fcm_token en el perfil del jugador para compatibilidad.
      */
-    async saveTokenToProfile(token) {
-        if (!token) return;
+    async saveTokenToProfile(token, pushSubscription = null) {
+        if (!token && !pushSubscription) return;
 
         const uid = this.currentUserUid || (window.auth && window.auth.currentUser?.uid) || (window.Store ? window.Store.getState('currentUser')?.uid : null);
         if (!uid || !window.db) {
@@ -1560,28 +1607,42 @@ window.NotificationServiceClass = class NotificationService {
                 ? window.firebase.firestore.FieldValue.serverTimestamp()
                 : nowIso);
 
+        const subJson = pushSubscription ? (typeof pushSubscription.toJSON === 'function' ? pushSubscription.toJSON() : pushSubscription) : null;
+        const finalToken = token || subJson?.endpoint || '';
+
         try {
             // 1. Registrar en subcolección multi-dispositivo players/{userId}/devices/{deviceId}
+            const deviceData = {
+                token: finalToken,
+                deviceId: deviceId,
+                platform: platform,
+                push_enabled: true,
+                push_permission: 'granted',
+                userAgent: navigator.userAgent || '',
+                updated_at: serverTs,
+                last_active: nowIso
+            };
+            if (subJson) {
+                deviceData.subscription = subJson;
+                deviceData.endpoint = subJson.endpoint || '';
+            }
+
             await window.db.collection('players').doc(uid)
-                .collection('devices').doc(deviceId).set({
-                    token: token,
-                    deviceId: deviceId,
-                    platform: platform,
-                    push_enabled: true,
-                    push_permission: 'granted',
-                    userAgent: navigator.userAgent || '',
-                    updated_at: serverTs,
-                    last_active: nowIso
-                }, { merge: true });
+                .collection('devices').doc(deviceId).set(deviceData, { merge: true });
 
             // 2. Actualizar campo de compatibilidad en documento raíz de jugador
-            await window.db.collection('players').doc(uid).set({
-                fcm_token: token,
+            const rootUpdate = {
+                fcm_token: finalToken,
                 push_notifications_enabled: true,
                 push_permission: 'granted',
                 last_token_update: nowIso,
                 last_platform: platform
-            }, { merge: true });
+            };
+            if (subJson) {
+                rootUpdate.push_subscription = subJson;
+            }
+
+            await window.db.collection('players').doc(uid).set(rootUpdate, { merge: true });
 
             console.log(`📱 [NotificationService] Dispositivo registrado con éxito [${platform} / ${deviceId}]`);
         } catch (err) {

@@ -11,8 +11,8 @@ const firebaseConfig = {
     authDomain: "americanas-somospadel.firebaseapp.com",
     projectId: "americanas-somospadel",
     storageBucket: "americanas-somospadel.firebasestorage.app",
-    messagingSenderId: "638578709472",
-    appId: "1:638578709472:web:bf99bbb7688a947b4bd185"
+    messagingSenderId: "486590022834",
+    appId: "1:486590022834:web:069bc96e1e11c0edb75ab"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -55,6 +55,43 @@ if (messaging) {
         return self.registration.showNotification(notificationTitle, notificationOptions);
     });
 }
+
+// Listener push nativo (W3C Web Push fallback para mensajes directos con app apagada)
+self.addEventListener('push', (event) => {
+    console.log('📬 [FCM SW] Evento push nativo recibido.');
+    if (!event.data) return;
+
+    let payload = {};
+    try {
+        payload = event.data.json();
+    } catch (_) {
+        try {
+            payload = { notification: { body: event.data.text() } };
+        } catch (e) {
+            payload = {};
+        }
+    }
+
+    const notification = payload.notification || {};
+    const data = payload.data || {};
+
+    const title = notification.title || data.title || 'SomosPadel BCN 🎾';
+    const body = notification.body || data.body || 'Tienes una nueva actualización en SomosPadel.';
+    const icon = notification.icon || data.icon || './img/logo_somospadel.png';
+    const tag = data.id || data.tag || ('somospadel-push-' + Date.now());
+
+    const options = {
+        body: body,
+        icon: icon,
+        badge: './img/logo_somospadel.png',
+        data: data,
+        tag: tag,
+        vibrate: [200, 100, 200],
+        renotify: true
+    };
+
+    event.waitUntil(self.registration.showNotification(title, options));
+});
 
 // ============================================================================
 // LISTENER: NOTIFICATION CLICK (Abrir app o enfocar pestaña existente)

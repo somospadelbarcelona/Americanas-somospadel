@@ -7,8 +7,8 @@ const firebaseConfig = {
   authDomain: "americanas-somospadel.firebaseapp.com",
   projectId: "americanas-somospadel",
   storageBucket: "americanas-somospadel.firebasestorage.app",
-  messagingSenderId: "638578709472",
-  appId: "1:638578709472:web:bf99bbb7688a947b4bd185"
+  messagingSenderId: "486590022834",
+  appId: "1:486590022834:web:069bc96e1e11c0edb75ab"
 };
 
 // Expose config to the global scope for firebase-init.js
