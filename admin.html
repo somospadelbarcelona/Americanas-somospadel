@@ -2446,6 +2446,7 @@
             <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
             <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
             <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
+            <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-functions-compat.js"></script>
 
             <!-- App Config -->
             <script src="js/firebase-config.js"></script>
@@ -2466,7 +2467,7 @@
             <script src="js/modules/ui/PlayerAutocomplete.js"></script>
             <script src="js/modules/common/EventService.js"></script>
             <script src="js/modules/common/ParticipantService.js?v=2001"></script>
-            <script src="js/modules/common/NotificationService.js?v=3000"></script>
+            <script src="js/modules/common/NotificationService.js?v=20260926_V2"></script>
             <script src="js/modules/ui/NotificationUi.js?v=3000"></script>
 
             <!-- LOGIC MODULES (Legacy Logic Wrapped) -->
@@ -2559,16 +2560,46 @@
             <!-- DIAGNOSTIC CONSOLE -->
             <div id="debug-console"
                 style="position: fixed; bottom: 0; left: 0; width: 100%; background: #000; color: #0f0; border-top: 2px solid #0f0; padding: 10px; font-family: monospace; font-size: 12px; z-index: 99999; max-height: 150px; overflow-y: auto; display: none;">
-                <div>🚀 CONSOLA DE DIAGNÓSTICO (v2.0)</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,255,0,0.3); padding-bottom: 4px; margin-bottom: 6px;">
+                    <div>🚀 CONSOLA DE DIAGNÓSTICO (v2.0)</div>
+                    <button onclick="document.getElementById('debug-console').style.display='none'" style="background: rgba(255,255,255,0.15); color: #fff; border: 1px solid #555; border-radius: 4px; padding: 2px 8px; font-size: 11px; cursor: pointer;">Cerrar ✕</button>
+                </div>
             </div>
             <script>
-                window.onerror = function (msg, url, line) {
+                window.onerror = function (msg, url, line, col, error) {
+                    const lower = String(msg || '').toLowerCase();
+                    // 1. Suprimir errores opacos de CORS / Script Error
+                    if (lower.includes('script error') || !msg || (!url && !line) || (line === 0)) {
+                        console.warn("⚠️ [admin.onerror] CORS/Script error suprimido:", msg, url, line);
+                        return true;
+                    }
+                    // 2. Suprimir aserciones benignas de Firestore / IndexedDB
+                    if (lower.includes('internal assertion failed') || lower.includes('unexpected state') || lower.includes('assertion failed')) {
+                        console.warn("⚠️ [admin.onerror] Firestore assertion suprimida:", msg);
+                        return true;
+                    }
+                    // 3. Mostrar errores reales con detalle y opción de descarte
                     const c = document.getElementById('debug-console');
-                    if (c) { c.style.display = 'block'; c.innerHTML += `<div style="color:red">❌ ${msg} (L${line})</div>`; }
+                    if (c) { 
+                        c.style.display = 'block'; 
+                        const errDesc = error ? (error.message || String(error)) : msg;
+                        c.innerHTML += `<div style="color:red; margin-top:3px;">❌ ${errDesc} (L${line || 0})</div>`; 
+                    }
                 };
                 window.onunhandledrejection = function (e) {
+                    const reason = e ? (e.reason || '') : '';
+                    const reasonStr = (reason && (reason.message || (typeof reason === 'string' ? reason : reason.toString()))) || '';
+                    const lower = String(reasonStr).toLowerCase();
+                    if (lower.includes('internal assertion failed') || lower.includes('unexpected state') || lower.includes('assertion failed') || lower.includes('script error') || !reasonStr) {
+                        console.warn("⚠️ [admin.onunhandledrejection] Firestore/CORS assertion suprimida:", reasonStr);
+                        if (typeof e.preventDefault === 'function') e.preventDefault();
+                        return;
+                    }
                     const c = document.getElementById('debug-console');
-                    if (c) { c.style.display = 'block'; c.innerHTML += `<div style="color:yellow">⚠️ PROMISE: ${e.reason}</div>`; }
+                    if (c) { 
+                        c.style.display = 'block'; 
+                        c.innerHTML += `<div style="color:yellow; margin-top:3px;">⚠️ PROMISE: ${reasonStr}</div>`; 
+                    }
                 };
 
                 // Mobile Sidebar Toggle Function
@@ -3460,7 +3491,7 @@
             setTimeout(() => clearInterval(checkRouterInterval), 15000);
         })();
     </script>
-    <script src="js/modules/admin-notifications-manager.js"></script>
+    <script src="js/modules/admin-notifications-manager.js?v=20260926_V2"></script>
 </body>
 
 </html>

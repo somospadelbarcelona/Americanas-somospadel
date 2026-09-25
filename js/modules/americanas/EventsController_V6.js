@@ -724,13 +724,39 @@
             }
         }
 
-        hasEventStarted(dateStr, timeStr) {
-            const times = this._parseDate(dateStr, timeStr);
+        hasEventStarted(dateStr, timeStr, timeEndStr) {
+            const times = this._parseDate(dateStr, timeStr, timeEndStr);
             return times ? new Date() >= times.start : false;
         }
 
         getEventTimes(dateStr, timeStr, timeEndStr) {
             return this._parseDate(dateStr, timeStr, timeEndStr);
+        }
+
+        formatEventTime(evt) {
+            if (!evt) return '10:00';
+            const rawTime = (evt.time || '').trim();
+            const rawTimeEnd = (evt.time_end || evt.timeEnd || '').trim();
+
+            if (rawTime.includes('-')) {
+                return rawTime;
+            }
+            if (rawTime.toLowerCase().includes(' a ')) {
+                const parts = rawTime.toLowerCase().split(' a ').map(s => s.trim());
+                return parts.length >= 2 ? `${parts[0]} - ${parts[1]}` : rawTime;
+            }
+            if (rawTime && rawTimeEnd) {
+                return `${rawTime} - ${rawTimeEnd}`;
+            }
+            if (rawTime) {
+                const times = this.getEventTimes(evt.date, rawTime, rawTimeEnd);
+                if (times && times.end) {
+                    const pad = n => String(n).padStart(2, '0');
+                    return `${rawTime} - ${pad(times.end.getHours())}:${pad(times.end.getMinutes())}`;
+                }
+                return rawTime;
+            }
+            return '10:00';
         }
 
         checkAutoStartEvents() {
@@ -2340,7 +2366,7 @@
                                                         <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
                                                             <div style="background: #0f172a; color: #CCFF00; padding: 3px 6px; border-radius: 7px; font-size: 0.64rem; font-weight: 900; text-align: center; line-height: 1.1; flex-shrink: 0;">
                                                                 <div>${dateBadge}</div>
-                                                                <div style="font-size: 0.58rem; color: #fff; opacity: 0.85;">${evt.time || '18:00'}</div>
+                                                                <div style="font-size: 0.58rem; color: #fff; opacity: 0.85;">${this.formatEventTime(evt)}</div>
                                                             </div>
                                                             <div style="min-width: 0;">
                                                                 <div style="font-size: 0.80rem; font-weight: 900; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${evt.name}</div>
@@ -2381,7 +2407,7 @@
                                             <h3 style="margin: 0; font-size: 1.05rem; color: #0f172a; font-weight: 900; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${evt.name}</h3>
                                             
                                             <div style="display: flex; gap: 12px; margin: 10px 0 14px; color: #64748b; font-size: 0.76rem; font-weight: 600;">
-                                                <span><i class="far fa-clock" style="color: #65a30d; margin-right: 4px;"></i> ${evt.time || '18:00'}</span>
+                                                <span><i class="far fa-clock" style="color: #65a30d; margin-right: 4px;"></i> ${this.formatEventTime(evt)}</span>
                                                 <span><i class="fas fa-map-marker-alt" style="color: #94a3b8; margin-right: 4px;"></i> SomosPadel BCN</span>
                                             </div>
                                             
@@ -2863,7 +2889,7 @@
             const uid = user ? user.uid : '-';
             const isJoined = players.some(p => p.uid === uid || p.id === uid);
             const isFull = playerCount >= maxPlayers;
-            const hasStarted = this.hasEventStarted(evt.date, evt.time);
+            const hasStarted = this.hasEventStarted(evt.date, evt.time, evt.time_end || evt.timeEnd);
             const isLive = evt.status === 'live';
             const isPairing = evt.status === 'pairing';
             const isCancelled = evt.status === 'cancelled';
@@ -2945,12 +2971,8 @@
             }
 
             // Time Formatting
-            const times = this._parseDate(evt.date, evt.time);
-            let timeLabel = evt.time || '10:00';
-            if (times && evt.time && !evt.time.includes('-')) {
-                const pad = n => n.toString().padStart(2, '0');
-                timeLabel = `${pad(times.start.getHours())}:${pad(times.start.getMinutes())} - ${pad(times.end.getHours())}:${pad(times.end.getMinutes())}`;
-            }
+            const times = this._parseDate(evt.date, evt.time, evt.time_end || evt.timeEnd);
+            let timeLabel = this.formatEventTime(evt);
 
             // Gender Check (Centralized, Strict and Unified)
             const genderCheck = this.checkGenderEligibility(evt, user);
@@ -3695,14 +3717,23 @@
             const evt = events.find(e => e.id === id);
             if (!evt) return;
 
+            const timeStr = this.formatEventTime(evt);
             const title = encodeURIComponent(`SomosPadel: ${evt.name}`);
             const location = encodeURIComponent(evt.sede || evt.location || 'Barcelona Pádel el Prat');
-            const details = encodeURIComponent(`Torneo/Entreno SomosPadel BCN.\nHorario: ${evt.time}\nPrecio: ${evt.price_socio || 10}€\n¡A darlo todo en pista!`);
+            const details = encodeURIComponent(`Torneo/Entreno SomosPadel BCN.\nHorario: ${timeStr}\nPrecio: ${evt.price_socio || evt.price_members || 10}€\n¡A darlo todo en pista!`);
             
-            // Construir fecha ISO simple
-            const normDate = evt.normDate || this.getTodayStr();
+            // Construir fecha ISO
+            const times = this.getEventTimes(evt.date, evt.time, evt.time_end || evt.timeEnd);
+            const normDate = (times && times.normDate) || evt.normDate || this.getTodayStr();
             const dateClean = normDate.replace(/-/g, '');
-            const gCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dateClean}T180000Z/${dateClean}T200000Z&details=${details}&location=${location}`;
+            let datesParam = `${dateClean}T180000Z/${dateClean}T200000Z`;
+            if (times && times.start && times.end) {
+                const pad = n => String(n).padStart(2, '0');
+                const startStr = `${times.start.getFullYear()}${pad(times.start.getMonth()+1)}${pad(times.start.getDate())}T${pad(times.start.getHours())}${pad(times.start.getMinutes())}00`;
+                const endStr = `${times.end.getFullYear()}${pad(times.end.getMonth()+1)}${pad(times.end.getDate())}${pad(times.end.getHours())}${pad(times.end.getMinutes())}00`;
+                datesParam = `${startStr}/${endStr}`;
+            }
+            const gCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${datesParam}&details=${details}&location=${location}`;
             window.open(gCalUrl, '_blank');
         }
 
@@ -4034,7 +4065,7 @@
             const numExt = (evt.price_external !== undefined) ? evt.price_external : 10;
             const sede = evt.sede || evt.location || evt.club || 'SomosPadel BCN';
             const level = evt.level || '2 - 4.5';
-            const timeStr = evt.time ? (evt.time_end ? `${evt.time} - ${evt.time_end}` : `${evt.time}`) : '19:30 - 21:30';
+            const timeStr = this.formatEventTime(evt);
             const category = (evt.category || 'Mixto').toUpperCase();
             const organizer = evt.organizer || (evt.organizer_type === 'external' ? (evt.club || 'Club Asociado') : 'SomosPadel BCN');
             const perk = (evt.description && evt.description.length < 90) ? evt.description : (evt.perk || evt.promo || '');
@@ -4421,7 +4452,7 @@
                 await this.downloadInstagramStory(evt, canvas, false);
 
                 // 2. Intentar copiar imagen binaria al portapapeles para sticker automático en Stories
-                const captionText = `🎾 ¡NUEVA CONVOCATORIA EN SOMOSPADEL BARCELONA! 🎾\n\n🏆 ${evt.name}\n📅 Fecha: ${evt.date}\n⏰ Horario: ${evt.time || '19:30'}\n📍 Sede: ${evt.sede || evt.location || 'SomosPadel BCN'}\n👥 Plazas: ${evt.players ? evt.players.length : 0} inscritos\n💰 Tarifa: ${evt.price_members || 10}€ socios / ${evt.price_external || 10}€ no socios\n\n📲 ¡Reserva tu plaza en el link de la bio @somospadelbcn!\n\n#SomosPadel #PadelBarcelona #AmericanasPadel #PadelAddict`;
+                const captionText = `🎾 ¡NUEVA CONVOCATORIA EN SOMOSPADEL BARCELONA! 🎾\n\n🏆 ${evt.name}\n📅 Fecha: ${evt.date}\n⏰ Horario: ${this.formatEventTime(evt)}\n📍 Sede: ${evt.sede || evt.location || 'SomosPadel BCN'}\n👥 Plazas: ${evt.players ? evt.players.length : 0} inscritos\n💰 Tarifa: ${evt.price_members || 10}€ socios / ${evt.price_external || 10}€ no socios\n\n📲 ¡Reserva tu plaza en el link de la bio @somospadelbcn!\n\n#SomosPadel #PadelBarcelona #AmericanasPadel #PadelAddict`;
 
                 if (navigator.clipboard) {
                     try {
@@ -4499,7 +4530,7 @@
                 const { canvas, blob } = await this._getOrRenderStoryCanvas(evt);
                 if (!canvas || !blob) throw new Error("No se pudo obtener el gráfico");
 
-                const captionText = `🎾 ¡NUEVA CONVOCATORIA EN SOMOSPADEL BARCELONA! 🎾\n\n🏆 ${evt.name}\n📅 Fecha: ${evt.date}\n⏰ Horario: ${evt.time || '19:30'}\n📍 Sede: ${evt.sede || evt.location || 'SomosPadel BCN'}\n👥 Plazas: ${evt.players ? evt.players.length : 0} inscritos\n💰 Tarifa: ${evt.price_members || 10}€ socios / ${evt.price_external || 10}€ no socios\n\n📲 ¡Reserva tu plaza en el link de la bio @somospadelbcn!\n\n#SomosPadel #PadelBarcelona #AmericanasPadel #PadelAddict`;
+                const captionText = `🎾 ¡NUEVA CONVOCATORIA EN SOMOSPADEL BARCELONA! 🎾\n\n🏆 ${evt.name}\n📅 Fecha: ${evt.date}\n⏰ Horario: ${this.formatEventTime(evt)}\n📍 Sede: ${evt.sede || evt.location || 'SomosPadel BCN'}\n👥 Plazas: ${evt.players ? evt.players.length : 0} inscritos\n💰 Tarifa: ${evt.price_members || 10}€ socios / ${evt.price_external || 10}€ no socios\n\n📲 ¡Reserva tu plaza en el link de la bio @somospadelbcn!\n\n#SomosPadel #PadelBarcelona #AmericanasPadel #PadelAddict`;
 
                 try {
                     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -4571,7 +4602,7 @@
 
         async copyInstagramCaption(evt) {
             if (!evt) return;
-            const captionText = `🎾 ¡NUEVA CONVOCATORIA EN SOMOSPADEL BARCELONA! 🎾\n\n🏆 ${evt.name}\n📅 Fecha: ${evt.date}\n⏰ Horario: ${evt.time || '19:30'}\n📍 Sede: ${evt.sede || evt.location || 'SomosPadel BCN'}\n👥 Plazas: ${evt.players ? evt.players.length : 0} inscritos\n💰 Tarifa: ${evt.price_members || 10}€ socios / ${evt.price_external || 10}€ no socios\n\n📲 ¡Reserva tu plaza ahora en el link de la bio @somospadelbcn!\n\n#SomosPadel #PadelBarcelona #AmericanasPadel #PadelAddict`;
+            const captionText = `🎾 ¡NUEVA CONVOCATORIA EN SOMOSPADEL BARCELONA! 🎾\n\n🏆 ${evt.name}\n📅 Fecha: ${evt.date}\n⏰ Horario: ${this.formatEventTime(evt)}\n📍 Sede: ${evt.sede || evt.location || 'SomosPadel BCN'}\n👥 Plazas: ${evt.players ? evt.players.length : 0} inscritos\n💰 Tarifa: ${evt.price_members || 10}€ socios / ${evt.price_external || 10}€ no socios\n\n📲 ¡Reserva tu plaza ahora en el link de la bio @somospadelbcn!\n\n#SomosPadel #PadelBarcelona #AmericanasPadel #PadelAddict`;
             try {
                 if (navigator.clipboard && navigator.clipboard.writeText) {
                     await navigator.clipboard.writeText(captionText);
@@ -5893,9 +5924,10 @@
             window.toggleVoiceBroadcast = window.toggleBattleVoiceBroadcast;
 
             // Global Share Convocatoria Action
+            const eventFormattedTime = this.formatEventTime(evt);
             window.shareConvocatoriaBattleReady = function() {
                 const eventTitle = (evt.name || 'Torneo').toUpperCase();
-                const timeText = evt.time || '16:30';
+                const timeText = eventFormattedTime;
                 const playersList = dbPlayers.map((p, i) => `${i + 1}. ${p.name} (LVL ${parseFloat(p.level || 3.5).toFixed(2)})`).join('\n');
                 const shareText = `🎾 *SOMOSPADEL BCN • CONVOCATORIA OFICIAL* 🎾\n` +
                     `🏆 *${eventTitle}*\n` +
@@ -6027,7 +6059,7 @@
                         const metaY = 205;
                         const metaItems = [
                             { icon: '📅', text: evt.date || 'HOY' },
-                            { icon: '🕒', text: evt.time || '16:30' },
+                            { icon: '🕒', text: eventFormattedTime || '16:30' },
                             { icon: '📍', text: eventLocation.length > 20 ? eventLocation.substring(0, 18) + '...' : eventLocation },
                             { icon: '💶', text: eventPriceText || '15€' }
                         ];
@@ -6948,7 +6980,7 @@
                                     ${isEntrenoModal ? '🎾 ENTRENO OFICIAL' : '🏆 TORNEO AMERICANO'}
                                 </span>
                                 <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.68rem; font-weight: 800; color: #334155; background: #f1f5f9; padding: 3px 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
-                                    <i class="far fa-clock" style="color: #0284c7;"></i> ${evt.time || '16:30'}
+                                    <i class="far fa-clock" style="color: #0284c7;"></i> ${this.formatEventTime(evt)}
                                 </span>
                                 <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.68rem; font-weight: 800; color: #334155; background: #f1f5f9; padding: 3px 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
                                     <i class="fas fa-map-marker-alt" style="color: #dc2626;"></i> ${eventLocation}

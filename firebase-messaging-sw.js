@@ -102,6 +102,17 @@ self.addEventListener('notificationclick', (event) => {
 
     const data = event.notification.data || {};
     let targetPath = data.url || data.link || './';
+    const articleId = data.articleId || data.article;
+
+    // Si viene articleId en data y la URL no contiene parámetro de artículo, adjuntarlo
+    if (articleId && !targetPath.includes('article=') && !targetPath.includes('post=')) {
+        if (targetPath === './' || targetPath === '/' || !targetPath) {
+            targetPath = `dashboard?article=${encodeURIComponent(articleId)}`;
+        } else {
+            const separator = targetPath.includes('?') ? '&' : '?';
+            targetPath = `${targetPath}${separator}article=${encodeURIComponent(articleId)}`;
+        }
+    }
 
     // Normalizar destino relativo al scope del Service Worker (evita 404 en GitHub Pages)
     let urlToOpen;
@@ -114,11 +125,12 @@ self.addEventListener('notificationclick', (event) => {
             urlToOpen = targetPath;
         } else if (targetPath.startsWith('#')) {
             urlToOpen = new URL(targetPath, baseScope).href;
-        } else if (targetPath.startsWith('./')) {
+        } else if (targetPath.startsWith('./') || targetPath.startsWith('?')) {
             urlToOpen = new URL(targetPath, baseScope).href;
         } else if (targetPath.startsWith('/')) {
             urlToOpen = new URL('.' + targetPath, baseScope).href;
         } else {
+            // Convierte 'dashboard?article=...' o 'journal?article=...' a ruta hash (#dashboard?article=...)
             urlToOpen = new URL('#' + targetPath.replace(/^#/, ''), baseScope).href;
         }
     } catch (e) {
@@ -138,7 +150,8 @@ self.addEventListener('notificationclick', (event) => {
                             client.postMessage({
                                 type: 'NOTIFICATION_CLICKED',
                                 data: data,
-                                url: urlToOpen
+                                url: urlToOpen,
+                                articleId: articleId || (targetPath.match(/[?&#](?:article|articleId|post)=([^&#]+)/) || [])[1]
                             });
                         }
                         return client.focus();

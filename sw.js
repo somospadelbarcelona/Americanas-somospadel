@@ -1,13 +1,13 @@
 // ============================================================================
 // 🎾 SOMOSPADEL PWA SERVICE WORKER
-// Versión: somospadel-pwa-v2.0.3
+// Versión: somospadel-pwa-v2.0.4
 // Estrategias:
 //  - Documentos de navegación: Network First con fallback a caché offline
 //  - Recursos estáticos pesados (fuentes, imágenes, CSS, JS): Stale-While-Revalidate / Cache First
 //  - Firestore y APIs externas: Excluidas de caché (conexión directa)
 // ============================================================================
 
-const CACHE_NAME = 'somospadel-pwa-v2.0.3';
+const CACHE_NAME = 'somospadel-pwa-v2.0.4';
 
 // Recursos críticos para el funcionamiento offline básico (App Shell)
 const PRECACHE_ASSETS = [
@@ -145,7 +145,7 @@ self.addEventListener('fetch', (event) => {
         url.pathname.endsWith('/');
 
     if (isNavigation) {
-        event.respondWith(handleNetworkFirstNavigation(request));
+        event.respondWith(handleNetworkFirstNavigation(request, event));
         return;
     }
 
@@ -184,33 +184,97 @@ self.addEventListener('fetch', (event) => {
 // ============================================================================
 
 /**
- * Estrategia Network First para documentos de navegación
+ * Helper para obtener documento de navegación desde caché local con fallbacks ordenados
  */
-async function handleNetworkFirstNavigation(request) {
+async function getCachedNavigationFallback(request) {
+    const cachedResponse = await caches.match(request);
+    if (cachedResponse) {
+        return cachedResponse;
+    }
+
+    // Fallback secundario a la raíz o index.html en caso de que la URL varíe
+    const fallbackResponse = await caches.match('./index.html') ||
+                             await caches.match('index.html') ||
+                             await caches.match('./') ||
+                             await caches.match('/');
+    if (fallbackResponse) {
+        return fallbackResponse;
+    }
+    return null;
+}
+
+/**
+ * Estrategia Network First para documentos de navegación con Timeout Rápido
+ * Timeout de 1600ms (rango 1500ms - 1800ms): si la red en pista o móvil es lenta,
+ * la app abre instantáneamente desde la caché local en menos de 200ms en lugar de quedarse
+ * congelada durante 15-30 segundos esperando a la red.
+ * Si la red responde después, actualiza la caché silenciosamente en segundo plano.
+ */
+async function handleNetworkFirstNavigation(request, event) {
+    const FAST_TIMEOUT_MS = 1600;
+
+    // Promesa de fetch a la red que continúa en segundo plano para actualizar caché silenciosamente
+    const networkFetchPromise = fetch(request)
+        .then(async (networkResponse) => {
+            if (networkResponse && networkResponse.status === 200) {
+                try {
+                    const cache = await caches.open(CACHE_NAME);
+                    await cache.put(request, networkResponse.clone());
+                    console.log('🎾 [SW] Caché de navegación actualizada en segundo plano:', request.url);
+                } catch (cacheErr) {
+                    console.warn('🎾 [SW] Aviso al guardar navegación en caché:', cacheErr);
+                }
+            }
+            return networkResponse;
+        })
+        .catch((networkError) => {
+            console.warn('🎾 [SW] Fallo de red en navegación:', networkError);
+            return null;
+        });
+
+    // Mantener con vida el Service Worker en segundo plano para completar el guardado en caché si la red responde tarde
+    if (event && typeof event.waitUntil === 'function') {
+        event.waitUntil(networkFetchPromise);
+    }
+
+    // Timeout rápido para fallback inmediato a la caché
+    const timeoutPromise = new Promise((resolve) => {
+        setTimeout(() => resolve(null), FAST_TIMEOUT_MS);
+    });
+
     try {
-        const networkResponse = await fetch(request);
-        if (networkResponse && networkResponse.status === 200) {
-            const cache = await caches.open(CACHE_NAME);
-            cache.put(request, networkResponse.clone());
+        // Carrera entre la red rápida y el timeout de seguridad
+        const quickResponse = await Promise.race([networkFetchPromise, timeoutPromise]);
+
+        if (quickResponse && quickResponse.status === 200) {
+            return quickResponse;
         }
-        return networkResponse;
-    } catch (networkError) {
-        console.warn('🎾 [SW] Sin conexión a internet. Buscando documento en caché offline:', request.url);
-        const cachedResponse = await caches.match(request);
+
+        // Si la red excedió el timeout (1600ms) o falló de inmediato por falta de conexión
+        console.warn(`🎾 [SW] Red lenta o inaccesible (>${FAST_TIMEOUT_MS}ms). Sirviendo App Shell desde caché local:`, request.url);
+        const cachedResponse = await getCachedNavigationFallback(request);
+
+        if (cachedResponse) {
+            // Nota: networkFetchPromise continúa en background para actualizar la caché cuando la red responda
+            return cachedResponse;
+        }
+
+        // Si no había copia previa en caché (ej. primera visita sin precaché previa), esperar a la red como último recurso
+        console.warn('🎾 [SW] Sin copia previa en caché. Esperando respuesta de red restante...');
+        const networkResponse = await networkFetchPromise;
+        if (networkResponse) {
+            return networkResponse;
+        }
+
+        throw new Error('Sin conexión a red y sin documento en caché disponible.');
+    } catch (error) {
+        console.warn('🎾 [SW] Sin conexión a internet o error en navegación. Buscando documento en caché offline:', request.url);
+        const cachedResponse = await getCachedNavigationFallback(request);
         if (cachedResponse) {
             return cachedResponse;
         }
 
-        // Fallback secundario a la raíz o index.html en caso de que la URL varíe
-        const fallbackResponse = await caches.match('./index.html') ||
-                                 await caches.match('index.html') ||
-                                 await caches.match('./') ||
-                                 await caches.match('/');
-        if (fallbackResponse) {
-            return fallbackResponse;
-        }
-
-        throw networkError;
+        throw error;
     }
 }
 
@@ -317,6 +381,17 @@ self.addEventListener('notificationclick', (event) => {
 
     const data = event.notification.data || {};
     let targetPath = data.url || data.link || './';
+    const articleId = data.articleId || data.article;
+
+    // Si viene articleId en data y la URL no contiene parámetro de artículo, adjuntarlo
+    if (articleId && !targetPath.includes('article=') && !targetPath.includes('post=')) {
+        if (targetPath === './' || targetPath === '/' || !targetPath) {
+            targetPath = `dashboard?article=${encodeURIComponent(articleId)}`;
+        } else {
+            const separator = targetPath.includes('?') ? '&' : '?';
+            targetPath = `${targetPath}${separator}article=${encodeURIComponent(articleId)}`;
+        }
+    }
 
     // Normalizar destino relativo al scope del Service Worker (evita 404 en GitHub Pages)
     let urlToOpen;
@@ -329,11 +404,12 @@ self.addEventListener('notificationclick', (event) => {
             urlToOpen = targetPath;
         } else if (targetPath.startsWith('#')) {
             urlToOpen = new URL(targetPath, baseScope).href;
-        } else if (targetPath.startsWith('./')) {
+        } else if (targetPath.startsWith('./') || targetPath.startsWith('?')) {
             urlToOpen = new URL(targetPath, baseScope).href;
         } else if (targetPath.startsWith('/')) {
             urlToOpen = new URL('.' + targetPath, baseScope).href;
         } else {
+            // Convierte 'dashboard?article=...' o 'journal?article=...' a ruta hash (#dashboard?article=...)
             urlToOpen = new URL('#' + targetPath.replace(/^#/, ''), baseScope).href;
         }
     } catch (e) {
@@ -353,7 +429,8 @@ self.addEventListener('notificationclick', (event) => {
                             client.postMessage({
                                 type: 'NOTIFICATION_CLICKED',
                                 data: data,
-                                url: urlToOpen
+                                url: urlToOpen,
+                                articleId: articleId || (targetPath.match(/[?&#](?:article|articleId|post)=([^&#]+)/) || [])[1]
                             });
                         }
                         return client.focus();

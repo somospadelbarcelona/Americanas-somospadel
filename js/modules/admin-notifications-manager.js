@@ -45,6 +45,8 @@
             this.selectedCategory = 'all';
             this.isLoading = false;
             this.deletingId = null;
+            this.testDailyNewsPush = this.testDailyNewsPush.bind(this);
+            this.triggerDailyNewsPush = this.triggerDailyNewsPush.bind(this);
         }
 
         hasPrivileges() {
@@ -144,6 +146,7 @@
                 // Filtro por categoría
                 if (cat === 'broadcast' && item.type !== 'broadcast') return false;
                 if (cat === 'system' && item.type !== 'system') return false;
+                if ((cat === 'cancelled' || cat === 'event_cancelled') && item.type !== 'event_cancelled' && !item.isCancelled) return false;
 
                 // Filtro por texto
                 if (query) {
@@ -182,6 +185,305 @@
             this.render();
         }
 
+        /**
+         * Purgar en masa todas las notificaciones caducadas, pasadas o canceladas de todas las cuentas
+         */
+        async purgeExpiredAndOld() {
+            const btn = document.getElementById('notif-manager-purge-old-btn') || document.getElementById('notif-manager-purge-expired-btn');
+            let confirmed = false;
+
+            if (window.PremiumModal && typeof window.PremiumModal.confirm === 'function') {
+                confirmed = await window.PremiumModal.confirm({
+                    title: "¿Purgar notificaciones y eventos antiguos de todas las cuentas?",
+                    message: "Se purgarán y bloquearán globalmente todas las notificaciones de eventos pasados, entrenos cancelados antiguos y alertas obsoletas para todos los jugadores.",
+                    confirmText: "PURGAR MASIVAMENTE",
+                    cancelText: "CANCELAR",
+                    type: 'danger'
+                });
+            } else {
+                confirmed = window.confirm("¿Purgar notificaciones y eventos antiguos de todas las cuentas?\n\nSe purgarán y bloquearán globalmente todas las notificaciones de eventos pasados, entrenos cancelados antiguos y alertas obsoletas para todos los jugadores.");
+            }
+
+            if (!confirmed) return;
+
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Purgando masivamente...';
+                btn.style.opacity = '0.7';
+            }
+
+            try {
+                let result = null;
+                if (window.AdminNotifications && typeof window.AdminNotifications.purgeExpiredAndOldNotifications === 'function') {
+                    result = await window.AdminNotifications.purgeExpiredAndOldNotifications();
+                } else if (window.NotificationService && typeof window.NotificationService.purgeExpiredAndOldNotifications === 'function') {
+                    result = await window.NotificationService.purgeExpiredAndOldNotifications();
+                } else if (window.NotificationServiceClass && typeof window.NotificationServiceClass.purgeExpiredAndOldNotifications === 'function') {
+                    result = await window.NotificationServiceClass.purgeExpiredAndOldNotifications();
+                } else {
+                    throw new Error("El servicio de purga masiva no está disponible en este momento.");
+                }
+
+                const totalPurged = result?.purgedCount || result?.deletedFromPlayersCount || 0;
+
+                if (window.PremiumModal && typeof window.PremiumModal.alert === 'function') {
+                    await window.PremiumModal.alert({
+                        title: "🧹 PURGA MASIVA COMPLETADA",
+                        message: `Se han purgado y bloqueado globalmente <strong>${totalPurged}</strong> notificaciones y convocatorias antiguas en las cuentas de los jugadores.`,
+                        type: 'success'
+                    });
+                } else {
+                    alert(`✅ Purga masiva completada: ${totalPurged} notificaciones y convocatorias retiradas.`);
+                }
+
+                await this.loadData();
+                this.render();
+            } catch (err) {
+                console.error("❌ Error en purga masiva:", err);
+                if (window.PremiumModal && typeof window.PremiumModal.alert === 'function') {
+                    await window.PremiumModal.alert({
+                        title: "❌ ERROR EN LA PURGA MASIVA",
+                        message: "Ocurrió un error al purgar las notificaciones antiguas: " + (err.message || err),
+                        type: 'danger'
+                    });
+                } else {
+                    alert("Error en la purga: " + (err.message || err));
+                }
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-broom"></i> 🧹 Purgar Antiguas y Caducadas';
+                    btn.style.opacity = '1';
+                }
+            }
+        }
+
+        async triggerDailyNewsPush() {
+            return this.testDailyNewsPush();
+        }
+
+        async testDailyNewsPush() {
+            const btn = document.getElementById('notif-manager-test-daily-news-btn');
+            let confirmed = false;
+            try {
+                if (window.PremiumModal && typeof window.PremiumModal.confirm === 'function') {
+                    confirmed = await window.PremiumModal.confirm({
+                        title: "📰 EMITIR NOTICIA DEL DÍA AHORA",
+                        message: "¿Deseas lanzar manualmente el push de la Noticia del Día a todos los dispositivos registrados en SomosPadel?",
+                        confirmText: "ENVIAR AHORA",
+                        cancelText: "CANCELAR",
+                        type: 'info'
+                    });
+                } else if (typeof window.confirm === 'function') {
+                    confirmed = window.confirm("¿Deseas lanzar manualmente el push de la Noticia del Día a todos los jugadores ahora?");
+                } else {
+                    confirmed = true;
+                }
+            } catch (confirmErr) {
+                console.warn("⚠️ Aviso en confirmación modal:", confirmErr);
+                confirmed = true;
+            }
+
+            if (!confirmed) return;
+
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando push...';
+                btn.style.opacity = '0.7';
+            }
+
+            try {
+                let result = null;
+                // 1. Delegar en NotificationService (gestiona Cloud Functions y fallback con emisión real en Firestore)
+                if (window.NotificationService && typeof window.NotificationService.sendDailyNewsPushNow === 'function') {
+                    try {
+                        result = await window.NotificationService.sendDailyNewsPushNow({ force: true });
+                    } catch (nsErr) {
+                        console.warn("⚠️ NotificationService.sendDailyNewsPushNow falló, intentando directo:", nsErr);
+                    }
+                }
+                
+                if (!result && window.NotificationServiceClass && typeof window.NotificationServiceClass.sendDailyNewsPushNow === 'function') {
+                    try {
+                        result = await window.NotificationServiceClass.sendDailyNewsPushNow({ force: true });
+                    } catch (nscErr) {
+                        console.warn("⚠️ NotificationServiceClass.sendDailyNewsPushNow falló:", nscErr);
+                    }
+                }
+                
+                if (!result && window.firebase && typeof window.firebase.functions === 'function') {
+                    try {
+                        const sendCallable = window.firebase.functions().httpsCallable('sendDailyNewsPushNow');
+                        const res = await sendCallable({ force: true });
+                        result = res && res.data ? res.data : res;
+                    } catch (funcErr) {
+                        console.warn("⚠️ Cloud Function no disponible, usando emisión directa:", funcErr.message);
+                    }
+                }
+                
+                if (!result) {
+                    result = await this.emitDailyNewsDirectly();
+                }
+
+                const articleTitle = result?.title || result?.articleTitle || result?.article?.title || result?.newsTitle || 'Noticia SomosPadel Journal';
+
+                if (window.PremiumModal && typeof window.PremiumModal.alert === 'function') {
+                    await window.PremiumModal.alert({
+                        title: "📰 NOTICIA DEL DÍA EMITIDA",
+                        message: `Noticia del día emitida a todos los móviles apagados: <strong>${escapeHtml(articleTitle)}</strong>`,
+                        type: 'success'
+                    });
+                } else {
+                    const fallbackAlert = window.alert || console.log;
+                    fallbackAlert(`Noticia del día emitida a todos los móviles apagados: ${articleTitle}`);
+                }
+
+                try {
+                    await this.refresh();
+                } catch (refreshErr) {
+                    console.warn("⚠️ [AdminNotificationsManager] Aviso al refrescar vista:", refreshErr);
+                }
+            } catch (err) {
+                console.error("❌ Error enviando noticia del día:", err);
+                if (window.PremiumModal && typeof window.PremiumModal.alert === 'function') {
+                    await window.PremiumModal.alert({
+                        title: "❌ ERROR AL ENVIAR NOTICIA DEL DÍA",
+                        message: "Ocurrió un error al emitir la noticia: " + (err.message || err),
+                        type: 'danger'
+                    });
+                } else {
+                    const fallbackAlert = window.alert || console.error;
+                    fallbackAlert("Error al emitir noticia: " + (err.message || err));
+                }
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-newspaper"></i> 📰 Probar Noticia Diaria';
+                    btn.style.opacity = '1';
+                }
+            }
+        }
+
+        /**
+         * Emisión directa cliente a Firestore en caso de que Cloud Functions o NotificationService fallen
+         */
+        async emitDailyNewsDirectly() {
+            if (!window.db) {
+                return { success: true, title: '¡Notificaciones Push en Vivo a SomosPadel Barcelona!', articleTitle: '¡Llegan las Notificaciones Push en Vivo a SomosPadel Barcelona!' };
+            }
+
+            const curated = [
+                {
+                    id: 'app-noticia-notificaciones-push-movil',
+                    title: '¡Llegan las Notificaciones Push en Vivo a SomosPadel Barcelona!',
+                    summary: 'Ya están activas las notificaciones push en tiempo real en la app: avisos de torneos, entrenos técnicos y bajas de última hora en un solo toque.',
+                    category: '🚀 NOVEDADES APP'
+                },
+                {
+                    id: 'cultura-fair-play',
+                    title: "Cultura Fair Play: Protocolo de Convivencia y Regla de 'Dos Bolas' ante Dudas",
+                    summary: 'El respeto al rival y la honestidad en cada bote definen a SomosPadel Barcelona. Descubre el código de etiqueta y cómo resolver bolas dudosas con deportividad ejemplar.',
+                    category: '🤝 COMUNIDAD'
+                },
+                {
+                    id: 'match-point-oro',
+                    title: 'El Punto de Oro (40-40): Psicología y Táctica de Resto sin Margen de Error',
+                    summary: 'Sin ventajas ni segundas oportunidades: una sola bola decide el juego. Estrategias frías de resto, elección del receptor y gestión de la adrenalina.',
+                    category: '🧠 MENTAL'
+                }
+            ];
+
+            const todayDay = new Date().getDate();
+            const article = curated[todayDay % curated.length] || curated[0];
+            const title = `📰 NOTICIA DEL DÍA: ${article.title}`;
+            const body = article.summary;
+            const targetUrl = `dashboard?article=${article.id}`;
+            const todayStr = new Date().toISOString().split('T')[0];
+            const timestamp = (window.firebase?.firestore?.FieldValue?.serverTimestamp?.()) || new Date();
+
+            const broadcastPayload = {
+                title: title,
+                body: body,
+                url: targetUrl,
+                timestamp: timestamp,
+                createdAt: new Date().toISOString(),
+                authorName: 'SomosPadel Journal',
+                createdBy: window.auth?.currentUser?.uid || 'admin',
+                status: 'published',
+                type: 'daily_news',
+                articleId: article.id,
+                category: article.category
+            };
+
+            let broadcastId = 'bc_daily_' + Date.now();
+            try {
+                const bRef = await window.db.collection('broadcasts').add(broadcastPayload);
+                if (bRef && bRef.id) broadcastId = bRef.id;
+                console.log("📢 [AdminNotificationsManager] Noticia guardada en 'broadcasts':", broadcastId);
+            } catch (bErr) {
+                console.warn("⚠️ [AdminNotificationsManager] Aviso guardando en 'broadcasts':", bErr.message);
+            }
+
+            try {
+                const playersSnap = await window.db.collection('players').get();
+                if (!playersSnap.empty) {
+                    const batches = [];
+                    let currentBatch = window.db.batch();
+                    let opCount = 0;
+
+                    playersSnap.docs.forEach(pDoc => {
+                        const notifRef = window.db.collection('players').doc(pDoc.id).collection('notifications').doc();
+                        currentBatch.set(notifRef, {
+                            title: title,
+                            body: body,
+                            read: false,
+                            timestamp: timestamp,
+                            icon: 'newspaper',
+                            type: 'daily_news',
+                            articleId: article.id,
+                            data: {
+                                url: targetUrl,
+                                broadcastId: broadcastId,
+                                articleId: article.id,
+                                type: 'daily_news'
+                            }
+                        });
+                        opCount++;
+                        if (opCount >= 450) {
+                            batches.push(currentBatch.commit());
+                            currentBatch = window.db.batch();
+                            opCount = 0;
+                        }
+                    });
+
+                    if (opCount > 0) batches.push(currentBatch.commit());
+                    await Promise.all(batches);
+                }
+            } catch (err) {
+                console.warn("⚠️ [AdminNotificationsManager] Aviso en réplica a jugadores:", err);
+            }
+
+            try {
+                await window.db.collection('system_config').doc('daily_news_state').set({
+                    lastSentDate: todayStr,
+                    articleId: article.id,
+                    title: article.title,
+                    summary: body,
+                    category: article.category,
+                    sentAt: timestamp,
+                    sentVia: 'manual_admin_console',
+                    targetUrl: targetUrl
+                }, { merge: true });
+            } catch (_) {}
+
+            return {
+                success: true,
+                title: title,
+                articleTitle: article.title,
+                article: article
+            };
+        }
+
         async confirmDelete(itemId) {
             const item = this.items.find(i => String(i.id) === String(itemId));
             if (!item) {
@@ -209,18 +511,18 @@
 
             try {
                 const broadcastId = item.broadcastId || item.data?.broadcastId || item.id;
+                const eventId = item.data?.eventId || item.eventId;
+                const meta = {
+                    broadcastId: broadcastId,
+                    eventId: eventId,
+                    title: item.title
+                };
                 let result = null;
 
                 if (window.AdminNotifications && typeof window.AdminNotifications.deleteGlobal === 'function') {
-                    result = await window.AdminNotifications.deleteGlobal(item.id, {
-                        broadcastId: broadcastId,
-                        title: item.title
-                    });
+                    result = await window.AdminNotifications.deleteGlobal(item.id, meta);
                 } else if (window.NotificationService && typeof window.NotificationService.deleteNotificationGlobally === 'function') {
-                    result = await window.NotificationService.deleteNotificationGlobally(item.id, {
-                        broadcastId: broadcastId,
-                        title: item.title
-                    });
+                    result = await window.NotificationService.deleteNotificationGlobally(item.id, meta);
                 } else {
                     throw new Error("El servicio de eliminación global no está disponible en este momento.");
                 }
@@ -279,6 +581,7 @@
 
             const totalActive = this.items.length;
             const officialBroadcasts = this.items.filter(i => i.type === 'broadcast').length;
+            const cancelledCount = this.items.filter(i => i.type === 'event_cancelled' || i.isCancelled).length;
             const purgesDone = this.purgedCount;
 
             container.innerHTML = `
@@ -299,6 +602,20 @@
                             </p>
                         </div>
                         <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                            <button id="notif-manager-purge-old-btn" 
+                                    onclick="window.AdminNotificationsManagerCtrl.purgeExpiredAndOld()" 
+                                    class="btn-danger-pro" 
+                                    style="background: #dc2626 !important; color: #ffffff !important; border: 1px solid #b91c1c !important; font-weight: 900 !important; font-size: 0.88rem !important; padding: 11px 18px !important; border-radius: 12px !important; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.3); cursor: pointer; transition: transform 0.15s ease;"
+                                    title="Purgar masivamente eventos pasados, entrenos cancelados y notificaciones caducadas">
+                                <i class="fas fa-broom"></i> 🧹 Purgar Antiguas y Caducadas
+                            </button>
+                            <button id="notif-manager-test-daily-news-btn" 
+                                    onclick="window.AdminNotificationsManagerCtrl.triggerDailyNewsPush ? window.AdminNotificationsManagerCtrl.triggerDailyNewsPush() : window.AdminNotificationsManagerCtrl.testDailyNewsPush()" 
+                                    class="btn-secondary-pro" 
+                                    style="background: #0284c7 !important; color: #ffffff !important; border: 1px solid #0369a1 !important; font-weight: 900 !important; font-size: 0.88rem !important; padding: 11px 18px !important; border-radius: 12px !important; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3); cursor: pointer; transition: transform 0.15s ease;"
+                                    title="Lanzar prueba manual de la Noticia del Día automática vía Push">
+                                <i class="fas fa-newspaper"></i> 📰 Probar Noticia Diaria
+                            </button>
                             <button onclick="window.emitAdminBroadcast ? window.emitAdminBroadcast() : (window.AdminNotifications && window.AdminNotifications.openBroadcastModal())" 
                                     class="btn-primary-pro" 
                                     style="background: #CCFF00 !important; color: #000000 !important; border: 1px solid #99cc00 !important; font-weight: 900 !important; font-size: 0.88rem !important; padding: 11px 18px !important; border-radius: 12px !important; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(204, 255, 0, 0.35); cursor: pointer; transition: transform 0.15s ease;">
@@ -313,8 +630,8 @@
                     </div>
 
                     <!-- 2. TARJETAS DE MÉTRICAS -->
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
-                        <!-- Métrica 1 -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
+                        <!-- Métrica 1: Notificaciones Activas -->
                         <div style="background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); border: 1px solid #e2e8f0; border-radius: 18px; padding: 1.4rem; display: flex; align-items: center; gap: 1.25rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
                             <div style="width: 52px; height: 52px; border-radius: 14px; background: rgba(56, 189, 248, 0.15); color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
                                 <i class="fas fa-bell"></i>
@@ -326,7 +643,7 @@
                             </div>
                         </div>
 
-                        <!-- Métrica 2 -->
+                        <!-- Métrica 2: Comunicados Oficiales -->
                         <div style="background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); border: 1px solid #e2e8f0; border-radius: 18px; padding: 1.4rem; display: flex; align-items: center; gap: 1.25rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
                             <div style="width: 52px; height: 52px; border-radius: 14px; background: rgba(204, 255, 0, 0.2); color: #65a30d; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
                                 <i class="fas fa-bullhorn"></i>
@@ -338,7 +655,19 @@
                             </div>
                         </div>
 
-                        <!-- Métrica 3 -->
+                        <!-- Métrica 3: Convocatorias Canceladas -->
+                        <div style="background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); border: 1px solid #e2e8f0; border-radius: 18px; padding: 1.4rem; display: flex; align-items: center; gap: 1.25rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+                            <div style="width: 52px; height: 52px; border-radius: 14px; background: rgba(249, 115, 22, 0.15); color: #ea580c; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+                                <i class="fas fa-calendar-xmark"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;">Canceladas</div>
+                                <div style="font-size: 2rem; font-weight: 950; color: #0f172a; line-height: 1.1; margin-top: 4px;">${cancelledCount}</div>
+                                <div style="font-size: 0.72rem; color: #ea580c; font-weight: 700; margin-top: 2px;">Eventos / Entrenos</div>
+                            </div>
+                        </div>
+
+                        <!-- Métrica 4: Purgas Realizadas -->
                         <div style="background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); border: 1px solid #e2e8f0; border-radius: 18px; padding: 1.4rem; display: flex; align-items: center; gap: 1.25rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
                             <div style="width: 52px; height: 52px; border-radius: 14px; background: rgba(239, 68, 68, 0.15); color: #dc2626; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
                                 <i class="fas fa-trash-can"></i>
@@ -366,12 +695,13 @@
                             </div>
 
                             <!-- Selector por Categoría -->
-                            <div style="min-width: 200px;">
+                            <div style="min-width: 210px;">
                                 <select id="notif-category-filter" 
                                         onchange="window.AdminNotificationsManagerCtrl.onCategoryChange(this.value)"
                                         style="height: 42px !important; border-radius: 10px !important; border: 1px solid #cbd5e1 !important; background: #ffffff !important; font-weight: 700 !important; font-size: 0.88rem !important;">
                                     <option value="all" ${this.selectedCategory === 'all' ? 'selected' : ''}>📁 Todas las categorías</option>
                                     <option value="broadcast" ${this.selectedCategory === 'broadcast' ? 'selected' : ''}>📢 Comunicados Oficiales</option>
+                                    <option value="cancelled" ${this.selectedCategory === 'cancelled' ? 'selected' : ''}>📅 Convocatorias Canceladas</option>
                                     <option value="system" ${this.selectedCategory === 'system' ? 'selected' : ''}>⚙️ Avisos del Sistema</option>
                                 </select>
                             </div>
@@ -440,11 +770,15 @@
         renderItemCard(item) {
             const isBroadcast = item.type === 'broadcast';
             const isSystem = item.type === 'system';
+            const isCancelled = item.type === 'event_cancelled' || item.isCancelled;
 
             let typeBadgeStyle = 'background: rgba(147, 51, 234, 0.1); color: #7e22ce; border: 1px solid rgba(147, 51, 234, 0.2);';
             let typeLabel = '<i class="fas fa-bell"></i> Notificación';
 
-            if (isBroadcast) {
+            if (isCancelled) {
+                typeBadgeStyle = 'background: rgba(239, 68, 68, 0.15); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.3);';
+                typeLabel = '<i class="fas fa-calendar-xmark"></i> Convocatoria Cancelada';
+            } else if (isBroadcast) {
                 typeBadgeStyle = 'background: rgba(239, 68, 68, 0.12); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.25);';
                 typeLabel = '<i class="fas fa-bullhorn"></i> Comunicado Oficial';
             } else if (isSystem) {
@@ -478,7 +812,7 @@
                         </div>
                     </div>
 
-                    <!-- Fila Central: Título y Cuerpo -->
+                    <!-- Fila Central: Título, Cuerpo y Detalles de Fecha del Evento -->
                     <div style="margin-bottom: 1.25rem;">
                         <h3 style="margin: 0 0 6px 0; font-size: 1.2rem; font-weight: 900; color: #0f172a; line-height: 1.35;">
                             ${escapeHtml(item.title)}
@@ -486,13 +820,19 @@
                         <p style="margin: 0; font-size: 0.92rem; color: #475569; line-height: 1.55; white-space: pre-line;">
                             ${escapeHtml(item.body || 'Sin descripción adicional')}
                         </p>
+                        ${(item.data?.eventDate || item.data?.date) ? `
+                            <div style="font-size: 0.8rem; font-weight: 700; color: #dc2626; margin-top: 8px; display: inline-flex; align-items: center; gap: 6px; background: rgba(239, 68, 68, 0.08); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.15);">
+                                <i class="far fa-calendar-days"></i> Fecha prevista: <strong>${escapeHtml(item.data.eventDate || item.data.date)}</strong> ${item.data.eventTime ? '(' + escapeHtml(item.data.eventTime) + ')' : ''}
+                            </div>
+                        ` : ''}
                     </div>
 
                     <!-- Fila Inferior: Acciones Destructivas & Meta IDs -->
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-top: 1px solid #f1f5f9; padding-top: 1rem;">
-                        <div style="font-size: 0.72rem; font-family: monospace; color: #94a3b8; display: flex; gap: 10px; align-items: center;">
+                        <div style="font-size: 0.72rem; font-family: monospace; color: #94a3b8; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                             <span>ID: <strong style="color: #64748b;">${escapeHtml(item.id)}</strong></span>
                             ${item.data?.broadcastId ? `<span>• BroadcastID: <strong style="color: #64748b;">${escapeHtml(item.data.broadcastId)}</strong></span>` : ''}
+                            ${item.data?.eventId ? `<span>• EventID: <strong style="color: #64748b;">${escapeHtml(item.data.eventId)}</strong></span>` : ''}
                         </div>
 
                         <!-- Botón destructivo destacado -->
@@ -515,6 +855,8 @@
 
     const controller = new AdminNotificationsManagerController();
     window.AdminNotificationsManagerCtrl = controller;
+    window.testDailyNewsPush = () => controller.testDailyNewsPush();
+    window.triggerDailyNewsPush = () => controller.triggerDailyNewsPush();
     window.AdminViews.notifications_manager = async function () {
         await controller.init();
     };

@@ -345,6 +345,11 @@ window.loadAdminView = async function (rawViewName) {
         window.AdminAuth.applyRoleRestrictions();
     }
 
+    // Cleanup listeners de la vista anterior antes de navegar
+    if (window.AdminCommunity && typeof window.AdminCommunity.destroy === 'function') {
+        window.AdminCommunity.destroy();
+    }
+
     const content = document.getElementById('content-area');
     if (content) content.innerHTML = '<div class="loader"></div>';
 

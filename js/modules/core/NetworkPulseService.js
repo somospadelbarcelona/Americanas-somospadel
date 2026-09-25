@@ -70,9 +70,13 @@
          * Escucha usuarios reales conectados (Últimos accesos)
          */
         listenToActiveNodes() {
+            if (this._unsubscribeNodes) {
+                this._unsubscribeNodes();
+                this._unsubscribeNodes = null;
+            }
             // Obtenemos los últimos 20 usuarios que han tenido actividad, sin límite de tiempo estricto
             // para asegurar que la lista siempre contenga nombres de personas reales del club.
-            this.db.collection('players')
+            this._unsubscribeNodes = this.db.collection('players')
                 .orderBy('lastActive', 'desc')
                 .limit(20)
                 .onSnapshot(snapshot => {

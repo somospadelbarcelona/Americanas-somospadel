@@ -936,9 +936,9 @@ body {
     justify-content: center !important;
 }
 
-/* TÍTULOS DE FILAS: 100% VISIBLES EN BLANCO PURO CON TEXT-SHADOW */
+/* TÍTULOS DE FILAS: 100% VISIBLES EN BLANCO PURO CON TEXT-SHADOW Y SIN CORTES */
 .drawer-row-title {
-    font-size: 0.88rem !important;
+    font-size: 0.85rem !important;
     font-weight: 800 !important;
     color: #ffffff !important;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
@@ -951,11 +951,28 @@ body {
     display: block !important;
     opacity: 1 !important;
     visibility: visible !important;
+    line-height: 1.25 !important;
+}
+
+@media (max-width: 380px) {
+    .drawer-row-title {
+        font-size: 0.79rem !important;
+        letter-spacing: -0.25px !important;
+    }
 }
 
 .drawer-row-badge {
     flex-shrink: 0 !important;
     margin-left: auto !important;
+    padding: 2px 7px !important;
+    font-size: 0.65rem !important;
+    font-weight: 900 !important;
+    border-radius: 6px !important;
+    line-height: 1.15 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    letter-spacing: 0.3px !important;
 }
 
 .drawer-row-chevron {

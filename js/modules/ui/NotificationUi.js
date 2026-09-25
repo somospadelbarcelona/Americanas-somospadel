@@ -659,7 +659,7 @@ class NotificationUi {
         // 2. CLASIFICACIÓN ESTRICTA: CANCELADOS, ENTRENOS vs AMERICANAS
         // -------------------------------------------------------------
         const isEnt = fullText.includes('entreno') || fullText.includes('entrenamiento') || fullText.includes('coach') || rawType === 'entreno' || rawUrl === 'entrenos';
-        const isCancelled = item.isCancelled || item.data?.isCancelled || fullText.includes('cancelad') || fullText.includes('suspendid') || fullText.includes('eliminad') || fullText.includes('anulad');
+        const isCancelled = item.isCancelled || item.data?.isCancelled || rawType === 'event_cancelled' || item.type === 'event_cancelled' || fullText.includes('cancelad') || fullText.includes('suspendid') || fullText.includes('eliminad') || fullText.includes('anulad');
 
         // PRIORIDAD MÁXIMA: EVENTOS CANCELADOS, SUSPENDIDOS O ELIMINADOS
         if (isCancelled) {
@@ -728,14 +728,15 @@ class NotificationUi {
 
         const finalTitle = rawTitle.length > 0 ? rawTitle : defaultTitle;
         const finalBody = rawBody.length > 0 ? rawBody : defaultBody;
+        const rawTimestamp = item.timestamp || item.createdAt || item.data?.timestamp || item.data?.createdAt || new Date();
 
         return {
             id: item.id || `notif_${Date.now()}`,
             title: finalTitle,
             body: finalBody,
             read: Boolean(item.read),
-            timestamp: item.timestamp,
-            timeFormatted: this.timeAgo(item.timestamp),
+            timestamp: rawTimestamp,
+            timeFormatted: this.timeAgo(rawTimestamp),
             category,
             tag,
             sede,
@@ -836,24 +837,34 @@ class NotificationUi {
 
     parseTimestamp(ts) {
         if (!ts) return new Date();
-        if (ts.toDate) return ts.toDate();
-        if (ts instanceof Date) return ts;
-        return new Date(ts);
+        try {
+            if (typeof ts.toDate === 'function') return ts.toDate();
+            if (ts instanceof Date) return isNaN(ts.getTime()) ? new Date() : ts;
+            const d = new Date(ts);
+            return isNaN(d.getTime()) ? new Date() : d;
+        } catch (_) {
+            return new Date();
+        }
     }
 
     timeAgo(timestamp) {
         if (!timestamp) return 'Ahora';
-        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-        const seconds = Math.floor((new Date() - date) / 1000);
-
-        if (seconds < 60) return "Ahora";
-        const mins = Math.floor(seconds / 60);
-        if (mins < 60) return `${mins} min`;
-        const hours = Math.floor(mins / 60);
-        if (hours < 24) return `${hours} h`;
-        const days = Math.floor(hours / 24);
-        if (days < 7) return `${days} d`;
-        return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+        try {
+            const date = typeof timestamp.toDate === 'function' ? timestamp.toDate() : (timestamp instanceof Date ? timestamp : new Date(timestamp));
+            if (isNaN(date.getTime())) return 'Ahora';
+            const seconds = Math.floor((new Date() - date) / 1000);
+            if (seconds < 0) return "Ahora";
+            if (seconds < 60) return "Ahora";
+            const mins = Math.floor(seconds / 60);
+            if (mins < 60) return `${mins} min`;
+            const hours = Math.floor(mins / 60);
+            if (hours < 24) return `${hours} h`;
+            const days = Math.floor(hours / 24);
+            if (days < 7) return `${days} d`;
+            return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+        } catch (_) {
+            return 'Ahora';
+        }
     }
 }
 

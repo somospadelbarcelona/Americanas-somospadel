@@ -163,7 +163,10 @@
             }
 
             const location = event.location || 'Sede SomosPadel';
-            const time = event.time || 'Horario a confirmar';
+            let time = event.time || 'Horario a confirmar';
+            if (event.time && (event.time_end || event.timeEnd) && !event.time.includes('-') && !event.time.toLowerCase().includes(' a ')) {
+                time = `${event.time.trim()} - ${(event.time_end || event.timeEnd).trim()}`;
+            }
 
             return `
                 <div class="ag-card-anim" style="

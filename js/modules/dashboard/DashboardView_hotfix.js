@@ -641,6 +641,9 @@
                 });
             }
 
+            // Inicializar escucha de eventos push para navegación directa al Journal
+            this.initJournalPushNavigation();
+
         }
 
         async render(data) {
@@ -1493,12 +1496,13 @@
                     promoRoot.innerHTML = this.renderClubOrganizersPromo();
                 }
 
-                // Deep-linking para noticias compartidas (?post=ID)
+                // Deep-linking para noticias del día y artículos del Journal (?article=ID, ?articleId=ID, ?journal=ID, ?post=ID)
                 const urlParams = new URLSearchParams(window.location.search);
-                const sharePostId = urlParams.get('post');
+                const sharePostId = urlParams.get('article') || this.getArticleIdFromUrl() || window._pendingArticleModalId;
                 if (sharePostId) {
+                    window._pendingArticleModalId = null;
                     setTimeout(() => {
-                        this.openBlogPost(sharePostId);
+                        this.openArticleModal(sharePostId);
                     }, 650); // Tiempo óptimo para inyección en el DOM y carga de Firestore
                 }
 
@@ -2860,6 +2864,102 @@
             }
         }
 
+        getArticleIdFromUrl() {
+            // 1. Revisar query string de window.location.search (?article=..., ?articleId=..., ?journal=..., ?post=...)
+            try {
+                const urlParams = new URLSearchParams(window.location.search || '');
+                const fromSearch = urlParams.get('article') || 
+                                   urlParams.get('articleId') || 
+                                   urlParams.get('journal') || 
+                                   urlParams.get('post');
+                if (fromSearch) return decodeURIComponent(fromSearch).trim();
+            } catch (_) {}
+
+            // 2. Revisar hash de window.location.hash (#dashboard?article=..., #journal?article=..., etc.)
+            try {
+                const hash = window.location.hash || '';
+                if (hash.includes('?')) {
+                    const hashParams = new URLSearchParams(hash.substring(hash.indexOf('?') + 1));
+                    const fromHash = hashParams.get('article') || 
+                                     hashParams.get('articleId') || 
+                                     hashParams.get('journal') || 
+                                     hashParams.get('post');
+                    if (fromHash) return decodeURIComponent(fromHash).trim();
+                }
+                const match = hash.match(/[?&#](?:article|articleId|journal|post)=([^&#]+)/i);
+                if (match && match[1]) {
+                    return decodeURIComponent(match[1]).trim();
+                }
+            } catch (_) {}
+
+            return null;
+        }
+
+        initJournalPushNavigation() {
+            if (typeof window === 'undefined') return;
+
+            // Escuchar mensajes del Service Worker cuando el usuario pulsa una notificación push
+            if (navigator.serviceWorker && !window._spJournalSwListenerAttached) {
+                window._spJournalSwListenerAttached = true;
+                navigator.serviceWorker.addEventListener('message', (event) => {
+                    if (!event.data) return;
+                    console.log('📬 [App] Mensaje push recibido del Service Worker:', event.data);
+
+                    if (event.data.type === 'NOTIFICATION_CLICKED') {
+                        const data = event.data.data || {};
+                        const articleId = event.data.articleId || data.articleId || data.article || data.post;
+                        const url = event.data.url || data.url || '';
+
+                        let resolvedArticleId = articleId;
+                        if (!resolvedArticleId && url) {
+                            const m = url.match(/[?&#](?:article|articleId|journal|post)=([^&#]+)/i);
+                            if (m && m[1]) resolvedArticleId = decodeURIComponent(m[1]).trim();
+                        }
+
+                        if (resolvedArticleId) {
+                            console.log('📰 [App] Abriendo artículo tras clic en push:', resolvedArticleId);
+                            this.openArticleModal(resolvedArticleId);
+                        }
+                    }
+                });
+            }
+
+            // Escuchar cambios de hash dinámicos para abrir artículos
+            if (!window._spJournalHashListenerAttached) {
+                window._spJournalHashListenerAttached = true;
+                window.addEventListener('hashchange', () => {
+                    const articleId = this.getArticleIdFromUrl();
+                    if (articleId) {
+                        this.openArticleModal(articleId);
+                    }
+                });
+            }
+        }
+
+        async openArticle(articleId) {
+            return this.openArticleModal(articleId);
+        }
+
+        async openArticleModal(articleId) {
+            if (!articleId) return;
+            console.log(`📰 [DashboardView] Solicitud de apertura de artículo Journal: ${articleId}`);
+
+            // Si el usuario está en otra sección distinta a dashboard/journal/blog, navegar al dashboard
+            if (window.Router && window.Router.currentRoute && !['dashboard', 'journal', 'blog'].includes(window.Router.currentRoute)) {
+                window._pendingArticleModalId = articleId;
+                window.Router.navigate('dashboard');
+                return;
+            }
+
+            // Si el render del dashboard aún no ha finalizado o el DOM está cargando, poner en cola
+            if (this._isRendering || !document.getElementById('content-area')) {
+                window._pendingArticleModalId = articleId;
+                return;
+            }
+
+            return this.openBlogPost(articleId);
+        }
+
         async openBlogPost(postId) {
             try {
                 const db = window.db || firebase.firestore();
@@ -2959,21 +3059,38 @@
                 }
 
                 // Buscar en catálogo masivo si no estaba en Firestore ni en los básicos
+                const cleanPostId = (postId || '').replace(/^news_\d{4}-\d{2}-\d{2}_/, '');
                 if (!post && window.NewsCatalog && typeof window.NewsCatalog.getFullCatalog === 'function') {
                     const allCat = window.NewsCatalog.getFullCatalog();
-                    post = allCat.find(p => p.id === postId || p.id.includes(postId));
+                    post = allCat.find(p => 
+                        p.id === postId || 
+                        p.id === cleanPostId || 
+                        postId.includes(p.id) || 
+                        (cleanPostId && cleanPostId.includes(p.id)) || 
+                        p.id.includes(postId) || 
+                        (cleanPostId && p.id.includes(cleanPostId))
+                    );
                 }
 
                 if (!post) return;
 
+                // Formateo de contenido para máxima calidad editorial (párrafos, bullets y consejos)
+                let formattedContent = post.content || post.contentTemplate || post.body || '';
+                if (!formattedContent && post.snippet) formattedContent = post.snippet;
+                if (typeof formattedContent === 'string' && formattedContent.includes('\n\n')) {
+                    formattedContent = formattedContent.split('\n\n').map(par => `<p style="margin: 0 0 14px 0;">${par.replace(/\n/g, '<br>')}</p>`).join('');
+                }
+
                 // Resolver la mejor imagen de fondo para la cabecera (Fototeca Curada HD o pool local)
-                let articleImg = (this.currentImagesMap && this.currentImagesMap[postId]) || post.imageUrl;
+                let articleImg = (this.currentImagesMap && this.currentImagesMap[postId]) || 
+                                 (this.currentImagesMap && this.currentImagesMap[cleanPostId]) || 
+                                 post.imageUrl;
                 if (!articleImg && window.NewsCatalog) {
                     const assigned = window.NewsCatalog.assignUniquePhotos([post]);
                     articleImg = assigned[post.id];
                 }
                 if (!articleImg) {
-                    articleImg = 'img/pista_padel_azul.png';
+                    articleImg = 'https://images.unsplash.com/photo-1592919505780-303950717480?q=80&w=1200&auto=format&fit=crop';
                 }
 
                 // Detectar si el post tiene acción interactiva integrada
@@ -3089,26 +3206,53 @@
                         <div style="position: absolute; top: 100px; left: -50px; width: 150px; height: 150px; background: radial-gradient(circle, ${post.catColor || '#CCFF00'}15 0%, transparent 70%); pointer-events: none; filter: blur(30px);"></div>
                         
                         <!-- Premium Image Header Area (Magazine style) -->
-                        <div style="background-image: url('${articleImg}'); background-size: cover; background-position: center; height: 200px; position: relative; overflow: hidden; border-bottom: 1px solid rgba(255,255,255,0.06); flex-shrink: 0;">
+                        <div style="background-image: url('${articleImg}'); background-size: cover; background-position: center; height: 210px; position: relative; overflow: hidden; border-bottom: 1px solid rgba(255,255,255,0.06); flex-shrink: 0;">
                             <!-- Overlay degradado para fundido limpio a negro (#090f1e) en la base y oscurecimiento para botones -->
-                            <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(9, 15, 30, 0.2) 0%, rgba(9, 15, 30, 0.6) 60%, #090f1e 100%); pointer-events: none;"></div>
+                            <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(9, 15, 30, 0.25) 0%, rgba(9, 15, 30, 0.65) 60%, #090f1e 100%); pointer-events: none;"></div>
                             
                             <!-- Glassmorphism Floating Emoji Badge -->
                             <div class="blog-modal-emoji-badge" style="position: absolute; bottom: 16px; right: 16px; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; background: rgba(15, 23, 42, 0.6); border: 1.5px solid rgba(255, 255, 255, 0.25); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); z-index: 2; animation: badgePop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both 0.15s;">
-                                ${post.emoji || '📰'}
+                                ${post.emoji || '🎾'}
                             </div>
                         </div>
 
                         <!-- Content Area -->
                         <div id="blog-post-content-area" style="padding: 24px; padding-top: 16px; position: relative; z-index: 2; overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1;">
                             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
-                                <span style="font-size: 0.58rem; font-weight: 1000; color: ${post.catColor || '#CCFF00'}; border: 1px solid ${post.catColor || '#CCFF00'}45; padding: 4px 10px; border-radius: 8px; background: ${post.catColor || '#CCFF00'}12; letter-spacing: 0.8px; text-transform: uppercase;">${post.category || 'REVISTA'}</span>
+                                <span style="font-size: 0.58rem; font-weight: 1000; color: ${post.catColor || '#CCFF00'}; border: 1px solid ${post.catColor || '#CCFF00'}45; padding: 4px 10px; border-radius: 8px; background: ${post.catColor || '#CCFF00'}12; letter-spacing: 0.8px; text-transform: uppercase;">${post.category || 'REVISTA SOMOSPADEL'}</span>
                                 <span style="font-size: 0.62rem; color: rgba(255,255,255,0.45); font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase;">• ${post.readTime || '3 MIN'} DE LECTURA</span>
                             </div>
                             
                             <h3 style="color: white; font-weight: 950; font-size: 1.35rem; margin: 0 0 16px 0; line-height: 1.25; letter-spacing: -0.4px; text-shadow: 0 2px 10px rgba(0,0,0,0.4);">${post.title}</h3>
                             
-                            <p style="color: rgba(255,255,255,0.85); font-size: 0.86rem; font-weight: 500; line-height: 1.65; margin: 0 0 20px 0; word-break: break-word; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">${post.content}</p>
+                            <div style="color: rgba(255,255,255,0.88); font-size: 0.88rem; font-weight: 450; line-height: 1.7; margin: 0 0 20px 0; word-break: break-word;">${formattedContent}</div>
+                            
+                            ${interactiveActionHtml}
+
+                            <!-- Bloque de Firma y Aval del Coach SomosPadel Academy -->
+                            <div style="margin: 22px 0 16px; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #CCFF00 0%, #10b981 100%); display: flex; align-items: center; justify-content: center; color: #000; font-size: 1.1rem; font-weight: 950; box-shadow: 0 4px 14px rgba(204,255,0,0.35);">
+                                        <i class="fas fa-medal"></i>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 0.82rem; font-weight: 950; color: #ffffff; letter-spacing: 0.2px;">Alex Coscolín • Head Coach</div>
+                                        <div style="font-size: 0.68rem; color: #CCFF00; font-weight: 700; letter-spacing: 0.3px;">SOMOSPADEL BARCELONA ACADEMY</div>
+                                    </div>
+                                </div>
+                                <button onclick="window.DashboardView.shareToWhatsApp('${post.id}', '${post.title.replace(/'/g, "\\'")}', event)"
+                                        style="background: #25D366; color: #ffffff; border: none; font-weight: 950; font-size: 0.74rem; padding: 8px 14px; border-radius: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(37,211,102,0.3); transition: transform 0.2s;"
+                                        onmouseover="this.style.transform='scale(1.04)';"
+                                        onmouseout="this.style.transform='scale(1)';">
+                                    <i class="fab fa-whatsapp"></i> COMPARTIR CON MI PAREJA
+                                </button>
+                            </div>
+
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 0.68rem; color: rgba(255,255,255,0.4); font-weight: 800; letter-spacing: 0.5px;">
+                                <span>Publicado: ${post.date || 'Recientemente'}</span>
+                                <span style="color: #CCFF00; font-weight: 900; letter-spacing: 0.8px;">SOMOSPADEL BCN JOURNAL</span>
+                            </div>
+                        </div>
                             
                             ${interactiveActionHtml}
 
@@ -3830,7 +3974,7 @@
                         const theme = this.getEventCategoryTheme(evt);
                         const eventNameText = (evt.name || evt.title || (theme.categoryName === 'entreno' ? 'Entreno Pistas' : 'Americana Oficial')).trim();
                         const dateText = this.formatDateShort ? this.formatDateShort(evt.date) : 'Hoy';
-                        const timeStr = evt.time || '19:30';
+                        const timeStr = evt.time ? (evt.time_end && !evt.time.includes('-') ? `${evt.time} - ${evt.time_end}` : evt.time) : '19:30';
                         const timeDisplay = `${dateText === 'HOY' ? 'Hoy' : dateText} ${timeStr}`;
 
                         // Capacity & Urgency
@@ -4097,7 +4241,7 @@
                     const nextTournament = openEvents[0];
                     context.tournamentName = nextTournament.name;
                     context.tournamentDate = this.formatFriendlyDate(nextTournament.date);
-                    context.tournamentTime = nextTournament.time || '18:00';
+                    context.tournamentTime = nextTournament.time ? (nextTournament.time_end && !nextTournament.time.includes('-') ? `${nextTournament.time} - ${nextTournament.time_end}` : nextTournament.time) : '18:00';
                     context.tournamentId = nextTournament.id;
                     const maxCourtsTournament = parseInt(nextTournament.max_courts || nextTournament.courts || 0);
                     context.maxPlayers = maxCourtsTournament > 0 ? (maxCourtsTournament * 4) : parseInt(nextTournament.max_players || nextTournament.maxPlayers || 16);
@@ -4158,10 +4302,11 @@
                     const isLive = myActiveEvent.status === 'live' || myActiveEvent.status === 'in_progress' || myActiveEvent.status === 'pairing';
 
                     if (matchData) {
+                        const eventMatchTime = myActiveEvent.time ? (myActiveEvent.time_end && !myActiveEvent.time.includes('-') ? `${myActiveEvent.time} - ${myActiveEvent.time_end}` : myActiveEvent.time) : '18:00';
                         context.hasMatchToday = true; // HeroCard renderUpcomingMatch
                         context.status = isLive ? 'LIVE_MATCH' : 'UPCOMING_EVENT';
                         context.eventName = myActiveEvent.name;
-                        context.matchTime = myActiveEvent.time || '18:00';
+                        context.matchTime = eventMatchTime;
                         context.matchDay = isTodayMatch ? (myActiveEvent.type === 'entreno' ? 'Entreno (Pozo)' : 'Americana') : this.formatFriendlyDate(myActiveEvent.date);
                         context.tournamentName = myActiveEvent.type === 'entreno' ? 'Entreno (Pozo)' : 'Americana';
                         context.eventDateRaw = myActiveEvent.date;
@@ -4175,16 +4320,17 @@
                         context.round = matchData.round;
                     } else {
                         // Si no hay partidos pero el evento es hoy o está en vivo, mostramos info general
+                        const fallbackTime = myActiveEvent.time ? (myActiveEvent.time_end && !myActiveEvent.time.includes('-') ? `${myActiveEvent.time} - ${myActiveEvent.time_end}` : myActiveEvent.time) : '18:00';
                         if (isTodayMatch || isLive) {
                             context.hasMatchToday = true;
                             context.status = isLive ? 'LIVE_MATCH' : 'UPCOMING_EVENT';
                             context.eventName = myActiveEvent.name;
-                            context.matchTime = myActiveEvent.time || '18:00';
+                            context.matchTime = fallbackTime;
                             context.matchDay = myActiveEvent.type === 'entreno' ? 'Entreno (Pozo)' : 'Americana';
                         } else {
                             context.status = 'UPCOMING_EVENT';
                             context.eventName = myActiveEvent.name;
-                            context.matchTime = myActiveEvent.time || '18:00';
+                            context.matchTime = fallbackTime;
                             context.matchDay = this.formatFriendlyDate(myActiveEvent.date);
                         }
                     }
@@ -7079,6 +7225,7 @@
     }
 
     window.DashboardView = new DashboardView();
+    window.openArticleModal = (articleId) => window.DashboardView && window.DashboardView.openArticleModal(articleId);
 
     /**
      * 🖼️ Lightbox Oficial de Temporada 2027: Cartel SomosPadel

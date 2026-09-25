@@ -6,74 +6,71 @@
     'use strict';
 
     const PHOTO_LIBRARY = {
-        // Pistas panorámicas, cristales y ambientación de pista
+        // Pistas panorámicas profesionales de cristal, moqueta azul e iluminación nocturna
         courts: [
-            'https://images.unsplash.com/photo-1592919505780-303950717480?q=80&w=800&auto=format&fit=crop', // Pista cristal y red
-            'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?q=80&w=800&auto=format&fit=crop', // Pista deportiva nocturna
-            'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=800&auto=format&fit=crop', // Estadio iluminado
-            'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?q=80&w=800&auto=format&fit=crop', // Pista azul moderno
-            'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=800&auto=format&fit=crop', // Instalaciones deportivas pro
+            'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?q=80&w=1200&auto=format&fit=crop', // Pista deportiva profesional con iluminación nocturna
+            'https://images.unsplash.com/photo-1592919505780-303950717480?q=80&w=1200&auto=format&fit=crop', // Pista panorámica cristal y red tensada
+            'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?q=80&w=1200&auto=format&fit=crop', // Cancha azul moderna con líneas nítidas
+            'https://images.unsplash.com/photo-1622163642998-1ea32b0bbc67?q=80&w=1200&auto=format&fit=crop', // Pista de pádel indoor con moqueta azul rey
+            'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1200&auto=format&fit=crop', // Estadio iluminado de competición
             'img/pista_padel_azul.png',
             'img/blog_court_night.png'
         ],
-        // Palas, pelotas en moqueta y material de juego
+        // Palas de carbono, pelotas amarillas sobre moqueta y zapatillas técnicas
         material: [
-            'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?q=80&w=800&auto=format&fit=crop', // Pelotas de tenis/pádel
-            'https://images.unsplash.com/photo-1617083934555-563d61a29f8f?q=80&w=800&auto=format&fit=crop', // Raqueta y pelotas en suelo
-            'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?q=80&w=800&auto=format&fit=crop', // Bola amarilla en primer plano
-            'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=800&auto=format&fit=crop', // Zapatillas deportivas de agarre
-            'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?q=80&w=800&auto=format&fit=crop', // Suelas y calzado técnico
-            'https://images.unsplash.com/photo-1511556532299-8f662fc26c06?q=80&w=800&auto=format&fit=crop', // Calzado deportivo en pista
+            'https://images.unsplash.com/photo-1617083934555-563d61a29f8f?q=80&w=1200&auto=format&fit=crop', // Palas pro y pelotas en moqueta de pista
+            'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?q=80&w=1200&auto=format&fit=crop', // Macro bola amarilla de pádel en moqueta con textura HD
+            'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?q=80&w=1200&auto=format&fit=crop', // Pelotas de pádel con fibra y textura nítida
+            'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1200&auto=format&fit=crop', // Zapatillas deportivas de agarre técnico en pista
+            'https://images.unsplash.com/photo-1511556532299-8f662fc26c06?q=80&w=1200&auto=format&fit=crop', // Suela de espiga y tracción en movimiento
             'img/blog_racket_ball.png',
             'img/blog_ball_glass.png'
         ],
-        // Acción de juego, voleas, remates y movimientos en pista
+        // Acción de juego en pista: smash en suspensión, volea cortada y bajada de pared
         action: [
-            'https://images.unsplash.com/photo-1599474924187-334a4ae5bd3c?q=80&w=800&auto=format&fit=crop', // Golpe dinámico en red
-            'https://images.unsplash.com/photo-1530549387789-4c1017266635?q=80&w=800&auto=format&fit=crop', // Salto y potencia deportiva
-            'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=800&auto=format&fit=crop', // Movimiento atlético
-            'https://images.unsplash.com/photo-1547347298-4074fc3086f0?q=80&w=800&auto=format&fit=crop', // Jugador concentrado en el punto
-            'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?q=80&w=800&auto=format&fit=crop', // Velocidad y reacción
+            'https://images.unsplash.com/photo-1599474924187-334a4ae5bd3c?q=80&w=1200&auto=format&fit=crop', // Remate en suspensión y potencia aérea
+            'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?q=80&w=1200&auto=format&fit=crop', // Volea y golpe de potencia en red
+            'https://images.unsplash.com/photo-1530549387789-4c1017266635?q=80&w=1200&auto=format&fit=crop', // Desplazamiento dinámico en pista
+            'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=1200&auto=format&fit=crop', // Reacción rápida y split step en red
+            'https://images.unsplash.com/photo-1547347298-4074fc3086f0?q=80&w=1200&auto=format&fit=crop', // Impacto preciso con la bola en primer plano
             'img/blog_action_smash.png'
         ],
-        // Salud, fisioterapia, prevención de lesiones y recuperación
+        // Salud, fisioterapia de pádel, calentamiento y prevención de lesiones
         health: [
-            'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=800&auto=format&fit=crop', // Entrenamiento funcional
-            'https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=800&auto=format&fit=crop', // Estiramientos y movilidad
-            'https://images.unsplash.com/photo-1574680096145-d05b474e2155?q=80&w=800&auto=format&fit=crop', // Fisioterapia y brazos
-            'https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?q=80&w=800&auto=format&fit=crop', // Masaje y recuperación muscular
-            'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=800&auto=format&fit=crop'  // Flexibilidad y articulaciones
+            'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=1200&auto=format&fit=crop', // Preparación física específica de tren superior
+            'https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=1200&auto=format&fit=crop', // Movilidad de hombro y manguito rotador para el saque
+            'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=1200&auto=format&fit=crop', // Estiramientos y flexibilidad articular en pista
+            'https://images.unsplash.com/photo-1574680096145-d05b474e2155?q=80&w=1200&auto=format&fit=crop'  // Recuperación muscular y fuerza preventiva
         ],
-        // Nutrición deportiva, hidratación y energía
+        // Nutrición deportiva, sales, hidratación y energía en descansos de americana
         nutrition: [
-            'https://images.unsplash.com/photo-1490645935967-10de6ba17061?q=80&w=800&auto=format&fit=crop', // Frutas y comida sana
-            'https://images.unsplash.com/photo-1550547660-d9450f859349?q=80&w=800&auto=format&fit=crop', // Hidratación con agua fresca
-            'https://images.unsplash.com/photo-1522844990619-4951c40f7eda?q=80&w=800&auto=format&fit=crop', // Botella deportiva y energía
-            'https://images.unsplash.com/photo-1576045057995-568f588f82fb?q=80&w=800&auto=format&fit=crop', // Frutos secos y snack de pista
-            'https://images.unsplash.com/photo-1532550907401-a500c9a57435?q=80&w=800&auto=format&fit=crop'  // Smoothie recuperador
+            'https://images.unsplash.com/photo-1550547660-d9450f859349?q=80&w=1200&auto=format&fit=crop', // Hidratación isotónica en el banco de la pista
+            'https://images.unsplash.com/photo-1522844990619-4951c40f7eda?q=80&w=1200&auto=format&fit=crop', // Bebida deportiva y electrolitos en el banquillo
+            'https://images.unsplash.com/photo-1576045057995-568f588f82fb?q=80&w=1200&auto=format&fit=crop', // Frutos secos y recarga rápida de glucógeno
+            'https://images.unsplash.com/photo-1490645935967-10de6ba17061?q=80&w=1200&auto=format&fit=crop'  // Fruta fresca (plátano y sales) para el tercer tiempo
         ],
-        // Psicología, concentración y mentalidad competitiva
+        // Psicología de pista: concentración en punto de oro, guardia en el resto y foco táctico
         mental: [
-            'https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=800&auto=format&fit=crop', // Concentración y calma
-            'https://images.unsplash.com/photo-1518459031867-a89b944bffe4?q=80&w=800&auto=format&fit=crop', // Respiración y foco
-            'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=800&auto=format&fit=crop', // Determinación mental
-            'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=800&auto=format&fit=crop'  // Mindset deportivo
+            'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?q=80&w=1200&auto=format&fit=crop', // Jugador en posición de resto concentrado antes del saque
+            'https://images.unsplash.com/photo-1574680096145-d05b474e2155?q=80&w=1200&auto=format&fit=crop', // Foco y determinación mental en puntos calientes
+            'https://images.unsplash.com/photo-1526676037777-05a232554f77?q=80&w=1200&auto=format&fit=crop', // Concentración táctica y templanza bajo presión
+            'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1200&auto=format&fit=crop'  // Estrategia y conexión mental de pareja en el banquillo
         ],
-        // Comunidad, parejas, celebración de puntos y fair play
+        // Comunidad, Fair Play, compañerismo y choque de palas en la red
         community: [
-            'https://images.unsplash.com/photo-1528605248644-14dd04022da1?q=80&w=800&auto=format&fit=crop', // Amistad y grupo sonriendo
-            'https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=800&auto=format&fit=crop', // Chocando manos / equipo
-            'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?q=80&w=800&auto=format&fit=crop', // Emoción de equipo
-            'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?q=80&w=800&auto=format&fit=crop', // Pareja de dobles
+            'https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=1200&auto=format&fit=crop', // Pareja de pádel chocando manos en la red con deportividad
+            'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?q=80&w=1200&auto=format&fit=crop', // Pasión, respeto deportivo y celebración compartida
+            'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?q=80&w=1200&auto=format&fit=crop', // Saludo deportivo entre rivales en la red
+            'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?q=80&w=1200&auto=format&fit=crop', // Abrazo y complicidad de equipo tras el partido
             'img/blog_player_victory.png',
             'img/blog_club_lounge.png'
         ],
-        // Torneos, trofeos, americanas y podiums
+        // Torneos, trofeos de campeonato, podiums y medallas de americana
         tournaments: [
-            'https://images.unsplash.com/photo-1578269174936-2709b6aeb913?q=80&w=800&auto=format&fit=crop', // Trofeo dorado
-            'https://images.unsplash.com/photo-1569517282132-25d22f4573e6?q=80&w=800&auto=format&fit=crop', // Medallas y celebración
-            'https://images.unsplash.com/photo-1530549387789-4c1017266635?q=80&w=800&auto=format&fit=crop', // Competición al máximo
-            'https://images.unsplash.com/photo-1551958219-acbc608c6377?q=80&w=800&auto=format&fit=crop', // Victoria en torneo
+            'https://images.unsplash.com/photo-1578269174936-2709b6aeb913?q=80&w=1200&auto=format&fit=crop', // Trofeo dorado de campeones de americana
+            'https://images.unsplash.com/photo-1569517282132-25d22f4573e6?q=80&w=1200&auto=format&fit=crop', // Medallas y celebración oficial en pista
+            'https://images.unsplash.com/photo-1530549387789-4c1017266635?q=80&w=1200&auto=format&fit=crop', // Máxima intensidad de competición en Pista 1
+            'https://images.unsplash.com/photo-1551958219-acbc608c6377?q=80&w=1200&auto=format&fit=crop', // Victoria y gloria en el podium del torneo
             'img/americana-night.png',
             'img/americana-pro.png'
         ]
@@ -393,16 +390,46 @@
 
         // ── 🧠 PSICOLOGÍA & MINDSET ─────────────────────────────────────────────
         {
+            id: 'match-point-oro',
+            title: 'El Punto de Oro (40-40): Psicología y Táctica de Resto sin Margen de Error',
+            category: '🧠 MENTAL',
+            catColor: '#38bdf8',
+            theme: 'mental',
+            emoji: '🎯',
+            imgGrad: 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, #0f172a 100%)',
+            readTime: '3 min',
+            snippet: 'Sin ventajas ni segundas oportunidades: una sola bola decide el juego. Estrategias frías de resto, elección de lado y control de pulsaciones.',
+            contentTemplate: `El <strong>Punto de Oro (Punto Decisivo)</strong> introducido en el pádel moderno transforma el 40-40 en una prueba de fuego psicológica absoluta. No hay segundas oportunidades: quien gana el punto, se anota el juego.<br><br>
+            <strong>⚡ 3 Claves Tácticas de Élite para el Punto de Oro:</strong><br>
+            • <strong>Elección Fría del Restador:</strong> La pareja restadora elige quién recibe el servicio. No elijas por orgullo o por quién tenga el remate más vistoso: debe restar el jugador con mayor solvencia y porcentaje de restos profundos dentro.<br>
+            • <strong>Objetivo del Resto (Volumen de Bola):</strong> Jamás intentes un tiro ganador directo arriesgado contra la reja. El resto debe ser bajo, al centro o a los pies del sacador para obligarle a jugar una primera volea incómoda por debajo del plano de la cinta.<br>
+            • <strong>Posicionamiento del Sacador:</strong> Si estás al servicio, asegura un primer saque con efecto cortado a la 'T' para eliminar ángulos. Tu compañero en la red debe cerrar el medio y no regalar la paralela.<br><br>
+            <strong>⚠️ Error Frecuente:</strong> Acelerar la jugada en el segundo golpe por ansiedad de cerrar el punto. El 70% de los puntos de oro se deciden por error no forzado, no por golpe ganador.<br><br>
+            <div class="journal-coach-tip-box" style="margin: 16px 0; background: rgba(204, 255, 0, 0.08); border-left: 4px solid #CCFF00; border-radius: 0 14px 14px 0; padding: 14px 16px;">
+                <div style="font-weight: 950; color: #CCFF00; font-size: 0.85rem; margin-bottom: 5px; display: flex; align-items: center; gap: 6px;">
+                    <i class="fas fa-lightbulb"></i> CONSEJO DEL COACH SOMOSPADEL
+                </div>
+                <div style="font-size: 0.82rem; color: rgba(255, 255, 255, 0.9); line-height: 1.5;">
+                    <em>'Respira hondo dos veces antes de posicionarte en el resto para bajar las pulsaciones y visualizar la altura de la red. Entrena este punto simulándolo en cada entreno de los martes.'</em> — <strong>{PLAYER1}</strong> & <strong>{PLAYER2}</strong>
+                </div>
+            </div>`
+        },
+        {
             id: 'mental-gestion-punto-de-oro',
             title: 'El Punto de Oro (40-40): Psicología Bajo Máxima Presión',
             category: '🧠 MENTAL',
             catColor: '#38bdf8',
             theme: 'mental',
             emoji: '🎯',
-            imgGrad: 'linear-gradient(135deg, #7dd3fc 0%, #0ea5e9 100%)',
+            imgGrad: 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, #0f172a 100%)',
             readTime: '3 min',
             snippet: 'Sin ventajas: una sola bola decide el juego. Estrategia mental para elegir el lado y no fallar.',
-            contentTemplate: `El punto de oro es el momento de mayor tensión emocional en el pádel actual. No hay margen de error y quien se precipite suele cometer el fallo no forzado. La regla de oro es jugar con amplio margen sobre la red y hacia el rival más vulnerable mentalmente.<br><br><strong>{PLAYER1}</strong> analiza: <em>'En el punto de oro nunca inventes un golpe que no domines al 100%. Un saque seguro a la T y una volea firme al centro bastan'</em>. <strong>{PLAYER2}</strong> añade que respirar hondo dos veces antes de restar elimina los temblores de muñeca.`
+            contentTemplate: `El punto de oro es el momento de mayor tensión emocional en el pádel actual. No hay margen de error y quien se precipite suele cometer el fallo no forzado. La regla de oro es jugar con amplio margen sobre la red y hacia el rival más vulnerable mentalmente.<br><br>
+            <strong>⚡ Protocolo Mental SomosPadel:</strong><br>
+            • <strong>Ritual de Saque:</strong> Bota la bola 3 veces despacio para estabilizar el ritmo cardíaco.<br>
+            • <strong>Contacto Visual con tu Pareja:</strong> Un choque de palas previo para recordar el plan: bola al centro y cerrar la red juntos.<br>
+            • <strong>Cero Reproches:</strong> Sea cual sea el desenlace, mantener la cabeza alta para el siguiente juego.<br><br>
+            <strong>{PLAYER1}</strong> analiza: <em>'En el punto de oro nunca inventes un golpe que no domines al 100%. Un saque seguro a la T y una volea firme al centro bastan'</em>. <strong>{PLAYER2}</strong> añade que respirar hondo dos veces antes de restar elimina los temblores de muñeca.`
         },
         {
             id: 'mental-remontar-marcador-adverso',
@@ -641,16 +668,110 @@
             contentTemplate: `Jugar al nivel del mar en Barcelona significa que la meteorología transforma el partido por completo. Con temperaturas altas y baja humedad, el fieltro de la pelota se calienta y el rebote en pared de fondo se dispara más de 35 cm, haciendo que el remate x3 y x4 sea letal.<br><br>Por el contrario, en tardes y noches húmedas con condensación en el vidrio, la pelota patina al impactar y se cae al suelo a ras de moqueta. El widget meteorológico integrado en el Inicio te indica en tiempo real si las condiciones son propicias para el ataque rápido o si conviene optar por bandejas conservadoras y juego de fondo.<br><br><strong>{PLAYER1}</strong> comenta: <em>'Consultar el clima antes de elegir pala con goma blanda o dura te da una ventaja competitiva determinante'</em>. <strong>{PLAYER2}</strong> recuerda secar siempre los cristales antes del inicio de cada ronda.`
         },
         {
-            id: 'app-noticia-fair-play-regla-dos-bolas',
+            id: 'cultura-fair-play',
             title: 'Cultura Fair Play: Protocolo de Convivencia y Regla de "Dos Bolas" ante Dudas',
-            category: '🚀 NOVEDADES APP',
-            catColor: '#ec4899',
+            category: '🤝 COMUNIDAD',
+            catColor: '#a855f7',
             theme: 'community',
             emoji: '🤝',
-            imgGrad: 'linear-gradient(135deg, rgba(236, 72, 153, 0.25) 0%, #0f172a 100%)',
+            imgGrad: 'linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, #0f172a 100%)',
             readTime: '2 min',
-            snippet: 'En caso de discrepancia en una línea ajustada o toque de red, se repite el punto con elegancia. El respeto es innegociable.',
-            contentTemplate: `En SomosPadel nos mueve la competitividad sana, pero por encima de cualquier trofeo o punto de ranking está la deportividad y el respeto hacia los compañeros de juego. Por ello, recordamos a todos los participantes la vigencia del <strong>Código de Honor de la Comunidad</strong>.<br><br>Si una bola bota en el límite de la línea y la pareja receptora tiene dudas honestas sobre si tocó fuera o dentro, la normativa estipula cantar 'dos bolas' y repetir el saque de inmediato, sin discusiones ni pérdidas de tiempo. Asimismo, cualquier invasión involuntaria o roce de pala con la red debe ser cantada por el propio infractor.<br><br><strong>{PLAYER1}</strong> subraya: <em>'Ganar un punto con trampa o polémica no tiene ningún mérito; preferimos perder el punto y ganar el respeto de todos'</em>. <strong>{PLAYER2}</strong> aplaude que el fair play sea la seña de identidad del club.`
+            snippet: 'En caso de discrepancia en una línea ajustada o roce de red, se repite el punto con nobleza. El respeto deportivo es innegociable.',
+            contentTemplate: `En <strong>SomosPadel Barcelona</strong> el resultado siempre queda en segundo plano frente a los valores compartidos. Una comunidad sana y competitiva se construye punto a punto cuando ambos lados de la red compiten con máxima entrega pero con absoluta nobleza arbitral.<br><br>
+            <strong>⚡ Decálogo de Etiqueta y Convivencia en el 20x10:</strong><br>
+            • <strong>La Regla de las "Dos Bolas":</strong> Si una bola bota en el límite de la línea y la pareja restadora tiene una duda sincera sobre si fue dentro o fuera, el protocolo es cantar 'dos bolas' y repetir el saque al instante, sin discusiones ni polémicas.<br>
+            • <strong>Autocantar Invasiones y Roce de Red:</strong> Cualquier roce involuntario de pala, zapatilla o cuerpo con la red o los postes debe ser cantado inmediatamente por el propio infractor.<br>
+            • <strong>Cortesía en Pelotas Afortunadas:</strong> Pedir disculpas levantando la mano tras una bola de cinta o toque de verja fortuito, y jamás celebrar los errores no forzados del rival.<br><br>
+            <div class="journal-coach-tip-box" style="margin: 16px 0; background: rgba(204, 255, 0, 0.08); border-left: 4px solid #CCFF00; border-radius: 0 14px 14px 0; padding: 14px 16px;">
+                <div style="font-weight: 950; color: #CCFF00; font-size: 0.85rem; margin-bottom: 5px; display: flex; align-items: center; gap: 6px;">
+                    <i class="fas fa-handshake"></i> FILOSOFÍA SOMOSPADEL
+                </div>
+                <div style="font-size: 0.82rem; color: rgba(255, 255, 255, 0.9); line-height: 1.5;">
+                    <em>'Ganar un punto con trampa o tensión no tiene mérito. Preferimos repetir el punto y ganar el respeto de todos en el tercer tiempo.'</em> — <strong>{PLAYER1}</strong> & <strong>{PLAYER2}</strong>
+                </div>
+            </div>`
+        },
+        {
+            id: 'app-noticia-fair-play-regla-dos-bolas',
+            title: 'Cultura Fair Play: Protocolo de Convivencia y Regla de "Dos Bolas" ante Dudas',
+            category: '🤝 COMUNIDAD',
+            catColor: '#a855f7',
+            theme: 'community',
+            emoji: '🤝',
+            imgGrad: 'linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, #0f172a 100%)',
+            readTime: '2 min',
+            snippet: 'En caso de discrepancia en una línea ajustada o roce de red, se repite el punto con elegancia. El respeto es innegociable.',
+            contentTemplate: `En SomosPadel nos mueve la competitividad sana, pero por encima de cualquier trofeo o punto de ranking está la deportividad y el respeto hacia los compañeros de juego.<br><br>
+            Si una bola bota en el límite de la línea y la pareja receptora tiene dudas honestas sobre si tocó fuera o dentro, la normativa estipula cantar 'dos bolas' y repetir el saque de inmediato, sin discusiones ni pérdidas de tiempo. Asimismo, cualquier invasión involuntaria o roce de pala con la red debe ser cantada por el propio infractor.<br><br>
+            <strong>{PLAYER1}</strong> subraya: <em>'Ganar un punto con trampa o polémica no tiene ningún mérito; preferimos perder el punto y ganar el respeto de todos'</em>. <strong>{PLAYER2}</strong> aplaude que el fair play sea la seña de identidad del club.`
+        },
+        {
+            id: 'palas-control-potencia',
+            title: 'Palas de Control vs Potencia: ¿Qué Formato Maximiza Tu Rendimiento Real?',
+            category: '👟 MATERIAL',
+            catColor: '#fb923c',
+            theme: 'material',
+            emoji: '🏓',
+            imgGrad: 'linear-gradient(135deg, rgba(251, 146, 60, 0.25) 0%, #0f172a 100%)',
+            readTime: '3 min',
+            snippet: 'Redonda, lágrima o diamante: analiza el balance, la dureza del plano y el punto dulce para evitar lesiones de codo y definir con soltura.',
+            contentTemplate: `Elegir la pala correcta es el primer paso para desbloquear tu verdadero potencial en pista. Una pala inadecuada no solo merma tu precisión defensiva, sino que sobrecarga las articulaciones del antebrazo y hombro por culpa de vibraciones descompensadas.<br><br>
+            <strong>⚡ Claves según Formato Geométrico:</strong><br>
+            • <strong>Formato Redondo (Control Total):</strong> Balance bajo hacia el puño y amplio punto dulce central. Ideal para jugadores de drive que priorizan volumen de bola, globos precisos y defensa en el fondo.<br>
+            • <strong>Formato Diamante (Ataque Aéreo):</strong> Balance alto hacia la cabeza. Otorga palanca devastadora en el smash por tres y víboras rápidas, exigiendo técnica sólida para no fallar fuera del punto dulce.<br>
+            • <strong>Formato Lágrima / Gota (Polivalencia):</strong> Balance medio equilibrado. La mejor opción si buscas alternar defensa rocosa y aceleración en la red.<br><br>
+            <strong>{PLAYER1}</strong> comenta: <em>'Probar una pala con balance más equilibrado redujo mis dolores de antebrazo y me dio más confianza en la volea'</em>. <strong>{PLAYER2}</strong> sugiere no elegir una pala dura en invierno si juegas en pistas húmedas.`
+        },
+        {
+            id: 'nutricion-hidratacion',
+            title: 'Hidratación Inteligente: Por Qué el Agua Sola No Evita el Bajón en el Tercer Set',
+            category: '🍎 NUTRICIÓN',
+            catColor: '#22c55e',
+            theme: 'nutrition',
+            emoji: '💧',
+            imgGrad: 'linear-gradient(135deg, rgba(34, 197, 94, 0.25) 0%, #0f172a 100%)',
+            readTime: '3 min',
+            snippet: 'En 120 minutos de americana pierdes hasta 1.8 litros de sudor y electrolitos clave. Aprende a pautar sales minerales para evitar calambres y niebla mental.',
+            contentTemplate: `Durante un partido intenso de pádel o una americana de dos horas en indoor, la temperatura corporal y la tasa de sudoración se disparan. Beber únicamente agua pura en grandes volúmenes puede diluir aún más los niveles de sodio en sangre, acelerando la aparición de fatiga central y calambres musculares.<br><br>
+            <strong>⚡ Protocolo de Reposición en Pista:</strong><br>
+            • <strong>Sorbos Cortos y Frecuentes:</strong> 100-150 ml en cada cambio de campo impar, sin esperar a tener sensación de sed.<br>
+            • <strong>Electrolitos Esenciales:</strong> Añadir entre 400 y 600 mg de sodio y potasio por litro de agua para asegurar la contractilidad muscular.<br>
+            • <strong>Aporte Glucídico:</strong> Un plátano maduro o gel suave en el descanso entre la ronda 3 y 4 previene el agotamiento glucogénico.<br><br>
+            <strong>{PLAYER1}</strong> detalla: <em>'Desde que llevo sales minerales en el bidón no he vuelto a sufrir tirones en los gemelos en los finales de americana'</em>. <strong>{PLAYER2}</strong> recuerda que la hidratación correcta comienza el día anterior.`
+        },
+        {
+            id: 'tactica-defensa-cristal',
+            title: 'Defensa de Doble Pared: Los Giros Mecánicos y la Lectura del Rebote',
+            category: '💡 CONSEJOS',
+            catColor: '#f59e0b',
+            theme: 'courts',
+            emoji: '📐',
+            imgGrad: 'linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, #0f172a 100%)',
+            readTime: '4 min',
+            snippet: 'Acompañar la trayectoria en lugar de perseguir la bola: domina la apertura de apoyos y sal del cristal con globos milimétricos al rincón.',
+            contentTemplate: `La doble pared (fondo-lateral o lateral-fondo) es la pesadilla del jugador en progresión pero la gran aliada del jugador avanzado. El principio mecánico clave consiste en no correr hacia la bola, sino acompañar su parábola natural girando sobre el pie de apoyo.<br><br>
+            <strong>⚡ 3 Pasos Biomecánicos Infalibles:</strong><br>
+            • <strong>Identificación del Primer Contacto:</strong> Observa si toca primero fondo y abre hacia la pared lateral, o si entra por el lateral hacia el fondo.<br>
+            • <strong>Armado Corto y Abajo:</strong> Mantén la pala preparada por debajo de la cadera. Si armas alto contra el cristal te faltará espacio y golpearás mordido.<br>
+            • <strong>Salida por Globo Cruzado:</strong> Una vez recuperada la bola, no intentes ganar el punto con un tiro plano apresurado: ejecuta un globo alto y cruzado para dar tiempo a subir a la red.<br><br>
+            <strong>{PLAYER1}</strong> explica: <em>'Flexionar las rodillas y esperar a que la bola pase el cuerpo antes de girar te da todo el tiempo del mundo'</em>. <strong>{PLAYER2}</strong> recalca no perder de vista la bola en ningún instante del giro.`
+        },
+        {
+            id: 'salud-prevencion-epicondilitis',
+            title: 'Blindaje del Codo: Prevención y Ejercicios Excéntricos para Evitar la Epicondilitis',
+            category: '💪 SALUD',
+            catColor: '#ef4444',
+            theme: 'health',
+            emoji: '🩺',
+            imgGrad: 'linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, #0f172a 100%)',
+            readTime: '3 min',
+            snippet: 'El codo de tenista es la molestia más común en el pádel. Rutinas de fortalecimiento del extensor radial, elección de grips y balance de pala.',
+            contentTemplate: `La epicondilitis lateral se origina por microtraumatismos repetitivos en la inserción de los tendones extensores de la muñeca. En el pádel, suele detonarse por impactar la bola tarde con la muñeca flexionada o por usar palas excesivamente cabezonas.<br><br>
+            <strong>⚡ Prevención Activa:</strong><br>
+            • <strong>Grosor del Grip:</strong> Si el puño es muy fino, tienes que apretar con demasiada fuerza. Añade overgrips hasta que tu dedo índice quepa con holgura entre la punta de tus dedos y la palma.<br>
+            • <strong>Calentamiento con Gomas:</strong> Realiza 2 minutos de extensiones y rotaciones de muñeca con banda elástica antes de entrar a pista.<br>
+            • <strong>Impacto por Delante:</strong> Procura golpear siempre la bola por delante de la cadera para que la fuerza provenga del peso del cuerpo y no del codo.<br><br>
+            <strong>{PLAYER1}</strong> aconseja: <em>'Aplicar hielo 10 minutos tras un partido exigente y estirar los extensores mantiene el codo como nuevo'</em>. <strong>{PLAYER2}</strong> recomienda revisar el estado de las pelotas y no jugar con bolas mojadas o apelmazadas.`
         },
         {
             id: 'app-noticia-pwa-instalacion-movil',

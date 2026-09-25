@@ -387,7 +387,7 @@ function renderEntrenoCard(e) {
                     </div>
                     <div style="display: flex; gap: 0.8rem; font-size: 0.75rem; color: #333333; flex-wrap: wrap; align-items: center;">
                          <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-calendar-alt" style="color: #60A5FA;"></i> <span style="color:#333; font-weight: 600;">${formatDate(e.date)}</span></span>
-                         <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-clock" style="color: #A78BFA;"></i> <span style="color:#333; font-weight: 600;">${e.time || '10:00'}</span></span>
+                         <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-clock" style="color: #A78BFA;"></i> <span style="color:#333; font-weight: 600;">${e.time ? (e.time_end && !e.time.includes('-') ? `${e.time} - ${e.time_end}` : e.time) : '10:00'}${durationText ? ` (${durationText})` : ''}</span></span>
                          <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-signal" style="color: #F59E0B;"></i> <span style="color:#333; font-weight: 700;">Niv. ${levelText}</span></span>
                          <span onclick='window.openEditEntrenoModal(${JSON.stringify(e).replace(/'/g, "&#39;")})' style="cursor:pointer; display: flex; align-items: center; gap: 5px;" title="Gestionar participantes">
                             <i class="fas fa-users" style="color: #10B981;"></i> <span style="color:#000; font-weight:800;">${playersCount}</span><span style="opacity:0.5;">/${maxPlayers}</span>
@@ -746,6 +746,15 @@ window.openEditEntrenoModal = async (entreno) => {
     for (const [key, value] of Object.entries(entreno)) {
         const input = form.querySelector(`[name="${key}"]`);
         if (input) input.value = value;
+    }
+
+    // Normalizar time y time_end si vienen combinados o sin separar
+    if (entreno.time && entreno.time.includes('-')) {
+        const parts = entreno.time.split('-').map(s => s.trim());
+        const tStartInput = form.querySelector('[name="time"]');
+        const tEndInput = form.querySelector('[name="time_end"]');
+        if (tStartInput && parts[0]) tStartInput.value = parts[0].slice(0, 5);
+        if (tEndInput && (!entreno.time_end || !tEndInput.value) && parts[1]) tEndInput.value = parts[1].slice(0, 5);
     }
 
     // Setup Sede Combobox & Sync Sede

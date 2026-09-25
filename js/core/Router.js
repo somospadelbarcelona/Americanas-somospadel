@@ -7,6 +7,8 @@
         constructor() {
             this.routes = {
                 'dashboard': () => this.renderDashboard(),
+                'journal': () => this.renderDashboard(),
+                'blog': () => this.renderDashboard(),
                 'americanas': () => this.handleControllerTab('EventsController', 'events'),
                 'events': () => this.handleControllerTab('EventsController', 'events'),
                 'finished_americanas': () => this.handleControllerTab('EventsController', 'finished_americanas'),
@@ -382,8 +384,8 @@
             }
 
             const controllersToCleanup = [
-                { name: 'DashboardView', routes: ['dashboard'] },
-                { name: 'DashboardController', routes: ['dashboard'] },
+                { name: 'DashboardView', routes: ['dashboard', 'journal', 'blog'] },
+                { name: 'DashboardController', routes: ['dashboard', 'journal', 'blog'] },
                 { name: 'EventsController', routes: ['events', 'americanas', 'finished_americanas', 'agenda_americanas', 'help_americanas', 'finished', 'agenda', 'results', 'entrenos', 'partidas_abiertas', 'meteo', 'clima', 'weather'] },
                 { name: 'ControlTowerView', routes: ['live'] },
                 { name: 'TVView', routes: ['tv'] },

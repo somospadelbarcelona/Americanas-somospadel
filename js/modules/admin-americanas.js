@@ -521,6 +521,8 @@ function renderAmericanaCard(e) {
         }
     }
 
+
+
     // Level Text
     const levelText = (e.level && String(e.level).trim()) || (e.level_min && e.level_max ? `${e.level_min} - ${e.level_max}` : (e.level_min ? `${e.level_min}` : (e.level_max ? `Hasta ${e.level_max}` : '3.5 - 4.5')));
 
@@ -567,7 +569,7 @@ function renderAmericanaCard(e) {
                     </div>
                     <div style="display: flex; gap: 0.8rem; font-size: 0.75rem; color: #333333; flex-wrap: wrap; align-items: center; margin-top: 4px;">
                          <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-calendar-alt" style="color: #60A5FA;"></i> <span style="color:#333; font-weight: 600;">${formatDate(e.date)}</span></span>
-                         <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-clock" style="color: #A78BFA;"></i> <span style="color:#333; font-weight: 600;">${e.time || '18:00'}</span></span>
+                         <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-clock" style="color: #A78BFA;"></i> <span style="color:#333; font-weight: 600;">${e.time ? (e.time_end && !e.time.includes('-') ? `${e.time} - ${e.time_end}` : e.time) : '18:00'}${durationText ? ` (${durationText})` : ''}</span></span>
                          <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-signal" style="color: #F59E0B;"></i> <span style="color:#333; font-weight: 700;">Niv. ${levelText}</span></span>
                          <span onclick='window.openEditAmericanaModal(${JSON.stringify(e).replace(/'/g, "&#39;")})' style="cursor:pointer; display: flex; align-items: center; gap: 5px;" title="Gestionar participantes">
                             <i class="fas fa-users" style="color: #10B981;"></i> <span style="color:#000; font-weight:800;">${playersCount}</span><span style="opacity:0.5;">/${maxPlayers}</span>
@@ -1078,6 +1080,15 @@ window.openEditAmericanaModal = async (americana) => {
                 input.value = value;
             }
         }
+    }
+
+    // Normalizar time y time_end si vienen combinados o sin separar
+    if (americana.time && americana.time.includes('-')) {
+        const parts = americana.time.split('-').map(s => s.trim());
+        const tStartInput = form.querySelector('[name="time"]');
+        const tEndInput = form.querySelector('[name="time_end"]');
+        if (tStartInput && parts[0]) tStartInput.value = parts[0].slice(0, 5);
+        if (tEndInput && (!americana.time_end || !tEndInput.value) && parts[1]) tEndInput.value = parts[1].slice(0, 5);
     }
 
     // Toggle Club input visibility

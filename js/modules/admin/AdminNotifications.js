@@ -903,6 +903,23 @@
             }
             throw new Error("NotificationService no está disponible para obtener la lista global.");
         }
+
+        /**
+         * Purga masivamente notificaciones caducadas y eventos antiguos delegando en NotificationService
+         */
+        async purgeExpiredAndOldNotifications(options = {}) {
+            if (window.NotificationService && typeof window.NotificationService.purgeExpiredAndOldNotifications === 'function') {
+                return await window.NotificationService.purgeExpiredAndOldNotifications(options);
+            }
+            if (window.NotificationServiceClass && typeof window.NotificationServiceClass.purgeExpiredAndOldNotifications === 'function') {
+                return await window.NotificationServiceClass.purgeExpiredAndOldNotifications(options);
+            }
+            throw new Error("NotificationService no está disponible para purgar notificaciones antiguas.");
+        }
+
+        async purgeExpiredAndOld(options = {}) {
+            return await this.purgeExpiredAndOldNotifications(options);
+        }
     }
 
     window.AdminNotifications = new AdminNotificationsManager();

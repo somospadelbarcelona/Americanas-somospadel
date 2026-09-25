@@ -2,12 +2,28 @@ console.log("🔥 [v99] Initializing Firebase...");
 
 // GLOBAL ERROR DIAGNOSTIC
 window.onerror = function (msg, url, line, col, error) {
-    if (msg.toLowerCase().includes('script error') && line === 0) {
+    const errorDetail = error ? error.stack : 'No stack trace';
+    const lowerDetail = (String(msg) + ' ' + String(errorDetail)).toLowerCase();
+
+    if (lowerDetail.includes('script error') && line === 0) {
         console.warn("⚠️ Suppressed CORS/Script Error:", msg);
         return false; // Let it propagate to console
     }
 
-    const errorDetail = error ? error.stack : 'No stack trace';
+    // Suprimir errores benignos de aserción interna de Firestore / IndexedDB
+    if (
+        lowerDetail.includes('internal assertion failed') ||
+        lowerDetail.includes('unexpected state') ||
+        lowerDetail.includes('assertion failed')
+    ) {
+        console.warn("⚠️ [onerror] Error interno de aserción Firestore/IndexedDB interceptado y suprimido:", msg);
+        try {
+            window.indexedDB?.deleteDatabase?.('firestore/[DEFAULT]/americanas-somospadel/main');
+            window.indexedDB?.deleteDatabase?.('firestore/[DEFAULT]');
+        } catch (_) {}
+        return true; // Prevents default handling and error dialogs
+    }
+
     if (!url) url = 'Script Inline/Desconocido';
 
     console.error("Critical Error Catch:", msg, url, line, col, error);
@@ -27,9 +43,29 @@ window.addEventListener('unhandledrejection', function (event) {
     const reason = event.reason;
     const msg = (reason && (reason.message || (typeof reason === 'string' ? reason : reason.toString()))) || '';
     const name = (reason && reason.name) || '';
-    const lowerMsg = (msg + ' ' + name + ' ' + String(reason)).toLowerCase();
+    const stack = (reason && reason.stack) || '';
+    const lowerMsg = (msg + ' ' + name + ' ' + stack + ' ' + String(reason)).toLowerCase();
 
-    // Silenciar errores benignos propios del ciclo de vida móvil, suspensión de pestañas en iOS Safari, cuotas de almacenamiento o cancelaciones de usuario
+    // 1. Manejo específico y recuperación ante aserciones internas de Firestore/IndexedDB
+    if (
+        lowerMsg.includes('internal assertion failed') ||
+        lowerMsg.includes('unexpected state') ||
+        lowerMsg.includes('assertion failed')
+    ) {
+        console.warn("⚠️ [unhandledrejection] Error interno de aserción Firestore/IndexedDB interceptado y auto-recuperado.");
+        if (typeof event.preventDefault === 'function') event.preventDefault();
+
+        // Purgar de forma segura la base de datos IndexedDB local de Firestore si existe
+        try {
+            window.indexedDB?.deleteDatabase?.('firestore/[DEFAULT]/americanas-somospadel/main');
+            window.indexedDB?.deleteDatabase?.('firestore/[DEFAULT]');
+        } catch (_) {}
+
+        // No mostrar en ningún caso el modal por este error benigno de sincronización local
+        return;
+    }
+
+    // 2. Silenciar errores benignos propios del ciclo de vida móvil, suspensión de pestañas en iOS Safari, cuotas de almacenamiento o cancelaciones de usuario
     if (
         lowerMsg.includes('the client has already been terminated') ||
         lowerMsg.includes('failed-precondition') ||
@@ -72,6 +108,31 @@ window.addEventListener('unhandledrejection', function (event) {
     }
 });
 
+// Helper seguro para consultas Firestore con auto-recuperación ante aserciones corruptas de IndexedDB
+async function safeFirestoreGet(ref, options) {
+    if (!ref) throw new Error("safeFirestoreGet: ref no válida");
+    try {
+        return options ? await ref.get(options) : await ref.get();
+    } catch (err) {
+        const msg = (err && (err.message || String(err))) || '';
+        const lowerMsg = msg.toLowerCase();
+        if (
+            lowerMsg.includes('internal assertion failed') ||
+            lowerMsg.includes('unexpected state') ||
+            lowerMsg.includes('assertion failed')
+        ) {
+            console.warn("⚠️ [safeFirestoreGet] Assertion failure en caché local detectado. Purgando IndexedDB y reintentando con { source: 'server' }...", msg);
+            try {
+                window.indexedDB?.deleteDatabase?.('firestore/[DEFAULT]/americanas-somospadel/main');
+                window.indexedDB?.deleteDatabase?.('firestore/[DEFAULT]');
+            } catch (_) {}
+            return await ref.get({ source: 'server' });
+        }
+        throw err;
+    }
+}
+window.safeFirestoreGet = safeFirestoreGet;
+
 // Proactive startup cleanup of stale Firestore target entries in LocalStorage to prevent QuotaExceededError
 try {
     for (let i = localStorage.length - 1; i >= 0; i--) {
@@ -113,27 +174,49 @@ if (typeof window.FIREBASE_CONFIG === 'undefined') {
         }
         db = firebase.firestore();
 
-        // Enable offline persistence (Resilient single-tab mode to prevent mobile assertion failures)
+        // Enable multi-tab offline persistence with automatic fallback to memory
         // Debe ser llamado INMEDIATAMENTE después de crear la instancia db y ANTES de cualquier consulta.
-        try {
-            db.enablePersistence()
-                .then(() => {
-                    console.log("📦 Firestore persistence enabled (resilient mode)");
-                })
-                .catch((err) => {
-                    console.warn("⚠️ Firestore persistence fallback:", err.code, err.message);
-                    if (err.message && err.message.includes('INTERNAL ASSERTION FAILED')) {
-                        console.warn("🚨 [FirebaseInit] Cache corrupta en IndexedDB. Purgando base de datos local...");
-                        try {
-                            if (window.indexedDB && window.indexedDB.deleteDatabase) {
-                                window.indexedDB.deleteDatabase('firestore/[DEFAULT]/americanas-somospadel/main');
-                            }
-                        } catch (_) {}
-                    }
-                });
-        } catch (e) {
-            console.warn("⚠️ Sync error enabling Firestore persistence:", e);
-        }
+        const initPersistencePromise = (typeof db.enableMultiTabIndexedDbPersistence === 'function')
+            ? db.enableMultiTabIndexedDbPersistence()
+            : db.enablePersistence({ synchronizeTabs: true });
+
+        initPersistencePromise
+            .then(() => {
+                console.log("📦 Firestore multi-tab persistence enabled successfully.");
+                return safeFirestoreGet(db.collection('players').limit(1));
+            })
+            .then(snapshot => {
+                if (snapshot) console.log(`✅ Conexión Firestore OK, ${snapshot.size} documentos en 'players'`);
+            })
+            .catch(err => {
+                const code = err.code || '';
+                const msg = (err.message || String(err)).toLowerCase();
+                console.warn("⚠️ Firestore persistence fallback:", code, err.message);
+
+                if (msg.includes('internal assertion failed') || msg.includes('unexpected state') || msg.includes('assertion failed')) {
+                    console.warn("🚨 [FirebaseInit] Cache corrupta en IndexedDB detectada en inicio. Purgando base de datos local...");
+                    try {
+                        window.indexedDB?.deleteDatabase?.('firestore/[DEFAULT]/americanas-somospadel/main');
+                        window.indexedDB?.deleteDatabase?.('firestore/[DEFAULT]');
+                    } catch (_) {}
+                }
+
+                // Verify connection even if persistence falls back to memory
+                return safeFirestoreGet(db.collection('players').limit(1))
+                    .then(snapshot => {
+                        if (snapshot) console.log(`✅ Conexión Firestore OK (fallback en memoria), ${snapshot.size} documentos en 'players'`);
+                    })
+                    .catch(connErr => {
+                        const isPermissionError = connErr.code === 'permission-denied' ||
+                            (connErr.message && connErr.message.toLowerCase().includes('permission-denied')) ||
+                            (connErr.message && connErr.message.toLowerCase().includes('missing or insufficient permissions'));
+                        if (isPermissionError) {
+                            console.log("ℹ️ Firestore connection requires authentication (normal behavior before login).");
+                        } else {
+                            console.warn('⚠️ Nota de conexión con Firestore al iniciar:', connErr.message || connErr);
+                        }
+                    });
+            });
 
         auth = firebase.auth();
 
@@ -160,28 +243,6 @@ if (typeof window.FIREBASE_CONFIG === 'undefined') {
             }
             console.log('🔐 Auth state changed:', user ? `uid=${user.uid}` : 'no user');
         });
-
-        // Verify Firestore connection immediately
-        db.collection('players').limit(1).get()
-            .then(snapshot => {
-                console.log(`✅ Conexión Firestore OK, ${snapshot.size} documentos en 'players'`);
-            })
-            .catch(err => {
-                console.error('❌ Error al conectar con Firestore al iniciar:', err);
-                const isPermissionError = err.code === 'permission-denied' || 
-                                           (err.message && err.message.toLowerCase().includes('permission-denied')) ||
-                                           (err.message && err.message.toLowerCase().includes('missing or insufficient permissions'));
-                
-                if (isPermissionError) {
-                    console.log("ℹ️ Firestore connection requires authentication (normal behavior before login).");
-                } else if (window.PremiumModal) {
-                    window.PremiumModal.alert({
-                        title: "🔴 FIREBASE CONN ERROR",
-                        message: err.message || 'Error de conexión a Firestore',
-                        type: 'danger'
-                    });
-                }
-            });
         try {
             if (firebase.messaging.isSupported()) {
                 messaging = firebase.messaging();
@@ -246,7 +307,7 @@ const FirebaseDB = {
 
             const fetchFn = async () => {
                 try {
-                    const snapshot = await db.collection('players').get();
+                    const snapshot = await safeFirestoreGet(db.collection('players'));
                     return snapshot.docs.map(doc => {
                         const data = doc.data();
                         return { ...data, id: doc.id, uid: data.uid || doc.id };
@@ -273,7 +334,7 @@ const FirebaseDB = {
             if (window.CacheService && !force) {
                 try {
                     // 1. Obtener el Sync Token más reciente del servidor (1 sola lectura ligera)
-                    const serverMeta = await db.collection('metadata').doc('players').get();
+                    const serverMeta = await safeFirestoreGet(db.collection('metadata').doc('players'));
                     if (serverMeta.exists) {
                         const serverTime = serverMeta.data().last_updated?.toDate?.()?.getTime() || 0;
                         const localTime = parseInt(localStorage.getItem('players_sync_token') || '0');
@@ -324,16 +385,7 @@ const FirebaseDB = {
         },
 
         async getById(id) {
-            let doc;
-            try {
-                doc = await db.collection('players').doc(id).get();
-            } catch (err) {
-                if (err.message && err.message.includes('INTERNAL ASSERTION FAILED')) {
-                    doc = await db.collection('players').doc(id).get({ source: 'server' });
-                } else {
-                    throw err;
-                }
-            }
+            const doc = await safeFirestoreGet(db.collection('players').doc(id));
             if (!doc.exists) return null;
             return { id: doc.id, ...doc.data() };
         },
@@ -343,43 +395,27 @@ const FirebaseDB = {
             const cleanPhone = String(phone).trim();
             let snapshot;
             try {
-                snapshot = await db.collection('players')
-                    .where('phone', '==', cleanPhone)
-                    .limit(1)
-                    .get();
-            } catch (err) {
-                if (err.message && err.message.includes('INTERNAL ASSERTION FAILED')) {
-                    console.warn("⚠️ [getByPhone] Fallo de aserción en caché local. Consultando directamente al servidor...");
-                    try {
-                        if (window.indexedDB && window.indexedDB.deleteDatabase) {
-                            window.indexedDB.deleteDatabase('firestore/[DEFAULT]/americanas-somospadel/main');
-                        }
-                    } catch (_) {}
-                    snapshot = await db.collection('players')
+                snapshot = await safeFirestoreGet(
+                    db.collection('players')
                         .where('phone', '==', cleanPhone)
                         .limit(1)
-                        .get({ source: 'server' });
-                } else {
-                    throw err;
-                }
+                );
+            } catch (err) {
+                console.warn("⚠️ [getByPhone] Fallo al buscar jugador por teléfono:", err);
+                throw err;
             }
 
             // Fallback: If not found and it's a number, try querying as type Number
             if (snapshot.empty && !isNaN(cleanPhone) && cleanPhone !== '') {
                 try {
-                    snapshot = await db.collection('players')
-                        .where('phone', '==', Number(cleanPhone))
-                        .limit(1)
-                        .get();
-                } catch (err) {
-                    if (err.message && err.message.includes('INTERNAL ASSERTION FAILED')) {
-                        snapshot = await db.collection('players')
+                    snapshot = await safeFirestoreGet(
+                        db.collection('players')
                             .where('phone', '==', Number(cleanPhone))
                             .limit(1)
-                            .get({ source: 'server' });
-                    } else {
-                        throw err;
-                    }
+                    );
+                } catch (err) {
+                    console.warn("⚠️ [getByPhone] Fallo al buscar por teléfono numérico:", err);
+                    throw err;
                 }
             }
 
@@ -419,7 +455,7 @@ const FirebaseDB = {
             if (window.CacheService) window.CacheService.remove('players', 'all');
             await _updatePlayersSyncToken();
 
-            const doc = await docRef.get();
+            const doc = await safeFirestoreGet(docRef);
             return { ...doc.data(), id: doc.id };
         },
 
@@ -433,7 +469,7 @@ const FirebaseDB = {
                 if (window.CacheService) window.CacheService.remove('players', 'all');
                 await _updatePlayersSyncToken();
 
-                const doc = await db.collection('players').doc(cleanId).get();
+                const doc = await safeFirestoreGet(db.collection('players').doc(cleanId));
                 return { id: doc.id, ...doc.data() };
             } catch (err) {
                 console.error("Error in FirebaseDB.players.update:", err);
@@ -461,7 +497,7 @@ const FirebaseDB = {
         },
 
         async cleanupFictional() {
-            const snapshot = await db.collection('players').get();
+            const snapshot = await safeFirestoreGet(db.collection('players'));
             let deletedCount = 0;
             for (const doc of snapshot.docs) {
                 const data = doc.data();
@@ -492,9 +528,9 @@ const FirebaseDB = {
     americanas: {
         async getAll() {
             const fetchFn = async () => {
-                const snapshot = await db.collection('americanas')
-                    .orderBy('date', 'desc')
-                    .get();
+                const snapshot = await safeFirestoreGet(
+                    db.collection('americanas').orderBy('date', 'desc')
+                );
                 return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             };
 
@@ -505,7 +541,7 @@ const FirebaseDB = {
         },
 
         async getById(id) {
-            const doc = await db.collection('americanas').doc(id).get();
+            const doc = await safeFirestoreGet(db.collection('americanas').doc(id));
             if (!doc.exists) return null;
             return { id: doc.id, ...doc.data() };
         },
@@ -532,7 +568,7 @@ const FirebaseDB = {
             if (window.clearDatabaseCache) window.clearDatabaseCache('americanas');
             window.dispatchEvent(new CustomEvent('eventModified', { detail: { type: 'americana', id: docRef.id } }));
 
-            const doc = await docRef.get();
+            const doc = await safeFirestoreGet(docRef);
             return { id: doc.id, ...doc.data() };
         },
 
@@ -543,7 +579,7 @@ const FirebaseDB = {
             if (window.clearDatabaseCache) window.clearDatabaseCache('americanas');
             window.dispatchEvent(new CustomEvent('eventModified', { detail: { type: 'americana', id } }));
 
-            const doc = await db.collection('americanas').doc(id).get();
+            const doc = await safeFirestoreGet(db.collection('americanas').doc(id));
             return { id: doc.id, ...doc.data() };
         },
 
@@ -573,7 +609,7 @@ const FirebaseDB = {
             batch.delete(db.collection('americanas').doc(id));
 
             // Scan and delete associated matches to avoid orphan data noise
-            const matchesSnap = await db.collection('matches').where('americana_id', '==', id).get();
+            const matchesSnap = await safeFirestoreGet(db.collection('matches').where('americana_id', '==', id));
             matchesSnap.forEach(doc => batch.delete(doc.ref));
 
             await batch.commit();
@@ -645,7 +681,7 @@ const FirebaseDB = {
     matches: {
         async getAll() {
             const fetchFn = async () => {
-                const snapshot = await db.collection('matches').get();
+                const snapshot = await safeFirestoreGet(db.collection('matches'));
                 return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             };
 
@@ -655,9 +691,9 @@ const FirebaseDB = {
             return await fetchFn();
         },
         async getByAmericana(americanaId) {
-            const snapshot = await db.collection('matches')
-                .where('americana_id', '==', americanaId)
-                .get();
+            const snapshot = await safeFirestoreGet(
+                db.collection('matches').where('americana_id', '==', americanaId)
+            );
             return snapshot.docs
                 .map(doc => ({ id: doc.id, ...doc.data() }))
                 .sort((a, b) => (a.round || 0) - (b.round || 0));
@@ -670,8 +706,8 @@ const FirebaseDB = {
             try {
                 // Optimized Query Array
                 const fetchPromises = collections.flatMap(coll => [
-                    db.collection(coll).where('team_a_ids', 'array-contains', playerId).get(),
-                    db.collection(coll).where('team_b_ids', 'array-contains', playerId).get()
+                    safeFirestoreGet(db.collection(coll).where('team_a_ids', 'array-contains', playerId)),
+                    safeFirestoreGet(db.collection(coll).where('team_b_ids', 'array-contains', playerId))
                 ]);
 
                 const snapshots = await Promise.all(fetchPromises);
@@ -695,8 +731,8 @@ const FirebaseDB = {
                     console.warn("⚠️ [Telemetry] Standard range scan returned 0. Deploying legacy sonar...");
                     // Simplified exhaustive scan for better battery/data performance
                     const legacyPromises = collections.flatMap(coll => [
-                        db.collection(coll).where('players', 'array-contains', playerId).get(),
-                        db.collection(coll).where('player1', '==', playerId).get()
+                        safeFirestoreGet(db.collection(coll).where('players', 'array-contains', playerId)),
+                        safeFirestoreGet(db.collection(coll).where('player1', '==', playerId))
                     ]);
                     const legacySnaps = await Promise.all(legacyPromises);
                     legacySnaps.forEach(snap => snap.docs.forEach(doc => {
@@ -722,13 +758,13 @@ const FirebaseDB = {
                 ...data,
                 created_at: firebase.firestore.FieldValue.serverTimestamp()
             });
-            const doc = await docRef.get();
+            const doc = await safeFirestoreGet(docRef);
             return { id: doc.id, ...doc.data() };
         },
 
         async update(id, data) {
             await db.collection('matches').doc(id).update(data);
-            const doc = await db.collection('matches').doc(id).get();
+            const doc = await safeFirestoreGet(db.collection('matches').doc(id));
             return { id: doc.id, ...doc.data() };
         },
 
@@ -741,7 +777,7 @@ const FirebaseDB = {
     entrenos: {
         async getAll() {
             const fetchFn = async () => {
-                const snapshot = await db.collection('entrenos').orderBy('date', 'desc').get();
+                const snapshot = await safeFirestoreGet(db.collection('entrenos').orderBy('date', 'desc'));
                 return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             };
 
@@ -751,7 +787,7 @@ const FirebaseDB = {
             return await fetchFn();
         },
         async getById(id) {
-            const doc = await db.collection('entrenos').doc(id).get();
+            const doc = await safeFirestoreGet(db.collection('entrenos').doc(id));
             return doc.exists ? { id: doc.id, ...doc.data() } : null;
         },
         async create(data) {
@@ -767,7 +803,7 @@ const FirebaseDB = {
             if (window.clearDatabaseCache) window.clearDatabaseCache('entrenos');
             window.dispatchEvent(new CustomEvent('eventModified', { detail: { type: 'entreno', id: docRef.id } }));
 
-            const doc = await docRef.get();
+            const doc = await safeFirestoreGet(docRef);
             return { id: doc.id, ...doc.data() };
         },
         async update(id, data) {
@@ -775,7 +811,7 @@ const FirebaseDB = {
             if (window.CacheService) window.CacheService.remove('entrenos', 'all');
             if (window.clearDatabaseCache) window.clearDatabaseCache('entrenos');
             window.dispatchEvent(new CustomEvent('eventModified', { detail: { type: 'entreno', id } }));
-            const doc = await db.collection('entrenos').doc(id).get();
+            const doc = await safeFirestoreGet(db.collection('entrenos').doc(id));
             return { id: doc.id, ...doc.data() };
         },
         async delete(id) {
@@ -786,7 +822,7 @@ const FirebaseDB = {
             batch.delete(db.collection('entrenos').doc(id));
 
             // Purge matches
-            const matchesSnap = await db.collection('entrenos_matches').where('americana_id', '==', id).get();
+            const matchesSnap = await safeFirestoreGet(db.collection('entrenos_matches').where('americana_id', '==', id));
             matchesSnap.forEach(doc => batch.delete(doc.ref));
 
             await batch.commit();
@@ -863,20 +899,22 @@ const FirebaseDB = {
     // Entrenos Matches
     entrenos_matches: {
         async getAll() {
-            const snapshot = await db.collection('entrenos_matches').get();
+            const snapshot = await safeFirestoreGet(db.collection('entrenos_matches'));
             return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         },
         async getByPlayer(playerId) {
             const [snapshotA, snapshotB] = await Promise.all([
-                db.collection('entrenos_matches').where('team_a_ids', 'array-contains', playerId).get(),
-                db.collection('entrenos_matches').where('team_b_ids', 'array-contains', playerId).get()
+                safeFirestoreGet(db.collection('entrenos_matches').where('team_a_ids', 'array-contains', playerId)),
+                safeFirestoreGet(db.collection('entrenos_matches').where('team_b_ids', 'array-contains', playerId))
             ]);
             const matchesA = snapshotA.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             const matchesB = snapshotB.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             return [...matchesA, ...matchesB];
         },
         async getByAmericana(entrenoId) {
-            const snapshot = await db.collection('entrenos_matches').where('americana_id', '==', entrenoId).get();
+            const snapshot = await safeFirestoreGet(
+                db.collection('entrenos_matches').where('americana_id', '==', entrenoId)
+            );
             return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a, b) => (a.round || 0) - (b.round || 0));
         },
         async create(data) {
@@ -884,12 +922,12 @@ const FirebaseDB = {
                 ...data,
                 created_at: firebase.firestore.FieldValue.serverTimestamp()
             });
-            const doc = await docRef.get();
+            const doc = await safeFirestoreGet(docRef);
             return { id: doc.id, ...doc.data() };
         },
         async update(id, data) {
             await db.collection('entrenos_matches').doc(id).update(data);
-            const doc = await db.collection('entrenos_matches').doc(id).get();
+            const doc = await safeFirestoreGet(db.collection('entrenos_matches').doc(id));
             return { id: doc.id, ...doc.data() };
         },
         async delete(id) {
@@ -900,7 +938,7 @@ const FirebaseDB = {
     // Menu Collection
     menu: {
         async getAll() {
-            const snapshot = await db.collection('menu_items').orderBy('order', 'asc').get();
+            const snapshot = await safeFirestoreGet(db.collection('menu_items').orderBy('order', 'asc'));
             return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         },
         async create(data) {

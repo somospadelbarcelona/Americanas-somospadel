@@ -9,6 +9,7 @@ const admin = require('firebase-admin');
 admin.initializeApp();
 
 const db = admin.firestore();
+const { JOURNAL_CATALOG, JOURNAL_DAILY_ARTICLES } = require('./journalCatalog');
 
 // ==========================================
 // 1. CORE MATCHMAKING & ROUND GENERATION (BÚNKER ANTI-COPIA)
@@ -955,4 +956,245 @@ exports.onEntrenoDeleted = functions.firestore
 
         return null;
     });
+
+// ==========================================
+// 8. SOMOSPADEL JOURNAL - NOTICIA DEL DÍA AUTOMÁTICA (PUSH Y CRON)
+// ==========================================
+
+/**
+ * Selecciona de forma rotativa y coherente el artículo del día.
+ * Utiliza el día del año en la zona de Madrid (1-366) y previene repetición inmediata del día anterior.
+ */
+function selectDailyNewsArticle(date = new Date(), previousArticleId = null) {
+    if (!JOURNAL_DAILY_ARTICLES || JOURNAL_DAILY_ARTICLES.length === 0) {
+        return null;
+    }
+    const dayOfYear = getMadridDayOfYear(date);
+    let selectedIndex = dayOfYear % JOURNAL_DAILY_ARTICLES.length;
+    let article = JOURNAL_DAILY_ARTICLES[selectedIndex];
+
+    if (previousArticleId && article.id === previousArticleId && JOURNAL_DAILY_ARTICLES.length > 1) {
+        selectedIndex = (selectedIndex + 1) % JOURNAL_DAILY_ARTICLES.length;
+        article = JOURNAL_DAILY_ARTICLES[selectedIndex];
+    }
+    return article;
+}
+
+exports.JOURNAL_DAILY_ARTICLES = JOURNAL_DAILY_ARTICLES;
+exports.JOURNAL_CATALOG = JOURNAL_DAILY_ARTICLES;
+exports.selectDailyNewsArticle = selectDailyNewsArticle;
+exports.getDailyNewsArticle = selectDailyNewsArticle;
+
+/**
+ * Obtiene la fecha en formato YYYY-MM-DD en la zona horaria de Madrid.
+ */
+function getMadridDateStr(date = new Date()) {
+    return new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Europe/Madrid',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    }).format(date);
+}
+
+/**
+ * Obtiene el día del año (1-366) en la zona horaria de Madrid para rotación determinista diaria.
+ */
+function getMadridDayOfYear(date = new Date()) {
+    const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Europe/Madrid',
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric'
+    });
+    const parts = formatter.formatToParts(date);
+    const y = parseInt(parts.find(p => p.type === 'year').value, 10);
+    const m = parseInt(parts.find(p => p.type === 'month').value, 10) - 1;
+    const d = parseInt(parts.find(p => p.type === 'day').value, 10);
+
+    const madridDay = new Date(Date.UTC(y, m, d));
+    const startOfYear = new Date(Date.UTC(y, 0, 1));
+    const diff = madridDay - startOfYear;
+    const oneDay = 1000 * 60 * 60 * 24;
+    return Math.floor(diff / oneDay) + 1;
+}
+
+/**
+ * Lógica central para seleccionar y emitir la Noticia del Día de SomosPadel Journal.
+ * Invocada automáticamente cada día a las 11:00 AM (Europe/Madrid) o manualmente por un Administrador.
+ */
+async function executeDailyNewsPush(options = {}) {
+    const { articleId, force = false, triggeredBy = 'cron' } = options;
+    const now = new Date();
+    const todayStr = getMadridDateStr(now);
+
+    // 1. Obtener estado previo guardado en Firestore
+    const stateRef = db.collection('system_config').doc('daily_news_state');
+    const stateDoc = await stateRef.get();
+    const stateData = stateDoc.exists ? stateDoc.data() : {};
+
+    // 2. Si es cron automático y ya se envió hoy, evitar envíos repetidos
+    if (!force && stateData.lastSentDate === todayStr) {
+        console.log(`ℹ️ [DailyNewsPush] Noticia del día ya fue enviada hoy (${todayStr}): "${stateData.title}". Omitiendo.`);
+        return {
+            skipped: true,
+            reason: 'already_sent_today',
+            date: todayStr,
+            article: { id: stateData.articleId, title: stateData.title }
+        };
+    }
+
+    // 3. Selección del artículo del catálogo curado
+    let article = null;
+    if (articleId) {
+        article = JOURNAL_DAILY_ARTICLES.find(a => a.id === articleId);
+    }
+
+    if (!article) {
+        article = selectDailyNewsArticle(now, stateData.articleId);
+    }
+
+    if (!article) {
+        throw new Error('No fue posible seleccionar un artículo del catálogo de SomosPadel Journal.');
+    }
+
+    const title = `📰 NOTICIA DEL DÍA: ${article.title}`;
+    const body = article.summary || article.body || 'Descubre la táctica y novedades de hoy en SomosPadel Barcelona.';
+    const targetUrl = `dashboard?article=${article.id}`;
+    const notifId = `news_${todayStr}_${article.id}`;
+    const tag = `daily_news_${todayStr}`;
+
+    console.log(`🚀 [DailyNewsPush] Emitiendo Noticia del Día (${todayStr}): "${title}" [Origen: ${triggeredBy}]`);
+
+    // 4. Emisión FCM Push masiva al Topic principal 'all_players' (teléfonos con app apagada)
+    const pushResult = await sendTopicNotification('all_players', title, body, targetUrl, {
+        id: notifId,
+        articleId: article.id,
+        type: 'daily_news',
+        url: targetUrl,
+        icon: article.icon || 'newspaper',
+        category: article.category || 'SOMOSPADEL JOURNAL'
+    }, tag);
+
+    // Emisión al Topic secundario 'news' por cobertura adicional
+    try {
+        await sendTopicNotification('news', title, body, targetUrl, {
+            id: notifId,
+            articleId: article.id,
+            type: 'daily_news',
+            url: targetUrl,
+            icon: article.icon || 'newspaper',
+            category: article.category || 'SOMOSPADEL JOURNAL'
+        }, tag);
+    } catch (newsErr) {
+        console.warn('⚠️ [DailyNewsPush] Aviso no crítico en topic news:', newsErr.message);
+    }
+
+    // 5. Guardar en el cajón de notificaciones de los jugadores activos
+    const inAppCount = await saveInAppNotificationForActivePlayers({
+        title: title,
+        body: body,
+        icon: article.icon || 'newspaper',
+        data: {
+            url: targetUrl,
+            id: notifId,
+            articleId: article.id,
+            type: 'daily_news',
+            icon: article.icon || 'newspaper',
+            category: article.category || 'SOMOSPADEL JOURNAL'
+        }
+    });
+
+    // 6. Persistir registro en Firestore en system_config/daily_news_state
+    const updatePayload = {
+        lastSentDate: todayStr,
+        articleId: article.id,
+        title: article.title,
+        summary: body,
+        category: article.category || 'SOMOSPADEL JOURNAL',
+        sentAt: admin.firestore.FieldValue.serverTimestamp(),
+        sentVia: triggeredBy,
+        targetUrl: targetUrl,
+        inAppPlayersCount: inAppCount,
+        lastPushResult: pushResult
+    };
+
+    await stateRef.set(updatePayload, { merge: true });
+
+    return {
+        success: true,
+        date: todayStr,
+        article: {
+            id: article.id,
+            title: article.title,
+            category: article.category,
+            summary: body
+        },
+        pushResult,
+        inAppPlayersCount: inAppCount,
+        timestamp: new Date().toISOString()
+    };
+}
+
+/**
+ * Cron Diario: Emisión automática de la Noticia del Día a las 11:00 AM (Europe/Madrid).
+ * Notificación push a todos los jugadores aunque tengan el teléfono o app totalmente cerrados.
+ */
+exports.scheduledDailyNewsPush = functions.pubsub
+    .schedule('0 11 * * *')
+    .timeZone('Europe/Madrid')
+    .onRun(async (context) => {
+        console.log('⏰ [scheduledDailyNewsPush] Iniciando cron diario de Noticia del Día (11:00 AM Europe/Madrid)...');
+        try {
+            const result = await executeDailyNewsPush({ force: false, triggeredBy: 'cron' });
+            console.log('✅ [scheduledDailyNewsPush] Tarea diaria completada con éxito:', result);
+            return result;
+        } catch (error) {
+            console.error('❌ [scheduledDailyNewsPush] Error en la ejecución diaria:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+/**
+ * Callable Function para SuperAdmin / Pruebas Técnicas:
+ * Permite emitir inmediatamente la Noticia del Día bajo demanda con permisos de administrador.
+ */
+exports.sendDailyNewsPushNow = functions.https.onCall(async (data, context) => {
+    // 1. Verificar autenticación
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'Acceso denegado: solo usuarios autenticados.');
+    }
+
+    // 2. Verificar permisos de administrador
+    const callerDoc = await db.collection('players').doc(context.auth.uid).get();
+    const callerRole = callerDoc.exists ? callerDoc.data().role : null;
+    const isAuthorized = ['admin', 'super_admin', 'admin_player'].includes(callerRole);
+
+    if (!isAuthorized) {
+        throw new functions.https.HttpsError('permission-denied', 'No tienes permisos de administrador para emitir noticias del día.');
+    }
+
+    const { articleId, force = true } = data || {};
+
+    try {
+        const result = await executeDailyNewsPush({
+            articleId,
+            force: force !== false,
+            triggeredBy: `manual_${context.auth.uid}`
+        });
+
+        return {
+            success: true,
+            article: result.article,
+            timestamp: result.timestamp || new Date().toISOString(),
+            date: result.date,
+            inAppPlayersCount: result.inAppPlayersCount,
+            skipped: result.skipped || false
+        };
+    } catch (err) {
+        console.error('❌ [sendDailyNewsPushNow] Error en emisión manual:', err);
+        throw new functions.https.HttpsError('internal', err.message || 'Error al emitir la noticia del día.');
+    }
+});
+
 
