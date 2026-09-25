@@ -1316,7 +1316,7 @@ window.NotificationServiceClass = class NotificationService {
                         if ('serviceWorker' in navigator) {
                             try { swReg = await navigator.serviceWorker.ready; } catch (_) {}
                         }
-                        const VAPID_KEY = "BD-Ue7u-m6m999_placeholder_pon_tu_clave_aqui";
+                        const VAPID_KEY = "BCQ_YjYrpwremCwo-xQhtP1x5TDi39LWQ2fuwnBAcyjxN3bJTD8WtXNYsFM7IDxHd3hzEPn2z7JRsLdT0l2L87E";
                         const tokenOptions = {};
                         if (VAPID_KEY && !VAPID_KEY.includes('placeholder')) {
                             tokenOptions.vapidKey = VAPID_KEY;
@@ -1484,7 +1484,7 @@ window.NotificationServiceClass = class NotificationService {
                         }
                     }
 
-                    const VAPID_KEY = "BD-Ue7u-m6m999_placeholder_pon_tu_clave_aqui";
+                    const VAPID_KEY = "BCQ_YjYrpwremCwo-xQhtP1x5TDi39LWQ2fuwnBAcyjxN3bJTD8WtXNYsFM7IDxHd3hzEPn2z7JRsLdT0l2L87E";
                     const tokenOptions = {};
                     if (VAPID_KEY && !VAPID_KEY.includes('placeholder')) {
                         tokenOptions.vapidKey = VAPID_KEY;

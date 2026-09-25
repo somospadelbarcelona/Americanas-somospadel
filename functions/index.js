@@ -814,3 +814,145 @@ exports.sendClubBroadcast = functions.https.onCall(async (data, context) => {
     };
 });
 
+// ==========================================
+// 8. TRIGGERS: EVENTOS CANCELADOS, SUSPENDIDOS O ELIMINADOS (NOTIFICACIÓN CON APP APAGADA)
+// ==========================================
+
+/**
+ * Trigger: onAmericanaCancelledOrUpdated
+ * Detecta si una americana ha sido cancelada o suspendida y emite push a los móviles apagados.
+ */
+exports.onAmericanaCancelledOrUpdated = functions.firestore
+    .document('americanas/{id}')
+    .onUpdate(async (change, context) => {
+        const { id } = context.params;
+        const beforeData = change.before.data() || {};
+        const afterData = change.after.data() || {};
+
+        const wasCancelled = ['cancelled', 'cancelada', 'suspendida', 'suspendido', 'anulado'].includes(beforeData.status);
+        const isCancelled = ['cancelled', 'cancelada', 'suspendida', 'suspendido', 'anulado'].includes(afterData.status);
+
+        if (!wasCancelled && isCancelled) {
+            const title = '⛔ AMERICANA CANCELADA O SUSPENDIDA';
+            const body = `La americana "${afterData.name || beforeData.name || 'Convocatoria'}" prevista para el ${afterData.date || ''} ha sido cancelada.`;
+            const targetUrl = 'americanas';
+
+            console.log(`⛔ [onAmericanaCancelledOrUpdated] Notificando cancelación de americana ${id}`);
+
+            await sendTopicNotification('americanas', title, body, targetUrl, {
+                id: `evt_cancelled_americana_${id}`,
+                americanaId: String(id),
+                isCancelled: true,
+                type: 'cancelled_americana'
+            }, `cancelled_americana_${id}`);
+
+            await saveInAppNotificationForActivePlayers({
+                title: title,
+                body: body,
+                icon: 'calendar-xmark',
+                data: {
+                    url: targetUrl,
+                    id: `evt_cancelled_americana_${id}`,
+                    isCancelled: true,
+                    type: 'cancelled_americana'
+                }
+            });
+        }
+        return null;
+    });
+
+/**
+ * Trigger: onAmericanaDeleted
+ * Detecta si una americana se elimina de Firestore y avisa a los móviles apagados.
+ */
+exports.onAmericanaDeleted = functions.firestore
+    .document('americanas/{id}')
+    .onDelete(async (snapshot, context) => {
+        const { id } = context.params;
+        const data = snapshot.data() || {};
+
+        const title = '⛔ AMERICANA ELIMINADA';
+        const body = `La americana "${data.name || 'Convocatoria'}" ha sido eliminada por la organización.`;
+        const targetUrl = 'americanas';
+
+        console.log(`⛔ [onAmericanaDeleted] Notificando eliminación de americana ${id}`);
+
+        await sendTopicNotification('americanas', title, body, targetUrl, {
+            id: `evt_cancelled_americana_${id}`,
+            americanaId: String(id),
+            isCancelled: true,
+            type: 'deleted_americana'
+        }, `deleted_americana_${id}`);
+
+        return null;
+    });
+
+/**
+ * Trigger: onEntrenoCancelledOrUpdated
+ * Detecta si un entreno ha sido cancelado o suspendido y emite push a los móviles apagados.
+ */
+exports.onEntrenoCancelledOrUpdated = functions.firestore
+    .document('entrenos/{id}')
+    .onUpdate(async (change, context) => {
+        const { id } = context.params;
+        const beforeData = change.before.data() || {};
+        const afterData = change.after.data() || {};
+
+        const wasCancelled = ['cancelled', 'cancelada', 'suspendida', 'suspendido', 'anulado'].includes(beforeData.status);
+        const isCancelled = ['cancelled', 'cancelada', 'suspendida', 'suspendido', 'anulado'].includes(afterData.status);
+
+        if (!wasCancelled && isCancelled) {
+            const title = '⛔ ENTRENO CANCELADO O SUSPENDIDO';
+            const body = `El entreno "${afterData.name || beforeData.name || 'Entrenamiento'}" previsto para el ${afterData.date || ''} ha sido cancelado.`;
+            const targetUrl = 'entrenos';
+
+            console.log(`⛔ [onEntrenoCancelledOrUpdated] Notificando cancelación de entreno ${id}`);
+
+            await sendTopicNotification('entrenos', title, body, targetUrl, {
+                id: `evt_cancelled_entreno_${id}`,
+                entrenoId: String(id),
+                isCancelled: true,
+                type: 'cancelled_entreno'
+            }, `cancelled_entreno_${id}`);
+
+            await saveInAppNotificationForActivePlayers({
+                title: title,
+                body: body,
+                icon: 'calendar-xmark',
+                data: {
+                    url: targetUrl,
+                    id: `evt_cancelled_entreno_${id}`,
+                    isCancelled: true,
+                    type: 'cancelled_entreno'
+                }
+            });
+        }
+        return null;
+    });
+
+/**
+ * Trigger: onEntrenoDeleted
+ * Detecta si un entreno se elimina de Firestore y avisa a los móviles apagados.
+ */
+exports.onEntrenoDeleted = functions.firestore
+    .document('entrenos/{id}')
+    .onDelete(async (snapshot, context) => {
+        const { id } = context.params;
+        const data = snapshot.data() || {};
+
+        const title = '⛔ ENTRENO ELIMINADO';
+        const body = `El entreno "${data.name || 'Entrenamiento'}" ha sido eliminado por la organización.`;
+        const targetUrl = 'entrenos';
+
+        console.log(`⛔ [onEntrenoDeleted] Notificando eliminación de entreno ${id}`);
+
+        await sendTopicNotification('entrenos', title, body, targetUrl, {
+            id: `evt_cancelled_entreno_${id}`,
+            entrenoId: String(id),
+            isCancelled: true,
+            type: 'deleted_entreno'
+        }, `deleted_entreno_${id}`);
+
+        return null;
+    });
+
