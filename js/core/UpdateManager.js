@@ -16,9 +16,23 @@
             this.cleanupOldCaches();
 
             // Escuchar cambios de controlador (cuando el nuevo SW toma el control)
+            const hadActiveController = !!navigator.serviceWorker.controller;
             let refreshing = false;
             navigator.serviceWorker.addEventListener('controllerchange', () => {
                 if (refreshing) return;
+                // No recargar en la primera instalación del Service Worker
+                if (!hadActiveController) {
+                    console.log("🎾 UpdateManager: First Service Worker registered. Skipping reload.");
+                    return;
+                }
+                // Prevenir bucles de recarga en iOS Safari
+                try {
+                    if (sessionStorage.getItem('sw_reloaded')) {
+                        console.log("ℹ️ UpdateManager: Already reloaded in this session. Skipping.");
+                        return;
+                    }
+                    sessionStorage.setItem('sw_reloaded', 'true');
+                } catch (e) {}
                 refreshing = true;
                 console.log("🔄 UpdateManager: New version active. Reloading...");
                 window.location.reload();

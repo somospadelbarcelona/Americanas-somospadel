@@ -87,10 +87,10 @@ document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
         if (window.db) {
             try {
-                const isTerminated = window.db._delegate?._firestoreClient?.asyncQueue?.isShuttingDown;
-                if (isTerminated) {
-                    console.warn("🔄 [FirebaseInit] Cliente Firestore terminado en segundo plano. Recargando para restablecer conexión...");
-                    window.location.reload();
+                if (typeof window.db.enableNetwork === 'function') {
+                    window.db.enableNetwork().catch(err => {
+                        console.warn("⚠️ [FirebaseInit] enableNetwork al volver del segundo plano:", err?.message || err);
+                    });
                 }
             } catch (e) {
                 // Ignore

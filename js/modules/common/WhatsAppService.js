@@ -124,6 +124,39 @@ window.WhatsAppService = {
     },
 
     /**
+     * Construye la URL canónica directa para un evento (Americanas o Entrenos)
+     * Formato canónico:
+     * - Americanas: https://somospadelbarcelona.github.io/Americanas-somospadel/?event=${event.id}#americanas
+     * - Entrenos: https://somospadelbarcelona.github.io/Americanas-somospadel/?event=${event.id}#entrenos
+     */
+    getEventCanonicalUrl(event) {
+        const baseUrl = "https://somospadelbarcelona.github.io/Americanas-somospadel/";
+        if (!event) return baseUrl;
+        const name = (event.name || '').toUpperCase();
+        const isEntreno = event.type === 'entreno' || name.includes('ENTRENO');
+        const sectionHash = isEntreno ? "#entrenos" : "#americanas";
+        const rawId = event.id || event._id || event.uid;
+        const eventId = rawId ? encodeURIComponent(String(rawId).trim()) : '';
+        const queryParam = eventId ? `?event=${eventId}` : '';
+        return `${baseUrl}${queryParam}${sectionHash}`;
+    },
+
+    /**
+     * Abre URLs de forma segura evitando bloqueos de popups y desbordamientos
+     */
+    _openUrlSafely(url) {
+        if (!url) return;
+        try {
+            const win = window.open(url, '_blank', 'noopener,noreferrer');
+            if (!win || win.closed || typeof win.closed === 'undefined') {
+                window.location.href = url;
+            }
+        } catch (e) {
+            window.location.href = url;
+        }
+    },
+
+    /**
      * Genera un mensaje formateado para WhatsApp (Broadcast Pro 9.0)
      * @param {Object} event - Objeto del evento
      * @param {Array} richPlayers - Lista de jugadores enriquecida con nivel/género
@@ -136,7 +169,8 @@ window.WhatsAppService = {
         const type = (event.category || 'open').toLowerCase();
         const isMixed = type === 'mixed' || type === 'mixto' || type === 'mixta';
         const isFemale = type === 'female' || type === 'femenina';
-        const isAmericana = name.includes('AMERICANA') || event.type === 'americana';
+        const isEntreno = event.type === 'entreno' || name.includes('ENTRENO');
+        const isAmericana = !isEntreno;
 
         const dateStr = this._formatDate(event.date);
         const timeStr = event.time || '10:00';
@@ -181,11 +215,8 @@ window.WhatsAppService = {
         const metrics = this._calculateEventMetrics(displayList);
         const progressBar = this._generateProgressBar(players.length, maxPlayers);
 
-        // Deep link directo al evento
-        const baseUrl = "https://somospadelbarcelona.github.io/Americanas-somospadel";
-        const sectionHash = isAmericana ? "#americanas" : "#entrenos";
-        const eventParam = event.id ? `?event=${event.id}` : '';
-        const deepLinkUrl = `${baseUrl}/${eventParam}${sectionHash}`;
+        // Deep link canónico directo al evento
+        const deepLinkUrl = this.getEventCanonicalUrl(event);
 
         // === CONSTRUCCIÓN DE LISTA DE JUGADORES (Pro & Clean con 01., 02., 10., 11., 12.) ===
         const processedIds = new Set();
@@ -519,19 +550,20 @@ window.WhatsAppService = {
      */
     async shareLookingFor(event, countNeeded) {
         const E = this.E;
-        const typeIcon = (event.type === 'entreno') ? "🏋️‍♂️" : "🏆";
+        const name = (event.name || 'EVENTO').toUpperCase();
+        const isEntreno = event.type === 'entreno' || name.includes('ENTRENO');
+        const typeIcon = isEntreno ? "🏋️‍♂️" : "🏆";
 
         let msg = E.DRUM + " *¡BUSCAMOS " + countNeeded + " JUGADORE" + (countNeeded > 1 ? 'S' : '') + "!* " + E.DRUM + "\n\n";
-        msg += typeIcon + " *" + (event.name || 'EVENTO').toUpperCase() + "*\n";
+        msg += typeIcon + " *" + name + "*\n";
         msg += E.CALENDAR + " " + this._formatDate(event.date) + "\n";
         msg += E.TIMER + " " + (event.time || '10:00') + "\n";
         msg += E.PIN + " " + (event.location || 'SomosPadel BCN') + "\n";
         msg += "--------------------------\n\n";
         msg += "Nos falta" + (countNeeded > 1 ? 'n ' : ' ') + "*" + countNeeded + "* para completar el cuadro. ¡Dale caña! 🔥🎾\n\n";
 
-        const baseUrl = "https://somospadelbarcelona.github.io/Americanas-somospadel";
-        const sectionHash = (event.type === 'entreno') ? "#entrenos" : "#americanas";
-        msg += E.LINK + " " + baseUrl + "/" + sectionHash + "\n";
+        const deepLinkUrl = this.getEventCanonicalUrl(event);
+        msg += E.LINK + " " + deepLinkUrl + "\n";
 
         const encodedText = encodeURIComponent(msg);
         const url = "https://api.whatsapp.com/send?text=" + encodedText;

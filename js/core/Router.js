@@ -38,8 +38,26 @@
             // Determinar la ruta inicial desde el hash de la URL o parámetros de consulta (Deep Linking)
             const urlParams = new URLSearchParams(window.location.search);
             const isRsvpAction = urlParams.get('action') === 'rsvp' || (window.location.hash && window.location.hash.includes('rsvp'));
-            const initialHash = window.location.hash.replace('#', '');
-            let targetRoute = this.routes[initialHash] ? initialHash : 'dashboard';
+            const cleanHash = (window.location.hash.split(/[?&]/)[0] || '').replace('#', '');
+            let targetRoute = this.routes[cleanHash] ? cleanHash : 'dashboard';
+
+            // Detectar si viene un parámetro event o openEvent o id en search o hash
+            let targetEventId = urlParams.get('event') || urlParams.get('openEvent') || urlParams.get('id');
+            if (!targetEventId && window.location.hash && (window.location.hash.includes('event=') || window.location.hash.includes('openEvent=') || window.location.hash.includes('id='))) {
+                const match = window.location.hash.match(/[?&#](?:event|openEvent|id)=([^&/#]+)/);
+                if (match) targetEventId = match[1];
+            }
+
+            if (targetEventId) {
+                // Si viene y no hay hash explícito o es dashboard o ruta no válida, verificar si hay indicio de tipo o mantener una ruta inteligente hacia entrenos o americanas
+                if (!cleanHash || cleanHash === 'dashboard' || !this.routes[cleanHash]) {
+                    const fullUrlLower = (window.location.search + ' ' + window.location.hash).toLowerCase();
+                    const isEntreno = urlParams.get('type') === 'entreno' || 
+                                      urlParams.get('section') === 'entrenos' || 
+                                      fullUrlLower.includes('entreno');
+                    targetRoute = isEntreno ? 'entrenos' : 'americanas';
+                }
+            }
 
             if (isRsvpAction) {
                 targetRoute = 'equipos';
@@ -52,7 +70,7 @@
                 if (event.state && event.state.route) {
                     this.navigate(event.state.route, true);
                 } else {
-                    const currentHash = window.location.hash.replace('#', '');
+                    const currentHash = (window.location.hash.split(/[?&]/)[0] || '').replace('#', '');
                     const targetRoute = this.routes[currentHash] ? currentHash : 'dashboard';
                     this.navigate(targetRoute, true);
                 }
@@ -252,6 +270,9 @@
         }
 
         navigate(route, isBack = false, force = false) {
+            const cleanRoute = (route ? String(route).split('?')[0] : '').replace('#', '');
+            route = cleanRoute || 'dashboard';
+
             if (typeof window.closeCommunityMenu === 'function') {
                 window.closeCommunityMenu();
             }
@@ -328,10 +349,19 @@
 
             // History Management
             if (!isBack) {
-                const search = window.location.search || '';
-                const hasRsvpParam = search.includes('action=rsvp');
+                let search = window.location.search || '';
+                // Si search está vacío pero el hash traía parámetros (?event=...), rescatarlos para normalizar y no perder el deep link
+                if (!search && window.location.hash && (window.location.hash.includes('?') || window.location.hash.includes('event='))) {
+                    const qIdx = window.location.hash.indexOf('?');
+                    if (qIdx !== -1) {
+                        search = window.location.hash.substring(qIdx);
+                    } else if (window.location.hash.includes('event=')) {
+                        const m = window.location.hash.match(/[?&#]?(event=[^&#]+)/);
+                        if (m) search = `?${m[1]}`;
+                    }
+                }
                 const targetHash = `#${route}`;
-                const fullUrl = hasRsvpParam ? `${search}${targetHash}` : targetHash;
+                const fullUrl = search ? `${search}${targetHash}` : targetHash;
                 window.history.pushState({ route }, '', fullUrl);
             }
 

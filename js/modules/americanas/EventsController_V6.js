@@ -125,7 +125,8 @@
                 expandedCards: new Set(),
                 collapsedCards: new Set(),
                 eventTabs: {},
-                matchCache: {} // { eventId: { matches: [], lastFetch: timestamp } }
+                matchCache: {}, // { eventId: { matches: [], lastFetch: timestamp } }
+                pendingDeepLinkTarget: null
             };
             this.unsubscribeEvents = null;
             this.unsubscribeEntrenos = null;
@@ -139,6 +140,9 @@
             this._currentInscritosType = null;
             this._visibilityBound = false;
             this._forceFullRender = false;
+            this._deepLinkInterval = null;
+            this._isResolvingDeepLink = false;
+            this._handledDeepLinkTarget = null;
 
             // AUTO-INIT: Start Background Services Immediately
             this.startBackgroundService();
@@ -160,6 +164,7 @@
             if (this.autoStartInterval) clearInterval(this.autoStartInterval);
             if (this._onDataUpdateDebounce) clearTimeout(this._onDataUpdateDebounce);
             if (this._personalMatchesDebounce) clearTimeout(this._personalMatchesDebounce);
+            if (this._deepLinkInterval) clearInterval(this._deepLinkInterval);
 
             this.stopAutoRefreshPolling();
 
@@ -186,6 +191,9 @@
             // Check if we have received at least one update for each main collection
             if (this.state.americanas && this.state.entrenos) {
                 this.state.loading = false;
+                if (this.state.pendingDeepLinkTarget) {
+                    this._resolveDeepLinkTarget();
+                }
                 if (this.state.viewInitialized && this.isCurrentRouteActive()) {
                     if (this._onDataUpdateDebounce) clearTimeout(this._onDataUpdateDebounce);
                     this._onDataUpdateDebounce = setTimeout(() => {
@@ -1264,55 +1272,169 @@
 
             // Auto-enfoque y scroll a evento si viene referenciado por Deep Link (?event=ID)
             this._checkDeepLinkEvent();
+            if (this.state.pendingDeepLinkTarget) {
+                this._resolveDeepLinkTarget();
+            }
+        }
+
+        _extractDeepLinkTarget() {
+            try {
+                // 1. Extraer de window.location.search (?event=, openEvent=, id=)
+                const urlParams = new URLSearchParams(window.location.search);
+                let targetId = urlParams.get('event') || urlParams.get('openEvent') || urlParams.get('id');
+
+                // 2. Extraer de window.location.hash (#entrenos?event=, #americanas?event=, #event=, etc.)
+                const hash = window.location.hash || '';
+                if (!targetId && hash) {
+                    const qIdx = hash.indexOf('?');
+                    if (qIdx !== -1) {
+                        const hashParams = new URLSearchParams(hash.substring(qIdx));
+                        targetId = hashParams.get('event') || hashParams.get('openEvent') || hashParams.get('id');
+                    }
+                    if (!targetId) {
+                        const match = hash.match(/(?:event|openEvent|id)=([^&/#]+)/i);
+                        if (match && match[1]) targetId = match[1];
+                    }
+                    if (!targetId && hash.startsWith('#event-')) {
+                        targetId = hash.replace('#event-', '');
+                    }
+                }
+
+                return targetId ? String(targetId).trim() : null;
+            } catch (err) {
+                console.warn("⚠️ [EventsController] Error extrayendo targetId de deep link:", err);
+                return null;
+            }
         }
 
         _checkDeepLinkEvent() {
             try {
-                const urlParams = new URLSearchParams(window.location.search);
-                const hash = window.location.hash || '';
-                let targetId = urlParams.get('event') || urlParams.get('openEvent') || urlParams.get('id');
-
-                if (!targetId && hash.includes('event=')) {
-                    const match = hash.match(/event=([^&/#]+)/);
-                    if (match) targetId = match[1];
-                }
-
+                const targetId = this._extractDeepLinkTarget();
                 if (!targetId) return;
 
-                console.log("🔗 [EventsController] Deep Link target event detected:", targetId);
+                // Evitar repetir si ya se procesó este ID en la sesión
+                if (this._handledDeepLinkTarget === targetId && !this.state.pendingDeepLinkTarget) return;
 
-                setTimeout(() => {
-                    const card = document.getElementById(`event-card-${targetId}`);
-                    if (card) {
-                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        card.style.transition = 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-                        card.style.boxShadow = '0 0 35px #CCFF00, 0 0 70px rgba(204, 255, 0, 0.4)';
-                        card.style.borderColor = '#CCFF00';
-                        card.style.transform = 'scale(1.02)';
+                console.log("🔗 [EventsController] Deep Link target event detectado:", targetId);
+                this.state.pendingDeepLinkTarget = targetId;
 
-                        if (window.navigator && window.navigator.vibrate) window.navigator.vibrate([30, 50, 30]);
-
-                        setTimeout(() => {
-                            card.style.boxShadow = '';
-                            card.style.borderColor = '';
-                            card.style.transform = '';
-                        }, 3500);
-                    } else {
-                        const allEvents = this.getAllSortedEvents();
-                        const targetEvt = allEvents.find(e => String(e.id) === String(targetId));
-                        if (targetEvt) {
-                            const isEntreno = targetEvt.type === 'entreno';
-                            const targetTab = isEntreno ? 'entrenos' : 'events';
-                            if (this.state.activeTab !== targetTab) {
-                                console.log(`🔄 [EventsController] Conmutando a pestaña ${targetTab} para deep link...`);
-                                this.setTab(targetTab);
-                            }
-                        }
-                    }
-                }, 400);
+                this._resolveDeepLinkTarget();
             } catch (err) {
-                console.warn("⚠️ Deep link check error:", err);
+                console.warn("⚠️ [EventsController] Deep link check error:", err);
             }
+        }
+
+        _resolveDeepLinkTarget() {
+            const targetId = this.state.pendingDeepLinkTarget;
+            if (!targetId) return;
+
+            // Si ya hay un proceso de resolución activo, intentar resolución inmediata con datos actuales
+            if (this._isResolvingDeepLink) {
+                this._attemptDeepLinkResolution(targetId);
+                return;
+            }
+
+            this._isResolvingDeepLink = true;
+            let attempts = 0;
+            const maxAttempts = 30; // 30 intentos x 200ms = 6 segundos (máxima resiliencia móvil 4G)
+
+            const checkAndResolve = async () => {
+                attempts++;
+                const resolved = await this._attemptDeepLinkResolution(targetId);
+                if (resolved || attempts >= maxAttempts) {
+                    if (this._deepLinkInterval) {
+                        clearInterval(this._deepLinkInterval);
+                        this._deepLinkInterval = null;
+                    }
+                    this._isResolvingDeepLink = false;
+                    if (!resolved && attempts >= maxAttempts) {
+                        console.warn(`⌛ [EventsController] Timeout resolviendo deep link para ID: ${targetId} tras ${maxAttempts} intentos.`);
+                        this.state.pendingDeepLinkTarget = null;
+                    }
+                }
+            };
+
+            // Intento inmediato
+            checkAndResolve();
+            if (this._isResolvingDeepLink) {
+                this._deepLinkInterval = setInterval(checkAndResolve, 200);
+            }
+        }
+
+        async _attemptDeepLinkResolution(targetId) {
+            const allEvents = (typeof this.getAllSortedEvents === 'function')
+                ? this.getAllSortedEvents()
+                : [...(this.state.americanas || []), ...(this.state.entrenos || [])];
+
+            const targetEvt = allEvents.find(e => String(e.id) === String(targetId));
+            if (!targetEvt) return false;
+
+            console.log(`✅ [EventsController] Evento Deep Link localizado (${targetEvt.name || targetEvt.id}). Procesando foco y navegación...`);
+            this.state.pendingDeepLinkTarget = null;
+            this._handledDeepLinkTarget = targetId;
+
+            const isFinished = this.isEventFinished(targetEvt);
+            const isEntreno = targetEvt.type === 'entreno';
+
+            // 1. Determinar pestaña según tipo y estado
+            let targetTab = isEntreno ? 'entrenos' : 'events';
+            if (isFinished) {
+                targetTab = isEntreno ? 'finished' : 'finished_americanas';
+            }
+
+            // 2. Expandir automáticamente la tarjeta en el estado
+            if (!this.state.expandedCards) this.state.expandedCards = new Set();
+            if (!this.state.collapsedCards) this.state.collapsedCards = new Set();
+            this.state.expandedCards.add(targetId);
+            this.state.collapsedCards.delete(targetId);
+
+            // 3. Resetear filtros si están activos y pueden ocultar el evento
+            const hadActiveFilters = (typeof this.hasActiveFilters === 'function' && this.hasActiveFilters());
+            if (hadActiveFilters) {
+                console.log("🧹 [EventsController] Reseteando filtros activos para revelar evento de Deep Link");
+                this.resetFilters();
+            }
+
+            // 4. Cambiar a la pestaña si no es la actual
+            if (this.state.activeTab !== targetTab) {
+                console.log(`🔄 [EventsController] Conmutando a pestaña ${targetTab} para deep link...`);
+                await this.setTab(targetTab);
+            } else if (!hadActiveFilters) {
+                this._forceFullRender = true;
+                this.render();
+            }
+
+            // 5. Scroll suave al centro, resplandor neón #CCFF00, borde vibrante y vibración háptica
+            setTimeout(() => {
+                const card = document.getElementById(`event-card-${targetId}`);
+                if (card) {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    card.style.transition = 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                    card.style.boxShadow = '0 0 35px #CCFF00, 0 0 70px rgba(204, 255, 0, 0.45)';
+                    card.style.borderColor = '#CCFF00';
+                    card.style.transform = 'scale(1.02)';
+                    card.style.zIndex = '50';
+
+                    if (window.navigator && window.navigator.vibrate) {
+                        try { window.navigator.vibrate([30, 50, 30]); } catch (e) {}
+                    }
+
+                    try {
+                        window.NotificationService?.showToast?.("🎾 Abriendo evento seleccionado...", "success");
+                    } catch (e) {}
+
+                    setTimeout(() => {
+                        card.style.boxShadow = '';
+                        card.style.borderColor = '';
+                        card.style.transform = '';
+                        card.style.zIndex = '';
+                    }, 3500);
+                } else {
+                    console.warn(`⚠️ [EventsController] Tarjeta #event-card-${targetId} aún no presente en DOM tras activación.`);
+                }
+            }, 120);
+
+            return true;
         }
 
         scrollSubmenu(direction) {

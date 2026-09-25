@@ -187,64 +187,9 @@
             // Marca de tiempo de arranque de la página
             const bootTime = Date.now();
 
-            async function triggerActiveRecovery(errType, errMsg) {
-                // Solo recuperar en los primeros 5 segundos de carga de la página
-                if (Date.now() - bootTime > 5000) return;
-
-                // Evitar bucles infinitos de recarga
-                const lastAttempt = sessionStorage.getItem('sp_recovery_attempt');
-                if (lastAttempt && Date.now() - parseInt(lastAttempt) < 15000) {
-                    console.warn("⚠️ [Resilience] Bucle de recuperación detectado. Saltando auto-recarga.");
-                    return;
-                }
-
-                console.error(`🚨 [Resilience] Error crítico detectado al iniciar (${errType}: ${errMsg}). Iniciando auto-recuperación activa...`);
-                sessionStorage.setItem('sp_recovery_attempt', Date.now().toString());
-
-                // Mostrar overlay elegante de recuperación activa para tranquilizar al usuario
-                let overlay = document.getElementById('sp-recovery-overlay');
-                if (!overlay) {
-                    overlay = document.createElement('div');
-                    overlay.id = 'sp-recovery-overlay';
-                    overlay.style = "position:fixed; inset:0; z-index:999999; background:#0a0a12; color:white; font-family:'Outfit',sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; text-align:center; animation: fadeIn 0.3s ease;";
-                    overlay.innerHTML = `
-                        <div style="width:70px; height:70px; margin-bottom:20px; position:relative; display:flex; align-items:center; justify-content:center;">
-                            <div style="position:absolute; width:100%; height:100%; border:3px solid rgba(204,255,0,0.1); border-top-color:#CCFF00; border-radius:50%; animation:spin 1s linear infinite;"></div>
-                            <i class="fas fa-magic" style="color:#CCFF00; font-size:1.8rem; animation:pulseGlow 1.5s infinite;"></i>
-                        </div>
-                        <h2 style="font-weight:900; margin:0 0 10px 0; font-size:1.4rem; letter-spacing:0.5px;">Auto-recuperación Activa</h2>
-                        <p style="color:#94a3b8; font-size:0.85rem; max-width:320px; margin:0 0 15px 0; line-height:1.5;">Hemos detectado una inconsistencia de caché tras la actualización. Limpiando el sistema para ti...</p>
-                        <span style="font-size:0.65rem; color:#64748b; font-family:monospace; text-transform:uppercase; letter-spacing:1px;">Limpiando Caché PWA & Recargando</span>
-                    `;
-                    
-                    // Inyectar animaciones clave si no existen
-                    if (!document.getElementById('sp-recovery-animations')) {
-                        const styleAnim = document.createElement('style');
-                        styleAnim.id = 'sp-recovery-animations';
-                        styleAnim.innerHTML = `
-                            @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-                            @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
-                        `;
-                        document.head.appendChild(styleAnim);
-                    }
-                    
-                    document.body.appendChild(overlay);
-                }
-
-                // Ejecutar la limpieza forzada y recarga de la app en background
-                if (typeof window.forceUpdateApp === 'function') {
-                    setTimeout(async () => {
-                        await window.forceUpdateApp();
-                    }, 1200);
-                } else {
-                    try {
-                        if ('caches' in window) {
-                            const keys = await caches.keys();
-                            for (const key of keys) await caches.delete(key);
-                        }
-                    } catch(e) {}
-                    window.location.reload(true);
-                }
+            function triggerActiveRecovery(errType, errMsg) {
+                // Registro no destructivo para diagnóstico sin provocar recargas del navegador ni bucles en Safari
+                console.warn(`🛡️ [Resilience] Evento registrado (${errType}: ${errMsg}). Modo pasivo seguro (sin auto-recarga).`);
             }
 
             window.onerror = function(message, source, lineno, colno, error) {
@@ -254,16 +199,15 @@
                 const timeStr = `${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}:${String(dateObj.getSeconds()).padStart(2, '0')}`;
                 
                 const errObj = {
-                    title: "Crash en Script",
+                    title: "Aviso de Script",
                     message: `${message} en ${source ? source.split('/').pop() : 'inline'}:${lineno}:${colno}`,
                     stack: error ? error.stack : '',
                     time: timeStr
                 };
                 errors.push(errObj);
+                console.warn("⚠️ [Error Capture]", errObj.message);
                 
-                // Activar protocolo de auto-recuperación resiliente si ocurre un fallo crítico al inicio
-                triggerActiveRecovery('Crash en Script', message);
-                
+                triggerActiveRecovery('Aviso de Script', message);
                 return false;
             };
 
@@ -273,13 +217,13 @@
                 
                 const errObj = {
                     title: "Promesa Rechazada (Promise Rejection)",
-                    message: event.reason ? (event.reason.message || String(event.reason)) : "Error desconocido en promesa asíncrona",
+                    message: event.reason ? (event.reason.message || String(event.reason)) : "Error no bloqueante en promesa asíncrona",
                     stack: event.reason ? event.reason.stack : '',
                     time: timeStr
                 };
                 errors.push(errObj);
+                console.warn("⚠️ [Promise Rejection Capture]", errObj.message);
 
-                // Activar protocolo de auto-recuperación resiliente
                 const msg = event.reason ? (event.reason.message || String(event.reason)) : 'Promise Rejection';
                 triggerActiveRecovery('Promise Rejection', msg);
             };
@@ -4667,7 +4611,6 @@
     <script src="js/modules/common/GeoService.js" defer></script>
     <script src="js/modules/common/EventService.js" defer></script>
     <script src="js/modules/common/ParticipantService.js" defer></script>
-    <script src="js/modules/common/LevelService.js" defer></script>
     <script src="js/modules/common/ShuffleAnimator.js?v=4.2" defer></script>
     <!-- NOTIFICATIONS -->
     <script src="js/modules/common/NotificationService.js?v=PRO_CLEAN_WHITE_v10" defer></script>
@@ -4892,9 +4835,23 @@
                 });
 
             // Recarga limpia cuando el nuevo Service Worker toma el control
+            const hadActiveController = !!navigator.serviceWorker.controller;
             let refreshing = false;
             navigator.serviceWorker.addEventListener('controllerchange', function () {
                 if (refreshing) return;
+                // No recargar en la primera instalación del Service Worker
+                if (!hadActiveController) {
+                    console.log('🎾 [PWA] Primer Service Worker instalado. Omitiendo recarga.');
+                    return;
+                }
+                // Prevenir bucles de recarga en iOS Safari y verificar si ya se recargó en esta sesión
+                try {
+                    if (sessionStorage.getItem('sw_reloaded')) {
+                        console.log('ℹ️ [PWA] Service Worker ya actualizado en esta sesión. Omitiendo recarga automática.');
+                        return;
+                    }
+                    sessionStorage.setItem('sw_reloaded', 'true');
+                } catch (e) {}
                 refreshing = true;
                 console.log('🔄 [PWA] Nuevo Service Worker activado. Recargando de forma transparente...');
                 window.location.reload();
