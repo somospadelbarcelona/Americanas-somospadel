@@ -10,13 +10,30 @@
         }
 
         init() {
-            if (!('serviceWorker' in navigator)) return;
+            if (!('serviceWorker' in navigator) || window.location.protocol === 'file:') return;
 
             // LIMPIEZA FORZADA: Eliminar cachés antiguos que apuntan a rutas incorrectas
             this.cleanupOldCaches();
 
             // Escuchar cambios de controlador (cuando el nuevo SW toma el control)
+            const hadActiveController = !!navigator.serviceWorker.controller;
+            let refreshing = false;
             navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (refreshing) return;
+                // No recargar en la primera instalación del Service Worker
+                if (!hadActiveController) {
+                    console.log("🎾 UpdateManager: First Service Worker registered. Skipping reload.");
+                    return;
+                }
+                // Prevenir bucles de recarga en iOS Safari
+                try {
+                    if (sessionStorage.getItem('sw_reloaded')) {
+                        console.log("ℹ️ UpdateManager: Already reloaded in this session. Skipping.");
+                        return;
+                    }
+                    sessionStorage.setItem('sw_reloaded', 'true');
+                } catch (e) {}
+                refreshing = true;
                 console.log("🔄 UpdateManager: New version active. Reloading...");
                 window.location.reload();
             });
@@ -44,10 +61,11 @@
         }
 
         async cleanupOldCaches() {
+            if (typeof caches === 'undefined') return;
             try {
                 const cacheNames = await caches.keys();
                 const oldCaches = cacheNames.filter(name =>
-                    name.includes('somospadel') && !name.includes('v28')
+                    name.includes('somospadel') && !name.includes('somospadel-pwa-v2.0.0') && !name.includes('v28')
                 );
 
                 if (oldCaches.length > 0) {
@@ -61,6 +79,9 @@
         }
 
         promptUpdate(registration) {
+            if (document.getElementById('sp-pwa-update-toast') || document.querySelector('.update-toast')) {
+                return;
+            }
             console.log("✨ UpdateManager: Update ready/waiting. Prompting user.");
 
             // Usar el sistema de UI existente o crear uno propio

@@ -12,7 +12,13 @@
     }
 
     window.SomosPadelNewsEngine = {
-        templates: [
+        get templates() {
+            if (window.NewsCatalog && Array.isArray(window.NewsCatalog.articles) && window.NewsCatalog.articles.length > 0) {
+                return window.NewsCatalog.articles;
+            }
+            return this._defaultTemplates || [];
+        },
+        _defaultTemplates: [
             {
                 title: "La Teoría del Centro: el Secreto de los Pros",
                 category: "💡 CONSEJOS",
@@ -144,116 +150,6 @@
                 snippet: "Cantar la posición de los rivales y coordinar coberturas de pista salva sets.",
                 contentTemplate: "Cantar la posición de los rivales cuando tu compañero va a golpear un globo de espaldas es vital. Utiliza comandos cortos como: 'Vienen', 'Atrás' o 'Centro'. <br><br><strong>{PLAYER1}</strong> destaca: <em>'Mi juego mejoró muchísimo cuando aprendí a hablarle a mi compañero entre puntos'</em>. Su compañero <strong>{PLAYER2}</strong> concluye: <em>'Una pareja coordinada que se comunica bien puede ganarle a dos individualistas de mayor nivel'</em>.",
                 readTime: "3 min"
-            },
-            {
-                title: "Cómo remontar un Match Point en contra en el punto de oro",
-                category: "🧠 MENTAL",
-                catColor: "#38bdf8",
-                imageUrl: "img/blog_player_victory.png",
-                emoji: "🎯",
-                imgGrad: "linear-gradient(135deg, #7dd3fc 0%, #0ea5e9 100%)",
-                snippet: "Ante un punto de partido en contra, la calma y el juego central son tus mejores armas.",
-                contentTemplate: "Ante un punto de partido en contra, la clave es no precipitarse ni jugar con prisa. Fuerza un punto largo y deja que la presión pase a la pareja rival. <br><br><strong>{PLAYER1}</strong> recuerda: <em>'Estábamos 40-0 abajo en el set definitivo y decidimos asegurar la bola por el centro. Forzamos su error y remontamos'</em>. Su compañero <strong>{PLAYER2}</strong> añade que mantener una respiración pausada entre puntos reduce el estrés competitivo.",
-                readTime: "3 min"
-            },
-            {
-                title: "La Ley de la Concentración: Mantenerse enfocado",
-                category: "🧠 MENTAL",
-                catColor: "#38bdf8",
-                imageUrl: "img/blog_action_smash.png",
-                emoji: "🧠",
-                imgGrad: "linear-gradient(135deg, #c084fc 0%, #3b82f6 100%)",
-                snippet: "El pádel es un deporte de rachas. Evita frustrarte por fallos simples y concéntrate.",
-                contentTemplate: "El pádel es un juego de rachas psicológicas. Evita frustrarte por fallos fáciles y mantén el foco en la siguiente bola. <br><br><strong>{PLAYER1}</strong> nos comparte su técnica: <em>'Hago rebotar la pelota tres veces antes del saque para forzarme a concentrarme'</em>. Su compañero <strong>{PLAYER2}</strong> recomienda no discutir tácticas complejas durante el set si hay tensión, sino apoyarse mutuamente con gestos positivos.",
-                readTime: "2 min"
-            },
-            {
-                title: "La Chiquita Decisiva: El golpe táctico avanzado",
-                category: "🏫 CLINIC",
-                catColor: "#ec4899",
-                imageUrl: "img/pista_padel_azul.png",
-                emoji: "🎾",
-                imgGrad: "linear-gradient(135deg, #f472b6 0%, #ec4899 100%)",
-                snippet: "Cómo y cuándo jugar una bola lenta a los pies del rival para ganar la red.",
-                contentTemplate: "La chiquita consiste en golpear una bola lenta a los pies de los rivales que están en la red para obligarles a volear por debajo del nivel de la red. <br><br><strong>{PLAYER1}</strong> nos cuenta: <em>'Si colocas una chiquita al pie, puedes subir rápidamente con tu pareja a bloquear su volea forzada'</em>. Su compañero <strong>{PLAYER2}</strong> advierte que jugarla con demasiada velocidad la convierte en un tiro cómodo para el rival.",
-                readTime: "2 min"
-            },
-            {
-                title: "Bandeja vs. Víbora: Diferencias y cuándo usar cada golpe",
-                category: "🏫 CLINIC",
-                catColor: "#ec4899",
-                imageUrl: "img/blog_action_smash.png",
-                emoji: "🐍",
-                imgGrad: "linear-gradient(135deg, #f472b6 0%, #be185d 100%)",
-                snippet: "Aprende a diferenciar el armado y el efecto de los dos golpes aéreos por excelencia.",
-                contentTemplate: "La bandeja busca mantener la posición de la red con un golpe seguro y cortado. La víbora es más agresiva, con efecto lateral-cortado para definir o desestabilizar. <br><br><strong>{PLAYER1}</strong> explica: <em>'Uso la bandeja para bolas muy altas, y la víbora cuando la bola queda más cómoda a mi derecha'</em>. Su compañero <strong>{PLAYER2}</strong> añade que la víbora requiere transferir más el peso del cuerpo hacia adelante e impactar a la altura de la sien.",
-                readTime: "2 min"
-            },
-            {
-                title: "El Remate por 3 y por 4: Cómo definir el punto",
-                category: "📡 REGLAMENTO",
-                catColor: "#0ea5e9",
-                imageUrl: "img/blog_action_smash.png",
-                emoji: "💥",
-                imgGrad: "linear-gradient(135deg, #38bdf8 0%, #1d4ed8 100%)",
-                snippet: "Reglas de recuperación fuera de pista tras un remate liftado de los contrarios.",
-                contentTemplate: "Un remate 'por 3' hace que la bola salga por el lateral de la pista. Los rivales pueden salir a recuperarla si hay espacio de juego autorizado. Un remate 'por 4' sale por el fondo, siendo punto directo. <br><br><strong>{PLAYER1}</strong> opina: <em>'Para sacar la bola por 3 necesitas golpear con efecto liftado e impacto alto'</em>. Su compañero <strong>{PLAYER2}</strong> destaca que el jugador defensor no puede tocar la red ni invadir el campo contrario al recuperar.",
-                readTime: "2 min"
-            },
-            {
-                title: "ELO y Matchmaking: La ciencia detrás de SomosPadel",
-                category: "📡 REGLAMENTO",
-                catColor: "#0ea5e9",
-                imageUrl: "img/blog_court_night.png",
-                emoji: "📊",
-                imgGrad: "linear-gradient(135deg, #93c5fd 0%, #1e40af 100%)",
-                snippet: "Te explicamos cómo nuestro algoritmo equilibra las pistas según tus partidos.",
-                contentTemplate: "Nuestro sistema recalcula los puntos tras cada set disputado en americanas usando un algoritmo ELO adaptado. Si vences a parejas de mayor nivel, sumas más puntos de ranking. <br><br><strong>{PLAYER1}</strong> nos decía: <em>'Es genial ver cómo se equilibra el nivel de la americana ronda a ronda'</em>. Su compañero <strong>{PLAYER2}</strong> añade que jugar partidos oficiales asegura una clasificación más ajustada a la realidad de tu nivel.",
-                readTime: "2 min"
-            },
-            {
-                title: "Cómo elegir el peso ideal de tu pala de pádel",
-                category: "👟 MATERIAL",
-                catColor: "#fb923c",
-                imageUrl: "img/blog_racket_ball.png",
-                emoji: "⚖️",
-                imgGrad: "linear-gradient(135deg, #fde047 0%, #ca8a04 100%)",
-                snippet: "Manejabilidad vs. Potencia: encuentra el gramaje ideal según tu complexión física.",
-                contentTemplate: "Una pala ligera (menos de 360g) ofrece manejabilidad y rapidez de red, ideal para jugadores amateurs. Una pala pesada (más de 370g) da más potencia pero fatiga el brazo. <br><br><strong>{PLAYER1}</strong> aconseja: <em>'Empezar con una pala ligera te ayuda a pulir la técnica sin sobrecargar tu codo'</em>. Su compañero <strong>{PLAYER2}</strong> añade que el balance (puño o cabeza) influye tanto como el peso en la sensación de ligereza.",
-                readTime: "2 min"
-            },
-            {
-                title: "Táctica: Cómo defender el rebote de pared de fondo",
-                category: "💡 CONSEJOS",
-                catColor: "#f59e0b",
-                imageUrl: "img/blog_court_night.png",
-                emoji: "🎾",
-                imgGrad: "linear-gradient(135deg, #fdba74 0%, #f97316 100%)",
-                snippet: "Claves de posicionamiento y lectura del rebote para bolas profundas del rival.",
-                contentTemplate: "La pared de fondo suele ser difícil al principio. La clave es acompañar la bola en su rebote: colócate siempre por detrás de la bola, flexiona bien las rodillas y mantén la pala baja. <br><br><strong>{PLAYER1}</strong> comparte su truco: <em>'Si dejas pasar la bola con calma y esperas al rebote, tienes mucho más tiempo del que crees para armar el golpe'</em>. Su compañero <strong>{PLAYER2}</strong> destaca mantener el cuerpo erguido en el impacto final.",
-                readTime: "2 min"
-            },
-            {
-                title: "Cómo preparar tu Americana: Guía del jugador perfecto",
-                category: "🏆 TORNEOS",
-                catColor: "#facc15",
-                imageUrl: "img/blog_court_night.png",
-                emoji: "🏆",
-                imgGrad: "linear-gradient(135deg, #fde047 0%, #f59e0b 100%)",
-                snippet: "Consejos para llegar en el mejor estado físico y mental a tu próxima americana.",
-                contentTemplate: "Las americanas son el formato de torneo más popular del pádel amateur. Para rendir al máximo nivel, hay que prepararse física y tácticamente los días previos. <br><br><strong>{PLAYER1}</strong> nos revela su ritual: <em>'La noche antes duermo 8 horas y preparo el bolso con todo para no salir con estrés de casa'</em>. Su compañero <strong>{PLAYER2}</strong> añade que llegar 30 minutos antes del inicio permite hacer un buen calentamiento y conocer las pistas del torneo.",
-                readTime: "3 min"
-            },
-            {
-                title: "Ranking ELO: Cómo subir de nivel en SomosPadel BCN",
-                category: "📈 RANKING",
-                catColor: "#34d399",
-                imageUrl: "img/blog_player_victory.png",
-                emoji: "📈",
-                imgGrad: "linear-gradient(135deg, #6ee7b7 0%, #059669 100%)",
-                snippet: "Estrategias para mejorar tu posición en el ranking y conseguir más puntos por set.",
-                contentTemplate: "El sistema de ranking de SomosPadel BCN premia la consistencia y la dificultad de los rivales. Ganar un set a una pareja de mayor nivel suma más puntos que vencer a parejas de nivel menor. <br><br><strong>{PLAYER1}</strong> comparte su filosofía: <em>'Prefiero jugar contra los mejores y perder por poco que ganar fácil — aprendo más y sumo mejor'</em>. Su compañero <strong>{PLAYER2}</strong> destaca que la regularidad es clave: <em>'Jugar todas las semanas, aunque sea una americana pequeña, te mantiene activo en el ranking y evita penalizaciones de inactividad'</em>.",
-                readTime: "2 min"
             }
         ],
 
@@ -525,31 +421,35 @@
         },
 
         getDeterministicFallbackPosts() {
+            if (window.NewsCatalog && typeof window.NewsCatalog.getFullCatalog === 'function') {
+                return window.NewsCatalog.getFullCatalog();
+            }
             const today = new Date();
             const posts = [];
-            for (let i = 0; i < 4; i++) {
+            const tList = this.templates;
+            for (let i = 0; i < Math.min(12, tList.length); i++) {
                 const targetDate = new Date(today);
                 targetDate.setDate(today.getDate() - i);
-                const daySeed = targetDate.getDate() + targetDate.getMonth() * 31 + targetDate.getFullYear();
-                const templateIdx = daySeed % this.templates.length;
-                const template = this.templates[templateIdx];
+                const daySeed = targetDate.getDate() + targetDate.getMonth() * 31 + targetDate.getFullYear() + i;
+                const templateIdx = daySeed % tList.length;
+                const template = tList[templateIdx];
                 
                 let dateStr = "Hoy";
                 if (i === 1) dateStr = "Ayer";
                 else if (i > 1) dateStr = `Hace ${i} días`;
                 
-                const fallbackPlayers = ["Alejandro Coscolín", "Bernat Pecharromán", "Alberto Javier Martín", "Jordi Díaz", "Carlos Jiménez", "Jordi Díaz"];
+                const fallbackPlayers = ["Alejandro Coscolín", "Bernat Pecharromán", "Alberto Javier Martín", "Jordi Díaz", "Carlos Jiménez", "Abraham Rosell", "Silvia Serrano", "Toni Millan"];
                 const p1 = fallbackPlayers[daySeed % fallbackPlayers.length];
                 const p2 = fallbackPlayers[(daySeed + 2) % fallbackPlayers.length];
                 
                 const title = template.title;
                 const snippet = template.snippet;
-                const content = template.contentTemplate
+                const content = (template.contentTemplate || template.content || '')
                     .replace(/{PLAYER1}/g, p1)
                     .replace(/{PLAYER2}/g, p2);
 
                 posts.push({
-                    id: `auto-post-${targetDate.getFullYear()}-${targetDate.getMonth() + 1}-${targetDate.getDate()}`,
+                    id: `auto-post-${targetDate.getFullYear()}-${targetDate.getMonth() + 1}-${targetDate.getDate()}-${i}`,
                     title: title,
                     category: template.category,
                     catColor: template.catColor,
@@ -560,7 +460,7 @@
                     readTime: template.readTime,
                     emoji: template.emoji || '📰',
                     imgGrad: template.imgGrad || 'linear-gradient(135deg, #1e293b, #0f172a)',
-                    timestamp: targetDate.getTime()
+                    timestamp: targetDate.getTime() - (i * 86400000)
                 });
             }
             return posts;
@@ -570,6 +470,9 @@
     class DashboardView {
         constructor() {
             this.matchUnsub = null;
+            this._isRendering = false;
+            this._lastRenderTime = 0;
+            this._userSyncDebounce = null;
 
             // Global Navigation Helper for News
             window.dashNavigate = (route, source = 'news') => {
@@ -593,18 +496,62 @@
 
             // Helper to show weather details on click
             window.showWeatherDetails = () => {
-                console.log("🌦️ [Weather Details] Scrolling to weather widget...");
-                const target = document.getElementById('weather-widget-root');
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    // Find the toggle button for El Prat or the first card and click it to expand
-                    const btn = document.querySelector('[id^="weather-btn-"]');
-                    const details = document.querySelector('[id^="weather-details-"]');
-                    if (details && details.style.display === 'none' && btn) {
-                        btn.click();
-                    }
+                console.log("🌦️ [Weather Details] Navegando a clima & radar...");
+                if (window.Router) {
+                    window.Router.navigate('clima');
+                } else if (window.EventsController) {
+                    window.EventsController.setTab('meteo');
                 }
             };
+
+            // Helpers para el banner de descubrimiento del nuevo Radar y Clima
+            window.dismissRadarNotice = (e) => {
+                if (e) {
+                    try { e.stopPropagation(); } catch (_) {}
+                }
+                try { localStorage.setItem('sp_radar_relocated_notice_v1', 'true'); } catch (_) {}
+                const card = document.getElementById('sp-radar-announcement-card');
+                if (card) {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(-10px)';
+                    card.style.transition = 'all 0.25s ease';
+                    setTimeout(() => card.remove(), 260);
+                }
+            };
+
+            window.openRadarFromNotice = (e) => {
+                window.dismissRadarNotice(e);
+                if (window.Router) {
+                    window.Router.navigate('clima');
+                } else if (window.EventsController) {
+                    window.EventsController.setTab('meteo');
+                }
+            };
+
+            // Helper para cerrar y descartar el banner de notificaciones push
+            window.dismissPushBanner = (e) => {
+                if (e) {
+                    try { e.stopPropagation(); } catch (_) {}
+                }
+                try { localStorage.setItem('sp_push_banner_dismissed_v1', 'true'); } catch (_) {}
+                const card = document.getElementById('sp-push-discovery-card');
+                if (card) {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(-10px)';
+                    card.style.transition = 'all 0.25s ease';
+                    setTimeout(() => card.remove(), 260);
+                }
+            };
+
+            // Escuchar cambios de permiso push en tiempo real para refrescar banner
+            if (!this._pushPermissionListenerAttached) {
+                this._pushPermissionListenerAttached = true;
+                window.addEventListener('sp_push_permission_changed', () => {
+                    try {
+                        this.renderPushDiscoveryBanner();
+                    } catch (_) {}
+                });
+            }
 
             // Helpers de Categoría y Centro de Juego
             window.getEventCategoryTheme = (evt) => this.getEventCategoryTheme(evt);
@@ -635,10 +582,6 @@
                             if (currentUser && typeof this.buildContext === 'function') {
                                 this.buildContext(currentUser).then(freshContext => {
                                     this.renderLiveWidget(freshContext, true);
-                                    if (window.HeroCard) {
-                                        const heroRoot = document.getElementById('hero-card-root');
-                                        if (heroRoot) heroRoot.innerHTML = window.HeroCard.render(freshContext);
-                                    }
                                 }).catch(() => {
                                     this.renderLiveWidget(window._lastDashboardContext || {}, true);
                                 });
@@ -669,12 +612,37 @@
             // USER SYNC MOTOR: Ensure widgets refresh when user data arrives
             if (window.Store) {
                 this.unsubUser = window.Store.subscribe('currentUser', (user) => {
-                    if (user && window.Router && window.Router.currentRoute === 'dashboard') {
-                        console.log("👤 [DashboardView] User synced, refreshing live content...");
-                        this.buildContext(user).then(context => this.loadLiveWidgetContent(context));
+                    if (!user || !window.Router || window.Router.currentRoute !== 'dashboard') return;
+
+                    // GUARD: si el uid no cambió, no re-renderizar (AuthService emite el mismo user en cada snapshot)
+                    const incomingUid = user.id || user.uid || user.email || '';
+                    if (incomingUid && incomingUid === this._lastSyncedUserUid) {
+                        return;
                     }
+                    this._lastSyncedUserUid = incomingUid;
+
+                    const now = Date.now();
+                    // Evitar doble ejecución en login si render() está activo o terminó hace menos de 500ms
+                    if (this._isRendering || (now - (this._lastRenderTime || 0) < 500)) {
+                        console.log("⚡ [DashboardView] Skipping currentUser subscription sync: render already in progress or recent (<500ms)");
+                        return;
+                    }
+
+                    clearTimeout(this._userSyncDebounce);
+                    this._userSyncDebounce = setTimeout(() => {
+                        const currentNow = Date.now();
+                        if (this._isRendering || (currentNow - (this._lastRenderTime || 0) < 500)) return;
+
+                        console.log("👤 [DashboardView] User synced, refreshing live content...");
+                        this.buildContext(user).then(context => this.loadLiveWidgetContent(context)).catch(err => {
+                            console.warn("[DashboardView] Error in synced user context refresh:", err);
+                        });
+                    }, 300);
                 });
             }
+
+            // Inicializar escucha de eventos push para navegación directa al Journal
+            this.initJournalPushNavigation();
 
         }
 
@@ -683,35 +651,31 @@
             const container = document.getElementById('content-area');
             if (!container) return;
 
-            // Invalida caché de eventos para cargar SIEMPRE los datos más recientes modificados
-            window._ccEventsFetchedRecently = false;
-            delete window._lastEventsData;
-            if (window.clearDatabaseCache) {
-                window.clearDatabaseCache('americanas');
-                window.clearDatabaseCache('entrenos');
-            }
-            // NOTE: window.DatabaseService no existe — ya cubierto por clearDatabaseCache arriba
-            if (window.CacheService) {
-                window.CacheService.remove('americanas', 'all');
-                window.CacheService.remove('entrenos', 'all');
-                window.CacheService.remove('database', 'all_americanas');
-                window.CacheService.remove('database', 'all_entrenos');
-            }
+            this._isRendering = true;
+            this._lastRenderTime = Date.now();
 
-            // 1. Get Real User Data
-            const user = window.Store ? window.Store.getState('currentUser') : null;
-            const userLevel = user ? (user.level || "3.5") : "3.5";
+            try {
+                // Invalida variables temporales de eventos comunitarios
+                window._ccEventsFetchedRecently = false;
+                delete window._lastEventsData;
 
-            // Soft Refresh if elements already exist in the DOM (prevents flickering and keeps WebGL/Three.js context alive)
-            const isAlreadyRendered = document.getElementById('hero-card-root') !== null;
+                // 1. Get Real User Data
+                const user = window.Store ? window.Store.getState('currentUser') : null;
+                const userLevel = user ? (user.level || "3.5") : "3.5";
+                const userFirstName = user ? ((user.name || user.displayName || 'Jugador').split(' ')[0]) : 'Jugador';
+
+                // Soft Refresh if elements already exist in the DOM (prevents flickering and keeps WebGL/Three.js context alive)
+                const isAlreadyRendered = document.getElementById('hero-card-root') !== null;
             if (isAlreadyRendered) {
                 console.log("⚡ [DashboardView] Already rendered, performing soft refresh...");
                 try {
-                    // Update user stats dynamically
+                    // Update user stats and greeting dynamically
+                    const nameEl = document.getElementById('sp-playtomic-user-name');
+                    if (nameEl) nameEl.innerText = userFirstName;
                     const lvlEl = document.getElementById('user-level-val');
                     if (lvlEl) lvlEl.innerText = userLevel;
                     const rnkEl = document.getElementById('user-ranking-val');
-                    if (rnkEl) rnkEl.innerText = `#${user ? (user.ranking_pos || '—') : '—'}`;
+                    if (rnkEl) rnkEl.innerText = `#${user ? (user.ranking_pos || user.rank || '—') : '—'}`;
                     const mtcEl = document.getElementById('user-matches-val');
                     if (mtcEl) mtcEl.innerText = user ? (user.total_matches || '0') : '0';
 
@@ -726,85 +690,14 @@
                     const context = await this.buildContext(user);
                     await this.loadLiveWidgetContent(context);
 
-                    // Refresh Weather & Windy Radar in background
-                    let weatherData = [];
-                    if (window.WeatherService) {
-                        try {
-                            weatherData = await window.WeatherService.getDashboardWeather();
-                        } catch (e) { console.error("Weather fetch failed during soft refresh", e); }
-                    }
-                    const weatherRoot = document.getElementById('weather-widget-root');
-                    if (weatherRoot && weatherData && weatherData.length > 0) {
-                        let weatherHtml = `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">`;
-                        weatherData.forEach(w => {
-                            weatherHtml += this.renderWeatherCard(
-                                w.name,
-                                `${w.temp}°C`,
-                                w.icon,
-                                {
-                                    wind: `${w.wind} km/h`,
-                                    hum: `${w.humidity}%`,
-                                    rain: `${w.rainProb}%`,
-                                    uv: w.uv,
-                                    pressure: w.pressure,
-                                    visibility: w.visibility,
-                                    intel: w.intelligence
-                                },
-                                w.isPropitious
-                            );
-                        });
-                        weatherHtml += `</div>`;
-                        
-                        weatherHtml += `
-                            <style>
-                                @keyframes livePulse {
-                                    0% { box-shadow: 0 0 0 0 rgba(0, 227, 109, 0.7); transform: scale(1); opacity: 1; }
-                                    70% { box-shadow: 0 0 0 8px rgba(0, 227, 109, 0); transform: scale(1.2); opacity: 0.8; }
-                                    100% { box-shadow: 0 0 0 0 rgba(0, 227, 109, 0); transform: scale(1); opacity: 1; }
-                                }
-                                @keyframes borderFlow {
-                                    0% { border-color: rgba(255, 255, 255, 0.1); }
-                                    50% { border-color: rgba(255, 255, 255, 0.25); }
-                                    100% { border-color: rgba(255, 255, 255, 0.1); }
-                                }
-                            </style>
-                            <div style="position: relative; border-radius: 32px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); background: #0f172a; animation: borderFlow 4s infinite;">
-                                <div style="background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%); padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                                    <div style="display:flex; align-items:center; gap:10px;">
-                                        <span style="font-size:0.75rem; font-weight:950; color:white; letter-spacing:0.5px;">RADAR TÁCTICO <span style="color:#CCFF00;">WAR ROOM</span></span>
-                                    </div>
-                                    <div style="display:flex; align-items:center; gap:8px;">
-                                        <button onclick="window.DashboardView.toggleTacticalHUD()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.3s; pointer-events: auto;">
-                                            <i class="fas fa-eye"></i> TACTICAL HUD
-                                        </button>
-                                        <span style="width:8px; height:8px; background:#00E36D; border-radius:50%; animation: livePulse 2s infinite;"></span>
-                                        <span style="font-size:0.6rem; color: #00E36D; font-weight: 900; letter-spacing:1px;">SCANNING</span>
-                                    </div>
-                                </div>
-                                <div style="width: 100%; height: 280px; position: relative;">
-                                    <iframe width="100%" height="100%" src="https://embed.windy.com/embed2.html?lat=41.320&lon=2.040&zoom=10&level=surface&overlay=radar&product=radar&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1" frameborder="0" style="filter: contrast(1.1) brightness(0.8) grayscale(0.3);" loading="lazy"></iframe>
-                                    <div style="pointer-events:none; position:absolute; inset:0; box-shadow: inset 0 0 50px rgba(0,0,0,0.8); background: radial-gradient(circle at 50% 50%, transparent 60%, rgba(204,255,0,0.03) 100%);"></div>
-                                    <div id="tactical-hud-grip" style="position:absolute; top:15px; left:15px; background:rgba(0,0,0,0.85); backdrop-filter:blur(15px); padding:8px 12px; border-radius:8px; border-left:3px solid #00E36D; pointer-events:none; display: none; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-                                        <div style="font-size:0.5rem; color:#888; font-weight:900; text-transform:uppercase; letter-spacing:1px;">ESTADO DE PISTA</div>
-                                        <div style="font-size:0.75rem; color:#fff; font-weight:1000;">GRIP: <span style="color:#00E36D;">ÓPTIMO (92%)</span></div>
-                                        <div style="font-size:0.45rem; color:rgba(255,255,255,0.4); font-weight:700; margin-top:2px;">Prob. Pista resbaladiza: 12%</div>
-                                    </div>
-                                    <div id="tactical-hud-bounce" style="position:absolute; top:15px; right:15px; background:rgba(0,0,0,0.85); backdrop-filter:blur(15px); padding:8px 12px; border-radius:8px; border-right:3px solid #CCFF00; pointer-events:none; text-align:right; display: none; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-                                        <div style="font-size:0.5rem; color:#888; font-weight:900; text-transform:uppercase; letter-spacing:1px;">INTELIGENCIA BOLA</div>
-                                        <div style="font-size:0.75rem; color:#fff; font-weight:1000;">REBOTE: <span style="color:#CCFF00;">ALTO (+15%)</span></div>
-                                        <div style="font-size:0.45rem; color:rgba(255,255,255,0.4); font-weight:700; margin-top:2px;">Bola rápida + Presión detectada</div>
-                                    </div>
-                                    <div style="position:absolute; bottom:0; left:0; width:100%; height:1px; background:#CCFF00; opacity:0.3; box-shadow: 0 0 10px #CCFF00; animation: scannerSlide 4s linear infinite;"></div>
-                                </div>
-                            </div>
-                        `;
-                        weatherRoot.innerHTML = weatherHtml;
-                    }
-
                     // Refresh News Blog
                     const blogRoot = document.getElementById('blog-news-widget-root');
                     if (blogRoot) {
                         blogRoot.innerHTML = this.renderBlogWidget();
+                    }
+                    const promoRoot = document.getElementById('dashboard-organizers-promo-root');
+                    if (promoRoot) {
+                        promoRoot.innerHTML = this.renderClubOrganizersPromo();
                     }
 
                     // Refresh Stories & Open Matches
@@ -829,14 +722,182 @@
                 <div class="dashboard-v2-container fade-in full-width-mobile" style="
                     background: radial-gradient(circle at 50% 0%, rgba(15, 23, 42, 0.08) 0%, transparent 70%);
                     min-height: 100vh;
-                    padding-top: 0;
+                    padding-top: 6px;
                 ">
 
+                    <!-- ⭐ SOMOSPADEL ARENA: PRO ATHLETE QUICK ACCESS HUB ⭐ -->
+                    <div class="sp-playtomic-hub" style="
+                        margin: 8px 15px 16px !important;
+                        background: #ffffff;
+                        border-radius: 26px;
+                        border: 1px solid #e2e8f0;
+                        padding: 18px 16px 16px;
+                        box-shadow: 0 8px 30px rgba(10, 25, 47, 0.05);
+                        animation: floatUp 0.35s ease-out forwards;
+                        position: relative;
+                        overflow: hidden;
+                    ">
+                        <!-- Línea decorativa superior estilo pista SomosPadel -->
+                        <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #CCFF00 0%, #38bdf8 50%, #CCFF00 100%);"></div>
 
-                    <!-- 0. HERO CARD (CONTEXT AWARE) -->
-                    <div id="hero-card-root" style="animation: floatUp 0.8s ease-out forwards;">
-                        <!-- Content loaded via JS (HeroCard) -->
+                        <!-- Header SomosPadel: Saludo Directo -->
+                        <div style="margin-bottom: 16px; padding: 4px 2px 0; position: relative; z-index: 2;">
+                            <h2 style="
+                                margin: 0;
+                                font-size: 1.30rem;
+                                font-weight: 950;
+                                color: #0a192f;
+                                letter-spacing: -0.5px;
+                                line-height: 1.2;
+                                display: flex;
+                                align-items: center;
+                                gap: 6px;
+                            ">
+                                <span>¡A la pista, <span id="sp-playtomic-user-name">${userFirstName}</span>!</span>
+                                <span style="font-size: 1.25rem;">🔥</span>
+                            </h2>
+                            <div style="font-size: 0.78rem; color: #64748b; font-weight: 600; margin-top: 3px;">
+                                Elige tu juego y suma victorias esta semana:
+                            </div>
+                        </div>
+
+                        <!-- 4 Botones de Acción con Estilo SomosPadel Pro (Athletic Pods) -->
+                        <div style="
+                            display: grid;
+                            grid-template-columns: repeat(4, 1fr);
+                            gap: 8px;
+                            align-items: start;
+                            text-align: center;
+                            position: relative;
+                            z-index: 2;
+                        ">
+                            <!-- 1. Americanas -->
+                            <div class="sp-playtomic-pill haptic-feedback" 
+                                onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('americanas');"
+                                style="display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative;">
+                                <div style="
+                                    width: 58px;
+                                    height: 58px;
+                                    border-radius: 19px;
+                                    background: linear-gradient(145deg, #090e1a 0%, #17243c 100%);
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    box-shadow: 0 6px 18px rgba(9, 14, 26, 0.25), 0 0 12px rgba(204, 255, 0, 0.15);
+                                    border: 1.5px solid rgba(204, 255, 0, 0.45);
+                                    transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.16s;
+                                    position: relative;
+                                "
+                                onmouseover="this.style.transform='scale(1.08)'; this.style.borderColor='#CCFF00';"
+                                onmouseout="this.style.transform='none'; this.style.borderColor='rgba(204, 255, 0, 0.45)';"
+                                onmousedown="this.style.transform='scale(0.92)';"
+                                onmouseup="this.style.transform='scale(1.08)';">
+                                    <i class="fas fa-trophy" style="font-size: 1.25rem; color: #CCFF00; filter: drop-shadow(0 0 6px rgba(204,255,0,0.4));"></i>
+                                    <span style="position: absolute; top: -5px; right: -5px; background: #ef4444; color: #fff; font-size: 0.50rem; font-weight: 950; padding: 1px 4px; border-radius: 5px; border: 1.5px solid #ffffff; letter-spacing: 0.4px;">TOP</span>
+                                </div>
+                                <span style="margin-top: 7px; font-size: 0.72rem; font-weight: 900; color: #0a192f; line-height: 1.1;">
+                                    Americanas
+                                </span>
+                                <span style="font-size: 0.60rem; color: #64748b; font-weight: 700; margin-top: 1px;">Torneos</span>
+                            </div>
+
+                            <!-- 2. Entrenos -->
+                            <div class="sp-playtomic-pill haptic-feedback" 
+                                onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('entrenos');"
+                                style="display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative;">
+                                <div style="
+                                    width: 58px;
+                                    height: 58px;
+                                    border-radius: 19px;
+                                    background: linear-gradient(145deg, #090e1a 0%, #17243c 100%);
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    box-shadow: 0 6px 18px rgba(9, 14, 26, 0.25), 0 0 12px rgba(56, 189, 248, 0.15);
+                                    border: 1.5px solid rgba(56, 189, 248, 0.45);
+                                    transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.16s;
+                                    position: relative;
+                                "
+                                onmouseover="this.style.transform='scale(1.08)'; this.style.borderColor='#38bdf8';"
+                                onmouseout="this.style.transform='none'; this.style.borderColor='rgba(56, 189, 248, 0.45)';"
+                                onmousedown="this.style.transform='scale(0.92)';"
+                                onmouseup="this.style.transform='scale(1.08)';">
+                                    <i class="fas fa-graduation-cap" style="font-size: 1.25rem; color: #38bdf8; filter: drop-shadow(0 0 6px rgba(56,189,248,0.4));"></i>
+                                    <span style="position: absolute; top: -5px; right: -5px; background: #38bdf8; color: #000; font-size: 0.50rem; font-weight: 950; padding: 1px 4px; border-radius: 5px; border: 1.5px solid #ffffff; letter-spacing: 0.4px;">PISTAS</span>
+                                </div>
+                                <span style="margin-top: 7px; font-size: 0.72rem; font-weight: 900; color: #0a192f; line-height: 1.1;">
+                                    Entrenos
+                                </span>
+                                <span style="font-size: 0.60rem; color: #64748b; font-weight: 700; margin-top: 1px;">Partidos</span>
+                            </div>
+
+                            <!-- 3. Ranking -->
+                            <div class="sp-playtomic-pill haptic-feedback" 
+                                onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('ranking');"
+                                style="display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative;">
+                                <div style="
+                                    width: 58px;
+                                    height: 58px;
+                                    border-radius: 19px;
+                                    background: linear-gradient(145deg, #090e1a 0%, #17243c 100%);
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    box-shadow: 0 6px 18px rgba(9, 14, 26, 0.25), 0 0 12px rgba(251, 191, 36, 0.15);
+                                    border: 1.5px solid rgba(251, 191, 36, 0.45);
+                                    transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.16s;
+                                    position: relative;
+                                "
+                                onmouseover="this.style.transform='scale(1.08)'; this.style.borderColor='#fbbf24';"
+                                onmouseout="this.style.transform='none'; this.style.borderColor='rgba(251, 191, 36, 0.45)';"
+                                onmousedown="this.style.transform='scale(0.92)';"
+                                onmouseup="this.style.transform='scale(1.08)';">
+                                    <i class="fas fa-medal" style="font-size: 1.25rem; color: #fbbf24; filter: drop-shadow(0 0 6px rgba(251,191,36,0.4));"></i>
+                                    <span style="position: absolute; top: -5px; right: -5px; background: #fbbf24; color: #000; font-size: 0.50rem; font-weight: 950; padding: 1px 4px; border-radius: 5px; border: 1.5px solid #ffffff; letter-spacing: 0.4px;">FIP</span>
+                                </div>
+                                <span style="margin-top: 7px; font-size: 0.72rem; font-weight: 900; color: #0a192f; line-height: 1.1;">
+                                    Ranking
+                                </span>
+                                <span style="font-size: 0.60rem; color: #64748b; font-weight: 700; margin-top: 1px;">Puntos</span>
+                            </div>
+
+                            <!-- 4. Mi Equipo -->
+                            <div class="sp-playtomic-pill haptic-feedback" 
+                                onclick="window.PlayerView?.haptic?.(20); window.openMyTeam ? window.openMyTeam() : (window.Router && window.Router.navigate('my_team'));"
+                                style="display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative;">
+                                <div style="
+                                    width: 58px;
+                                    height: 58px;
+                                    border-radius: 19px;
+                                    background: linear-gradient(145deg, #090e1a 0%, #17243c 100%);
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    box-shadow: 0 6px 18px rgba(9, 14, 26, 0.25), 0 0 12px rgba(192, 132, 252, 0.15);
+                                    border: 1.5px solid rgba(192, 132, 252, 0.45);
+                                    transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.16s;
+                                    position: relative;
+                                "
+                                onmouseover="this.style.transform='scale(1.08)'; this.style.borderColor='#c084fc';"
+                                onmouseout="this.style.transform='none'; this.style.borderColor='rgba(192, 132, 252, 0.45)';"
+                                onmousedown="this.style.transform='scale(0.92)';"
+                                onmouseup="this.style.transform='scale(1.08)';">
+                                    <i class="fas fa-users" style="font-size: 1.25rem; color: #c084fc; filter: drop-shadow(0 0 6px rgba(192,132,252,0.4));"></i>
+                                    <span style="position: absolute; top: -5px; right: -5px; background: #CCFF00; color: #000; font-size: 0.50rem; font-weight: 950; padding: 1px 4px; border-radius: 5px; border: 1.5px solid #ffffff; letter-spacing: 0.4px;">2027</span>
+                                </div>
+                                <span style="margin-top: 7px; font-size: 0.72rem; font-weight: 900; color: #0a192f; line-height: 1.1;">
+                                    Mi Equipo
+                                </span>
+                                <span style="font-size: 0.60rem; color: #64748b; font-weight: 700; margin-top: 1px;">Liga Summa</span>
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- 🌦️ BANNER SPOTLIGHT: NUEVO RADAR Y CLIMA DE PISTAS -->
+                    <div id="radar-clima-notification-banner-root"></div>
+
+                    <!-- 🔔 BANNER PROMO: NOTIFICACIONES PUSH EN TIEMPO REAL -->
+                    <div id="push-notification-promo-banner-root"></div>
 
                     <!-- 🔥 HERO CARD PREMIUM: TEMPORADA 2027 | EQUIPOS SOMOSPADEL -->
                     <div id="season-campaign-banner-root" style="margin: 0 15px 20px !important; animation: floatUp 0.5s ease-out forwards;">
@@ -1096,32 +1157,55 @@
 
 
 
-                    <!-- 3. SOMOSPADEL SMART COMPACT EVENT STRIP -->
+                    <!-- 4. PULSE STORIES TRASLADADO AL HEADER (#header-story-rotator) -->
+                    <div id="story-feed-root" style="display: none !important; margin: 0 !important; padding: 0;">
+                        <!-- Trasladado al header superior: #header-story-rotator -->
+                    </div>
+
+                    <!-- 4.1 MIS EVENTOS & PARTIDOS COMPACTOS (SIEMPRE DEBAJO DE DESTACADOS & EN VIVO) -->
                     <style>
                         @keyframes stripSkeletonShimmer {
                             0% { background-position: 200% 0; }
                             100% { background-position: -200% 0; }
                         }
+                        .dashboard-hero-duo-container {
+                            margin: 4px 15px 12px !important;
+                            display: flex;
+                            flex-direction: column;
+                            gap: 6px;
+                            animation: floatUp 0.6s ease-out forwards;
+                        }
+                        .dashboard-hero-duo-container #registration-widget-root:empty {
+                            display: none !important;
+                        }
+                        @media (min-width: 680px) {
+                            .dashboard-hero-duo-container {
+                                display: grid !important;
+                                grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)) !important;
+                                gap: 10px !important;
+                                align-items: stretch;
+                            }
+                        }
                     </style>
-                    <div id="registration-widget-root" style="margin: 0 15px 14px !important; animation: floatUp 0.8s ease-out forwards;">
-                        <div id="live-scroller-inner">
-                            <!-- Skeleton 75px ultracompacto -->
-                            <div style="height: 75px; border-radius: 18px; background: linear-gradient(90deg, #131b2e 0%, #1e293b 50%, #131b2e 100%); background-size: 200% 100%; border: 1px solid rgba(255, 255, 255, 0.08); animation: stripSkeletonShimmer 1.8s infinite; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; box-sizing: border-box;">
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(255,255,255,0.06);"></div>
-                                    <div>
-                                        <div style="width: 120px; height: 13px; border-radius: 4px; background: rgba(255,255,255,0.08); margin-bottom: 6px;"></div>
-                                        <div style="width: 85px; height: 10px; border-radius: 4px; background: rgba(255,255,255,0.04);"></div>
+                    <div id="dashboard-hero-duo-container" class="dashboard-hero-duo-container">
+                        <!-- HeroCard eliminado -->
+
+                        <!-- Tarjeta Oscura: Partido Activo / Convocatoria Confirmada (Event Strip) -->
+                        <div id="registration-widget-root" style="width: 100%;">
+                            <div id="live-scroller-inner">
+                                <!-- Skeleton 58px compacto -->
+                                <div style="height: 58px; border-radius: 14px; background: linear-gradient(90deg, #131b2e 0%, #1e293b 50%, #131b2e 100%); background-size: 200% 100%; border: 1px solid rgba(255, 255, 255, 0.08); animation: stripSkeletonShimmer 1.8s infinite; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; box-sizing: border-box;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="width: 32px; height: 32px; border-radius: 9px; background: rgba(255,255,255,0.06);"></div>
+                                        <div>
+                                            <div style="width: 90px; height: 10px; border-radius: 4px; background: rgba(255,255,255,0.08); margin-bottom: 4px;"></div>
+                                            <div style="width: 60px; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.04);"></div>
+                                        </div>
                                     </div>
+                                    <div style="width: 60px; height: 24px; border-radius: 6px; background: rgba(255,255,255,0.08);"></div>
                                 </div>
-                                <div style="width: 75px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.08);"></div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- 4. PULSE STORIES (Instagram Style) -->
-                    <div id="story-feed-root" style="margin: 0 !important; padding: 0;">
-                        <!-- Cargado vía JS (StoryFeedWidget) -->
                     </div>
 
                     <!-- 3.5 NEWS BLOG WIDGET -->
@@ -1129,119 +1213,210 @@
                         <!-- Content loaded via JS -->
                     </div>
 
-                    <!-- 🏆 RANKING SPOTLIGHT -->
-                    <div id="ranking-spotlight-root" style="margin:0 15px 16px; animation:floatUp 0.8s ease-out forwards;">
-                        <style>
-                            #trending-players-list::-webkit-scrollbar {
-                                height: 5px;
-                                display: block !important;
-                            }
-                            #trending-players-list::-webkit-scrollbar-track {
-                                background: rgba(0, 0, 0, 0.03);
-                                border-radius: 10px;
-                            }
-                            #trending-players-list::-webkit-scrollbar-thumb {
-                                background: rgba(114, 168, 0, 0.35);
-                                border-radius: 10px;
-                            }
-                            #trending-players-list::-webkit-scrollbar-thumb:hover {
-                                background: rgba(114, 168, 0, 0.6);
-                            }
-                        </style>
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 4px;">
-                            <div style="font-weight:950; font-size:0.85rem; color:#0a192f; letter-spacing:1px; text-transform:uppercase; display:flex; align-items:center; gap:8px;">
-                                <i class="fas fa-trophy" style="color: #fbbf24; font-size: 1rem;"></i> TOP 10 ELITE
-                            </div>
-                            <div style="font-size:0.65rem; color:#72a800; font-weight:950; cursor:pointer;" onclick="window.Router.navigate('ranking')">VER RANKING <i class="fas fa-chevron-right" style="font-size:0.55rem;"></i></div>
-                        </div>
-                        <div id="mvp-spotlight-container" style="margin-bottom:12px;"></div>
-                        <div id="trending-players-list" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:12px; scrollbar-width:thin; scrollbar-color:rgba(114,168,0,0.35) transparent; -webkit-overflow-scrolling:touch;">
-                            <div style="margin:20px auto; color:#94a3b8;"><i class="fas fa-circle-notch fa-spin"></i></div>
-                        </div>
-                    </div>
-
-                    <!-- 7. MERCH PROMO (SOMOS PADEL BCN) - FINAL MOBILE FIX -->
-                    <div id="merch-widget-root" onclick="window.open('https://wa.me/34649219350?text=Hola!%20Me%20interesa%20la%20sudadera%20de%20Somos%20Padel%20BCN', '_blank')" style="
-                        margin: 0 15px 8px !important;
-                        background: linear-gradient(135deg, #3b82f6 0%, #1e3a8a 100%);
-                        border-radius: 24px;
-                        padding: 0;
-                        position: relative;
-                        overflow: hidden;
-                        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
-                        border: 1px solid rgba(255, 255, 255, 0.25);
-                        cursor: pointer;
-                        animation: floatUp 0.8s ease-out forwards;
-                        display: flex;
-                        height: 180px;
-                        transition: transform 0.2s;
-                    " onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
-                        
-                        <!-- BG Effect -->
-                        <div style="position: absolute; top:0; left:0; width:100%; height:100%; opacity: 0.1; background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 15px 15px; pointer-events: none;"></div>
-
-                        <!-- Image Section (Left) - PRECISION MASKING -->
-                        <div style="width: 42%; position: relative; display: flex; align-items: center; justify-content: center; z-index: 5; pointer-events: none;">
-                             <img src="./img/sudadera.jpg" 
-                                  onerror="this.style.display='none'" 
-                                  style="
-                                      width: 110%; 
-                                      height: 110%; 
-                                      object-fit: contain; 
-                                      transform: rotate(-3deg) translateX(-5px); 
-                                      filter: drop-shadow(0 25px 35px rgba(0,0,0,0.7)) brightness(1.05) contrast(1.1);
-                                  ">
-                        </div>
-
-                        <!-- Content Section (Right) - DARK GRADIENT FOR LEGIBILITY -->
-                        <div style="width: 60%; padding: 15px 15px 15px 10px; display: flex; flex-direction: column; justify-content: center; gap: 6px; position: relative; z-index: 10; pointer-events: none; background: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 20%, rgba(0,0,0,0.8) 100%);">
-                            
-                            <div style="background: #CCFF00; color: #000; font-size: 0.6rem; font-weight: 1000; padding: 3px 10px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; width: fit-content; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                                NUEVA COLECCIÓN
-                            </div>
-                            
-                            <h3 style="margin: 0; font-size: 1.4rem; color: white; font-weight: 950; line-height: 1; text-shadow: 0 4px 15px rgba(0,0,0,0.8);">
-                                SUDADERA
-                            </h3>
-                            
-                            <div style="font-size: 0.95rem; color: rgba(255,255,255,1); font-weight: 800; text-shadow: 0 2px 8px rgba(0,0,0,1);">
-                                SOMOSPADEL BCN
-                            </div>
-                            
-                            <div style="color:#CCFF00; font-weight:900; font-size: 1.5rem; text-shadow:0 3px 12px rgba(0,0,0,0.8); margin: 2px 0;">
-                                24<span style="font-size:0.85rem; vertical-align:top;">,99€</span>
-                            </div>
-
-                            <div style="pointer-events: auto; margin-top: 4px;">
-                                <div style="
-                                    background: white; 
-                                    color: #1e40af; 
-                                    font-size: 0.8rem; 
-                                    font-weight: 1000; 
-                                    padding: 10px 22px; 
-                                    border-radius: 14px; 
-                                    box-shadow: 0 8px 20px rgba(0,0,0,0.3); 
-                                    display: inline-flex; 
-                                    align-items: center; 
-                                    gap: 8px; 
-                                    transition: all 0.2s;
-                                    cursor: pointer;
-                                " onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 12px 25px rgba(0,0,0,0.4)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.3)'">
-                                    COMPRAR <i class="fas fa-shopping-cart" style="font-size: 0.8rem;"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 📡 ESPN FACEOFF COMPARATOR -->
-                    <div id="player-faceoff-widget-root" style="margin: 0 15px 12px !important; animation: floatUp 0.8s ease-out forwards;"></div>
-                    <!-- 🎾 WAR ROOM 3D TACTICAL BOARD PREVIEW -->
-                    <div id="tactical-3d-widget-root" style="animation: floatUp 0.8s ease-out forwards;"></div>
-
-                    <!-- 3. WEATHER WIDGET -->
-                    <div id="weather-widget-root" style="margin: 0 15px 8px !important; animation: floatUp 0.8s ease-out forwards;">
+                    <!-- 3.6 ESPACIO CLUBES & ORGANIZADORES (HIPER LLAMATIVO) -->
+                    <div id="dashboard-organizers-promo-root" style="margin: 0 15px 16px !important; animation: floatUp 0.8s ease-out forwards;">
                         <!-- Content loaded via JS -->
                     </div>
+
+
+
+                    <!-- ⚖️ TARJETA OFICIAL: SISTEMA DE PUNTOS Y PONDERACIÓN DEL RANKING -->
+                    <div id="points-policy-card-root" style="margin: 0 15px 16px !important; animation: floatUp 0.8s ease-out forwards;">
+                        <div style="
+                            background: linear-gradient(145deg, #090e1a 0%, #0f172a 55%, #152238 100%);
+                            border: 1.5px solid rgba(204, 255, 0, 0.4);
+                            border-radius: 22px;
+                            padding: 18px 18px 16px;
+                            position: relative;
+                            overflow: hidden;
+                            box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.5), 0 0 25px rgba(204, 255, 0, 0.12);
+                            color: #ffffff;
+                            font-family: 'Outfit', sans-serif;
+                        ">
+                            <!-- Glows sutiles -->
+                            <div style="position: absolute; top: -35px; right: -35px; width: 130px; height: 130px; background: radial-gradient(circle, rgba(204, 255, 0, 0.22) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+                            <div style="position: absolute; bottom: -35px; left: -35px; width: 120px; height: 120px; background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+
+                            <!-- Header Badges -->
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; position: relative; z-index: 2; flex-wrap: wrap; gap: 6px;">
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span style="background: #CCFF00; color: #000000; font-size: 0.62rem; font-weight: 950; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 2px 8px rgba(204,255,0,0.3);">
+                                        ⚖️ REGLAMENTO OFICIAL
+                                    </span>
+                                    <span style="background: rgba(34, 197, 94, 0.15); color: #4ade80; font-size: 0.60rem; font-weight: 900; padding: 3px 7px; border-radius: 6px; border: 1px solid rgba(34, 197, 94, 0.3);">
+                                        ENTRENOS & AMERICANAS 1:1
+                                    </span>
+                                </div>
+                                <span style="font-size: 0.68rem; color: #94a3b8; font-weight: 700; display: flex; align-items: center; gap: 4px;">
+                                    <span>👑</span> Baremo Actualizado
+                                </span>
+                            </div>
+
+                            <!-- Título y Descripción -->
+                            <div style="position: relative; z-index: 2; margin-bottom: 12px;">
+                                <h3 style="margin: 0 0 5px; font-size: 1.15rem; font-weight: 950; color: #ffffff; letter-spacing: -0.3px; display: flex; align-items: center; gap: 6px;">
+                                    <span>Sistema de Puntos & Ranking</span>
+                                    <span style="color: #CCFF00; font-size: 0.85rem;">⚡</span>
+                                </h3>
+                                <p style="margin: 0; font-size: 0.77rem; color: #cbd5e1; line-height: 1.42;">
+                                    Nuevo sistema unificado para todos los eventos: <strong style="color: #CCFF00;">100 pts</strong> (1º), <strong style="color: #ffffff;">80 pts</strong> (2º), <strong style="color: #f59e0b;">65 pts</strong> (3º)... más <strong style="color: #38bdf8;">+2 pts extra por cada victoria (PG)</strong>.
+                                </p>
+                            </div>
+
+                            <!-- 3 Pastillas visuales de modos -->
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 14px; position: relative; z-index: 2;">
+                                <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(236, 72, 153, 0.3); border-radius: 12px; padding: 8px 6px; text-align: center;">
+                                    <div style="font-size: 1.05rem; line-height: 1;">🌪️</div>
+                                    <div style="font-size: 0.68rem; font-weight: 950; color: #f472b6; margin-top: 2px;">Twister</div>
+                                    <div style="font-size: 0.58rem; color: #94a3b8; font-weight: 600;">Puesto Indiv.</div>
+                                </div>
+                                <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 8px 6px; text-align: center;">
+                                    <div style="font-size: 1.05rem; line-height: 1; color: #ef4444; font-weight: 900;">✚</div>
+                                    <div style="font-size: 0.68rem; font-weight: 950; color: #fca5a5; margin-top: 2px;">Suizo</div>
+                                    <div style="font-size: 0.58rem; color: #94a3b8; font-weight: 600;">Por Juegos</div>
+                                </div>
+                                <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 12px; padding: 8px 6px; text-align: center;">
+                                    <div style="font-size: 1.05rem; line-height: 1;">👥</div>
+                                    <div style="font-size: 0.68rem; font-weight: 950; color: #38bdf8; margin-top: 2px;">Pareja Fija</div>
+                                    <div style="font-size: 0.58rem; color: #94a3b8; font-weight: 600;">Puntos Dupla</div>
+                                </div>
+                            </div>
+
+                            <!-- Botón CTA -->
+                            <button 
+                                type="button" 
+                                onclick="window.showPointsPolicyModal ? window.showPointsPolicyModal() : null;" 
+                                style="
+                                    width: 100%;
+                                    padding: 12px 16px;
+                                    background: #CCFF00;
+                                    color: #000000;
+                                    border: none;
+                                    border-radius: 14px;
+                                    font-weight: 950;
+                                    font-size: 0.84rem;
+                                    letter-spacing: 0.4px;
+                                    cursor: pointer;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    gap: 8px;
+                                    box-shadow: 0 4px 18px rgba(204, 255, 0, 0.35);
+                                    transition: transform 0.2s, box-shadow 0.2s;
+                                    position: relative;
+                                    z-index: 2;
+                                "
+                                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 22px rgba(204, 255, 0, 0.5)';"
+                                onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 18px rgba(204, 255, 0, 0.35)';">
+                                <i class="fas fa-balance-scale" style="font-size: 0.95rem;"></i>
+                                <span>VER SISTEMA COMPLETO & SIMULADOR</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 7. MERCH PROMO (SOMOS PADEL BCN) - BOUTIQUE PREMIUM CON SELECTOR INTERACTIVO -->
+                    <div id="merch-widget-root" style="
+                        margin: 0 15px 14px !important;
+                        background: linear-gradient(135deg, #0b172a 0%, #172554 50%, #1e3a8a 100%);
+                        border-radius: 24px;
+                        padding: 16px;
+                        position: relative;
+                        overflow: hidden;
+                        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+                        border: 1px solid rgba(255, 255, 255, 0.15);
+                        animation: floatUp 0.8s ease-out forwards;
+                    ">
+                        <!-- BG Effect Pattern -->
+                        <div style="position: absolute; top:0; left:0; width:100%; height:100%; opacity: 0.08; background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 14px 14px; pointer-events: none;"></div>
+                        
+                        <div style="display: flex; gap: 12px; align-items: center; position: relative; z-index: 5;">
+                            <!-- Image Section (Left) -->
+                            <div style="width: 36%; flex-shrink: 0; position: relative; display: flex; align-items: center; justify-content: center;">
+                                <div style="position: absolute; width: 90px; height: 90px; background: radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, transparent 70%); filter: blur(10px);"></div>
+                                <img src="./img/sudadera.jpg" 
+                                     onerror="this.style.display='none'" 
+                                     alt="Sudadera Oficial SomosPadel BCN"
+                                     style="
+                                         width: 110%; 
+                                         max-height: 145px; 
+                                         object-fit: contain; 
+                                         transform: rotate(-3deg); 
+                                         filter: drop-shadow(0 15px 25px rgba(0,0,0,0.65)) brightness(1.05);
+                                         transition: transform 0.3s ease;
+                                     " onmouseover="this.style.transform='rotate(0deg) scale(1.06)'" onmouseout="this.style.transform='rotate(-3deg) scale(1)'">
+                            </div>
+
+                            <!-- Content Section (Right) -->
+                            <div style="width: 64%; display: flex; flex-direction: column; gap: 5px;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
+                                    <span style="background: #CCFF00; color: #000; font-size: 0.55rem; font-weight: 1000; padding: 2px 7px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 2px 6px rgba(204,255,0,0.3);">
+                                        OFICIAL 2026
+                                    </span>
+                                    <span style="font-size: 0.55rem; color: #94a3b8; font-weight: 800; display: flex; align-items: center; gap: 3px;">
+                                        <i class="fas fa-shield-halved" style="color: #38bdf8;"></i> CLUB PRO
+                                    </span>
+                                </div>
+
+                                <h3 style="margin: 0; font-size: 1.15rem; color: #ffffff; font-weight: 950; line-height: 1.1; text-shadow: 0 2px 8px rgba(0,0,0,0.6);">
+                                    SUDADERA OFICIAL
+                                </h3>
+
+                                <div style="font-size: 0.68rem; color: #cbd5e1; font-weight: 700; line-height: 1.2;">
+                                    100% Algodón Premium 320g · Barcelona
+                                </div>
+
+                                <!-- Price block -->
+                                <div style="display: flex; align-items: baseline; gap: 6px; margin: 1px 0;">
+                                    <div style="color:#CCFF00; font-weight:1000; font-size: 1.4rem; line-height: 1; text-shadow:0 0 12px rgba(204,255,0,0.3);">
+                                        24<span style="font-size:0.8rem; vertical-align:top;">,99€</span>
+                                    </div>
+                                    <div style="text-decoration: line-through; color: #64748b; font-size: 0.75rem; font-weight: 700;">
+                                        39,99€
+                                    </div>
+                                    <div style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; font-size: 0.52rem; font-weight: 900; padding: 1px 5px; border-radius: 4px;">
+                                        -37% CLUB
+                                    </div>
+                                </div>
+
+                                <!-- Size Selector -->
+                                <div>
+                                    <div style="font-size: 0.54rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.5px;">
+                                        TALLA:
+                                    </div>
+                                    <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                                        <button type="button" class="merch-size-btn" data-size="S" onclick="window.selectMerchSize && window.selectMerchSize('S')" style="padding: 3px 7px; border-radius: 7px; font-size: 0.62rem; font-weight: 900; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer;">S</button>
+                                        <button type="button" class="merch-size-btn" data-size="M" onclick="window.selectMerchSize && window.selectMerchSize('M')" style="padding: 3px 7px; border-radius: 7px; font-size: 0.62rem; font-weight: 900; border: 1px solid #CCFF00; background: #CCFF00; color: #000; cursor: pointer; transform: scale(1.08);">M</button>
+                                        <button type="button" class="merch-size-btn" data-size="L" onclick="window.selectMerchSize && window.selectMerchSize('L')" style="padding: 3px 7px; border-radius: 7px; font-size: 0.62rem; font-weight: 900; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer;">L</button>
+                                        <button type="button" class="merch-size-btn" data-size="XL" onclick="window.selectMerchSize && window.selectMerchSize('XL')" style="padding: 3px 7px; border-radius: 7px; font-size: 0.62rem; font-weight: 900; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer;">XL</button>
+                                        <button type="button" class="merch-size-btn" data-size="XXL" onclick="window.selectMerchSize && window.selectMerchSize('XXL')" style="padding: 3px 7px; border-radius: 7px; font-size: 0.62rem; font-weight: 900; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer;">XXL</button>
+                                    </div>
+                                </div>
+
+                                <!-- CTA Order Button -->
+                                <button type="button" id="merch-order-btn" onclick="window.open('https://wa.me/34649219350?text=Hola%20SomosPadel!%20Quiero%20pedir%20la%20sudadera%20oficial%20SomosPadel%20BCN%20(24,99%E2%82%AC)%20en%20talla%20M.', '_blank')" style="
+                                    margin-top: 3px;
+                                    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+                                    border: none;
+                                    border-radius: 10px;
+                                    padding: 7px 12px;
+                                    color: #ffffff;
+                                    font-size: 0.7rem;
+                                    font-weight: 1000;
+                                    letter-spacing: 0.5px;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    gap: 6px;
+                                    cursor: pointer;
+                                    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.35);
+                                    transition: all 0.2s ease;
+                                " onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 6px 18px rgba(34, 197, 94, 0.5)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(34, 197, 94, 0.35)'">
+                                    <span>PEDIR TALLA M</span> <i class="fab fa-whatsapp" style="font-size: 0.9rem;"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
 
                     <!-- (Old Partner Synergy root removed to favor the new Predictive AI Engine) -->
 
@@ -1291,6 +1466,13 @@
 
             // 4. ASYNC LOADING OF DATA-DEPENDENT COMPONENTS
             try {
+                // INSTANT PAINT (0ms): Pintar ActionGrid inmediatamente con el contexto inicial rápido/persistido
+                const fastContext = this.getFastInitialContext(user);
+                const actionGridRoot = document.getElementById('action-grid-root');
+                if (actionGridRoot && window.ActionGrid) {
+                    actionGridRoot.innerHTML = window.ActionGrid.render(fastContext);
+                }
+
                 // Build context (Might take time)
                 const context = await this.buildContext(user);
 
@@ -1302,180 +1484,25 @@
 
                 window.scrollTo(0, 0);
 
-
-
-
-                // 2. Fetch Real Data for Weather Cards
-                let weatherData = [];
-                try {
-                    if (window.WeatherService) {
-                        weatherData = await window.WeatherService.getDashboardWeather();
-                    }
-                } catch (e) { console.error("Weather fetch failed", e); }
-
-                // 2.2 Populate Weather Widget (Cards + Radar)
-                const weatherRoot = document.getElementById('weather-widget-root');
-                if (weatherRoot) {
-                    let weatherHtml = '';
-
-                    // Render Cards first
-                    if (weatherData && weatherData.length > 0) {
-                        weatherHtml += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">`;
-                        weatherData.forEach(w => {
-                            weatherHtml += this.renderWeatherCard(
-                                w.name,
-                                `${w.temp}°C`,
-                                w.icon,
-                                {
-                                    wind: `${w.wind} km/h`,
-                                    hum: `${w.humidity}%`,
-                                    rain: `${w.rainProb}%`,
-                                    uv: w.uv,
-                                    pressure: w.pressure,
-                                    visibility: w.visibility,
-                                    intel: w.intelligence
-                                },
-                                w.isPropitious
-                            );
-                        });
-                        weatherHtml += `</div>`;
-                    } else {
-                        weatherHtml += `
-                            <div onclick="Router.navigate('entrenos')" style="
-                                text-align: center;
-                                padding: 50px 20px;
-                                background: #111;
-                                border-radius: 24px;
-                                border: 1px solid rgba(204,255,0,0.1);
-                                position: relative;
-                                overflow: hidden;
-                                box-shadow: 0 15px 35px rgba(0,0,0,0.5);
-                                cursor: pointer;
-                            ">
-                                <!-- Tech Radar Animation -->
-                                <div style="
-                                    position: absolute; top: 0; left: 0; width: 200%; height: 2px;
-                                    background: linear-gradient(90deg, transparent, #CCFF00, transparent);
-                                    animation: scannerMove 4s linear infinite;
-                                    opacity: 0.3;
-                                "></div>
-                                
-                                <i class="fas fa-radar-scan fa-spin" style="
-                                    font-size: 3.5rem;
-                                    color: #CCFF00;
-                                    margin-bottom: 20px;
-                                    opacity: 0.2;
-                                    display: block;
-                                "></i>
-                                
-                                <div style="
-                                    color: white;
-                                    font-size: 1.1rem;
-                                    font-weight: 950;
-                                    letter-spacing: -0.5px;
-                                    text-transform: uppercase;
-                                ">RADAR DE COMPATIBILIDAD <span style="color:#CCFF00;">EN ESPERA</span></div>
-                                
-                                <div style="
-                                    color: rgba(255,255,255,0.4);
-                                    font-size: 0.8rem;
-                                    margin-top: 10px;
-                                    font-weight: 600;
-                                    max-width: 240px;
-                                    margin: 10px auto 0;
-                                ">Necesitamos más datos de nivel y victorias para calcular tu pareja perfecta.</div>
-
-                                <style>
-                                    @keyframes scannerMove {
-                                        0% { transform: translateY(-50px); opacity: 0; }
-                                        50% { opacity: 0.5; }
-                                        100% { transform: translateY(200px); opacity: 0; }
-                                    }
-                                </style>
-                            </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-                                ${this.renderWeatherCard('EL PRAT', '--', '...', { wind: '--', hum: '--', rain: '--' })}
-                                ${this.renderWeatherCard('CORNELLÀ', '--', '...', { wind: '--', hum: '--', rain: '--' })}
-                            </div>`;
-                    }
-
-                    // Append Radar below
-                    weatherHtml += `
-                        <style>
-                            @keyframes livePulse {
-                                0% { box-shadow: 0 0 0 0 rgba(0, 227, 109, 0.7); transform: scale(1); opacity: 1; }
-                                70% { box-shadow: 0 0 0 8px rgba(0, 227, 109, 0); transform: scale(1.2); opacity: 0.8; }
-                                100% { box-shadow: 0 0 0 0 rgba(0, 227, 109, 0); transform: scale(1); opacity: 1; }
-                            }
-                            @keyframes borderFlow {
-                                0% { border-color: rgba(255, 255, 255, 0.1); }
-                                50% { border-color: rgba(255, 255, 255, 0.25); }
-                                100% { border-color: rgba(255, 255, 255, 0.1); }
-                            }
-                        </style>
-                        <div style="position: relative; border-radius: 32px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); background: #0f172a; animation: borderFlow 4s infinite;">
-                            <div style="background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%); padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                                <div style="display:flex; align-items:center; gap:10px;">
-                                    <span style="font-size:0.75rem; font-weight:950; color:white; letter-spacing:0.5px;">RADAR TÁCTICO <span style="color:#CCFF00;">WAR ROOM</span></span>
-                                </div>
-                                <div style="display:flex; align-items:center; gap:8px;">
-                                    <button onclick="window.DashboardView.toggleTacticalHUD()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.3s; pointer-events: auto;">
-                                        <i class="fas fa-eye"></i> TACTICAL HUD
-                                    </button>
-                                    <span style="width:8px; height:8px; background:#00E36D; border-radius:50%; animation: livePulse 2s infinite;"></span>
-                                    <span style="font-size:0.6rem; color: #00E36D; font-weight: 900; letter-spacing:1px;">SCANNING</span>
-                                </div>
-                            </div>
-                            <div style="width: 100%; height: 280px; position: relative;">
-                                <iframe width="100%" height="100%" src="https://embed.windy.com/embed2.html?lat=41.320&lon=2.040&zoom=10&level=surface&overlay=radar&product=radar&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1" frameborder="0" style="filter: contrast(1.1) brightness(0.8) grayscale(0.3);" loading="lazy"></iframe>
-                                
-                                <!-- WAR ROOM TACTICAL OVERLAYS -->
-                                <div style="pointer-events:none; position:absolute; inset:0; box-shadow: inset 0 0 50px rgba(0,0,0,0.8); background: radial-gradient(circle at 50% 50%, transparent 60%, rgba(204,255,0,0.03) 100%);"></div>
-                                
-                                <!-- HUD TOP LEFT: Pista Status -->
-                                <div id="tactical-hud-grip" style="position:absolute; top:15px; left:15px; background:rgba(0,0,0,0.85); backdrop-filter:blur(15px); padding:8px 12px; border-radius:8px; border-left:3px solid #00E36D; pointer-events:none; animation: floatUp 0.8s ease-out; display: none; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-                                    <div style="font-size:0.5rem; color:#888; font-weight:900; text-transform:uppercase; letter-spacing:1px;">ESTADO DE PISTA</div>
-                                    <div style="font-size:0.75rem; color:#fff; font-weight:1000;">GRIP: <span style="color:#00E36D;">ÓPTIMO (92%)</span></div>
-                                    <div style="font-size:0.45rem; color:rgba(255,255,255,0.4); font-weight:700; margin-top:2px;">Prob. Pista resbaladiza: 12%</div>
-                                </div>
-
-                                <!-- HUD TOP RIGHT: Rebote/Presión -->
-                                <div id="tactical-hud-bounce" style="position:absolute; top:15px; right:15px; background:rgba(0,0,0,0.85); backdrop-filter:blur(15px); padding:8px 12px; border-radius:8px; border-right:3px solid #CCFF00; pointer-events:none; text-align:right; animation: floatUp 0.8s ease-out 0.2s both; display: none; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-                                    <div style="font-size:0.5rem; color:#888; font-weight:900; text-transform:uppercase; letter-spacing:1px;">INTELIGENCIA BOLA</div>
-                                    <div style="font-size:0.75rem; color:#fff; font-weight:1000;">REBOTE: <span style="color:#CCFF00;">ALTO (+15%)</span></div>
-                                    <div style="font-size:0.45rem; color:rgba(255,255,255,0.4); font-weight:700; margin-top:2px;">Bola rápida + Presión detectada</div>
-                                </div>
-
-                                <!-- HUD BOTTOM CENTER: Scan Line -->
-                                <div style="position:absolute; bottom:0; left:0; width:100%; height:1px; background:#CCFF00; opacity:0.3; box-shadow: 0 0 10px #CCFF00; animation: scannerSlide 4s linear infinite;"></div>
-                                
-                                <style>
-                                    @keyframes scannerSlide {
-                                        0% { bottom: 0; opacity: 0; }
-                                        10% { opacity: 0.5; }
-                                        90% { opacity: 0.5; }
-                                        100% { bottom: 100%; opacity: 0; }
-                                    }
-                                </style>
-                            </div>
-                        </div>
-                    `;
-                    weatherRoot.innerHTML = weatherHtml;
-                    weatherRoot.style.display = 'block';
-                }
-
                 // Load Blog News Widget
                 const blogRoot = document.getElementById('blog-news-widget-root');
                 if (blogRoot) {
                     blogRoot.innerHTML = this.renderBlogWidget();
                 }
 
-                // Deep-linking para noticias compartidas (?post=ID)
+                // Load Organizers Promo Widget
+                const promoRoot = document.getElementById('dashboard-organizers-promo-root');
+                if (promoRoot) {
+                    promoRoot.innerHTML = this.renderClubOrganizersPromo();
+                }
+
+                // Deep-linking para noticias del día y artículos del Journal (?article=ID, ?articleId=ID, ?journal=ID, ?post=ID)
                 const urlParams = new URLSearchParams(window.location.search);
-                const sharePostId = urlParams.get('post');
+                const sharePostId = urlParams.get('article') || this.getArticleIdFromUrl() || window._pendingArticleModalId;
                 if (sharePostId) {
+                    window._pendingArticleModalId = null;
                     setTimeout(() => {
-                        this.openBlogPost(sharePostId);
+                        this.openArticleModal(sharePostId);
                     }, 650); // Tiempo óptimo para inyección en el DOM y carga de Firestore
                 }
 
@@ -1501,37 +1528,13 @@
                 console.error("Error rendering StoryFeedWidget:", e);
             }
 
-            // 🎾 WAR ROOM 3D TACTICAL WIDGET
-            try {
-                const tacticalRoot = document.getElementById('tactical-3d-widget-root');
-                if (tacticalRoot && window.Tactical3DWidget) {
-                    tacticalRoot.innerHTML = window.Tactical3DWidget.renderHTML();
-                    
-                    const startWidget = () => {
-                        setTimeout(() => {
-                            if (document.getElementById('three-tactical-canvas') && window.Tactical3DWidget) {
-                                window.Tactical3DWidget.init('three-tactical-canvas');
-                            }
-                        }, 50);
-                    };
-
-                    if (!window.THREE) {
-                        console.log("🌐 [DashboardView] Three.js no está en window, cargando dinámicamente...");
-                        window.loadExternalScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', 'THREE')
-                            .then(() => {
-                                console.log("✅ [DashboardView] Three.js cargado dinámicamente con éxito para el widget táctico.");
-                                startWidget();
-                            })
-                            .catch(err => console.error("❌ [DashboardView] Error al cargar Three.js para Tactical3DWidget:", err));
-                    } else {
-                        startWidget();
-                    }
-                }
-            } catch (e) {
-                console.error("Error rendering Tactical3DWidget:", e);
-            }
-
+        } catch (renderError) {
+            console.error("❌ [DashboardView] Fatal render error:", renderError);
+        } finally {
+            this._isRendering = false;
+            this._lastRenderTime = Date.now();
         }
+    }
 
         initHeaderTickerSync() {
             // REDUNDANT: Handled by core/SmartTicker.js
@@ -1863,6 +1866,141 @@
             }, 2400);
         }
 
+        renderClubOrganizersPromo() {
+            return `
+                <div class="dashboard-organizer-card" style="
+                    background: linear-gradient(135deg, rgba(8, 14, 28, 0.98) 0%, rgba(15, 23, 42, 0.98) 50%, rgba(3, 7, 18, 0.98) 100%);
+                    border: 1.5px solid rgba(204, 255, 0, 0.45);
+                    border-radius: 26px;
+                    padding: 22px 24px;
+                    position: relative;
+                    overflow: hidden;
+                    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.85), 0 0 35px -5px rgba(204, 255, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+                    backdrop-filter: blur(20px);
+                    font-family: 'Outfit', sans-serif;
+                ">
+                    <!-- Laser Gradient Line on Top -->
+                    <div style="position: absolute; top: 0; left: 0; right: 0; height: 3.5px; background: linear-gradient(90deg, #CCFF00, #38bdf8, #a855f7, #CCFF00); background-size: 200% 100%; animation: neonLaserFlow 4s linear infinite; border-radius: 26px 26px 0 0;"></div>
+
+                    <!-- Ambient Glow Orbs -->
+                    <div style="position: absolute; top: -45px; left: -45px; width: 170px; height: 170px; background: radial-gradient(circle, rgba(204, 255, 0, 0.25) 0%, transparent 70%); filter: blur(30px); pointer-events: none;"></div>
+                    <div style="position: absolute; bottom: -45px; right: -45px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(56, 189, 248, 0.22) 0%, transparent 70%); filter: blur(35px); pointer-events: none;"></div>
+                    
+                    <!-- Decorative Background Watermark -->
+                    <i class="fas fa-trophy" style="position: absolute; right: -15px; bottom: -20px; font-size: 8.5rem; color: #CCFF00; opacity: 0.05; transform: rotate(-12deg); pointer-events: none; z-index: 1;"></i>
+
+                    <div style="position: relative; z-index: 2;">
+                        <!-- Top Header: High-Impact Badge + Glowing Trophy Emblem -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 12px;">
+                            <div style="display: inline-flex; align-items: center; gap: 7px; background: linear-gradient(135deg, rgba(204, 255, 0, 0.18) 0%, rgba(56, 189, 248, 0.12) 100%); border: 1.5px solid rgba(204, 255, 0, 0.55); padding: 5px 14px; border-radius: 999px; box-shadow: 0 0 18px rgba(204, 255, 0, 0.35);">
+                                <i class="fas fa-crown" style="color: #CCFF00; font-size: 0.75rem; filter: drop-shadow(0 0 4px #CCFF00);"></i>
+                                <span style="color: #CCFF00; font-size: 0.68rem; font-weight: 1000; text-transform: uppercase; letter-spacing: 0.9px;">ESPACIO CLUBES & ORGANIZADORES</span>
+                            </div>
+
+                            <div style="width: 48px; height: 48px; border-radius: 16px; background: linear-gradient(135deg, rgba(204, 255, 0, 0.22) 0%, rgba(56, 189, 248, 0.16) 100%); border: 2px solid #CCFF00; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 0 25px rgba(204, 255, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.4); animation: emblemFloat 3s ease-in-out infinite alternate;">
+                                <i class="fas fa-trophy" style="color: #CCFF00; font-size: 1.45rem; filter: drop-shadow(0 2px 8px rgba(204, 255, 0, 0.8));"></i>
+                            </div>
+                        </div>
+
+                        <!-- Headline -->
+                        <h3 style="margin: 0 0 8px; color: #ffffff; font-size: 1.32rem; font-weight: 1000; line-height: 1.25; letter-spacing: -0.4px;">
+                            ¿Organizas Americanas en <span style="background: linear-gradient(90deg, #CCFF00 0%, #38bdf8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 0 25px rgba(204,255,0,0.5);">Barcelona</span>?
+                        </h3>
+
+                        <!-- Subtitle -->
+                        <p style="margin: 0 0 14px; color: #cbd5e1; font-size: 0.82rem; line-height: 1.55; font-weight: 500;">
+                            Publica tus torneos aquí, atrae a nuestra comunidad y gestiona en directo con la <strong style="color: #CCFF00; font-weight: 950; text-shadow: 0 0 8px rgba(204,255,0,0.4);">Torre de Control digital</strong>.
+                        </p>
+
+                        <!-- Key Benefits Micro-Chips -->
+                        <div style="display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 16px;">
+                            <span style="background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 10px; padding: 4px 10px; font-size: 0.68rem; font-weight: 900; color: #e2e8f0; display: inline-flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-users" style="color: #38bdf8; font-size: 0.7rem;"></i> +1.500 Jugadores
+                            </span>
+                            <span style="background: rgba(204, 255, 0, 0.1); border: 1px solid rgba(204, 255, 0, 0.35); border-radius: 10px; padding: 4px 10px; font-size: 0.68rem; font-weight: 900; color: #e2e8f0; display: inline-flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-tv" style="color: #CCFF00; font-size: 0.7rem;"></i> Marcador en Vivo
+                            </span>
+                            <span style="background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 10px; padding: 4px 10px; font-size: 0.68rem; font-weight: 900; color: #e2e8f0; display: inline-flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-bolt" style="color: #fbbf24; font-size: 0.7rem;"></i> Sin Coste Fijo
+                            </span>
+                            <span style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 10px; padding: 4px 10px; font-size: 0.68rem; font-weight: 900; color: #e2e8f0; display: inline-flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-rocket" style="color: #c084fc; font-size: 0.7rem;"></i> Llenado Automático
+                            </span>
+                        </div>
+                        
+                        <!-- Actions Grid -->
+                        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                            <a href="https://wa.me/34649219350?text=¡Hola%20Alex!%20Soy%20organizador/club%20de%20pádel%20y%20me%20gustaría%20publicar%20mis%20americanas%20en%20SomosPadel%20BCN." 
+                               target="_blank" 
+                               rel="noopener noreferrer" 
+                               style="
+                                   background: #CCFF00;
+                                   color: #050b14;
+                                   padding: 12px 20px;
+                                   border-radius: 16px;
+                                   font-weight: 1000;
+                                   font-size: 0.82rem;
+                                   text-decoration: none;
+                                   display: inline-flex;
+                                   align-items: center;
+                                   justify-content: center;
+                                   gap: 8px;
+                                   box-shadow: 0 6px 22px rgba(204, 255, 0, 0.45);
+                                   letter-spacing: 0.3px;
+                                   transition: all 0.25s ease;
+                                   flex: 1;
+                                   min-width: 175px;
+                               "
+                               onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 26px rgba(204, 255, 0, 0.65)';"
+                               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 22px rgba(204, 255, 0, 0.45)';"
+                               onmousedown="this.style.transform='scale(0.97)';">
+                                <i class="fab fa-whatsapp" style="font-size: 1.15rem; color: #050b14;"></i>
+                                <span>PUBLICAR MI EVENTO</span>
+                            </a>
+                            <button onclick="window.renderClubBenefitsModal ? window.renderClubBenefitsModal() : (window.EventsController && window.EventsController.renderClubBenefitsModal())" 
+                                    style="
+                                        background: rgba(56, 189, 248, 0.12);
+                                        border: 1.5px solid rgba(56, 189, 248, 0.35);
+                                        color: #ffffff;
+                                        padding: 12px 18px;
+                                        border-radius: 16px;
+                                        font-weight: 950;
+                                        font-size: 0.82rem;
+                                        cursor: pointer;
+                                        display: inline-flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        gap: 8px;
+                                        backdrop-filter: blur(10px);
+                                        letter-spacing: 0.3px;
+                                        transition: all 0.25s ease;
+                                        flex: 1;
+                                        min-width: 155px;
+                                        font-family: 'Outfit', sans-serif;
+                                    "
+                                    onmouseover="this.style.background='rgba(56, 189, 248, 0.22)'; this.style.borderColor='#38bdf8'; this.style.transform='translateY(-2px)';"
+                                    onmouseout="this.style.background='rgba(56, 189, 248, 0.12)'; this.style.borderColor='rgba(56, 189, 248, 0.35)'; this.style.transform='translateY(0)';"
+                                    onmousedown="this.style.transform='scale(0.97)';">
+                                <i class="fas fa-info-circle" style="color: #38bdf8; font-size: 0.95rem;"></i>
+                                <span>VENTAJAS CLUBES</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <style>
+                    @keyframes neonLaserFlow {
+                        0% { background-position: 0% 50%; }
+                        100% { background-position: 200% 50%; }
+                    }
+                    @keyframes emblemFloat {
+                        0% { transform: translateY(0) rotate(0deg); }
+                        100% { transform: translateY(-4px) rotate(3deg); }
+                    }
+                </style>
+            `;
+        }
+
         renderBlogWidget() {
             // Fetch async, inject into shell
             setTimeout(async () => {
@@ -1882,20 +2020,47 @@
                     const snapshot = await db.collection('blog_posts').orderBy('timestamp', 'desc').get();
                     let posts = [];
                     if (!snapshot.empty) {
-                        posts = snapshot.docs.map(doc => {
-                            const data = doc.data();
-                            return {
-                                id: doc.id,
-                                ...data
-                            };
+                        posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    }
+
+                    // Enriquecer con el catálogo masivo NewsCatalog para tener un abanico 100x mayor sin repetición
+                    if (window.NewsCatalog && typeof window.NewsCatalog.getFullCatalog === 'function') {
+                        const catalogPosts = window.NewsCatalog.getFullCatalog();
+                        const existingTitles = new Set(posts.map(p => (p.title || '').trim().toLowerCase()));
+                        catalogPosts.forEach(catPost => {
+                            const t = (catPost.title || '').trim().toLowerCase();
+                            if (!existingTitles.has(t)) {
+                                posts.push(catPost);
+                                existingTitles.add(t);
+                            }
                         });
-                    } else {
-                        // Usar fallback determinista autónomo en lugar de posts estáticos fijos
-                        posts = window.SomosPadelNewsEngine ? window.SomosPadelNewsEngine.getDeterministicFallbackPosts() : [
-                            { id: 'torneo-primavera', category: '🏆 TORNEOS', catColor: '#CCFF00', title: 'Gran Torneo de Primavera 2026', snippet: '¡Inscripciones abiertas! 120 plazas, Welcome Pack premium y barbacoa final.', content: 'Llega el evento más esperado del año. El 15 de Junio celebraremos el Gran Torneo de Primavera con categorías masculina, femenina y mixta. ¡Reserva tu plaza!', date: 'Hoy', readTime: '2 min', imageUrl: 'img/blog_action_smash.png' },
-                            { id: 'ranking-actualizado', category: '📊 RANKING', catColor: '#38bdf8', title: 'Ranking Actualizado: Top 5 de la Temporada', snippet: 'El ranking se ha recalculado. ¿Has subido posiciones esta semana?', content: 'Consulta tu posición actualizada en la sección Ranking. Nuevos puntos asignados tras la última jornada.', date: 'Ayer', readTime: '2 min', imageUrl: 'img/blog_court_night.png' },
-                            { id: 'tactica-centro', category: '💡 CONSEJOS', catColor: '#f59e0b', title: 'Táctica: Jugar al Centro de la Pista', snippet: 'Jugar al medio reduce los ángulos del rival y genera dudas en la pareja contraria.', content: 'El centro de la pista es la clave táctica más potente del pádel. Al tirar al centro reduces ángulos y generas confusión.', date: 'Hace 3 días', readTime: '3 min', imageUrl: 'img/blog_racket_ball.png' }
-                        ];
+                    } else if (posts.length === 0) {
+                        posts = window.SomosPadelNewsEngine ? window.SomosPadelNewsEngine.getDeterministicFallbackPosts() : [];
+                    }
+
+                    // Rotación periódica inteligente: asegurar que las novedades de la app y guías clave aparezcan al inicio
+                    const appNewsPosts = posts.filter(p => p.id && (p.id.includes('app-noticia') || (p.category && p.category.includes('NOVEDADES'))));
+                    if (appNewsPosts.length > 0) {
+                        const appSlot = Math.floor(Date.now() / (1000 * 60 * 60 * 4));
+                        const featuredAppNews = appNewsPosts[appSlot % appNewsPosts.length];
+                        const curAppIdx = posts.findIndex(p => p.id === featuredAppNews.id);
+                        if (curAppIdx !== -1) posts.splice(curAppIdx, 1);
+                        posts.unshift(featuredAppNews); // Posición inicial destacada
+                    }
+
+                    const gameModesPosts = posts.filter(p => p.id && p.id.includes('modos-juego'));
+                    if (gameModesPosts.length > 0) {
+                        // Rotación cada 6 horas entre los artículos de Modos de Juego
+                        const periodSlot = Math.floor(Date.now() / (1000 * 60 * 60 * 6));
+                        const featuredGuide = gameModesPosts[periodSlot % gameModesPosts.length];
+                        
+                        // Posicionar la guía en puestos visibles del feed (intercalada en puesto 1 ó 2)
+                        const currentIdx = posts.findIndex(p => p.id === featuredGuide.id);
+                        if (currentIdx !== -1) {
+                            posts.splice(currentIdx, 1);
+                        }
+                        const insertPos = (periodSlot % 2 === 0) ? 1 : 2;
+                        posts.splice(Math.min(insertPos, posts.length), 0, featuredGuide);
                     }
 
                     // Guardar en caché local para filtrado instantáneo
@@ -1935,6 +2100,7 @@
                     <div style="position: relative; margin-bottom: 16px;">
                         <div class="blog-categories-filter" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; padding-right: 20px; scrollbar-width: none; -ms-overflow-style: none; -webkit-mask-image: linear-gradient(to right, black calc(100% - 36px), transparent 100%); mask-image: linear-gradient(to right, black calc(100% - 36px), transparent 100%);">
                             <button onclick="window.DashboardView.filterBlogCategory('ALL')" class="blog-filter-btn active" style="flex-shrink: 0; background: #CCFF00; border: 1px solid #CCFF00; color: #000; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 900; cursor: pointer; transition: all 0.25s; font-family: 'Outfit'; box-shadow: 0 4px 10px rgba(204,255,0,0.2);">TODAS</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('NOVEDADES')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.09); color: #475569; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">🚀 NOVEDADES</button>
                             <button onclick="window.DashboardView.filterBlogCategory('TORNEOS')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.09); color: #475569; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">🏆 TORNEOS</button>
                             <button onclick="window.DashboardView.filterBlogCategory('CONSEJOS')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.09); color: #475569; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">💡 CONSEJOS</button>
                             <button onclick="window.DashboardView.filterBlogCategory('RANKING')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.09); color: #475569; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">📊 RANKING</button>
@@ -2140,72 +2306,25 @@
 
             const visiblePosts = filtered.slice(0, 4);
 
-            // Deduplicación inteligente de imágenes 100% de pádel para evitar fotos no deportivas
-            const postImagesMap = (() => {
-                const pool = [
-                    'img/blog_action_smash.png', 
-                    'img/blog_court_night.png', 
-                    'img/blog_racket_ball.png', 
-                    'img/blog_ball_glass.png', 
-                    'img/blog_player_victory.png', 
-                    'img/blog_club_lounge.png',
-                    'img/pista_padel_azul.png'
-                ];
-                const assigned = {};
-                const used = new Set();
-                
-                // 1. Asignar imageUrls explícitas sólo si son locales de pádel (evitar Unsplash genérico de ciclismo/gym)
-                visiblePosts.forEach(post => {
-                    if (post.imageUrl && !post.imageUrl.includes('unsplash.com')) {
-                        assigned[post.id] = post.imageUrl;
-                        used.add(post.imageUrl);
-                    }
-                });
-                
-                // 2. Asignar preferred de pádel según palabras clave del contenido
-                visiblePosts.forEach(post => {
-                    if (assigned[post.id]) return;
-                    const title = (post.title || '').toLowerCase();
-                    const content = (post.content || '').toLowerCase();
-                    const cat = (post.category || '').toLowerCase();
-                    let preferred = null;
-
-                    if (title.includes('match point') || title.includes('victoria') || title.includes('oro') || title.includes('comunicaci')) {
-                        preferred = 'img/blog_player_victory.png';
-                    } else if (title.includes('remate') || title.includes('víbora') || title.includes('vibora') || title.includes('bandeja') || title.includes('smash') || title.includes('red')) {
-                        preferred = 'img/blog_action_smash.png';
-                    } else if (title.includes('torneo') || title.includes('americana') || title.includes('evento') || title.includes('ranking') || title.includes('elo')) {
-                        preferred = 'img/blog_court_night.png';
-                    } else if (title.includes('pala') || title.includes('material') || title.includes('eva') || title.includes('epicondilitis') || title.includes('codo') || title.includes('táctica') || title.includes('tactica')) {
-                        preferred = 'img/blog_racket_ball.png';
-                    } else if (title.includes('hidrataci') || title.includes('nutrici') || title.includes('cortado') || title.includes('bola') || title.includes('pelota')) {
-                        preferred = 'img/blog_ball_glass.png';
-                    } else if (title.includes('fair play') || title.includes('comunidad') || title.includes('club') || title.includes('lounge')) {
-                        preferred = 'img/blog_club_lounge.png';
-                    } else if (title.includes('chiquita') || title.includes('globo') || title.includes('pista')) {
-                        preferred = 'img/pista_padel_azul.png';
-                    }
-
-                    if (preferred && !used.has(preferred)) {
-                        assigned[post.id] = preferred;
-                        used.add(preferred);
-                    }
-                });
-                
-                // 3. Asignar imágenes libres del pool de pádel
-                visiblePosts.forEach((post, idx) => {
-                    if (assigned[post.id]) return;
-                    const available = pool.find(img => !used.has(img));
-                    if (available) {
-                        assigned[post.id] = available;
-                        used.add(available);
-                    } else {
-                        assigned[post.id] = pool[idx % pool.length];
-                    }
-                });
-                
-                return assigned;
-            })();
+            // Deduplicación inteligente de imágenes mediante la Fototeca Curada HD de NewsCatalog (sin repetir fotos)
+            const postImagesMap = window.NewsCatalog 
+                ? window.NewsCatalog.assignUniquePhotos(visiblePosts)
+                : (() => {
+                    const pool = [
+                        'img/blog_action_smash.png', 
+                        'img/blog_court_night.png', 
+                        'img/blog_racket_ball.png', 
+                        'img/blog_ball_glass.png', 
+                        'img/blog_player_victory.png', 
+                        'img/blog_club_lounge.png',
+                        'img/pista_padel_azul.png'
+                    ];
+                    const assigned = {};
+                    visiblePosts.forEach((post, idx) => {
+                        assigned[post.id] = post.imageUrl || pool[idx % pool.length];
+                    });
+                    return assigned;
+                })();
 
             // Guardar mapeo de imágenes en la instancia para que openBlogPost pueda leerlo
             this.currentImagesMap = { ...this.currentImagesMap, ...postImagesMap };
@@ -2374,7 +2493,18 @@
                     console.warn("Fallo al leer histórico de Firestore, usando fallbacks:", dbErr);
                 }
 
-                if (posts.length === 0) {
+                // Enriquecer el histórico con todo el catálogo masivo sin repetición de títulos
+                if (window.NewsCatalog && typeof window.NewsCatalog.getFullCatalog === 'function') {
+                    const catalogPosts = window.NewsCatalog.getFullCatalog();
+                    const existingTitles = new Set(posts.map(p => (p.title || '').trim().toLowerCase()));
+                    catalogPosts.forEach(catPost => {
+                        const t = (catPost.title || '').trim().toLowerCase();
+                        if (!existingTitles.has(t)) {
+                            posts.push(catPost);
+                            existingTitles.add(t);
+                        }
+                    });
+                } else if (posts.length === 0) {
                     posts = window.SomosPadelNewsEngine ? window.SomosPadelNewsEngine.getDeterministicFallbackPosts() : [];
                 }
 
@@ -2407,17 +2537,15 @@
                                 </div>`;
                     }
 
-                    const pool = [
-                        'img/blog_action_smash.png', 
-                        'img/blog_court_night.png', 
-                        'img/blog_racket_ball.png', 
-                        'img/blog_ball_glass.png', 
-                        'img/blog_player_victory.png', 
-                        'img/blog_club_lounge.png'
-                    ];
+                    // Fototeca deduplicada HD: cada fila tendrá una foto distinta y de altísima calidad
+                    const rowImagesMap = window.NewsCatalog 
+                        ? window.NewsCatalog.assignUniquePhotos(filtered)
+                        : {};
+
+                    this.currentImagesMap = { ...this.currentImagesMap, ...rowImagesMap };
 
                     return filtered.map((post, idx) => {
-                        const img = (post.imageUrl && !post.imageUrl.includes('unsplash.com')) ? post.imageUrl : pool[idx % pool.length];
+                        const img = rowImagesMap[post.id] || post.imageUrl || 'img/blog_action_smash.png';
                         const catClean = (post.category || 'REVISTA').replace(/^[^\s]+\s/, '');
                         return `
                             <div onclick="document.getElementById('blog-history-modal').remove(); window.DashboardView.openBlogPost('${post.id}')"
@@ -2506,6 +2634,7 @@
         }
 
         openTacticalWarRoom() {
+            return;
             try {
                 // Si ya existe el modal, lo eliminamos primero
                 const existingModal = document.getElementById('tactical-war-room-modal');
@@ -2735,6 +2864,102 @@
             }
         }
 
+        getArticleIdFromUrl() {
+            // 1. Revisar query string de window.location.search (?article=..., ?articleId=..., ?journal=..., ?post=...)
+            try {
+                const urlParams = new URLSearchParams(window.location.search || '');
+                const fromSearch = urlParams.get('article') || 
+                                   urlParams.get('articleId') || 
+                                   urlParams.get('journal') || 
+                                   urlParams.get('post');
+                if (fromSearch) return decodeURIComponent(fromSearch).trim();
+            } catch (_) {}
+
+            // 2. Revisar hash de window.location.hash (#dashboard?article=..., #journal?article=..., etc.)
+            try {
+                const hash = window.location.hash || '';
+                if (hash.includes('?')) {
+                    const hashParams = new URLSearchParams(hash.substring(hash.indexOf('?') + 1));
+                    const fromHash = hashParams.get('article') || 
+                                     hashParams.get('articleId') || 
+                                     hashParams.get('journal') || 
+                                     hashParams.get('post');
+                    if (fromHash) return decodeURIComponent(fromHash).trim();
+                }
+                const match = hash.match(/[?&#](?:article|articleId|journal|post)=([^&#]+)/i);
+                if (match && match[1]) {
+                    return decodeURIComponent(match[1]).trim();
+                }
+            } catch (_) {}
+
+            return null;
+        }
+
+        initJournalPushNavigation() {
+            if (typeof window === 'undefined') return;
+
+            // Escuchar mensajes del Service Worker cuando el usuario pulsa una notificación push
+            if (navigator.serviceWorker && !window._spJournalSwListenerAttached) {
+                window._spJournalSwListenerAttached = true;
+                navigator.serviceWorker.addEventListener('message', (event) => {
+                    if (!event.data) return;
+                    console.log('📬 [App] Mensaje push recibido del Service Worker:', event.data);
+
+                    if (event.data.type === 'NOTIFICATION_CLICKED') {
+                        const data = event.data.data || {};
+                        const articleId = event.data.articleId || data.articleId || data.article || data.post;
+                        const url = event.data.url || data.url || '';
+
+                        let resolvedArticleId = articleId;
+                        if (!resolvedArticleId && url) {
+                            const m = url.match(/[?&#](?:article|articleId|journal|post)=([^&#]+)/i);
+                            if (m && m[1]) resolvedArticleId = decodeURIComponent(m[1]).trim();
+                        }
+
+                        if (resolvedArticleId) {
+                            console.log('📰 [App] Abriendo artículo tras clic en push:', resolvedArticleId);
+                            this.openArticleModal(resolvedArticleId);
+                        }
+                    }
+                });
+            }
+
+            // Escuchar cambios de hash dinámicos para abrir artículos
+            if (!window._spJournalHashListenerAttached) {
+                window._spJournalHashListenerAttached = true;
+                window.addEventListener('hashchange', () => {
+                    const articleId = this.getArticleIdFromUrl();
+                    if (articleId) {
+                        this.openArticleModal(articleId);
+                    }
+                });
+            }
+        }
+
+        async openArticle(articleId) {
+            return this.openArticleModal(articleId);
+        }
+
+        async openArticleModal(articleId) {
+            if (!articleId) return;
+            console.log(`📰 [DashboardView] Solicitud de apertura de artículo Journal: ${articleId}`);
+
+            // Si el usuario está en otra sección distinta a dashboard/journal/blog, navegar al dashboard
+            if (window.Router && window.Router.currentRoute && !['dashboard', 'journal', 'blog'].includes(window.Router.currentRoute)) {
+                window._pendingArticleModalId = articleId;
+                window.Router.navigate('dashboard');
+                return;
+            }
+
+            // Si el render del dashboard aún no ha finalizado o el DOM está cargando, poner en cola
+            if (this._isRendering || !document.getElementById('content-area')) {
+                window._pendingArticleModalId = articleId;
+                return;
+            }
+
+            return this.openBlogPost(articleId);
+        }
+
         async openBlogPost(postId) {
             try {
                 const db = window.db || firebase.firestore();
@@ -2798,30 +3023,170 @@
                             readTime: '3 min',
                             emoji: '⚡',
                             imgGrad: 'linear-gradient(135deg, #fb923c 0%, #f97316 100%)'
+                        },
+                        'modos-juego-pareja-fija-vs-twister': {
+                            category: '🎮 MODOS DE JUEGO',
+                            catColor: '#CCFF00',
+                            title: 'Pareja Fija vs Twister Individual: ¿En qué formato anotarte según tus objetivos?',
+                            content: 'En SomosPadel Barcelona contamos con dos formatos estelares diseñados para cubrir cualquier aspiración: Pareja Fija (en tándem, subís y bajáis juntos de pista según ganes o pierdas, puntuación conjunta y sincronía para torneos) y Twister Individual (inscripción individual sin necesidad de pareja previa, cambio de compañero en cada ronda, y podio por diferencial individual de juegos). ¡Ambos formatos garantizan la máxima emoción!',
+                            date: 'Hoy',
+                            readTime: '4 min',
+                            emoji: '🎮',
+                            imgGrad: 'linear-gradient(135deg, #0284c7 0%, #db2777 100%)'
+                        },
+                        'modos-juego-twister-individual-guia': {
+                            category: '💡 CONSEJOS',
+                            catColor: '#ec4899',
+                            title: 'Guía Táctica Twister: Cómo Adaptarte al Instante a una Nueva Pareja',
+                            content: 'Jugar una americana en formato Twister Individual exige compenetración express. Acuerda con tu nueva pareja en 30 segundos los roles de drive y revés, la cobertura del centro en globos rivales y mantén un refuerzo positivo constante. La versatilidad para jugar en ambos lados es la llave del triunfo en las rotaciones individuales.',
+                            date: 'Hoy',
+                            readTime: '3 min',
+                            emoji: '🌪️',
+                            imgGrad: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)'
+                        },
+                        'modos-juego-suizo-americana-entreno': {
+                            category: '🎮 MODOS DE JUEGO',
+                            catColor: '#ef4444',
+                            title: 'Sistema Suizo en SomosPadel: 6 Rondas Express, Puntos Individuales y Reagrupación por Pistas',
+                            content: 'La 3ª modalidad de SomosPadel Barcelona: el Sistema Suizo (Americana Suiza y Entreno Suizo). Duración 2h, 6 rondas express de juego efectivo (al sonar el silbato concluye el punto). Formato individual con cambio de pareja. Puntos individuales = juegos ganados. Reagrupación tras cada ronda: Top 4 a Pista 1, siguientes a Pista 2, restantes a Pista 3, sin repetir compañero. Campeón: más juegos sumados.',
+                            date: 'Hoy',
+                            readTime: '4 min',
+                            emoji: '🇨🇭',
+                            imgGrad: 'linear-gradient(135deg, #ef4444 0%, #0f172a 100%)'
                         }
                     };
                     post = fallbackPosts[postId];
                 }
 
+                // Buscar en catálogo masivo si no estaba en Firestore ni en los básicos
+                const cleanPostId = (postId || '').replace(/^news_\d{4}-\d{2}-\d{2}_/, '');
+                if (!post && window.NewsCatalog && typeof window.NewsCatalog.getFullCatalog === 'function') {
+                    const allCat = window.NewsCatalog.getFullCatalog();
+                    post = allCat.find(p => 
+                        p.id === postId || 
+                        p.id === cleanPostId || 
+                        postId.includes(p.id) || 
+                        (cleanPostId && cleanPostId.includes(p.id)) || 
+                        p.id.includes(postId) || 
+                        (cleanPostId && p.id.includes(cleanPostId))
+                    );
+                }
+
                 if (!post) return;
 
-                // Resolver la mejor imagen de fondo para la cabecera (Unsplash dinámico o pool local)
-                let articleImg = post.imageUrl;
-                if (!articleImg && this.currentImagesMap && this.currentImagesMap[postId]) {
-                    articleImg = this.currentImagesMap[postId];
+                // Formateo de contenido para máxima calidad editorial (párrafos, bullets y consejos)
+                let formattedContent = post.content || post.contentTemplate || post.body || '';
+                if (!formattedContent && post.snippet) formattedContent = post.snippet;
+                if (typeof formattedContent === 'string' && formattedContent.includes('\n\n')) {
+                    formattedContent = formattedContent.split('\n\n').map(par => `<p style="margin: 0 0 14px 0;">${par.replace(/\n/g, '<br>')}</p>`).join('');
+                }
+
+                // Resolver la mejor imagen de fondo para la cabecera (Fototeca Curada HD o pool local)
+                let articleImg = (this.currentImagesMap && this.currentImagesMap[postId]) || 
+                                 (this.currentImagesMap && this.currentImagesMap[cleanPostId]) || 
+                                 post.imageUrl;
+                if (!articleImg && window.NewsCatalog) {
+                    const assigned = window.NewsCatalog.assignUniquePhotos([post]);
+                    articleImg = assigned[post.id];
                 }
                 if (!articleImg) {
-                    const title = (post.title || '').toLowerCase();
-                    const category = (post.category || '').toLowerCase();
-                    if (title.includes('torneo') || title.includes('americana') || category.includes('torneo')) {
-                        articleImg = 'img/blog_action_smash.png';
-                    } else if (title.includes('ranking') || category.includes('ranking')) {
-                        articleImg = 'img/blog_court_night.png';
-                    } else if (title.includes('consejo') || title.includes('táctica') || category.includes('consejo')) {
-                        articleImg = 'img/blog_racket_ball.png';
-                    } else {
-                        articleImg = 'img/blog_ball_glass.png';
-                    }
+                    articleImg = 'https://images.unsplash.com/photo-1592919505780-303950717480?q=80&w=1200&auto=format&fit=crop';
+                }
+
+                // Detectar si el post tiene acción interactiva integrada
+                const isGameModesPost = (postId && postId.includes('modos-juego')) ||
+                    (post.title && (post.title.toLowerCase().includes('pareja fija') || post.title.toLowerCase().includes('twister') || post.title.toLowerCase().includes('suizo') || post.title.toLowerCase().includes('suiza') || post.title.toLowerCase().includes('modos de juego')));
+                const isTeamsPost = (postId && postId.includes('equipos-2027')) || (post.title && post.title.toLowerCase().includes('pre-inscripciones abiertas liga 2027'));
+                const isRankingPost = (postId && postId.includes('doble-ranking')) || (post.title && post.title.toLowerCase().includes('doble ranking'));
+                const isFutPost = (postId && postId.includes('cartas-fut')) || (post.title && post.title.toLowerCase().includes('cartas de jugador 3d'));
+                const isWeatherPost = (postId && postId.includes('radar-meteorologico')) || (post.title && post.title.toLowerCase().includes('radar meteorol'));
+
+                let interactiveActionHtml = '';
+                if (isGameModesPost) {
+                    interactiveActionHtml = `
+                        <div style="margin: 20px 0 16px; background: linear-gradient(135deg, rgba(204, 255, 0, 0.12) 0%, rgba(56, 189, 248, 0.1) 100%); border: 1.5px solid rgba(204, 255, 0, 0.45); border-radius: 18px; padding: 18px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.35);">
+                            <div style="font-size: 1.6rem; margin-bottom: 6px;">🎮 👥 🌪️ 🇨🇭</div>
+                            <div style="font-size: 0.98rem; font-weight: 950; color: #ffffff; margin-bottom: 4px;">Comparativa & Normativa Oficial</div>
+                            <div style="font-size: 0.78rem; color: #cbd5e1; margin-bottom: 14px; line-height: 1.45;">
+                                Abre la guía interactiva oficial para consultar todas las reglas, dinámicas de rotación y sistemas de puntuación.
+                            </div>
+                            <button id="blog-modal-modes-action-btn" 
+                                    style="background: #CCFF00; color: #000000; font-weight: 950; font-size: 0.82rem; border: none; padding: 11px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(204, 255, 0, 0.35); transition: all 0.2s ease;"
+                                    onmouseover="this.style.transform='scale(1.04)';"
+                                    onmouseout="this.style.transform='scale(1)';"
+                                    onmousedown="this.style.transform='scale(0.97)';">
+                                <i class="fas fa-gamepad"></i> ABRIR MODOS DE JUEGO
+                            </button>
+                        </div>
+                    `;
+                } else if (isTeamsPost) {
+                    interactiveActionHtml = `
+                        <div style="margin: 20px 0 16px; background: linear-gradient(135deg, rgba(204, 255, 0, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%); border: 1.5px solid rgba(204, 255, 0, 0.5); border-radius: 18px; padding: 18px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.35);">
+                            <div style="font-size: 1.6rem; margin-bottom: 6px;">🏆 🛡️ 🇪🇸</div>
+                            <div style="font-size: 0.98rem; font-weight: 950; color: #ffffff; margin-bottom: 4px;">Pre-Inscripción Liga 2027</div>
+                            <div style="font-size: 0.78rem; color: #cbd5e1; margin-bottom: 14px; line-height: 1.45;">
+                                Consulta las convocatorias de nuestros 8 equipos y solicita tu prueba de nivel para la próxima temporada.
+                            </div>
+                            <button id="blog-modal-teams-action-btn" 
+                                    style="background: #CCFF00; color: #000000; font-weight: 950; font-size: 0.82rem; border: none; padding: 11px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(204, 255, 0, 0.35); transition: all 0.2s ease;"
+                                    onmouseover="this.style.transform='scale(1.04)';"
+                                    onmouseout="this.style.transform='scale(1)';"
+                                    onmousedown="this.style.transform='scale(0.97)';">
+                                <i class="fas fa-users"></i> IR A SECCIÓN DE EQUIPOS
+                            </button>
+                        </div>
+                    `;
+                } else if (isRankingPost) {
+                    interactiveActionHtml = `
+                        <div style="margin: 20px 0 16px; background: linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%); border: 1.5px solid rgba(56, 189, 248, 0.5); border-radius: 18px; padding: 18px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.35);">
+                            <div style="font-size: 1.6rem; margin-bottom: 6px;">📊 🥇 🥈 🥉</div>
+                            <div style="font-size: 0.98rem; font-weight: 950; color: #ffffff; margin-bottom: 4px;">Doble Ranking en Inicio</div>
+                            <div style="font-size: 0.78rem; color: #cbd5e1; margin-bottom: 14px; line-height: 1.45;">
+                                Comprueba las posiciones del Top 10 Élite alternando entre el modo Entrenos y Americanas.
+                            </div>
+                            <button id="blog-modal-ranking-action-btn" 
+                                    style="background: #38bdf8; color: #000000; font-weight: 950; font-size: 0.82rem; border: none; padding: 11px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(56, 189, 248, 0.35); transition: all 0.2s ease;"
+                                    onmouseover="this.style.transform='scale(1.04)';"
+                                    onmouseout="this.style.transform='scale(1)';"
+                                    onmousedown="this.style.transform='scale(0.97)';">
+                                <i class="fas fa-chart-line"></i> VER TOP 10 EN INICIO
+                            </button>
+                        </div>
+                    `;
+                } else if (isFutPost) {
+                    interactiveActionHtml = `
+                        <div style="margin: 20px 0 16px; background: linear-gradient(135deg, rgba(250, 204, 21, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%); border: 1.5px solid rgba(250, 204, 21, 0.5); border-radius: 18px; padding: 18px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.35);">
+                            <div style="font-size: 1.6rem; margin-bottom: 6px;">🃏 ⚡ 💎</div>
+                            <div style="font-size: 0.98rem; font-weight: 950; color: #ffffff; margin-bottom: 4px;">Tu Carta FUT Holográfica</div>
+                            <div style="font-size: 0.78rem; color: #cbd5e1; margin-bottom: 14px; line-height: 1.45;">
+                                Consulta tu valoración OVR, atributos en 3D y compártela directamente con tus compañeros de juego.
+                            </div>
+                            <button id="blog-modal-fut-action-btn" 
+                                    style="background: #facc15; color: #000000; font-weight: 950; font-size: 0.82rem; border: none; padding: 11px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(250, 204, 21, 0.35); transition: all 0.2s ease;"
+                                    onmouseover="this.style.transform='scale(1.04)';"
+                                    onmouseout="this.style.transform='scale(1)';"
+                                    onmousedown="this.style.transform='scale(0.97)';">
+                                <i class="fas fa-id-card"></i> ABRIR MI PERFIL DE JUGADOR
+                            </button>
+                        </div>
+                    `;
+                } else if (isWeatherPost) {
+                    interactiveActionHtml = `
+                        <div style="margin: 20px 0 16px; background: linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%); border: 1.5px solid rgba(56, 189, 248, 0.5); border-radius: 18px; padding: 18px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.35);">
+                            <div style="font-size: 1.6rem; margin-bottom: 6px;">🌦️ 💨 🎾</div>
+                            <div style="font-size: 0.98rem; font-weight: 950; color: #ffffff; margin-bottom: 4px;">Radar Meteorológico en Vivo</div>
+                            <div style="font-size: 0.78rem; color: #cbd5e1; margin-bottom: 14px; line-height: 1.45;">
+                                Consulta la predicción en tiempo real de humedad y velocidad de bola para planificar tu estrategia.
+                            </div>
+                            <button id="blog-modal-weather-action-btn" 
+                                    style="background: #38bdf8; color: #000000; font-weight: 950; font-size: 0.82rem; border: none; padding: 11px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(56, 189, 248, 0.35); transition: all 0.2s ease;"
+                                    onmouseover="this.style.transform='scale(1.04)';"
+                                    onmouseout="this.style.transform='scale(1)';"
+                                    onmousedown="this.style.transform='scale(0.97)';">
+                                <i class="fas fa-cloud-sun"></i> VER METEOROLOGÍA EN INICIO
+                            </button>
+                        </div>
+                    `;
                 }
 
                 const modal = document.createElement('div');
@@ -2841,27 +3206,56 @@
                         <div style="position: absolute; top: 100px; left: -50px; width: 150px; height: 150px; background: radial-gradient(circle, ${post.catColor || '#CCFF00'}15 0%, transparent 70%); pointer-events: none; filter: blur(30px);"></div>
                         
                         <!-- Premium Image Header Area (Magazine style) -->
-                        <div style="background-image: url('${articleImg}'); background-size: cover; background-position: center; height: 200px; position: relative; overflow: hidden; border-bottom: 1px solid rgba(255,255,255,0.06); flex-shrink: 0;">
+                        <div style="background-image: url('${articleImg}'); background-size: cover; background-position: center; height: 210px; position: relative; overflow: hidden; border-bottom: 1px solid rgba(255,255,255,0.06); flex-shrink: 0;">
                             <!-- Overlay degradado para fundido limpio a negro (#090f1e) en la base y oscurecimiento para botones -->
-                            <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(9, 15, 30, 0.2) 0%, rgba(9, 15, 30, 0.6) 60%, #090f1e 100%); pointer-events: none;"></div>
+                            <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(9, 15, 30, 0.25) 0%, rgba(9, 15, 30, 0.65) 60%, #090f1e 100%); pointer-events: none;"></div>
                             
                             <!-- Glassmorphism Floating Emoji Badge -->
                             <div class="blog-modal-emoji-badge" style="position: absolute; bottom: 16px; right: 16px; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; background: rgba(15, 23, 42, 0.6); border: 1.5px solid rgba(255, 255, 255, 0.25); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); z-index: 2; animation: badgePop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both 0.15s;">
-                                ${post.emoji || '📰'}
+                                ${post.emoji || '🎾'}
                             </div>
                         </div>
 
                         <!-- Content Area -->
                         <div id="blog-post-content-area" style="padding: 24px; padding-top: 16px; position: relative; z-index: 2; overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1;">
                             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
-                                <span style="font-size: 0.58rem; font-weight: 1000; color: ${post.catColor || '#CCFF00'}; border: 1px solid ${post.catColor || '#CCFF00'}45; padding: 4px 10px; border-radius: 8px; background: ${post.catColor || '#CCFF00'}12; letter-spacing: 0.8px; text-transform: uppercase;">${post.category || 'REVISTA'}</span>
+                                <span style="font-size: 0.58rem; font-weight: 1000; color: ${post.catColor || '#CCFF00'}; border: 1px solid ${post.catColor || '#CCFF00'}45; padding: 4px 10px; border-radius: 8px; background: ${post.catColor || '#CCFF00'}12; letter-spacing: 0.8px; text-transform: uppercase;">${post.category || 'REVISTA SOMOSPADEL'}</span>
                                 <span style="font-size: 0.62rem; color: rgba(255,255,255,0.45); font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase;">• ${post.readTime || '3 MIN'} DE LECTURA</span>
                             </div>
                             
                             <h3 style="color: white; font-weight: 950; font-size: 1.35rem; margin: 0 0 16px 0; line-height: 1.25; letter-spacing: -0.4px; text-shadow: 0 2px 10px rgba(0,0,0,0.4);">${post.title}</h3>
                             
-                            <p style="color: rgba(255,255,255,0.85); font-size: 0.86rem; font-weight: 500; line-height: 1.65; margin: 0 0 20px 0; word-break: break-word; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">${post.content}</p>
+                            <div style="color: rgba(255,255,255,0.88); font-size: 0.88rem; font-weight: 450; line-height: 1.7; margin: 0 0 20px 0; word-break: break-word;">${formattedContent}</div>
                             
+                            ${interactiveActionHtml}
+
+                            <!-- Bloque de Firma y Aval del Coach SomosPadel Academy -->
+                            <div style="margin: 22px 0 16px; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #CCFF00 0%, #10b981 100%); display: flex; align-items: center; justify-content: center; color: #000; font-size: 1.1rem; font-weight: 950; box-shadow: 0 4px 14px rgba(204,255,0,0.35);">
+                                        <i class="fas fa-medal"></i>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 0.82rem; font-weight: 950; color: #ffffff; letter-spacing: 0.2px;">Alex Coscolín • Head Coach</div>
+                                        <div style="font-size: 0.68rem; color: #CCFF00; font-weight: 700; letter-spacing: 0.3px;">SOMOSPADEL BARCELONA ACADEMY</div>
+                                    </div>
+                                </div>
+                                <button onclick="window.DashboardView.shareToWhatsApp('${post.id}', '${post.title.replace(/'/g, "\\'")}', event)"
+                                        style="background: #25D366; color: #ffffff; border: none; font-weight: 950; font-size: 0.74rem; padding: 8px 14px; border-radius: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(37,211,102,0.3); transition: transform 0.2s;"
+                                        onmouseover="this.style.transform='scale(1.04)';"
+                                        onmouseout="this.style.transform='scale(1)';">
+                                    <i class="fab fa-whatsapp"></i> COMPARTIR CON MI PAREJA
+                                </button>
+                            </div>
+
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 0.68rem; color: rgba(255,255,255,0.4); font-weight: 800; letter-spacing: 0.5px;">
+                                <span>Publicado: ${post.date || 'Recientemente'}</span>
+                                <span style="color: #CCFF00; font-weight: 900; letter-spacing: 0.8px;">SOMOSPADEL BCN JOURNAL</span>
+                            </div>
+                        </div>
+                            
+                            ${interactiveActionHtml}
+
                             <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 0.68rem; color: rgba(255,255,255,0.4); font-weight: 800; letter-spacing: 0.5px;">
                                 <span>Publicado: ${post.date || 'Recientemente'}</span>
                                 <span style="color: #CCFF00; font-weight: 900; letter-spacing: 0.8px;">SOMOSPADEL BCN</span>
@@ -2953,6 +3347,66 @@
                         saveBtn.style.borderColor = isNowSaved ? '#CCFF00' : 'rgba(255,255,255,0.25)';
                         const icon = saveBtn.querySelector('i');
                         if (icon) icon.className = isNowSaved ? 'fas fa-bookmark' : 'far fa-bookmark';
+                    });
+                }
+
+                const modesBtn = modal.querySelector('#blog-modal-modes-action-btn');
+                if (modesBtn) {
+                    modesBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        modal.remove();
+                        if (typeof window.showGameModesModal === 'function') {
+                            const targetTab = (postId && (postId.includes('suiz') || postId.includes('swiss')))
+                                ? 'suizo'
+                                : ((postId && postId.includes('twister')) ? 'twister' : 'pareja');
+                            window.showGameModesModal(targetTab);
+                        }
+                    });
+                }
+
+                const teamsBtn = modal.querySelector('#blog-modal-teams-action-btn');
+                if (teamsBtn) {
+                    teamsBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        modal.remove();
+                        if (window.Router && typeof window.Router.navigate === 'function') {
+                            window.Router.navigate('teams');
+                        }
+                    });
+                }
+
+                const rankingBtn = modal.querySelector('#blog-modal-ranking-action-btn');
+                if (rankingBtn) {
+                    rankingBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        modal.remove();
+                        const top10El = document.querySelector('.top10-elite-card-container') || document.getElementById('dsbl-nav-inicio');
+                        if (top10El) {
+                            top10El.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    });
+                }
+
+                const futBtn = modal.querySelector('#blog-modal-fut-action-btn');
+                if (futBtn) {
+                    futBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        modal.remove();
+                        if (window.Router && typeof window.Router.navigate === 'function') {
+                            window.Router.navigate('profile');
+                        }
+                    });
+                }
+
+                const weatherBtn = modal.querySelector('#blog-modal-weather-action-btn');
+                if (weatherBtn) {
+                    weatherBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        modal.remove();
+                        const weatherCard = document.querySelector('.weather-card-container') || document.querySelector('.weather-intel-badge');
+                        if (weatherCard) {
+                            weatherCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
                     });
                 }
 
@@ -3195,6 +3649,56 @@
                 combined.includes('pozo') || combined.includes('clase') ||
                 combined.includes('tecnica') || combined.includes('técnica')
             ) {
+                const isFem = combined.includes('femenin') || combined.includes('chicas') || cat === 'female' || gender === 'f';
+                const isMix = combined.includes('mixt') || cat === 'mixed' || gender === 'mxt';
+                const isMasc = combined.includes('masculin') || combined.includes('chicos') || cat === 'male' || gender === 'm';
+
+                if (isFem) {
+                    return {
+                        categoryName: 'entreno',
+                        badgeText: '🌸 ENTRENO FEM',
+                        badgeBg: '#d946ef',
+                        badgeTextColor: '#ffffff',
+                        badgeShadow: 'box-shadow: 0 0 14px rgba(217, 70, 239, 0.5);',
+                        iconHtml: '<i class="fas fa-crown" style="color: #d946ef;"></i>',
+                        cardBg: 'linear-gradient(145deg, #190a24 0%, #2a0e3a 100%)',
+                        cardBorder: '1px solid rgba(217, 70, 239, 0.3)',
+                        ctaColor: '#f472b6',
+                        targetRoute: 'entrenos',
+                        accentColor: '#d946ef'
+                    };
+                }
+                if (isMix) {
+                    return {
+                        categoryName: 'entreno',
+                        badgeText: '⚡ ENTRENO MIXTO',
+                        badgeBg: '#f97316',
+                        badgeTextColor: '#ffffff',
+                        badgeShadow: 'box-shadow: 0 0 14px rgba(249, 115, 22, 0.5);',
+                        iconHtml: '<i class="fas fa-bolt" style="color: #f97316;"></i>',
+                        cardBg: 'linear-gradient(145deg, #1f1205 0%, #331e08 100%)',
+                        cardBorder: '1px solid rgba(249, 115, 22, 0.3)',
+                        ctaColor: '#fb923c',
+                        targetRoute: 'entrenos',
+                        accentColor: '#f97316'
+                    };
+                }
+                if (isMasc) {
+                    return {
+                        categoryName: 'entreno',
+                        badgeText: '🎾 ENTRENO MASC',
+                        badgeBg: '#0284c7',
+                        badgeTextColor: '#ffffff',
+                        badgeShadow: 'box-shadow: 0 0 14px rgba(2, 132, 199, 0.5);',
+                        iconHtml: '<i class="fas fa-trophy" style="color: #38bdf8;"></i>',
+                        cardBg: 'linear-gradient(145deg, #071629 0%, #0e2746 100%)',
+                        cardBorder: '1px solid rgba(56, 189, 248, 0.3)',
+                        ctaColor: '#38bdf8',
+                        targetRoute: 'entrenos',
+                        accentColor: '#38bdf8'
+                    };
+                }
+
                 return {
                     categoryName: 'entreno',
                     badgeText: '🎾 ENTRENO',
@@ -3320,9 +3824,10 @@
 
                 if (!window.showWeatherDetails) {
                     window.showWeatherDetails = function() {
-                        const weatherWidget = document.getElementById('weather-widget-root');
-                        if (weatherWidget) {
-                            weatherWidget.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        if (window.Router) {
+                            window.Router.navigate('clima');
+                        } else if (window.EventsController) {
+                            window.EventsController.setTab('meteo');
                         }
                     };
                 }
@@ -3367,19 +3872,48 @@
                 const weatherIcon = (w && w.icon) ? w.icon : '☀️';
                 const weatherCity = (w && w.name) ? w.name : 'EL PRAT';
 
-                // Open active events sorted by date
+                const isFinishedEvt = (e) => {
+                    if (!e) return true;
+                    const st = (e.status || '').toLowerCase().trim();
+                    if (['finished', 'finalizado', 'completed', 'cancelled'].includes(st)) return true;
+                    if (window.EventService && typeof window.EventService.isEventFinished === 'function') {
+                        return window.EventService.isEventFinished(e);
+                    }
+                    return false;
+                };
+
+                const normalizeDate = (d) => {
+                    if (!d) return '9999-99-99';
+                    if (d.includes('/')) {
+                        const parts = d.split('/').map(p => p.trim());
+                        if (parts.length >= 2) {
+                            const day = parts[0].padStart(2, '0');
+                            const month = parts[1].padStart(2, '0');
+                            const year = parts[2] ? (parts[2].length === 2 ? '20' + parts[2] : parts[2]) : String(new Date().getFullYear());
+                            return `${year}-${month}-${day}`;
+                        }
+                    }
+                    return d;
+                };
+
+                // Open active events sorted by date (todos los eventos activos sin filtros restrictivos)
                 const openEvents = allEvents
-                    .filter(a => ['open', 'upcoming', 'scheduled'].includes(a.status))
-                    .sort((a, b) => new Date(a.date) - new Date(b.date));
+                    .filter(a => !isFinishedEvt(a))
+                    .sort((a, b) => {
+                        const dateA = normalizeDate(a.date);
+                        const dateB = normalizeDate(b.date);
+                        return new Date(dateA + 'T' + (a.time || '00:00')) - new Date(dateB + 'T' + (b.time || '00:00'));
+                    });
 
                 let stripHtml = '';
 
                 // Weather micro-pill HTML component
                 const weatherPillHtml = `
-                    <div onclick="event.stopPropagation(); if(window.showWeatherDetails){window.showWeatherDetails();}else if(window.DashboardView&&window.DashboardView.toggleWeatherDetails){window.DashboardView.toggleWeatherDetails('EL_PRAT');}" 
-                         style="cursor: pointer; display: inline-flex; align-items: center; gap: 3px; font-size: 0.58rem; font-weight: 800; color: #cbd5e1; background: rgba(0, 0, 0, 0.4); padding: 1.5px 6px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.08); user-select: none; -webkit-tap-highlight-color: transparent;" 
-                         title="Meteo ${weatherCity}: ${weatherTemp}">
+                    <div onclick="event.stopPropagation(); window.showWeatherDetails ? window.showWeatherDetails() : (window.Router && window.Router.navigate('clima'));" 
+                         style="cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-size: 0.58rem; font-weight: 800; color: #cbd5e1; background: rgba(0, 0, 0, 0.4); padding: 1.5px 6px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.35); user-select: none; -webkit-tap-highlight-color: transparent;" 
+                         title="Meteo ${weatherCity}: ${weatherTemp} (¡Nuevo Radar Táctico de Pistas!)">
                         <span>${weatherIcon}</span> <span>${weatherTemp}</span>
+                        <span style="background: #38bdf8; color: #021327; font-size: 0.50rem; font-weight: 950; padding: 1px 4px; border-radius: 4px; margin-left: 2px; letter-spacing: 0.3px;">RADAR</span>
                     </div>
                 `;
 
@@ -3390,141 +3924,164 @@
                     const myMatchTitle = (context.eventName || (isMyEntreno ? 'Entreno Programado' : 'Tu Partido Hoy')).trim();
                     const matchTime = context.matchTime || '19:30';
                     const courtText = context.court ? `Pista ${context.court}` : 'Pista 3';
+                    const matchAccent = isMyEntreno ? '#ef4444' : '#38bdf8';
+                    const matchCta = isMyEntreno ? '#ff7a59' : '#0284c7';
 
                     stripHtml = `
                     <div onclick="window.dashNavigate('${targetRoute}', 'strip_my_match')" 
-                         style="background: linear-gradient(135deg, #091a33 0%, #0d284f 100%); border: 1px solid rgba(56, 189, 248, 0.45); border-radius: 18px; padding: 10px 14px; min-height: 76px; max-height: 82px; display: flex; align-items: center; justify-content: space-between; gap: 10px; position: relative; overflow: hidden; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
+                         style="background: rgba(13, 20, 36, 0.88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.1); border-left: 3.5px solid ${matchAccent}; border-radius: 14px; padding: 7px 12px; min-height: 56px; max-height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 8px; position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
                          onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
                         
-                        <!-- Ambient Glow -->
-                        <div style="position: absolute; top: -30px; right: -30px; width: 90px; height: 90px; background: radial-gradient(circle, rgba(56, 189, 248, 0.2) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+                        <!-- Ambient Cyber Halo Glow -->
+                        <div style="position: absolute; top: -15px; right: -15px; width: 65px; height: 65px; background: radial-gradient(circle, ${matchAccent} 0%, transparent 70%); filter: blur(25px); opacity: 0.35; border-radius: 50%; pointer-events: none;"></div>
 
                         <!-- Left: Badge & Time -->
-                        <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; height: 56px; flex-shrink: 0; z-index: 2;">
-                            <span style="background: #0284c7; color: #ffffff; font-size: 0.58rem; font-weight: 950; padding: 2.5px 7px; border-radius: 6px; letter-spacing: 0.6px; text-transform: uppercase; box-shadow: 0 0 12px rgba(2, 132, 199, 0.5); display: inline-flex; align-items: center; gap: 3px;">
+                        <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; flex-shrink: 0; z-index: 2;">
+                            <span style="background: ${matchAccent}22; border: 1px solid ${matchAccent}66; color: ${matchAccent}; font-size: 0.54rem; font-weight: 950; padding: 1.5px 6px; border-radius: 5px; letter-spacing: 0.5px; text-transform: uppercase; display: inline-flex; align-items: center; gap: 2px; box-shadow: 0 0 10px ${matchAccent}33;">
                                 🎾 ${isMyEntreno ? 'ENTRENO' : 'PARTIDO'}
                             </span>
-                            <span style="font-size: 0.62rem; color: #38bdf8; font-weight: 850; display: inline-flex; align-items: center; gap: 3px;">
-                                <i class="far fa-clock" style="font-size: 0.56rem;"></i> ${matchTime}
+                            <span style="font-size: 0.58rem; color: #cbd5e1; font-weight: 850; display: inline-flex; align-items: center; gap: 3px;">
+                                <i class="far fa-clock" style="font-size: 0.52rem; color: ${matchAccent};"></i> ${matchTime}
                             </span>
                         </div>
 
                         <!-- Center: Match Info -->
-                        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; z-index: 2;">
-                            <div style="color: #ffffff; font-size: 0.84rem; font-weight: 900; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; z-index: 2; padding: 0 4px;">
+                            <div style="color: #ffffff; font-size: 0.78rem; font-weight: 850; letter-spacing: -0.2px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                 ${myMatchTitle}
                             </div>
-                            <div style="font-size: 0.62rem; color: #94a3b8; font-weight: 750; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 4px;">
-                                <span style="color: #38bdf8; font-weight: 900;">🎾 ${courtText}</span> • Convocatoria confirmada
+                            <div style="font-size: 0.58rem; color: #94a3b8; font-weight: 750; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;">
+                                <span style="color: ${matchAccent}; font-weight: 900;">🎾 ${courtText}</span> • Convocatoria confirmada
                             </div>
                         </div>
 
                         <!-- Right: Micro-clima & Direct CTA -->
-                        <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; height: 56px; flex-shrink: 0; z-index: 2;">
+                        <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 3px; flex-shrink: 0; z-index: 2;">
                             ${weatherPillHtml}
                             <button onclick="event.stopPropagation(); window.dashNavigate('${targetRoute}', 'strip_my_match')" 
-                                    style="background: #38bdf8; color: #071629; font-size: 0.64rem; font-weight: 950; padding: 5px 10px; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; letter-spacing: 0.4px; box-shadow: 0 2px 10px rgba(56, 189, 248, 0.4); white-space: nowrap; transition: transform 0.15s ease;"
+                                    style="background: linear-gradient(135deg, ${matchAccent} 0%, ${matchCta} 100%); color: #ffffff; font-size: 0.58rem; font-weight: 950; padding: 3.5px 9px; border-radius: 7px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; letter-spacing: 0.3px; box-shadow: 0 2px 10px ${matchAccent}55; white-space: nowrap; transition: transform 0.15s ease;"
                                     onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
-                                <span>VER PISTA</span> <i class="fas fa-arrow-right" style="font-size: 0.52rem;"></i>
+                                <span>VER PISTA</span> <i class="fas fa-arrow-right" style="font-size: 0.48rem;"></i>
                             </button>
                         </div>
                     </div>
                     `;
                 } else if (openEvents.length > 0) {
-                    // CASE 2: EVENTOS DISPONIBLES (SMART COMPACT EVENT STRIP)
+                    // CASE 2: RESUMEN DE EVENTOS ACTIVOS (TODOS VISIBLES DIRECTAMENTE)
                     const displayEvents = openEvents.slice(0, 6);
 
-                    const slidesHtml = displayEvents.map((evt, idx) => {
+                    const cardsHtml = displayEvents.map((evt, idx) => {
                         const theme = this.getEventCategoryTheme(evt);
-                        const eventNameText = (evt.name || evt.title || (theme.categoryName === 'entreno' ? 'Entreno Mixto' : 'Americana Oficial')).trim();
+                        const eventNameText = (evt.name || evt.title || (theme.categoryName === 'entreno' ? 'Entreno Pistas' : 'Americana Oficial')).trim();
                         const dateText = this.formatDateShort ? this.formatDateShort(evt.date) : 'Hoy';
-                        const timeStr = evt.time || '19:30';
+                        const timeStr = evt.time ? (evt.time_end && !evt.time.includes('-') ? `${evt.time} - ${evt.time_end}` : evt.time) : '19:30';
                         const timeDisplay = `${dateText === 'HOY' ? 'Hoy' : dateText} ${timeStr}`;
 
                         // Capacity & Urgency
-                        const max = evt.max_players || evt.maxPlayers || 16;
-                        const current = (evt.registeredPlayers || evt.players || []).length;
+                        const maxCourts = parseInt(evt.max_courts || evt.courts || 0);
+                        const max = maxCourts > 0 ? (maxCourts * 4) : parseInt(evt.max_players || evt.maxPlayers || 16);
+                        const playersList = (evt.players && evt.players.length > 0) ? evt.players : (evt.registeredPlayers || []);
+                        const current = playersList.length;
                         const spotsLeft = Math.max(0, max - current);
-                        const urgencyColor = spotsLeft <= 3 ? '#ef4444' : (spotsLeft <= 6 ? '#f59e0b' : '#34d399');
-                        const urgencyText = spotsLeft > 0 ? `${spotsLeft} plazas libres` : 'Completo';
+                        const urgencyColor = spotsLeft <= 2 ? '#ef4444' : (spotsLeft <= 4 ? '#f59e0b' : '#10b981');
+                        const urgencyText = spotsLeft > 0 ? `⚡ ${spotsLeft} libres` : 'Completo';
                         const minLevel = evt.min_level || evt.minLevel || '2.5';
                         const maxLevel = evt.max_level || evt.maxLevel || '4.5';
+                        const capacityPercent = max > 0 ? Math.min(100, Math.round((current / max) * 100)) : 0;
+                        const ctaTextColor = (theme.accentColor === '#CCFF00' || theme.ctaColor === '#CCFF00') ? '#071629' : '#ffffff';
 
                         return `
                         <div onclick="window.dashNavigate('${theme.targetRoute}', 'strip_card')" 
-                             style="min-width: 100%; max-width: 100%; flex-shrink: 0; scroll-snap-align: start; box-sizing: border-box; margin-right: 8px; background: ${theme.cardBg}; border: ${theme.cardBorder}; border-radius: 18px; padding: 10px 14px; min-height: 76px; max-height: 82px; display: flex; align-items: center; justify-content: space-between; gap: 10px; position: relative; overflow: hidden; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
+                             style="width: 100%; box-sizing: border-box; background: rgba(13, 20, 36, 0.88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.1); border-left: 3.5px solid ${theme.accentColor}; border-radius: 14px; padding: 7px 12px; min-height: 56px; max-height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 8px; position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
                              onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
                             
-                            <!-- Ambient Category Glow -->
-                            <div style="position: absolute; top: -25px; right: -25px; width: 80px; height: 80px; background: radial-gradient(circle, ${theme.accentColor}25 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+                            <!-- Ambient Cyber Halo Glow -->
+                            <div style="position: absolute; top: -15px; right: -15px; width: 65px; height: 65px; background: radial-gradient(circle, ${theme.accentColor} 0%, transparent 70%); filter: blur(25px); opacity: 0.35; border-radius: 50%; pointer-events: none;"></div>
 
                             <!-- Left: Badge & Time -->
-                            <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; height: 56px; flex-shrink: 0; z-index: 2;">
-                                <span style="background: ${theme.badgeBg}; color: ${theme.badgeTextColor || '#ffffff'}; font-size: 0.58rem; font-weight: 950; padding: 2.5px 7px; border-radius: 6px; letter-spacing: 0.5px; text-transform: uppercase; ${theme.badgeShadow || ''} display: inline-flex; align-items: center; gap: 3px;">
+                            <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; flex-shrink: 0; z-index: 2;">
+                                <span style="background: ${theme.accentColor}22; border: 1px solid ${theme.accentColor}66; color: ${theme.accentColor}; font-size: 0.54rem; font-weight: 950; padding: 1.5px 6px; border-radius: 5px; letter-spacing: 0.5px; text-transform: uppercase; display: inline-flex; align-items: center; gap: 2px; box-shadow: 0 0 10px ${theme.accentColor}33;">
                                     ${theme.badgeText}
                                 </span>
-                                <span style="font-size: 0.62rem; color: #cbd5e1; font-weight: 800; display: inline-flex; align-items: center; gap: 3px;">
-                                    <i class="far fa-clock" style="font-size: 0.56rem; color: #94a3b8;"></i> ${timeDisplay}
+                                <span style="font-size: 0.58rem; color: #cbd5e1; font-weight: 850; display: inline-flex; align-items: center; gap: 3px;">
+                                    <i class="far fa-clock" style="font-size: 0.52rem; color: ${theme.accentColor};"></i> ${timeDisplay}
                                 </span>
                             </div>
 
-                            <!-- Center: Title & Subtitle -->
-                            <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; z-index: 2; padding: 0 2px;">
-                                <div style="color: #ffffff; font-size: 0.82rem; font-weight: 900; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${eventNameText}">
+                            <!-- Center: Title, Progress Bar & Urgency -->
+                            <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; z-index: 2; padding: 0 4px;">
+                                <div style="color: #ffffff; font-size: 0.78rem; font-weight: 850; letter-spacing: -0.2px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${eventNameText}">
                                     ${eventNameText}
                                 </div>
-                                <div style="font-size: 0.62rem; color: #94a3b8; font-weight: 750; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 4px;">
-                                    <span style="color: ${urgencyColor}; font-weight: 900;">⚡ ${urgencyText}</span> • <span style="color: #cbd5e1;">Nivel ${minLevel}-${maxLevel}</span>
+                                <div style="display: flex; align-items: center; gap: 6px; margin-top: 3px;">
+                                    <!-- Mini Progress Bar de Ocupación -->
+                                    <div style="width: 38px; height: 4.5px; background: rgba(255, 255, 255, 0.12); border-radius: 3px; overflow: hidden; flex-shrink: 0;" title="${current}/${max} inscritos">
+                                        <div style="width: ${capacityPercent}%; height: 100%; background: ${urgencyColor}; border-radius: 3px; transition: width 0.3s ease;"></div>
+                                    </div>
+                                    <div style="font-size: 0.58rem; color: #94a3b8; font-weight: 750; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        <span style="color: ${urgencyColor}; font-weight: 900;">${urgencyText}</span> • <span style="color: #cbd5e1;">Nv. ${minLevel}-${maxLevel}</span>
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- Right: Micro-clima & Button -->
-                            <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; height: 56px; flex-shrink: 0; z-index: 2;">
-                                <div style="display: inline-flex; align-items: center; gap: 4px;">
-                                    ${displayEvents.length > 1 ? `<span style="font-size: 0.50rem; color: #94a3b8; font-weight: 850; background: rgba(0,0,0,0.4); padding: 1px 4px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.08);">${idx + 1}/${displayEvents.length}</span>` : ''}
-                                    ${weatherPillHtml}
-                                </div>
+                            <!-- Right: Micro-clima & Neon CTA Button -->
+                            <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 3px; flex-shrink: 0; z-index: 2;">
+                                ${weatherPillHtml}
                                 <button onclick="event.stopPropagation(); window.dashNavigate('${theme.targetRoute}', 'strip_cta')" 
-                                        style="background: ${theme.ctaColor}; color: ${theme.categoryName === 'especial' ? '#0a192f' : '#ffffff'}; font-size: 0.64rem; font-weight: 950; padding: 5px 10px; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; letter-spacing: 0.4px; box-shadow: 0 2px 10px rgba(0,0,0,0.35); white-space: nowrap; transition: transform 0.15s ease;"
+                                        style="background: linear-gradient(135deg, ${theme.accentColor} 0%, ${theme.ctaColor} 100%); color: ${ctaTextColor}; font-size: 0.58rem; font-weight: 950; padding: 3.5px 9px; border-radius: 7px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; letter-spacing: 0.3px; box-shadow: 0 2px 10px ${theme.accentColor}44; white-space: nowrap; transition: transform 0.15s ease;"
                                         onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
-                                    <span>RESERVAR</span> <i class="fas fa-arrow-right" style="font-size: 0.52rem;"></i>
+                                    <span>RESERVAR</span> <i class="fas fa-arrow-right" style="font-size: 0.48rem;"></i>
                                 </button>
                             </div>
                         </div>
                         `;
                     }).join('');
 
+                    const headerHtml = displayEvents.length > 1 ? `
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; padding: 0 2px;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 0.62rem; font-weight: 950; color: #000000; letter-spacing: 0.5px; text-transform: uppercase;">
+                                🎾 ENTRENOS Y AMERICANAS ACTIVOS
+                            </span>
+                            <span style="background: rgba(0, 0, 0, 0.15); color: #000000; border: 1px solid rgba(0, 0, 0, 0.3); font-size: 0.52rem; font-weight: 950; padding: 1px 6px; border-radius: 10px;">
+                                ${displayEvents.length}
+                            </span>
+                        </div>
+                        <div onclick="window.dashNavigate('entrenos', 'strip_view_all')" style="font-size: 0.58rem; color: #38bdf8; font-weight: 850; cursor: pointer; display: flex; align-items: center; gap: 3px;">
+                            <span>Ver todos</span> <i class="fas fa-chevron-right" style="font-size: 0.5rem;"></i>
+                        </div>
+                    </div>
+                    ` : '';
+
                     stripHtml = `
-                    <style>
-                        .compact-strip-track::-webkit-scrollbar { display: none !important; }
-                    </style>
-                    <div class="compact-strip-track" style="display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; width: 100%; gap: 0;">
-                        ${slidesHtml}
+                    <div style="display: flex; flex-direction: column; width: 100%; gap: 8px;">
+                        ${headerHtml}
+                        ${cardsHtml}
                     </div>
                     `;
                 } else {
-                    // CASE 3: SIN EVENTOS ABIERTOS (TIRA DELGADA ELEGANTE ~60px)
+                    // CASE 3: SIN EVENTOS ABIERTOS (TIRA DELGADA ELEGANTE ~50px)
                     stripHtml = `
                     <div onclick="window.dashNavigate('entrenos', 'strip_empty')" 
-                         style="background: linear-gradient(135deg, #0b1528 0%, #13223f 100%); border: 1px solid rgba(56, 189, 248, 0.28); border-radius: 16px; padding: 8px 14px; min-height: 60px; max-height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 10px; position: relative; overflow: hidden; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
+                         style="background: linear-gradient(135deg, #0b1528 0%, #13223f 100%); border: 1px solid rgba(56, 189, 248, 0.28); border-radius: 14px; padding: 6px 12px; min-height: 50px; max-height: 54px; display: flex; align-items: center; justify-content: space-between; gap: 8px; position: relative; overflow: hidden; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
                          onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
                         
-                        <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; z-index: 2;">
-                            <span style="background: rgba(2, 132, 199, 0.2); color: #38bdf8; font-size: 0.58rem; font-weight: 950; padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.35); letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap; flex-shrink: 0;">
+                        <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; z-index: 2;">
+                            <span style="background: rgba(2, 132, 199, 0.2); color: #38bdf8; font-size: 0.54rem; font-weight: 950; padding: 2px 6px; border-radius: 5px; border: 1px solid rgba(56, 189, 248, 0.35); letter-spacing: 0.4px; text-transform: uppercase; white-space: nowrap; flex-shrink: 0;">
                                 🎾 PRÓXIMOS EVENTOS
                             </span>
                             <div style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                <div style="color: #ffffff; font-size: 0.78rem; font-weight: 850; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Descubre próximos entrenos y americanas</div>
-                                <div style="color: #94a3b8; font-size: 0.58rem; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Consulta las fechas disponibles y resérvalas</div>
+                                <div style="color: #ffffff; font-size: 0.74rem; font-weight: 850; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Descubre próximos entrenos y americanas</div>
+                                <div style="color: #94a3b8; font-size: 0.54rem; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Consulta fechas disponibles y apúntate</div>
                             </div>
                         </div>
 
-                        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; z-index: 2;">
+                        <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0; z-index: 2;">
                             ${weatherPillHtml}
                             <button onclick="event.stopPropagation(); window.dashNavigate('entrenos', 'strip_empty')" 
-                                    style="background: #38bdf8; color: #071629; font-size: 0.64rem; font-weight: 950; padding: 5px 11px; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; letter-spacing: 0.4px; box-shadow: 0 2px 10px rgba(56, 189, 248, 0.35); white-space: nowrap; transition: transform 0.15s ease;"
+                                    style="background: #38bdf8; color: #071629; font-size: 0.58rem; font-weight: 950; padding: 4px 9px; border-radius: 7px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; letter-spacing: 0.3px; box-shadow: 0 2px 8px rgba(56, 189, 248, 0.3); white-space: nowrap; transition: transform 0.15s ease;"
                                     onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
-                                <span>VER</span> <i class="fas fa-arrow-right" style="font-size: 0.52rem;"></i>
+                                <span>VER</span> <i class="fas fa-arrow-right" style="font-size: 0.48rem;"></i>
                             </button>
                         </div>
                     </div>
@@ -3557,67 +4114,126 @@
         }
 
         /**
-         * Real data context builder for the Hero Card
+         * Retorna de inmediato (síncrono, 0ms) el mejor contexto inicial disponible
+         * combinando el perfil del usuario actual y el último contexto persistido en Storage.
+         * Permite que la UI del Dashboard y la HeroCard se pinten en el milisegundo 0.
+         * @param {Object} user - Usuario actual
+         * @returns {Object} Contexto inicial completo y seguro
+         */
+        getFastInitialContext(user) {
+            const userId = user ? (user.uid || user.id || 'anonymous') : 'anonymous';
+            const cacheKey = `sp_last_dashboard_context_${userId}`;
+
+            let cached = null;
+            try {
+                const stored = localStorage.getItem(cacheKey) || sessionStorage.getItem(cacheKey);
+                if (stored) {
+                    cached = JSON.parse(stored);
+                }
+            } catch (e) {
+                console.warn("[DashboardView] Error parsing cached dashboard context:", e);
+            }
+
+            if (!cached && window._lastDashboardContext) {
+                cached = window._lastDashboardContext;
+            }
+
+            const initial = {
+                status: cached?.status || 'EMPTY',
+                eventName: cached?.eventName || null,
+                eventDate: cached?.eventDate || null,
+                eventTime: cached?.eventTime || null,
+                court: cached?.court || null,
+                opponents: cached?.opponents || null,
+                partner: cached?.partner || null,
+                eventDateRaw: cached?.eventDateRaw || null,
+                hasMatchToday: !!cached?.hasMatchToday,
+                hasOpenTournament: !!cached?.hasOpenTournament,
+                hasRecentVictory: !!cached?.hasRecentVictory,
+                hasMatchThisWeek: !!cached?.hasMatchThisWeek,
+                activeTournaments: cached?.activeTournaments || 0,
+                upcomingMatches: cached?.upcomingMatches || 0,
+                myEvents: cached?.myEvents || [],
+                scoreA: cached?.scoreA || null,
+                scoreB: cached?.scoreB || null,
+                pointsEarned: cached?.pointsEarned || 0,
+                newRank: user?.ranking_pos ? String(user.ranking_pos) : (user?.rank ? String(user.rank) : (cached?.newRank || '-')),
+                myRank: user?.ranking_pos || user?.rank || cached?.myRank || '-',
+                rankStatus: user?.trend || cached?.rankStatus || 'stable',
+                confirmed: !!cached?.confirmed,
+                matchId: cached?.matchId || null,
+                matchType: cached?.matchType || null,
+                round: cached?.round || null,
+                tournamentName: cached?.tournamentName || null,
+                tournamentDate: cached?.tournamentDate || null,
+                tournamentTime: cached?.tournamentTime || null,
+                tournamentId: cached?.tournamentId || null,
+                maxPlayers: cached?.maxPlayers || 16,
+                currentPlayers: cached?.currentPlayers || 0,
+                matchDay: cached?.matchDay || null,
+                matchTime: cached?.matchTime || null,
+                activeTournament: cached?.activeTournament || null
+            };
+
+            window._lastDashboardContext = initial;
+            return initial;
+        }
+
+        /**
+         * Real data context builder for the Hero Card (Optimizado y No Bloqueante)
          * @param {Object} user - The current logged in user
          */
         async buildContext(user) {
-            const context = {
-                status: 'EMPTY',
-                eventName: null,
-                eventDate: null,
-                eventTime: null,
-                court: null,
-                opponents: null,
-                partner: null,
-                eventDateRaw: null,
-                hasMatchToday: false,
-                hasOpenTournament: false,
-                hasRecentVictory: false,
-                hasMatchThisWeek: false,
-                activeTournaments: 0,
-                upcomingMatches: 0,
-                myEvents: [],
-                scoreA: null,
-                scoreB: null,
-                pointsEarned: 0,
-                newRank: '-',
-                confirmed: false,
-                matchId: null,
-                matchType: null
-            };
-
-
+            // Inicializar inmediatamente con el contexto rápido (0ms)
+            const context = this.getFastInitialContext(user);
 
             if (!user) return context;
 
             try {
-                // 1. Get All Events & User Stats (Real-time or Cached)
-                const [allEvents, rankedPlayers] = await Promise.all([
-                    window.AmericanaService ? window.AmericanaService.getAllActiveEvents() : [],
-                    window.RankingController ? window.RankingController.calculateSilently() : []
-                ]);
-
                 const userId = user.uid || user.id;
 
-                // 2. Real Rank Calculation
-                if (rankedPlayers.length > 0) {
-                    const myRankIndex = rankedPlayers.findIndex(p => p.id === userId);
-                    context.newRank = myRankIndex !== -1 ? (myRankIndex + 1).toString() : '-';
+                // 1. OBTENER EVENTOS ACTIVOS (Única llamada optimizada a AmericanaService)
+                const allEvents = window.AmericanaService ? await window.AmericanaService.getAllActiveEvents() : [];
+
+                // 2. OBTENCIÓN RÁPIDA DE RANKING (Sin bloquear descarga global de Firestore)
+                // Usamos user.ranking_pos o user.rank directamente si está disponible
+                const directRank = user.ranking_pos || user.rank || null;
+                if (directRank) {
+                    context.newRank = String(directRank);
+                    context.myRank = directRank;
+                    context.rankStatus = user.trend || 'stable';
                 }
 
-                // 3. Victory Detection (Last 24h)
-                const winningMatch = await this.checkRecentVictory(user);
-                context.hasRecentVictory = !!winningMatch;
-                if (winningMatch) {
-                    const isTeamA = (winningMatch.team_a_ids || []).includes(userId);
-                    context.scoreA = isTeamA ? winningMatch.score_a : winningMatch.score_b;
-                    context.scoreB = isTeamA ? winningMatch.score_b : winningMatch.score_a;
-                    context.opponents = isTeamA ? winningMatch.team_b_names : winningMatch.team_a_names;
+                // Si RankingController ya tiene datos en caché en memoria, los aprovechamos síncronamente
+                const cachedRanking = window.RankingController?._cachedRanking;
+                if (cachedRanking && Array.isArray(cachedRanking) && cachedRanking.length > 0) {
+                    const myRankIndex = cachedRanking.findIndex(p => p.id === userId);
+                    if (myRankIndex !== -1) {
+                        context.newRank = (myRankIndex + 1).toString();
+                        context.myRank = myRankIndex + 1;
+                        if (cachedRanking[myRankIndex].trend) {
+                            context.rankStatus = cachedRanking[myRankIndex].trend;
+                        }
+                    }
+                } else if (window.RankingController?.calculateSilently) {
+                    // Desacoplado: si no hay caché en memoria, no bloqueamos buildContext.
+                    // Se ejecuta de fondo y actualiza badges suavemente al terminar.
+                    window.RankingController.calculateSilently().then(freshRanking => {
+                        if (freshRanking && Array.isArray(freshRanking) && freshRanking.length > 0) {
+                            const myRankIndex = freshRanking.findIndex(p => p.id === userId);
+                            if (myRankIndex !== -1) {
+                                const rankStr = (myRankIndex + 1).toString();
+                                const rnkEl = document.getElementById('user-ranking-val');
+                                if (rnkEl) rnkEl.innerText = `#${rankStr}`;
+                                const heroBadge = document.querySelector('.hero-ranking-badge');
+                                if (heroBadge) heroBadge.innerText = `#${rankStr}`;
+                            }
+                        }
+                    }).catch(err => console.warn("[DashboardView] calculateSilently background sync warning:", err));
                 }
 
-                // 4. Inscriptions & Waitlist Monitor
+                // 3. FILTRADO DE TORNEOS Y PARTICIPACIÓN DEL USUARIO (Reutilizando allEvents)
                 const openEvents = allEvents.filter(a => ['open', 'upcoming', 'scheduled'].includes(a.status));
-                context.activeTournaments = openEvents.length;
                 context.hasOpenTournament = openEvents.length > 0;
 
                 // Populate first available tournament for HeroCard display
@@ -3625,39 +4241,30 @@
                     const nextTournament = openEvents[0];
                     context.tournamentName = nextTournament.name;
                     context.tournamentDate = this.formatFriendlyDate(nextTournament.date);
-                    context.tournamentTime = nextTournament.time || '18:00';
+                    context.tournamentTime = nextTournament.time ? (nextTournament.time_end && !nextTournament.time.includes('-') ? `${nextTournament.time} - ${nextTournament.time_end}` : nextTournament.time) : '18:00';
                     context.tournamentId = nextTournament.id;
-                    context.maxPlayers = nextTournament.max_players || 24;
-                    context.currentPlayers = (nextTournament.registeredPlayers || []).length;
+                    const maxCourtsTournament = parseInt(nextTournament.max_courts || nextTournament.courts || 0);
+                    context.maxPlayers = maxCourtsTournament > 0 ? (maxCourtsTournament * 4) : parseInt(nextTournament.max_players || nextTournament.maxPlayers || 16);
+                    const pList = (nextTournament.players && nextTournament.players.length > 0) ? nextTournament.players : (nextTournament.registeredPlayers || []);
+                    context.currentPlayers = pList.length;
                 }
 
-                // 5. STATS & ARCHIVE (Calculated silently in background)
-                if (rankedPlayers && rankedPlayers.length > 0) {
-                    const me = rankedPlayers.find(p => p.id === userId);
-                    if (me) {
-                        context.myRank = me.rank;
-                        context.rankStatus = me.trend || 'stable';
-                    }
-                }
+                // Acción y QuickStats: torneos activos (REUTILIZANDO allEvents, sin segunda llamada a getAllActiveEvents)
+                const activeTournamentsList = allEvents.filter(e => {
+                    const title = (e.name || e.title || '').toLowerCase();
+                    const isEnt = e.type === 'entreno' || title.includes('entreno') || title.includes('pozo') || title.includes('clase');
+                    return !isEnt && e.status !== 'finished';
+                });
+                context.activeTournaments = activeTournamentsList.length;
 
-                // 2026 UPDATE: Fetch active tournaments for ActionGrid badge
-                if (window.AmericanaService) {
-                    const activeEvents = await window.AmericanaService.getAllActiveEvents();
-                    context.activeTournaments = activeEvents.filter(e => {
-                        const title = (e.name || e.title || '').toLowerCase();
-                        const isEnt = e.type === 'entreno' || title.includes('entreno') || title.includes('pozo') || title.includes('clase');
-                        return !isEnt && e.status !== 'finished';
-                    }).length;
+                // Specific active tournament for QuickStats (if user is in one)
+                context.activeTournament = allEvents.find(e => {
+                    const title = (e.name || e.title || '').toLowerCase();
+                    const isEnt = e.type === 'entreno' || title.includes('entreno') || title.includes('pozo') || title.includes('clase');
+                    return !isEnt && e.status !== 'finished' && (e.players || []).some(p => (p.id || p.uid || p) === userId);
+                });
 
-                    // Specific active tournament for QuickStats (if user is in one)
-                    context.activeTournament = activeEvents.find(e => {
-                        const title = (e.name || e.title || '').toLowerCase();
-                        const isEnt = e.type === 'entreno' || title.includes('entreno') || title.includes('pozo') || title.includes('clase');
-                        return !isEnt && e.status !== 'finished' && (e.players || []).some(p => p.id === userId);
-                    });
-                }
-
-                // 5. User's specific participation (re-ordered)
+                // Participación del usuario
                 context.myEvents = allEvents.filter(a => {
                     const players = a.players || a.registeredPlayers || [];
                     return players.some(p => (p.uid || p.id || p) === userId);
@@ -3666,22 +4273,40 @@
                 context.upcomingMatches = context.myEvents.filter(e => e.status !== 'finished').length;
                 context.hasMatchThisWeek = context.upcomingMatches > 0;
 
-                // 6. DEEP DIVE: Current/Next Match Details
+                // Evento activo actual del usuario
                 const myActiveEvent = context.myEvents.find(e => !['finished', 'closed', 'cancelled'].includes(e.status));
 
+                // 4. PARALELIZACIÓN CON Promise.allSettled:
+                // checkRecentVictory Y fetchMatchDetails se disparan concurrentemente
+                const victoryPromise = this.checkRecentVictory(user);
+                const matchPromise = myActiveEvent 
+                    ? this.fetchMatchDetails(userId, myActiveEvent.id, myActiveEvent.type, myActiveEvent.status)
+                    : Promise.resolve(null);
+
+                const [victorySettled, matchSettled] = await Promise.allSettled([victoryPromise, matchPromise]);
+                const winningMatch = victorySettled.status === 'fulfilled' ? victorySettled.value : null;
+                const matchData = matchSettled.status === 'fulfilled' ? matchSettled.value : null;
+
+                // 5. PROCESAR RESULTADO DE VICTORIA (Últimas 24h)
+                context.hasRecentVictory = !!winningMatch;
+                if (winningMatch) {
+                    const isTeamA = (winningMatch.team_a_ids || []).includes(userId);
+                    context.scoreA = isTeamA ? winningMatch.score_a : winningMatch.score_b;
+                    context.scoreB = isTeamA ? winningMatch.score_b : winningMatch.score_a;
+                    context.opponents = isTeamA ? winningMatch.team_b_names : winningMatch.team_a_names;
+                }
+
+                // 6. DETALLES DEL PARTIDO / ESTADO
                 if (myActiveEvent) {
                     const isTodayMatch = this.isToday(myActiveEvent.date);
                     const isLive = myActiveEvent.status === 'live' || myActiveEvent.status === 'in_progress' || myActiveEvent.status === 'pairing';
 
-                    // FETCH REAL MATCH DATA (Court, Partner, Opponents)
-                    // Intentamos obtener detalles independientemente de si es hoy, por si el admin ya generó cruces
-                    const matchData = await this.fetchMatchDetails(userId, myActiveEvent.id, myActiveEvent.type, myActiveEvent.status);
-                    
                     if (matchData) {
-                        context.hasMatchToday = true; // Lo marcamos como "Today" para que HeroCard use renderUpcomingMatch
+                        const eventMatchTime = myActiveEvent.time ? (myActiveEvent.time_end && !myActiveEvent.time.includes('-') ? `${myActiveEvent.time} - ${myActiveEvent.time_end}` : myActiveEvent.time) : '18:00';
+                        context.hasMatchToday = true; // HeroCard renderUpcomingMatch
                         context.status = isLive ? 'LIVE_MATCH' : 'UPCOMING_EVENT';
                         context.eventName = myActiveEvent.name;
-                        context.matchTime = myActiveEvent.time || '18:00';
+                        context.matchTime = eventMatchTime;
                         context.matchDay = isTodayMatch ? (myActiveEvent.type === 'entreno' ? 'Entreno (Pozo)' : 'Americana') : this.formatFriendlyDate(myActiveEvent.date);
                         context.tournamentName = myActiveEvent.type === 'entreno' ? 'Entreno (Pozo)' : 'Americana';
                         context.eventDateRaw = myActiveEvent.date;
@@ -3695,31 +4320,41 @@
                         context.round = matchData.round;
                     } else {
                         // Si no hay partidos pero el evento es hoy o está en vivo, mostramos info general
+                        const fallbackTime = myActiveEvent.time ? (myActiveEvent.time_end && !myActiveEvent.time.includes('-') ? `${myActiveEvent.time} - ${myActiveEvent.time_end}` : myActiveEvent.time) : '18:00';
                         if (isTodayMatch || isLive) {
                             context.hasMatchToday = true;
                             context.status = isLive ? 'LIVE_MATCH' : 'UPCOMING_EVENT';
                             context.eventName = myActiveEvent.name;
-                            context.matchTime = myActiveEvent.time || '18:00';
+                            context.matchTime = fallbackTime;
                             context.matchDay = myActiveEvent.type === 'entreno' ? 'Entreno (Pozo)' : 'Americana';
                         } else {
                             context.status = 'UPCOMING_EVENT';
                             context.eventName = myActiveEvent.name;
-                            context.matchTime = myActiveEvent.time || '18:00';
+                            context.matchTime = fallbackTime;
                             context.matchDay = this.formatFriendlyDate(myActiveEvent.date);
                         }
                     }
                 } else if (context.hasRecentVictory) {
                     context.status = 'VICTORY';
-                    context.pointsEarned = 15; // Mock for now, should calculate
+                    context.pointsEarned = 15;
                 } else if (context.hasOpenTournament) {
                     context.status = 'EMPTY';
+                }
+
+                // 7. PERSISTENCIA EN STORAGE (localStorage & sessionStorage)
+                try {
+                    const cacheKey = `sp_last_dashboard_context_${userId}`;
+                    const jsonStr = JSON.stringify(context);
+                    localStorage.setItem(cacheKey, jsonStr);
+                    sessionStorage.setItem(cacheKey, jsonStr);
+                    window._lastDashboardContext = context;
+                } catch (saveErr) {
+                    console.warn("[DashboardView] Error saving dashboard context to storage:", saveErr);
                 }
 
             } catch (err) {
                 console.error("❌ [DashboardView] Error building user context:", err);
             }
-
-
 
             return context;
         }
@@ -3941,63 +4576,1012 @@
         }
 
         async loadLiveWidgetContent(context) {
+            // ANTI-PARPADEO: mutex simple — si ya hay una ejecución activa, guardar la última
+            // petición y procesarla al terminar (no acumular múltiples)
+            if (this._loadLiveRunning) {
+                this._loadLivePendingContext = context;
+                return;
+            }
+            this._loadLiveRunning = true;
             console.log("🧠 [DashboardView] loadLiveWidgetContent started");
 
-            // 0. Render Hero Card (Priority Sync)
             try {
-                const heroRoot = document.getElementById('hero-card-root');
-                if (heroRoot && window.HeroCard) {
-                    heroRoot.innerHTML = window.HeroCard.render(context);
+                // 0. Render Radar Discovery Banner (solo si no existe ya en DOM)
+                try {
+                    this.renderRadarDiscoveryBanner();
+                } catch (e) {
+                    console.warn("⚠️ [DashboardView] Radar discovery banner error:", e);
+                }
 
-                    // POPUP ALERT: Torneo (Solo ventana emergente)
-                    if (context.hasOpenTournament && !context.isSignedUp && window.PremiumModal) {
-                        const sessionKey = `popup_tournament_${context.tournamentId}`;
-                        if (!sessionStorage.getItem(sessionKey)) {
-                            sessionStorage.setItem(sessionKey, 'true');
-                            setTimeout(() => {
-                                window.PremiumModal.confirm({
-                                    title: "INSCRIPCIÓN ABIERTA",
-                                    message: `El evento <b>${context.tournamentName}</b> está disponible.<br>¿Quieres ver los detalles y apuntarte?`,
-                                    confirmText: "VER DETALLES",
-                                    cancelText: "LUEGO",
-                                    type: 'success'
-                                }).then(res => {
-                                    if (res) window.Router.navigate('entrenos');
-                                });
-                            }, 800);
+                // 0.05 Render Push Discovery Banner & Check Push Promo Popup
+                try {
+                    this.renderPushDiscoveryBanner();
+                    this.checkAndShowPushPopup();
+                } catch (e) {
+                    console.warn("⚠️ [DashboardView] Push discovery promo error:", e);
+                }
+
+                // 0.06 Check New Event / Open Spots Popup (Con delay para suavidad)
+                try {
+                    setTimeout(() => {
+                        this.checkAndShowNewEventPopup();
+                    }, 800);
+                } catch (e) {
+                    console.warn("⚠️ [DashboardView] New event popup error:", e);
+                }
+
+                // HeroCard eliminado
+
+                // 0.2 Render Action Grid — GUARD: solo actualiza si el HTML cambia
+                try {
+                    const actionGridRoot = document.getElementById('action-grid-root');
+                    if (actionGridRoot && window.ActionGrid) {
+                        const newGridHtml = window.ActionGrid.render(context);
+                        if (actionGridRoot.innerHTML !== newGridHtml) {
+                            actionGridRoot.innerHTML = newGridHtml;
                         }
                     }
-                }
-            } catch (e) {
-                console.error("❌ HeroCard render failed:", e);
-            }
-            try {
-                await this.renderLiveWidget(context);
-            } catch (e) {
-                console.error("❌ renderLiveWidget failed:", e);
-            }
-
-
-
-            try {
-                // 3. Load Activity Feed
-                const activityContainer = document.getElementById('activity-feed-content');
-                if (activityContainer) {
-                    this.renderActivityFeed().then(html => {
-                        activityContainer.innerHTML = html;
-                    }).catch(e => {
-                        console.error("Activity Feed failed", e);
-                    });
+                } catch (e) {
+                    console.error("❌ ActionGrid render failed:", e);
                 }
 
-                // 4. Load Trending Players (MVP + Elite list)
-                this.renderTrendingPlayers();
+                try {
+                    await this.renderLiveWidget(context);
+                } catch (e) {
+                    console.error("❌ renderLiveWidget failed:", e);
+                }
 
-                // 5. Load ESPN Player Faceoff (1vs1 comparison simulator)
-                this.renderPlayerFaceoff();
-            } catch (e) {
-                console.error('❌ [DashboardView] Error in core widget loading:', e);
+                try {
+                    // 3. Load Activity Feed
+                    const activityContainer = document.getElementById('activity-feed-content');
+                    if (activityContainer) {
+                        this.renderActivityFeed().then(html => {
+                            if (activityContainer.innerHTML !== html) {
+                                activityContainer.innerHTML = html;
+                            }
+                        }).catch(e => {
+                            console.error("Activity Feed failed", e);
+                        });
+                    }
+
+                    // 4. Load Trending Players (MVP + Elite list)
+                    this.renderTrendingPlayers();
+
+
+                } catch (e) {
+                    console.error('❌ [DashboardView] Error in core widget loading:', e);
+                }
+            } finally {
+                this._loadLiveRunning = false;
+                // Si llegó otra petición mientras ejecutábamos, procesarla ahora
+                if (this._loadLivePendingContext) {
+                    const pendingCtx = this._loadLivePendingContext;
+                    this._loadLivePendingContext = null;
+                    this.loadLiveWidgetContent(pendingCtx);
+                }
             }
+        }
+
+        /**
+         * 🌦️ BANNER SPOTLIGHT — Descubrimiento del nuevo Radar Táctico y Clima de Pistas
+         * Muestra una tarjeta elegante informativa en INICIO hasta que el usuario la acepte o cierre.
+         */
+        renderRadarDiscoveryBanner() {
+            try {
+                const noticeDismissed = localStorage.getItem('sp_radar_relocated_notice_v1') === 'true';
+                const bannerRoot = document.getElementById('radar-clima-notification-banner-root');
+                if (!bannerRoot) return;
+
+                // Guard: si ya existe el card en el DOM, no re-renderizar (evita parpadeo)
+                if (!noticeDismissed && document.getElementById('sp-radar-announcement-card')) return;
+
+                if (noticeDismissed) {
+                    bannerRoot.innerHTML = '';
+                    return;
+                }
+
+
+                bannerRoot.innerHTML = `
+                    <div id="sp-radar-announcement-card" style="
+                        margin: 0 15px 16px !important;
+                        background: linear-gradient(135deg, rgba(8, 25, 48, 0.96) 0%, rgba(15, 23, 42, 0.96) 100%);
+                        border: 1.5px solid rgba(56, 189, 248, 0.5);
+                        border-radius: 20px;
+                        padding: 14px 16px;
+                        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35), 0 0 22px rgba(56, 189, 248, 0.2);
+                        position: relative;
+                        overflow: hidden;
+                        animation: floatUp 0.35s ease-out forwards;
+                    ">
+                        <!-- Glow decorativo de fondo -->
+                        <div style="position: absolute; top: -30px; right: -30px; width: 110px; height: 110px; background: radial-gradient(circle, rgba(56, 189, 248, 0.28) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; position: relative; z-index: 2;">
+                            <div style="display: flex; gap: 12px; align-items: flex-start;">
+                                <div style="
+                                    width: 44px;
+                                    height: 44px;
+                                    border-radius: 14px;
+                                    background: linear-gradient(135deg, #0284c7 0%, #06b6d4 100%);
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    flex-shrink: 0;
+                                    box-shadow: 0 4px 14px rgba(6, 182, 212, 0.4);
+                                ">
+                                    <i class="fas fa-satellite-dish" style="color: #ffffff; font-size: 1.25rem;"></i>
+                                </div>
+                                <div>
+                                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px; flex-wrap: wrap;">
+                                        <span style="background: #38bdf8; color: #021327; font-size: 0.58rem; font-weight: 950; padding: 2px 7px; border-radius: 5px; text-transform: uppercase; letter-spacing: 0.5px;">¡NOVEDAD!</span>
+                                        <span style="color: #f8fafc; font-size: 0.88rem; font-weight: 900; font-family: 'Outfit', sans-serif;">Radar Táctico & Clima de Pistas</span>
+                                    </div>
+                                    <p style="margin: 0; font-size: 0.74rem; color: #cbd5e1; line-height: 1.4; font-weight: 500;">
+                                        Hemos reubicado el radar meteorológico y las condiciones de pista a <strong style="color: #38bdf8;">Americanas</strong> y <strong style="color: #38bdf8;">Entrenos</strong> (pestaña <span style="color: #38bdf8; font-weight: 800;">CLIMA & RADAR</span>).
+                                    </p>
+                                </div>
+                            </div>
+                            <button type="button" onclick="window.dismissRadarNotice(event)" style="
+                                background: rgba(255, 255, 255, 0.08);
+                                border: 1px solid rgba(255, 255, 255, 0.12);
+                                color: #94a3b8;
+                                width: 28px;
+                                height: 28px;
+                                border-radius: 50%;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 0.82rem;
+                                cursor: pointer;
+                                flex-shrink: 0;
+                            " title="Cerrar aviso">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+
+                        <!-- Botones de Acción -->
+                        <div style="display: flex; gap: 8px; margin-top: 12px; position: relative; z-index: 2;">
+                            <button type="button" onclick="window.openRadarFromNotice(event)" style="
+                                flex: 1;
+                                background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+                                color: #021327;
+                                border: none;
+                                padding: 9px 14px;
+                                border-radius: 12px;
+                                font-size: 0.76rem;
+                                font-weight: 950;
+                                cursor: pointer;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                gap: 6px;
+                                box-shadow: 0 4px 12px rgba(56, 189, 248, 0.35);
+                            ">
+                                <i class="fas fa-eye"></i>
+                                <span>VER RADAR Y PISTAS AHORA</span>
+                            </button>
+                            <button type="button" onclick="window.dismissRadarNotice(event)" style="
+                                background: rgba(255, 255, 255, 0.08);
+                                color: #cbd5e1;
+                                border: 1px solid rgba(255, 255, 255, 0.12);
+                                padding: 9px 14px;
+                                border-radius: 12px;
+                                font-size: 0.74rem;
+                                font-weight: 700;
+                                cursor: pointer;
+                            ">
+                                <span>Entendido</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } catch (err) {
+                console.warn("[DashboardView] Error renderRadarDiscoveryBanner:", err);
+            }
+        }
+
+        /**
+         * 🔔 BANNER SPOTLIGHT — Promoción y Estado de Notificaciones Push en Vivo
+         * Muestra una tarjeta destacada con degradado nocturno y acentos neón en el Inicio.
+         */
+        renderPushDiscoveryBanner() {
+            try {
+                const noticeDismissed = localStorage.getItem('sp_push_banner_dismissed_v1') === 'true';
+                const bannerRoot = document.getElementById('push-notification-promo-banner-root');
+                if (!bannerRoot) return;
+
+                if (noticeDismissed) {
+                    bannerRoot.innerHTML = '';
+                    return;
+                }
+
+                const notificationSupported = 'Notification' in window;
+                const rawPermission = notificationSupported ? Notification.permission : 'default';
+                const pushStoredEnabled = typeof localStorage !== 'undefined' && localStorage.getItem('somospadel_push_enabled') === 'true';
+                const isGranted = rawPermission === 'granted' || (pushStoredEnabled && rawPermission !== 'denied');
+
+                if (isGranted) {
+                    bannerRoot.innerHTML = `
+                        <div id="sp-push-discovery-card" class="sp-push-discovery-banner active-mode">
+                            <div class="sp-push-banner-glow green"></div>
+                            <div class="sp-push-banner-content">
+                                <div style="display: flex; gap: 12px; align-items: flex-start;">
+                                    <div class="sp-push-banner-icon green">
+                                        <i class="fas fa-bell"></i>
+                                    </div>
+                                    <div>
+                                        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px; flex-wrap: wrap;">
+                                            <span style="background: #10b981; color: #021327; font-size: 0.58rem; font-weight: 950; padding: 2px 7px; border-radius: 5px; text-transform: uppercase; letter-spacing: 0.5px;">🟢 ONLINE</span>
+                                            <span style="color: #f8fafc; font-size: 0.88rem; font-weight: 900; font-family: 'Outfit', sans-serif;">Alertas Push Activas en tu Móvil</span>
+                                        </div>
+                                        <p style="margin: 0; font-size: 0.74rem; color: #cbd5e1; line-height: 1.4; font-weight: 500;">
+                                            Recibirás avisos en vivo cuando se publiquen americanas, entrenos de tu nivel o queden plazas libres.
+                                        </p>
+                                    </div>
+                                </div>
+                                <button type="button" class="sp-push-banner-close" onclick="window.dismissPushBanner(event)" title="Cerrar aviso">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="sp-push-banner-actions">
+                                <button type="button" class="sp-push-btn-main" style="background:#10b981; color:#ffffff;" onclick="window.NotificationUi && window.NotificationUi.open()">
+                                    <i class="fas fa-inbox"></i>
+                                    <span>VER BANDEJA DE ALERTAS</span>
+                                </button>
+                                <button type="button" class="sp-push-btn-subtle" onclick="window.NotificationUi && window.NotificationUi.testPushAlert()">
+                                    <i class="fas fa-paper-plane"></i>
+                                    <span>Probar aviso</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    bannerRoot.innerHTML = `
+                        <div id="sp-push-discovery-card" class="sp-push-discovery-banner">
+                            <div class="sp-push-banner-glow"></div>
+                            <div class="sp-push-banner-content">
+                                <div style="display: flex; gap: 12px; align-items: flex-start;">
+                                    <div class="sp-push-banner-icon">
+                                        <i class="fas fa-bell"></i>
+                                    </div>
+                                    <div>
+                                        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px; flex-wrap: wrap;">
+                                            <span style="background: #CCFF00; color: #021327; font-size: 0.58rem; font-weight: 950; padding: 2px 7px; border-radius: 5px; text-transform: uppercase; letter-spacing: 0.5px;">⚡ NUEVA FUNCIÓN</span>
+                                            <span style="color: #f8fafc; font-size: 0.88rem; font-weight: 900; font-family: 'Outfit', sans-serif;">Alertas Push en Vivo en tu Móvil</span>
+                                        </div>
+                                        <p style="margin: 0; font-size: 0.74rem; color: #cbd5e1; line-height: 1.4; font-weight: 500;">
+                                            Entérate al instante de <strong>nuevas americanas</strong>, <strong>entrenos de tu nivel</strong> y <strong>plazas libres de última hora</strong> directamente en tu pantalla.
+                                        </p>
+                                    </div>
+                                </div>
+                                <button type="button" class="sp-push-banner-close" onclick="window.dismissPushBanner(event)" title="Cerrar aviso">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="sp-push-banner-actions">
+                                <button type="button" class="sp-push-btn-main" onclick="window.NotificationUi ? window.NotificationUi.requestPushActivation() : (window.NotificationService && window.NotificationService.requestPushPermission())">
+                                    <i class="fas fa-bell"></i>
+                                    <span>ACTIVAR NOTIFICACIONES PUSH AHORA</span>
+                                </button>
+                                <button type="button" class="sp-push-btn-subtle" onclick="window.dismissPushBanner(event)">
+                                    <span>Más tarde</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                console.warn("[DashboardView] Error renderPushDiscoveryBanner:", err);
+            }
+        }
+
+        /**
+         * Comprueba y muestra el popup de promoción de notificaciones Push si no está activado
+         */
+        checkAndShowPushPopup() {
+            try {
+                const notificationSupported = 'Notification' in window;
+                const rawPermission = notificationSupported ? Notification.permission : 'default';
+                const pushStoredEnabled = typeof localStorage !== 'undefined' && localStorage.getItem('somospadel_push_enabled') === 'true';
+                const isGranted = rawPermission === 'granted' || (pushStoredEnabled && rawPermission !== 'denied');
+
+                if (isGranted || rawPermission === 'denied') return;
+
+                const dismissedAt = localStorage.getItem('sp_push_popup_dismissed_at');
+                if (dismissedAt) {
+                    const elapsed = Date.now() - parseInt(dismissedAt, 10);
+                    if (elapsed < 3 * 24 * 60 * 60 * 1000) {
+                        return;
+                    }
+                }
+
+                if (document.getElementById('sp-push-promo-modal-overlay')) return;
+
+                setTimeout(() => {
+                    this.showPushNotificationPopup();
+                }, 1200);
+            } catch (err) {
+                console.warn("[DashboardView] Error in checkAndShowPushPopup:", err);
+            }
+        }
+
+        /**
+         * Renderiza el modal emergente moderno de activación de notificaciones Push
+         */
+        showPushNotificationPopup() {
+            if (document.getElementById('sp-push-promo-modal-overlay')) return;
+
+            const overlay = document.createElement('div');
+            overlay.id = 'sp-push-promo-modal-overlay';
+            overlay.className = 'sp-push-popup-overlay';
+
+            overlay.innerHTML = `
+                <div class="sp-push-popup-modal" role="dialog" aria-modal="true">
+                    <div style="position: absolute; top: -50px; right: -50px; width: 160px; height: 160px; background: radial-gradient(circle, rgba(204, 255, 0, 0.25) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+                    <div style="position: absolute; bottom: -50px; left: -50px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(56, 189, 248, 0.2) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; position: relative; z-index: 2;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="
+                                width: 48px;
+                                height: 48px;
+                                border-radius: 16px;
+                                background: linear-gradient(135deg, #090e1a 0%, #17243c 100%);
+                                border: 1.5px solid rgba(204, 255, 0, 0.5);
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 1.4rem;
+                                color: #CCFF00;
+                                box-shadow: 0 4px 18px rgba(204, 255, 0, 0.3);
+                            ">
+                                <i class="fas fa-bell shake-animation"></i>
+                            </div>
+                            <div>
+                                <span style="background: #CCFF00; color: #000; font-size: 0.60rem; font-weight: 950; padding: 2px 7px; border-radius: 5px; text-transform: uppercase; letter-spacing: 0.5px;">¡NOVEDAD EXCLUSIVA!</span>
+                                <h3 style="margin: 4px 0 0; font-size: 1.22rem; font-weight: 950; color: #ffffff; letter-spacing: -0.3px; line-height: 1.2;">
+                                    Alertas Push en Vivo
+                                </h3>
+                            </div>
+                        </div>
+                        <button type="button" id="btn-close-push-popup" style="
+                            background: rgba(255, 255, 255, 0.08);
+                            border: 1px solid rgba(255, 255, 255, 0.15);
+                            color: #94a3b8;
+                            width: 32px;
+                            height: 32px;
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 0.9rem;
+                            cursor: pointer;
+                        " title="Cerrar">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <p style="margin: 0 0 16px; font-size: 0.82rem; color: #cbd5e1; line-height: 1.45; font-weight: 500; position: relative; z-index: 2;">
+                        Sé el primero en enterarte de todo lo que ocurre en SomosPadel Barcelona sin necesidad de tener la app abierta.
+                    </p>
+
+                    <div style="margin-bottom: 20px; position: relative; z-index: 2;">
+                        <div class="sp-push-popup-feature-row">
+                            <div class="sp-push-popup-feature-icon" style="background: rgba(204, 255, 0, 0.15); color: #CCFF00; border: 1px solid rgba(204, 255, 0, 0.3);">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.78rem; font-weight: 850; color: #ffffff;">Nuevas Americanas y Torneos</div>
+                                <div style="font-size: 0.68rem; color: #94a3b8;">Asegura tu plaza en cuanto se abren las inscripciones.</div>
+                            </div>
+                        </div>
+
+                        <div class="sp-push-popup-feature-row">
+                            <div class="sp-push-popup-feature-icon" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.78rem; font-weight: 850; color: #ffffff;">Entrenos Adaptados a tu Nivel</div>
+                                <div style="font-size: 0.68rem; color: #94a3b8;">Avisos prioritarios cuando Alex publique sesiones para ti.</div>
+                            </div>
+                        </div>
+
+                        <div class="sp-push-popup-feature-row">
+                            <div class="sp-push-popup-feature-icon" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);">
+                                <i class="fas fa-person-running"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.78rem; font-weight: 850; color: #ffffff;">Plazas Libres y Bajas de Última Hora</div>
+                                <div style="font-size: 0.68rem; color: #94a3b8;">Entra como reserva al instante antes de que vuele el puesto.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 8px; position: relative; z-index: 2;">
+                        <button type="button" id="btn-popup-activate-push" style="
+                            width: 100%;
+                            padding: 13px 18px;
+                            background: #CCFF00;
+                            color: #000000;
+                            border: none;
+                            border-radius: 14px;
+                            font-weight: 950;
+                            font-size: 0.85rem;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 8px;
+                            box-shadow: 0 4px 18px rgba(204, 255, 0, 0.4);
+                            font-family: 'Outfit', sans-serif;
+                            transition: transform 0.2s ease;
+                        ">
+                            <i class="fas fa-bell"></i>
+                            <span>ACTIVAR NOTIFICACIONES PUSH AHORA</span>
+                        </button>
+
+                        <button type="button" id="btn-popup-dismiss-push" style="
+                            width: 100%;
+                            padding: 10px 16px;
+                            background: transparent;
+                            border: none;
+                            color: #94a3b8;
+                            font-size: 0.76rem;
+                            font-weight: 700;
+                            cursor: pointer;
+                            font-family: 'Outfit', sans-serif;
+                        ">
+                            Más tarde
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            const closePopup = () => {
+                try {
+                    localStorage.setItem('sp_push_popup_dismissed_at', String(Date.now()));
+                } catch (_) {}
+                overlay.classList.remove('show');
+                setTimeout(() => {
+                    overlay.remove();
+                }, 280);
+            };
+
+            const activatePush = async () => {
+                const actBtn = overlay.querySelector('#btn-popup-activate-push');
+                if (actBtn) {
+                    actBtn.disabled = true;
+                    actBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> ACTIVANDO...';
+                }
+                if (window.NotificationUi) {
+                    await window.NotificationUi.requestPushActivation();
+                } else if (window.NotificationService) {
+                    await window.NotificationService.requestPushPermission();
+                }
+                closePopup();
+            };
+
+            overlay.querySelector('#btn-close-push-popup')?.addEventListener('click', closePopup);
+            overlay.querySelector('#btn-popup-dismiss-push')?.addEventListener('click', closePopup);
+            overlay.querySelector('#btn-popup-activate-push')?.addEventListener('click', activatePush);
+
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) closePopup();
+            });
+
+            const onEsc = (e) => {
+                if (e.key === 'Escape') {
+                    closePopup();
+                    document.removeEventListener('keydown', onEsc);
+                }
+            };
+            document.addEventListener('keydown', onEsc);
+
+            document.body.appendChild(overlay);
+            requestAnimationFrame(() => {
+                overlay.classList.add('show');
+            });
+        }
+
+        /**
+         * 🎾 POPUP / MODAL EMERGENTE — Nuevos Entrenos y Americanas recién publicados o con plazas libres
+         * Comprueba si hay un evento relevante no descartado en localStorage ('sp_event_popup_dismissed_${eventId}')
+         * y lo muestra de forma atractiva en el Dashboard.
+         */
+        async checkAndShowNewEventPopup() {
+            try {
+                // Verificar que estemos en la vista Dashboard
+                if (window.Router && window.Router.currentRoute && window.Router.currentRoute !== 'dashboard') {
+                    return;
+                }
+
+                // 1. Consultar eventos activos (AmericanaService o fallback NotificationService)
+                let events = [];
+                if (window.AmericanaService && typeof window.AmericanaService.getAllActiveEvents === 'function') {
+                    events = await window.AmericanaService.getAllActiveEvents();
+                }
+
+                if ((!Array.isArray(events) || events.length === 0) && window.NotificationService) {
+                    if (Array.isArray(window.NotificationService.eventNotifications) && window.NotificationService.eventNotifications.length > 0) {
+                        events = window.NotificationService.eventNotifications
+                            .filter(n => n && n.data && n.data.eventId)
+                            .map(n => ({
+                                id: n.data.eventId,
+                                name: n.title,
+                                title: n.title,
+                                date: n.date,
+                                time: n.time,
+                                location: n.sede || n.location,
+                                type: n.category === 'entrenos' ? 'entreno' : 'americana',
+                                createdAt: n.timestamp,
+                                status: n.isCancelled || n.data?.isCancelled ? 'cancelled' : (n.status || '')
+                            }));
+                    }
+                }
+
+                // Si hubiera un popup de evento abierto y el evento resulta cancelado/eliminado, cerrarlo inmediatamente
+                const existingPopup = document.getElementById('sp-new-event-popup-overlay') || document.querySelector('.sp-new-event-popup-overlay');
+                if (existingPopup) {
+                    const activeEventId = existingPopup.getAttribute('data-event-id') || this._activeEventPopupId;
+                    if (activeEventId && Array.isArray(events)) {
+                        const activeEvt = events.find(e => String(e?.id) === String(activeEventId));
+                        if (activeEvt) {
+                            const actStatus = String(activeEvt.status || '').toLowerCase().trim();
+                            const actTitle = String(activeEvt.name || activeEvt.title || activeEvt.eventName || '').toLowerCase();
+                            const isNowCancelled = activeEvt.isCancelled || activeEvt.isDeleted ||
+                                ['cancelled', 'cancelado', 'suspendido', 'anulado', 'deleted'].includes(actStatus) ||
+                                actTitle.includes('cancelad') || actTitle.includes('suspendid') || actTitle.includes('eliminad') || actTitle.includes('anulad');
+
+                            if (isNowCancelled) {
+                                console.log(`[DashboardView] Cerrando popup de evento cancelado: ${activeEventId}`);
+                                existingPopup.classList.remove('show');
+                                setTimeout(() => existingPopup.remove(), 300);
+                                this._activeEventPopupId = null;
+                            }
+                        }
+                    }
+                    return;
+                }
+
+                // Guard: Si ya hay un modal emergente o drawer visible, no superponer
+                if (
+                    document.getElementById('sp-push-promo-modal-overlay') ||
+                    document.querySelector('.sp-push-popup-overlay.show') ||
+                    document.querySelector('.modal.show') ||
+                    document.body.classList.contains('notif-drawer-open')
+                ) {
+                    return;
+                }
+
+                if (!Array.isArray(events) || events.length === 0) return;
+
+                // Obtener datos del usuario actual para no molestar si ya está apuntado
+                const currentUser = window.Store?.getState('currentUser') || (() => {
+                    try { return JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch (_) { return {}; }
+                })();
+                const currentUid = currentUser?.uid || currentUser?.id;
+
+                const now = Date.now();
+                const candidates = [];
+
+                for (const evt of events) {
+                    if (!evt || !evt.id) continue;
+                    const eventId = String(evt.id);
+
+                    // Descartado por el usuario previamente
+                    if (localStorage.getItem('sp_event_popup_dismissed_' + eventId) === 'true') {
+                        continue;
+                    }
+
+                    // Estado del evento: Asegurar que cualquier evento cancelado, suspendido, anulado, eliminado o finalizado sea ignorado
+                    const status = String(evt.status || '').toLowerCase().trim();
+                    const evtTitleLower = String(evt.name || evt.title || evt.eventName || '').toLowerCase();
+                    const isCancelledOrDeleted = evt.isCancelled || evt.isDeleted ||
+                        ['cancelled', 'cancelado', 'suspendido', 'anulado', 'deleted'].includes(status) ||
+                        evtTitleLower.includes('cancelad') || evtTitleLower.includes('suspendid') || evtTitleLower.includes('eliminad') || evtTitleLower.includes('anulad');
+
+                    if (isCancelledOrDeleted || ['finished', 'finalizado', 'completed'].includes(status)) {
+                        continue;
+                    }
+
+                    // Cálculo de jugadores y plazas disponibles
+                    const courts = Number(evt.courts || evt.max_courts || 3);
+                    const maxPlayers = Number(evt.max_players || evt.maxPlayers || (courts * 4));
+                    const playersList = Array.isArray(evt.players)
+                        ? evt.players
+                        : (Array.isArray(evt.registeredPlayers) ? evt.registeredPlayers : []);
+                    const registeredCount = playersList.length;
+                    const openSpots = Math.max(0, maxPlayers - registeredCount);
+
+                    // Si el usuario actual ya está inscrito, omitir
+                    if (currentUid && playersList.some(p => p && (p.uid === currentUid || p.id === currentUid))) {
+                        continue;
+                    }
+
+                    // 1. Recién publicado en las últimas 48 horas
+                    const createdTime = this._extractEventCreatedTimestamp(evt);
+                    const isRecentlyCreated = createdTime > 0 && (now - createdTime) >= 0 && (now - createdTime) <= (48 * 60 * 60 * 1000);
+
+                    // 2. Evento próximo con plazas libres
+                    const eventDateTime = this._extractEventDateTime(evt);
+                    const isUpcoming = eventDateTime ? (eventDateTime >= (now - 30 * 60 * 1000)) : true;
+                    const hasOpenSpots = openSpots > 0 && isUpcoming;
+
+                    if (isRecentlyCreated || hasOpenSpots) {
+                        const titleLower = String(evt.name || evt.title || evt.eventName || '').toLowerCase();
+                        const formatLower = String(evt.format || evt.mode || '').toLowerCase();
+                        const isEntreno = evt.type === 'entreno' ||
+                            titleLower.includes('entreno') ||
+                            titleLower.includes('pozo') ||
+                            titleLower.includes('clase') ||
+                            formatLower.includes('entreno') ||
+                            formatLower.includes('pozo');
+
+                        candidates.push({
+                            event: evt,
+                            eventId,
+                            isEntreno,
+                            isRecentlyCreated,
+                            hasOpenSpots,
+                            openSpots,
+                            maxPlayers,
+                            courts,
+                            createdTime,
+                            eventDateTime
+                        });
+                    }
+                }
+
+                if (candidates.length === 0) return;
+
+                // Ordenar: primero los creados en las últimas 48h (más recientes), luego los próximos con plazas
+                candidates.sort((a, b) => {
+                    if (a.isRecentlyCreated && !b.isRecentlyCreated) return -1;
+                    if (!a.isRecentlyCreated && b.isRecentlyCreated) return 1;
+                    if (a.isRecentlyCreated && b.isRecentlyCreated) {
+                        return b.createdTime - a.createdTime;
+                    }
+                    return (a.eventDateTime || 0) - (b.eventDateTime || 0);
+                });
+
+                const target = candidates[0];
+
+                // Verificar de nuevo tras la espera que no haya modal abierto
+                if (
+                    document.getElementById('sp-new-event-popup-overlay') ||
+                    document.getElementById('sp-push-promo-modal-overlay') ||
+                    document.querySelector('.modal.show')
+                ) {
+                    return;
+                }
+
+                this.showNewEventPopup(target);
+            } catch (err) {
+                console.warn("[DashboardView] Error in checkAndShowNewEventPopup:", err);
+            }
+        }
+
+        /**
+         * Renderiza el popup elegante y deportivo en el centro de la pantalla
+         */
+        showNewEventPopup(target) {
+            if (document.getElementById('sp-new-event-popup-overlay')) return;
+
+            const evt = target.event;
+            const eventId = target.eventId;
+            const isEntreno = target.isEntreno;
+            const badgeText = isEntreno ? '💪 NUEVO ENTRENO CONVOCADO' : '🏆 NUEVA AMERICANA';
+            const eventName = (evt.name || evt.title || evt.eventName || (isEntreno ? 'ENTRENO OFICIAL SOMOSPADEL' : 'AMERICANA SOMOSPADEL')).toUpperCase();
+
+            const sede = evt.location || evt.club || evt.venue || evt.sede || 'Delfos Cornellà';
+            const courts = target.courts || 3;
+            const sedeText = `${sede} · ${courts} ${courts === 1 ? 'pista' : 'pistas'}`;
+
+            const dateText = this._formatEventDate(evt.date);
+            const timeText = evt.time ? `${evt.time}h` : '';
+            const dateTimeText = [dateText, timeText].filter(Boolean).join(' · ');
+
+            const openSpots = target.openSpots;
+            const spotsText = openSpots > 0
+                ? `${openSpots} ${openSpots === 1 ? 'vacante libre' : 'vacantes libres'}`
+                : 'Últimas plazas disponibles';
+
+            const overlay = document.createElement('div');
+            overlay.id = 'sp-new-event-popup-overlay';
+            overlay.className = 'sp-new-event-popup-overlay';
+            overlay.setAttribute('role', 'dialog');
+            overlay.setAttribute('aria-modal', 'true');
+            overlay.setAttribute('data-event-id', eventId);
+            this._activeEventPopupId = eventId;
+
+            overlay.innerHTML = `
+                <div class="sp-new-event-popup-card">
+                    <div class="sp-new-event-popup-glow-1"></div>
+                    <div class="sp-new-event-popup-glow-2"></div>
+
+                    <button type="button" class="sp-new-event-popup-close" id="btn-close-new-event-popup" title="Cerrar aviso" aria-label="Cerrar">
+                        <i class="fas fa-times"></i>
+                    </button>
+
+                    <div class="sp-new-event-popup-header">
+                        <div class="sp-new-event-badge">
+                            ${badgeText}
+                        </div>
+                    </div>
+
+                    <h3 class="sp-new-event-title">${eventName}</h3>
+
+                    <div class="sp-new-event-meta-grid">
+                        <div class="sp-new-event-meta-chip">
+                            <i class="fas fa-calendar-days"></i>
+                            <span>${dateTimeText || 'Próxima convocatoria'}</span>
+                        </div>
+                        <div class="sp-new-event-meta-chip">
+                            <i class="fas fa-location-dot"></i>
+                            <span>${sedeText}</span>
+                        </div>
+                        <div class="sp-new-event-meta-chip sp-new-event-spots-chip">
+                            <i class="fas fa-bolt"></i>
+                            <span><strong class="sp-new-event-spots-highlight">${spotsText}</strong></span>
+                        </div>
+                    </div>
+
+                    <div class="sp-new-event-actions">
+                        <button type="button" id="btn-popup-join-event" class="sp-new-event-btn-action">
+                            <span>🎾 APUNTARME / VER PLAZAS</span>
+                        </button>
+                        <button type="button" id="btn-popup-dismiss-event" class="sp-new-event-btn-dismiss">
+                            Ver más tarde
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            let isClosed = false;
+            const closeModal = (saveDismiss = false) => {
+                if (isClosed) return;
+                isClosed = true;
+                if (this._activeEventPopupId === eventId) {
+                    this._activeEventPopupId = null;
+                }
+                if (saveDismiss) {
+                    try {
+                        localStorage.setItem('sp_event_popup_dismissed_' + eventId, 'true');
+                    } catch (_) {}
+                }
+                overlay.classList.remove('show');
+                setTimeout(() => {
+                    overlay.remove();
+                }, 300);
+            };
+
+            const onJoin = () => {
+                closeModal(true);
+                const route = isEntreno ? 'entrenos' : 'americanas';
+                if (window.Router) {
+                    window.Router.navigate(route);
+                } else {
+                    window.location.hash = `#${route}`;
+                }
+                if (window.EventsController && typeof window.EventsController.openLiveEvent === 'function') {
+                    setTimeout(() => {
+                        try {
+                            window.EventsController.openLiveEvent(eventId, isEntreno ? 'entreno' : 'americana');
+                        } catch (err) {
+                            console.warn('[DashboardView] Error opening live event from popup:', err);
+                        }
+                    }, 200);
+                }
+            };
+
+            overlay.querySelector('#btn-popup-join-event')?.addEventListener('click', onJoin);
+            overlay.querySelector('#btn-popup-dismiss-event')?.addEventListener('click', () => closeModal(true));
+            overlay.querySelector('#btn-close-new-event-popup')?.addEventListener('click', () => closeModal(true));
+
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    closeModal(true);
+                }
+            });
+
+            const onEsc = (e) => {
+                if (e.key === 'Escape') {
+                    closeModal(true);
+                    document.removeEventListener('keydown', onEsc);
+                }
+            };
+            document.addEventListener('keydown', onEsc);
+
+            document.body.appendChild(overlay);
+            requestAnimationFrame(() => {
+                overlay.classList.add('show');
+            });
+        }
+
+        /**
+         * Extrae el timestamp numérico de creación de un evento
+         */
+        _extractEventCreatedTimestamp(evt) {
+            if (!evt) return 0;
+            const raw = evt.createdAt || evt.created_at || evt.timestamp || evt.publishedAt || evt.updatedAt;
+            if (raw) {
+                if (typeof raw.toMillis === 'function') return raw.toMillis();
+                if (typeof raw.toDate === 'function') return raw.toDate().getTime();
+                if (raw instanceof Date) return raw.getTime();
+                if (typeof raw === 'number') return raw < 10000000000 ? raw * 1000 : raw;
+                if (typeof raw === 'string') {
+                    const parsed = Date.parse(raw);
+                    if (!isNaN(parsed)) return parsed;
+                }
+            }
+            return 0;
+        }
+
+        /**
+         * Infiere la fecha y hora de celebración de un evento en milisegundos
+         */
+        _extractEventDateTime(evt) {
+            if (!evt) return 0;
+            if (evt.date) {
+                try {
+                    const dateStr = String(evt.date).trim();
+                    const timeStr = String(evt.time || '10:00').trim();
+                    let y, m, d;
+                    if (dateStr.includes('-')) {
+                        const parts = dateStr.split('-');
+                        if (parts[0].length === 4) {
+                            y = parseInt(parts[0], 10);
+                            m = parseInt(parts[1], 10) - 1;
+                            d = parseInt(parts[2], 10);
+                        } else {
+                            d = parseInt(parts[0], 10);
+                            m = parseInt(parts[1], 10) - 1;
+                            y = parseInt(parts[2], 10);
+                        }
+                    } else if (dateStr.includes('/')) {
+                        const parts = dateStr.split('/');
+                        d = parseInt(parts[0], 10);
+                        m = parseInt(parts[1], 10) - 1;
+                        y = parseInt(parts[2], 10);
+                    }
+                    const [hh, mm] = timeStr.split(':').map(n => parseInt(n, 10) || 0);
+                    if (y && !isNaN(m) && d) {
+                        return new Date(y, m, d, hh, mm).getTime();
+                    }
+                } catch (_) {}
+            }
+            return 0;
+        }
+
+        /**
+         * Formatea la fecha de evento para presentación amigable
+         */
+        _formatEventDate(dateStr) {
+            if (!dateStr) return '';
+            try {
+                const raw = String(dateStr).trim();
+                let y, m, d;
+                if (raw.includes('-')) {
+                    const parts = raw.split('-');
+                    if (parts[0].length === 4) {
+                        y = parseInt(parts[0], 10);
+                        m = parseInt(parts[1], 10);
+                        d = parseInt(parts[2], 10);
+                    } else {
+                        d = parseInt(parts[0], 10);
+                        m = parseInt(parts[1], 10);
+                        y = parseInt(parts[2], 10);
+                    }
+                } else if (raw.includes('/')) {
+                    const parts = raw.split('/');
+                    d = parseInt(parts[0], 10);
+                    m = parseInt(parts[1], 10);
+                    y = parseInt(parts[2], 10);
+                }
+                if (d && m) {
+                    const pad = (n) => String(n).padStart(2, '0');
+                    return `${pad(d)}/${pad(m)}${y ? '/' + y : ''}`;
+                }
+            } catch (_) {}
+            return String(dateStr);
+        }
+
+        /**
+         * 🎾 BANNER EXPRESS — Jugador Externo (player_americanas) en INICIO
+         * Muestra una tarjeta informativa no intrusiva con el evento abierto.
+         * El usuario puede cerrarlo (queda oculto por la sesión) o ir a VER DETALLES.
+         */
+        _injectExternalInscriptionBanner(context) {
+            const bannerKey = `banner_inscription_dismissed_${context.tournamentId}`;
+            if (sessionStorage.getItem(bannerKey)) return; // Ya fue cerrado en esta sesión
+
+            // Buscar el contenedor — lo insertamos debajo del hero-card-root
+            const heroRoot = document.getElementById('hero-card-root');
+            if (!heroRoot) return;
+
+            // Evitar doble render
+            const existing = document.getElementById('inscription-express-banner');
+            if (existing) return;
+
+            const spotsLeft = Math.max(0, (context.maxPlayers || 16) - (context.currentPlayers || 0));
+            const isUrgent = spotsLeft <= 4 && spotsLeft > 0;
+            const accentColor = isUrgent ? '#f97316' : '#CCFF00';
+            const accentColorDark = isUrgent ? '#ea580c' : '#a3e635';
+
+            const banner = document.createElement('div');
+            banner.id = 'inscription-express-banner';
+            banner.style.cssText = `
+                margin: 0 15px 12px;
+                border-radius: 18px;
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+                border: 1.5px solid ${accentColor}55;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.35), 0 0 0 1px ${accentColor}22;
+                overflow: hidden;
+                animation: floatUp 0.5s ease-out forwards;
+                position: relative;
+            `;
+            banner.innerHTML = `
+                <div style="display: flex; align-items: center; padding: 14px 16px; gap: 14px; position: relative;">
+                    <!-- Icono express -->
+                    <div style="
+                        width: 48px; height: 48px; flex-shrink: 0;
+                        background: ${accentColor}22;
+                        border: 1.5px solid ${accentColor}55;
+                        border-radius: 14px;
+                        display: flex; align-items: center; justify-content: center;
+                        font-size: 1.4rem;
+                    ">${isUrgent ? '🔥' : '🎾'}</div>
+
+                    <!-- Texto -->
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="
+                            color: ${accentColor};
+                            font-size: 0.6rem; font-weight: 900;
+                            letter-spacing: 1.5px; text-transform: uppercase;
+                            margin-bottom: 2px;
+                        ">${isUrgent ? '¡ÚLTIMAS PLAZAS!' : 'INSCRIPCIÓN ABIERTA'}</div>
+                        <div style="
+                            color: #f1f5f9; font-size: 0.85rem; font-weight: 800;
+                            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                        ">${context.tournamentName || 'Americana Open'}</div>
+                        <div style="color: #64748b; font-size: 0.72rem; font-weight: 600; margin-top: 1px;">
+                            ${context.tournamentDate || ''} · ${spotsLeft > 0 ? `${spotsLeft} plazas libres` : 'Completo'}
+                        </div>
+                    </div>
+
+                    <!-- Botón VER DETALLES -->
+                    <button onclick="window.Router.navigate('entrenos'); document.getElementById('inscription-express-banner')?.remove();" style="
+                        background: ${accentColor};
+                        color: #000;
+                        border: none; border-radius: 10px;
+                        padding: 8px 14px;
+                        font-size: 0.7rem; font-weight: 950;
+                        letter-spacing: 0.5px;
+                        cursor: pointer;
+                        white-space: nowrap;
+                        flex-shrink: 0;
+                        box-shadow: 0 0 12px ${accentColor}55;
+                    ">VER →</button>
+
+                    <!-- Botón cerrar -->
+                    <button onclick="
+                        sessionStorage.setItem('${bannerKey}', 'true');
+                        const b = document.getElementById('inscription-express-banner');
+                        if(b) { b.style.opacity='0'; b.style.transform='translateY(-8px)'; b.style.transition='all 0.25s ease'; setTimeout(()=>b.remove(), 260); }
+                    " style="
+                        position: absolute; top: 8px; right: 8px;
+                        background: rgba(255,255,255,0.08);
+                        border: none; border-radius: 50%;
+                        width: 22px; height: 22px;
+                        display: flex; align-items: center; justify-content: center;
+                        color: #94a3b8; font-size: 0.75rem; cursor: pointer;
+                        line-height: 1;
+                    ">✕</button>
+                </div>
+            `;
+
+            // Insertar después del hero-card-root
+            heroRoot.parentNode.insertBefore(banner, heroRoot.nextSibling);
         }
 
         async renderTrendingPlayers() {
@@ -4005,382 +5589,632 @@
             const mvpRoot = document.getElementById('mvp-spotlight-container');
             if (!root) return;
 
-            try {
-                // Obtenemos los datos del Ranking real
-                const players = await (window.RankingController ? window.RankingController.calculateSilently() : []);
-                
-                // --- 1. MVP SPOTLIGHT (Top 1) ---
-                if (mvpRoot) {
-                    let mvp = (players && players.length > 0) ? players[0] : null;
-                    if (!mvp) {
-                        const currentUser = window.Store ? window.Store.getState('currentUser') : null;
-                        mvp = currentUser ? {
-                            name: currentUser.name || "Alejandro Coscolín",
-                            level: currentUser.level || 3.5,
-                            stats: {
-                                americanas: { points: 2450, played: 12, won: 6 },
-                                entrenos: { points: 0, played: 0, won: 0 }
-                            },
-                            photo_url: currentUser.photo_url || currentUser.photoURL || null,
-                            ranking_pos: 1
-                        } : {
-                            name: "Alejandro Coscolín",
-                            level: 3.5,
-                            stats: {
-                                americanas: { points: 2450, played: 12, won: 6 },
-                                entrenos: { points: 0, played: 0, won: 0 }
-                            },
-                            photo_url: null,
-                            ranking_pos: 1
-                        };
+            const paint = (players) => {
+                const currentRoot = document.getElementById('trending-players-list');
+                const currentMvpRoot = document.getElementById('mvp-spotlight-container');
+                if (!currentRoot) return;
+
+                try {
+                    // Guardar copia de los últimos datos de ranking
+                    this._lastRankingPlayers = (players && players.length > 0) ? players : (this._lastRankingPlayers || []);
+                    const currentMode = window._dashboardRankingMode || localStorage.getItem('sp_dashboard_ranking_mode') || 'entrenos';
+                    window._dashboardRankingMode = currentMode;
+
+                    // 0. Sincronizar estilo de las pestañas
+                    const tabEntrenos = document.getElementById('tab-dashboard-entrenos');
+                    const tabAmericanas = document.getElementById('tab-dashboard-americanas');
+                    if (tabEntrenos && tabAmericanas) {
+                        if (currentMode === 'entrenos') {
+                            tabEntrenos.style.background = '#0f172a';
+                            tabEntrenos.style.color = '#CCFF00';
+                            tabEntrenos.style.boxShadow = '0 4px 10px rgba(15, 23, 42, 0.25)';
+                            tabAmericanas.style.background = 'transparent';
+                            tabAmericanas.style.color = '#64748b';
+                            tabAmericanas.style.boxShadow = 'none';
+                        } else {
+                            tabAmericanas.style.background = '#0f172a';
+                            tabAmericanas.style.color = '#CCFF00';
+                            tabAmericanas.style.boxShadow = '0 4px 10px rgba(15, 23, 42, 0.25)';
+                            tabEntrenos.style.background = 'transparent';
+                            tabEntrenos.style.color = '#64748b';
+                            tabEntrenos.style.boxShadow = 'none';
+                        }
                     }
 
-                    // Precalculate aggregated stats for FUT card rendering
-                    const mvpPoints = (mvp.stats?.americanas?.points || 0) + (mvp.stats?.entrenos?.points || 0);
-                    const mvpWon = (mvp.stats?.americanas?.won || 0) + (mvp.stats?.entrenos?.won || 0);
-                    const mvpStreak = mvpWon > 0 ? (1 + ((mvp.id ? String(mvp.id).charCodeAt(0) : 0) % Math.min(mvpWon, 4))) : 0;
+                    // Actualizar subtítulo del carrusel de aspirantes
+                    const headerEl = document.getElementById('trending-section-header');
+                    if (headerEl) {
+                        headerEl.innerHTML = `
+                            <div style="font-size:0.68rem; font-weight:950; color:#475569; letter-spacing:0.8px; text-transform:uppercase; display:flex; align-items:center; gap:6px;">
+                                <i class="fas fa-fire" style="color:#f97316;"></i> ASPIRANTES TOP 10 ${currentMode === 'entrenos' ? 'ENTRENOS' : 'AMERICANAS'} (#4 - #10)
+                            </div>
+                            <div style="font-size:0.58rem; color:#64748b; font-weight:800; text-transform:uppercase;"><i class="fas fa-id-card" style="color:#72a800;"></i> CARTA INTERACTIVA</div>
+                        `;
+                    }
 
-                    const levelNum = parseFloat(mvp.level || 3.5);
+                    // 1. Filtrar y ordenar la lista específicamente para el modo seleccionado (entrenos vs americanas)
+                    const modeKey = currentMode;
+                    const modePlayers = (this._lastRankingPlayers || []).map(p => {
+                        const mStats = p.stats?.[modeKey] || { points: 0, played: 0, won: 0, lost: 0, gamesWon: 0, gamesLost: 0 };
+                        return {
+                            ...p,
+                            modePoints: mStats.points || 0,
+                            modePlayed: mStats.played || 0,
+                            modeWon: mStats.won || 0,
+                            modeLost: mStats.lost || 0,
+                            modeGamesWon: mStats.gamesWon || 0,
+                            modeGamesLost: mStats.gamesLost || 0
+                        };
+                    });
 
-                    // Estadísticas de rendimiento reales
-                    const playedAme = mvp.stats?.americanas?.played || 0;
-                    const playedEnt = mvp.stats?.entrenos?.played || 0;
-                    const totalPlayed = playedAme + playedEnt;
+                    modePlayers.sort((a, b) => {
+                        if (b.modePoints !== a.modePoints) return b.modePoints - a.modePoints;
+                        if (b.modeWon !== a.modeWon) return b.modeWon - a.modeWon;
+                        return (parseFloat(b.level || 3.5) - parseFloat(a.level || 3.5));
+                    });
 
-                    const wonAme = mvp.stats?.americanas?.won || 0;
-                    const wonEnt = mvp.stats?.entrenos?.won || 0;
-                    const totalWon = wonAme + wonEnt;
+                    // --- 1. MVP SPOTLIGHT (Top 1) ---
+                    if (currentMvpRoot) {
+                        let mvp = (modePlayers && modePlayers.length > 0) ? modePlayers[0] : null;
+                        if (!mvp) {
+                            const currentUser = window.Store ? window.Store.getState('currentUser') : null;
+                            mvp = currentUser ? {
+                                name: currentUser.name || "Alejandro Coscolín",
+                                level: currentUser.level || 3.5,
+                                modePoints: currentMode === 'entrenos' ? 145 : 2450,
+                                modePlayed: 12,
+                                modeWon: 8,
+                                modeLost: 4,
+                                modeGamesWon: 48,
+                                modeGamesLost: 24,
+                                photo_url: currentUser.photo_url || currentUser.photoURL || null,
+                                ranking_pos: 1
+                            } : {
+                                name: "Alejandro Coscolín",
+                                level: 3.5,
+                                modePoints: currentMode === 'entrenos' ? 145 : 2450,
+                                modePlayed: 12,
+                                modeWon: 8,
+                                modeLost: 4,
+                                modeGamesWon: 48,
+                                modeGamesLost: 24,
+                                photo_url: null,
+                                ranking_pos: 1
+                            };
+                        }
 
-                    const lostAme = mvp.stats?.americanas?.lost || 0;
-                    const lostEnt = mvp.stats?.entrenos?.lost || 0;
-                    const totalLost = lostAme + lostEnt;
+                        // Estadísticas específicas de la modalidad seleccionada
+                        const mvpPoints = mvp.modePoints;
+                        const mvpWon = mvp.modeWon;
+                        const mvpPlayed = mvp.modePlayed;
+                        const mvpLost = mvp.modeLost;
+                        const mvpGamesWon = mvp.modeGamesWon;
+                        const mvpGamesLost = mvp.modeGamesLost;
+                        const mvpStreak = mvpWon > 0 ? (1 + ((mvp.id ? String(mvp.id).charCodeAt(0) : 0) % Math.min(mvpWon, 4))) : 0;
+                        const winRate = mvpPlayed > 0 ? Math.round((mvpWon / mvpPlayed) * 100) : 0;
+                        const levelNum = parseFloat(mvp.level || 3.5);
+                        const rankBadge = window.RankingController?.getLevelBadge(levelNum) || { label: 'GOLD', color: '#fbbf24' };
+                        const modeLabelUpper = currentMode === 'entrenos' ? 'ENTRENOS' : 'AMERICANAS';
 
-                    const winRate = totalPlayed > 0 ? Math.round((totalWon / totalPlayed) * 100) : 0;
+                        mvpRoot.innerHTML = `
+                            <div class="fut-card-wrapper" onclick="this.classList.toggle('flipped')" style="
+                                perspective: 1000px;
+                                margin-bottom: 16px;
+                                font-family: 'Outfit', 'Inter', sans-serif;
+                                cursor: pointer;
+                                position: relative;
+                                user-select: none;
+                                -webkit-tap-highlight-color: transparent;">
+                                <style>
+                                    @keyframes gold-shine {
+                                        0% { background-position: 0% 50%; }
+                                        50% { background-position: 100% 50%; }
+                                        100% { background-position: 0% 50%; }
+                                    }
+                                    @keyframes pulse-soft {
+                                        0% { opacity: 0.6; transform: scale(1); }
+                                        50% { opacity: 1; transform: scale(1.02); }
+                                        100% { opacity: 0.6; transform: scale(1); }
+                                    }
+                                    .fut-card-flipper {
+                                        position: relative;
+                                        width: 100%;
+                                        transform-style: preserve-3d;
+                                        transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                                    }
+                                    .fut-card-wrapper.flipped .fut-card-flipper {
+                                        transform: rotateY(180deg);
+                                    }
+                                    .fut-card-wrapper:not(.flipped):hover .fut-card-flipper {
+                                        transform: rotateY(10deg) rotateX(5deg) scale(1.02);
+                                    }
+                                    .fut-card-front, .fut-card-back {
+                                        width: 100%;
+                                        backface-visibility: hidden;
+                                        -webkit-backface-visibility: hidden;
+                                        border-radius: 24px;
+                                        border: 2px solid #eab308;
+                                        box-sizing: border-box;
+                                        overflow: hidden;
+                                    }
+                                    .fut-card-front {
+                                        background: linear-gradient(135deg, #1e1b4b 0%, #030712 100%);
+                                        box-shadow: 0 15px 35px rgba(234, 179, 8, 0.15), 0 0 25px rgba(234, 179, 8, 0.05);
+                                        position: relative;
+                                        z-index: 2;
+                                    }
+                                    .fut-card-back {
+                                        background: linear-gradient(135deg, #090514 0%, #02010a 100%);
+                                        box-shadow: 0 15px 35px rgba(234, 179, 8, 0.15), 0 0 25px rgba(234, 179, 8, 0.05);
+                                        transform: rotateY(180deg);
+                                        position: absolute;
+                                        top: 0;
+                                        left: 0;
+                                        height: 100%;
+                                        z-index: 1;
+                                    }
+                                    .fut-card-inner {
+                                        background: radial-gradient(circle at center, #1c1917 0%, #0c0a09 100%);
+                                        border-radius: 22px;
+                                        padding: 16px;
+                                        position: relative;
+                                        overflow: hidden;
+                                        border: 1px solid rgba(234, 179, 8, 0.25);
+                                        height: 100%;
+                                        box-sizing: border-box;
+                                    }
+                                    .fut-gold-glow {
+                                        position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+                                        background: linear-gradient(45deg, transparent, rgba(234, 179, 8, 0.15), transparent);
+                                        transform: rotate(30deg);
+                                        pointer-events: none;
+                                        animation: gold-shine 6s ease infinite;
+                                        background-size: 200% 200%;
+                                    }
+                                    .fut-badge-gold {
+                                        background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+                                        color: #000;
+                                        font-weight: 1000;
+                                        font-size: 0.55rem;
+                                        padding: 3px 8px;
+                                        border-radius: 6px;
+                                        text-transform: uppercase;
+                                        letter-spacing: 1px;
+                                        box-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
+                                        display: inline-block;
+                                    }
+                                    .fut-stat-label {
+                                        color: rgba(255,255,255,0.4);
+                                        font-size: 0.52rem;
+                                        font-weight: 800;
+                                        text-transform: uppercase;
+                                        letter-spacing: 0.5px;
+                                    }
+                                    .fut-stat-value {
+                                        color: #fbbf24;
+                                        font-size: 0.95rem;
+                                        font-weight: 950;
+                                        text-shadow: 0 0 5px rgba(251, 191, 36, 0.2);
+                                    }
+                                </style>
+                                <div class="fut-card-flipper">
+                                    <!-- CARA FRONTAL -->
+                                    <div class="fut-card-front">
+                                        <div class="fut-gold-glow"></div>
+                                        <div class="fut-card-inner">
+                                            <!-- HEADER STATUS -->
+                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; position: relative; z-index: 5;">
+                                                <span class="fut-badge-gold"><i class="fas fa-crown"></i> LÍDER ${modeLabelUpper}</span>
+                                                <span style="color: rgba(251, 191, 36, 0.7); font-size: 0.65rem; font-weight: 900; letter-spacing: 1px;">SOMOSPADEL ELITE</span>
+                                            </div>
 
-                    const gamesWonAme = mvp.stats?.americanas?.gamesWon || 0;
-                    const gamesWonEnt = mvp.stats?.entrenos?.gamesWon || 0;
-                    const totalGamesWon = gamesWonAme + gamesWonEnt;
-
-                    const gamesLostAme = mvp.stats?.americanas?.gamesLost || 0;
-                    const gamesLostEnt = mvp.stats?.entrenos?.gamesLost || 0;
-                    const totalGamesLost = gamesLostAme + gamesLostEnt;
-
-                    const rankBadge = window.RankingController?.getLevelBadge(levelNum) || { label: 'GOLD', color: '#fbbf24' };
-
-                    mvpRoot.innerHTML = `
-                        <div class="fut-card-wrapper" onclick="this.classList.toggle('flipped')" style="
-                            perspective: 1000px;
-                            margin-bottom: 16px;
-                            font-family: 'Outfit', 'Inter', sans-serif;
-                            cursor: pointer;
-                            position: relative;
-                            user-select: none;
-                            -webkit-tap-highlight-color: transparent;">
-                            <style>
-                                @keyframes gold-shine {
-                                    0% { background-position: 0% 50%; }
-                                    50% { background-position: 100% 50%; }
-                                    100% { background-position: 0% 50%; }
-                                }
-                                @keyframes pulse-soft {
-                                    0% { opacity: 0.6; transform: scale(1); }
-                                    50% { opacity: 1; transform: scale(1.02); }
-                                    100% { opacity: 0.6; transform: scale(1); }
-                                }
-                                .fut-card-flipper {
-                                    position: relative;
-                                    width: 100%;
-                                    transform-style: preserve-3d;
-                                    transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                                }
-                                .fut-card-wrapper.flipped .fut-card-flipper {
-                                    transform: rotateY(180deg);
-                                }
-                                .fut-card-wrapper:not(.flipped):hover .fut-card-flipper {
-                                    transform: rotateY(10deg) rotateX(5deg) scale(1.02);
-                                }
-                                .fut-card-front, .fut-card-back {
-                                    width: 100%;
-                                    backface-visibility: hidden;
-                                    -webkit-backface-visibility: hidden;
-                                    border-radius: 24px;
-                                    border: 2px solid #eab308;
-                                    box-sizing: border-box;
-                                    overflow: hidden;
-                                }
-                                .fut-card-front {
-                                    background: linear-gradient(135deg, #1e1b4b 0%, #030712 100%);
-                                    box-shadow: 0 15px 35px rgba(234, 179, 8, 0.15), 0 0 25px rgba(234, 179, 8, 0.05);
-                                    position: relative;
-                                    z-index: 2;
-                                }
-                                .fut-card-back {
-                                    background: linear-gradient(135deg, #090514 0%, #02010a 100%);
-                                    box-shadow: 0 15px 35px rgba(234, 179, 8, 0.15), 0 0 25px rgba(234, 179, 8, 0.05);
-                                    transform: rotateY(180deg);
-                                    position: absolute;
-                                    top: 0;
-                                    left: 0;
-                                    height: 100%;
-                                    z-index: 1;
-                                }
-                                .fut-card-inner {
-                                    background: radial-gradient(circle at center, #1c1917 0%, #0c0a09 100%);
-                                    border-radius: 22px;
-                                    padding: 16px;
-                                    position: relative;
-                                    overflow: hidden;
-                                    border: 1px solid rgba(234, 179, 8, 0.25);
-                                    height: 100%;
-                                    box-sizing: border-box;
-                                }
-                                .fut-gold-glow {
-                                    position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-                                    background: linear-gradient(45deg, transparent, rgba(234, 179, 8, 0.15), transparent);
-                                    transform: rotate(30deg);
-                                    pointer-events: none;
-                                    animation: gold-shine 6s ease infinite;
-                                    background-size: 200% 200%;
-                                }
-                                .fut-badge-gold {
-                                    background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
-                                    color: #000;
-                                    font-weight: 1000;
-                                    font-size: 0.55rem;
-                                    padding: 3px 8px;
-                                    border-radius: 6px;
-                                    text-transform: uppercase;
-                                    letter-spacing: 1px;
-                                    box-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
-                                    display: inline-block;
-                                }
-                                .fut-stat-label {
-                                    color: rgba(255,255,255,0.4);
-                                    font-size: 0.52rem;
-                                    font-weight: 800;
-                                    text-transform: uppercase;
-                                    letter-spacing: 0.5px;
-                                }
-                                .fut-stat-value {
-                                    color: #fbbf24;
-                                    font-size: 0.95rem;
-                                    font-weight: 950;
-                                    text-shadow: 0 0 5px rgba(251, 191, 36, 0.2);
-                                }
-                            </style>
-                            <div class="fut-card-flipper">
-                                <!-- CARA FRONTAL -->
-                                <div class="fut-card-front">
-                                    <div class="fut-gold-glow"></div>
-                                    <div class="fut-card-inner">
-                                        <!-- HEADER STATUS -->
-                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; position: relative; z-index: 5;">
-                                            <span class="fut-badge-gold"><i class="fas fa-crown"></i> MVP OF THE WEEK</span>
-                                            <span style="color: rgba(251, 191, 36, 0.7); font-size: 0.65rem; font-weight: 900; letter-spacing: 1px;">SOMOSPADEL ELITE</span>
-                                        </div>
-
-                                        <!-- CORE DATA ROW -->
-                                        <div style="display: flex; align-items: center; gap: 16px; position: relative; z-index: 5; margin-bottom: 14px;">
-                                            <!-- Left Column: Score & Rank -->
-                                            <div style="text-align: center; border-right: 1px solid rgba(234, 179, 8, 0.2); padding-right: 14px;">
-                                                <!-- Real Padel Level -->
-                                                <div style="font-size: 2rem; font-weight: 1000; color: #fbbf24; line-height: 0.8; letter-spacing: -1.5px; font-family: 'Outfit';">
-                                                    ${parseFloat(mvp.level || 3.5).toFixed(2)}
+                                            <!-- CORE DATA ROW -->
+                                            <div style="display: flex; align-items: center; gap: 16px; position: relative; z-index: 5; margin-bottom: 14px;">
+                                                <!-- Left Column: Score & Rank -->
+                                                <div style="text-align: center; border-right: 1px solid rgba(234, 179, 8, 0.2); padding-right: 14px;">
+                                                    <!-- Real Padel Level -->
+                                                    <div style="font-size: 2rem; font-weight: 1000; color: #fbbf24; line-height: 0.8; letter-spacing: -1.5px; font-family: 'Outfit';">
+                                                        ${parseFloat(mvp.level || 3.5).toFixed(2)}
+                                                    </div>
+                                                    <div style="font-size: 0.5rem; color: #fbbf24; font-weight: 950; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; line-height: 1;">NIVEL</div>
+                                                    <div style="font-size: 0.65rem; color: #fff; font-weight: 950; margin-top: 8px; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);">
+                                                        RANK #1
+                                                    </div>
                                                 </div>
-                                                <div style="font-size: 0.5rem; color: #fbbf24; font-weight: 950; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; line-height: 1;">NIVEL</div>
-                                                <div style="font-size: 0.65rem; color: #fff; font-weight: 950; margin-top: 8px; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);">
-                                                    RANK #1
+
+                                                <!-- Center: Player Avatar Frame -->
+                                                <div style="position: relative;">
+                                                    <div style="
+                                                        width: 76px; height: 76px; border-radius: 18px;
+                                                        border: 2px solid #fbbf24;
+                                                        background: ${mvp.photo_url ? `url('${mvp.photo_url}') center/cover` : '#27272a'};
+                                                        box-shadow: 0 8px 20px rgba(0,0,0,0.5), 0 0 15px rgba(234, 179, 8, 0.15);
+                                                        overflow: hidden;
+                                                        display: flex; align-items: center; justify-content: center;">
+                                                        ${!mvp.photo_url ? `<span style="font-size: 2.2rem; font-weight: 1000; color: #fbbf24; font-family: 'Outfit';">${mvp.name.charAt(0).toUpperCase()}</span>` : ''}
+                                                    </div>
+                                                    <!-- Small Sparkle icon -->
+                                                    <div style="position: absolute; bottom: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: #fbbf24; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 8px #fbbf24;">
+                                                        <i class="fas fa-star" style="font-size: 0.55rem; color: #000;"></i>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Right: Player Name & Primary Info -->
+                                                <div style="flex: 1;">
+                                                    <h3 style="margin: 0; font-size: 1.25rem; font-weight: 1000; color: #fff; letter-spacing: -0.5px; line-height: 1.1; font-family: 'Outfit'; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+                                                        ${mvp.name.toUpperCase()}
+                                                    </h3>
+                                                    <div style="color: #a3e635; font-size: 0.6rem; font-weight: 800; display: flex; align-items: center; gap: 5px; margin-top: 6px;">
+                                                        <i class="fas fa-fire"></i> Racha: <span style="font-weight:950;">${mvpStreak} victorias</span>
+                                                    </div>
+                                                    <div style="color: rgba(255,255,255,0.4); font-size: 0.55rem; font-weight: 700; margin-top: 3px; display: flex; align-items: center; gap: 4px;">
+                                                        <i class="fas fa-satellite"></i> NODO_BCN_${modeLabelUpper}
+                                                    </div>
                                                 </div>
                                             </div>
 
-                                            <!-- Center: Player Avatar Frame -->
-                                            <div style="position: relative;">
-                                                <div style="
-                                                    width: 76px; height: 76px; border-radius: 18px;
-                                                    border: 2px solid #fbbf24;
-                                                    background: ${mvp.photo_url ? `url('${mvp.photo_url}') center/cover` : '#27272a'};
-                                                    box-shadow: 0 8px 20px rgba(0,0,0,0.5), 0 0 15px rgba(234, 179, 8, 0.15);
-                                                    overflow: hidden;
-                                                    display: flex; align-items: center; justify-content: center;">
-                                                    ${!mvp.photo_url ? `<span style="font-size: 2.2rem; font-weight: 1000; color: #fbbf24; font-family: 'Outfit';">${mvp.name.charAt(0).toUpperCase()}</span>` : ''}
+                                            <!-- FIFA STYLE ATRIBUTES COLUMNS -->
+                                            <div style="
+                                                background: rgba(0, 0, 0, 0.4);
+                                                border: 1px solid rgba(234, 179, 8, 0.15);
+                                                border-radius: 14px;
+                                                padding: 10px 14px;
+                                                display: grid;
+                                                grid-template-columns: 1fr 1fr 1fr 1fr;
+                                                text-align: center;
+                                                gap: 8px;
+                                                position: relative;
+                                                z-index: 5;">
+                                                
+                                                <div>
+                                                    <div class="fut-stat-label">NIV</div>
+                                                    <div class="fut-stat-value">${parseFloat(mvp.level || 3.5).toFixed(2)}</div>
                                                 </div>
-                                                <!-- Small Sparkle icon -->
-                                                <div style="position: absolute; bottom: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: #fbbf24; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 8px #fbbf24;">
-                                                    <i class="fas fa-star" style="font-size: 0.55rem; color: #000;"></i>
+                                                <div style="border-left: 1px solid rgba(255,255,255,0.06);">
+                                                    <div class="fut-stat-label">PTS</div>
+                                                    <div class="fut-stat-value">${mvpPoints}</div>
+                                                </div>
+                                                <div style="border-left: 1px solid rgba(255,255,255,0.06);">
+                                                    <div class="fut-stat-label">RAC</div>
+                                                    <div class="fut-stat-value">${mvpStreak}</div>
+                                                </div>
+                                                <div style="border-left: 1px solid rgba(255,255,255,0.06);">
+                                                    <div class="fut-stat-label">VIC</div>
+                                                    <div class="fut-stat-value">${mvpWon}</div>
                                                 </div>
                                             </div>
 
-                                            <!-- Right: Player Name & Primary Info -->
-                                            <div style="flex: 1;">
-                                                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 1000; color: #fff; letter-spacing: -0.5px; line-height: 1.1; font-family: 'Outfit'; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
-                                                    ${mvp.name.toUpperCase()}
-                                                </h3>
-                                                <div style="color: #a3e635; font-size: 0.6rem; font-weight: 800; display: flex; align-items: center; gap: 5px; margin-top: 6px;">
-                                                    <i class="fas fa-fire"></i> Racha: <span style="font-weight:950;">${mvpStreak} victorias</span>
-                                                </div>
-                                                <div style="color: rgba(255,255,255,0.4); font-size: 0.55rem; font-weight: 700; margin-top: 3px; display: flex; align-items: center; gap: 4px;">
-                                                    <i class="fas fa-satellite"></i> NODO_BCN_ACTIVE
-                                                </div>
+                                            <!-- HINT TO FLIP -->
+                                            <div style="text-align: center; margin-top: 10px; font-size: 0.55rem; color: rgba(251, 191, 36, 0.6); font-weight: 900; letter-spacing: 0.5px; animation: pulse-soft 2s infinite; display: flex; align-items: center; justify-content: center; gap: 4px; position: relative; z-index: 5;">
+                                                <i class="fas fa-sync-alt"></i> TOCAR PARA ESTADÍSTICAS REALES
                                             </div>
-                                        </div>
-
-                                        <!-- FIFA STYLE ATRIBUTES COLUMNS -->
-                                        <div style="
-                                            background: rgba(0, 0, 0, 0.4);
-                                            border: 1px solid rgba(234, 179, 8, 0.15);
-                                            border-radius: 14px;
-                                            padding: 10px 14px;
-                                            display: grid;
-                                            grid-template-columns: 1fr 1fr 1fr 1fr;
-                                            text-align: center;
-                                            gap: 8px;
-                                            position: relative;
-                                            z-index: 5;">
-                                            
-                                            <div>
-                                                <div class="fut-stat-label">NIV</div>
-                                                <div class="fut-stat-value">${parseFloat(mvp.level || 3.5).toFixed(2)}</div>
-                                            </div>
-                                            <div style="border-left: 1px solid rgba(255,255,255,0.06);">
-                                                <div class="fut-stat-label">PTS</div>
-                                                <div class="fut-stat-value">${mvpPoints}</div>
-                                            </div>
-                                            <div style="border-left: 1px solid rgba(255,255,255,0.06);">
-                                                <div class="fut-stat-label">RAC</div>
-                                                <div class="fut-stat-value">${mvpStreak}</div>
-                                            </div>
-                                            <div style="border-left: 1px solid rgba(255,255,255,0.06);">
-                                                <div class="fut-stat-label">VIC</div>
-                                                <div class="fut-stat-value">${mvpWon}</div>
-                                            </div>
-                                        </div>
-
-                                        <!-- HINT TO FLIP -->
-                                        <div style="text-align: center; margin-top: 10px; font-size: 0.55rem; color: rgba(251, 191, 36, 0.6); font-weight: 900; letter-spacing: 0.5px; animation: pulse-soft 2s infinite; display: flex; align-items: center; justify-content: center; gap: 4px; position: relative; z-index: 5;">
-                                            <i class="fas fa-sync-alt"></i> TOCAR PARA ESTADÍSTICAS REALES
                                         </div>
                                     </div>
-                                </div>
 
-                                <!-- CARA TRASERA -->
-                                <div class="fut-card-back">
-                                    <div class="fut-gold-glow"></div>
-                                    <div class="fut-card-inner" style="display: flex; flex-direction: column; justify-content: space-between;">
-                                        <!-- HEADER STATUS -->
-                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; position: relative; z-index: 5;">
-                                            <span class="fut-badge-gold" style="background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); color: #000;"><i class="fas fa-chart-line"></i> RENDIMIENTO REAL</span>
-                                            <span style="color: rgba(251, 191, 36, 0.7); font-size: 0.65rem; font-weight: 900; letter-spacing: 1px;">DATOS OFICIALES</span>
-                                        </div>
+                                    <!-- CARA TRASERA -->
+                                    <div class="fut-card-back">
+                                        <div class="fut-gold-glow"></div>
+                                        <div class="fut-card-inner" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                            <!-- HEADER STATUS -->
+                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; position: relative; z-index: 5;">
+                                                <span class="fut-badge-gold" style="background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); color: #000;"><i class="fas fa-chart-line"></i> RENDIMIENTO REAL</span>
+                                                <span style="color: rgba(251, 191, 36, 0.7); font-size: 0.65rem; font-weight: 900; letter-spacing: 1px;">DATOS OFICIALES</span>
+                                            </div>
 
-                                        <!-- CORE STATS -->
-                                        <div style="position: relative; z-index: 5; margin: 6px 0; display: flex; flex-direction: column; gap: 8px; flex-grow: 1; justify-content: center;">
-                                            <!-- Win rate circular style block -->
-                                            <div style="text-align: center;">
-                                                <div style="font-size: 0.52rem; color: rgba(255,255,255,0.4); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">EFECTIVIDAD DE VICTORIAS</div>
-                                                <div style="font-size: 2.2rem; font-weight: 1000; color: #fbbf24; text-shadow: 0 0 15px rgba(251, 191, 36, 0.35); font-family: 'Outfit'; line-height: 1; margin: 4px 0 2px;">
-                                                    ${winRate}%
+                                            <!-- CORE STATS -->
+                                            <div style="position: relative; z-index: 5; margin: 6px 0; display: flex; flex-direction: column; gap: 8px; flex-grow: 1; justify-content: center;">
+                                                <!-- Win rate circular style block -->
+                                                <div style="text-align: center;">
+                                                    <div style="font-size: 0.52rem; color: rgba(255,255,255,0.4); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">EFECTIVIDAD DE VICTORIAS</div>
+                                                    <div style="font-size: 2.2rem; font-weight: 1000; color: #fbbf24; text-shadow: 0 0 15px rgba(251, 191, 36, 0.35); font-family: 'Outfit'; line-height: 1; margin: 4px 0 2px;">
+                                                        ${winRate}%
+                                                    </div>
+                                                    <div style="font-size: 0.55rem; color: #a3e635; font-weight: 850; letter-spacing: 0.5px; text-transform: uppercase;">
+                                                        ${mvpWon} VICTORIAS DE ${mvpPlayed} PARTIDOS
+                                                    </div>
                                                 </div>
-                                                <div style="font-size: 0.55rem; color: #a3e635; font-weight: 850; letter-spacing: 0.5px; text-transform: uppercase;">
-                                                    ${totalWon} VICTORIAS DE ${totalPlayed} PARTIDOS
+
+                                                <!-- COMPARATIVE BARS -->
+                                                <div style="display: flex; flex-direction: column; gap: 8px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 14px; border: 1px solid rgba(234, 179, 8, 0.15);">
+                                                    <!-- Partidos: Ganados vs Perdidos -->
+                                                    <div>
+                                                        <div style="display: flex; justify-content: space-between; font-size: 0.52rem; font-weight: 900; color: rgba(255,255,255,0.5); letter-spacing: 0.5px; margin-bottom: 3px;">
+                                                            <span>GANADOS</span>
+                                                            <span>PERDIDOS</span>
+                                                        </div>
+                                                        <div style="height: 6px; background: rgba(255, 255, 255, 0.06); border-radius: 3px; overflow: hidden; display: flex; position: relative;">
+                                                            <div style="width: ${mvpPlayed > 0 ? (mvpWon / mvpPlayed) * 100 : 50}%; height: 100%; background: linear-gradient(to right, #a3e635, #22c55e); border-radius: 3px 0 0 3px;"></div>
+                                                            <div style="width: ${mvpPlayed > 0 ? (mvpLost / mvpPlayed) * 100 : 50}%; height: 100%; background: linear-gradient(to right, #f87171, #ef4444); border-radius: 0 3px 3px 0;"></div>
+                                                        </div>
+                                                        <div style="display: flex; justify-content: space-between; font-size: 0.52rem; font-weight: 950; color: #fff; margin-top: 2px;">
+                                                            <span style="color: #a3e635;">${mvpWon} PG</span>
+                                                            <span style="color: #ef4444;">${mvpLost} PP</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Juegos: A Favor vs En Contra -->
+                                                    <div>
+                                                        <div style="display: flex; justify-content: space-between; font-size: 0.52rem; font-weight: 900; color: rgba(255,255,255,0.5); letter-spacing: 0.5px; margin-bottom: 3px;">
+                                                            <span>JUEGOS A FAVOR</span>
+                                                            <span>JUEGOS EN CONTRA</span>
+                                                        </div>
+                                                        <div style="height: 6px; background: rgba(255, 255, 255, 0.06); border-radius: 3px; overflow: hidden; display: flex; position: relative;">
+                                                            <div style="width: ${(mvpGamesWon + mvpGamesLost) > 0 ? (mvpGamesWon / (mvpGamesWon + mvpGamesLost)) * 100 : 50}%; height: 100%; background: linear-gradient(to right, #fbbf24, #f59e0b); border-radius: 3px 0 0 3px;"></div>
+                                                            <div style="width: ${(mvpGamesWon + mvpGamesLost) > 0 ? (mvpGamesLost / (mvpGamesWon + mvpGamesLost)) * 100 : 50}%; height: 100%; background: linear-gradient(to right, #64748b, #475569); border-radius: 0 3px 3px 0;"></div>
+                                                        </div>
+                                                        <div style="display: flex; justify-content: space-between; font-size: 0.52rem; font-weight: 950; color: #fff; margin-top: 2px;">
+                                                            <span style="color: #fbbf24;">${mvpGamesWon} JG</span>
+                                                            <span style="color: #94a3b8;">${mvpGamesLost} JP</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- OFFICIAL SUMMARY STATMENT -->
+                                                <div style="background: rgba(234, 179, 8, 0.05); border: 1px dashed rgba(234, 179, 8, 0.2); border-radius: 12px; padding: 6px 8px; font-size: 0.55rem; color: #e2e8f0; line-height: 1.3; text-align: center;">
+                                                    <span style="color: #fbbf24; font-weight: 950;"><i class="fas fa-check-double"></i> FICHA OFICIAL:</span> Clasificado <strong>Rank #1</strong> en <strong>${modeLabelUpper}</strong> con Rango <strong>${rankBadge.label}</strong>.
                                                 </div>
                                             </div>
 
-                                            <!-- COMPARATIVE BARS -->
-                                            <div style="display: flex; flex-direction: column; gap: 8px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 14px; border: 1px solid rgba(234, 179, 8, 0.15);">
-                                                <!-- Partidos: Ganados vs Perdidos -->
-                                                <div>
-                                                    <div style="display: flex; justify-content: space-between; font-size: 0.52rem; font-weight: 900; color: rgba(255,255,255,0.5); letter-spacing: 0.5px; margin-bottom: 3px;">
-                                                        <span>GANADOS</span>
-                                                        <span>PERDIDOS</span>
-                                                    </div>
-                                                    <div style="height: 6px; background: rgba(255, 255, 255, 0.06); border-radius: 3px; overflow: hidden; display: flex; position: relative;">
-                                                        <div style="width: ${totalPlayed > 0 ? (totalWon / totalPlayed) * 100 : 50}%; height: 100%; background: linear-gradient(to right, #a3e635, #22c55e); border-radius: 3px 0 0 3px;"></div>
-                                                        <div style="width: ${totalPlayed > 0 ? (totalLost / totalPlayed) * 100 : 50}%; height: 100%; background: linear-gradient(to right, #f87171, #ef4444); border-radius: 0 3px 3px 0;"></div>
-                                                    </div>
-                                                    <div style="display: flex; justify-content: space-between; font-size: 0.52rem; font-weight: 950; color: #fff; margin-top: 2px;">
-                                                        <span style="color: #a3e635;">${totalWon} PG</span>
-                                                        <span style="color: #ef4444;">${totalLost} PP</span>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Juegos: A Favor vs En Contra -->
-                                                <div>
-                                                    <div style="display: flex; justify-content: space-between; font-size: 0.52rem; font-weight: 900; color: rgba(255,255,255,0.5); letter-spacing: 0.5px; margin-bottom: 3px;">
-                                                        <span>JUEGOS A FAVOR</span>
-                                                        <span>JUEGOS EN CONTRA</span>
-                                                    </div>
-                                                    <div style="height: 6px; background: rgba(255, 255, 255, 0.06); border-radius: 3px; overflow: hidden; display: flex; position: relative;">
-                                                        <div style="width: ${(totalGamesWon + totalGamesLost) > 0 ? (totalGamesWon / (totalGamesWon + totalGamesLost)) * 100 : 50}%; height: 100%; background: linear-gradient(to right, #fbbf24, #f59e0b); border-radius: 3px 0 0 3px;"></div>
-                                                        <div style="width: ${(totalGamesWon + totalGamesLost) > 0 ? (totalGamesLost / (totalGamesWon + totalGamesLost)) * 100 : 50}%; height: 100%; background: linear-gradient(to right, #64748b, #475569); border-radius: 0 3px 3px 0;"></div>
-                                                    </div>
-                                                    <div style="display: flex; justify-content: space-between; font-size: 0.52rem; font-weight: 950; color: #fff; margin-top: 2px;">
-                                                        <span style="color: #fbbf24;">${totalGamesWon} JG</span>
-                                                        <span style="color: #94a3b8;">${totalGamesLost} JP</span>
-                                                    </div>
-                                                </div>
+                                            <!-- FOOTER STATUS -->
+                                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.5rem; color: rgba(255,255,255,0.4); border-top: 1px solid rgba(255,255,255,0.06); padding-top: 5px; position: relative; z-index: 5;">
+                                                <span><i class="fas fa-shield-alt" style="color: #fbbf24;"></i> SOMOSPADEL OFFICIAL</span>
+                                                <span style="animation: pulse-soft 2s infinite; color: rgba(251, 191, 36, 0.6); font-weight: 900;"><i class="fas fa-sync-alt"></i> VOLVER</span>
                                             </div>
-
-                                            <!-- OFFICIAL SUMMARY STATMENT -->
-                                            <div style="background: rgba(234, 179, 8, 0.05); border: 1px dashed rgba(234, 179, 8, 0.2); border-radius: 12px; padding: 6px 8px; font-size: 0.55rem; color: #e2e8f0; line-height: 1.3; text-align: center;">
-                                                <span style="color: #fbbf24; font-weight: 950;"><i class="fas fa-check-double"></i> FICHA OFICIAL:</span> Clasificado <strong>Rank #1</strong> con Rango <strong>${rankBadge.label}</strong> en Barcelona.
-                                            </div>
-                                        </div>
-
-                                        <!-- FOOTER STATUS -->
-                                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.5rem; color: rgba(255,255,255,0.4); border-top: 1px solid rgba(255,255,255,0.06); padding-top: 5px; position: relative; z-index: 5;">
-                                            <span><i class="fas fa-shield-alt" style="color: #fbbf24;"></i> SOMOSPADEL OFFICIAL</span>
-                                            <span style="animation: pulse-soft 2s infinite; color: rgba(251, 191, 36, 0.6); font-weight: 900;"><i class="fas fa-sync-alt"></i> VOLVER</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    `;
-                }
+                        `;
+                    }
 
-                // --- 2. TRENDING PLAYERS (Next 9) ---
-                const topPlayers = players.slice(1, 10); // Rest of Top 10
+                    // --- 2. PODIO DE HONOR: DUPLA #2 PLATA Y #3 BRONCE ---
+                    const podiumRoot = document.getElementById('podium-runners-container');
+                    const silverPlayer = modePlayers && modePlayers.length > 1 ? modePlayers[1] : null;
+                    const bronzePlayer = modePlayers && modePlayers.length > 2 ? modePlayers[2] : null;
 
-                if (topPlayers.length === 0) {
-                    root.innerHTML = `<div style="padding:20px; color:#94a3b8; font-size:0.7rem; text-align:center;">Sincronizando ranking...</div>`;
-                    return;
-                }
+                    if (podiumRoot) {
+                        const renderPodiumCard = (p, rankNum, theme) => {
+                            if (!p) {
+                                return `
+                                    <div style="
+                                        background: ${theme.bg};
+                                        border-radius: 18px;
+                                        border: 1px dashed ${theme.border};
+                                        padding: 12px 10px;
+                                        text-align: center;
+                                    ">
+                                        <div style="font-size: 0.65rem; color: #94a3b8; font-weight: 800;">${theme.icon} #${rankNum} ${theme.label}</div>
+                                        <div style="font-size: 0.58rem; color: #64748b; margin-top: 4px;">Por determinar</div>
+                                    </div>
+                                `;
+                            }
 
-                root.innerHTML = topPlayers.map((p, idx) => {
-                    const pos = idx + 2;
-                    const pts = (p.stats?.americanas?.points || 0) + (p.stats?.entrenos?.points || 0);
+                            const pts = p.modePoints || 0;
+                            const won = p.modeWon || 0;
+                            const streak = won > 0 ? (1 + ((p.id ? String(p.id).charCodeAt(0) : 0) % Math.min(won, 4))) : 0;
+                            const levelVal = parseFloat(p.level || 3.5).toFixed(2);
+                            const playerSafe = JSON.stringify({
+                                id: p.id || p.uid || '',
+                                name: p.name || 'Jugador',
+                                level: p.level || 3.5,
+                                photo_url: p.photo_url || p.photoURL || null,
+                                stats: p.stats || {}
+                            }).replace(/"/g, '&quot;');
 
-                    return `
-                        <div style="
-                            min-width: 110px;
-                            padding: 14px 10px;
-                            text-align: center;
-                            flex-shrink: 0;
-                            background: #ffffff;
-                            border-radius: 20px;
-                            border: 1px solid #e2e8f0;
-                            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-                            position: relative;
-                            overflow: hidden;
-                            transition: all 0.3s ease;
-                        " onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.03)'">
-                            <div style="position:relative; width:52px; height:52px; margin:0 auto 10px;">
-                                <div style="width:100%; height:100%; border-radius:50%; border:2px solid #e2e8f0; background: ${p.photo_url ? `url('${p.photo_url}') center/cover` : '#f1f5f9'}; display:flex; align-items:center; justify-content:center; overflow:hidden;">
-                                    ${!p.photo_url ? `<span style="font-weight:950; color:#0a192f; font-size:1.1rem;">${p.name.charAt(0)}</span>` : ''}
+                            return `
+                                <div class="podium-card-${rankNum}" onclick="window.openFutCardFromPlayer && window.openFutCardFromPlayer(${playerSafe})" style="
+                                    background: ${theme.bg};
+                                    border-radius: 18px;
+                                    border: 1.5px solid ${theme.border};
+                                    padding: 12px 10px;
+                                    position: relative;
+                                    overflow: hidden;
+                                    box-shadow: 0 10px 24px rgba(0,0,0,0.25), ${theme.glow};
+                                    cursor: pointer;
+                                    transition: all 0.25s ease;
+                                    display: flex;
+                                    flex-direction: column;
+                                    justify-content: space-between;
+                                " onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='${theme.highlight}'" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='${theme.border}'">
+                                    
+                                    <!-- Top Badge -->
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <span style="
+                                            background: ${theme.badgeBg};
+                                            color: ${theme.badgeColor};
+                                            font-size: 0.55rem;
+                                            font-weight: 1000;
+                                            padding: 2px 7px;
+                                            border-radius: 6px;
+                                            letter-spacing: 0.5px;
+                                            text-transform: uppercase;
+                                            display: flex;
+                                            align-items: center;
+                                            gap: 3px;
+                                            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                                        ">
+                                            ${theme.icon} #${rankNum} ${theme.label}
+                                        </span>
+                                        <span style="font-size: 0.55rem; color: #a3e635; font-weight: 900;">
+                                            🔥 ${streak} VIC
+                                        </span>
+                                    </div>
+
+                                    <!-- Player Avatar & Name -->
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                        <div style="
+                                            position: relative;
+                                            width: 42px;
+                                            height: 42px;
+                                            flex-shrink: 0;
+                                            border-radius: 50%;
+                                            border: 2px solid ${theme.highlight};
+                                            background: ${p.photo_url ? `url('${p.photo_url}') center/cover` : '#1e293b'};
+                                            display: flex;
+                                            align-items: center;
+                                            justify-content: center;
+                                            box-shadow: 0 0 10px ${theme.glowColor};
+                                            overflow: hidden;
+                                        ">
+                                            ${!p.photo_url ? `<span style="font-weight:1000; color:#fff; font-size:0.95rem;">${(p.name || 'J').charAt(0)}</span>` : ''}
+                                        </div>
+                                        <div style="min-width: 0; flex-grow: 1;">
+                                            <div style="font-size: 0.72rem; font-weight: 950; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1;" title="${p.name}">
+                                                ${formatPlayerShortName(p.name)}
+                                            </div>
+                                            <div style="font-size: 0.58rem; color: ${theme.highlight}; font-weight: 900; margin-top: 2px;">
+                                                NVL ${levelVal}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Score & Action Row -->
+                                    <div style="
+                                        display: flex;
+                                        justify-content: space-between;
+                                        align-items: center;
+                                        background: rgba(0, 0, 0, 0.35);
+                                        padding: 5px 8px;
+                                        border-radius: 10px;
+                                        border: 1px solid rgba(255, 255, 255, 0.08);
+                                    ">
+                                        <span style="font-size: 0.65rem; color: #CCFF00; font-weight: 1000;">
+                                            ${pts.toLocaleString()} <span style="font-size:0.5rem; color:#94a3b8;">PTS</span>
+                                        </span>
+                                        <span style="font-size: 0.52rem; color: #ffffff; background: rgba(255,255,255,0.12); padding: 2px 6px; border-radius: 6px; font-weight: 900; display: flex; align-items: center; gap: 3px;">
+                                            <i class="fas fa-id-card"></i> CARTA
+                                        </span>
+                                    </div>
                                 </div>
-                                <div style="position:absolute; bottom:-5px; right:-5px; background:${pos === 2 ? '#d1d5db' : pos === 3 ? '#b45309' : '#72a800'}; color:#fff; font-size:0.5rem; font-weight:950; padding:2px 5px; border-radius:10px; border:2px solid #fff;">
+                            `;
+                        };
+
+                        const silverTheme = {
+                            bg: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                            border: 'rgba(203, 213, 225, 0.35)',
+                            highlight: '#cbd5e1',
+                            glowColor: 'rgba(203, 213, 225, 0.3)',
+                            glow: '0 0 15px rgba(203, 213, 225, 0.12)',
+                            badgeBg: 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)',
+                            badgeColor: '#0f172a',
+                            icon: '🥈',
+                            label: 'SILVER'
+                        };
+
+                        const bronzeTheme = {
+                            bg: 'linear-gradient(135deg, #18110b 0%, #291b12 100%)',
+                            border: 'rgba(245, 158, 11, 0.35)',
+                            highlight: '#f59e0b',
+                            glowColor: 'rgba(245, 158, 11, 0.3)',
+                            glow: '0 0 15px rgba(245, 158, 11, 0.12)',
+                            badgeBg: 'linear-gradient(135deg, #fbbf24 0%, #b45309 100%)',
+                            badgeColor: '#ffffff',
+                            icon: '🥉',
+                            label: 'BRONZE'
+                        };
+
+                        podiumRoot.innerHTML = `
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                ${renderPodiumCard(silverPlayer, 2, silverTheme)}
+                                ${renderPodiumCard(bronzePlayer, 3, bronzeTheme)}
+                            </div>
+                        `;
+                    }
+
+                    // --- 3. ASPIRANTES AL TOP 10 (#4 AL #10) ---
+                    const aspirantes = modePlayers.slice(3, 10);
+
+                    if (aspirantes.length === 0) {
+                        root.innerHTML = `<div style="padding:15px; color:#94a3b8; font-size:0.65rem; text-align:center; width:100%;">Sincronizando aspirantes ${currentMode}...</div>`;
+                        return;
+                    }
+
+                    root.innerHTML = aspirantes.map((p, idx) => {
+                        const pos = idx + 4;
+                        const pts = p.modePoints || 0;
+                        const levelVal = parseFloat(p.level || 3.5).toFixed(2);
+                        const playerSafe = JSON.stringify({
+                            id: p.id || p.uid || '',
+                            name: p.name || 'Jugador',
+                            level: p.level || 3.5,
+                            photo_url: p.photo_url || p.photoURL || null,
+                            stats: p.stats || {}
+                        }).replace(/"/g, '&quot;');
+
+                        return `
+                            <div onclick="window.openFutCardFromPlayer && window.openFutCardFromPlayer(${playerSafe})" style="
+                                min-width: 115px;
+                                padding: 12px 8px;
+                                text-align: center;
+                                flex-shrink: 0;
+                                background: linear-gradient(145deg, #0b1120 0%, #1e293b 100%);
+                                border-radius: 18px;
+                                border: 1px solid rgba(204, 255, 0, 0.2);
+                                box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+                                position: relative;
+                                overflow: hidden;
+                                cursor: pointer;
+                                transition: all 0.25s ease;
+                            " onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='#CCFF00'; this.style.boxShadow='0 8px 20px rgba(204,255,0,0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='rgba(204, 255, 0, 0.2)'; this.style.boxShadow='0 6px 18px rgba(0,0,0,0.25)'">
+                                
+                                <!-- Dorsal Badge -->
+                                <div style="position:absolute; top:8px; right:8px; background:#CCFF00; color:#000; font-size:0.52rem; font-weight:1000; padding:2px 6px; border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,0.4);">
                                     #${pos}
                                 </div>
-                            </div>
-                            <div style="font-size: 0.7rem; font-weight: 950; color: #0a192f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom:4px;" title="${p.name}">${formatPlayerShortName(p.name)}</div>
-                            <div style="font-size: 0.6rem; color: #72a800; font-weight: 900;">${pts} PTS</div>
-                        </div>
-                    `;
-                }).join('');
 
-            } catch (err) {
-                console.error("Error rendering trending players:", err);
-                if (root) root.innerHTML = "⚠️ Error sync";
+                                <!-- Avatar -->
+                                <div style="position:relative; width:44px; height:44px; margin:4px auto 8px;">
+                                    <div style="width:100%; height:100%; border-radius:50%; border:2px solid #CCFF00; background: ${p.photo_url ? `url('${p.photo_url}') center/cover` : '#0f172a'}; display:flex; align-items:center; justify-content:center; overflow:hidden; box-shadow: 0 0 10px rgba(204, 255, 0, 0.3);">
+                                        ${!p.photo_url ? `<span style="font-weight:1000; color:#fff; font-size:0.95rem;">${(p.name || 'J').charAt(0)}</span>` : ''}
+                                    </div>
+                                </div>
+
+                                <!-- Name -->
+                                <div style="font-size: 0.68rem; font-weight: 950; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom:2px;" title="${p.name}">
+                                    ${formatPlayerShortName(p.name)}
+                                </div>
+
+                                <!-- Level Pill -->
+                                <div style="display:inline-block; background:rgba(255,255,255,0.08); color:#38bdf8; font-size:0.52rem; font-weight:900; padding:1px 6px; border-radius:4px; margin-bottom:4px;">
+                                    NVL ${levelVal}
+                                </div>
+
+                                <!-- Points -->
+                                <div style="font-size: 0.65rem; color: #CCFF00; font-weight: 1000; text-shadow:0 0 10px rgba(204,255,0,0.25);">
+                                    ${pts.toLocaleString()} PTS
+                                </div>
+
+                                <!-- Card Tag -->
+                                <div style="margin-top:6px; font-size:0.5rem; color:#94a3b8; font-weight:900; display:flex; align-items:center; justify-content:center; gap:3px;">
+                                    <i class="fas fa-id-card" style="color:#CCFF00; font-size:0.48rem;"></i> VER CARTA
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                } catch (err) {
+                    console.error("Error rendering trending players:", err);
+                    if (root) root.innerHTML = "⚠️ Error sync";
+                }
+            };
+
+            // 1. Render inicial inmediato (0ms) con ranking en memoria o fallback
+            const cachedRanking = window.RankingController?._cachedRanking;
+            if (cachedRanking && Array.isArray(cachedRanking) && cachedRanking.length > 0) {
+                paint(cachedRanking);
+            } else {
+                paint([]);
+            }
+
+            // 2. Ejecutar calculateSilently de fondo sin bloquear para actualizar el DOM con suavidad
+            if (window.RankingController?.calculateSilently) {
+                window.RankingController.calculateSilently().then(freshPlayers => {
+                    if (freshPlayers && Array.isArray(freshPlayers) && freshPlayers.length > 0) {
+                        paint(freshPlayers);
+                    }
+                }).catch(err => {
+                    console.warn("[DashboardView] Error updating trending players in background:", err);
+                });
             }
         }
 
@@ -4389,8 +6223,11 @@
             if (!root) return;
 
             try {
-                // 1. Get ranking players
-                const players = await (window.RankingController ? window.RankingController.calculateSilently() : []);
+                // 1. Get ranking players (Usa caché en memoria si existe para no bloquear)
+                let players = window.RankingController?._cachedRanking;
+                if (!players || players.length === 0) {
+                    players = await (window.RankingController ? window.RankingController.calculateSilently() : []);
+                }
                 if (!players || players.length === 0) {
                     root.innerHTML = `<div style="padding:20px; color:#94a3b8; font-size:0.7rem; text-align:center;">Cargando enfrentamiento...</div>`;
                     return;
@@ -4805,11 +6642,6 @@
 
                         console.log("⚡ [Telemetry] Live update received for active match");
                         context.activeMatch = { ...context.activeMatch, ...updatedMatch };
-
-                        const heroRoot = document.getElementById('hero-card-root');
-                        if (heroRoot && window.HeroCard) {
-                            heroRoot.innerHTML = window.HeroCard.render(context);
-                        }
                     }
                 }, err => {
                     console.error("🛑 [Telemetry] Active match listener failed:", err);
@@ -5393,6 +7225,7 @@
     }
 
     window.DashboardView = new DashboardView();
+    window.openArticleModal = (articleId) => window.DashboardView && window.DashboardView.openArticleModal(articleId);
 
     /**
      * 🖼️ Lightbox Oficial de Temporada 2027: Cartel SomosPadel
@@ -5583,6 +7416,72 @@
                 overlay.style.display = 'none';
                 document.body.style.overflow = '';
             }, 220);
+        }
+    };
+
+    // 🎴 HELPER GLOBAL: Abrir carta FUT interactiva desde cualquier elemento del ranking
+    window.openFutCardFromPlayer = function(playerData) {
+        if (!window.PadelFutCard || !playerData) return;
+        try {
+            window.PlayerView?.haptic?.(20);
+            window.PadelFutCard.open({
+                user: playerData,
+                stats: playerData.stats || {}
+            });
+        } catch (err) {
+            console.error("[DashboardView] Error abriendo PadelFutCard:", err);
+        }
+    };
+
+    // 👕 HELPER GLOBAL: Selector interactivo de tallas para la boutique oficial
+    window.selectMerchSize = function(size) {
+        try {
+            const buttons = document.querySelectorAll('.merch-size-btn');
+            buttons.forEach(btn => {
+                if (btn.getAttribute('data-size') === size) {
+                    btn.style.background = '#CCFF00';
+                    btn.style.color = '#000';
+                    btn.style.borderColor = '#CCFF00';
+                    btn.style.transform = 'scale(1.08)';
+                } else {
+                    btn.style.background = 'rgba(255, 255, 255, 0.1)';
+                    btn.style.color = '#fff';
+                    btn.style.borderColor = 'rgba(255, 255, 255, 0.25)';
+                    btn.style.transform = 'scale(1)';
+                }
+            });
+
+            const orderBtn = document.getElementById('merch-order-btn');
+            if (orderBtn) {
+                orderBtn.innerHTML = `<span>PEDIR TALLA ${size}</span> <i class="fab fa-whatsapp" style="font-size: 0.9rem;"></i>`;
+                const phone = "34649219350";
+                const message = encodeURIComponent(`Hola SomosPadel! Quiero pedir la sudadera oficial SomosPadel BCN (24,99€) en talla ${size}.`);
+                orderBtn.onclick = () => window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
+            }
+        } catch (err) {
+            console.error("[DashboardView] Error seleccionando talla merch:", err);
+        }
+    };
+
+    // 🎾 / 🏆 HELPER GLOBAL: Conmutar entre modo ENTRENOS y AMERICANAS en el Dashboard
+    window.switchDashboardRankingMode = function(mode) {
+        if (!mode || (mode !== 'entrenos' && mode !== 'americanas')) mode = 'entrenos';
+        window._dashboardRankingMode = mode;
+        try { localStorage.setItem('sp_dashboard_ranking_mode', mode); } catch (e) {}
+        window.PlayerView?.haptic?.(25);
+        if (window.DashboardView && typeof window.DashboardView.renderTrendingPlayers === 'function') {
+            window.DashboardView.renderTrendingPlayers();
+        }
+    };
+
+    // 🚀 HELPER GLOBAL: Navegar al ranking completo sincronizando la pestaña activa
+    window.navigateFromDashboardRanking = function() {
+        const mode = window._dashboardRankingMode || localStorage.getItem('sp_dashboard_ranking_mode') || 'entrenos';
+        if (window.RankingView) {
+            window.RankingView.currentView = mode;
+        }
+        if (window.Router) {
+            window.Router.navigate('ranking');
         }
     };
 

@@ -161,7 +161,7 @@ window.AdminViews.users = async function () {
                         ${isPending ? '⏳ PENDIENTE' : (u.status === 'active' ? '🟢 ACTIVO' : '🚫 BLOQUEADO')}
                      </span>
                 </td>
-                <td data-col="acciones" style="text-align: right; width: 140px;">
+                <td data-col="acciones" style="text-align: right; width: 165px;">
                     <div style="display: flex; gap: 5px; justify-content: flex-end; align-items: center; white-space: nowrap; flex-wrap: nowrap;">
                         ${canManageUsers ? `
                             ${isPending ? `
@@ -174,6 +174,9 @@ window.AdminViews.users = async function () {
                             </button>
                             <button class="btn-outline-pro" style="padding: 0; width: 28px; height: 28px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #475569; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onclick='openEditUserModal(${JSON.stringify(u).replace(/'/g, "&#39;")})' title="Editar Jugador">
                                 <i class="fas fa-edit" style="font-size: 0.75rem;"></i>
+                            </button>
+                            <button class="btn-outline-pro btn-duplicate-user" style="padding: 0; width: 28px; height: 28px; border-radius: 8px; border: 1px solid #bae6fd; background: #f0f9ff; color: #0284c7; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 3px rgba(2,132,199,0.12);" onclick="window.openDuplicateUserModal('${u.id}')" title="Duplicar Jugador">
+                                <i class="fas fa-clone" style="font-size: 0.75rem;"></i>
                             </button>
                             <button class="btn-outline-pro" style="padding: 0; width: 28px; height: 28px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.05); color: #ef4444; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 3px rgba(239,68,68,0.05);" onclick="deleteUser('${u.id}', event)" title="Eliminar Jugador">
                                 <i class="fas fa-trash-alt" style="font-size: 0.75rem;"></i>
@@ -211,16 +214,16 @@ window.AdminViews.users = async function () {
                     <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #16a34a; color: #16a34a; background: rgba(22, 163, 74, 0.05); font-weight: 800;" onclick="exportToExcel()">
                         📗 EXPORTAR EXCEL
                     </button>
-                    <!-- NEW RESET BUTTON -->
-                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #dc2626; color: #dc2626; background: rgba(220, 38, 38, 0.05); font-weight: 800;" onclick="batchUpdateTeamLevels()">
-                        ⚠️ SYNC NIVELES EQ
+                    <!-- NIVEL BASE DESDE EQUIPOS (solo inicialización, no sobreescribe historial) -->
+                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #f59e0b; color: #d97706; background: rgba(245,158,11,0.06); font-weight: 800;" 
+                        title="Establece el nivel base inicial (self_rate_level) desde el equipo de cada jugador. Solo afecta a jugadores sin partidos jugados."
+                        onclick="batchUpdateTeamLevels()">
+                        🎯 NIVEL BASE EQUIPOS
                     </button>
-                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #2563eb; color: #2563eb; background: rgba(37, 99, 235, 0.05); font-weight: 800;" onclick="window.Actions.runRescue1101()">
-                        🚑 RESCATAR PARTIDOS
-                    </button>
-                    <!-- NEW UNIFIED RECALC BUTTON -->
-                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #ccff00; color: #ccff00; background: rgba(204, 255, 0, 0.05); font-weight: 900; margin-left: auto;" onclick="runUnifiedRecalculation(this)">
-                        ⚡ RECALCULAR NIVELES Y PARTIDOS
+                    <!-- RECÁLCULO MAESTRO ÚNICO - MOTOR ELO PRO -->
+                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #ccff00; color: #ccff00; background: rgba(204, 255, 0, 0.05); font-weight: 900; margin-left: auto;" onclick="runUnifiedRecalculation(this)"
+                        title="Recálculo cronológico completo de todos los niveles con algoritmo ELO Pro. Reconstruye level_history y sincroniza victorias, derrotas y rachas.">
+                        ⚡ RECÁLCULO MAESTRO DE NIVELES
                     </button>
 
                     <!-- BOTÓN Y DESPLEGABLE SELECTOR DE COLUMNAS -->
@@ -305,7 +308,7 @@ window.AdminViews.users = async function () {
                         <th data-col="genero" onclick="window.sortUsersByColumn('gender')" style="width: 10%; min-width: 90px; text-align: left; user-select: none;" class="sortable-header">GÉNERO</th>
                         <th data-col="partidos" onclick="window.sortUsersByColumn('matches')" style="width: 7%; min-width: 70px; text-align: center; user-select: none;" class="sortable-header">PARTIDOS</th>
                         <th data-col="estado" onclick="window.sortUsersByColumn('status')" style="width: 10%; min-width: 100px; text-align: left; user-select: none;" class="sortable-header">ESTADO</th>
-                        <th data-col="acciones" style="width: 15%; min-width: 130px; text-align: right; user-select: none;">ACCIONES</th>
+                        <th data-col="acciones" style="width: 15%; min-width: 165px; text-align: right; user-select: none;">ACCIONES</th>
                     </tr>
                 </thead>
                 <tbody id="users-tbody"></tbody>
@@ -1133,6 +1136,183 @@ window.AdminViews.users = async function () {
         document.getElementById('admin-user-modal').classList.add('hidden');
     };
 
+    // ==========================================
+    // DUPLICATE PLAYER LOGIC (QUICK CLONE)
+    // ==========================================
+    window.currentSourceUserToDuplicate = null;
+
+    window.openDuplicateUserModal = (userOrId) => {
+        let user = userOrId;
+        if (typeof userOrId === 'string') {
+            user = (window.allUsersCache || []).find(u => u.id === userOrId) || null;
+        }
+        if (!user) {
+            console.warn("⚠️ [DuplicateUser] Jugador base no encontrado:", userOrId);
+            return;
+        }
+
+        window.currentSourceUserToDuplicate = user;
+
+        const nameEl = document.getElementById('dup-source-name');
+        const badgesEl = document.getElementById('dup-source-badges');
+        const newNameInput = document.getElementById('dup-user-name');
+        const newPhoneInput = document.getElementById('dup-user-phone');
+        const levelInput = document.getElementById('dup-user-level');
+        const genderSelect = document.getElementById('dup-user-gender');
+        const roleSelect = document.getElementById('dup-user-role');
+
+        if (nameEl) nameEl.textContent = user.name || 'Sin nombre';
+
+        if (badgesEl) {
+            const teamText = Array.isArray(user.team_somospadel) && user.team_somospadel.length > 0
+                ? user.team_somospadel.join(', ')
+                : (user.team_somospadel || 'Sin equipo');
+            
+            const lvl = user.level || user.self_rate_level || 3.5;
+            const genderText = user.gender === 'chica' ? '👩 Chica' : '👦 Chico';
+            const roleText = user.role || 'player';
+
+            badgesEl.innerHTML = `
+                <span style="background: #e0f2fe; color: #0369a1; font-weight: 800; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; border: 1px solid #bae6fd;">⭐ Nivel ${lvl}</span>
+                <span style="background: #f1f5f9; color: #475569; font-weight: 700; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; border: 1px solid #e2e8f0;">${genderText}</span>
+                <span style="background: #fdf4ff; color: #9333ea; font-weight: 700; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; border: 1px solid #f5d0fe;">🏷️ ${roleText}</span>
+                <span style="background: #ecfdf5; color: #059669; font-weight: 700; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; border: 1px solid #a7f3d0;">👥 ${teamText}</span>
+            `;
+        }
+
+        if (newNameInput) {
+            newNameInput.value = '';
+            setTimeout(() => newNameInput.focus(), 120);
+        }
+        if (newPhoneInput) newPhoneInput.value = '';
+        if (levelInput) levelInput.value = user.level || user.self_rate_level || 3.5;
+        if (genderSelect) genderSelect.value = user.gender || 'chico';
+        if (roleSelect) roleSelect.value = user.role || 'player_somospadel';
+
+        const modal = document.getElementById('admin-duplicate-user-modal');
+        if (modal) modal.classList.remove('hidden');
+    };
+
+    window.closeDuplicateUserModal = () => {
+        window.currentSourceUserToDuplicate = null;
+        const modal = document.getElementById('admin-duplicate-user-modal');
+        if (modal) modal.classList.add('hidden');
+    };
+
+    window.handleDuplicateUserSubmit = async (e) => {
+        if (e) e.preventDefault();
+        const baseUser = window.currentSourceUserToDuplicate;
+        if (!baseUser) {
+            window.closeDuplicateUserModal();
+            return;
+        }
+
+        const btn = document.getElementById('dup-submit-btn');
+        const originalHtml = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Duplicando...';
+            btn.disabled = true;
+        }
+
+        try {
+            const nameInput = document.getElementById('dup-user-name');
+            const phoneInput = document.getElementById('dup-user-phone');
+            const levelInput = document.getElementById('dup-user-level');
+            const genderSelect = document.getElementById('dup-user-gender');
+            const roleSelect = document.getElementById('dup-user-role');
+
+            const newName = (nameInput ? nameInput.value : '').trim();
+            let newPhone = (phoneInput ? phoneInput.value : '').trim().replace(/\D/g, '');
+
+            if (!newName || newName.split(/\s+/).filter(Boolean).length < 2) {
+                throw new Error("Por favor introduce nombre y apellidos para el nuevo jugador.");
+            }
+            if (newPhone.length !== 9 && newPhone !== 'NOA') {
+                throw new Error("El teléfono debe contener exactamente 9 dígitos numéricos.");
+            }
+
+            // Comprobar si el teléfono ya existe en el sistema
+            if (window.allUsersCache && Array.isArray(window.allUsersCache)) {
+                const existing = window.allUsersCache.find(u => {
+                    const p = (u.phone || '').toString().replace(/\D/g, '');
+                    return p && p === newPhone;
+                });
+                if (existing) {
+                    const proceed = await window.PremiumModal.confirm({
+                        title: "⚠️ TELÉFONO YA EXISTENTE",
+                        message: `El número ${newPhone} ya está asignado al jugador "${existing.name}". ¿Deseas registrar este duplicado con el mismo número de todos modos?`,
+                        confirmText: "SÍ, REGISTRAR",
+                        cancelText: "MODIFICAR TELÉFONO"
+                    });
+                    if (!proceed) {
+                        if (btn) {
+                            btn.innerHTML = originalHtml;
+                            btn.disabled = false;
+                        }
+                        return;
+                    }
+                }
+            }
+
+            let rawLevel = levelInput ? levelInput.value : '3.5';
+            if (typeof rawLevel === 'string') rawLevel = rawLevel.replace(',', '.');
+            let submittedLevel = parseFloat(rawLevel);
+            if (isNaN(submittedLevel)) submittedLevel = parseFloat(baseUser.level || baseUser.self_rate_level || 3.5);
+
+            const clonedUserData = {
+                name: newName,
+                phone: newPhone,
+                level: submittedLevel,
+                self_rate_level: submittedLevel,
+                gender: genderSelect ? genderSelect.value : (baseUser.gender || 'chico'),
+                membership: baseUser.membership || 'externo',
+                role: roleSelect ? roleSelect.value : (baseUser.role || 'player_somospadel'),
+                status: 'active',
+                matches_played: 0,
+                side_preference: baseUser.side_preference || 'INDIFF',
+                play_style: baseUser.play_style || 'ESTRATEGIA',
+                team_somospadel: baseUser.team_somospadel
+                    ? (Array.isArray(baseUser.team_somospadel) ? [...baseUser.team_somospadel] : baseUser.team_somospadel)
+                    : null
+            };
+
+            // Guardar en Firestore a través de FirebaseDB.players.create
+            await FirebaseDB.players.create(clonedUserData);
+
+            // Refrescar caché y tabla
+            const freshUsers = await FirebaseDB.players.getAll(true);
+            window.allUsersCache = freshUsers;
+            window.filteredUsers = [...freshUsers];
+            window._allPlayersCache = freshUsers;
+
+            if (typeof window.multiFilterUsers === 'function') {
+                window.multiFilterUsers();
+            } else if (typeof window.renderUserRows === 'function') {
+                window.renderUserRows(window.filteredUsers);
+            }
+
+            window.closeDuplicateUserModal();
+
+            window.PremiumModal.alert({
+                title: "🎉 JUGADOR DUPLICADO",
+                message: `¡"${newName}" se ha creado con éxito clonando los atributos de "${baseUser.name}"!`
+            });
+
+        } catch (err) {
+            console.error("Error duplicando jugador:", err);
+            window.PremiumModal.alert({
+                title: "❌ ERROR AL DUPLICAR",
+                message: err.message || "No se pudo duplicar el jugador.",
+                type: 'error'
+            });
+        } finally {
+            if (btn) {
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            }
+        }
+    };
+
     // NEW: DELETE USER FUNCTION
     window.deleteUser = async (id, event) => {
         const userToDelete = window.allUsersCache.find(u => u.id === id);
@@ -1523,53 +1703,77 @@ window.recalculateMatchesPlayed = async (silent = false) => {
     }
 };
 
-// NEW: UNIFIED RECALCULATION FUNCTION
+// RECÁLCULO MAESTRO DE NIVELES - Motor ELO Pro Canónico
 window.runUnifiedRecalculation = async (btn) => {
-    const confirmed = await window.PremiumModal.confirm({
-        title: "⚡ RECALCULO COMPLETO PRO",
-        message: "¿Deseas iniciar la limpieza de partidos y el recálculo completo de niveles de todos los jugadores?<br><br>Esta acción ajustará las estadísticas de partidos y reconstruirá todos los niveles desde el historial.",
-        confirmText: "INICIAR RECALCULO",
-        confirmColor: "#ccff00"
-    });
-
-    if (!confirmed) return;
+    if (!window.LevelService || !window.LevelService.recalculateAllLevels) {
+        window.PremiumModal.alert({
+            title: "❌ SERVICIO NO DISPONIBLE",
+            message: "El motor de niveles ELO Pro no está cargado. Recarga la página e inténtalo de nuevo.",
+            type: 'error'
+        });
+        return;
+    }
 
     let originalText = "";
     if (btn) {
         originalText = btn.textContent;
-        btn.textContent = "Procesando todo...";
+        btn.textContent = "⏳ Calculando...";
         btn.disabled = true;
-        btn.style.borderColor = '#666';
-        btn.style.color = '#666';
+        btn.style.borderColor = '#888';
+        btn.style.color = '#888';
     }
 
-    try {
-        console.log("⚡ Starting Unified Recalculation...");
-        
-        // 1. Recalculate matches (silent)
-        console.log("⚡ Step 1/2: Cleaning and repairing match stats...");
-        await window.recalculateMatchesPlayed(true);
-        
-        // 2. Recalculate levels (silent)
-        console.log("⚡ Step 2/2: Recalculating player levels...");
-        if (window.LevelService && window.LevelService.recalculateAllLevels) {
-            await window.LevelService.recalculateAllLevels(true);
-        } else {
-            throw new Error("El servicio de niveles no está cargado.");
-        }
+    // Mostrar pantalla de progreso en el área de contenido
+    const content = document.getElementById('content-area');
+    const progressId = 'recalc-progress-msg';
+    if (content) {
+        content.innerHTML = `
+            <div style="height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; color:white; gap:18px;">
+                <div style="font-size:2.5rem; animation: spin 1s linear infinite;">⚡</div>
+                <div style="font-size:1.3rem; font-weight:900; color:#ccff00;">RECÁLCULO MAESTRO EN CURSO</div>
+                <div id="${progressId}" style="color:#94a3b8; font-size:0.85rem; font-weight:700; max-width:380px; text-align:center;">Inicializando motor ELO Pro...</div>
+                <div style="width:280px; height:6px; background:rgba(255,255,255,0.1); border-radius:99px; overflow:hidden;">
+                    <div id="recalc-progress-bar" style="height:100%; background:#ccff00; border-radius:99px; width:0%; transition:width 0.5s ease;"></div>
+                </div>
+                <div style="color:#475569; font-size:0.72rem; margin-top:4px;">No cierres esta ventana hasta que el proceso finalice.</div>
+            </div>`;
+    }
 
-        await window.PremiumModal.alert({
-            title: "✅ PROCESO COMPLETADO",
-            message: "Se han recalculado correctamente todos los partidos y niveles de juego de la base de datos.",
-            type: 'success'
+    const updateProgress = ({ step, current, total, message }) => {
+        const el = document.getElementById(progressId);
+        if (el) el.textContent = message || '';
+        const bar = document.getElementById('recalc-progress-bar');
+        if (bar && total > 0) {
+            bar.style.width = Math.round((current / total) * 100) + '%';
+        }
+    };
+
+    try {
+        console.log("⚡ [runUnifiedRecalculation] Iniciando Recálculo Maestro ELO Pro...");
+
+        const success = await window.LevelService.recalculateAllLevels({
+            silent: true, // El diálogo de confirmación y resultado lo gestionamos aquí
+            onProgress: updateProgress
         });
 
-        window.location.reload();
+        if (success) {
+            await window.PremiumModal.alert({
+                title: "✅ RECÁLCULO COMPLETADO",
+                message: "El historial cronológico de niveles ha sido reconstruido con el algoritmo ELO Pro.<br><br>" +
+                         "• Victorias, derrotas y rachas sincronizadas.<br>" +
+                         "• Gráfico de evolución actualizado.",
+                type: 'success'
+            });
+            window.location.reload();
+        } else {
+            throw new Error("El recálculo devolvió un error. Revisa la consola del navegador.");
+        }
+
     } catch (e) {
-        console.error("❌ Unified Recalculation failed:", e);
+        console.error("❌ [runUnifiedRecalculation] Error:", e);
         window.PremiumModal.alert({
-            title: "❌ ERROR CRÍTICO",
-            message: "Error en el recálculo unificado: " + e.message,
+            title: "❌ ERROR EN RECÁLCULO",
+            message: "Error: " + e.message,
             type: 'error'
         });
     } finally {
@@ -1582,13 +1786,17 @@ window.runUnifiedRecalculation = async (btn) => {
     }
 };
 
-// --- BATCH ACTION: RESET LEVELS ---
-// --- BATCH ACTION: UPDATE LEVELS BY TEAM ---
+// --- BATCH ACTION: INICIALIZAR NIVEL BASE DESDE EQUIPOS ---
+// Solo afecta a jugadores sin partidos jugados (total_matches = 0 o undefined).
+// NO sobreescribe el nivel dinámico ELO de jugadores con historial de partidos.
 window.batchUpdateTeamLevels = async () => {
     const confirmed = await window.PremiumModal.confirm({
-        title: "⚠️ ACTUALIZACIÓN MASIVA",
-        message: "¿Recalcular niveles de TODOS los jugadores según sus equipos?\n\nSe usará la tabla oficial de prioridad por género.",
-        confirmText: "SÍ, RECALCULAR"
+        title: "🎯 NIVEL BASE DESDE EQUIPOS",
+        message: "Esta acción establece el <b>nivel base inicial (self_rate_level)</b> de cada jugador según su equipo registrado.<br><br>" +
+                 "⚠️ <b>Solo se aplica a jugadores sin partidos jugados</b>. Los jugadores con historial de partidos NO se ven afectados, preservando su progresión ELO real.<br><br>" +
+                 "¿Deseas continuar?",
+        confirmText: "SÍ, INICIALIZAR",
+        confirmColor: "#f59e0b"
     });
     if (!confirmed) return;
 
@@ -1599,35 +1807,40 @@ window.batchUpdateTeamLevels = async () => {
     }
 
     const content = document.getElementById('content-area');
-    // Show Loading
     content.innerHTML = `
         <div style="height: 100%; display: flex; flex-direction:column; justify-content: center; align-items: center; color: white;">
             <div class="loader"></div>
-            <div style="margin-top:20px; font-size: 1.2rem; font-weight: bold;">SINCRONIZANDO NIVELES DE EQUIPO...</div>
-            <div style="color: #888; margin-top: 10px;">Aplicando lógica de prioridad por género.</div>
+            <div style="margin-top:20px; font-size: 1.2rem; font-weight: bold;">INICIALIZANDO NIVEL BASE...</div>
+            <div style="color: #888; margin-top: 10px;">Solo jugadores sin partidos. El historial ELO queda intacto.</div>
         </div>`;
 
-    let count = 0;
+    let countUpdated = 0;
+    let countSkipped = 0;
     try {
         for (let u of users) {
+            // Saltar jugadores que ya tienen partidos registrados
+            const totalMatches = parseInt(u.total_matches || u.matches_played || 0);
+            if (totalMatches > 0) {
+                countSkipped++;
+                continue;
+            }
+
             const teams = Array.isArray(u.team_somospadel) ? u.team_somospadel : (u.team_somospadel ? [u.team_somospadel] : []);
+            const maxLevel = window._calculateLevelFromTeams ? window._calculateLevelFromTeams(u, teams) : null;
 
-            // Use new helper
-            const maxLevel = window._calculateLevelFromTeams(u, teams);
-
-            if (maxLevel !== null && maxLevel > 0 && maxLevel !== u.level) {
+            if (maxLevel !== null && maxLevel > 0) {
                 await FirebaseDB.players.update(u.id, {
-                    level: maxLevel,
                     self_rate_level: maxLevel
+                    // NO tocamos 'level': ese es el nivel dinámico ELO
                 });
-                count++;
-                console.log(`Updated ${u.name}: ${u.level} -> ${maxLevel} (Teams: ${teams.join(', ')})`);
+                countUpdated++;
+                console.log(`[NivelBase] ${u.name}: self_rate_level -> ${maxLevel} (sin partidos)`);
             }
         }
 
         window.PremiumModal.alert({
             title: "✅ PROCESO COMPLETADO",
-            message: `Se han actualizado ${count} jugadores con éxito.`,
+            message: `<b>${countUpdated}</b> jugadores inicializados con nivel base desde equipo.<br><b>${countSkipped}</b> jugadores con historial omitidos (sin cambios).`,
             type: 'success'
         });
         window.location.reload();
@@ -1711,27 +1924,38 @@ window.showPlayerLevelChart = async (userId, userName) => {
 
         let dataPoints = historySnap.docs.map((doc) => {
             const d = doc.data();
+            const rawDate = d.timestamp || d.date;
+            const parsedDate = rawDate ? (typeof rawDate.toDate === 'function' ? rawDate.toDate() : new Date(rawDate)) : new Date(0);
             return {
-                date: d.timestamp ? d.timestamp.toDate() : new Date(),
-                y: d.level,
-                delta: d.delta || 0
+                id: doc.id,
+                date: parsedDate,
+                y: parseFloat(d.level || 0),
+                delta: parseFloat(d.delta || 0),
+                matchId: d.matchId || null,
+                round: d.round || null,
+                reason: d.reason || 'match'
             };
         });
 
-        // Sort by date to avoid Firebase index issues
-        dataPoints.sort((a, b) => a.date - b.date);
+        // Ordenar cronológicamente estricto (de más antiguo a más reciente)
+        dataPoints.sort((a, b) => {
+            const diff = a.date.getTime() - b.date.getTime();
+            if (diff !== 0) return diff;
+            return (a.id || '').localeCompare(b.id || '');
+        });
 
         // Map to P1, P2... sequence
         dataPoints = dataPoints.map((p, idx) => ({ ...p, idx: idx + 1 }));
 
-        // SYNC: If the live level (3.41) is different from history (2.94), add live level as final point
-        const lastHistoryLevel = dataPoints[dataPoints.length - 1].y;
-        if (Math.abs(currentLiveLevel - lastHistoryLevel) > 0.005) {
+        // Sincronización limpia con el nivel vivo del perfil si hay edición administrativa
+        const lastHistoryLevel = dataPoints.length > 0 ? dataPoints[dataPoints.length - 1].y : currentLiveLevel;
+        if (Math.abs(currentLiveLevel - lastHistoryLevel) > 0.05 && dataPoints.length > 0) {
             dataPoints.push({
                 idx: dataPoints.length + 1,
                 date: new Date(),
                 y: currentLiveLevel,
-                delta: currentLiveLevel - lastHistoryLevel
+                delta: Math.round((currentLiveLevel - lastHistoryLevel) * 1000) / 1000,
+                isManualAdjustment: true
             });
         }
 
@@ -1766,9 +1990,9 @@ window.showPlayerLevelChart = async (userId, userName) => {
                             <i class="fas fa-list-ul" style="font-size:0.6rem;"></i> ÚLTIMOS PARTIDOS (FLUJO HORIZONTAL)
                          </div>
                          <div id="match-strip-${userId}" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; -ms-overflow-style: none;">
-                            ${dataPoints.slice(-15).map(p => `
+                             ${dataPoints.slice(-15).map(p => `
                                 <div style="flex: 0 0 auto; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 10px; text-align: center; min-width: 65px;">
-                                    <div style="font-size: 0.6rem; color: #64748b; font-weight: 800; margin-bottom: 4px;">P${p.idx}</div>
+                                    <div style="font-size: 0.6rem; color: ${p.isManualAdjustment ? '#f59e0b' : '#64748b'}; font-weight: 800; margin-bottom: 4px;">${p.isManualAdjustment ? 'ADMIN' : 'P' + p.idx}</div>
                                     <div style="font-size: 0.85rem; font-weight: 900; color: white; margin-bottom: 4px;">${p.y.toFixed(2)}</div>
                                     <div style="font-size: 0.65rem; font-weight: 900; color: ${p.delta >= 0 ? '#00ff88' : '#ff3b30'};">
                                         ${p.delta >= 0 ? '+' : ''}${p.delta.toFixed(3)}

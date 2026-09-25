@@ -14,18 +14,31 @@ window.AppInit = {
     async boot() {
         console.log("🚀 [AppInit] Iniciando secuencia de arranque de AMERICANAS...");
         
-        // Timeout de seguridad global de 5 segundos para evitar congelamiento infinito
+        // Recuperación defensiva inmediata si Firebase ya está instanciado (0ms)
+        if (!window.db && window.firebase && typeof window.firebase.firestore === 'function') {
+            try {
+                window.db = window.firebase.firestore();
+            } catch (e) {}
+        }
+        if (!window.auth && window.firebase && typeof window.firebase.auth === 'function') {
+            try {
+                window.auth = window.firebase.auth();
+            } catch (e) {}
+        }
+
+        // Timeout de seguridad global de 12 segundos para evitar congelamiento infinito
         const bootTimeout = setTimeout(() => {
             if (!this.initialized) {
-                console.error("❌ [AppInit Failsafe] Secuencia de arranque interrumpida por timeout de seguridad (5s).");
+                console.error("❌ [AppInit Failsafe] Secuencia de arranque interrumpida por timeout de seguridad (12s).");
                 this.showStartupError("El sistema tardó demasiado en responder. Comprueba tu conexión a Internet o recarga la página.");
             }
-        }, 5000);
+        }, 12000);
 
         try {
             // 1. ESPERA A FIREBASE (El pilar básico)
-            await this.waitForDependency('db', 25); // Reducimos a 25 intentos (5s máx)
-            await this.waitForDependency('auth', 25); 
+            // 180 intentos a 50ms = 9s máx (0ms si ya está cargado)
+            await this.waitForDependency('db', 180); 
+            await this.waitForDependency('auth', 180); 
             console.log("✅ [AppInit] Firebase DB y Auth detectados.");
 
             // 2. REGISTRO Y LANZAMIENTO DE SERVICIOS
@@ -57,19 +70,49 @@ window.AppInit = {
     /**
      * Espera a que una variable global esté definida (Firebase, etc)
      */
-    waitForDependency(globalVar, maxAttempts = 50) {
+    waitForDependency(globalVar, maxAttempts = 180) {
         return new Promise((resolve, reject) => {
+            // Recuperación defensiva: Si se busca 'db' o 'auth' y Firebase ya está instanciado en window
+            if (globalVar === 'db' && !window.db && window.firebase && typeof window.firebase.firestore === 'function') {
+                try {
+                    window.db = window.firebase.firestore();
+                } catch (e) {}
+            }
+            if (globalVar === 'auth' && !window.auth && window.firebase && typeof window.firebase.auth === 'function') {
+                try {
+                    window.auth = window.firebase.auth();
+                } catch (e) {}
+            }
+
+            // Si ya está disponible, resolver sin demora (0ms)
+            if (window[globalVar]) {
+                return resolve(window[globalVar]);
+            }
+
             let attempts = 0;
             const check = setInterval(() => {
+                // Comprobación defensiva en cada ciclo
+                if (globalVar === 'db' && !window.db && window.firebase && typeof window.firebase.firestore === 'function') {
+                    try {
+                        window.db = window.firebase.firestore();
+                    } catch (e) {}
+                }
+                if (globalVar === 'auth' && !window.auth && window.firebase && typeof window.firebase.auth === 'function') {
+                    try {
+                        window.auth = window.firebase.auth();
+                    } catch (e) {}
+                }
+
                 if (window[globalVar]) {
                     clearInterval(check);
                     resolve(window[globalVar]);
+                    return;
                 }
-                if (attempts++ >= maxAttempts) {
+                if (++attempts >= maxAttempts) {
                     clearInterval(check);
                     reject(`Timeout esperando a ${globalVar}`);
                 }
-            }, 200);
+            }, 50);
         });
     },
 

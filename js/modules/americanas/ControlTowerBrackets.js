@@ -6,6 +6,10 @@
 (function () {
     'use strict';
 
+    // Helper: normaliza team_a_names / team_b_names que pueden ser string
+    // (datos históricos guardados con join) o array (formato correcto actual)
+    const _toArray = (raw) => Array.isArray(raw) ? raw : (typeof raw === 'string' && raw ? raw.split(/\s*\/\s*/) : []);
+
     class ControlTowerBrackets {
         static render(matches, eventDoc) {
             if (!matches || matches.length === 0) {
@@ -24,10 +28,10 @@
             // Extract unique players for the Player Journey Filter
             const playersSet = new Map();
             matches.forEach(m => {
-                (m.team_a_names || []).forEach((n, idx) => {
+                _toArray(m.team_a_names).forEach((n, idx) => {
                     if (n && n !== '---') playersSet.set(n.trim().toUpperCase(), n.trim());
                 });
-                (m.team_b_names || []).forEach((n, idx) => {
+                _toArray(m.team_b_names).forEach((n, idx) => {
                     if (n && n !== '---') playersSet.set(n.trim().toUpperCase(), n.trim());
                 });
             });
@@ -409,8 +413,8 @@
                                         const isFinished = m.status === 'finished' || (scoreA + scoreB > 0);
                                         const isWinnerA = isFinished && scoreA > scoreB;
                                         const isWinnerB = isFinished && scoreB > scoreA;
-                                        const teamAName = (m.team_a_names || []).join(' & ') || 'POR DEFINIR';
-                                        const teamBName = (m.team_b_names || []).join(' & ') || 'POR DEFINIR';
+                                        const teamAName = _toArray(m.team_a_names).join(' & ') || 'POR DEFINIR';
+                                        const teamBName = _toArray(m.team_b_names).join(' & ') || 'POR DEFINIR';
                                         const courtNum = m.court || m.pista || 1;
 
                                         return `
@@ -457,8 +461,8 @@
                                     </div>
                                     <div class="sp-ladder-matches-grid">
                                         ${matchesOnCourt.slice(-3).map(m => {
-                                            const teamA = (m.team_a_names || []).join(' & ');
-                                            const teamB = (m.team_b_names || []).join(' & ');
+                                            const teamA = _toArray(m.team_a_names).join(' & ');
+                                            const teamB = _toArray(m.team_b_names).join(' & ');
                                             return `
                                                 <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:8px 12px; font-size:0.72rem;">
                                                     <div style="font-weight:900; color:#64748b; font-size:0.6rem; margin-bottom:4px;">RONDA ${m.round}</div>
@@ -535,19 +539,19 @@
             // Populate journey box
             const allMatches = window.ControlTowerView?.allMatches || [];
             const playerMatches = allMatches.filter(m => {
-                const teamA = (m.team_a_names || []).map(x => (x || '').toLowerCase()).join(' ');
-                const teamB = (m.team_b_names || []).map(x => (x || '').toLowerCase()).join(' ');
+                const teamA = _toArray(m.team_a_names).map(x => (x || '').toLowerCase()).join(' ');
+                const teamB = _toArray(m.team_b_names).map(x => (x || '').toLowerCase()).join(' ');
                 return teamA.includes(name) || teamB.includes(name);
             }).sort((a, b) => (parseInt(a.round || 1) - parseInt(b.round || 1)));
 
             if (journeyBox && journeyRows) {
                 journeyTitle.innerText = `RECORRIDO DE: ${playerName.toUpperCase()} (${playerMatches.length} PARTIDOS)`;
                 journeyRows.innerHTML = playerMatches.map(m => {
-                    const isInTeamA = (m.team_a_names || []).some(x => (x || '').toLowerCase().includes(name));
+                    const isInTeamA = _toArray(m.team_a_names).some(x => (x || '').toLowerCase().includes(name));
                     const scoreMy = isInTeamA ? (m.score_a || 0) : (m.score_b || 0);
                     const scoreRival = isInTeamA ? (m.score_b || 0) : (m.score_a || 0);
-                    const partners = isInTeamA ? m.team_a_names : m.team_b_names;
-                    const rivals = isInTeamA ? m.team_b_names : m.team_a_names;
+                    const partners = _toArray(isInTeamA ? m.team_a_names : m.team_b_names);
+                    const rivals = _toArray(isInTeamA ? m.team_b_names : m.team_a_names);
                     const won = parseInt(scoreMy) > parseInt(scoreRival);
 
                     return `

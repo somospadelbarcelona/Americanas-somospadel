@@ -124,6 +124,39 @@ window.WhatsAppService = {
     },
 
     /**
+     * Construye la URL canónica directa para un evento (Americanas o Entrenos)
+     * Formato canónico:
+     * - Americanas: https://somospadelbarcelona.github.io/Americanas-somospadel/?event=${event.id}#americanas
+     * - Entrenos: https://somospadelbarcelona.github.io/Americanas-somospadel/?event=${event.id}#entrenos
+     */
+    getEventCanonicalUrl(event) {
+        const baseUrl = "https://somospadelbarcelona.github.io/Americanas-somospadel/";
+        if (!event) return baseUrl;
+        const name = (event.name || '').toUpperCase();
+        const isEntreno = event.type === 'entreno' || name.includes('ENTRENO');
+        const sectionHash = isEntreno ? "#entrenos" : "#americanas";
+        const rawId = event.id || event._id || event.uid;
+        const eventId = rawId ? encodeURIComponent(String(rawId).trim()) : '';
+        const queryParam = eventId ? `?event=${eventId}` : '';
+        return `${baseUrl}${queryParam}${sectionHash}`;
+    },
+
+    /**
+     * Abre URLs de forma segura evitando bloqueos de popups y desbordamientos
+     */
+    _openUrlSafely(url) {
+        if (!url) return;
+        try {
+            const win = window.open(url, '_blank', 'noopener,noreferrer');
+            if (!win || win.closed || typeof win.closed === 'undefined') {
+                window.location.href = url;
+            }
+        } catch (e) {
+            window.location.href = url;
+        }
+    },
+
+    /**
      * Genera un mensaje formateado para WhatsApp (Broadcast Pro 9.0)
      * @param {Object} event - Objeto del evento
      * @param {Array} richPlayers - Lista de jugadores enriquecida con nivel/género
@@ -136,19 +169,23 @@ window.WhatsAppService = {
         const type = (event.category || 'open').toLowerCase();
         const isMixed = type === 'mixed' || type === 'mixto' || type === 'mixta';
         const isFemale = type === 'female' || type === 'femenina';
-        const isAmericana = name.includes('AMERICANA') || event.type === 'americana';
+        const isEntreno = event.type === 'entreno' || name.includes('ENTRENO');
+        const isAmericana = !isEntreno;
 
         const dateStr = this._formatDate(event.date);
         const timeStr = event.time || '10:00';
         const endTimeStr = event.time_end ? ` a ${event.time_end}` : '';
-        const location = event.location || 'SomosPadel BCN';
+        const location = event.location || event.sede || event.club || 'SomosPadel BCN';
 
-        const players = event.players || [];
-        const maxPlayers = (parseInt(event.max_courts) || 4) * 4;
+        const players = event.players || event.registeredPlayers || [];
+        const rawCourts = parseInt(event.max_courts || event.courts || 0);
+        const maxCourts = rawCourts > 0 ? rawCourts : (event.max_players ? Math.max(1, Math.round(event.max_players / 4)) : 4);
+        // Court capacity in padel is strictly 4 players per court
+        const maxPlayers = maxCourts * 4;
         const spotsLeft = Math.max(0, maxPlayers - players.length);
 
-        const pMember = event.price_members || 10;
-        const pExt = event.price_external || 10;
+        const pMember = event.price_members || event.price_socio || event.price || 10;
+        const pExt = event.price_external || event.price_no_socio || event.price_externo || event.price || 10;
 
         // Formateo de nivel
         let levelText = '3.0 - 4.5';
@@ -178,11 +215,8 @@ window.WhatsAppService = {
         const metrics = this._calculateEventMetrics(displayList);
         const progressBar = this._generateProgressBar(players.length, maxPlayers);
 
-        // Deep link directo al evento
-        const baseUrl = "https://somospadelbarcelona.github.io/Americanas-somospadel";
-        const sectionHash = isAmericana ? "#americanas" : "#entrenos";
-        const eventParam = event.id ? `?event=${event.id}` : '';
-        const deepLinkUrl = `${baseUrl}/${eventParam}${sectionHash}`;
+        // Deep link canónico directo al evento
+        const deepLinkUrl = this.getEventCanonicalUrl(event);
 
         // === CONSTRUCCIÓN DE LISTA DE JUGADORES (Pro & Clean con 01., 02., 10., 11., 12.) ===
         const processedIds = new Set();
@@ -265,12 +299,18 @@ window.WhatsAppService = {
         msg += `📅 *Fecha:* ${dateStr}\n`;
         msg += `⏰ *Horario:* ${timeStr}${endTimeStr}\n`;
         msg += `📍 *Club:* ${location}\n`;
+        if (event.organizer && String(event.organizer).trim()) {
+            msg += `👤 *Organizador:* ${String(event.organizer).trim()}\n`;
+        }
         msg += `🎾 *Modo:* ${modeLabel}\n`;
         msg += `⚡ *Nivel:* ${levelText}\n`;
         if (metrics.avgLevel) {
             msg += `📊 *Nivel medio:* ${metrics.avgLevel}\n`;
         }
         msg += `✨ *Extras:* ${extrasStr}\n\n`;
+        if (event.description && String(event.description).trim()) {
+            msg += `📢 *Nota del organizador:*\n_${String(event.description).trim()}_\n\n`;
+        }
 
         // Ocupación y balance
         msg += `📊 *Ocupación (${players.length}/${maxPlayers}):*\n`;
@@ -318,9 +358,24 @@ window.WhatsAppService = {
             // Vibración táctil sutil
             if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(25);
 
+            // 100% FRESH FETCH from Firestore to prevent stale in-memory data
+            let freshEvent = event;
+            if (event.id && window.EventService?.getById) {
+                try {
+                    const evtType = (event.type === 'entreno' || (event.name && event.name.toUpperCase().includes('ENTRENO'))) ? 'entreno' : 'americana';
+                    const fetched = await window.EventService.getById(evtType, event.id);
+                    if (fetched) {
+                        freshEvent = { ...event, ...fetched, id: event.id, type: evtType };
+                    }
+                } catch (fetchErr) {
+                    console.warn("⚠️ [WhatsAppService] Error fetching fresh event from Firestore, using in-memory event:", fetchErr);
+                }
+            }
+
             // Enriquecer jugadores con niveles actualizados y género
             let richPlayers = null;
-            if (event.players && event.players.length > 0) {
+            const eventPlayers = freshEvent.players || freshEvent.registeredPlayers || [];
+            if (eventPlayers && eventPlayers.length > 0) {
                 try {
                     let allUsers = window._allPlayersCache || window.allUsersCache;
                     if (!allUsers && window.FirebaseDB?.players?.getAll) {
@@ -332,7 +387,7 @@ window.WhatsAppService = {
                         }
                     }
                     if (allUsers && Array.isArray(allUsers) && allUsers.length > 0) {
-                        richPlayers = event.players.map(p => {
+                        richPlayers = eventPlayers.map(p => {
                             const pid = (typeof p === 'string') ? p : (p.id || p.uid);
                             const user = allUsers.find(u => (u.id === pid) || (u.uid === pid));
                             return {
@@ -349,8 +404,8 @@ window.WhatsAppService = {
                 }
             }
 
-            // Generar el mensaje optimizado para WhatsApp
-            const text = this.generateMessage(event, richPlayers);
+            // Generar el mensaje optimizado para WhatsApp con el evento 100% actualizado
+            const text = this.generateMessage(freshEvent, richPlayers);
 
             // Copia de seguridad automática en el portapapeles (por si el navegador bloquea popups en escritorio)
             try {
@@ -365,7 +420,7 @@ window.WhatsAppService = {
             }
 
             // Abrir directamente WhatsApp
-            await this.shareText(text, `SomosPadel: ${event.name || 'Convocatoria'}`);
+            await this.shareText(text, `SomosPadel: ${freshEvent.name || 'Convocatoria'}`);
 
         } catch (e) {
             console.error("❌ Error en shareStartFromAdmin:", e);
@@ -437,8 +492,8 @@ window.WhatsAppService = {
         if (!records) return;
         const E = this.E;
 
-        let msg = E.TROPHY + " *SALÓN DE LA FAMA - SOMOSPADEL BCN* " + E.TROPHY + "\n";
-        msg += "*TEMPORADA 2026*\n";
+        let msg = E.TROPHY + " *RÉCORDS DE LA TEMPORADA - SOMOSPADEL BCN* " + E.TROPHY + "\n";
+        msg += "*LIGA SUMMAPADEL 2026*\n";
         msg += "--------------------------\n\n";
 
         const items = [
@@ -457,8 +512,10 @@ window.WhatsAppService = {
         items.forEach(item => {
             if (item.r && item.r.name !== 'VACANTE') {
                 const icon = item.r.icon || "🏆";
-                msg += icon + " *" + item.t + "*\n";
-                msg += "👑 " + item.r.name + " (" + item.r.value + ")\n\n";
+                const title = item.r.title || item.t;
+                const metric = item.r.count || item.r.value || "";
+                msg += icon + " *" + title.toUpperCase() + "*\n";
+                msg += "👑 " + item.r.name + (metric ? " (" + metric + ")" : "") + "\n\n";
             }
         });
 
@@ -493,19 +550,20 @@ window.WhatsAppService = {
      */
     async shareLookingFor(event, countNeeded) {
         const E = this.E;
-        const typeIcon = (event.type === 'entreno') ? "🏋️‍♂️" : "🏆";
+        const name = (event.name || 'EVENTO').toUpperCase();
+        const isEntreno = event.type === 'entreno' || name.includes('ENTRENO');
+        const typeIcon = isEntreno ? "🏋️‍♂️" : "🏆";
 
         let msg = E.DRUM + " *¡BUSCAMOS " + countNeeded + " JUGADORE" + (countNeeded > 1 ? 'S' : '') + "!* " + E.DRUM + "\n\n";
-        msg += typeIcon + " *" + (event.name || 'EVENTO').toUpperCase() + "*\n";
+        msg += typeIcon + " *" + name + "*\n";
         msg += E.CALENDAR + " " + this._formatDate(event.date) + "\n";
-        msg += E.TIMER + " " + (event.time || '10:00') + "\n";
+        msg += E.TIMER + " " + (event.time || '10:00') + (event.time_end && !event.time?.includes('-') ? ' - ' + event.time_end : '') + "\n";
         msg += E.PIN + " " + (event.location || 'SomosPadel BCN') + "\n";
         msg += "--------------------------\n\n";
         msg += "Nos falta" + (countNeeded > 1 ? 'n ' : ' ') + "*" + countNeeded + "* para completar el cuadro. ¡Dale caña! 🔥🎾\n\n";
 
-        const baseUrl = "https://somospadelbarcelona.github.io/Americanas-somospadel";
-        const sectionHash = (event.type === 'entreno') ? "#entrenos" : "#americanas";
-        msg += E.LINK + " " + baseUrl + "/" + sectionHash + "\n";
+        const deepLinkUrl = this.getEventCanonicalUrl(event);
+        msg += E.LINK + " " + deepLinkUrl + "\n";
 
         const encodedText = encodeURIComponent(msg);
         const url = "https://api.whatsapp.com/send?text=" + encodedText;

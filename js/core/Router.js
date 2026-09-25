@@ -7,51 +7,72 @@
         constructor() {
             this.routes = {
                 'dashboard': () => this.renderDashboard(),
+                'journal': () => this.renderDashboard(),
+                'blog': () => this.renderDashboard(),
                 'americanas': () => this.handleControllerTab('EventsController', 'events'),
                 'events': () => this.handleControllerTab('EventsController', 'events'),
-                'profile': () => window.PlayerController?.init(),
-                'live': () => window.ControlTowerView?.handleLiveRoute(),
-                'live-entreno': () => window.EntrenoLiveView?.handleRoute(),
-                'ranking': () => window.RankingController?.init(),
-                'equipos': () => window.TeamController?.init(),
-                'teams': () => window.TeamController?.init(),
-                'tournaments': () => window.TournamentController?.init(),
-                'agenda': () => this.handleControllerTab('EventsController', 'agenda'),
+                'finished_americanas': () => this.handleControllerTab('EventsController', 'finished_americanas'),
+                'agenda_americanas': () => this.handleControllerTab('EventsController', 'agenda_americanas'),
+                'help_americanas': () => this.handleControllerTab('EventsController', 'help_americanas'),
+                'finished': () => this.handleControllerTab('EventsController', 'finished'),
+                'profile': () => this.executeControllerInit('PlayerController', 'profile'),
+                'live': () => this.executeControllerInit('ControlTowerView', 'live', (c) => c.handleLiveRoute()),
+                'live-entreno': () => this.executeControllerInit('EntrenoLiveView', 'live-entreno', (c) => c.handleRoute()),
+                'ranking': () => this.executeControllerInit('RankingController', 'ranking'),
+                'clima': () => this.handleControllerTab('EventsController', 'meteo'),
+                'weather': () => this.handleControllerTab('EventsController', 'meteo'),
+                'meteo': () => this.handleControllerTab('EventsController', 'meteo'),
+                'comunidad': () => this.handleCommunityRoute('teams'),
+                'community': () => this.handleCommunityRoute('teams'),
+                'equipos': () => this.handleCommunityRoute('teams'),
+                'teams': () => this.handleCommunityRoute('teams'),
+                'tournaments': () => this.handleCommunityRoute('tournaments'),
+                'agenda': () => this.handleCommunityRoute('agenda'),
                 'results': () => this.handleControllerTab('EventsController', 'results'),
-                'entrenos': () => this.handleControllerTab('EventsController', 'entrenos'),
-                'partidas_abiertas': () => this.handleControllerTab('EventsController', 'entrenos'),
-                'records': () => {
-                    console.log("🛣️ [Router] Executing records route...");
-                    if (window.RecordsController) {
-                        window.RecordsController.init();
-                    } else {
-                        console.error("❌ [Router] RecordsController not found in window!");
-                        // Emergency render if controller missing
-                        const content = document.getElementById('content-area');
-                        if (content) content.innerHTML = '<div style="padding:100px; color:white; text-align:center;">Error: Controller no listo. Reintenta en 1s...</div>';
-                        setTimeout(() => window.Router.navigate('records'), 1500);
-                    }
-                }
+                'entrenos': () => this.handleCommunityRoute('entrenos'),
+                'partidas_abiertas': () => this.handleCommunityRoute('entrenos'),
+                'my_team': () => this.handleCommunityRoute('my_team'),
+                'records': () => this.handleCommunityRoute('records'),
+                'inscriptions': () => this.handleCommunityRoute('inscriptions'),
+                'inscripciones': () => this.handleCommunityRoute('inscriptions')
             };
 
             // Determinar la ruta inicial desde el hash de la URL o parámetros de consulta (Deep Linking)
             const urlParams = new URLSearchParams(window.location.search);
             const isRsvpAction = urlParams.get('action') === 'rsvp' || (window.location.hash && window.location.hash.includes('rsvp'));
-            const initialHash = window.location.hash.replace('#', '');
-            let targetRoute = this.routes[initialHash] ? initialHash : 'dashboard';
+            const cleanHash = (window.location.hash.split(/[?&]/)[0] || '').replace('#', '');
+            let targetRoute = this.routes[cleanHash] ? cleanHash : 'dashboard';
+
+            // Detectar si viene un parámetro event o openEvent o id en search o hash
+            let targetEventId = urlParams.get('event') || urlParams.get('openEvent') || urlParams.get('id');
+            if (!targetEventId && window.location.hash && (window.location.hash.includes('event=') || window.location.hash.includes('openEvent=') || window.location.hash.includes('id='))) {
+                const match = window.location.hash.match(/[?&#](?:event|openEvent|id)=([^&/#]+)/);
+                if (match) targetEventId = match[1];
+            }
+
+            if (targetEventId) {
+                // Si viene y no hay hash explícito o es dashboard o ruta no válida, verificar si hay indicio de tipo o mantener una ruta inteligente hacia entrenos o americanas
+                if (!cleanHash || cleanHash === 'dashboard' || !this.routes[cleanHash]) {
+                    const fullUrlLower = (window.location.search + ' ' + window.location.hash).toLowerCase();
+                    const isEntreno = urlParams.get('type') === 'entreno' || 
+                                      urlParams.get('section') === 'entrenos' || 
+                                      fullUrlLower.includes('entreno');
+                    targetRoute = isEntreno ? 'entrenos' : 'americanas';
+                }
+            }
 
             if (isRsvpAction) {
                 targetRoute = 'equipos';
             }
 
-            this.currentRoute = null; // No bloquear la primera navegación
+            this.currentRoute = targetRoute; // Inicializar con la ruta objetivo (nunca null transitorio)
 
             // Handle browser navigation
             window.onpopstate = (event) => {
                 if (event.state && event.state.route) {
                     this.navigate(event.state.route, true);
                 } else {
-                    const currentHash = window.location.hash.replace('#', '');
+                    const currentHash = (window.location.hash.split(/[?&]/)[0] || '').replace('#', '');
                     const targetRoute = this.routes[currentHash] ? currentHash : 'dashboard';
                     this.navigate(targetRoute, true);
                 }
@@ -85,17 +106,213 @@
         init() {
             this.initGlobalExceptionHandler();
             console.log("🛣️ Enterprise Router System v2.0 Initialized");
+
+            // Sync role-americanas-only class dynamically
+            const syncRoleClass = () => {
+                const currentUser = window.Store?.getState('currentUser') || 
+                    (() => {
+                        try { return JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch (e) { return {}; }
+                    })();
+                const isAmericanasOnly = currentUser && currentUser.role === 'player_americanas';
+                if (document.body) {
+                    document.body.classList.toggle('role-americanas-only', !!isAmericanasOnly);
+                }
+            };
+            syncRoleClass();
+            if (window.Store && typeof window.Store.subscribe === 'function') {
+                window.Store.subscribe('currentUser', syncRoleClass);
+            }
         }
 
-        handleControllerTab(controllerName, tabName) {
+        executeControllerInit(controllerName, route, customAction = null, retries = 0) {
             const controller = window[controllerName];
             if (controller) {
-                if (typeof controller.init === 'function') controller.init();
-                if (typeof controller.setTab === 'function') controller.setTab(tabName);
+                try {
+                    if (typeof customAction === 'function') {
+                        customAction(controller);
+                    } else if (typeof controller.init === 'function') {
+                        controller.init();
+                    }
+                } catch (err) {
+                    console.error(`[Router] Error ejecutando ${controllerName}:`, err);
+                    this.renderError(route, err);
+                }
+            } else if (retries < 80) {
+                if (retries === 4) {
+                    const content = document.getElementById('content-area');
+                    if (content && !content.querySelector('.loader')) {
+                        content.innerHTML = '<div class="loader-container" style="display:flex; justify-content:center; align-items:center; height:50vh;"><div class="loader"></div></div>';
+                    }
+                }
+                setTimeout(() => this.executeControllerInit(controllerName, route, customAction, retries + 1), 50);
+            } else {
+                console.error(`❌ [Router] Controlador ${controllerName} no encontrado tras varios intentos`);
+                this.renderError(route, new Error(`El módulo ${route} tardó demasiado en responder.`));
+            }
+        }
+
+        handleControllerTab(controllerName, tabName, retries = 0) {
+            const controller = window[controllerName];
+            if (controller) {
+                try {
+                    if (controller.state && typeof controller.state === 'object') {
+                        controller.state.activeTab = tabName;
+                    }
+                    if (!controller.state?.viewInitialized && typeof controller.init === 'function') {
+                        controller.init();
+                    } else if (typeof controller.setTab === 'function') {
+                        controller.setTab(tabName);
+                    } else if (typeof controller.render === 'function') {
+                        controller.render();
+                    }
+                } catch (err) {
+                    console.error(`[Router] Error en handleControllerTab (${controllerName}, ${tabName}):`, err);
+                    this.renderError(tabName, err);
+                }
+            } else if (retries < 80) {
+                if (retries === 4) {
+                    const content = document.getElementById('content-area');
+                    if (content && !content.querySelector('.loader')) {
+                        content.innerHTML = '<div class="loader-container" style="display:flex; justify-content:center; align-items:center; height:50vh;"><div class="loader"></div></div>';
+                    }
+                }
+                setTimeout(() => this.handleControllerTab(controllerName, tabName, retries + 1), 50);
+            } else {
+                console.error(`❌ [Router] Controlador ${controllerName} no listo para pestaña ${tabName}`);
+                this.renderError(tabName, new Error(`El módulo de ${tabName} tardó demasiado en cargar.`));
+            }
+        }
+
+        handleCommunityRoute(subTab = 'teams') {
+            window.activeCommunitySubTab = subTab;
+
+            const onDone = () => {
+                this.attachCommunitySubmenu(subTab);
+            };
+
+            if (subTab === 'teams') {
+                this.executeControllerInit('TeamController', 'teams', (c) => {
+                    c.init();
+                    setTimeout(onDone, 60);
+                    setTimeout(onDone, 200);
+                });
+            } else if (subTab === 'entrenos') {
+                this.handleControllerTab('EventsController', 'entrenos');
+                setTimeout(onDone, 80);
+                setTimeout(onDone, 250);
+            } else if (subTab === 'my_team') {
+                this.executeControllerInit('TeamController', 'my_team', (c) => {
+                    if (typeof c.renderMyTeam === 'function') {
+                        c.renderMyTeam();
+                    } else if (window.TeamView && typeof window.TeamView.renderMyTeam === 'function') {
+                        window.TeamView.renderMyTeam(c.teams || window.ClubTeamsData || []);
+                    }
+                    setTimeout(onDone, 60);
+                    setTimeout(onDone, 200);
+                });
+            } else if (subTab === 'records') {
+                this.executeControllerInit('RecordsController', 'records', (c) => {
+                    c.init();
+                    setTimeout(onDone, 60);
+                    setTimeout(onDone, 200);
+                });
+            } else if (subTab === 'agenda') {
+                this.executeControllerInit('AgendaController', 'agenda', (c) => {
+                    c.init();
+                    setTimeout(onDone, 60);
+                    setTimeout(onDone, 200);
+                });
+            } else if (subTab === 'inscriptions' || subTab === 'inscripciones') {
+                // 🔒 BLOQUEADO — En breves estará disponible para la nueva temporada
+                setTimeout(() => {
+                    if (typeof window.showInscriptionsComingSoon === 'function') {
+                        window.showInscriptionsComingSoon();
+                    }
+                }, 50);
+                // Volver a comunidad/equipos en lugar de cargar inscripciones
+                this.navigate('comunidad', false, true);
+                setTimeout(onDone, 60);
+            } else if (subTab === 'tournaments') {
+                this.executeControllerInit('TournamentController', 'tournaments', (c) => {
+                    c.init();
+                    setTimeout(onDone, 60);
+                    setTimeout(onDone, 200);
+                });
+            }
+        }
+
+        attachCommunitySubmenu(activeSubTab) {
+            const content = document.getElementById('content-area');
+            if (!content) return;
+
+            // Determinar la subpestaña canónica activa (entrenos, teams, my_team, agenda, inscriptions, records)
+            let currentTab = activeSubTab || window.activeCommunitySubTab || 'teams';
+            if (['comunidad', 'community', 'equipos', 'teams'].includes(currentTab)) {
+                currentTab = 'teams';
+            } else if (['entrenos', 'partidas_abiertas'].includes(currentTab)) {
+                currentTab = 'entrenos';
+            } else if (['my_team'].includes(currentTab)) {
+                currentTab = 'my_team';
+            } else if (['agenda'].includes(currentTab)) {
+                currentTab = 'agenda';
+            } else if (['records'].includes(currentTab)) {
+                currentTab = 'records';
+            } else if (['inscriptions', 'inscripciones'].includes(currentTab)) {
+                currentTab = 'inscriptions';
+            }
+
+            if (window.SubnavManager) {
+                window.SubnavManager.renderCommunity(currentTab);
+            }
+
+            const existing = document.getElementById('community-hub-bar');
+            if (existing) {
+                existing.remove();
             }
         }
 
         navigate(route, isBack = false, force = false) {
+            const cleanRoute = (route ? String(route).split('?')[0] : '').replace('#', '');
+            route = cleanRoute || 'dashboard';
+
+            if (typeof window.closeCommunityMenu === 'function') {
+                window.closeCommunityMenu();
+            }
+
+            // === ROLE ACCESS GUARD: JUGADOR AMERICANAS ===
+            const currentUser = window.Store?.getState('currentUser') || 
+                (() => {
+                    try { return JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch (e) { return {}; }
+                })();
+
+            const isAmericanasOnly = currentUser && currentUser.role === 'player_americanas';
+            if (document.body) {
+                document.body.classList.toggle('role-americanas-only', !!isAmericanasOnly);
+            }
+
+            if (isAmericanasOnly) {
+                const blockedRoutes = [
+                    'comunidad', 'community', 'partidas_abiertas',
+                    'results', 'equipos', 'teams', 'tournaments'
+                ];
+                if (blockedRoutes.includes(route)) {
+                    console.warn(`[Router] Acceso restringido para JUGADOR AMERICANAS a la ruta: ${route}`);
+                    if (window.PremiumModal && typeof window.PremiumModal.alert === 'function') {
+                        window.PremiumModal.alert({
+                            title: "🔒 ACCESO EXCLUSIVO",
+                            message: "No está permitido el acceso ya que esta sección es exclusiva para jugadores de SomosPadel Barcelona 🎾",
+                            type: "warning"
+                        });
+                    } else if (window.NotificationService && typeof window.NotificationService.showToast === 'function') {
+                        window.NotificationService.showToast("No está permitido el acceso: Exclusivo para jugadores de SomosPadel Barcelona 🎾", "warning");
+                    }
+                    if (!this.currentRoute) {
+                        return this.navigate('americanas');
+                    }
+                    return;
+                }
+            }
+
             const content = document.getElementById('content-area');
             const needsRender = !content || 
                 content.querySelector('.match-promo-card') !== null || 
@@ -107,14 +324,17 @@
             }
 
             console.log(`[Router] Transitioning: ${this.currentRoute} -> ${route} (force: ${force})`);
+            const prevRoute = this.currentRoute;
+            this.currentRoute = route;
 
             // === MEMORY & RESOURCE CLEANUP ===
-            this.cleanupPreviousRoute(route);
-
-            this.currentRoute = route;
+            this.cleanupPreviousRoute(prevRoute, route);
 
             // Update UI State
             this.updateNavUI(route);
+
+            // 📡 Telemetría Inteligente de Secciones (Lo más visto y lo menos visto)
+            this.trackRouteView(route);
 
             // Execute View Logic
             const viewAction = this.routes[route];
@@ -131,10 +351,19 @@
 
             // History Management
             if (!isBack) {
-                const search = window.location.search || '';
-                const hasRsvpParam = search.includes('action=rsvp');
+                let search = window.location.search || '';
+                // Si search está vacío pero el hash traía parámetros (?event=...), rescatarlos para normalizar y no perder el deep link
+                if (!search && window.location.hash && (window.location.hash.includes('?') || window.location.hash.includes('event='))) {
+                    const qIdx = window.location.hash.indexOf('?');
+                    if (qIdx !== -1) {
+                        search = window.location.hash.substring(qIdx);
+                    } else if (window.location.hash.includes('event=')) {
+                        const m = window.location.hash.match(/[?&#]?(event=[^&#]+)/);
+                        if (m) search = `?${m[1]}`;
+                    }
+                }
                 const targetHash = `#${route}`;
-                const fullUrl = hasRsvpParam ? `${search}${targetHash}` : targetHash;
+                const fullUrl = search ? `${search}${targetHash}` : targetHash;
                 window.history.pushState({ route }, '', fullUrl);
             }
 
@@ -142,23 +371,48 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        cleanupPreviousRoute(newRoute) {
-            if (this.currentRoute && this.currentRoute === newRoute) return;
+        cleanupPreviousRoute(prevRoute, newRoute) {
+            if (prevRoute && prevRoute === newRoute) return;
+
+            const isCommunity = ['comunidad', 'community', 'equipos', 'teams', 'entrenos', 'partidas_abiertas', 'agenda', 'tournaments', 'my_team', 'records', 'inscriptions', 'inscripciones'].includes(newRoute);
+            const isAmericanas = ['events', 'americanas', 'finished_americanas', 'agenda_americanas', 'help_americanas', 'meteo', 'clima', 'weather'].includes(newRoute);
+
+            if (!isCommunity && !isAmericanas) {
+                if (window.SubnavManager) window.SubnavManager.hide();
+                const comBar = document.getElementById('community-hub-bar');
+                if (comBar) comBar.remove();
+            }
 
             const controllersToCleanup = [
-                { name: 'DashboardView', routes: ['dashboard'] },
-                { name: 'DashboardController', routes: ['dashboard'] },
-                { name: 'EventsController', routes: ['events', 'americanas', 'results', 'agenda', 'entrenos'] },
+                { name: 'DashboardView', routes: ['dashboard', 'journal', 'blog'] },
+                { name: 'DashboardController', routes: ['dashboard', 'journal', 'blog'] },
+                { name: 'EventsController', routes: ['events', 'americanas', 'finished_americanas', 'agenda_americanas', 'help_americanas', 'finished', 'agenda', 'results', 'entrenos', 'partidas_abiertas', 'meteo', 'clima', 'weather'] },
                 { name: 'ControlTowerView', routes: ['live'] },
                 { name: 'TVView', routes: ['tv'] },
                 { name: 'PlayerController', routes: ['profile'] },
                 { name: 'RecordsController', routes: ['records'] },
                 { name: 'RankingController', routes: ['ranking'] },
-                { name: 'TeamController', routes: ['teams', 'equipos'] }
+                { name: 'TeamController', routes: ['teams', 'equipos', 'comunidad', 'community', 'my_team'] },
+                { name: 'TournamentController', routes: ['tournaments'] }
             ];
 
+            // Asegurar que el polling de EventsController se detiene al navegar a cualquier otra sección (ranking, perfil, etc.)
+            const eventsRoutes = ['events', 'americanas', 'finished_americanas', 'agenda_americanas', 'help_americanas', 'finished', 'agenda', 'results', 'entrenos', 'partidas_abiertas', 'meteo', 'clima', 'weather'];
+            if (!eventsRoutes.includes(newRoute) && window.EventsController && typeof window.EventsController.stopAutoRefreshPolling === 'function') {
+                window.EventsController.stopAutoRefreshPolling();
+            }
+
             controllersToCleanup.forEach(ctrl => {
-                if (ctrl.routes.includes(this.currentRoute)) {
+                if (prevRoute && ctrl.routes.includes(prevRoute) && !ctrl.routes.includes(newRoute)) {
+                    // Mantener el servicio de fondo de EventsController activo para transiciones instantáneas
+                    if (ctrl.name === 'EventsController') {
+                        const instance = window.EventsController;
+                        if (instance && typeof instance.stopAutoRefreshPolling === 'function') {
+                            instance.stopAutoRefreshPolling();
+                        }
+                        return;
+                    }
+
                     const instance = window[ctrl.name];
                     if (instance && typeof instance.destroy === 'function') {
                         console.log(`[Router] Cleaning up ${ctrl.name}`);
@@ -169,14 +423,30 @@
         }
 
         updateNavUI(route) {
+            // Sincronizar clase visual según el rol
+            const currentUser = window.Store?.getState('currentUser') || 
+                (() => {
+                    try { return JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch (e) { return {}; }
+                })();
+            const isAmericanasOnly = currentUser && currentUser.role === 'player_americanas';
+            if (document.body) {
+                document.body.classList.toggle('role-americanas-only', !!isAmericanasOnly);
+            }
+
             // 1. Bottom Nav Dock (New System)
             let activeColor = 'rgba(204, 255, 0, 0.15)'; // color por defecto (lime)
             
             document.querySelectorAll('.nav-item').forEach(btn => {
-                // Determine if this nav-item corresponds to the current route
-                // We check if the ID contains the route name or if it's a direct match
                 const navRoute = btn.id.replace('nav-', '');
-                const isActive = navRoute === route;
+                let effectiveRoute = route;
+                if (['events', 'americanas', 'finished_americanas', 'agenda_americanas', 'help_americanas', 'meteo', 'clima', 'weather'].includes(route)) {
+                    effectiveRoute = 'americanas';
+                } else if (['entrenos', 'live-entreno'].includes(route)) {
+                    effectiveRoute = 'entrenos';
+                } else if (['comunidad', 'community', 'agenda', 'help', 'finished', 'partidas_abiertas', 'equipos', 'teams', 'tournaments', 'my_team', 'records', 'inscriptions', 'inscripciones'].includes(route)) {
+                    effectiveRoute = 'community';
+                }
+                const isActive = navRoute === effectiveRoute;
                 btn.classList.toggle('active', isActive);
 
                 if (isActive) {
@@ -267,6 +537,60 @@
                     <button onclick="Router.navigate('dashboard')" class="btn-primary-pro">VOLVER AL INICIO</button>
                 </div>
             `;
+        }
+
+        trackRouteView(route) {
+            try {
+                // 1. Mapeo a secciones principales de negocio
+                let section = route;
+                if (['events', 'americanas', 'finished_americanas', 'agenda_americanas', 'help_americanas', 'meteo', 'clima', 'weather'].includes(route)) {
+                    section = 'americanas';
+                } else if (['entrenos', 'agenda', 'help', 'finished', 'partidas_abiertas'].includes(route)) {
+                    section = 'entrenos';
+                } else if (['equipos', 'teams'].includes(route)) {
+                    section = 'teams';
+                } else if (['tournaments'].includes(route)) {
+                    section = 'tournaments';
+                } else if (['ranking', 'records'].includes(route)) {
+                    section = 'ranking';
+                } else if (['profile'].includes(route)) {
+                    section = 'profile';
+                } else if (['dashboard'].includes(route)) {
+                    section = 'dashboard';
+                }
+
+                // 2. Registro local persistente para telemetría
+                const viewsKey = 'somospadel_route_telemetry_v1';
+                let counts = {};
+                try {
+                    counts = JSON.parse(localStorage.getItem(viewsKey) || '{}');
+                } catch (e) { counts = {}; }
+                counts[section] = (counts[section] || 0) + 1;
+                counts['_total'] = (counts['_total'] || 0) + 1;
+                counts['_lastUpdated'] = new Date().toISOString();
+                localStorage.setItem(viewsKey, JSON.stringify(counts));
+
+                // 3. Registro en Firestore (con debounce para eficiencia)
+                if (window.db && typeof window.db.collection === 'function') {
+                    const now = Date.now();
+                    if (!this._lastFirestoreLog || (now - this._lastFirestoreLog > 8000)) {
+                        this._lastFirestoreLog = now;
+                        const currentUser = window.Store?.getState('currentUser') || 
+                            (() => {
+                                try { return JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e){ return {}; }
+                            })();
+
+                        window.db.collection('telemetry_routes').doc(section).set({
+                            section: section,
+                            views: firebase.firestore.FieldValue.increment(1),
+                            lastViewedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            lastRole: currentUser?.role || 'guest'
+                        }, { merge: true }).catch(() => {});
+                    }
+                }
+            } catch (e) {
+                // Silencioso para garantizar cero impacto en la experiencia
+            }
         }
 
         initGlobalExceptionHandler() {

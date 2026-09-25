@@ -304,7 +304,8 @@ const FixedPairsLogic = {
         });
 
         // Initialize/Reset deduplication guard for this ranking cycle
-        window._processedCourtsInRanking = new Set();
+        const _env = typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : {});
+        _env._processedCourtsInRanking = new Set();
 
         // Identify explicit pairs (manual or partner-defined)
         const explicitPairs = pairs.filter(p => p.is_explicit);
@@ -356,12 +357,12 @@ const FixedPairsLogic = {
                 // If we already processed this court in this round, ignore extra copies
                 const courtNum = parseInt(match.court || 0);
                 const dedupKey = `R${match.round}_C${courtNum}`;
-                if (window._processedCourtsInRanking?.has(dedupKey)) {
+                if (_env._processedCourtsInRanking?.has(dedupKey)) {
                     console.warn(`🛑 Skipping duplicate result for ${dedupKey} to prevent jump glitches.`);
                     return;
                 }
-                window._processedCourtsInRanking = window._processedCourtsInRanking || new Set();
-                window._processedCourtsInRanking.add(dedupKey);
+                _env._processedCourtsInRanking = _env._processedCourtsInRanking || new Set();
+                _env._processedCourtsInRanking.add(dedupKey);
 
                 const scoreA = parseInt(match.score_a || 0);
                 const scoreB = parseInt(match.score_b || 0);

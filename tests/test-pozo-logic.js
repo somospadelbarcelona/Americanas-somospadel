@@ -9,15 +9,19 @@ const path = require('path');
 
 // Mocks para el entorno
 global.window = {};
-global.console.log = (...args) => console.log('LOG:', ...args);
-global.console.warn = (...args) => console.warn('WARN:', ...args);
+const origLog = console.log.bind(console);
+const origWarn = console.warn.bind(console);
+global.console.log = (...args) => origLog('LOG:', ...args);
+global.console.warn = (...args) => origWarn('WARN:', ...args);
 
 // Cargar la lógica (quitando el 'window.' para que Node no pete)
-const fpContent = fs.readFileSync(path.join(__dirname, 'js/fixed-pairs-logic.js'), 'utf8').replace(/window\.FixedPairsLogic =/g, 'const FixedPairsLogic =');
-const rpContent = fs.readFileSync(path.join(__dirname, 'js/rotating-pozo-logic.js'), 'utf8').replace(/window\.RotatingPozoLogic =/g, 'const RotatingPozoLogic =');
+const fpContent = fs.readFileSync(path.join(__dirname, '../js/fixed-pairs-logic.js'), 'utf8');
+const rpContent = fs.readFileSync(path.join(__dirname, '../js/rotating-pozo-logic.js'), 'utf8');
 
-eval(fpContent + '; global.FixedPairsLogic = FixedPairsLogic;');
-eval(rpContent + '; global.RotatingPozoLogic = RotatingPozoLogic;');
+eval(fpContent);
+eval(rpContent);
+global.FixedPairsLogic = window.FixedPairsLogic;
+global.RotatingPozoLogic = window.RotatingPozoLogic;
 
 function runTests() {
     console.log('\n🚀 INICIANDO PRUEBAS DE LÓGICA POZO...');
@@ -31,8 +35,8 @@ function runTests() {
         { id: 'p4', name: 'Pareja 4', current_court: 2 }
     ];
     const matchesFixed = [
-        { round: 1, court: 1, team_a_id: 'p1', team_b_id: 'p2', score_a: 6, score_b: 0, status: 'finished' },
-        { round: 1, court: 2, team_a_id: 'p3', team_b_id: 'p4', score_a: 6, score_b: 0, status: 'finished' }
+        { round: 1, court: 1, pair_a_id: 'p1', pair_b_id: 'p2', team_a_id: 'p1', team_b_id: 'p2', score_a: 6, score_b: 0, status: 'finished' },
+        { round: 1, court: 2, pair_a_id: 'p3', pair_b_id: 'p4', team_a_id: 'p3', team_b_id: 'p4', score_a: 6, score_b: 0, status: 'finished' }
     ];
     // Se supone que P1 (gana en P1) se queda en P1.
     // P2 (pierde en P1) baja a P2.

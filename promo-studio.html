@@ -1,0 +1,3277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketing & Creative Studio 2026 • Somos Pádel Barcelona</title>
+    
+    <!-- GOOGLE FONTS 2026 EDITORIAL -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,700&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- FONT AWESOME ICONS (CDN + FALLBACK) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" 
+          onerror="this.onerror=null;this.href='https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css';">
+    
+    <!-- EXPORT & QR LIBS (CDN + FALLBACKS) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" 
+            onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js';"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js" 
+            onerror="this.onerror=null;this.src='https://unpkg.com/html-to-image@1.11.11/dist/html-to-image.js';"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" 
+            onerror="this.onerror=null;this.src='https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js';"></script>
+    <style id="hologram-toggle-style"></style>
+
+    <style>
+        :root {
+            --bg-deep: #05070d;
+            --bg-card: #0c111d;
+            --bg-surface: #141c2e;
+            --bg-stage: #030408;
+            --primary: #CCFF00;
+            --primary-glow: rgba(204, 255, 0, 0.45);
+            --primary-dark: #a2cc00;
+            --cyan: #00e5ff;
+            --cyan-glow: rgba(0, 229, 255, 0.4);
+            --pink: #ff007f;
+            --gold: #f59e0b;
+            --gold-glow: rgba(245, 158, 11, 0.45);
+            --text-main: #ffffff;
+            --text-sub: #94a3b8;
+            --text-muted: #64748b;
+            --border-glass: rgba(255, 255, 255, 0.12);
+            --font-display: 'Outfit', sans-serif;
+            --font-body: 'Montserrat', sans-serif;
+            
+            /* DYNAMIC ACCENT */
+            --accent-color: #CCFF00;
+            --accent-glow: rgba(204, 255, 0, 0.45);
+            --accent-text: #05070d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            font-family: var(--font-body);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 10%, rgba(204, 255, 0, 0.07), transparent 35%),
+                radial-gradient(circle at 85% 85%, rgba(0, 229, 255, 0.05), transparent 40%);
+        }
+
+        /* TOP STUDIO HEADER */
+        header.studio-header {
+            background: rgba(12, 17, 29, 0.88);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-glass);
+            padding: 0.9rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand-box {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-logo-img {
+            height: 42px;
+            width: auto;
+            filter: drop-shadow(0 0 14px var(--primary-glow));
+        }
+
+        .brand-title-wrap {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand-title {
+            font-family: var(--font-display);
+            font-weight: 900;
+            font-size: 1.25rem;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            line-height: 1.1;
+        }
+
+        .brand-badge {
+            background: var(--primary);
+            color: #000;
+            font-size: 0.65rem;
+            font-weight: 900;
+            padding: 2px 7px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .brand-subline {
+            font-size: 0.72rem;
+            color: var(--text-sub);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-header {
+            background: rgba(255, 255, 255, 0.07);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 999px;
+            text-decoration: none;
+            font-size: 0.82rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid var(--border-glass);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
+        }
+
+        .btn-header:hover {
+            background: rgba(255, 255, 255, 0.14);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn-header-primary {
+            background: var(--primary);
+            color: #05070d;
+            border-color: var(--primary);
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .btn-header-primary:hover {
+            background: #d8ff33;
+            color: #000;
+            box-shadow: 0 0 25px rgba(204, 255, 0, 0.7);
+        }
+
+        /* MAIN STUDIO WORKSPACE */
+        .workspace {
+            display: grid;
+            grid-template-columns: 480px 1fr;
+            flex: 1;
+            height: calc(100vh - 72px);
+            overflow: hidden;
+        }
+
+        @media (max-width: 1200px) {
+            .workspace {
+                grid-template-columns: 420px 1fr;
+            }
+        }
+
+        @media (max-width: 980px) {
+            .workspace {
+                grid-template-columns: 1fr;
+                height: auto;
+                overflow: visible;
+            }
+            .stage-area {
+                min-height: 85vh;
+                padding: 1rem;
+                padding-bottom: 5.5rem;
+            }
+            .artboard-stage {
+                min-height: 560px;
+                width: 100%;
+            }
+            .export-dock {
+                position: fixed;
+                bottom: 1rem;
+                left: 50%;
+                transform: translateX(-50%);
+                width: calc(100% - 24px);
+                max-width: 520px;
+                justify-content: center;
+                padding: 8px 14px;
+                gap: 8px;
+            }
+            .btn-export-main, .btn-export-video, .btn-export-text {
+                padding: 10px 14px;
+                font-size: 0.78rem;
+                flex: 1;
+                justify-content: center;
+            }
+        }
+
+        /* SIDEBAR CONTROLS */
+        .controls-panel {
+            background: var(--bg-card);
+            border-right: 1px solid var(--border-glass);
+            overflow-y: auto;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .controls-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+        .controls-panel::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.18);
+            border-radius: 3px;
+        }
+
+        .section-box {
+            background: rgba(255, 255, 255, 0.025);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            padding: 1.2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            transition: border-color 0.2s;
+        }
+
+        .section-box:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .section-title {
+            font-family: var(--font-display);
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.95rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .section-title span {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* FORM STYLING */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 0.9rem;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-label {
+            font-size: 0.73rem;
+            font-weight: 700;
+            color: var(--text-sub);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .form-input, .form-textarea, .form-select {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-glass);
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.85rem;
+            padding: 10px 12px;
+            border-radius: 10px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 14px var(--accent-glow);
+            background: rgba(20, 28, 46, 0.95);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 55px;
+            line-height: 1.4;
+        }
+
+        /* FORMAT SELECTOR PILLS */
+        .format-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .format-btn {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-glass);
+            color: var(--text-sub);
+            padding: 12px 6px;
+            border-radius: 12px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 0.72rem;
+            font-weight: 700;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .format-btn i {
+            font-size: 1.25rem;
+            transition: transform 0.2s;
+        }
+
+        .format-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.3);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        .format-btn.active {
+            background: rgba(204, 255, 0, 0.12);
+            border-color: var(--primary);
+            color: #fff;
+            border-width: 2px;
+            box-shadow: 0 0 16px rgba(204, 255, 0, 0.25);
+        }
+
+        .format-btn.active i {
+            color: var(--primary);
+            transform: scale(1.1);
+        }
+
+        /* TEMPLATE SELECTOR CARDS */
+        .template-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .template-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            padding: 12px 10px;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .template-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 4px; height: 100%;
+            background: transparent;
+            transition: background 0.2s;
+        }
+
+        .template-card:hover {
+            border-color: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateY(-2px);
+        }
+
+        .template-card.active {
+            border-color: var(--primary);
+            background: rgba(204, 255, 0, 0.1);
+            box-shadow: 0 0 20px rgba(204, 255, 0, 0.2);
+        }
+
+        .template-card.active::before {
+            background: var(--primary);
+        }
+
+        .template-card-title {
+            font-family: var(--font-display);
+            font-weight: 800;
+            font-size: 0.82rem;
+            color: #fff;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .template-card-desc {
+            font-size: 0.68rem;
+            color: var(--text-sub);
+            line-height: 1.35;
+        }
+
+        /* BACKGROUND SELECTOR (PHOTOS) */
+        .bg-selector-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .bg-thumb {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid var(--border-glass);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .bg-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .bg-thumb:hover img {
+            transform: scale(1.12);
+        }
+
+        .bg-thumb.active {
+            border-color: var(--primary);
+            box-shadow: 0 0 16px var(--primary-glow);
+        }
+
+        .bg-thumb-label {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            background: rgba(0, 0, 0, 0.75);
+            font-size: 0.58rem;
+            font-weight: 800;
+            padding: 3px 2px;
+            text-align: center;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .bg-custom-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px dashed var(--border-glass);
+            border-radius: 10px;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-sub);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .bg-custom-btn:hover {
+            border-color: var(--primary);
+            color: #fff;
+            background: rgba(204, 255, 0, 0.08);
+        }
+
+        .slider-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 6px;
+        }
+
+        .slider-control input[type="range"] {
+            flex: 1;
+            accent-color: var(--accent-color);
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.15);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .slider-val {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--primary);
+            min-width: 32px;
+            text-align: right;
+        }
+
+        /* COLOR PICKER PILLS */
+        .color-pills {
+            display: flex;
+            gap: 12px;
+            margin-top: 4px;
+        }
+
+        .color-pill {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: transform 0.2s, border-color 0.2s;
+            position: relative;
+        }
+
+        .color-pill:hover, .color-pill.active {
+            transform: scale(1.18);
+            border-color: #fff;
+            box-shadow: 0 0 15px currentColor;
+        }
+
+        /* CHECKBOX GROUP */
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            font-size: 0.78rem;
+            font-weight: 600;
+            user-select: none;
+            padding: 5px 0;
+            color: #cbd5e1;
+            transition: color 0.2s;
+        }
+
+        .checkbox-group:hover {
+            color: #fff;
+        }
+
+        .checkbox-group input {
+            accent-color: var(--accent-color);
+            width: 17px;
+            height: 17px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        /* PREVIEW STAGE AREA */
+        .stage-area {
+            background: var(--bg-stage);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(204, 255, 0, 0.03) 0%, transparent 60%),
+                radial-gradient(circle at 100% 100%, rgba(0, 229, 255, 0.04) 0%, transparent 40%);
+        }
+
+        /* STAGE FLOATING TOOLBAR */
+        .stage-toolbar {
+            position: absolute;
+            top: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(12, 17, 29, 0.92);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 6px 16px;
+            border-radius: 999px;
+            border: 1px solid var(--border-glass);
+            z-index: 30;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+        }
+
+        .zoom-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-sub);
+            cursor: pointer;
+            font-size: 0.85rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .zoom-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .zoom-indicator {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--primary);
+            min-width: 44px;
+            text-align: center;
+        }
+
+        /* ARTBOARD STAGE CONTAINER */
+        .artboard-stage {
+            flex: 1;
+            width: 100%;
+            height: calc(100% - 90px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .artboard-scaler {
+            transform-origin: center center;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 30px 100px rgba(0, 0, 0, 0.95), 0 0 60px rgba(204, 255, 0, 0.15);
+            border-radius: 28px;
+            overflow: hidden;
+            display: flex;
+        }
+
+        /* ================================================================
+           NATIVE DOM POSTER ARTBOARD (1080x1920 / 1080x1080 / 1200x675)
+           EDITORIAL HIGH IMPACT 2026
+           ================================================================ */
+        .flyer-artboard {
+            position: relative;
+            width: 1080px;
+            height: 1920px;
+            background: #060913;
+            overflow: hidden;
+            user-select: none;
+            font-family: var(--font-body);
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 70px 65px;
+            box-sizing: border-box;
+            line-height: 1.2;
+        }
+
+        /* PHOTOGRAPHIC BACKGROUND LAYER */
+        .artboard-bg-wrap {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .artboard-bg-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center 30%;
+            transition: filter 0.3s ease, transform 0.3s ease;
+        }
+
+        /* CINEMATIC OVERLAYS & VIGNETTES */
+        .artboard-vignette {
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(circle at 50% 30%, rgba(6, 9, 19, 0.25) 0%, rgba(4, 6, 13, 0.85) 68%, rgba(2, 3, 7, 0.97) 100%),
+                linear-gradient(180deg, rgba(6,9,19,0.7) 0%, rgba(6,9,19,0.1) 40%, rgba(4,6,13,0.92) 85%, rgba(2,3,7,0.99) 100%);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .artboard-neon-glows {
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(circle at 10% 12%, var(--accent-glow) 0%, transparent 45%),
+                radial-gradient(circle at 90% 80%, rgba(0, 229, 255, 0.3) 0%, transparent 45%),
+                radial-gradient(circle at 50% 95%, var(--accent-glow) 0%, transparent 50%);
+            mix-blend-mode: screen;
+            opacity: 0.85;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        .artboard-grid-pattern {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+            background-size: 60px 60px;
+            z-index: 4;
+            pointer-events: none;
+        }
+
+        /* FOREGROUND CONTENT LAYER */
+        .artboard-content {
+            position: relative;
+            z-index: 10;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* 1. TOP HEADER BRAND & BROADCAST BAR */
+        .artboard-top-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+        }
+
+        .poster-brand {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .poster-brand-logo {
+            height: 72px;
+            width: auto;
+            filter: drop-shadow(0 0 20px var(--accent-glow));
+        }
+
+        .poster-brand-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .poster-brand-main {
+            font-family: var(--font-display);
+            font-size: 34px;
+            font-weight: 900;
+            letter-spacing: -0.5px;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-transform: uppercase;
+        }
+
+        .poster-brand-tag {
+            background: var(--accent-color);
+            color: #000;
+            font-size: 14px;
+            font-weight: 900;
+            padding: 3px 10px;
+            border-radius: 6px;
+            letter-spacing: 1px;
+        }
+
+        .poster-brand-sub {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-sub);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* EVENT DETAILS PRACTICAL BADGE */
+        .broadcast-hud, .event-details-pill {
+            display: flex;
+            align-items: center;
+            background: rgba(7, 12, 24, 0.92);
+            border: 1.5px solid rgba(255, 255, 255, 0.18);
+            border-radius: 999px;
+            padding: 8px 24px 8px 14px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.7), 0 0 20px var(--accent-glow);
+            gap: 14px;
+        }
+
+        .live-dot-wrap, .event-status-tag {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(204, 255, 0, 0.15);
+            border: 1px solid var(--accent-color);
+            padding: 6px 14px;
+            border-radius: 999px;
+        }
+
+        .live-pulsing-dot, .event-pulse-dot {
+            width: 10px;
+            height: 10px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            box-shadow: 0 0 12px var(--accent-color);
+            animation: pulse-live 1.2s infinite ease-in-out;
+        }
+
+        @keyframes pulse-live {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.4); opacity: 0.6; }
+        }
+
+        .live-label, .event-status-label {
+            font-family: var(--font-display);
+            font-size: 13px;
+            font-weight: 900;
+            color: var(--accent-color);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .hud-match-info, .event-info-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.25;
+            text-align: left;
+        }
+
+        .hud-court-name, .event-location-time {
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--accent-color);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .hud-scores, .event-spots-details {
+            font-family: var(--font-display);
+            font-size: 15px;
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hud-score-badge, .event-pill-badge {
+            background: rgba(0, 229, 255, 0.15);
+            border: 1px solid rgba(0, 229, 255, 0.4);
+            padding: 2px 8px;
+            border-radius: 6px;
+            color: #00e5ff;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        /* 2. HERO SECTION: BADGE + MASSIVE TITLE + SUBTITLE */
+        .poster-hero {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            margin: 15px 0;
+        }
+
+        .poster-badge-pill {
+            align-self: flex-start;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1.5px solid var(--accent-color);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 10px 24px;
+            border-radius: 999px;
+            box-shadow: 0 0 25px var(--accent-glow);
+        }
+
+        .badge-pill-text {
+            font-family: var(--font-display);
+            font-size: 17px;
+            font-weight: 900;
+            color: var(--accent-color);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .poster-main-title {
+            font-family: var(--font-display);
+            font-size: 78px;
+            font-weight: 900;
+            line-height: 0.95;
+            letter-spacing: -2px;
+            text-transform: uppercase;
+            color: #ffffff;
+            text-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+        }
+
+        .poster-main-title .gradient-span {
+            background: linear-gradient(135deg, #ffffff 20%, var(--accent-color) 85%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 30px var(--accent-glow));
+        }
+
+        .poster-subtitle {
+            font-family: var(--font-body);
+            font-size: 24px;
+            font-weight: 600;
+            line-height: 1.45;
+            color: #d1d5db;
+            max-width: 90%;
+            text-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
+        }
+
+        /* 3. CENTRAL BODY: GIANT 3D FUT CARD + BRAIN RADAR */
+        .poster-center-stage {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        /* GIANT 3D FUT CARD (AMPLIFIED FROM PRESENTATION.HTML) */
+        .fut-card-hero {
+            width: 420px;
+            height: 610px;
+            border-radius: 36px;
+            background: linear-gradient(145deg, #182310 0%, #09101c 45%, #10160b 100%);
+            border: 3px solid var(--accent-color);
+            box-shadow: 
+                0 35px 80px rgba(0, 0, 0, 0.95), 
+                0 0 50px var(--accent-glow),
+                inset 0 0 30px rgba(204, 255, 0, 0.15);
+            position: relative;
+            overflow: hidden;
+            padding: 30px 28px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transform-style: preserve-3d;
+            transform: perspective(1000px) rotateY(-3deg) rotateX(2deg);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* 45 DEGREE HOLOGRAPHIC SWEEP */
+        .fut-card-hero::before {
+            content: '';
+            position: absolute;
+            top: -60%;
+            left: -60%;
+            width: 220%;
+            height: 220%;
+            background: linear-gradient(
+                45deg,
+                transparent 42%,
+                rgba(255, 255, 255, 0.18) 48%,
+                rgba(0, 229, 255, 0.35) 50%,
+                rgba(204, 255, 0, 0.4) 52%,
+                transparent 58%
+            );
+            transform: rotate(32deg);
+            pointer-events: none;
+            animation: card-hologram 4.5s infinite linear;
+            z-index: 10;
+        }
+
+        @keyframes card-hologram {
+            0% { transform: translateY(-110%) rotate(32deg); }
+            100% { transform: translateY(110%) rotate(32deg); }
+        }
+
+        .fut-top-bar {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            position: relative;
+            z-index: 5;
+        }
+
+        .fut-rating-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            line-height: 0.95;
+        }
+
+        .fut-ovr-number {
+            font-family: var(--font-display);
+            font-size: 76px;
+            font-weight: 900;
+            color: var(--accent-color);
+            text-shadow: 0 0 28px var(--accent-glow);
+            letter-spacing: -2px;
+        }
+
+        .fut-pos-pill {
+            font-family: var(--font-display);
+            font-size: 17px;
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 3px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-top: 4px;
+        }
+
+        .fut-badge-shield {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid rgba(204, 255, 0, 0.4);
+            box-shadow: 0 0 20px rgba(204, 255, 0, 0.3);
+        }
+
+        .fut-badge-shield i {
+            font-size: 28px;
+            color: var(--accent-color);
+        }
+
+        .fut-avatar-area {
+            text-align: center;
+            position: relative;
+            z-index: 5;
+            margin: -5px 0;
+        }
+
+        .fut-avatar-circle {
+            width: 170px;
+            height: 170px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #253816, #09101c);
+            border: 4px solid var(--accent-color);
+            margin: 0 auto 12px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 35px var(--accent-glow);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .fut-avatar-circle img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .fut-name-title {
+            font-family: var(--font-display);
+            font-size: 26px;
+            font-weight: 900;
+            color: #ffffff;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+        }
+
+        .fut-tier-pill {
+            display: inline-block;
+            background: rgba(204, 255, 0, 0.16);
+            color: var(--accent-color);
+            font-size: 11px;
+            font-weight: 900;
+            padding: 4px 14px;
+            border-radius: 999px;
+            letter-spacing: 1.5px;
+            border: 1px solid rgba(204, 255, 0, 0.4);
+            margin-top: 4px;
+        }
+
+        .fut-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px 16px;
+            border-top: 1.5px solid rgba(255, 255, 255, 0.16);
+            padding-top: 16px;
+            position: relative;
+            z-index: 5;
+        }
+
+        .fut-stat-item {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            gap: 6px;
+            font-family: var(--font-display);
+        }
+
+        .fut-stat-val {
+            font-size: 22px;
+            font-weight: 900;
+            color: #ffffff;
+        }
+
+        .fut-stat-key {
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--accent-color);
+            text-transform: uppercase;
+        }
+
+        .fut-chemistry-bar {
+            background: rgba(0, 0, 0, 0.65);
+            border-radius: 999px;
+            padding: 6px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 11px;
+            font-weight: 900;
+            color: #ffffff;
+            border: 1.5px solid rgba(204, 255, 0, 0.3);
+            position: relative;
+            z-index: 5;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .fut-chem-val {
+            color: var(--cyan);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* 4. KEY FEATURES GLASS BADGES */
+        .poster-features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+            margin: 10px 0 25px 0;
+        }
+
+        .poster-feature-card {
+            background: rgba(14, 21, 37, 0.78);
+            border: 1.5px solid rgba(255, 255, 255, 0.14);
+            border-left: 6px solid var(--accent-color);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 16px 20px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .feature-card-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: var(--accent-color);
+            flex-shrink: 0;
+            box-shadow: 0 0 15px rgba(204, 255, 0, 0.2);
+        }
+
+        .feature-card-text {
+            font-family: var(--font-display);
+            font-size: 18px;
+            font-weight: 800;
+            color: #ffffff;
+            line-height: 1.25;
+            letter-spacing: 0.2px;
+        }
+
+        /* 5. FOOTER: 3D CTA BUTTON & VIP QR ACCREDITATION PASS */
+        .poster-footer-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 30px;
+            margin-top: 15px;
+            background: rgba(8, 13, 24, 0.85);
+            border: 1.5px solid rgba(255, 255, 255, 0.16);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            padding: 24px 34px;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(204, 255, 0, 0.15);
+        }
+
+        .poster-cta-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .poster-cta-button {
+            background: linear-gradient(180deg, #ddff33 0%, #a2cc00 100%);
+            color: #05070d;
+            border: none;
+            padding: 22px 36px;
+            border-radius: 999px;
+            font-family: var(--font-display);
+            font-weight: 900;
+            font-size: 26px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            box-shadow: 
+                inset 0 3px 4px rgba(255, 255, 255, 0.8),
+                0 14px 40px var(--accent-glow);
+            text-shadow: 0 1px 1px rgba(255, 255, 255, 0.4);
+            cursor: pointer;
+        }
+
+        .poster-cta-button i {
+            font-size: 28px;
+            transition: transform 0.2s;
+        }
+
+        .poster-cta-subtext {
+            font-size: 15px;
+            font-weight: 700;
+            color: #94a3b8;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .poster-cta-subtext span {
+            color: var(--accent-color);
+        }
+
+        /* VIP ACCESS QR CREDENTIAL PASS */
+        .vip-qr-pass {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            color: #05070d;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+            flex-shrink: 0;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+        }
+
+        .qr-code-box {
+            width: 96px;
+            height: 96px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qr-code-box img, .qr-code-box canvas {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+        }
+
+        .vip-qr-details {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .vip-badge-tag {
+            font-family: var(--font-display);
+            font-size: 11px;
+            font-weight: 900;
+            background: #05070d;
+            color: var(--primary);
+            padding: 3px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            align-self: flex-start;
+            letter-spacing: 1.5px;
+        }
+
+        .vip-title {
+            font-family: var(--font-display);
+            font-size: 17px;
+            font-weight: 900;
+            letter-spacing: -0.3px;
+            color: #05070d;
+            line-height: 1.15;
+            text-transform: uppercase;
+        }
+
+        .vip-url-label {
+            font-size: 12px;
+            font-weight: 800;
+            color: #475569;
+            letter-spacing: 0.5px;
+        }
+
+        /* ================================================================
+           FORMAT VARIATIONS VIA [data-format="..."]
+           ================================================================ */
+        
+        /* 1:1 POST CUADRADO (1080x1080) */
+        .flyer-artboard[data-format="square"] {
+            width: 1080px;
+            height: 1080px;
+            padding: 50px 55px;
+        }
+
+        .flyer-artboard[data-format="square"] .poster-brand-logo {
+            height: 56px;
+        }
+
+        .flyer-artboard[data-format="square"] .poster-brand-main {
+            font-size: 26px;
+        }
+
+        .flyer-artboard[data-format="square"] .poster-main-title {
+            font-size: 54px;
+            margin-bottom: -5px;
+        }
+
+        .flyer-artboard[data-format="square"] .poster-subtitle {
+            font-size: 18px;
+            line-height: 1.35;
+        }
+
+        .flyer-artboard[data-format="square"] .poster-center-stage {
+            margin: 10px 0;
+            gap: 30px;
+        }
+
+        .flyer-artboard[data-format="square"] .fut-card-hero {
+            width: 290px;
+            height: 420px;
+            padding: 18px;
+            border-radius: 26px;
+        }
+
+        .flyer-artboard[data-format="square"] .fut-ovr-number {
+            font-size: 52px;
+        }
+
+        .flyer-artboard[data-format="square"] .fut-avatar-circle {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 6px;
+        }
+
+        .flyer-artboard[data-format="square"] .fut-name-title {
+            font-size: 18px;
+        }
+
+        .flyer-artboard[data-format="square"] .fut-stats-grid {
+            padding-top: 10px;
+            gap: 6px 10px;
+        }
+
+        .flyer-artboard[data-format="square"] .fut-stat-val {
+            font-size: 16px;
+        }
+
+        .flyer-artboard[data-format="square"] .fut-stat-key {
+            font-size: 11px;
+        }
+
+        .flyer-artboard[data-format="square"] .poster-features-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 5px 0 15px 0;
+        }
+
+        .flyer-artboard[data-format="square"] .poster-feature-card {
+            padding: 12px 14px;
+        }
+
+        .flyer-artboard[data-format="square"] .feature-card-text {
+            font-size: 15px;
+        }
+
+        .flyer-artboard[data-format="square"] .poster-footer-row {
+            padding: 16px 24px;
+            border-radius: 22px;
+        }
+
+        .flyer-artboard[data-format="square"] .poster-cta-button {
+            font-size: 20px;
+            padding: 16px 24px;
+        }
+
+        .flyer-artboard[data-format="square"] .vip-qr-pass {
+            padding: 10px 14px;
+        }
+
+        .flyer-artboard[data-format="square"] .qr-code-box {
+            width: 72px;
+            height: 72px;
+        }
+
+        /* 16:9 BANNER HORIZONTAL (1200x675) */
+        .flyer-artboard[data-format="banner"] {
+            width: 1200px;
+            height: 675px;
+            padding: 35px 45px;
+        }
+
+        .flyer-artboard[data-format="banner"] #story-flow-container {
+            display: grid !important;
+            grid-template-columns: 1.25fr 0.75fr !important;
+            grid-template-rows: auto 1fr !important;
+            gap: 12px 30px !important;
+            height: 100% !important;
+        }
+
+        .flyer-artboard[data-format="banner"] #story-flow-container > div:first-child {
+            grid-column: 1 / 2;
+            grid-row: 1 / 2;
+        }
+
+        .flyer-artboard[data-format="banner"] #poster-center-stage {
+            grid-column: 2 / 3;
+            grid-row: 1 / 3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+        }
+
+        .flyer-artboard[data-format="banner"] #story-flow-container > div:last-child {
+            grid-column: 1 / 2;
+            grid-row: 2 / 3;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+
+        .flyer-artboard[data-format="banner"] .poster-brand-logo {
+            height: 48px;
+        }
+
+        .flyer-artboard[data-format="banner"] .poster-brand-main {
+            font-size: 22px;
+        }
+
+        .flyer-artboard[data-format="banner"] .poster-main-title {
+            font-size: 46px;
+            line-height: 0.98;
+        }
+
+        .flyer-artboard[data-format="banner"] .poster-subtitle {
+            font-size: 15px;
+            line-height: 1.35;
+        }
+
+        .flyer-artboard[data-format="banner"] .fut-card-hero {
+            width: 320px;
+            height: 460px;
+            padding: 20px;
+            border-radius: 28px;
+        }
+
+        .flyer-artboard[data-format="banner"] .fut-ovr-number {
+            font-size: 58px;
+        }
+
+        .flyer-artboard[data-format="banner"] .fut-avatar-circle {
+            width: 110px;
+            height: 110px;
+            margin-bottom: 8px;
+        }
+
+        .flyer-artboard[data-format="banner"] .fut-name-title {
+            font-size: 20px;
+        }
+
+        .flyer-artboard[data-format="banner"] .fut-stats-grid {
+            padding-top: 10px;
+            gap: 8px 12px;
+        }
+
+        .flyer-artboard[data-format="banner"] .fut-stat-val {
+            font-size: 18px;
+        }
+
+        .flyer-artboard[data-format="banner"] .poster-features-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin: 6px 0 12px 0;
+        }
+
+        .flyer-artboard[data-format="banner"] .poster-feature-card {
+            padding: 8px 12px;
+            border-radius: 12px;
+        }
+
+        .flyer-artboard[data-format="banner"] .feature-card-icon {
+            width: 34px;
+            height: 34px;
+            font-size: 15px;
+        }
+
+        .flyer-artboard[data-format="banner"] .feature-card-text {
+            font-size: 13px;
+        }
+
+        .flyer-artboard[data-format="banner"] .poster-footer-row {
+            padding: 14px 20px;
+            border-radius: 20px;
+        }
+
+        .flyer-artboard[data-format="banner"] .poster-cta-button {
+            font-size: 17px;
+            padding: 14px 20px;
+        }
+
+        .flyer-artboard[data-format="banner"] .vip-qr-pass {
+            padding: 8px 12px;
+            border-radius: 14px;
+        }
+
+        .flyer-artboard[data-format="banner"] .qr-code-box {
+            width: 60px;
+            height: 60px;
+        }
+
+        .flyer-artboard[data-format="banner"] .poster-features-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin: 10px 0;
+        }
+
+        .flyer-artboard[data-format="banner"] .poster-feature-card {
+            padding: 10px 14px;
+        }
+
+        .flyer-artboard[data-format="banner"] .feature-card-text {
+            font-size: 14px;
+        }
+
+        .flyer-artboard[data-format="banner"] .poster-footer-row {
+            padding: 14px 20px;
+            border-radius: 20px;
+        }
+
+        .flyer-artboard[data-format="banner"] .poster-cta-button {
+            font-size: 18px;
+            padding: 14px 20px;
+        }
+
+        .flyer-artboard[data-format="banner"] .vip-qr-pass {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            padding: 10px 14px;
+            border-radius: 16px;
+        }
+
+        .flyer-artboard[data-format="banner"] .qr-code-box {
+            width: 60px;
+            height: 60px;
+        }
+
+        /* BOTTOM STAGE EXPORT BAR */
+        .export-dock {
+            position: absolute;
+            bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(12, 17, 29, 0.94);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 10px 20px;
+            border-radius: 999px;
+            border: 1px solid var(--border-glass);
+            z-index: 30;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(204, 255, 0, 0.15);
+        }
+
+        .btn-export-main {
+            background: var(--primary);
+            color: #05070d;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 999px;
+            font-family: var(--font-display);
+            font-weight: 900;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 25px var(--primary-glow);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .btn-export-main:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 35px rgba(204, 255, 0, 0.7);
+            background: #d9ff33;
+        }
+
+        .btn-export-video {
+            background: linear-gradient(135deg, #00e5ff 0%, #0088ff 100%);
+            color: #05070d;
+            border: none;
+            padding: 14px 26px;
+            border-radius: 999px;
+            font-family: var(--font-display);
+            font-weight: 900;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 25px var(--cyan-glow);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .btn-export-video:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 35px rgba(0, 229, 255, 0.7);
+        }
+
+        .btn-export-text {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            border: 1px solid var(--border-glass);
+            padding: 14px 22px;
+            border-radius: 999px;
+            font-family: var(--font-display);
+            font-weight: 800;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-export-text:hover {
+            background: rgba(255, 255, 255, 0.16);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* MODAL FOR COPYS */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.88);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 720px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9), 0 0 50px rgba(204, 255, 0, 0.15);
+        }
+
+        .modal-header {
+            padding: 1.3rem 1.8rem;
+            border-bottom: 1px solid var(--border-glass);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-title {
+            font-family: var(--font-display);
+            font-weight: 900;
+            font-size: 1.25rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text-sub);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: #fff;
+        }
+
+        .modal-body {
+            padding: 1.8rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.3rem;
+        }
+
+        .copy-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            padding: 1.3rem;
+            position: relative;
+        }
+
+        .copy-tag {
+            font-size: 0.72rem;
+            font-weight: 900;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .copy-text {
+            font-size: 0.86rem;
+            line-height: 1.55;
+            color: #e2e8f0;
+            white-space: pre-line;
+            margin-bottom: 14px;
+            font-family: var(--font-body);
+        }
+
+        .btn-copy {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-glass);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-copy:hover {
+            background: var(--primary);
+            color: #000;
+            border-color: var(--primary);
+        }
+
+        /* PROGRESS BAR FOR VIDEO */
+        .video-progress-bar {
+            position: fixed;
+            bottom: 5.5rem;
+            background: rgba(12, 17, 29, 0.95);
+            border: 1px solid var(--cyan);
+            border-radius: 999px;
+            padding: 12px 24px;
+            display: none;
+            align-items: center;
+            gap: 14px;
+            z-index: 150;
+            box-shadow: 0 10px 40px rgba(0, 229, 255, 0.5);
+            backdrop-filter: blur(15px);
+        }
+
+        .video-progress-bar.active {
+            display: flex;
+        }
+
+        /* HIDDEN RECORDING CANVAS */
+        #recording-canvas {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOP STUDIO HEADER -->
+    <header class="studio-header">
+        <div class="brand-box">
+            <img src="img/logo_somospadel.png" class="brand-logo-img" alt="Somos Pádel Logo" onerror="this.style.display='none'">
+            <div class="brand-title-wrap">
+                <div class="brand-title">
+                    SOMOS PÁDEL <span style="color: var(--primary)">STUDIO</span>
+                    <span class="brand-badge">2026 PRO</span>
+                </div>
+                <div class="brand-subline">SUITE EDITORIAL DE ALTO IMPACTO PARA TORNEOS & REDES</div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="btn-header" onclick="openCopiesModal()">
+                <i class="fas fa-comment-dots" style="color: var(--primary)"></i> Textos WhatsApp / Insta
+            </button>
+            <a href="admin.html" class="btn-header">
+                <i class="fas fa-shield-halved"></i> Panel Admin
+            </a>
+            <a href="presentation.html" class="btn-header">
+                <i class="fas fa-chalkboard-user"></i> Presentación VIP
+            </a>
+            <a href="index.html" class="btn-header btn-header-primary">
+                <i class="fas fa-home"></i> Ir a la App
+            </a>
+        </div>
+    </header>
+
+    <!-- BANNER MODO LOCAL VS SERVIDOR -->
+    <div id="file-protocol-notice" style="display: none; background: linear-gradient(90deg, #1e293b, #0f172a); border-bottom: 1px solid var(--border-glass); padding: 8px 24px; font-size: 0.8rem; color: #cbd5e1; align-items: center; justify-content: space-between; z-index: 99;">
+        <div>
+            <i class="fas fa-bolt" style="color: var(--primary); margin-right: 8px;"></i>
+            <span>Para descargar en máxima resolución sin restricciones del navegador, ejecuta <strong>CREAR_FLYER_Y_VIDEOS.bat</strong> o pulsa aquí: <a href="http://localhost:8000/promo-studio.html" target="_blank" style="color: var(--primary); text-decoration: underline; font-weight: 800;">Abrir en http://localhost:8000</a></span>
+        </div>
+        <button onclick="document.getElementById('file-protocol-notice').style.display='none'" style="background: transparent; border: none; color: #fff; cursor: pointer; font-size: 1.1rem; padding: 0 5px;">&times;</button>
+    </div>
+
+    <!-- MAIN STUDIO WORKSPACE -->
+    <div class="workspace">
+        
+        <!-- SIDEBAR CONTROLS -->
+        <aside class="controls-panel">
+            
+            <!-- 1. FORMATO DE PUBLICACIÓN -->
+            <div class="section-box">
+                <div class="section-title">
+                    <span><i class="fas fa-crop-simple"></i> Formato de Salida</span>
+                    <small style="color: var(--text-sub); font-size: 0.68rem;">HD 1080p</small>
+                </div>
+                <div class="format-grid">
+                    <button class="format-btn active" onclick="setFormat('story', this)">
+                        <i class="fas fa-mobile-screen"></i>
+                        <span>Story / Reel</span>
+                        <small style="opacity: 0.7">9:16 (1080x1920)</small>
+                    </button>
+                    <button class="format-btn" onclick="setFormat('square', this)">
+                        <i class="fas fa-square"></i>
+                        <span>Post Cuadrado</span>
+                        <small style="opacity: 0.7">1:1 (1080x1080)</small>
+                    </button>
+                    <button class="format-btn" onclick="setFormat('banner', this)">
+                        <i class="fas fa-panorama"></i>
+                        <span>Flyer Banner</span>
+                        <small style="opacity: 0.7">16:9 (1200x675)</small>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. PLANTILLAS ESTRATÉGICAS 2026 -->
+            <div class="section-box">
+                <div class="section-title">
+                    <span><i class="fas fa-wand-magic-sparkles"></i> Plantillas de Campaña</span>
+                </div>
+                <div class="template-grid">
+                    <div class="template-card active" onclick="setTemplate('superapp', this)">
+                        <div class="template-card-title">⚡ Ecosistema 2026</div>
+                        <div class="template-card-desc">Todo en 1: marcadores TV, pistas y cero WhatsApp.</div>
+                    </div>
+                    <div class="template-card" onclick="setTemplate('futcard', this)">
+                        <div class="template-card-title">⭐ Tu Carta FUT</div>
+                        <div class="template-card-desc">¿Nivel real? Descubre tu cromo y sube en el ELO.</div>
+                    </div>
+                    <div class="template-card" onclick="setTemplate('tournament', this)">
+                        <div class="template-card-title">🏆 Torneo VIP</div>
+                        <div class="template-card-desc">Convocatoria: pistas cubiertas, trofeos y premios.</div>
+                    </div>
+                    <div class="template-card" onclick="setTemplate('brainai', this)">
+                        <div class="template-card-title">🧠 Brain AI Padel</div>
+                        <div class="template-card-desc">IA para emparejarte con tu dupla perfecta y ganar.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. FONDOS FOTOGRÁFICOS REALES HD -->
+            <div class="section-box">
+                <div class="section-title">
+                    <span><i class="fas fa-image"></i> Fotografía de Fondo</span>
+                    <small style="color: var(--text-sub); font-size: 0.68rem;">ALTA DEFINICIÓN</small>
+                </div>
+                
+                <div class="bg-selector-grid">
+                    <div class="bg-thumb active" onclick="setBackgroundImage('img/pista_padel_azul.png', this)">
+                        <img src="img/pista_padel_azul.png" alt="Pista Azul Neón">
+                        <div class="bg-thumb-label">Pista Cristal</div>
+                    </div>
+                    <div class="bg-thumb" onclick="setBackgroundImage('img/blog_action_smash.png', this)">
+                        <img src="img/blog_action_smash.png" alt="Smash Pro">
+                        <div class="bg-thumb-label">Smash Noche</div>
+                    </div>
+                    <div class="bg-thumb" onclick="setBackgroundImage('img/blog_player_victory.png', this)">
+                        <img src="img/blog_player_victory.png" alt="Victoria & Trofeo">
+                        <div class="bg-thumb-label">Celebración</div>
+                    </div>
+                    <div class="bg-thumb" onclick="setBackgroundImage('img/blog_court_night.png', this)">
+                        <img src="img/blog_court_night.png" alt="Pista Nocturna">
+                        <div class="bg-thumb-label">Panorámica</div>
+                    </div>
+                </div>
+
+                <label class="bg-custom-btn" for="custom-bg-input">
+                    <i class="fas fa-arrow-up-from-bracket"></i>
+                    <span>Subir Foto Personalizada de Torneo</span>
+                    <input type="file" id="custom-bg-input" accept="image/*" style="display: none;" onchange="handleCustomBg(event)">
+                </label>
+
+                <div class="form-group" style="margin-top: 12px;">
+                    <div class="form-label">
+                        <span>Oscuridad Cinematográfica</span>
+                        <span id="darkness-val" class="slider-val">75%</span>
+                    </div>
+                    <div class="slider-control">
+                        <input type="range" id="bg-darkness" min="20" max="95" value="75" oninput="updateBgFilters()">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="form-label">
+                        <span>Desenfoque Óptico (Bokeh)</span>
+                        <span id="blur-val" class="slider-val">2px</span>
+                    </div>
+                    <div class="slider-control">
+                        <input type="range" id="bg-blur" min="0" max="15" value="2" oninput="updateBgFilters()">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="form-label">
+                        <span>Zoom de Imagen</span>
+                        <span id="scale-val" class="slider-val">105%</span>
+                    </div>
+                    <div class="slider-control">
+                        <input type="range" id="bg-scale" min="100" max="140" value="105" oninput="updateBgFilters()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. CONTENIDO DEL FLYER EDITORIAL -->
+            <div class="section-box">
+                <div class="section-title">
+                    <span><i class="fas fa-pen-nib"></i> Textos Editoriales</span>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Badge Superior</label>
+                    <input type="text" id="input-badge" class="form-input" value="🎁 REGÍSTRATE GRATIS • DESCUBRE LA SUPER APP" oninput="updateFlyerContent()">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Título Principal</label>
+                    <input type="text" id="input-title" class="form-input" value="ENTRA Y DESCUBRE TODO LO QUE OFRECEMOS" oninput="updateFlyerContent()">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Subtítulo / Propuesta de Valor</label>
+                    <textarea id="input-subtitle" class="form-textarea" oninput="updateFlyerContent()">Crea tu cuenta gratis para conseguir tu Carta FUT con estadísticas reales, competir en el Ranking ELO oficial y jugar en Americanas automáticas con marcador en vivo.</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Puntos Clave (Separados por barra |)</label>
+                    <input type="text" id="input-features" class="form-input" value="🃏 Tu Carta FUT con Stats | ⚡ Americanas y Pozo en Directo | 🏆 Ranking ELO Oficial | 🤖 Brain AI: Pareja Ideal" oninput="updateFlyerContent()">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Llamada a la Acción (CTA)</label>
+                    <input type="text" id="input-cta" class="form-input" value="¡REGÍSTRATE GRATIS Y PIDE TU CARTA!" oninput="updateFlyerContent()">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Enlace Web / App (Genera QR VIP)</label>
+                    <input type="text" id="input-url" class="form-input" value="https://somospadelbarcelona.web.app" oninput="updateQrCode()">
+                </div>
+            </div>
+
+            <!-- 4.1. FICHA PRÁCTICA DEL EVENTO / CONVOCATORIA -->
+            <div class="section-box">
+                <div class="section-title">
+                    <span><i class="fas fa-calendar-check"></i> Ficha Destacada de Bienvenida</span>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Estado / Etiqueta</label>
+                    <input type="text" id="input-event-status" class="form-input" value="REGISTRO GRATIS" oninput="updateEventPill()">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Cabecera / App</label>
+                    <input type="text" id="input-event-loc" class="form-input" value="📱 APP SOMOS PÁDEL BARCELONA" oninput="updateEventPill()">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <div class="form-group">
+                        <label class="form-label">Detalle / Tiempo</label>
+                        <input type="text" id="input-event-spots" class="form-input" value="CREA TU PERFIL EN 30s" oninput="updateEventPill()">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Acceso</label>
+                        <input type="text" id="input-event-level" class="form-input" value="ACCESO TOTAL" oninput="updateEventPill()">
+                    </div>
+                </div>
+
+                <!-- Presets con 1 clic -->
+                <div style="display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap;">
+                    <button type="button" class="btn-preset-mini" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border-glass); color: #fff; padding: 5px 9px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; cursor: pointer;" onclick="setEventPreset('registro')">🎁 Registro & Carta</button>
+                    <button type="button" class="btn-preset-mini" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border-glass); color: #fff; padding: 5px 9px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; cursor: pointer;" onclick="setEventPreset('superapp')">🚀 Toda la App</button>
+                    <button type="button" class="btn-preset-mini" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border-glass); color: #fff; padding: 5px 9px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; cursor: pointer;" onclick="setEventPreset('elo')">🏆 Ranking ELO</button>
+                </div>
+            </div>
+
+            <!-- 5. PERSONALIZACIÓN DE CARTA FUT -->
+            <div class="section-box">
+                <div class="section-title">
+                    <span><i class="fas fa-id-card"></i> Datos de la Carta FUT</span>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                    <div class="form-group">
+                        <label class="form-label">Nombre Jugador</label>
+                        <input type="text" id="input-player-name" class="form-input" value="ALEJANDRO GALÁN" oninput="updateFutCard()">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">OVR</label>
+                        <input type="text" id="input-player-ovr" class="form-input" value="98" oninput="updateFutCard()">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Pos</label>
+                        <input type="text" id="input-player-pos" class="form-input" value="REV" oninput="updateFutCard()">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Estadísticas (ATQ, DEF, POT, CTL, SIN, RES)</label>
+                    <input type="text" id="input-player-stats" class="form-input" value="ATQ:96, DEF:94, POT:98, CTL:93, SIN:99%, RES:91" oninput="updateFutCard()">
+                </div>
+            </div>
+
+            <!-- 6. ESTILO NEÓN & ELEMENTOS ACTIVOS -->
+            <div class="section-box">
+                <div class="section-title">
+                    <span><i class="fas fa-palette"></i> Acentos Neón & Módulos</span>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Color de Acento Neón</label>
+                    <div class="color-pills">
+                        <div class="color-pill active" style="background: #CCFF00; color: #CCFF00;" onclick="setAccentColor('#CCFF00', this)"></div>
+                        <div class="color-pill" style="background: #00e5ff; color: #00e5ff;" onclick="setAccentColor('#00e5ff', this)"></div>
+                        <div class="color-pill" style="background: #f59e0b; color: #f59e0b;" onclick="setAccentColor('#f59e0b', this)"></div>
+                        <div class="color-pill" style="background: #ff007f; color: #ff007f;" onclick="setAccentColor('#ff007f', this)"></div>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 12px;">
+                    <label class="checkbox-group">
+                        <input type="checkbox" id="chk-fut-card" checked onchange="toggleModules()">
+                        <span>Mostrar Carta FUT 3D Gigante</span>
+                    </label>
+                    <label class="checkbox-group">
+                        <input type="checkbox" id="chk-live-tv" checked onchange="toggleModules()">
+                        <span>Mostrar Ficha Práctica (Sede, Horario, Plazas)</span>
+                    </label>
+                    <label class="checkbox-group">
+                        <input type="checkbox" id="chk-badges" checked onchange="toggleModules()">
+                        <span>Mostrar Badges de Ventajas</span>
+                    </label>
+                    <label class="checkbox-group">
+                        <input type="checkbox" id="chk-qr" checked onchange="toggleModules()">
+                        <span>Mostrar Acreditación QR VIP Access</span>
+                    </label>
+                    <label class="checkbox-group">
+                        <input type="checkbox" id="chk-hologram" checked onchange="toggleModules()">
+                        <span>Barrido Holográfico Neón 2026</span>
+                    </label>
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- PREVIEW STAGE AREA -->
+        <main class="stage-area">
+            
+            <!-- STAGE TOOLBAR (ZOOM CONTROLS) -->
+            <div class="stage-toolbar">
+                <button class="zoom-btn" onclick="zoomOut()" title="Alejar"><i class="fas fa-minus"></i></button>
+                <span class="zoom-indicator" id="zoom-level-text">Fit</span>
+                <button class="zoom-btn" onclick="zoomIn()" title="Acercar"><i class="fas fa-plus"></i></button>
+                <div style="width: 1px; height: 16px; background: rgba(255,255,255,0.2);"></div>
+                <button class="zoom-btn" onclick="resetZoom()" title="Ajustar al espacio"><i class="fas fa-expand"></i> Ajustar</button>
+                <button class="zoom-btn" onclick="setZoom(1.0)" title="Tamaño 100% real"><i class="fas fa-magnifying-glass"></i> 100%</button>
+            </div>
+
+            <!-- ARTBOARD STAGE CONTAINER -->
+            <div class="artboard-stage" id="artboard-stage">
+                <div class="artboard-scaler" id="artboard-scaler">
+                    
+                    <!-- THE NATIVE DOM FLYER ARTBOARD (1080p NATIVE) -->
+                    <div class="flyer-artboard" id="flyer-artboard" data-format="story">
+                        
+                        <!-- PHOTOGRAPHIC BACKGROUND & CINEMATIC FILTERS -->
+                        <div class="artboard-bg-wrap">
+                            <img src="img/pista_padel_azul.png" id="bg-image" class="artboard-bg-img" alt="Background">
+                        </div>
+                        <div class="artboard-vignette" id="artboard-vignette-overlay"></div>
+                        <div class="artboard-neon-glows"></div>
+                        <div class="artboard-grid-pattern"></div>
+
+                        <!-- EDITORIAL ARTBOARD CONTENT -->
+                        <div class="artboard-content" id="artboard-content-wrapper">
+                            
+                            <!-- STORY & SQUARE LAYOUT -->
+                            <div class="story-flow" id="story-flow-container" style="display: flex; flex-direction: column; height: 100%; justify-content: space-between;">
+                                
+                                <!-- TOP ROW: BRAND & TV SCOREBOARD HUD -->
+                                <div>
+                                    <div class="artboard-top-row">
+                                        <div class="poster-brand">
+                                            <img src="img/logo_somospadel.png" class="poster-brand-logo" alt="Logo Somos Padel">
+                                            <div class="poster-brand-text">
+                                                <div class="poster-brand-main">
+                                                    SOMOS PÁDEL <span class="poster-brand-tag">BCN</span>
+                                                </div>
+                                                <div class="poster-brand-sub">OFICIAL AMERICANAS & RANKING</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="event-details-pill" id="hud-scoreboard">
+                                            <div class="event-status-tag" id="target-event-status-wrap">
+                                                <div class="event-pulse-dot"></div>
+                                                <span class="event-status-label" id="target-event-status">REGISTRO GRATIS</span>
+                                            </div>
+                                            <div class="event-info-text">
+                                                <div class="event-location-time" id="target-event-loc">📱 APP SOMOS PÁDEL BARCELONA</div>
+                                                <div class="event-spots-details">
+                                                    <span id="target-event-spots">CREA TU PERFIL EN 30s</span>
+                                                    <span class="event-pill-badge" id="target-event-level">ACCESO TOTAL</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- HERO HEADER: BADGE + TITLE + SUBTITLE -->
+                                    <div class="poster-hero">
+                                        <div class="poster-badge-pill" id="poster-badge-wrap">
+                                            <i class="fas fa-gift" style="color: var(--accent-color);"></i>
+                                            <span class="badge-pill-text" id="target-badge">🎁 REGÍSTRATE GRATIS • DESCUBRE LA SUPER APP</span>
+                                        </div>
+                                        <h1 class="poster-main-title" id="target-title">
+                                            ENTRA Y DESCUBRE <br>
+                                            <span class="gradient-span">TODO LO QUE OFRECEMOS</span>
+                                        </h1>
+                                        <p class="poster-subtitle" id="target-subtitle">
+                                            Crea tu cuenta gratis para conseguir tu Carta FUT con estadísticas reales, competir en el Ranking ELO oficial y jugar en Americanas automáticas con marcador en vivo.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- CENTRAL STAGE: 3D FUT CARD HERO -->
+                                <div class="poster-center-stage" id="poster-center-stage">
+                                    <div class="fut-card-hero" id="target-fut-card">
+                                        <div class="fut-top-bar">
+                                            <div class="fut-rating-block">
+                                                <div class="fut-ovr-number" id="target-fut-ovr">98</div>
+                                                <div class="fut-pos-pill" id="target-fut-pos">PRO</div>
+                                            </div>
+                                            <div class="fut-badge-shield">
+                                                <i class="fas fa-trophy"></i>
+                                            </div>
+                                        </div>
+
+                                        <div class="fut-player-media">
+                                            <div class="fut-avatar-circle">
+                                                <img src="img/ai_avatar_babolat.png" id="target-fut-avatar" alt="Avatar" onerror="this.src='img/brain_ball_mascot_3d.png'">
+                                            </div>
+                                            <div class="fut-player-title" id="target-fut-name">TU NOMBRE AQUÍ</div>
+                                            <span class="fut-tier-badge">JUGADOR VERIFICADO BCN</span>
+                                        </div>
+
+                                        <div class="fut-stats-grid" id="target-fut-stats">
+                                            <div class="fut-stat-item"><span class="fut-stat-val">96</span><span class="fut-stat-key">POT</span></div>
+                                            <div class="fut-stat-item"><span class="fut-stat-val">94</span><span class="fut-stat-key">ATQ</span></div>
+                                            <div class="fut-stat-item"><span class="fut-stat-val">98</span><span class="fut-stat-key">DEF</span></div>
+                                            <div class="fut-stat-item"><span class="fut-stat-val">93</span><span class="fut-stat-key">CTL</span></div>
+                                            <div class="fut-stat-item"><span class="fut-stat-val">99%</span><span class="fut-stat-key">SIN</span></div>
+                                            <div class="fut-stat-item"><span class="fut-stat-val">91</span><span class="fut-stat-key">RES</span></div>
+                                        </div>
+
+                                        <div class="fut-chemistry-bar">
+                                            <span><i class="fas fa-sparkles" style="color: var(--accent-color);"></i> CARTA FUT DE JUGADOR</span>
+                                            <span style="color: #00e5ff; font-weight: 800;">100% GRATIS</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- BOTTOM ROW: FEATURES + MEGA CTA + VIP QR CODE -->
+                                <div>
+                                    <div class="poster-features-grid" id="target-features-grid">
+                                        <!-- CARDS GENERADAS DINÁMICAMENTE -->
+                                    </div>
+
+                                    <div class="poster-cta-block">
+                                        <div class="poster-cta-wrapper">
+                                            <button class="poster-cta-btn" id="target-cta-btn">
+                                                <span id="target-cta-text">¡REGÍSTRATE GRATIS Y PIDE TU CARTA!</span>
+                                                <i class="fas fa-arrow-right"></i>
+                                            </button>
+                                            <div class="poster-cta-subtext">
+                                                <i class="fas fa-circle-check" style="color: var(--accent-color);"></i>
+                                                <span>Registro 100% gratuito en 30 segundos • Acceso inmediato a todo lo que ofrecemos</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="vip-qr-pass" id="target-qr-pass">
+                                            <div class="qr-code-box" id="qr-container"></div>
+                                            <div class="vip-qr-details">
+                                                <span class="vip-badge-tag">REGISTRO GRATIS</span>
+                                                <div class="vip-title">ESCANEA Y ENTRA</div>
+                                                <div class="vip-url-label" id="target-qr-url">somospadelbarcelona.web.app</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- BOTTOM EXPORT DOCK -->
+            <div class="export-dock">
+                <button class="btn-export-main" onclick="downloadFlyerImage('png')">
+                    <i class="fas fa-download"></i> Descargar Imagen HD (PNG 1080p)
+                </button>
+                <button class="btn-export-video" onclick="generateFlyerVideo()">
+                    <i class="fas fa-film"></i> Generar Video Reel (WebM)
+                </button>
+                <button class="btn-export-text" onclick="openCopiesModal()">
+                    <i class="fas fa-copy"></i> Copys WhatsApp & Redes
+                </button>
+            </div>
+
+            <!-- VIDEO PROGRESS BAR -->
+            <div id="video-progress" class="video-progress-bar">
+                <i class="fas fa-spinner fa-spin" style="color: var(--cyan); font-size: 1.3rem;"></i>
+                <span id="video-progress-text" style="font-size: 0.88rem; font-weight: 700; color: #fff;">Renderizando Video Reel 2026 (0%)...</span>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- MODAL DE COPYS DE MARKETING -->
+    <div class="modal-overlay" id="copies-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i class="fas fa-bullhorn"></i> Copys Persuasivos Listos para WhatsApp e Instagram
+                </div>
+                <button class="modal-close" onclick="closeCopiesModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                
+                <!-- COPY 1: GRUPOS WHATSAPP -->
+                <div class="copy-card">
+                    <div class="copy-tag"><i class="fab fa-whatsapp"></i> Mensaje para Grupos de WhatsApp de Pádel (Registro Inmediato)</div>
+                    <div class="copy-text" id="copy-whatsapp">🎾 ¡Atención padeleros y padeleras de Barcelona! 🚀
+
+Lanzamos la **Super App Oficial de Somos Pádel BCN** y queremos que seáis los primeros en entrar. 
+
+👉 **Regístrate GRATIS en 30 segundos** y mira todo lo que tenemos dentro:
+🃏 **Tu Carta FUT Oficial de Jugador**: stats reales de ataque, defensa, potencia y tu nivel ELO en Barcelona.
+⚡ **Americanas & Pozos automáticos**: olvídate de apuntar en notas de WhatsApp; pistas y rotaciones en directo desde el móvil.
+🏆 **Ranking ELO oficial**: compite, sube de nivel y mira el historial de tus partidos.
+🤖 **Brain AI**: descubre con qué compañeros tienes mayor química de juego.
+📱 **Comunidad & Stories**: sigue resultados de los torneos en vivo.
+
+Crea tu perfil y consigue tu carta gratis aquí 👇:
+📲 https://somospadelbarcelona.web.app
+
+¡Entrad a registraros y nos vemos en las pistas! ⚡🎾</div>
+                    <button class="btn-copy" onclick="copyToClipboard('copy-whatsapp', this)">
+                        <i class="fas fa-copy"></i> Copiar Mensaje WhatsApp
+                    </button>
+                </div>
+
+                <!-- COPY 2: INSTAGRAM FEED & REEL -->
+                <div class="copy-card">
+                    <div class="copy-tag"><i class="fab fa-instagram"></i> Publicación para Instagram (Feed / Reel / Carrusel)</div>
+                    <div class="copy-text" id="copy-instagram">¿Aún no estás registrado en la Super App de Somos Pádel BCN? 📲🔥
+
+Hemos creado la plataforma definitiva para llevar el pádel amateur al siguiente nivel 🪐⚡
+
+Regístrate 100% GRATIS y desbloquea todo lo que ofrecemos:
+🃏 Tu Carta FUT de jugador personalizada con estadísticas oficiales.
+🏆 Ranking ELO de Barcelona: descubre tu nivel real y escala posiciones.
+⚡ Americanas con rotaciones automáticas y marcadores en vivo.
+🤖 Brain AI: inteligencia artificial que analiza tu estilo y tu pareja ideal.
+📸 Stories y comunidad de pádel de Barcelona.
+
+📲 Link directo en la bio para entrar y registrarte en 30 segundos.
+Comenta "APP" y te enviamos tu pase directo por mensaje privado. 👇🎾
+
+#PadelBarcelona #SomosPadel #PadelAddict #AmericanasPadel #PadelCommunity #PadelViral #FUTPadel</div>
+                    <button class="btn-copy" onclick="copyToClipboard('copy-instagram', this)">
+                        <i class="fas fa-copy"></i> Copiar Copy Insta
+                    </button>
+                </div>
+
+                <!-- COPY 3: ESTADOS DE WHATSAPP / STORIES -->
+                <div class="copy-card">
+                    <div class="copy-tag"><i class="fas fa-bolt"></i> Story Rápida o Estado de WhatsApp con Link</div>
+                    <div class="copy-text" id="copy-story">🎾 ¡Ya está abierta la App Oficial de Somos Pádel!
+Regístrate GRATIS hoy para desbloquear tu Carta FUT de jugador y ver todo lo que ofrecemos 👇
+https://somospadelbarcelona.web.app</div>
+                    <button class="btn-copy" onclick="copyToClipboard('copy-story', this)">
+                        <i class="fas fa-copy"></i> Copiar Story Rápida
+                    </button>
+                </div>
+
+                <!-- COPY 4: CONVOCATORIA DE TORNEO / AMERICANA VIP -->
+                <div class="copy-card">
+                    <div class="copy-tag"><i class="fas fa-trophy"></i> Convocatoria de Torneo / Americana VIP</div>
+                    <div class="copy-text" id="copy-torneo">🏆 GRAN AMERICANA VIP SOMOS PÁDEL BARCELONA 🏆
+📅 Próxima Fecha Oficial
+📍 Pistas Panorámicas de Cristal Climatizadas
+
+⚡ Plazas estrictamente limitadas por nivel ELO:
+🥇 Trofeos oficiales para campeones
+🎁 Welcome Pack exclusivo
+📱 Marcadores en pantalla de TV en directo
+
+👉 Reserva tu plaza antes del cierre:
+https://somospadelbarcelona.web.app</div>
+                    <button class="btn-copy" onclick="copyToClipboard('copy-torneo', this)">
+                        <i class="fas fa-copy"></i> Copiar Convocatoria
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- CANVAS OCULTO PARA GRABACIÓN DE VIDEO -->
+    <canvas id="recording-canvas"></canvas>
+
+    <script>
+        // ================================================================
+        // ESTADO GLOBAL DEL ESTUDIO CREATIVO 2026
+        // ================================================================
+        let currentFormat = 'story'; // 'story' | 'square' | 'banner'
+        let currentAccent = '#CCFF00';
+        let currentZoom = 'fit';
+        let isRecording = false;
+
+        const resolutions = {
+            story: { width: 1080, height: 1920, aspect: '9/16' },
+            square: { width: 1080, height: 1080, aspect: '1/1' },
+            banner: { width: 1200, height: 675, aspect: '16/9' }
+        };
+
+        // PLANTILLAS EDITORIALES DE ALTO IMPACTO (OBJETIVO: REGISTRO Y CONVERSIÓN)
+        const templates = {
+            superapp: {
+                badge: "🎁 REGÍSTRATE GRATIS • DESCUBRE LA SUPER APP",
+                title: "ENTRA Y DESCUBRE TODO LO QUE OFRECEMOS",
+                subtitle: "Crea tu cuenta gratis para conseguir tu Carta FUT con estadísticas reales, competir en el Ranking ELO oficial y jugar en Americanas automáticas con marcador en vivo.",
+                features: "🃏 Tu Carta FUT con Stats | ⚡ Americanas y Pozo en Directo | 🏆 Ranking ELO Oficial | 🤖 Brain AI: Pareja Ideal",
+                cta: "¡REGÍSTRATE GRATIS Y PIDE TU CARTA!",
+                bg: "img/pista_padel_azul.png",
+                color: "#CCFF00",
+                playerName: "TU NOMBRE AQUÍ",
+                ovr: "98",
+                pos: "PRO",
+                stats: "ATQ:96, DEF:94, POT:98, CTL:93, SIN:99%, RES:91",
+                eventStatus: "REGISTRO GRATIS",
+                eventLoc: "📱 APP SOMOS PÁDEL BARCELONA",
+                eventSpots: "CREA TU PERFIL EN 30s",
+                eventLevel: "ACCESO TOTAL"
+            },
+            futcard: {
+                badge: "⭐ CROMO & RATING OFICIAL",
+                title: "REGÍSTRATE Y DESBLOQUEA TU CARTA FUT",
+                subtitle: "Descubre tus estadísticas reales de potencia, control, defensa y ELO en tu cromo personalizado al registrarte gratis en la app.",
+                features: "🔥 ELO Dinámico | 📊 Estadísticas FIFA Style | 🏅 Medallas de Campeón | ⭐ Radar de Rendimiento",
+                cta: "¡REGÍSTRATE Y MIRA TU CARTA!",
+                bg: "img/blog_player_victory.png",
+                color: "#f59e0b",
+                playerName: "TU NOMBRE AQUÍ",
+                ovr: "95",
+                pos: "PRO",
+                stats: "ATQ:95, DEF:92, POT:96, CTL:94, SIN:98%, RES:90",
+                eventStatus: "⭐ CARTA & ELO",
+                eventLoc: "📱 RANKING OFICIAL BCN",
+                eventSpots: "REGISTRO GRATUITO",
+                eventLevel: "TODOS LOS NIVELES"
+            },
+            tournament: {
+                badge: "🏆 AMERICANAS & TORNEOS EXCLUSIVOS",
+                title: "REGÍSTRATE PARA JUGAR AMERICANAS PRO",
+                subtitle: "Marcador en pantallas de TV del club, pistas de cristal, rotaciones automáticas sin papel y premios para campeones.",
+                features: "👥 Plazas Limitadas | 🎁 Welcome Pack & Premios | ⚡ Rotaciones Automáticas | ⏱️ 2 Horas Non-Stop",
+                cta: "¡REGÍSTRATE Y APÚNTATE GRATIS!",
+                bg: "img/blog_action_smash.png",
+                color: "#CCFF00",
+                playerName: "JUGADOR BCN",
+                ovr: "99",
+                pos: "PRO",
+                stats: "ATQ:98, DEF:92, POT:99, CTL:94, SIN:98%, RES:93",
+                eventStatus: "🏆 AMERICANAS BCN",
+                eventLoc: "📍 SUMMAPADEL & DELFOS",
+                eventSpots: "INSCRIPCIÓN POR LA APP",
+                eventLevel: "TODOS LOS NIVELES"
+            },
+            brainai: {
+                badge: "🧠 INTELIGENCIA ARTIFICIAL APLICADA",
+                title: "REGÍSTRATE Y DESCUBRE TU PAREJA IDEAL",
+                subtitle: "Nuestro motor de Inteligencia Artificial analiza tu estilo de juego para emparejarte con la dupla con mayor química de pista.",
+                features: "🎯 99% Sinergia Predictiva | 🤖 Scouting Táctico por IA | ⚡ Detección de Fortalezas | 📈 Crecimiento de Pareja",
+                cta: "¡REGÍSTRATE Y PRUEBA BRAIN AI!",
+                bg: "img/blog_court_night.png",
+                color: "#00e5ff",
+                playerName: "DUPLA PERFECTA",
+                ovr: "97",
+                pos: "PRO",
+                stats: "ATQ:91, DEF:98, POT:89, CTL:99, SIN:99%, RES:97",
+                eventStatus: "🤖 BRAIN AI MATCH",
+                eventLoc: "🎯 PAREJA IDEAL POR IA",
+                eventSpots: "TESTEA TU SINERGIA",
+                eventLevel: "ENTRADA LIBRE"
+            }
+        };
+
+        // ================================================================
+        // INICIALIZACIÓN
+        // ================================================================
+        window.addEventListener('DOMContentLoaded', () => {
+            fitArtboard();
+            updateFlyerContent();
+            updateFutCard();
+            updateEventPill();
+            updateQrCode();
+
+            if (window.location.protocol === 'file:') {
+                const notice = document.getElementById('file-protocol-notice');
+                if (notice) notice.style.display = 'flex';
+            }
+
+            window.addEventListener('resize', () => {
+                if (currentZoom === 'fit') fitArtboard();
+            });
+        });
+
+        // ================================================================
+        // ZOOM Y ESCALADO DINÁMICO DEL ARTBOARD (fitFlyerPreview)
+        // ================================================================
+        function fitFlyerPreview() {
+            const stage = document.getElementById('artboard-stage');
+            const scaler = document.getElementById('artboard-scaler');
+            const artboard = document.getElementById('flyer-artboard');
+            if (!stage || !scaler || !artboard) return;
+
+            const res = resolutions[currentFormat] || { width: 1080, height: 1920 };
+            const isMobile = window.innerWidth <= 768;
+            const stageW = Math.max(260, stage.clientWidth - (isMobile ? 20 : 40));
+            const stageH = Math.max(340, (stage.clientHeight > 100 ? stage.clientHeight : (window.innerHeight - 180)) - 40);
+
+            const scale = Math.min(stageW / res.width, stageH / res.height, 0.92);
+            
+            artboard.style.width = res.width + 'px';
+            artboard.style.height = res.height + 'px';
+            scaler.style.width = res.width + 'px';
+            scaler.style.height = res.height + 'px';
+            scaler.style.transform = `scale(${scale})`;
+
+            currentZoom = 'fit';
+            const zoomText = document.getElementById('zoom-level-text');
+            if (zoomText) zoomText.innerText = `${Math.round(scale * 100)}%`;
+        }
+
+        const fitArtboard = fitFlyerPreview;
+
+        function setZoom(val) {
+            const scaler = document.getElementById('artboard-scaler');
+            if (!scaler) return;
+            scaler.style.transform = `scale(${val})`;
+            currentZoom = val;
+            document.getElementById('zoom-level-text').innerText = `${Math.round(val * 100)}%`;
+        }
+
+        function zoomIn() {
+            const scaler = document.getElementById('artboard-scaler');
+            const currentScale = getComputedScale(scaler);
+            const nextScale = Math.min(currentScale + 0.1, 1.5);
+            setZoom(nextScale);
+        }
+
+        function zoomOut() {
+            const scaler = document.getElementById('artboard-scaler');
+            const currentScale = getComputedScale(scaler);
+            const nextScale = Math.max(currentScale - 0.1, 0.2);
+            setZoom(nextScale);
+        }
+
+        function resetZoom() {
+            fitFlyerPreview();
+        }
+
+        function getComputedScale(el) {
+            const transform = el.style.transform;
+            const match = transform.match(/scale\(([^)]+)\)/);
+            return match ? parseFloat(match[1]) : 0.5;
+        }
+
+        // ================================================================
+        // CAMBIAR FORMATO
+        // ================================================================
+        function setFormat(format, btn) {
+            currentFormat = format;
+            document.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+
+            const artboard = document.getElementById('flyer-artboard');
+            artboard.setAttribute('data-format', format);
+
+            fitFlyerPreview();
+            updateFlyerContent();
+        }
+
+        // ================================================================
+        // CAMBIAR COLOR DE ACENTO (setAccentColor)
+        // ================================================================
+        function setAccentColor(color, pill) {
+            currentAccent = color;
+            document.querySelectorAll('.color-pill').forEach(p => p.classList.remove('active'));
+            if (pill) pill.classList.add('active');
+
+            document.documentElement.style.setProperty('--accent-color', color);
+            const hexClean = color.replace('#', '');
+            const r = parseInt(hexClean.substring(0,2), 16);
+            const g = parseInt(hexClean.substring(2,4), 16);
+            const b = parseInt(hexClean.substring(4,6), 16);
+            document.documentElement.style.setProperty('--accent-glow', `rgba(${r}, ${g}, ${b}, 0.5)`);
+            
+            updateFlyerContent();
+        }
+
+        const setColor = setAccentColor;
+
+        // ================================================================
+        // PLANTILLAS PREDEFINIDAS
+        // ================================================================
+        function setTemplate(key, card) {
+            document.querySelectorAll('.template-card').forEach(c => c.classList.remove('active'));
+            if (card) card.classList.add('active');
+
+            const t = templates[key];
+            if (!t) return;
+
+            document.getElementById('input-badge').value = t.badge;
+            document.getElementById('input-title').value = t.title;
+            document.getElementById('input-subtitle').value = t.subtitle;
+            document.getElementById('input-features').value = t.features;
+            document.getElementById('input-cta').value = t.cta;
+            document.getElementById('input-player-name').value = t.playerName;
+            document.getElementById('input-player-ovr').value = t.ovr;
+            document.getElementById('input-player-pos').value = t.pos;
+            document.getElementById('input-player-stats').value = t.stats;
+
+            if (t.eventStatus) document.getElementById('input-event-status').value = t.eventStatus;
+            if (t.eventLoc) document.getElementById('input-event-loc').value = t.eventLoc;
+            if (t.eventSpots) document.getElementById('input-event-spots').value = t.eventSpots;
+            if (t.eventLevel) document.getElementById('input-event-level').value = t.eventLevel;
+
+            // Set color
+            const targetPill = Array.from(document.querySelectorAll('.color-pill')).find(p => p.style.color === t.color || p.getAttribute('style').includes(t.color));
+            setAccentColor(t.color, targetPill);
+
+            // Set BG
+            const targetThumb = Array.from(document.querySelectorAll('.bg-thumb')).find(th => th.querySelector('img') && th.querySelector('img').src.includes(t.bg));
+            setBackgroundImage(t.bg, targetThumb);
+
+            updateFlyerContent();
+            updateFutCard();
+            updateEventPill();
+        }
+
+        // ================================================================
+        // GESTIÓN DE FONDOS FOTOGRÁFICOS (setBackgroundImage)
+        // ================================================================
+        function setBackgroundImage(src, thumb) {
+            const bgImg = document.getElementById('bg-image');
+            if (bgImg) bgImg.src = src;
+
+            document.querySelectorAll('.bg-thumb').forEach(t => t.classList.remove('active'));
+            if (thumb) thumb.classList.add('active');
+        }
+
+        const setBgImage = setBackgroundImage;
+
+        function handleCustomBg(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                setBgImage(event.target.result, null);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function updateBgFilters() {
+            const darkness = document.getElementById('bg-darkness').value;
+            const blur = document.getElementById('bg-blur').value;
+            const scale = document.getElementById('bg-scale').value;
+
+            document.getElementById('darkness-val').innerText = `${darkness}%`;
+            document.getElementById('blur-val').innerText = `${blur}px`;
+            document.getElementById('scale-val').innerText = `${scale}%`;
+
+            const bgImg = document.getElementById('bg-image');
+            if (bgImg) {
+                bgImg.style.filter = `blur(${blur}px) brightness(${100 - (darkness * 0.45)}%)`;
+                bgImg.style.transform = `scale(${scale / 100})`;
+            }
+
+            const vignette = document.getElementById('artboard-vignette-overlay');
+            if (vignette) {
+                vignette.style.opacity = (darkness / 80).toFixed(2);
+            }
+        }
+
+        // ================================================================
+        // ACTUALIZACIÓN EN TIEMPO REAL DEL CONTENIDO
+        // ================================================================
+        function updateFlyerContent() {
+            const badge = document.getElementById('input-badge').value.trim();
+            const title = document.getElementById('input-title').value.trim();
+            const subtitle = document.getElementById('input-subtitle').value.trim();
+            const cta = document.getElementById('input-cta').value.trim();
+            const featuresRaw = document.getElementById('input-features').value;
+
+            // Badge
+            document.getElementById('target-badge').innerText = badge;
+
+            // Title with metallic neon gradient on second part
+            const words = title.split(' ');
+            if (words.length > 2) {
+                const mid = Math.ceil(words.length / 2);
+                const part1 = words.slice(0, mid).join(' ');
+                const part2 = words.slice(mid).join(' ');
+                document.getElementById('target-title').innerHTML = `${part1} <br><span class="gradient-span">${part2}</span>`;
+            } else {
+                document.getElementById('target-title').innerHTML = `<span class="gradient-span">${title}</span>`;
+            }
+
+            // Subtitle
+            document.getElementById('target-subtitle').innerText = subtitle;
+
+            // CTA Button
+            document.getElementById('target-cta-text').innerText = cta;
+
+            // Features Cards Grid
+            const items = featuresRaw.split(/[|,]/).map(s => s.trim()).filter(Boolean);
+            const grid = document.getElementById('target-features-grid');
+            grid.innerHTML = '';
+
+            const iconMap = [
+                'fa-trophy',
+                'fa-id-card',
+                'fa-tv',
+                'fa-brain',
+                'fa-fire',
+                'fa-bolt',
+                'fa-star',
+                'fa-ranking-star'
+            ];
+
+            items.slice(0, 4).forEach((item, idx) => {
+                const card = document.createElement('div');
+                card.className = 'poster-feature-card';
+                card.innerHTML = `
+                    <div class="feature-card-icon">
+                        <i class="fas ${iconMap[idx % iconMap.length]}"></i>
+                    </div>
+                    <div class="feature-card-text">${item}</div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // ================================================================
+        // ACTUALIZACIÓN DE FICHA PRÁCTICA DEL EVENTO / CONVOCATORIA
+        // ================================================================
+        function updateEventPill() {
+            const status = document.getElementById('input-event-status').value.trim();
+            const loc = document.getElementById('input-event-loc').value.trim();
+            const spots = document.getElementById('input-event-spots').value.trim();
+            const level = document.getElementById('input-event-level').value.trim();
+
+            const statusEl = document.getElementById('target-event-status');
+            if (statusEl) statusEl.innerText = status;
+
+            const locEl = document.getElementById('target-event-loc');
+            if (locEl) locEl.innerText = loc;
+
+            const spotsEl = document.getElementById('target-event-spots');
+            if (spotsEl) spotsEl.innerText = spots;
+
+            const levelEl = document.getElementById('target-event-level');
+            if (levelEl) levelEl.innerText = level;
+        }
+
+        function setEventPreset(type) {
+            if (type === 'registro') {
+                document.getElementById('input-event-status').value = 'REGISTRO GRATIS';
+                document.getElementById('input-event-loc').value = '📱 APP SOMOS PÁDEL BARCELONA';
+                document.getElementById('input-event-spots').value = 'CREA TU PERFIL EN 30s';
+                document.getElementById('input-event-level').value = 'ACCESO TOTAL';
+            } else if (type === 'superapp') {
+                document.getElementById('input-event-status').value = '⚡ SUPER APP TODO EN 1';
+                document.getElementById('input-event-loc').value = '🏆 AMERICANAS & ELO OFICIAL';
+                document.getElementById('input-event-spots').value = 'DESBLOQUEA TU CARTA';
+                document.getElementById('input-event-level').value = 'ENTRADA LIBRE';
+            } else if (type === 'elo') {
+                document.getElementById('input-event-status').value = '🏅 RANKING ELO BCN';
+                document.getElementById('input-event-loc').value = '📊 COMPITE Y SUBE DE NIVEL';
+                document.getElementById('input-event-spots').value = 'SUMA PUNTOS CADA SEMANA';
+                document.getElementById('input-event-level').value = 'TODOS LOS NIVELES';
+            } else if (type === 'americana') {
+                document.getElementById('input-event-status').value = 'CONVOCATORIA ABIERTA';
+                document.getElementById('input-event-loc').value = '📍 SUMMAPADEL BCN • SÁB 18:00H';
+                document.getElementById('input-event-spots').value = 'ÚLTIMAS 4 PLAZAS';
+                document.getElementById('input-event-level').value = 'NIVEL 2.5 - 4.5';
+            } else if (type === 'torneo') {
+                document.getElementById('input-event-status').value = '🏆 TORNEO AMERICANAS';
+                document.getElementById('input-event-loc').value = '📍 CLUB DELFOS • DOM 10:00H';
+                document.getElementById('input-event-spots').value = 'PREMIOS & WELCOME PACK';
+                document.getElementById('input-event-level').value = 'CATEGORÍA ABIERTA';
+            } else if (type === 'app') {
+                document.getElementById('input-event-status').value = '⚡ APP OFICIAL';
+                document.getElementById('input-event-loc').value = '📱 ROTACIONES & ELO EN VIVO';
+                document.getElementById('input-event-spots').value = 'INSCRIPCIÓN GRATIS';
+                document.getElementById('input-event-level').value = 'TODOS LOS NIVELES';
+            }
+            updateEventPill();
+        }
+
+        // ================================================================
+        // ACTUALIZACIÓN DE CARTA FUT 3D
+        // ================================================================
+        function updateFutCard() {
+            const name = document.getElementById('input-player-name').value.trim();
+            const ovr = document.getElementById('input-player-ovr').value.trim();
+            const pos = document.getElementById('input-player-pos').value.trim();
+            const statsRaw = document.getElementById('input-player-stats').value.trim();
+
+            document.getElementById('target-fut-name').innerText = name;
+            document.getElementById('target-fut-ovr').innerText = ovr;
+            document.getElementById('target-fut-pos').innerText = pos;
+
+            const statsContainer = document.getElementById('target-fut-stats');
+            statsContainer.innerHTML = '';
+
+            const pairs = statsRaw.split(',').map(s => s.trim()).filter(Boolean);
+            pairs.forEach(p => {
+                const [k, v] = p.split(':').map(x => x.trim());
+                if (k && v) {
+                    const item = document.createElement('div');
+                    item.className = 'fut-stat-item';
+                    item.innerHTML = `<span class="fut-stat-val">${v}</span><span class="fut-stat-key">${k}</span>`;
+                    statsContainer.appendChild(item);
+                }
+            });
+        }
+
+        // ================================================================
+        // GENERACIÓN DE CÓDIGO QR VIP
+        // ================================================================
+        function updateQrCode() {
+            const url = document.getElementById('input-url').value.trim() || 'https://somospadelbarcelona.web.app';
+            document.getElementById('target-qr-url').innerText = url.replace(/^https?:\/\//, '');
+
+            const container = document.getElementById('qr-container');
+            container.innerHTML = '';
+
+            try {
+                if (window.QRCode) {
+                    new QRCode(container, {
+                        text: url,
+                        width: 120,
+                        height: 120,
+                        colorDark: "#05070d",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.M
+                    });
+                } else {
+                    container.innerHTML = `<i class="fas fa-qrcode" style="font-size: 50px; color: #000;"></i>`;
+                }
+            } catch (e) {
+                console.error("QR Code Error:", e);
+                container.innerHTML = `<i class="fas fa-qrcode" style="font-size: 50px; color: #000;"></i>`;
+            }
+        }
+
+        // ================================================================
+        // TOGGLE DE ELEMENTOS (HUD, BADGES, FUT CARD, QR)
+        // ================================================================
+        function toggleModules() {
+            const showFut = document.getElementById('chk-fut-card').checked;
+            const showTv = document.getElementById('chk-live-tv').checked;
+            const showBadges = document.getElementById('chk-badges').checked;
+            const showQr = document.getElementById('chk-qr').checked;
+            const showHolo = document.getElementById('chk-hologram').checked;
+
+            const futCard = document.getElementById('target-fut-card');
+            if (futCard) futCard.style.display = showFut ? 'flex' : 'none';
+
+            const tvHud = document.getElementById('hud-scoreboard');
+            if (tvHud) tvHud.style.display = showTv ? 'flex' : 'none';
+
+            const featuresGrid = document.getElementById('target-features-grid');
+            if (featuresGrid) featuresGrid.style.display = showBadges ? 'grid' : 'none';
+
+            const qrPass = document.getElementById('target-qr-pass');
+            if (qrPass) qrPass.style.display = showQr ? 'flex' : 'none';
+
+            const styleHolo = document.getElementById('hologram-toggle-style') || document.createElement('style');
+            styleHolo.id = 'hologram-toggle-style';
+            styleHolo.innerHTML = showHolo ? '' : '.fut-card-hero::before { display: none !important; }';
+            if (!styleHolo.parentElement) document.head.appendChild(styleHolo);
+        }
+
+        // ================================================================
+        // EXPORTACIÓN HD REAL NATIVA (PNG 1080P) - downloadFlyerImage
+        // ================================================================
+        // ================================================================
+        // EXPORTACIÓN HD REAL NATIVA (PNG 1080P) - BLINDADA CONTRA CORS
+        // ================================================================
+        async function downloadFlyerImage(format = 'png') {
+            const artboard = document.getElementById('flyer-artboard');
+            const res = resolutions[currentFormat] || { width: 1080, height: 1920 };
+            
+            // Notification visual
+            const btn = document.querySelector('.btn-export-main');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Generando PNG 1080p...`;
+            btn.style.pointerEvents = 'none';
+
+            try {
+                let dataUrl = null;
+
+                // MÉTODO 1: html2canvas con configuración anti-taint
+                if (window.html2canvas) {
+                    try {
+                        const canvas = await html2canvas(artboard, {
+                            scale: 1,
+                            useCORS: true,
+                            allowTaint: false, // ¡Falso para que el canvas no se contamine en file://!
+                            foreignObjectRendering: false,
+                            width: res.width,
+                            height: res.height,
+                            backgroundColor: '#060913',
+                            logging: false
+                        });
+                        dataUrl = canvas.toDataURL('image/png', 1.0);
+                    } catch (errH2C) {
+                        console.warn("html2canvas en file:// detectó taint, recurriendo a motor Canvas nativo:", errH2C);
+                    }
+                }
+
+                // MÉTODO 2 (FALLBACK NATIVO INFALIBLE): Renderizador Canvas Directo
+                // Al dibujarse nativamente en Canvas local, JAMÁS lanza error de CORS ni SecurityError
+                if (!dataUrl) {
+                    dataUrl = await renderDirectCanvasExport(res);
+                }
+
+                if (!dataUrl) {
+                    throw new Error("No se pudo generar la imagen");
+                }
+
+                // Descargar archivo PNG
+                const link = document.createElement('a');
+                link.download = `SomosPadel_Poster_2026_${currentFormat}_${Date.now()}.${format}`;
+                link.href = dataUrl;
+                link.click();
+
+                btn.innerHTML = `<i class="fas fa-check"></i> ¡Descargado con éxito!`;
+                btn.style.background = '#00e5ff';
+                btn.style.color = '#000';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.background = '';
+                    btn.style.color = '';
+                    btn.style.pointerEvents = '';
+                }, 2500);
+
+            } catch (err) {
+                console.error("Error crítico exportando póster:", err);
+                // Si el navegador bloqueó completamente toDataURL en file://, generamos con motor directo
+                try {
+                    const fallbackUrl = await renderDirectCanvasExport(res);
+                    const link = document.createElement('a');
+                    link.download = `SomosPadel_Poster_2026_${currentFormat}_${Date.now()}.png`;
+                    link.href = fallbackUrl;
+                    link.click();
+                    btn.innerHTML = `<i class="fas fa-check"></i> ¡Descargado en modo directo!`;
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.style.pointerEvents = '';
+                    }, 2500);
+                } catch (errFallback) {
+                    alert("Aviso: Tu navegador bloquea la descarga en modo archivo directo (file://). Abre CREAR_FLYER_Y_VIDEOS.bat para ejecutarlo en http://localhost:8000 y descargar en máxima calidad.");
+                    btn.innerHTML = originalText;
+                    btn.style.pointerEvents = '';
+                }
+            }
+        }
+
+        // MOTOR DE RENDERIZADO CANVAS DIRECTO (100% INMUNE A CORS)
+        async function renderDirectCanvasExport(res) {
+            const canvas = document.createElement('canvas');
+            canvas.width = res.width;
+            canvas.height = res.height;
+            const ctx = canvas.getContext('2d');
+
+            const w = res.width;
+            const h = res.height;
+
+            // 1. Fondo Oscuro
+            ctx.fillStyle = '#060913';
+            ctx.fillRect(0, 0, w, h);
+
+            // 2. Intentar dibujar la imagen de fondo si está cargada
+            const bgElem = document.getElementById('bg-image');
+            if (bgElem && bgElem.complete && bgElem.naturalWidth > 0) {
+                try {
+                    ctx.save();
+                    ctx.filter = bgElem.style.filter || 'none';
+                    ctx.drawImage(bgElem, 0, 0, w, h);
+                    ctx.restore();
+                } catch (e) {
+                    console.warn("Fondo omitido por seguridad del navegador local");
+                }
+            }
+
+            // 3. Gradientes Neón y Viñeta
+            const grad = ctx.createRadialGradient(w * 0.5, h * 0.2, 50, w * 0.5, h * 0.4, w * 0.8);
+            grad.addColorStop(0, hexToRgba(currentAccent, 0.25));
+            grad.addColorStop(1, 'rgba(6, 9, 19, 0.92)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, w, h);
+
+            // 4. Cabecera
+            ctx.font = "900 42px 'Outfit', sans-serif";
+            ctx.fillStyle = "#ffffff";
+            ctx.textAlign = "left";
+            ctx.fillText("SOMOS PÁDEL BCN", 70, 110);
+            ctx.font = "800 18px 'Outfit', sans-serif";
+            ctx.fillStyle = currentAccent;
+            ctx.fillText("OFICIAL AMERICANAS & RANKING", 70, 140);
+
+            // Badge superior
+            const badgeText = document.getElementById('input-badge').value;
+            ctx.font = "900 24px 'Outfit', sans-serif";
+            ctx.fillStyle = currentAccent;
+            ctx.textAlign = "center";
+            ctx.fillText(badgeText, w * 0.5, 230);
+
+            // Título
+            const titleText = document.getElementById('input-title').value;
+            ctx.font = `900 ${currentFormat === 'banner' ? 50 : 70}px 'Outfit', sans-serif`;
+            ctx.fillStyle = "#ffffff";
+            ctx.fillText(titleText, w * 0.5, 330);
+
+            // Subtítulo
+            const subtitleText = document.getElementById('input-subtitle').value;
+            ctx.font = "600 26px 'Montserrat', sans-serif";
+            ctx.fillStyle = "#cbd5e1";
+            wrapCanvasText(ctx, subtitleText, w * 0.5, 430, w * 0.82, 38);
+
+            // Carta FUT central
+            const futX = w * 0.5 - 200;
+            const futY = 560;
+            const futW = 400;
+            const futH = 600;
+
+            // Tarjeta FUT
+            ctx.fillStyle = "#0c1322";
+            ctx.strokeStyle = currentAccent;
+            ctx.lineWidth = 4;
+            drawRoundRect(ctx, futX, futY, futW, futH, 30);
+            ctx.fill();
+            ctx.stroke();
+
+            // OVR y Posición
+            ctx.font = "900 90px 'Outfit', sans-serif";
+            ctx.fillStyle = currentAccent;
+            ctx.textAlign = "left";
+            ctx.fillText(document.getElementById('input-player-ovr').value || "98", futX + 35, futY + 110);
+            ctx.font = "900 28px 'Outfit', sans-serif";
+            ctx.fillStyle = "#ffffff";
+            ctx.fillText(document.getElementById('input-player-pos').value || "PRO", futX + 40, futY + 150);
+
+            // Nombre Jugador en Carta
+            ctx.font = "900 36px 'Outfit', sans-serif";
+            ctx.fillStyle = "#ffffff";
+            ctx.textAlign = "center";
+            ctx.fillText(document.getElementById('input-player-name').value || "TU NOMBRE AQUÍ", futX + futW / 2, futY + 340);
+
+            // Barra de stats en carta
+            ctx.font = "800 22px 'Outfit', sans-serif";
+            ctx.fillStyle = currentAccent;
+            ctx.fillText("POT: 99  |  ATQ: 96  |  DEF: 94  |  ELO: 2150", futX + futW / 2, futY + 440);
+
+            // Botón CTA
+            const ctaY = h - 260;
+            const ctaW = w * 0.75;
+            const ctaH = 90;
+            const ctaX = w * 0.5 - ctaW / 2;
+            ctx.fillStyle = currentAccent;
+            drawRoundRect(ctx, ctaX, ctaY, ctaW, ctaH, 45);
+            ctx.fill();
+
+            ctx.font = "900 34px 'Outfit', sans-serif";
+            ctx.fillStyle = "#050811";
+            ctx.textAlign = "center";
+            ctx.fillText(document.getElementById('input-cta').value, w * 0.5, ctaY + 56);
+
+            // QR Code
+            const qrImg = document.querySelector('#qr-container img') || document.querySelector('#qr-container canvas');
+            if (qrImg) {
+                try {
+                    ctx.drawImage(qrImg, w * 0.5 - 60, h - 150, 120, 120);
+                } catch(e) {}
+            }
+
+            return canvas.toDataURL('image/png', 1.0);
+        }
+
+        function drawRoundRect(ctx, x, y, width, height, radius) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+        }
+
+        function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight) {
+            const words = text.split(' ');
+            let line = '';
+            for (let n = 0; n < words.length; n++) {
+                const testLine = line + words[n] + ' ';
+                const metrics = ctx.measureText(testLine);
+                if (metrics.width > maxWidth && n > 0) {
+                    ctx.fillText(line, x, y);
+                    line = words[n] + ' ';
+                    y += lineHeight;
+                } else {
+                    line = testLine;
+                }
+            }
+            ctx.fillText(line, x, y);
+        }
+
+        function hexToRgba(hex, alpha) {
+            let c = (hex || '#CCFF00').replace('#', '');
+            if (c.length === 3) c = c.split('').map(x => x + x).join('');
+            const num = parseInt(c, 16);
+            return `rgba(${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}, ${alpha})`;
+        }
+
+        const exportPosterImage = downloadFlyerImage;
+
+        // ================================================================
+        // GENERACIÓN DE VIDEO REEL ANIMADO (WEBM) - generateFlyerVideo
+        // ================================================================
+        async function generateFlyerVideo() {
+            if (isRecording) return;
+            isRecording = true;
+
+            const progressBox = document.getElementById('video-progress');
+            const progressText = document.getElementById('video-progress-text');
+            progressBox.classList.add('active');
+
+            const res = resolutions[currentFormat];
+            const canvas = document.getElementById('recording-canvas');
+            canvas.width = res.width;
+            canvas.height = res.height;
+            const ctx = canvas.getContext('2d');
+
+            try {
+                // Capturar el poster renderizado base
+                const artboard = document.getElementById('flyer-artboard');
+                let baseImage = new Image();
+
+                let dataUrl = null;
+                if (window.htmlToImage) {
+                    try {
+                        dataUrl = await htmlToImage.toPng(artboard, { pixelRatio: 1, width: res.width, height: res.height });
+                    } catch(e){}
+                }
+                if (!dataUrl && window.html2canvas) {
+                    const c = await html2canvas(artboard, { scale: 1, useCORS: true, width: res.width, height: res.height });
+                    dataUrl = c.toDataURL('image/png');
+                }
+
+                await new Promise(resolve => {
+                    baseImage.onload = resolve;
+                    baseImage.src = dataUrl;
+                });
+
+                // Iniciar MediaRecorder a 30 FPS con barrido holográfico y pulso LED en vivo
+                const stream = canvas.captureStream(30);
+                let mimeType = 'video/webm;codecs=vp9';
+                if (!MediaRecorder.isTypeSupported(mimeType)) {
+                    mimeType = 'video/webm';
+                }
+
+                const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 6000000 });
+                const chunks = [];
+
+                recorder.ondataavailable = e => {
+                    if (e.data.size > 0) chunks.push(e.data);
+                };
+
+                recorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: mimeType });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.download = `SomosPadel_Reel_2026_${currentFormat}_${Date.now()}.webm`;
+                    link.href = url;
+                    link.click();
+
+                    progressBox.classList.remove('active');
+                    isRecording = false;
+                };
+
+                recorder.start();
+
+                const duration = 4000; // 4 segundos de video Reel
+                const startTime = performance.now();
+
+                function renderFrame(now) {
+                    const elapsed = now - startTime;
+                    const progress = Math.min(100, Math.floor((elapsed / duration) * 100));
+                    progressText.innerText = `Grabando Reel Animado 2026 (${progress}%)...`;
+
+                    // 1. Dibujar imagen base del póster
+                    ctx.drawImage(baseImage, 0, 0, res.width, res.height);
+
+                    // 2. Renderizar rayo de luz holográfico animado en 45°
+                    const sweepPos = ((elapsed % 2000) / 2000) * (res.width + res.height);
+                    const grad = ctx.createLinearGradient(sweepPos - 200, 0, sweepPos + 200, res.height);
+                    grad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+                    grad.addColorStop(0.5, 'rgba(204, 255, 0, 0.22)');
+                    grad.addColorStop(0.55, 'rgba(0, 229, 255, 0.25)');
+                    grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                    
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(0, 0, res.width, res.height);
+
+                    // 3. Destellos neón adicionales
+                    const pulse = (Math.sin(elapsed * 0.008) + 1) * 0.5;
+                    ctx.fillStyle = `rgba(204, 255, 0, ${0.05 + pulse * 0.08})`;
+                    ctx.fillRect(0, 0, res.width, res.height);
+
+                    if (elapsed < duration) {
+                        requestAnimationFrame(renderFrame);
+                    } else {
+                        recorder.stop();
+                    }
+                }
+
+                requestAnimationFrame(renderFrame);
+
+            } catch (err) {
+                console.error("Error grabando video Reel:", err);
+                alert("Tu navegador requiere interacción local o bloqueo la captura de video. Se recomienda descargar en PNG 1080p.");
+                progressBox.classList.remove('active');
+                isRecording = false;
+            }
+        }
+
+        const generateAnimatedVideo = generateFlyerVideo;
+
+        // Exponer la API Oficial de Somos Pádel Studio globalmente
+        window.downloadFlyerImage = downloadFlyerImage;
+        window.exportPosterImage = downloadFlyerImage;
+        window.generateFlyerVideo = generateFlyerVideo;
+        window.generateAnimatedVideo = generateFlyerVideo;
+        window.setTemplate = setTemplate;
+        window.setBackgroundImage = setBackgroundImage;
+        window.setBgImage = setBackgroundImage;
+        window.setAccentColor = setAccentColor;
+        window.setColor = setAccentColor;
+        window.setFormat = setFormat;
+        window.fitFlyerPreview = fitFlyerPreview;
+        window.fitArtboard = fitFlyerPreview;
+
+        // ================================================================
+        // MODAL DE COPYS DE MARKETING
+        // ================================================================
+        function openCopiesModal() {
+            document.getElementById('copies-modal').classList.add('active');
+        }
+
+        function closeCopiesModal() {
+            document.getElementById('copies-modal').classList.remove('active');
+        }
+
+        function copyToClipboard(elementId, btn) {
+            const text = document.getElementById(elementId).innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const original = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i> ¡Copiado con éxito!';
+                btn.style.background = '#CCFF00';
+                btn.style.color = '#000';
+                setTimeout(() => {
+                    btn.innerHTML = original;
+                    btn.style.background = '';
+                    btn.style.color = '';
+                }, 2000);
+            }).catch(err => {
+                console.error('Error al copiar texto:', err);
+            });
+        }
+    </script>
+</body>
+</html>

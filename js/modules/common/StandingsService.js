@@ -12,8 +12,16 @@
          * Calculates standings from a list of matches.
          * Optimized for Pozo, Americanas, and Entrenos.
          */
-        calculate(matches, type = 'americana', isFixedPairs = false, initialPlayers = []) {
+        calculate(matches, type = 'americana', isFixedPairs = false, initialPlayers = [], isSwiss = false) {
             const stats = {};
+
+            // Determine if Swiss mode is active (via parameter, type, or naming)
+            const isSwissMode = Boolean(
+                isSwiss || 
+                type === 'swiss' || 
+                type === 'entreno_suizo' || 
+                type === 'americana_suiza'
+            );
 
             // Initialize stats with all participants (to ensure 0-match players appear)
             if (initialPlayers && Array.isArray(initialPlayers)) {
@@ -62,8 +70,27 @@
             });
 
             return Object.values(stats).sort((a, b) => {
-                if (type === 'entreno') {
-                    // 🎾 REGLAS OFICIALES DE DESEMPATE Y CAMPEONES - ENTRENOS SOMOSPADEL BCN
+                if (isSwissMode) {
+                    // 🇨🇭 MODALIDAD SUIZA OFICIAL (ENTRENO SUIZO & AMERICANA SUIZA) - NORMAS SOMOSPADEL BCN
+                    // 1. Puntos individuales acumulados (Total de juegos ganados en todas las rondas)
+                    if (b.points !== a.points) return b.points - a.points;
+
+                    // 2. Diferencial de juegos ganados - perdidos (Diff: JF - JC)
+                    if (b.diff !== a.diff) return b.diff - a.diff;
+
+                    // 3. Victorias totales de partidos (Won)
+                    if (b.won !== a.won) return b.won - a.won;
+
+                    // 4. Menor cantidad de juegos recibidos (gamesLost)
+                    if (a.gamesLost !== b.gamesLost) return a.gamesLost - b.gamesLost;
+
+                    // 5. Nivel o desempate alfabético
+                    const lvlA = parseFloat(a.level || 0);
+                    const lvlB = parseFloat(b.level || 0);
+                    if (lvlB !== lvlA) return lvlB - lvlA;
+                    return String(a.name || '').localeCompare(String(b.name || ''));
+                } else if (type === 'entreno') {
+                    // 🎾 REGLAS OFICIALES DE DESEMPATE Y CAMPEONES - ENTRENOS SOMOSPADEL BCN (POZO TRADICIONAL)
                     // 1. Victorias totales en el entreno (Won) - Mérito principal de victorias
                     if (b.won !== a.won) return b.won - a.won;
 
@@ -117,6 +144,9 @@
                 : key;
 
             this._ensurePlayer(stats, key, displayName);
+            if (!stats[key].playerIds && sortedIds.length > 0) {
+                stats[key].playerIds = sortedIds;
+            }
             
             // 🛡️ PER-PAIR ROUND DEDUPLICATION
             if (!stats[key]._seenRounds) stats[key]._seenRounds = new Set();

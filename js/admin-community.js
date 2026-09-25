@@ -118,13 +118,24 @@ window.AdminCommunity = {
     },
 
     listenForMatches() {
-        db.collection('open_matches')
+        if (this._unsubscribeMatches) {
+            this._unsubscribeMatches();
+            this._unsubscribeMatches = null;
+        }
+        this._unsubscribeMatches = db.collection('open_matches')
             .orderBy('date', 'desc') // Admin ve todo, incluso pasado reciente
             .limit(50)
             .onSnapshot(snapshot => {
                 this.matches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 this.renderTable();
             });
+    },
+
+    destroy() {
+        if (this._unsubscribeMatches) {
+            this._unsubscribeMatches();
+            this._unsubscribeMatches = null;
+        }
     },
 
     renderTable() {

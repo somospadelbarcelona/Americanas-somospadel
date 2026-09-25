@@ -610,7 +610,7 @@
                 const summary = this.getConvocatoriaSummary(convoData, teamObj.roster || []);
 
                 if (summary.available.length > 0) {
-                    text += `${E.check} *CONFIRMADOS (${summary.available.length}):*\n`;
+                    text += `${E.check} *PUEDEN IR (${summary.available.length}):*\n`;
                     summary.available.forEach(p => {
                         const noteStr = p.note ? ` _(${p.note})_` : '';
                         text += `  • ${p.name}${noteStr}\n`;
@@ -618,7 +618,7 @@
                     text += '\n';
                 }
 
-                if (summary.conditional.length > 0) {
+                if (summary.conditional && summary.conditional.length > 0) {
                     text += `${E.maybe} *DUDAS / CONDICIONAL (${summary.conditional.length}):*\n`;
                     summary.conditional.forEach(p => {
                         const noteStr = p.note ? ` _(${p.note})_` : '';
@@ -628,7 +628,7 @@
                 }
 
                 if (summary.unavailable.length > 0) {
-                    text += `${E.cross} *BAJAS / NO DISPONIBLES (${summary.unavailable.length}):*\n`;
+                    text += `${E.cross} *NO PUEDEN IR (${summary.unavailable.length}):*\n`;
                     summary.unavailable.forEach(p => {
                         const noteStr = p.note ? ` _(${p.note})_` : '';
                         text += `  • ${p.name}${noteStr}\n`;

@@ -113,25 +113,38 @@
             };
 
             try {
-                // 1. Try to load from cache first for instant UI
-                const cachedRanking = await window.CacheService.get('general', 'global_ranking');
+                // 1. Try to load from cache first for instant UI (v4 official points system)
+                if (window.CacheService) {
+                    try { window.CacheService.delete('general', 'global_ranking'); } catch (e) {}
+                }
+                const cachedRanking = await window.CacheService.get('general', 'global_ranking_v4');
                 if (cachedRanking && Array.isArray(cachedRanking)) {
-                    console.log("⚡ [Ranking] Instant load from IndexedDB.");
+                    console.log("⚡ [Ranking] Instant load from IndexedDB (v4 Official Ranking).");
                     render(cachedRanking);
                 } else {
                     content.innerHTML = '<div class="loader-container" style="display:flex; justify-content:center; align-items:center; height:60vh;"><div class="loader"></div></div>';
                 }
 
-                // 2. Background Revalidation
+                // 2. Background Revalidation (Recalculates all historical americanas & entrenos)
                 const freshRanking = await this.calculateSilently();
 
                 // 3. Update UI
+                // Only skip render if user has explicitly navigated away to another route
+                const isStillOnRanking = !window.Router || 
+                    window.Router.currentRoute === 'ranking' || 
+                    window.location.hash.includes('ranking') || 
+                    !window.Router.currentRoute;
+                if (!isStillOnRanking) {
+                    console.log("⚡ [Ranking] Usuario ya no está en ranking, abortando actualización de UI.");
+                    return;
+                }
+
                 // Always render fresh data to ensure we are not stuck with old/empty cache
-                console.log("🔄 [Ranking] Updating UI with fresh data.");
+                console.log("🔄 [Ranking] Updating UI with fresh official recalculated data.");
                 render(freshRanking);
 
                 if (freshRanking && freshRanking.length > 0) {
-                    await window.CacheService.set('general', 'global_ranking', freshRanking);
+                    await window.CacheService.set('general', 'global_ranking_v4', freshRanking);
                 }
             } catch (error) {
                 console.error("❌ [RankingController] Critical error in init:", error);
@@ -180,9 +193,9 @@
             // Fallback: si no tenemos la caché en memoria pero sí en IndexedDB, podemos usarla temporalmente
             if (!this._cachedRanking && window.CacheService) {
                 try {
-                    const localRanking = await window.CacheService.get('general', 'global_ranking');
+                    const localRanking = await window.CacheService.get('general', 'global_ranking_v4');
                     if (localRanking && Array.isArray(localRanking) && localRanking.length > 0) {
-                        console.log("💾 [RankingController] Loaded backup ranking from IndexedDB.");
+                        console.log("💾 [RankingController] Loaded backup ranking from IndexedDB (v4).");
                         this._cachedRanking = localRanking;
                     }
                 } catch (err) {
@@ -211,7 +224,7 @@
                         this.db.americanas.getAll() || [],
                         this.db.entrenos.getAll() || []
                     ]),
-                    4000,
+                    15000,
                     [[], [], []]
                 );
 
@@ -274,7 +287,7 @@
                         fetchMatchesInBatches('matches', americanaIds),
                         fetchMatchesInBatches('entrenos_matches', entrenoIds)
                     ]),
-                    5000,
+                    20000,
                     [[], []]
                 );
 
@@ -287,13 +300,64 @@
 
                 console.log(`✅ [Ranking] Processed ${allAmeMatches.length + allEntMatches.length} valid matches (${allAmeMatches.length} americana + ${allEntMatches.length} entreno) from batch fetch.`);
 
-                // 3. Process matches into categorized player stats
+                // 3. Process matches into categorized player stats & calculate official event points
                 const playerStatsMap = {};
                 const eventMap = new Map(validEvents.map(e => [e.id, e]));
 
+                // Helper to get Points by Rank according to the official SomosPadel rules:
+                // 1º: 100, 2º: 80, 3º: 65, 4º: 55, 5º: 45, 6º: 38, 7º: 32, 8º: 28, 9º: 24, 10º: 20, 11º: 16, 12º: 12, 13º+: 10
+                const getOfficialPointsForRank = (rankNum) => {
+                    if (window.PointsPolicyModal && typeof window.PointsPolicyModal.getPointsForRank === 'function') {
+                        return window.PointsPolicyModal.getPointsForRank(rankNum);
+                    }
+                    const num = parseInt(rankNum, 10);
+                    if (isNaN(num) || num <= 0) return 10;
+                    if (num === 1) return 100;
+                    if (num === 2) return 80;
+                    if (num === 3) return 65;
+                    if (num === 4) return 55;
+                    if (num === 5) return 45;
+                    if (num === 6) return 38;
+                    if (num === 7) return 32;
+                    if (num === 8) return 28;
+                    if (num === 9) return 24;
+                    if (num === 10) return 20;
+                    if (num === 11) return 16;
+                    if (num === 12) return 12;
+                    return 10;
+                };
+
+                // Pre-index players by ID and normalized Name for ultra-fast matching
+                const playerByIdMap = new Map(players.map(p => [p.id, p]));
+                const playerByNameMap = new Map();
+                players.forEach(p => {
+                    if (p.name) playerByNameMap.set(p.name.trim().toUpperCase(), p.id);
+                });
+
+                const ensurePlayerStat = (id) => {
+                    if (!playerStatsMap[id]) {
+                        playerStatsMap[id] = {
+                            id, stats: {
+                                americanas: { points: 0, played: 0, won: 0, lost: 0, gamesWon: 0, gamesLost: 0, court1Count: 0, lastMatchCourt: 99, lastMatchRound: 0, categories: {} },
+                                entrenos: { points: 0, played: 0, won: 0, lost: 0, gamesWon: 0, gamesLost: 0, court1Count: 0, lastMatchCourt: 99, lastMatchRound: 0, categories: {} }
+                            }
+                        };
+                    }
+                    return playerStatsMap[id];
+                };
+
                 const processMatchPool = (matches, viewKey) => {
+                    // Group matches by event
+                    const matchesByEvent = new Map();
                     matches.forEach(m => {
-                        const evt = eventMap.get(m.americana_id);
+                        const evtId = m.americana_id;
+                        if (!evtId) return;
+                        if (!matchesByEvent.has(evtId)) matchesByEvent.set(evtId, []);
+                        matchesByEvent.get(evtId).push(m);
+                    });
+
+                    matchesByEvent.forEach((eventMatches, evtId) => {
+                        const evt = eventMap.get(evtId);
                         if (!evt) return;
 
                         const rawCat = (evt.category || 'male').toLowerCase();
@@ -301,60 +365,117 @@
                         if (rawCat.includes('fem')) cat = 'female';
                         else if (rawCat.includes('mix')) cat = 'mixed';
                         else if (rawCat === 'male' || rawCat.includes('masc')) cat = 'male';
-                        else if (rawCat === 'open' || rawCat === 'todas') cat = 'male'; // Fallback or handle differently
+                        else if (rawCat === 'open' || rawCat === 'todas') cat = 'male';
 
-                        const teamA = m.team_a_ids || [];
-                        const teamB = m.team_b_ids || [];
-                        const sA = parseInt(m.score_a || 0);
-                        const sB = parseInt(m.score_b || 0);
+                        // A. Match-level individual performance tracking
+                        eventMatches.forEach(m => {
+                            const teamA = m.team_a_ids || [];
+                            const teamB = m.team_b_ids || [];
+                            const sA = parseInt(m.score_a || 0);
+                            const sB = parseInt(m.score_b || 0);
+                            const isWonA = sA > sB;
+                            const isWonB = sB > sA;
+                            const isC1 = parseInt(m.court || 99) === 1;
+                            const court = m.court || 99;
+                            const round = m.round || 0;
 
-                        const updateStats = (id, scoreSelf, scoreOther, isWon, isC1, court, round) => {
-                            if (!playerStatsMap[id]) {
-                                playerStatsMap[id] = {
-                                    id, stats: {
-                                        americanas: { points: 0, played: 0, won: 0, lost: 0, gamesWon: 0, gamesLost: 0, court1Count: 0, lastMatchCourt: 99, lastMatchRound: 0, categories: {} },
-                                        entrenos: { points: 0, played: 0, won: 0, lost: 0, gamesWon: 0, gamesLost: 0, court1Count: 0, lastMatchCourt: 99, lastMatchRound: 0, categories: {} }
+                            const recordMatchStat = (id, scoreSelf, scoreOther, isWon) => {
+                                const ps = ensurePlayerStat(id);
+                                const s = ps.stats[viewKey];
+                                const isNewer = round >= (s.lastMatchRound || 0);
+
+                                s.played++;
+                                s.gamesWon += scoreSelf;
+                                s.gamesLost += scoreOther;
+                                if (isWon) s.won++; else s.lost++;
+                                if (isC1) s.court1Count++;
+                                if (isNewer) {
+                                    s.lastMatchRound = round;
+                                    s.lastMatchCourt = parseInt(court || 99);
+                                }
+
+                                if (!s.categories[cat]) {
+                                    s.categories[cat] = { points: 0, played: 0, won: 0, lost: 0, gamesWon: 0, gamesLost: 0, court1Count: 0, lastMatchCourt: 99, lastMatchRound: 0 };
+                                }
+                                const cs = s.categories[cat];
+                                cs.played++;
+                                cs.gamesWon += scoreSelf;
+                                cs.gamesLost += scoreOther;
+                                if (isWon) cs.won++; else cs.lost++;
+                                if (isC1) cs.court1Count++;
+                                if (isNewer) {
+                                    cs.lastMatchRound = round;
+                                    cs.lastMatchCourt = parseInt(court || 99);
+                                }
+                            };
+
+                            teamA.forEach(id => recordMatchStat(id, sA, sB, isWonA));
+                            teamB.forEach(id => recordMatchStat(id, sB, sA, isWonB));
+                        });
+
+                        // B. Official Event Standings & Points Allocation
+                        // (Puesto final 100, 80, 65... + 2 pts por victoria individual o de pareja)
+                        try {
+                            if (window.StandingsService && eventMatches.length > 0) {
+                                const isEntreno = viewKey === 'entrenos' || !!evt.isEntreno;
+                                const isSwiss = !!(evt.pair_mode === 'swiss' || (evt.name || '').toUpperCase().includes('SUIZ'));
+                                const isFixedPairs = !isSwiss && !!(evt.is_fija || (evt.pair_mode || '').toLowerCase().includes('fix') || (evt.name || '').toUpperCase().includes('FIJA'));
+                                const standingsType = isSwiss ? 'swiss' : (isEntreno ? 'entreno' : 'americana');
+
+                                const rawStandings = window.StandingsService.calculate(
+                                    eventMatches,
+                                    standingsType,
+                                    isFixedPairs,
+                                    evt.players || [],
+                                    isSwiss
+                                ) || [];
+
+                                // Filtrar participantes activos que efectivamente jugaron
+                                const activeStandings = rawStandings.filter(entry => (parseInt(entry.played || 0)) > 0);
+
+                                activeStandings.forEach((entry, idx) => {
+                                    const rank = idx + 1;
+                                    const basePoints = getOfficialPointsForRank(rank);
+                                    const victoryBonus = Math.max(0, parseInt(entry.won || 0)) * 2;
+                                    const totalPoints = basePoints + victoryBonus;
+
+                                    // Determinar los IDs de los jugadores premiados
+                                    let targetIds = [];
+                                    if (isFixedPairs) {
+                                        if (entry.playerIds && Array.isArray(entry.playerIds) && entry.playerIds.length > 0) {
+                                            targetIds = entry.playerIds;
+                                        } else if (entry.uid && typeof entry.uid === 'string') {
+                                            targetIds = entry.uid.split('|').filter(Boolean);
+                                        }
+                                    } else {
+                                        const directId = entry.uid || entry.id;
+                                        if (directId && playerByIdMap.has(directId)) {
+                                            targetIds = [directId];
+                                        } else if (entry.name) {
+                                            const resolvedId = playerByNameMap.get(entry.name.trim().toUpperCase());
+                                            if (resolvedId) targetIds = [resolvedId];
+                                        }
                                     }
-                                };
-                            }
-                            const s = playerStatsMap[id].stats[viewKey];
 
-                            // 1. Update Global View Stats
-                            const isNewer = round >= (s.lastMatchRound || 0);
-                            s.played++;
-                            s.gamesWon += scoreSelf;
-                            s.gamesLost += scoreOther;
-                            if (isWon) { s.won++; s.points += 3; } else { s.lost++; }
-                            if (isC1) s.court1Count++;
-                            if (isNewer) {
-                                s.lastMatchRound = round;
-                                s.lastMatchCourt = parseInt(court || 99);
+                                    targetIds.forEach(pid => {
+                                        const ps = ensurePlayerStat(pid);
+                                        ps.stats[viewKey].points += totalPoints;
+                                        if (ps.stats[viewKey].played === 0) {
+                                            ps.stats[viewKey].played = Math.max(1, parseInt(entry.played || 1));
+                                        }
+                                        if (!ps.stats[viewKey].categories[cat]) {
+                                            ps.stats[viewKey].categories[cat] = { points: 0, played: 0, won: 0, lost: 0, gamesWon: 0, gamesLost: 0, court1Count: 0, lastMatchCourt: 99, lastMatchRound: 0 };
+                                        }
+                                        ps.stats[viewKey].categories[cat].points += totalPoints;
+                                        if (ps.stats[viewKey].categories[cat].played === 0) {
+                                            ps.stats[viewKey].categories[cat].played = Math.max(1, parseInt(entry.played || 1));
+                                        }
+                                    });
+                                });
                             }
-
-                            // 2. Update Category Stats
-                            if (!s.categories[cat]) {
-                                s.categories[cat] = { points: 0, played: 0, won: 0, lost: 0, gamesWon: 0, gamesLost: 0, court1Count: 0, lastMatchCourt: 99, lastMatchRound: 0 };
-                            }
-                            const cs = s.categories[cat];
-                            cs.played++;
-                            cs.gamesWon += scoreSelf;
-                            cs.gamesLost += scoreOther;
-                            if (isWon) { cs.won++; cs.points += 3; } else { cs.lost++; }
-                            if (isC1) cs.court1Count++;
-                            if (isNewer) {
-                                cs.lastMatchRound = round;
-                                cs.lastMatchCourt = parseInt(court || 99);
-                            }
-                        };
-
-                        const isWonA = sA > sB;
-                        const isWonB = sB > sA;
-                        const isC1 = parseInt(m.court || 99) === 1;
-                        const court = m.court || 99;
-                        const round = m.round || 0;
-
-                        teamA.forEach(id => updateStats(id, sA, sB, isWonA, isC1, court, round));
-                        teamB.forEach(id => updateStats(id, sB, sA, isWonB, isC1, court, round));
+                        } catch (eventErr) {
+                            console.warn(`⚠️ [RankingController] Evento ${evtId} omitido en cálculo de posiciones:`, eventErr);
+                        }
                     });
                 };
 
@@ -431,11 +552,53 @@
         getTopPlayer() {
             return this.rankedPlayers && this.rankedPlayers.length > 0 ? this.rankedPlayers[0] : null;
         }
+
+        /**
+         * Forzar recálculo completo del ranking oficial para todos los eventos históricos
+         * Restringido exclusivamente a superadmin y admin
+         */
+        async forceRecalculate() {
+            const currentUser = window.Store?.getState('currentUser') || 
+                (() => {
+                    try { return JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch (e) { return {}; }
+                })();
+            const userRole = (currentUser?.role || '').toLowerCase();
+            const isAuthorized = ['super_admin', 'superadmin', 'admin', 'admin_player'].includes(userRole);
+
+            if (!isAuthorized) {
+                console.warn("🔒 [RankingController] Acceso denegado a forceRecalculate. Solo superadmin y admin pueden ejecutarlo.");
+                if (window.NotificationService && typeof window.NotificationService.showToast === 'function') {
+                    window.NotificationService.showToast("Acceso restringido: Solo administradores pueden forzar el recálculo.", "warning");
+                }
+                return null;
+            }
+
+            console.log("🔄 [RankingController] Forzando recálculo total de ranking oficial por administrador autorizado...");
+            this._cachedRanking = null;
+            this._lastCacheTime = 0;
+            if (window.CacheService) {
+                try {
+                    await window.CacheService.delete('general', 'global_ranking_v4');
+                    await window.CacheService.delete('general', 'global_ranking');
+                } catch (e) {
+                    console.warn("[RankingController] Error limpiando caché:", e);
+                }
+            }
+            if (window.Router && window.Router.currentRoute !== 'ranking' && typeof window.Router.navigate === 'function') {
+                window.Router.navigate('ranking');
+            }
+            const fresh = await this.calculateSilently();
+            if (window.RankingView) {
+                window.RankingView.render(fresh || []);
+            }
+            return fresh;
+        }
     }
 
     window.RankingControllerClass = RankingController;
     if (!window.RankingController) {
         window.RankingController = new RankingController();
     }
-    console.log("📊 RankingController Module Loaded (Class & Instance definition)");
+    window.recalculateGlobalRanking = () => window.RankingController.forceRecalculate();
+    console.log("📊 RankingController Module Loaded (Class, Instance & forceRecalculate definition)");
 })();

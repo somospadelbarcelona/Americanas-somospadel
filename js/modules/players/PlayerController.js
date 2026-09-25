@@ -81,6 +81,19 @@
         }
 
         async fetchPlayerData(userId) {
+            if (!userId) return;
+
+            // Deduplicación: Evitar ráfagas concurrentes o llamadas en menos de 400ms para el mismo usuario
+            const now = Date.now();
+            if (this._isFetching && this._fetchingUserId === userId) {
+                return;
+            }
+            if (this._lastFetchTime && (now - this._lastFetchTime < 400) && this._lastFetchedId === userId) {
+                return;
+            }
+            this._isFetching = true;
+            this._fetchingUserId = userId;
+
             try {
                 console.log(`🔍 [DEBUG PROFILE] Fetching data for UserID: ${userId}`);
 
@@ -418,11 +431,65 @@
                 window.Store.setState('playerStats', this.state);
                 console.log("[PlayerController] Hybrid Data Rendered:", this.state);
                 console.log("😈 NEMESIS DETECTED:", this.state.h2h.nemesis); // Debug Log
-                if (window.PlayerView) window.PlayerView.render();
+
+                // 🔄 SINCRONIZACIÓN ATÓMICA GLOBAL: Actualizar currentUser solo si hay cambios numéricos reales
+                try {
+                    const curUser = window.Store.getState('currentUser');
+                    if (curUser) {
+                        const hasStatsChanged = 
+                            curUser.matches_played !== stats.matches ||
+                            curUser.wins !== stats.won ||
+                            curUser.losses !== stats.lost ||
+                            curUser.win_rate !== stats.winRate;
+
+                        if (hasStatsChanged) {
+                            const updatedUser = {
+                                ...curUser,
+                                matches_played: stats.matches,
+                                total_matches: stats.matches,
+                                wins: stats.won,
+                                losses: stats.lost,
+                                win_rate: stats.winRate
+                            };
+                            try {
+                                localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+                            } catch (e) { }
+                            window.Store.setState('currentUser', updatedUser);
+
+                            const syncDocId = targetUserDoc?.id || userId;
+                            if (syncDocId && window.db) {
+                                window.db.collection('players').doc(syncDocId).update({
+                                    matches_played: stats.matches,
+                                    total_matches: stats.matches,
+                                    wins: stats.won,
+                                    losses: stats.lost,
+                                    win_rate: stats.winRate
+                                }).catch(e => console.warn("Auto-sync player matches to Firestore failed:", e));
+                            }
+                        }
+                    }
+
+                    if (window.AppInstance && typeof window.AppInstance.updateGlobalHeader === 'function') {
+                        window.AppInstance.updateGlobalHeader(window.Store.getState('currentUser'));
+                    }
+                } catch (syncErr) {
+                    console.warn("⚠️ [PlayerController] Error en sincronización global de partidos:", syncErr);
+                }
+
+                // 🛡️ NUNCA pintar Perfil si el usuario NO está actualmente en la ruta 'profile'
+                if (window.PlayerView && window.Router && window.Router.currentRoute === 'profile') {
+                    window.PlayerView.render();
+                }
 
             } catch (error) {
                 console.error("Critical Error in fetchPlayerData:", error);
-                if (window.PlayerView) window.PlayerView.render();
+                if (window.PlayerView && window.Router && window.Router.currentRoute === 'profile') {
+                    window.PlayerView.render();
+                }
+            } finally {
+                this._isFetching = false;
+                this._lastFetchTime = Date.now();
+                this._lastFetchedId = userId;
             }
         }
 

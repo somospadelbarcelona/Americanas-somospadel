@@ -24,7 +24,129 @@
             }
         }
 
+        getNormalizedFormGuide(data, user) {
+            let rawList = (data && data.formGuide && data.formGuide.length > 0) ? data.formGuide : [];
+            if (rawList.length === 0 && data && data.recentMatches && data.recentMatches.length > 0) {
+                rawList = data.recentMatches.slice(0, 5).map(m => m.result);
+            }
+            if (rawList.length === 0 && this.currentAiHistoryData && this.currentAiHistoryData.length > 0) {
+                rawList = this.currentAiHistoryData.slice(0, 5).map(m => m.won ? 'V' : 'D');
+            }
+            return rawList.map(res => {
+                const r = String(res || '').toUpperCase();
+                if (r === 'W' || r === 'V') {
+                    return { code: 'V', label: 'Victoria', color: '#10B981', bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)', shadow: '0 2px 8px rgba(16,185,129,0.2)' };
+                }
+                if (r === 'L') {
+                    return { code: 'D', label: 'Derrota', color: '#EF4444', bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.3)', shadow: 'none' };
+                }
+                if (r === 'D' || r === 'E' || r === 'T') {
+                    return { code: 'E', label: 'Empate', color: '#64748B', bg: 'rgba(100,116,139,0.12)', border: 'rgba(100,116,139,0.3)', shadow: 'none' };
+                }
+                return { code: 'V', label: 'Victoria', color: '#10B981', bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)', shadow: 'none' };
+            });
+        }
+
+        showLevelScaleModal() {
+            this.haptic(30);
+            const existing = document.getElementById('level-scale-modal');
+            if (existing) existing.remove();
+
+            const user = window.Store ? window.Store.getState('currentUser') : null;
+            const currentLvl = parseFloat(user?.level || 3.0);
+            const badge = window.RankingController?.getLevelBadge(currentLvl) || { stars: 2, label: 'SILVER', color: '#4b5563' };
+
+            const modal = document.createElement('div');
+            modal.id = 'level-scale-modal';
+            modal.style.cssText = 'position:fixed; inset:0; z-index:30000; background:rgba(15,23,42,0.65); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; padding:16px; opacity:0; transition:opacity 0.25s ease; font-family:"Outfit", sans-serif;';
+
+            const tiers = [
+                { label: 'ELITE', stars: 5, range: '4.50 - 7.00', color: '#047857', bg: '#ecfdf5', desc: 'Competición, torneos federados y primera categoría.' },
+                { label: 'PLATINUM', stars: 4, range: '4.00 - 4.49', color: '#334155', bg: '#f1f5f9', desc: 'Avanzado alto. Gran regularidad, potencia y lectura táctica.' },
+                { label: 'GOLD', stars: 3, range: '3.50 - 3.99', color: '#b45309', bg: '#fef3c7', desc: 'Intermedio avanzado. Buen control de paredes y juego en la red.' },
+                { label: 'SILVER', stars: 2, range: '3.00 - 3.49', color: '#4b5563', bg: '#f3f4f6', desc: 'Intermedio base. Nivel consolidado, juego táctico y voleas seguras.' },
+                { label: 'BRONZE', stars: 1, range: '1.00 - 2.99', color: '#c2410c', bg: '#ffedd5', desc: 'Iniciación y aprendizaje. Adquiriendo consistencia en el golpeo.' }
+            ];
+
+            modal.innerHTML = `
+                <div style="background:#ffffff; border-radius:28px; width:100%; max-width:480px; max-height:90vh; overflow-y:auto; padding:24px; box-shadow:0 20px 50px rgba(0,0,0,0.25); border:1px solid #e2e8f0; display:flex; flex-direction:column; gap:16px; text-align:left; transform:translateY(20px); transition:transform 0.25s ease;">
+                    
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div>
+                            <span style="font-size:0.6rem; font-weight:950; color:#2E61FF; text-transform:uppercase; letter-spacing:1.5px;">SISTEMA OFICIAL DE CALIBRACIÓN</span>
+                            <h3 style="margin:2px 0 0 0; font-size:1.25rem; font-weight:950; color:#0F172A; text-transform:uppercase; letter-spacing:-0.5px;">Escala de Niveles SomosPádel</h3>
+                        </div>
+                        <button onclick="window.PlayerView.closeLevelScaleModal()" style="background:#f1f5f9; border:none; width:34px; height:34px; border-radius:12px; font-weight:900; color:#64748B; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
+                    </div>
+
+                    <!-- Banner Tu Nivel Actual -->
+                    <div style="background:#0F172A; border-radius:18px; padding:14px 18px; color:#ffffff; display:flex; justify-content:space-between; align-items:center; border:1.5px solid rgba(204,255,0,0.3);">
+                        <div>
+                            <span style="font-size:0.58rem; color:#CCFF00; font-weight:900; letter-spacing:1px; text-transform:uppercase;">TU NIVEL ACTUAL</span>
+                            <div style="font-size:1.5rem; font-weight:950; color:#ffffff; line-height:1.1;">NIVEL ${currentLvl.toFixed(2)}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:0.8rem; font-weight:950; color:#CCFF00; text-transform:uppercase; letter-spacing:1px;">RANGO ${badge.label}</div>
+                            <div style="font-size:0.75rem; color:#94A3B8; margin-top:2px;">${'★'.repeat(badge.stars)}${'☆'.repeat(5 - badge.stars)}</div>
+                        </div>
+                    </div>
+
+                    <div style="font-size:0.72rem; color:#64748B; line-height:1.45; font-weight:600;">
+                        El nivel en Somos Pádel BCN se calibra partido a partido siguiendo el estándar internacional Playtomic/SomosPádel (1.00 - 7.00). Cada victoria ante parejas de tu nivel o superior sumará puntos a tu coeficiente.
+                    </div>
+
+                    <!-- Lista de Rangos -->
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        ${tiers.map(t => {
+                            const rangeParts = t.range.split('-').map(s => parseFloat(s.trim()));
+                            const isCurrent = currentLvl >= rangeParts[0] && (t.label === 'ELITE' ? true : currentLvl < rangeParts[1]);
+                            return `
+                                <div style="padding:12px 14px; border-radius:16px; background:${isCurrent ? '#f8fafc' : '#ffffff'}; border:${isCurrent ? '2px solid #2E61FF' : '1px solid #e2e8f0'}; display:flex; flex-direction:column; gap:4px; position:relative;">
+                                    ${isCurrent ? '<span style="position:absolute; top:-9px; right:12px; background:#2E61FF; color:#ffffff; font-size:0.55rem; font-weight:950; padding:2px 8px; border-radius:99px; letter-spacing:1px;">TÚ ESTÁS AQUÍ</span>' : ''}
+                                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                                        <div style="display:flex; align-items:center; gap:8px;">
+                                            <span style="font-size:0.8rem; font-weight:950; color:${t.color};">RANGO ${t.label}</span>
+                                            <span style="font-size:0.7rem; color:${t.color};">${'★'.repeat(t.stars)}</span>
+                                        </div>
+                                        <span style="font-size:0.75rem; font-weight:950; color:#0F172A; background:#f1f5f9; padding:2px 8px; border-radius:8px;">LVL ${t.range}</span>
+                                    </div>
+                                    <p style="margin:2px 0 0 0; font-size:0.7rem; color:#64748B; line-height:1.35; font-weight:500;">${t.desc}</p>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    <button onclick="window.PlayerView.closeLevelScaleModal()" style="width:100%; height:44px; background:#0F172A; color:#CCFF00; border:none; font-weight:950; font-size:0.8rem; border-radius:14px; cursor:pointer; text-transform:uppercase; letter-spacing:1px; margin-top:4px;">
+                        ENTENDIDO
+                    </button>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            requestAnimationFrame(() => {
+                modal.style.opacity = '1';
+                modal.firstElementChild.style.transform = 'translateY(0)';
+            });
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) window.PlayerView.closeLevelScaleModal();
+            });
+        }
+
+        closeLevelScaleModal() {
+            const modal = document.getElementById('level-scale-modal');
+            if (!modal) return;
+            modal.style.opacity = '0';
+            if (modal.firstElementChild) modal.firstElementChild.style.transform = 'translateY(20px)';
+            setTimeout(() => modal.remove(), 250);
+        }
+
         render() {
+            // 🛡️ STRICT ROUTE GUARD: NUNCA renderizar Perfil si la ruta activa NO es 'profile'
+            const activeRoute = window.Router ? window.Router.currentRoute : null;
+            if (activeRoute !== 'profile') {
+                return;
+            }
+
             const container = document.getElementById('content-area');
             const user = window.Store.getState('currentUser');
             const data = window.Store.getState('playerStats') || {
@@ -44,148 +166,281 @@
                 return;
             }
 
+            const currentLvl = parseFloat(user.level || 3.0);
+            const badge = window.RankingController?.getLevelBadge(currentLvl) || { stars: 2, label: 'SILVER', color: '#4b5563', starColor: '#94a3b8' };
+            const nextThreshold = (Math.floor(currentLvl * 2) + 1) / 2;
+            const prevThreshold = nextThreshold - 0.5;
+            const diff = Math.max(0, nextThreshold - currentLvl).toFixed(2);
+            const progress = data.nextLevelProgress !== undefined 
+                ? data.nextLevelProgress 
+                : Math.min(100, Math.max(0, ((currentLvl - prevThreshold) / 0.5) * 100));
+            const nextBadge = window.RankingController?.getLevelBadge(nextThreshold) || { label: 'GOLD' };
+
+            // Cómputo robusto de partidos y efectividad
+            const rawMatches = (data.stats && data.stats.matches !== undefined && data.stats.matches > 0)
+                ? data.stats.matches
+                : (parseInt(user.matches_played || 0) || (data.recentMatches ? data.recentMatches.length : 0));
+            const rawWon = (data.stats && data.stats.won !== undefined)
+                ? data.stats.won
+                : (parseInt(user.wins || 0));
+            const rawLost = (data.stats && data.stats.lost !== undefined)
+                ? data.stats.lost
+                : Math.max(0, rawMatches - rawWon);
+            const rawWinRate = (data.stats && data.stats.winRate !== undefined && data.stats.winRate > 0)
+                ? data.stats.winRate
+                : (rawMatches > 0 ? Math.round((rawWon / rawMatches) * 100) : 0);
+
+            // ⚡ GUARDIA DE RE-RENDER (ANTI-FLICKER):
+            // Si el perfil ya está en pantalla y los datos son idénticos, no destruir el DOM
+            const stateHash = `${user.id || user.uid}_${currentLvl}_${rawMatches}_${rawWon}_${rawLost}_${progress}_${this.activeTab || 'ai'}`;
+            if (this._lastRenderedStateHash === stateHash && container.querySelector('.player-profile-wrapper')) {
+                return; // Vista idéntica ya montada. Cero parpadeo.
+            }
+            this._lastRenderedStateHash = stateHash;
+
+            // Racha y Forma normalizada (V / D / E)
+            const normalizedForm = this.getNormalizedFormGuide(data, user);
+            let streakCount = 0;
+            let streakType = 'V';
+            if (normalizedForm.length > 0) {
+                streakType = normalizedForm[0].code;
+                for (const item of normalizedForm) {
+                    if (item.code === streakType) streakCount++;
+                    else break;
+                }
+            }
+            const streakDisplay = streakCount > 0 
+                ? (streakType === 'V' ? `🔥 ${streakCount}V` : (streakType === 'D' ? `❄️ ${streakCount}D` : `⚪ ${streakCount}E`)) 
+                : '—';
+            const streakColor = streakType === 'V' ? '#10B981' : (streakType === 'D' ? '#EF4444' : '#64748B');
+
+            let categoryName = 'Intermedio Base';
+            let categoryColor = '#94A3B8';
+            if (currentLvl >= 4.5) { categoryName = 'Élite / Competición'; categoryColor = '#047857'; }
+            else if (currentLvl >= 4.0) { categoryName = 'Avanzado'; categoryColor = '#334155'; }
+            else if (currentLvl >= 3.5) { categoryName = 'Intermedio Alto'; categoryColor = '#b45309'; }
+            else if (currentLvl >= 3.0) { categoryName = 'Intermedio Base'; categoryColor = '#4b5563'; }
+            else { categoryName = 'Iniciación'; categoryColor = '#c2410c'; }
+
+            const starsHtml = Array(5).fill(0).map((_, i) => 
+                `<i class="fas fa-star" style="font-size: 0.82rem; color: ${i < badge.stars ? (badge.starColor || '#CCFF00') : 'rgba(255,255,255,0.2)'}; margin-right: 2px;"></i>`
+            ).join('');
+
+            const formItemsHtml = normalizedForm.length > 0 ? normalizedForm.map(item => `
+                <div title="${item.label}" style="
+                    width: 32px; 
+                    height: 32px; 
+                    border-radius: 10px; 
+                    background: ${item.bg}; 
+                    color: ${item.color}; 
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center; 
+                    font-size: 0.85rem; 
+                    font-weight: 950; 
+                    border: 1.5px solid ${item.border};
+                    box-shadow: ${item.shadow};
+                    cursor: default;
+                    transition: transform 0.15s;
+                " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">${item.code}</div>
+            `).join('') : '<span style="color:#94a3b8; font-size:0.65rem; font-weight:800;">SIN PARTIDOS REGISTRADOS</span>';
+
             container.innerHTML = `
                 <div class="player-profile-wrapper fade-in" style="background: #f8fafc; min-height: 100vh; padding-bottom: 200px; font-family: 'Outfit', sans-serif; color: #0a192f;">
                     
-                    <!-- Profile Header: Dynamic & Aesthetic -->
-                    <div style="background: #ffffff; padding: 60px 24px 40px; border-bottom: 1px solid #e2e8f0; position: relative; overflow: hidden;">
-                        <!-- Animated background elements -->
-                        <div style="position: absolute; top: -100px; left: -100px; width: 300px; height: 300px; background: radial-gradient(circle, rgba(204,255,0,0.1) 0%, transparent 70%); animation: pulse 8s infinite;"></div>
-                        <div style="position: absolute; bottom: -50px; right: -50px; width: 250px; height: 250px; background: radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%); animation: pulse 6s infinite reverse;"></div>
-                         <style>
+                    <!-- Profile Header: Executive & Crystal Clear -->
+                    <div style="background: #ffffff; padding: 45px 20px 32px; border-bottom: 1px solid #e2e8f0; position: relative; overflow: hidden;">
+                        <!-- Animated background ambient lights -->
+                        <div style="position: absolute; top: -100px; left: -100px; width: 300px; height: 300px; background: radial-gradient(circle, rgba(204,255,0,0.08) 0%, transparent 70%); animation: pulse 8s infinite;"></div>
+                        <div style="position: absolute; bottom: -50px; right: -50px; width: 250px; height: 250px; background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%); animation: pulse 6s infinite reverse;"></div>
+                        <style>
                             @keyframes pulse { 0% { transform: scale(1); opacity: 0.1; } 50% { transform: scale(1.2); opacity: 0.2; } 100% { transform: scale(1); opacity: 0.1; } }
                             @keyframes coachPulse { 0% { box-shadow: 0 0 5px rgba(204,255,0,0.15); border-color: rgba(204,255,0,0.4); } 100% { box-shadow: 0 0 15px rgba(204,255,0,0.45); border-color: #CCFF00; } }
                             @keyframes pulseGlow { 0% { box-shadow: 0 0 3px rgba(16,185,129,0.3); opacity:0.8; } 100% { box-shadow: 0 0 10px rgba(16,185,129,0.8); opacity:1; } }
-                            @keyframes heatPulse { 0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.7; } 100% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.95; } }
                             .playtomic-drawer-modal { position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; height: 100%; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 25000; display: flex; flex-direction: column; justify-content: flex-end; transition: opacity 0.3s ease; }
                             .playtomic-drawer-modal.hidden { display: none !important; }
                         </style>
 
-                        <div style="display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; z-index: 2;">
+                        <div style="display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; z-index: 2; max-width: 600px; margin: 0 auto;">
                             
                             <!-- Avatar Section: EXECUTIVE STYLE -->
-                            <div style="position: relative; margin-bottom: 30px; display: flex; justify-content: center;">
+                            <div style="position: relative; margin-bottom: 20px; display: flex; justify-content: center;">
                                 <div style="
-                                    width: 140px; 
-                                    height: 140px; 
-                                    border-radius: 44px; 
+                                    width: 125px; 
+                                    height: 125px; 
+                                    border-radius: 38px; 
                                     background: linear-gradient(135deg, #CCFF00 0%, #00E36D 100%); 
-                                    padding: 4px; 
+                                    padding: 3.5px; 
                                     position: relative; 
-                                    box-shadow: 0 0 50px rgba(204, 255, 0, 0.2);
+                                    box-shadow: 0 10px 30px rgba(204, 255, 0, 0.25);
                                 ">
                                     <div style="
                                         width: 100%; 
                                         height: 100%; 
-                                        border-radius: 40px; 
+                                        border-radius: 34px; 
                                         background: url('${user.photo_url || user.photoURL || 'img/logo_somospadel.png'}') center/cover; 
-                                        border: 4px solid #ffffff;
+                                        border: 3px solid #ffffff;
                                         position: relative;
                                         overflow: hidden;
                                         background-color: #f1f5f9;
                                     ">
-                                        ${!(user.photo_url || user.photoURL) ? `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#CCFF00; font-size:3rem; font-weight:900;">${user.name.substring(0, 1).toUpperCase()}</div>` : ''}
+                                        ${!(user.photo_url || user.photoURL) ? `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#CCFF00; font-size:2.8rem; font-weight:900;">${user.name.substring(0, 1).toUpperCase()}</div>` : ''}
                                     </div>
                                     
                                     <!-- Verified Icon -->
-                                    <div style="position: absolute; top: -8px; right: -8px; background: #CCFF00; color: #000; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; border: 4px solid #ffffff; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                                    <div style="position: absolute; top: -6px; right: -6px; background: #CCFF00; color: #000; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; border: 3px solid #ffffff; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
                                         <i class="fas fa-check"></i>
                                     </div>
 
                                     <!-- Camera Icon -->
-                                    <div onclick="window.PlayerView.showUpdatePhotoPrompt()" style="position: absolute; bottom: -8px; right: -8px; background: white; width: 36px; height: 36px; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); cursor: pointer; border: 4px solid #ffffff;">
-                                        <i class="fas fa-camera" style="color: #000; font-size: 1rem;"></i>
+                                    <div onclick="window.PlayerView.showUpdatePhotoPrompt()" style="position: absolute; bottom: -6px; right: -6px; background: white; width: 32px; height: 32px; border-radius: 11px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.12); cursor: pointer; border: 3px solid #ffffff;" title="Actualizar foto de perfil">
+                                        <i class="fas fa-camera" style="color: #000; font-size: 0.85rem;"></i>
                                     </div>
                                 </div>
                             </div>
                             
-                            <h2 style="font-weight: 950; font-size: 2.4rem; margin: 0; text-transform: uppercase; letter-spacing: -1.5px; color: #0a192f; line-height: 0.9;">${user.name}</h2>
+                            <!-- Nombre -->
+                            <h2 style="font-weight: 950; font-size: 2rem; margin: 0; text-transform: uppercase; letter-spacing: -1px; color: #0a192f; line-height: 1;">${user.name}</h2>
                             
-                            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 15px;">
-                                ${(() => {
-                    const badge = window.RankingController?.getLevelBadge(user.level || 3.5) || { stars: 3, label: 'GOLD', color: '#FFD700', shadow: 'none' };
-                    const starsHtml = Array(5).fill(0).map((_, i) => 
-                        `<i class="fas fa-star" style="font-size: 0.9rem; color: ${i < badge.stars ? badge.color : 'rgba(255,255,255,0.1)'}; margin-right: 2px; ${i < badge.stars ? 'text-shadow: 0 0 10px ' + badge.color : ''}"></i>`
-                    ).join('');
-                    return `
-                                        <div style="font-size: 0.85rem; font-weight: 950; padding: 6px 20px; border-radius: 20px; background: ${badge.color}22; color: ${badge.color}; border: 1px solid ${badge.color}44; text-transform: uppercase; letter-spacing: 2px; box-shadow: ${badge.shadow};">
-                                            RANGO ${badge.label}
-                                        </div>
-                                        <div style="display: flex; gap: 4px;">${starsHtml}</div>
-                                        <span style="color: #475569; font-size: 0.8rem; font-weight: 950; letter-spacing: 1px; text-transform: uppercase; margin-top: 4px;">NIVEL ${parseFloat(user.level || 3.5).toFixed(2)}</span>
-                                    `;
-                })()}
-                            </div>
-
-                            <!-- PROGRESS TO NEXT STAR (Enhanced) -->
-                            <div style="margin-top: 25px; width: 100%; max-width: 320px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 24px; padding: 20px; position: relative; overflow: hidden;">
-                                ${(() => {
-                                    const currentLvl = parseFloat(user.level || 3.5);
-                                    const nextThreshold = (Math.floor(currentLvl * 2) + 1) / 2;
-                                    const prevThreshold = nextThreshold - 0.5;
-                                    const diff = (nextThreshold - currentLvl).toFixed(2);
-                                    const progress = data.nextLevelProgress || 0;
-                                    const nextBadge = window.RankingController?.getLevelBadge(nextThreshold) || { label: 'PRO' };
-                                    
-                                    return `
-                                        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px;">
-                                            <div style="text-align: left;">
-                                                <div style="color: #64748b; font-size: 0.55rem; font-weight: 950; text-transform: uppercase; letter-spacing: 1.5px;">PROYECTO DE ASCENSO</div>
-                                                <div style="color: #0a192f; font-weight: 900; font-size: 0.85rem; margin-top: 2px;">RANGO ${nextBadge.label}</div>
-                                            </div>
-                                            <div style="text-align: right;">
-                                                <div style="color: #72a800; font-weight: 950; font-size: 1.2rem; line-height: 1;">-${diff}</div>
-                                                <div style="color: #475569; font-size: 0.55rem; font-weight: 900; text-transform: uppercase;">PARA SUBIR</div>
-                                            </div>
-                                        </div>
-                                        <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 10px; position: relative; overflow: hidden;">
-                                            <div style="position: absolute; top: 0; left: 0; height: 100%; width: ${progress}%; background: linear-gradient(90deg, #CCFF00, #00E36D); box-shadow: 0 0 10px rgba(204,255,0,0.3); border-radius: 10px; transition: width 1s;"></div>
-                                        </div>
-                                        <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 0.55rem; font-weight: 900; color: #444;">
-                                            <span>LVL ${prevThreshold.toFixed(1)}</span>
-                                            <span style="color: #64748b; letter-spacing: 0.5px;">${Math.round(progress)}% COMPLETADO</span>
-                                            <span>LVL ${nextThreshold.toFixed(1)}</span>
-                                        </div>
-                                    `;
-                                })()}
-                            </div>
-
-                            <!-- FORM GUIDE: THE RACHA -->
-                            <div style="margin-top: 20px; display: flex; gap: 8px; align-items: center;">
-                                <span style="font-size: 0.65rem; font-weight: 950; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-right: 5px;">RACHA:</span>
-                                ${data.formGuide ? data.formGuide.map(res => `
-                                    <div style="
-                                        width: 24px; 
-                                        height: 24px; 
-                                        border-radius: 8px; 
-                                        background: ${res === 'W' ? 'rgba(204,255,0,0.1)' : (res === 'L' ? 'rgba(239,68,68,0.1)' : 'rgba(148,163,184,0.1)')}; 
-                                        color: ${res === 'W' ? '#CCFF00' : (res === 'L' ? '#ef4444' : '#94a3b8')}; 
-                                        display: flex; 
-                                        align-items: center; 
-                                        justify-content: center; 
-                                        font-size: 0.75rem; 
-                                        font-weight: 950; 
-                                        border: 1px solid ${res === 'W' ? 'rgba(204,255,0,0.2)' : (res === 'L' ? 'rgba(239,68,68,0.2)' : 'rgba(148,163,184,0.2)')};
-                                        box-shadow: ${res === 'W' ? '0 0 10px rgba(204,255,0,0.1)' : 'none'};
-                                    ">${res}</div>
-                                `).join('') : '<span style="color:#444; font-size:0.6rem;">SIN PARTIDOS</span>'}
-                            </div>
-                            
-                            <div style="margin-top: 18px; display: flex; justify-content: center; align-items: center; min-height: 38px; gap: 8px;">
+                            <!-- Rol del usuario -->
+                            <div style="margin-top: 8px; display: flex; justify-content: center; align-items: center; min-height: 28px; gap: 6px;">
                                 ${window.RoleService ? window.RoleService.getBadgeHtml(user.role) : `
-                                    <div style="background: linear-gradient(90deg, #CCFF00, #00E36D); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 950; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; display: flex; align-items: center; gap: 8px;">
+                                    <div style="background: linear-gradient(90deg, #CCFF00, #00E36D); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 950; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1.5px; display: flex; align-items: center; gap: 6px;">
                                         <i class="fas fa-crown"></i> EXECUTIVE PLAYER
                                     </div>
                                 `}
-                                <i class="fas fa-question-circle" onclick="window.showRolesLegendModal()" style="cursor: pointer; color: #64748b; font-size: 0.95rem; transition: color 0.2s;" onmouseover="this.style.color='#CCFF00'" onmouseout="this.style.color='#64748b'" title="Ver leyenda de roles oficiales"></i>
+                                <i class="fas fa-question-circle" onclick="window.showRolesLegendModal()" style="cursor: pointer; color: #94a3b8; font-size: 0.85rem; transition: color 0.2s;" onmouseover="this.style.color='#CCFF00'" onmouseout="this.style.color='#94a3b8'" title="Ver leyenda de roles oficiales"></i>
+                            </div>
+
+                            <!-- 🏆 HERO DE NIVEL Y CATEGORÍA OFICIAL -->
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 14px; width: 100%;">
+                                <div style="display: flex; align-items: center; gap: 14px; background: #0F172A; padding: 10px 22px; border-radius: 22px; box-shadow: 0 10px 25px rgba(15,23,42,0.15); border: 1.5px solid rgba(204,255,0,0.35);">
+                                    <div style="text-align: left;">
+                                        <div style="font-size: 0.55rem; color: #94A3B8; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;">Nivel Oficial</div>
+                                        <div style="font-size: 1.9rem; font-weight: 950; color: #CCFF00; line-height: 1; letter-spacing: -0.5px;">
+                                            ${currentLvl.toFixed(2)}
+                                        </div>
+                                    </div>
+                                    <div style="width: 1px; height: 34px; background: rgba(255,255,255,0.15);"></div>
+                                    <div style="text-align: left;">
+                                        <div style="display: flex; align-items: center; gap: 5px;">
+                                            <span style="font-size: 0.85rem; font-weight: 950; color: #ffffff; letter-spacing: 1px; text-transform: uppercase;">
+                                                RANGO ${badge.label}
+                                            </span>
+                                            <i class="fas fa-info-circle" onclick="window.PlayerView.showLevelScaleModal()" style="cursor: pointer; color: #CCFF00; font-size: 0.95rem;" title="¿Cómo funciona mi nivel?"></i>
+                                        </div>
+                                        <div style="display: flex; gap: 2px; margin-top: 3px;">
+                                            ${starsHtml}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div style="font-size: 0.65rem; font-weight: 900; color: #475569; letter-spacing: 0.8px; text-transform: uppercase; background: #f8fafc; padding: 4px 12px; border-radius: 99px; border: 1px solid #e2e8f0; display: inline-flex; align-items: center; gap: 6px;">
+                                    <span style="width: 6px; height: 6px; border-radius: 50%; background: ${categoryColor};"></span>
+                                    Categoría ${categoryName} (${prevThreshold.toFixed(1)} - ${nextThreshold.toFixed(1)})
+                                </div>
+                            </div>
+
+                            <!-- 📊 RESUMEN DE PARTIDOS Y EFECTIVIDAD (KPIS CLAVE) -->
+                            <div style="margin-top: 20px; width: 100%; max-width: 480px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+                                <!-- Partidos Totales -->
+                                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 18px; padding: 12px 6px; text-align: center; box-shadow: 0 4px 14px rgba(0,0,0,0.02);">
+                                    <div style="font-size: 0.55rem; font-weight: 950; color: #64748B; text-transform: uppercase; letter-spacing: 0.8px;">PARTIDOS</div>
+                                    <div id="player-header-matches-count" style="font-size: 1.45rem; font-weight: 950; color: #0F172A; margin: 2px 0 1px;">${rawMatches}</div>
+                                    <div id="player-header-matches-breakdown" style="font-size: 0.58rem; font-weight: 900; color: #64748B;">
+                                        <span style="color: #10B981;">${rawWon}V</span> · <span style="color: #EF4444;">${rawLost}D</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Victorias / Win Rate -->
+                                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 18px; padding: 12px 6px; text-align: center; box-shadow: 0 4px 14px rgba(0,0,0,0.02);">
+                                    <div style="font-size: 0.55rem; font-weight: 950; color: #64748B; text-transform: uppercase; letter-spacing: 0.8px;">VICTORIAS</div>
+                                    <div id="player-header-winrate-count" style="font-size: 1.45rem; font-weight: 950; color: #10B981; margin: 2px 0 1px;">${rawWinRate}%</div>
+                                    <div style="height: 4px; background: #e2e8f0; border-radius: 99px; margin: 5px 6px 0; overflow: hidden;">
+                                        <div id="player-header-winrate-bar" style="height: 100%; width: ${rawWinRate}%; background: linear-gradient(90deg, #10B981, #34D399); border-radius: 99px;"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Racha Actual -->
+                                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 18px; padding: 12px 6px; text-align: center; box-shadow: 0 4px 14px rgba(0,0,0,0.02);">
+                                    <div style="font-size: 0.55rem; font-weight: 950; color: #64748B; text-transform: uppercase; letter-spacing: 0.8px;">RACHA</div>
+                                    <div id="player-header-streak-badge" style="font-size: 1.15rem; font-weight: 950; color: ${streakColor}; margin: 3px 0 2px;">
+                                        ${streakDisplay}
+                                    </div>
+                                    <div style="font-size: 0.55rem; font-weight: 900; color: #94A3B8;">EN ACTIVO</div>
+                                </div>
+
+                                <!-- Próximo Rango Objetivo -->
+                                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 18px; padding: 12px 6px; text-align: center; box-shadow: 0 4px 14px rgba(0,0,0,0.02);">
+                                    <div style="font-size: 0.55rem; font-weight: 950; color: #64748B; text-transform: uppercase; letter-spacing: 0.8px;">OBJETIVO</div>
+                                    <div style="font-size: 1.1rem; font-weight: 950; color: #2E61FF; margin: 4px 0 2px;">${nextBadge.label}</div>
+                                    <div style="font-size: 0.58rem; font-weight: 900; color: #2E61FF;">LVL ${nextThreshold.toFixed(1)}</div>
+                                </div>
+                            </div>
+
+                            <!-- 🎯 PROYECTO DE ASCENSO CLARO -->
+                            <div style="margin-top: 18px; width: 100%; max-width: 480px; background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 22px; padding: 16px 18px; position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.02); text-align: left;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                                    <div>
+                                        <div style="display: flex; align-items: center; gap: 6px;">
+                                            <span style="background: #0F172A; color: #CCFF00; font-size: 0.58rem; font-weight: 950; padding: 3px 8px; border-radius: 7px; text-transform: uppercase; letter-spacing: 1px;">
+                                                🎯 PROYECTO DE ASCENSO
+                                            </span>
+                                        </div>
+                                        <div style="color: #0a192f; font-weight: 950; font-size: 0.95rem; margin-top: 5px;">
+                                            Subir a Rango ${nextBadge.label} (LVL ${nextThreshold.toFixed(1)})
+                                        </div>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <div style="color: #10B981; font-weight: 950; font-size: 1.25rem; line-height: 1;">-${diff}</div>
+                                        <div style="color: #64748b; font-size: 0.55rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">PARA SUBIR</div>
+                                    </div>
+                                </div>
+                                
+                                <div style="width: 100%; height: 7px; background: #f1f5f9; border-radius: 12px; position: relative; overflow: hidden; margin: 10px 0 8px; border: 1px solid #e2e8f0;">
+                                    <div style="position: absolute; top: 0; left: 0; height: 100%; width: ${progress}%; background: linear-gradient(90deg, #CCFF00, #10B981); box-shadow: 0 0 10px rgba(204,255,0,0.4); border-radius: 12px; transition: width 1s ease;"></div>
+                                </div>
+
+                                <div style="display: flex; justify-content: space-between; font-size: 0.6rem; font-weight: 900; color: #64748B;">
+                                    <span>Nivel ${prevThreshold.toFixed(1)} (${badge.label})</span>
+                                    <span style="color: #0F172A; font-weight: 950;">${Math.round(progress)}% COMPLETADO</span>
+                                    <span>Meta: ${nextThreshold.toFixed(1)} (${nextBadge.label})</span>
+                                </div>
+
+                                <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #e2e8f0; font-size: 0.65rem; color: #64748b; line-height: 1.35; font-weight: 600;">
+                                    💡 <strong>¿Cómo subir?</strong> Cada victoria en americanas o entrenamientos contra parejas de tu nivel sumará puntos a tu coeficiente ELO.
+                                </div>
+                            </div>
+
+                            <!-- ⚡ FORMA RECIENTE (ÚLTIMOS PARTIDOS) -->
+                            <div style="margin-top: 16px; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <span style="font-size: 0.65rem; font-weight: 950; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-right: 4px;">ÚLTIMOS PARTIDOS:</span>
+                                    <div id="player-header-form-dots" style="display: flex; gap: 6px;">
+                                        ${formItemsHtml}
+                                    </div>
+                                </div>
+                                <div style="font-size: 0.58rem; font-weight: 800; color: #94a3b8; display: flex; gap: 8px;">
+                                    <span><strong style="color: #10B981;">V</strong> Victoria</span>
+                                    <span>·</span>
+                                    <span><strong style="color: #EF4444;">D</strong> Derrota</span>
+                                    <span>·</span>
+                                    <span><strong style="color: #64748B;">E</strong> Empate</span>
+                                </div>
                             </div>
 
                             <!-- ACTION BUTTONS -->
-                            <div style="display:flex; gap:10px; margin-top: 25px;">
-                                <button onclick="window.PlayerView.haptic(50); window.PlayerView.shareProfileCard()" class="haptic-feedback" style="background: rgba(204,255,0,0.05); border: 1px solid #CCFF00; color: #CCFF00; padding: 12px 20px; border-radius: 16px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                            <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-top: 22px;">
+                                <button onclick="window.PlayerView.haptic(50); window.PadelFutCard && window.PadelFutCard.open(window.Store ? window.Store.getState('currentUser') : {})" class="haptic-feedback" style="background: linear-gradient(135deg, #CCFF00, #00E36D); border: none; color: #000; padding: 11px 18px; border-radius: 16px; font-weight: 950; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(204,255,0,0.35);">
+                                    <span>🎴</span> CARTA FUT
+                                </button>
+                                <button onclick="window.PlayerView.haptic(30); window.CourtScoreboard && window.CourtScoreboard.open()" class="haptic-feedback" style="background: #0F172A; border: 1px solid rgba(204,255,0,0.4); color: #CCFF00; padding: 11px 18px; border-radius: 16px; font-weight: 950; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                                    <span>📟</span> MARCADOR
+                                </button>
+                                <button onclick="window.PlayerView.haptic(50); window.PlayerView.shareProfileCard()" class="haptic-feedback" style="background: rgba(204,255,0,0.05); border: 1px solid #CCFF00; color: #72a800; padding: 11px 18px; border-radius: 16px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
                                     <i class="fas fa-share-alt"></i> COMPARTIR
                                 </button>
-                                <button onclick="window.PlayerView.haptic(30); window.PlayerView.showUpdatePasswordPrompt()" class="haptic-feedback" style="background: #ffffff; border: 1px solid #e2e8f0; color: #0a192f; padding: 12px 20px; border-radius: 16px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer;">
+                                <button onclick="window.PlayerView.haptic(30); window.PlayerView.showUpdatePasswordPrompt()" class="haptic-feedback" style="background: #ffffff; border: 1px solid #e2e8f0; color: #0a192f; padding: 11px 16px; border-radius: 16px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer;" title="Cambiar contraseña">
                                     <i class="fas fa-cog"></i>
                                 </button>
                             </div>
@@ -269,8 +524,6 @@
                 setTimeout(() => {
                     this.initAttributesCharts(data, user);
                     const context = data?.context || { status: 'EMPTY' };
-                    const heroRoot = document.getElementById('profile-hero-root');
-                    if (heroRoot && window.HeroCard) heroRoot.innerHTML = window.HeroCard.render(context);
 
                     const pLevelRoot = document.getElementById('profile-power-level-root');
                     if (pLevelRoot && window.PowerLevelCard) pLevelRoot.innerHTML = window.PowerLevelCard.render(user);
@@ -298,6 +551,13 @@
                 const demoData = this.getAiHistoryData(myName, userLevel);
                 this.currentAiHistoryData = demoData;
                 this.renderAiHistoryHtml(demoData, myName, userLevel, true);
+                return;
+            }
+
+            // Si ya tenemos datos recientes en memoria (< 30s) para este mismo usuario, pintar directo sin consultar Firestore
+            const now = Date.now();
+            if (this.currentAiHistoryData && this._lastAiHistoryUserId === userId && (now - (this._lastAiHistoryTime || 0) < 30000)) {
+                this.renderAiHistoryHtml(this.currentAiHistoryData, myName, userLevel, false);
                 return;
             }
 
@@ -341,8 +601,10 @@
                         const dateObj = rawDate ? (typeof rawDate.toDate === 'function' ? rawDate.toDate() : new Date(rawDate)) : new Date();
                         levelHistoryPoints.push({
                             level: parseFloat(d.level || 3.0),
+                            oldLevel: parseFloat(d.oldLevel || d.level || 3.0),
                             date: dateObj,
-                            delta: parseFloat(d.delta || 0)
+                            delta: parseFloat(d.delta || 0),
+                            matchId: d.matchId || null  // ← clave para lookup exacto por partido
                         });
                     });
                 });
@@ -468,13 +730,38 @@
                     partner = cleanName(partner);
                     rivals = rivals.map(cleanName);
 
+                    // ── Nivel real en el momento del partido ──────────────────
+                    // Estrategia de búsqueda (en orden de prioridad):
+                    //   1. Entrada de level_history con matchId coincidente (más precisa)
+                    //   2. Entrada de level_history con fecha más cercana al partido
+                    //   3. Nivel actual del jugador en Firestore (userLevel) como fallback seguro
                     let matchLevel = userLevel;
-                    if (levelHistoryPoints[index]) {
-                        matchLevel = levelHistoryPoints[index].level;
+
+                    // 1. Buscar por matchId exacto
+                    const matchIdStr = m.id || '';
+                    const histByMatchId = levelHistoryPoints.find(p => p.matchId && p.matchId === matchIdStr);
+                    if (histByMatchId) {
+                        matchLevel = histByMatchId.level;
                     } else {
-                        const lastPoint = levelHistoryPoints[levelHistoryPoints.length - 1];
-                        const lastLevel = lastPoint ? lastPoint.level : userLevel;
-                        matchLevel = lastLevel - ((userRawMatches.length - 1 - index) * 0.015);
+                        // 2. Buscar por fecha más próxima al partido
+                        const matchMs = getMatchMs(m);
+                        if (matchMs > 0 && levelHistoryPoints.length > 0) {
+                            let closestDiff = Infinity;
+                            let closestPoint = null;
+                            for (const p of levelHistoryPoints) {
+                                const pMs = p.date instanceof Date ? p.date.getTime() : new Date(p.date).getTime();
+                                const diff = Math.abs(pMs - matchMs);
+                                if (diff < closestDiff) {
+                                    closestDiff = diff;
+                                    closestPoint = p;
+                                }
+                            }
+                            // Solo usar el historial si la entrada más cercana está a menos de 7 días
+                            if (closestPoint && closestDiff < 7 * 24 * 60 * 60 * 1000) {
+                                matchLevel = closestPoint.level;
+                            }
+                        }
+                        // 3. fallback: userLevel (ya asignado arriba)
                     }
 
                     const seed = m.id.split('').reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
@@ -550,6 +837,48 @@
 
                 mappedMatches.reverse();
                 this.currentAiHistoryData = mappedMatches;
+                this._lastAiHistoryUserId = userId;
+                this._lastAiHistoryTime = Date.now();
+
+                // Sincronizar dinámicamente los KPIs de la cabecera con los partidos reales de Firestore
+                const realTotal = mappedMatches.length;
+                const realWins = mappedMatches.filter(m => m.won).length;
+                const realLosses = realTotal - realWins;
+                const realWinRate = realTotal > 0 ? Math.round((realWins / realTotal) * 100) : 0;
+
+                const elMatches = document.getElementById('player-header-matches-count');
+                if (elMatches) elMatches.textContent = realTotal;
+                const elWonLost = document.getElementById('player-header-matches-breakdown');
+                if (elWonLost) elWonLost.innerHTML = `<span style="color:#10B981;">${realWins}V</span> · <span style="color:#EF4444;">${realLosses}D</span>`;
+                const elWinRate = document.getElementById('player-header-winrate-count');
+                if (elWinRate) elWinRate.textContent = `${realWinRate}%`;
+                const elBar = document.getElementById('player-header-winrate-bar');
+                if (elBar) elBar.style.width = `${realWinRate}%`;
+
+                // Sincronizar los 5 partidos recientes en la cabecera
+                const recentSlice = mappedMatches.slice(0, 5);
+                const elFormDots = document.getElementById('player-header-form-dots');
+                if (elFormDots && recentSlice.length > 0) {
+                    elFormDots.innerHTML = recentSlice.map(m => {
+                        const code = m.won ? 'V' : 'D';
+                        const color = m.won ? '#10B981' : '#EF4444';
+                        const bg = m.won ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)';
+                        const border = m.won ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)';
+                        const shadow = m.won ? '0 2px 8px rgba(16,185,129,0.25)' : 'none';
+                        const title = m.won ? 'Victoria' : 'Derrota';
+                        return `
+                            <div title="${title}" style="
+                                width: 32px; height: 32px; border-radius: 10px;
+                                background: ${bg}; color: ${color};
+                                display: flex; align-items: center; justify-content: center;
+                                font-size: 0.85rem; font-weight: 950;
+                                border: 1.5px solid ${border}; box-shadow: ${shadow};
+                                cursor: default;
+                            ">${code}</div>
+                        `;
+                    }).join('');
+                }
+
                 this.renderAiHistoryHtml(mappedMatches, myName, userLevel, false);
 
             } catch (err) {
@@ -763,20 +1092,38 @@
             body.innerHTML = html;
 
             setTimeout(() => {
-                this.initAiLevelChart("profile-ai-level-chart", historyData);
+                this.initAiLevelChart("profile-ai-level-chart", historyData, userLevel);
             }, 100);
         }
 
-        initAiLevelChart(canvasId, historyData) {
+        initAiLevelChart(canvasId, historyData, userLevel) {
             const ctx = document.getElementById(canvasId);
             if (!ctx) return;
 
+            // Los matches llegan ordenados de más reciente a más antiguo (tras reverse() en render)
+            // Los revertimos para que la gráfica vaya de izquierda (más antiguo) a derecha (más reciente)
             const chartData = [...historyData].reverse();
+
             const labels = chartData.map(m => {
                 const dateParts = m.date.split('-');
                 return dateParts.length >= 3 ? `${dateParts[2]}/${dateParts[1]}` : m.date;
             });
+
             const dataPoints = chartData.map(m => parseFloat(m.user_level_at_match));
+
+            // ── Garantía de coherencia ──────────────────────────────────────────
+            // El último punto de la curva DEBE coincidir con el nivel actual real
+            // del jugador (userLevel de Firestore). Así la tarjeta y la curva son
+            // idénticas y no puede haber brecha (3.64 vs 3.02).
+            if (dataPoints.length > 0 && typeof userLevel === 'number') {
+                const lastPointDiff = Math.abs(dataPoints[dataPoints.length - 1] - userLevel);
+                if (lastPointDiff > 0.005) {
+                    // Añadir punto de anclaje con la fecha de hoy
+                    const today = new Date();
+                    labels.push(`${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}`);
+                    dataPoints.push(userLevel);
+                }
+            }
 
             if (window.Chart) {
                 try {
@@ -789,22 +1136,26 @@
                         data: {
                             labels: labels,
                             datasets: [{
-                                label: 'Nivel IA',
+                                label: 'Nivel ELO Pro',
                                 data: dataPoints,
                                 borderColor: '#2E61FF',
                                 borderWidth: 3.5,
-                                pointBackgroundColor: '#CCFF00',
+                                pointBackgroundColor: dataPoints.map((v, i) =>
+                                    i === dataPoints.length - 1 ? '#CCFF00' : '#CCFF00'
+                                ),
                                 pointBorderColor: '#2E61FF',
                                 pointBorderWidth: 2.5,
-                                pointRadius: 5.5,
-                                pointHoverRadius: 7.5,
+                                pointRadius: dataPoints.map((v, i) =>
+                                    i === dataPoints.length - 1 ? 7 : 5.5
+                                ),
+                                pointHoverRadius: 8,
                                 tension: 0.35,
                                 fill: true,
                                 backgroundColor: function(context) {
                                     const chart = context.chart;
-                                    const {ctx, chartArea} = chart;
+                                    const {ctx: c, chartArea} = chart;
                                     if (!chartArea) return null;
-                                    const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                                    const gradient = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
                                     gradient.addColorStop(0, 'rgba(46, 97, 255, 0.18)');
                                     gradient.addColorStop(1, 'rgba(46, 97, 255, 0.00)');
                                     return gradient;
@@ -814,18 +1165,24 @@
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
+                            animation: { duration: 600, easing: 'easeInOutQuart' },
                             plugins: {
                                 legend: { display: false },
                                 tooltip: {
                                     backgroundColor: '#0F172A',
                                     titleFont: { size: 10, weight: 'bold', family: 'Outfit' },
-                                    bodyFont: { size: 11, weight: '900', family: 'Outfit' },
-                                    padding: 10,
+                                    bodyFont: { size: 12, weight: '900', family: 'Outfit' },
+                                    padding: 12,
                                     cornerRadius: 12,
                                     displayColors: false,
                                     callbacks: {
+                                        title: function(items) {
+                                            return items[0]?.label || '';
+                                        },
                                         label: function(context) {
-                                            return `Nivel: ${context.parsed.y.toFixed(2)}`;
+                                            const val = context.parsed.y;
+                                            const isLast = context.dataIndex === context.dataset.data.length - 1;
+                                            return `Nivel: ${val.toFixed(2)}${isLast ? ' ← ACTUAL' : ''}`;
                                         }
                                     }
                                 }
@@ -835,7 +1192,9 @@
                                     grid: { display: false },
                                     ticks: {
                                         color: '#64748B',
-                                        font: { size: 9, weight: 'bold', family: 'Outfit' }
+                                        font: { size: 9, weight: 'bold', family: 'Outfit' },
+                                        maxRotation: 45,
+                                        maxTicksLimit: 12
                                     }
                                 },
                                 y: {
@@ -843,7 +1202,8 @@
                                     ticks: {
                                         color: '#64748B',
                                         font: { size: 9, weight: 'bold', family: 'Outfit' },
-                                        stepSize: 0.05
+                                        stepSize: 0.10,
+                                        callback: v => v.toFixed(2)
                                     }
                                 }
                             }
@@ -1225,8 +1585,6 @@
             const stats = data?.stats || { matches: 0, won: 0, winRate: 0 };
             return `
                 <div style="display:flex; flex-direction:column; gap:22px;">
-                    <!-- DASHBOARD HERO INTEGRATION -->
-                    <div id="profile-hero-root"></div>
 
                     <!-- ⚡ POWER LEVEL STATUS CARD -->
                     <div id="profile-power-level-root"></div>

@@ -7,6 +7,11 @@ window.NotificationServiceClass = class NotificationService {
     constructor() {
         this.unsubscribe = null;
         this.notifications = [];
+        this.eventNotifications = [];
+        this.eventsUnsubscribes = [];
+        this._eventsObserverStarted = false;
+        this._hasInitialEventsLoaded = false;
+        this._eventsMap = new Map();
         this.unreadCount = 0;
         this.callbacks = [];
         this.chatNotifications = [];
@@ -14,6 +19,10 @@ window.NotificationServiceClass = class NotificationService {
         this.serviceStartTime = Date.now();
         this.token = null;
         this.hasLoadedInitialBatch = false;
+
+        // Lista reactiva de notificaciones purgadas globalmente por SuperAdmin
+        this.globalPurgedIds = new Set();
+        this.purgedUnsubscribe = null;
         
         // El arranque ahora lo gestiona AppInit
         console.log("🔔 NotificationServiceClass defined.");
@@ -21,8 +30,14 @@ window.NotificationServiceClass = class NotificationService {
 
     init() {
         console.log("🔔 [NotificationService] Initializing...");
+
+        // 1. Iniciar observador de feed de eventos globales (funciona tanto para invitados como autenticados)
+        this.initEventsFeedObserver();
+
+        // 1.b. Iniciar observador de notificaciones purgadas globalmente por el SuperAdmin
+        this.initGlobalPurgedObserver();
         
-        // 1. Verificar si window.auth existe
+        // 2. Verificar si window.auth existe
         if (!window.auth) {
             console.error("❌ [NotificationService] window.auth missing at init!");
             return;
@@ -48,7 +63,7 @@ window.NotificationServiceClass = class NotificationService {
             }
         });
 
-        // 2. Escuchar cambios en el Store
+        // 3. Escuchar cambios en el Store
         if (window.Store) {
             window.Store.subscribe('currentUser', (user) => {
                 if (user && user.uid) {
@@ -70,6 +85,178 @@ window.NotificationServiceClass = class NotificationService {
 
 
     /**
+     * Observa en tiempo real la lista de notificaciones purgadas globalmente por el SuperAdmin
+     */
+    initGlobalPurgedObserver() {
+        if (!window.db) {
+            return;
+        }
+        if (this.purgedUnsubscribe) {
+            return;
+        }
+
+        try {
+            this.purgedUnsubscribe = window.db.collection('system_config').doc('purged_notifications')
+                .onSnapshot(docSnap => {
+                    try {
+                        if (docSnap && docSnap.exists) {
+                            const data = docSnap.data() || {};
+                            const list = data.purgedIds || data.ids || [];
+                            this.globalPurgedIds = new Set(
+                                Array.isArray(list) ? list.map(item => String(item).trim()).filter(Boolean) : []
+                            );
+                        } else {
+                            this.globalPurgedIds = new Set();
+                        }
+                        this.notifySubscribers();
+                    } catch (snapErr) {
+                        console.warn("⚠️ [NotificationService] Error procesando snapshot de purged_notifications:", snapErr);
+                    }
+                }, error => {
+                    // Fallback silencioso si no existe aún el documento o colección
+                    console.warn("⚠️ [NotificationService] purged_notifications doc listener notice (silent fallback):", error?.message);
+                });
+        } catch (e) {
+            console.warn("⚠️ [NotificationService] Error suscribiendo a purged_notifications:", e);
+        }
+    }
+
+    /**
+     * Comprueba si el usuario actual tiene rol de Administrador o SuperAdmin
+     * @returns {boolean}
+     */
+    _isAdminUser() {
+        const currentUser = (window.Store && window.Store.getState('currentUser')) || window.auth?.currentUser || window.AdminAuth?.user || {};
+        const role = (currentUser.role || window.AdminAuth?.user?.role || '').toString().toLowerCase().trim();
+        return ['super_admin', 'superadmin', 'admin', 'admin_player'].includes(role) ||
+            (window.AdminAuth && typeof window.AdminAuth.hasAdminRole === 'function' && window.AdminAuth.hasAdminRole(role));
+    }
+
+    /**
+     * Comprueba si una notificación o evento ha sido purgado globalmente por el SuperAdmin
+     * @param {object} rawItem 
+     * @returns {boolean}
+     */
+    _isItemGloballyPurged(rawItem) {
+        if (!this.globalPurgedIds || this.globalPurgedIds.size === 0 || !rawItem) {
+            return false;
+        }
+
+        const id = rawItem.id ? String(rawItem.id).trim() : null;
+        if (id && this.globalPurgedIds.has(id)) return true;
+
+        const broadcastId = (rawItem.data?.broadcastId || rawItem.broadcastId) ? String(rawItem.data?.broadcastId || rawItem.broadcastId).trim() : null;
+        if (broadcastId && this.globalPurgedIds.has(broadcastId)) return true;
+
+        const eventId = (rawItem.data?.eventId || rawItem.eventId) ? String(rawItem.data?.eventId || rawItem.eventId).trim() : null;
+        if (eventId) {
+            if (this.globalPurgedIds.has(eventId)) return true;
+            if (this.globalPurgedIds.has(`evt_cancelled_entreno_${eventId}`)) return true;
+            if (this.globalPurgedIds.has(`evt_cancelled_americana_${eventId}`)) return true;
+            if (this.globalPurgedIds.has(`notif_cancelled_${eventId}`)) return true;
+            if (this.globalPurgedIds.has(`notif_deleted_${eventId}`)) return true;
+            if (this.globalPurgedIds.has(`evt_new_entreno_${eventId}`)) return true;
+            if (this.globalPurgedIds.has(`evt_new_americana_${eventId}`)) return true;
+            if (this.globalPurgedIds.has(`evt_spot_entreno_${eventId}`)) return true;
+            if (this.globalPurgedIds.has(`evt_spot_americana_${eventId}`)) return true;
+        }
+
+        if (id) {
+            const strippedId = id.replace(/^evt_[a-z]+_[a-z]+_/, '')
+                                 .replace(/^evt_[a-z]+_/, '')
+                                 .replace(/^notif_[a-z]+_/, '');
+            if (strippedId && strippedId !== id) {
+                if (this.globalPurgedIds.has(strippedId)) return true;
+                if (this.globalPurgedIds.has(`evt_cancelled_entreno_${strippedId}`)) return true;
+                if (this.globalPurgedIds.has(`evt_cancelled_americana_${strippedId}`)) return true;
+                if (this.globalPurgedIds.has(`notif_cancelled_${strippedId}`)) return true;
+            }
+        }
+
+        const title = String(rawItem.title || rawItem.name || '').trim();
+        const body = String(rawItem.body || rawItem.text || rawItem.message || '').trim();
+
+        if (title && this.globalPurgedIds.has(title)) return true;
+
+        const textSignature = `txt_${title.toLowerCase()}|${body.toLowerCase()}`;
+        if (this.globalPurgedIds.has(textSignature)) return true;
+
+        return false;
+    }
+
+    /**
+     * Comprueba si una notificación o evento ha sido eliminado localmente por el usuario
+     * @param {object} rawItem
+     * @returns {boolean}
+     */
+    _isItemUserDeleted(rawItem) {
+        if (!rawItem) return false;
+        try {
+            const id = rawItem.id ? String(rawItem.id).trim() : null;
+            if (id) {
+                if (localStorage.getItem('sp_deleted_notif_' + id) === 'true') return true;
+                if (localStorage.getItem('sp_evt_deleted_' + id) === 'true') return true;
+                if (id === 'system_radar_clima_relocated' && localStorage.getItem('sp_radar_relocated_notif_deleted') === 'true') return true;
+            }
+
+            const broadcastId = (rawItem.data?.broadcastId || rawItem.broadcastId) ? String(rawItem.data?.broadcastId || rawItem.broadcastId).trim() : null;
+            if (broadcastId) {
+                if (localStorage.getItem('sp_deleted_notif_' + broadcastId) === 'true') return true;
+                if (localStorage.getItem('sp_evt_deleted_' + broadcastId) === 'true') return true;
+            }
+
+            const eventId = (rawItem.data?.eventId || rawItem.eventId) ? String(rawItem.data?.eventId || rawItem.eventId).trim() : null;
+            if (eventId) {
+                if (localStorage.getItem('sp_deleted_notif_' + eventId) === 'true') return true;
+                if (localStorage.getItem('sp_evt_deleted_' + eventId) === 'true') return true;
+            }
+
+            const title = String(rawItem.title || rawItem.name || '').trim();
+            const body = String(rawItem.body || rawItem.text || rawItem.message || '').trim();
+            if (title || body) {
+                const textSig = `sp_deleted_sig_${title}|${body}`;
+                if (localStorage.getItem(textSig) === 'true') return true;
+            }
+        } catch (e) {
+            console.warn("⚠️ [NotificationService] Error en _isItemUserDeleted:", e);
+        }
+        return false;
+    }
+
+    /**
+     * Comprueba si una notificación ha sido leída por el usuario (en Firestore o en localStorage)
+     * @param {object} rawItem
+     * @returns {boolean}
+     */
+    _isItemUserRead(rawItem) {
+        if (!rawItem) return false;
+        if (rawItem.read === true) return true;
+        try {
+            const id = rawItem.id ? String(rawItem.id).trim() : null;
+            if (id) {
+                if (localStorage.getItem('sp_read_notif_' + id) === 'true') return true;
+                if (localStorage.getItem('sp_evt_read_' + id) === 'true') return true;
+                if (id === 'system_radar_clima_relocated' && localStorage.getItem('sp_radar_relocated_notif_read') === 'true') return true;
+            }
+
+            const broadcastId = (rawItem.data?.broadcastId || rawItem.broadcastId) ? String(rawItem.data?.broadcastId || rawItem.broadcastId).trim() : null;
+            if (broadcastId) {
+                if (localStorage.getItem('sp_read_notif_' + broadcastId) === 'true') return true;
+                if (localStorage.getItem('sp_evt_read_' + broadcastId) === 'true') return true;
+            }
+
+            const eventId = (rawItem.data?.eventId || rawItem.eventId) ? String(rawItem.data?.eventId || rawItem.eventId).trim() : null;
+            if (eventId) {
+                if (localStorage.getItem('sp_read_notif_' + eventId) === 'true') return true;
+                if (localStorage.getItem('sp_evt_read_' + eventId) === 'true') return true;
+            }
+        } catch (e) {
+            console.warn("⚠️ [NotificationService] Error en _isItemUserRead:", e);
+        }
+        return false;
+    }
+
+    /**
      * Suscribe una función de callback para recibir actualizaciones de UI
      * @param {Function} callback (data) => void
      */
@@ -78,19 +265,93 @@ window.NotificationServiceClass = class NotificationService {
     }
 
     notifySubscribers() {
+        const items = this.getMergedNotifications();
+        this.unreadCount = items.filter(n => !n.read).length;
         const data = {
             count: this.unreadCount,
-            items: this.getMergedNotifications()
+            items: items
         };
         this.callbacks.forEach(cb => cb(data));
     }
 
     /**
-     * Fusiona las notificaciones de Firestore con los mensajes de chat recientes
+     * Fusiona las notificaciones de Firestore con los mensajes de chat y eventos del club
      */
     getMergedNotifications() {
         try {
-            const combined = [...this.notifications, ...this.chatNotifications];
+            // 1. Filtrar notificaciones de Firestore: purga global + borrado local del usuario
+            const firestoreNotifs = (this.notifications || []).filter(item => {
+                if (!item || !item.id) return false;
+                if (this._isItemGloballyPurged(item)) return false;
+                if (this._isItemUserDeleted(item)) return false;
+                return true;
+            }).map(item => ({
+                ...item,
+                read: this._isItemUserRead(item)
+            }));
+
+            // 2. Filtrar mensajes de chat: purga global + borrado local del usuario
+            const chatNotifs = (this.chatNotifications || []).filter(item => {
+                if (!item || !item.id) return false;
+                if (this._isItemGloballyPurged(item)) return false;
+                if (this._isItemUserDeleted(item)) return false;
+                return true;
+            }).map(item => ({
+                ...item,
+                read: this._isItemUserRead(item)
+            }));
+
+            // 3. Filtrar eventos reales no eliminados por el usuario ni purgados globalmente
+            const activeEventNotifs = (this.eventNotifications || []).filter(item => {
+                if (!item || !item.id) return false;
+                if (this._isItemGloballyPurged(item)) return false;
+                if (this._isItemUserDeleted(item)) return false;
+                return true;
+            }).map(item => ({
+                ...item,
+                read: this._isItemUserRead(item)
+            }));
+
+            // 4. Integrar eventos cancelados persistidos en localStorage (resiliencia offline y tras borrado en Firestore)
+            const cancelledLogs = this._getCancelledEventsLog().filter(item => {
+                if (!item || !item.id) return false;
+                if (this._isItemGloballyPurged(item)) return false;
+                if (this._isItemUserDeleted(item)) return false;
+                item.read = this._isItemUserRead(item);
+                const itemEvtId = item.data?.eventId || item.eventId;
+                return !activeEventNotifs.some(a => {
+                    if (!a) return false;
+                    if (a.id === item.id) return true;
+                    const aEvtId = a.data?.eventId || a.eventId;
+                    if (itemEvtId && aEvtId && itemEvtId === aEvtId) return true;
+                    return false;
+                });
+            });
+
+            const combined = [...firestoreNotifs, ...chatNotifs, ...activeEventNotifs, ...cancelledLogs];
+
+            // Inyectar notificación de sistema del nuevo Radar & Clima (si no ha sido eliminada por el usuario ni purgada globalmente)
+            const isRadarDeleted = this._isItemUserDeleted({ id: 'system_radar_clima_relocated' });
+            if (!isRadarDeleted && !this._isItemGloballyPurged({ id: 'system_radar_clima_relocated' })) {
+                const isRadarRead = this._isItemUserRead({ id: 'system_radar_clima_relocated' });
+                // Fecha estática histórica, NUNCA new Date().toISOString()
+                const radarTs = localStorage.getItem('sp_radar_relocated_notif_ts') || '2026-09-21T09:00:00.000Z';
+                if (!localStorage.getItem('sp_radar_relocated_notif_ts')) {
+                    try { localStorage.setItem('sp_radar_relocated_notif_ts', radarTs); } catch (_) {}
+                }
+                combined.unshift({
+                    id: 'system_radar_clima_relocated',
+                    title: '🌦️ Radar Táctico y Clima de Pistas',
+                    body: 'Nuevo mapa de viento/lluvia y telemetría de pistas en El Prat y Cornellà. ¡Disponible en Americanas y Entrenos!',
+                    timestamp: radarTs,
+                    read: isRadarRead,
+                    icon: 'cloud-sun',
+                    category: 'clima',
+                    data: {
+                        url: 'clima'
+                    }
+                });
+            }
 
             // Ordenar por tiempo (descendente)
             const sorted = combined.sort((a, b) => {
@@ -99,32 +360,798 @@ window.NotificationServiceClass = class NotificationService {
                 return timeB - timeA;
             });
 
-            // Deduplicar por contenido (Título + Cuerpo) para evitar spam en la ticketera
+            // Enriquecer y Deduplicar contenido para evitar spam repetitivo
             const seen = new Set();
-            const deduplicated = sorted.filter(item => {
-                if (!item) return false;
-                const title = String(item.title || '');
-                const body = String(item.body || '');
-                const signature = `${title}|${body}`.toLowerCase().trim();
-                if (seen.has(signature)) return false;
-                seen.add(signature);
-                return true;
-            });
+            const deduplicated = [];
+
+            for (const rawItem of sorted) {
+                if (!rawItem) continue;
+                if (this._isItemGloballyPurged(rawItem)) continue;
+                if (this._isItemUserDeleted(rawItem)) continue;
+
+                let title = String(rawItem.title || rawItem.name || '').trim();
+                let body = String(rawItem.body || rawItem.text || rawItem.message || '').trim();
+
+                // Normalización de títulos repetitivos antiguos
+                if (title === 'Inscripción OK' || title === 'Inscripcion OK') {
+                    title = '✅ Inscripción Confirmada';
+                    if (!body) body = 'Tu plaza está reservada para el próximo evento. ¡Nos vemos en la pista!';
+                } else if (title === 'Baja Confirmada') {
+                    title = '📋 Baja de Torneo Tramitada';
+                    if (!body) body = 'Has liberado tu plaza para el evento correctamente.';
+                } else if (title.includes('PLAZA LIBRE') || title.includes('Plaza Libre')) {
+                    if (!title.startsWith('⚡')) {
+                        title = '⚡ ¡Plaza Libre Disponible!';
+                        if (!body) body = 'Hay una plaza vacante en el torneo de hoy. Entra y resérvala antes de que se agote.';
+                    }
+                }
+
+                const eventId = rawItem.data?.eventId || rawItem.eventId;
+                const isCancelled = Boolean(rawItem.isCancelled || rawItem.data?.isCancelled || title.toLowerCase().includes('cancelad') || title.toLowerCase().includes('suspendid') || title.toLowerCase().includes('eliminad'));
+                const isSpot = Boolean(String(rawItem.id || '').startsWith('evt_spot_') || title.toLowerCase().includes('plaza libre'));
+                const isNew = Boolean(String(rawItem.id || '').startsWith('evt_new_') || title.toLowerCase().includes('nuevo') || title.toLowerCase().includes('nueva'));
+
+                // Firmas de deduplicación complementarias:
+                // 1. Clave por Evento + Acción
+                const evtSignature = eventId ? `evt_${eventId}_${isCancelled ? 'cancelled' : (isSpot ? 'spot' : (isNew ? 'new' : 'action'))}` : null;
+                // 2. Clave por Contenido Textual Exacto
+                const textSignature = `txt_${title.toLowerCase().trim()}|${body.toLowerCase().trim()}`;
+                // 3. Clave por ID explícito
+                const idSignature = rawItem.id ? `id_${rawItem.id}` : null;
+
+                // Descartar si alguna de las firmas está en las purgas globales
+                if (evtSignature && this.globalPurgedIds && this.globalPurgedIds.has(evtSignature)) continue;
+                if (textSignature && this.globalPurgedIds && this.globalPurgedIds.has(textSignature)) continue;
+                if (idSignature && this.globalPurgedIds && this.globalPurgedIds.has(idSignature)) continue;
+
+                if (evtSignature && seen.has(evtSignature)) continue;
+                if (seen.has(textSignature)) continue;
+                if (idSignature && seen.has(idSignature)) continue;
+
+                if (evtSignature) seen.add(evtSignature);
+                seen.add(textSignature);
+                if (idSignature) seen.add(idSignature);
+
+                deduplicated.push({
+                    ...rawItem,
+                    title: title || 'Aviso SomosPadel',
+                    body: body || 'Nueva actualización disponible en tu cuenta.',
+                    read: this._isItemUserRead(rawItem)
+                });
+            }
 
             return deduplicated.slice(0, 50);
         } catch (e) {
             console.error("❌ [NotificationService] Merging failed:", e);
-            return this.notifications.slice(0, 20);
+            return (this.notifications || []).filter(n => !this._isItemUserDeleted(n) && !this._isItemGloballyPurged(n)).slice(0, 20);
         }
     }
 
     _getTimestampValue(ts) {
-        if (!ts) return Date.now(); // Fallback a 'ahora' para evitar que mensajes nuevos se vayan al final
-        if (ts.toMillis) return ts.toMillis();
+        if (!ts) return 0;
+        if (ts.toMillis && typeof ts.toMillis === 'function') return ts.toMillis();
+        if (ts.toDate && typeof ts.toDate === 'function') return ts.toDate().getTime();
         if (ts instanceof Date) return ts.getTime();
-        if (typeof ts === 'string') return new Date(ts).getTime();
-        if (typeof ts === 'number') return ts;
-        return Date.now();
+        if (typeof ts === 'string') {
+            const parsed = Date.parse(ts);
+            return isNaN(parsed) ? 0 : parsed;
+        }
+        if (typeof ts === 'number') {
+            return ts < 10000000000 ? ts * 1000 : ts;
+        }
+        return 0;
+    }
+
+    /**
+     * Extrae el timestamp real de creación o modificación del evento,
+     * o infiere la fecha y hora a partir de 'date' y 'time'.
+     */
+    _extractEventTimestamp(evt) {
+        if (!evt) return '2026-09-21T09:00:00.000Z';
+
+        // 1. Extraer de cancelledAt, cancelled_at, createdAt, created_at, timestamp, updatedAt, updated_at
+        const raw = evt.cancelledAt || evt.cancelled_at || evt.createdAt || evt.created_at || evt.timestamp || evt.updatedAt || evt.updated_at;
+        if (raw) {
+            if (raw.toDate && typeof raw.toDate === 'function') {
+                return raw.toDate().toISOString();
+            }
+            if (raw.toMillis && typeof raw.toMillis === 'function') {
+                return new Date(raw.toMillis()).toISOString();
+            }
+            if (raw instanceof Date) {
+                return raw.toISOString();
+            }
+            if (typeof raw === 'number') {
+                const ms = raw < 10000000000 ? raw * 1000 : raw;
+                return new Date(ms).toISOString();
+            }
+            if (typeof raw === 'string') {
+                const parsed = Date.parse(raw);
+                if (!isNaN(parsed)) {
+                    return new Date(parsed).toISOString();
+                }
+            }
+        }
+
+        // 2. Si no, inferir fecha/hora real a partir de date ('YYYY-MM-DD' o 'DD/MM/YYYY') y time ('HH:mm')
+        if (evt.date) {
+            try {
+                const timeStr = String(evt.time || '10:00').trim();
+                const dateStr = String(evt.date).trim();
+                let year, month, day;
+
+                if (dateStr.includes('-')) {
+                    const parts = dateStr.split('-');
+                    if (parts[0].length === 4) {
+                        year = parseInt(parts[0], 10);
+                        month = parseInt(parts[1], 10) - 1;
+                        day = parseInt(parts[2], 10);
+                    } else if (parts[2] && parts[2].length === 4) {
+                        year = parseInt(parts[2], 10);
+                        month = parseInt(parts[1], 10) - 1;
+                        day = parseInt(parts[0], 10);
+                    }
+                } else if (dateStr.includes('/')) {
+                    const parts = dateStr.split('/');
+                    if (parts[2] && parts[2].length === 4) {
+                        year = parseInt(parts[2], 10);
+                        month = parseInt(parts[1], 10) - 1;
+                        day = parseInt(parts[0], 10);
+                    } else if (parts[0] && parts[0].length === 4) {
+                        year = parseInt(parts[0], 10);
+                        month = parseInt(parts[1], 10) - 1;
+                        day = parseInt(parts[2], 10);
+                    }
+                }
+
+                const timeParts = timeStr.split(':');
+                const hours = parseInt(timeParts[0] || '10', 10);
+                const minutes = parseInt(timeParts[1] || '0', 10);
+
+                if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+                    const inferred = new Date(year, month, day, hours, minutes, 0, 0);
+                    if (!isNaN(inferred.getTime())) {
+                        return inferred.toISOString();
+                    }
+                }
+            } catch (_) {}
+        }
+
+        return new Date().toISOString();
+    }
+
+    /**
+     * Obtiene los milisegundos de la fecha y hora prevista del evento o los infiere de sus datos / descripción
+     * @param {object} evt 
+     * @returns {number} ms timestamp
+     */
+    _getEventDateTimeMs(evt) {
+        if (!evt) return 0;
+        let dateStr = evt.date || evt.eventDate || (evt.data && (evt.data.date || evt.data.eventDate));
+        let timeStr = evt.time || evt.startTime || evt.eventTime || (evt.data && (evt.data.time || evt.data.startTime || evt.data.eventTime));
+
+        if (!dateStr && evt.body) {
+            const dateMatch = String(evt.body).match(/\b(\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{4})\b/);
+            if (dateMatch) {
+                dateStr = dateMatch[1];
+            }
+            const timeMatch = String(evt.body).match(/\b(\d{1,2}:\d{2})\b/);
+            if (timeMatch) {
+                timeStr = timeMatch[1];
+            }
+        }
+
+        if (dateStr) {
+            try {
+                timeStr = String(timeStr || '20:00').trim();
+                dateStr = String(dateStr).trim();
+                let year, month, day;
+
+                if (dateStr.includes('-')) {
+                    const parts = dateStr.split('-');
+                    if (parts[0].length === 4) {
+                        year = parseInt(parts[0], 10);
+                        month = parseInt(parts[1], 10) - 1;
+                        day = parseInt(parts[2], 10);
+                    } else if (parts[2] && parts[2].length === 4) {
+                        year = parseInt(parts[2], 10);
+                        month = parseInt(parts[1], 10) - 1;
+                        day = parseInt(parts[0], 10);
+                    }
+                } else if (dateStr.includes('/')) {
+                    const parts = dateStr.split('/');
+                    if (parts[2] && parts[2].length === 4) {
+                        year = parseInt(parts[2], 10);
+                        month = parseInt(parts[1], 10) - 1;
+                        day = parseInt(parts[0], 10);
+                    } else if (parts[0] && parts[0].length === 4) {
+                        year = parseInt(parts[0], 10);
+                        month = parseInt(parts[1], 10) - 1;
+                        day = parseInt(parts[2], 10);
+                    }
+                }
+
+                const timeParts = timeStr.split(':');
+                const hours = parseInt(timeParts[0] || '20', 10);
+                const minutes = parseInt(timeParts[1] || '0', 10);
+
+                if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+                    const dt = new Date(year, month, day, hours, minutes, 0, 0);
+                    if (!isNaN(dt.getTime())) {
+                        return dt.getTime();
+                    }
+                }
+            } catch (_) {}
+        }
+
+        const raw = evt.cancelledAt || evt.cancelled_at || evt.timestamp || evt.createdAt || evt.created_at || (evt.data && (evt.data.timestamp || evt.data.createdAt));
+        if (raw) {
+            return this._getTimestampValue(raw);
+        }
+        return 0;
+    }
+
+    /**
+     * Comprueba si un evento o notificación de evento está caducado por TTL (> 48h tras la fecha programada o creación).
+     * @param {object} evt - Objeto de evento o notificación
+     * @param {number} [ttlMs=172800000] - Tiempo de vida en milisegundos (48h por defecto)
+     * @returns {boolean} true si está caducado
+     */
+    _isEventExpiredByTTL(evt, ttlMs = 48 * 60 * 60 * 1000) {
+        if (!evt) return false;
+        const now = Date.now();
+        const eventMs = this._getEventDateTimeMs(evt);
+        if (eventMs > 0 && (now - eventMs) > ttlMs) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Alias de caducidad para eventos cancelados (> 48h)
+     */
+    _isEventCancelledExpired(evt, maxAgeHours = 48) {
+        return this._isEventExpiredByTTL(evt, maxAgeHours * 60 * 60 * 1000);
+    }
+
+    /**
+     * Obtiene el historial persistente de eventos cancelados/eliminados de localStorage,
+     * sanea automáticamente duplicados preexistentes, filtra elementos purgados globalmente
+     * y purga de forma transparente eventos caducados (> 48h).
+     * @returns {Array<object>}
+     */
+    _getCancelledEventsLog() {
+        try {
+            const raw = localStorage.getItem('sp_cancelled_events_log');
+            if (!raw) return [];
+            const parsed = JSON.parse(raw);
+            if (!Array.isArray(parsed)) return [];
+
+            // Deduplicación estricta y filtro de TTL (48h) y purgados globalmente
+            const unique = [];
+            const seen = new Set();
+            const TTL_MS = 48 * 60 * 60 * 1000; // 48 horas
+
+            for (const item of parsed) {
+                if (!item || !item.id) continue;
+                if (this._isItemGloballyPurged(item)) continue;
+
+                // Comprobar TTL de 48h
+                if (this._isEventExpiredByTTL(item, TTL_MS)) {
+                    continue; // Excluir evento cancelado antiguo (> 48h)
+                }
+
+                const evtId = item.data?.eventId || item.eventId || '';
+                const titleStr = String(item.title || '').trim().toLowerCase();
+                const bodyStr = String(item.body || '').trim().toLowerCase();
+                const key = evtId ? `evt_${evtId}` : (item.id ? `id_${item.id}` : `${titleStr}|${bodyStr}`);
+
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    unique.push(item);
+                }
+            }
+
+            // Si se detectaron y limpiaron duplicados, purgados o caducados, actualizar localStorage
+            if (unique.length !== parsed.length) {
+                try {
+                    localStorage.setItem('sp_cancelled_events_log', JSON.stringify(unique));
+                } catch (_) {}
+            }
+
+            return unique;
+        } catch (e) {
+            console.warn("⚠️ [NotificationService] Error leyendo sp_cancelled_events_log:", e);
+            return [];
+        }
+    }
+
+    /**
+     * Guarda de forma persistente un evento cancelado/eliminado en localStorage
+     * para que no desaparezca cuando el documento sea borrado en Firestore.
+     * Deduplica estrictamente para evitar entradas redundantes.
+     * @param {object} notif 
+     */
+    _saveCancelledEvent(notif) {
+        if (!notif || !notif.id) return;
+        try {
+            let log = this._getCancelledEventsLog();
+            const notifEvtId = notif.data?.eventId || notif.eventId;
+            const notifTitle = String(notif.title || '').trim().toLowerCase();
+            const notifBody = String(notif.body || '').trim().toLowerCase();
+            const notifTextSig = `${notifTitle}|${notifBody}`;
+
+            const idx = log.findIndex(item => {
+                if (!item) return false;
+                if (item.id === notif.id) return true;
+                const itemEvtId = item.data?.eventId || item.eventId;
+                if (notifEvtId && itemEvtId && itemEvtId === notifEvtId) return true;
+                const itemTitle = String(item.title || '').trim().toLowerCase();
+                const itemBody = String(item.body || '').trim().toLowerCase();
+                if (`${itemTitle}|${itemBody}` === notifTextSig) return true;
+                return false;
+            });
+
+            if (idx >= 0) {
+                const prev = log[idx];
+                log[idx] = {
+                    ...prev,
+                    ...notif,
+                    timestamp: prev.timestamp || notif.timestamp
+                };
+            } else {
+                log.unshift(notif);
+            }
+
+            // Mantener un historial controlado de hasta 50 eventos cancelados
+            if (log.length > 50) {
+                log = log.slice(0, 50);
+            }
+            localStorage.setItem('sp_cancelled_events_log', JSON.stringify(log));
+        } catch (e) {
+            console.warn("⚠️ [NotificationService] Error guardando en sp_cancelled_events_log:", e);
+        }
+    }
+
+    /**
+     * Elimina las notificaciones de 'nuevo evento' o 'plazas libres' asociadas a un ID
+     * tanto en memoria, en localStorage (evita reaparición) como en la bandeja nativa.
+     * @param {string} type 
+     * @param {string} id 
+     */
+    _removeEventActiveNotifs(type, id) {
+        if (!id) return;
+        const normType = (type === 'entreno' || String(type).toLowerCase().includes('entreno')) ? 'entreno' : 'americana';
+        const newId = `evt_new_${normType}_${id}`;
+        const spotId = `evt_spot_${normType}_${id}`;
+
+        // Limpiar en memoria
+        if (Array.isArray(this.eventNotifications)) {
+            this.eventNotifications = this.eventNotifications.filter(n => n && n.id !== newId && n.id !== spotId);
+        }
+
+        // Marcar como borradas en localStorage
+        try {
+            localStorage.setItem('sp_evt_deleted_' + newId, 'true');
+            localStorage.setItem('sp_evt_deleted_' + spotId, 'true');
+        } catch (_) {}
+
+        // Limpiar de la bandeja de notificaciones nativa del SO
+        this.clearNativeNotification(newId);
+        this.clearNativeNotification(spotId);
+    }
+
+    /**
+     * Maneja la eliminación física de un evento en Firestore o llamada desde EventService
+     * @param {string} type 
+     * @param {string} id 
+     * @param {object} eventData 
+     */
+    handleEventDeleted(type, id, eventData = {}) {
+        if (!id) return;
+        const normType = (type === 'entreno' || String(eventData.name || '').toLowerCase().includes('entreno')) ? 'entreno' : 'americana';
+        const notifId = `evt_cancelled_${normType}_${id}`;
+
+        // Retirar notificaciones previas de nuevo evento o plazas libres
+        this._removeEventActiveNotifs(normType, id);
+
+        // Si el evento está caducado (>48h) o ya fue purgado globalmente, no guardar ni notificar
+        if (this._isEventExpiredByTTL(eventData) || this._isItemGloballyPurged({ id: notifId, eventId: id, title: eventData.name })) {
+            return;
+        }
+
+        const isRead = localStorage.getItem('sp_evt_read_' + notifId) === 'true';
+        const isDeleted = localStorage.getItem('sp_evt_deleted_' + notifId) === 'true';
+
+        const notif = {
+            id: notifId,
+            title: `⛔ ${normType === 'entreno' ? 'Entreno Eliminado' : 'Americana Eliminada'}: ${eventData.name || 'Convocatoria'}`,
+            body: `El evento previsto para el ${eventData.date || ''} a las ${eventData.time || ''} ha sido cancelado o eliminado por la organización.`,
+            timestamp: this._extractEventTimestamp(eventData),
+            category: normType === 'entreno' ? 'entrenos' : 'matches',
+            isCancelled: true,
+            read: isRead,
+            data: {
+                id: notifId,
+                url: normType === 'entreno' ? 'entrenos' : 'americanas',
+                eventId: id,
+                isCancelled: true
+            }
+        };
+
+        // Guardar persistentemente en sp_cancelled_events_log
+        this._saveCancelledEvent(notif);
+
+        // Disparar push nativo fuera de la app para alertar al móvil de inmediato
+        if (!isDeleted) {
+            this._checkAndTriggerPush(notif);
+            this.showNativeNotification(notif.title, notif.body, notif.data);
+        }
+
+        if (!this._isInsideSnapshotBatch && this._hasInitialEventsLoaded) {
+            this._processEventsFeed();
+        }
+    }
+
+    /**
+     * Maneja la cancelación o suspensión de un evento (cambio de estado o llamada directa)
+     * @param {string} type 
+     * @param {string} id 
+     * @param {object} eventData 
+     * @param {string} reasonOrStatus 
+     * @param {boolean} skipPush 
+     */
+    handleEventCancelled(type, id, eventData = {}, reasonOrStatus = '', skipPush = false) {
+        if (!id) return;
+        const normType = (type === 'entreno' || String(eventData.name || '').toLowerCase().includes('entreno')) ? 'entreno' : 'americana';
+        const notifId = `evt_cancelled_${normType}_${id}`;
+
+        // Retirar notificaciones previas de plazas libres o nuevo evento
+        this._removeEventActiveNotifs(normType, id);
+
+        // Si el evento está caducado (>48h) o ya fue purgado globalmente, no guardar ni notificar
+        if (this._isEventExpiredByTTL(eventData) || this._isItemGloballyPurged({ id: notifId, eventId: id, title: eventData.name })) {
+            return;
+        }
+
+        const status = String(reasonOrStatus || eventData.status || 'cancelled').toLowerCase().trim();
+        const isSuspended = ['suspendido', 'suspended', 'postponed'].includes(status);
+        const actionLabel = isSuspended
+            ? (normType === 'americana' ? 'Suspendida' : 'Suspendido')
+            : (status === 'anulado'
+                ? (normType === 'americana' ? 'Anulada' : 'Anulado')
+                : (normType === 'americana' ? 'Cancelada' : 'Cancelado'));
+        const icon = isSuspended ? '⚠️' : '⛔';
+
+        const isRead = localStorage.getItem('sp_evt_read_' + notifId) === 'true';
+        const isDeleted = localStorage.getItem('sp_evt_deleted_' + notifId) === 'true';
+
+        const reason = eventData.cancelReason || eventData.reason || '';
+        const bodyText = reason
+            ? `El evento del ${eventData.date || ''} a las ${eventData.time || ''} ha sido ${actionLabel.toLowerCase()}: ${reason}`
+            : `El evento previsto para el ${eventData.date || ''} a las ${eventData.time || ''} ha sido ${isSuspended ? 'suspendido' : 'cancelado o anulado'} por la organización.`;
+
+        const notif = {
+            id: notifId,
+            title: `${icon} ${normType === 'entreno' ? 'Entreno ' + actionLabel : 'Americana ' + actionLabel}: ${eventData.name || 'Convocatoria'}`,
+            body: bodyText,
+            timestamp: this._extractEventTimestamp(eventData),
+            category: normType === 'entreno' ? 'entrenos' : 'matches',
+            isCancelled: true,
+            read: isRead,
+            data: {
+                id: notifId,
+                url: normType === 'entreno' ? 'entrenos' : 'americanas',
+                eventId: id,
+                isCancelled: true
+            }
+        };
+
+        // Guardar persistentemente en sp_cancelled_events_log
+        this._saveCancelledEvent(notif);
+
+        // Disparar push nativo fuera de la app
+        if (!isDeleted && !skipPush) {
+            this._checkAndTriggerPush(notif);
+            this.showNativeNotification(notif.title, notif.body, notif.data);
+        }
+
+        if (!this._isInsideSnapshotBatch && this._hasInitialEventsLoaded) {
+            this._processEventsFeed();
+        }
+    }
+
+    /**
+     * Observa las colecciones 'americanas' y 'entrenos' en tiempo real
+     * para sincronizar eventos reales y plazas libres tanto para usuarios como invitados.
+     */
+    initEventsFeedObserver() {
+        if (this._eventsObserverStarted) return;
+        this._eventsObserverStarted = true;
+        console.log("🏆 [NotificationService] initEventsFeedObserver starting...");
+
+        const firestore = window.db || (window.firebase && typeof window.firebase.firestore === 'function' ? window.firebase.firestore() : null);
+
+        if (!firestore) {
+            console.log("⏳ [NotificationService] Firestore no disponible de inmediato para feed de eventos, reintentando...");
+            const retryInterval = setInterval(() => {
+                const fs = window.db || (window.firebase && typeof window.firebase.firestore === 'function' ? window.firebase.firestore() : null);
+                if (fs) {
+                    clearInterval(retryInterval);
+                    this._eventsObserverStarted = false;
+                    this.initEventsFeedObserver();
+                }
+            }, 500);
+
+            setTimeout(() => {
+                clearInterval(retryInterval);
+                if (this.eventsUnsubscribes.length === 0) {
+                    this._loadEventsFallback();
+                }
+            }, 3000);
+            return;
+        }
+
+        const collectionsToWatch = [
+            { name: 'americanas', type: 'americana' },
+            { name: 'entrenos', type: 'entreno' }
+        ];
+
+        let directConnectionFailed = false;
+
+        collectionsToWatch.forEach(({ name, type }) => {
+            try {
+                const unsub = firestore.collection(name).onSnapshot(
+                    snapshot => {
+                        let hasChanges = false;
+                        this._isInsideSnapshotBatch = true;
+                        try {
+                            snapshot.docChanges().forEach(change => {
+                                const data = change.doc.data() || {};
+                                const evtId = change.doc.id;
+                                const evt = { id: evtId, ...data };
+
+                                if (change.type === 'removed') {
+                                    // 1. Obtener datos previos del evento desde this._eventsMap
+                                    const prev = this._eventsMap.get(evtId);
+                                    const prevEvent = (prev && prev.event) ? prev.event : evt;
+                                    const prevType = (prev && prev.type) ? prev.type : type;
+                                    this._eventsMap.delete(evtId);
+
+                                    // Generar notificación de cancelación/eliminación y disparar push nativo si no ha expirado
+                                    if (!this._isEventExpiredByTTL(prevEvent)) {
+                                        this.handleEventDeleted(prevType, evtId, prevEvent);
+                                    } else {
+                                        this._removeEventActiveNotifs(prevType, evtId);
+                                    }
+                                    hasChanges = true;
+                                } else if (change.type === 'modified') {
+                                    const status = String(evt.status || '').toLowerCase().trim();
+                                    const isCancelled = ['cancelled', 'cancelado', 'suspendido', 'anulado', 'suspended', 'postponed'].includes(status);
+                                    this._eventsMap.set(evtId, { event: evt, type });
+
+                                    // Si un evento cambia a estado cancelado o suspendido
+                                    if (isCancelled) {
+                                        if (!this._isEventExpiredByTTL(evt)) {
+                                            this.handleEventCancelled(type, evtId, evt, status);
+                                        } else {
+                                            this._removeEventActiveNotifs(type, evtId);
+                                        }
+                                    }
+                                    hasChanges = true;
+                                } else {
+                                    // 'added'
+                                    const status = String(evt.status || '').toLowerCase().trim();
+                                    const isCancelled = ['cancelled', 'cancelado', 'suspendido', 'anulado', 'suspended', 'postponed'].includes(status);
+                                    this._eventsMap.set(evtId, { event: evt, type });
+
+                                    if (isCancelled) {
+                                        if (!this._isEventExpiredByTTL(evt)) {
+                                            this.handleEventCancelled(type, evtId, evt, status, !this._hasInitialEventsLoaded);
+                                        } else {
+                                            this._removeEventActiveNotifs(type, evtId);
+                                        }
+                                    }
+                                    hasChanges = true;
+                                }
+                            });
+                        } finally {
+                            this._isInsideSnapshotBatch = false;
+                        }
+
+                        if (hasChanges || !this._hasInitialEventsLoaded) {
+                            this._hasInitialEventsLoaded = true;
+                            this._processEventsFeed();
+                        }
+                    },
+                    err => {
+                        console.warn(`⚠️ [NotificationService] onSnapshot error on collection '${name}':`, err);
+                        if (!directConnectionFailed) {
+                            directConnectionFailed = true;
+                            this._loadEventsFallback();
+                        }
+                    }
+                );
+                this.eventsUnsubscribes.push(unsub);
+            } catch (err) {
+                console.warn(`⚠️ [NotificationService] Error attaching listener to '${name}':`, err);
+                if (!directConnectionFailed) {
+                    directConnectionFailed = true;
+                    this._loadEventsFallback();
+                }
+            }
+        });
+    }
+
+    /**
+     * Fallback para cargar eventos a través de AmericanaService si falla la conexión directa de Firestore
+     */
+    async _loadEventsFallback() {
+        console.log("🔄 [NotificationService] Cargando eventos vía AmericanaService.getAllActiveEvents()...");
+        try {
+            if (!window.AmericanaService) return;
+            const events = await window.AmericanaService.getAllActiveEvents();
+            if (Array.isArray(events) && events.length > 0) {
+                events.forEach(evt => {
+                    const isEntreno = evt.type === 'entreno' ||
+                        String(evt.name || evt.title || '').toLowerCase().includes('entreno');
+                    const type = isEntreno ? 'entreno' : 'americana';
+                    this._eventsMap.set(evt.id, { event: evt, type });
+                });
+                this._processEventsFeed();
+            }
+        } catch (e) {
+            console.error("❌ [NotificationService] Fallback de eventos falló:", e);
+        }
+    }
+
+    /**
+     * Procesa los eventos detectados en el feed y genera notificaciones de nuevos eventos, plazas libres
+     * e integra el registro persistente de eventos cancelados y eliminados.
+     */
+    _processEventsFeed() {
+        const generated = [];
+
+        this._eventsMap.forEach(({ event: evt, type }) => {
+            if (!evt || !evt.id) return;
+
+            const status = String(evt.status || '').toLowerCase().trim();
+            const isCancelled = ['cancelled', 'cancelado', 'suspendido', 'anulado', 'suspended', 'postponed'].includes(status);
+
+            // Si el evento está cancelado o suspendido, no generar aviso de nuevo ni plazas libres
+            if (isCancelled) {
+                this._removeEventActiveNotifs(type, evt.id);
+                // Si el evento está caducado (>48h) o purgado globalmente, no generar aviso
+                if (this._isEventExpiredByTTL(evt) || this._isItemGloballyPurged({ id: `evt_cancelled_${type}_${evt.id}`, eventId: evt.id, title: evt.name })) {
+                    return;
+                }
+                const cId = `evt_cancelled_${type}_${evt.id}`;
+                const cancelledLogs = this._getCancelledEventsLog();
+                if (!cancelledLogs.some(c => c && c.id === cId)) {
+                    this.handleEventCancelled(type, evt.id, evt, status, !this._hasInitialEventsLoaded);
+                }
+                return;
+            }
+
+            const realTimestamp = this._extractEventTimestamp(evt);
+            const timeMs = this._getTimestampValue(realTimestamp);
+            const now = Date.now();
+            const isRecentCreation = !isNaN(timeMs) && (now - timeMs) >= 0 && (now - timeMs) <= (72 * 60 * 60 * 1000);
+
+            const isFinished = ['finished', 'finalizado', 'completed'].includes(status);
+            const isActive = !isFinished;
+
+            // 1. Si el evento es reciente (creado en las últimas 72 horas o activo actualmente)
+            if (isRecentCreation || isActive) {
+                const newId = `evt_new_${type}_${evt.id}`;
+                const isDeleted = localStorage.getItem('sp_evt_deleted_' + newId) === 'true';
+                if (!isDeleted) {
+                    const isRead = localStorage.getItem('sp_evt_read_' + newId) === 'true';
+
+                    const newNotif = {
+                        id: newId,
+                        title: `${type === 'entreno' ? '💪 Nuevo Entreno' : '🏆 Nueva Americana'}: ${evt.name || 'Torneo SomosPadel'}`,
+                        body: `Fecha: ${evt.date || ''} a las ${evt.time || ''} · ${evt.courts || 4} pistas · ${evt.location || 'SomosPadel'}. ¡Inscripciones abiertas!`,
+                        timestamp: realTimestamp,
+                        category: type === 'entreno' ? 'entrenos' : 'matches',
+                        read: isRead,
+                        data: { url: type === 'entreno' ? 'entrenos' : 'americanas', eventId: evt.id, id: newId }
+                    };
+
+                    generated.push(newNotif);
+                    this._checkAndTriggerPush(newNotif);
+                }
+            }
+
+            // 2. Si el evento tiene plazas libres y está abierto
+            const maxPlayers = Number(evt.max_players || evt.maxPlayers || (evt.courts ? evt.courts * 4 : 16));
+            const registeredCount = Array.isArray(evt.players)
+                ? evt.players.length
+                : (Array.isArray(evt.registeredPlayers) ? evt.registeredPlayers.length : 0);
+            const openSpots = maxPlayers - registeredCount;
+            const isOpen = (status === 'open' || !isFinished);
+
+            if (openSpots > 0 && isOpen) {
+                const spotId = `evt_spot_${type}_${evt.id}`;
+                const isSpotDeleted = localStorage.getItem('sp_evt_deleted_' + spotId) === 'true';
+                if (!isSpotDeleted) {
+                    const isSpotRead = localStorage.getItem('sp_evt_read_' + spotId) === 'true';
+
+                    const spotNotif = {
+                        id: spotId,
+                        title: `⚡ ¡${openSpots} ${openSpots === 1 ? 'Plaza Libre' : 'Plazas Libres'}! ${evt.name || 'Torneo'}`,
+                        body: `Quedan ${openSpots} plazas vacantes para jugar el ${evt.date || ''} a las ${evt.time || ''}. ¡Reserva antes de que se completen!`,
+                        timestamp: realTimestamp,
+                        category: type === 'entreno' ? 'entrenos' : 'matches',
+                        read: isSpotRead,
+                        data: { url: type === 'entreno' ? 'entrenos' : 'americanas', eventId: evt.id, id: spotId }
+                    };
+
+                    generated.push(spotNotif);
+                    this._checkAndTriggerPush(spotNotif);
+                }
+            }
+        });
+
+        // 3. Integrar los eventos del registro persistente 'sp_cancelled_events_log'
+        const cancelledLogs = this._getCancelledEventsLog();
+        cancelledLogs.forEach(cNotif => {
+            if (!cNotif || !cNotif.id) return;
+
+            // Respetar si el usuario la ha eliminado individualmente
+            if (localStorage.getItem('sp_evt_deleted_' + cNotif.id) === 'true') return;
+
+            // Respetar si el usuario la ha leído individualmente
+            cNotif.read = localStorage.getItem('sp_evt_read_' + cNotif.id) === 'true';
+
+            // Evitar duplicados en generated
+            if (!generated.some(n => n.id === cNotif.id)) {
+                generated.push(cNotif);
+            }
+        });
+
+        this.eventNotifications = generated;
+        this.notifySubscribers();
+        this.updateAppBadge();
+    }
+
+    /**
+     * Soporte FUERA DE LA APP (Web Push / Push Notifications nativas)
+     * e In-App feedback si está en primer plano.
+     */
+    _checkAndTriggerPush(notif) {
+        if (!notif || !notif.id) return;
+        const id = notif.id;
+
+        if (localStorage.getItem('sp_pushed_' + id) === 'true') {
+            return;
+        }
+
+        const isPushAllowed = (typeof Notification !== 'undefined' && Notification.permission === 'granted') ||
+            (localStorage.getItem('somospadel_push_enabled') === 'true');
+
+        if (isPushAllowed) {
+            this.showNativeNotification(notif.title, notif.body, notif.data);
+            try {
+                localStorage.setItem('sp_pushed_' + id, 'true');
+            } catch (_) {}
+
+            const isForeground = typeof document !== 'undefined' && !document.hidden;
+            if (isForeground) {
+                this.showInAppToast(notif.title, notif.body);
+                if (window.NotificationUi && typeof window.NotificationUi.playNotificationSound === 'function') {
+                    window.NotificationUi.playNotificationSound();
+                }
+            }
+        }
+    }
+
+    stopEventsFeedObserver() {
+        this.eventsUnsubscribes.forEach(unsub => {
+            try { unsub(); } catch (_) {}
+        });
+        this.eventsUnsubscribes = [];
+        this._eventsObserverStarted = false;
     }
 
     /**
@@ -144,12 +1171,15 @@ window.NotificationServiceClass = class NotificationService {
                 }));
 
                 this.notifications = items;
-                this.unreadCount = items.filter(n => !n.read).length;
+                this.unreadCount = this.getMergedNotifications().filter(n => !n.read).length;
 
                 console.log(`🔔 [NotificationService] Updated: ${this.unreadCount} unread`);
 
-                // NEW: Iniciar observación de chats al cargar notificaciones
-                this.initChatObserver();
+                // Iniciar observación de chats al cargar notificaciones (solo la primera vez)
+                if (!this._chatObserverStarted) {
+                    this._chatObserverStarted = true;
+                    this.initChatObserver();
+                }
 
                 // NEW: Visual feedback for local/dev environment
                 let isFirstLoad = !this.hasLoadedInitialBatch;
@@ -157,11 +1187,16 @@ window.NotificationServiceClass = class NotificationService {
                 if (snapshot.docChanges().length > 0) {
                     snapshot.docChanges().forEach(change => {
                         if (change.type === 'added') {
-                            const data = change.doc.data();
+                            const data = change.doc.data() || {};
+                            const changeItem = { id: change.doc.id, ...data };
+                            if (this._isItemGloballyPurged(changeItem) || this._isItemUserDeleted(changeItem)) {
+                                return;
+                            }
+                            const isRead = this._isItemUserRead(changeItem);
 
                             // Only show visual toasts for NEW arrivals after initial load
                             // to prevent clumping on startup
-                            if (!data.read && !isFirstLoad) {
+                            if (!isRead && !isFirstLoad) {
                                 console.log("📣 NEW NOTIFICATION RECEIVED:", data.title, data.body);
                                 // Pasamos el ID del documento para que se pueda borrar nativamente luego
                                 this.showNativeNotification(data.title, data.body, { ...data.data, id: change.doc.id });
@@ -288,8 +1323,8 @@ window.NotificationServiceClass = class NotificationService {
                 this.chatUnsubscribes.set(evt.id, unsub);
             });
 
-            // Forzar actualización inicial por si ya había mensajes
-            this.notifySubscribers();
+            // No llamamos notifySubscribers() aquí incondicionalmente — 
+            // solo se notifica dentro del snapshot cuando hay mensajes realmente nuevos (hasNew=true).
         } catch (e) {
             console.warn("💬 [NotificationService] Chat observation failed:", e);
         }
@@ -312,156 +1347,682 @@ window.NotificationServiceClass = class NotificationService {
     }
 
     /**
-     * Solicita permiso para Push Notifications
+     * Obtiene o genera un identificador único persistente para este navegador/dispositivo
+     */
+    getDeviceId() {
+        let deviceId = null;
+        try {
+            deviceId = localStorage.getItem('sp_device_id');
+        } catch (e) {}
+
+        if (!deviceId) {
+            deviceId = 'dev_' + (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : (Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 9)));
+            try {
+                localStorage.setItem('sp_device_id', deviceId);
+            } catch (e) {
+                console.warn("⚠️ [NotificationService] No se pudo guardar sp_device_id en localStorage:", e);
+            }
+        }
+        return deviceId;
+    }
+
+    /**
+     * Detecta la plataforma del dispositivo actual ('ios', 'android', 'desktop')
+     */
+    getDevicePlatform() {
+        const ua = navigator.userAgent || '';
+        if (/iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+            return 'ios';
+        }
+        if (/android/i.test(ua)) {
+            return 'android';
+        }
+        return 'desktop';
+    }
+
+    /**
+     * Convierte una clave VAPID Base64 URL-safe a Uint8Array (estándar W3C Push API)
+     */
+    _urlB64ToUint8Array(base64String) {
+        if (!base64String || typeof base64String !== 'string') return new Uint8Array(0);
+        const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+        const base64 = (base64String + padding)
+            .replace(/\-/g, '+')
+            .replace(/_/g, '/');
+        const rawData = (typeof window !== 'undefined' && window.atob) ? window.atob(base64) : Buffer.from(base64, 'base64').toString('binary');
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+    }
+
+    /**
+     * Solicita permiso para Push Notifications.
+     * IMPORTANTE: El permiso nativo del navegador se solicita SIEMPRE con soporte Promise y callback,
+     * independientemente de si FCM/messaging está disponible.
+     * El token FCM es opcional y su fallo no impide marcar el permiso como activo.
      */
     async requestPushPermission() {
-        if (!window.messaging) {
-            console.warn("📴 Messaging not supported/blocked. Revisa si usas HTTPS y un navegador moderno.");
-            return false;
-        }
-
-        // DETECCIÓN ESPECÍFICA PARA IPHONE (iOS)
+        // DETECCIÓN ESPECÍFICA PARA IPHONE (iOS) sin modo standalone
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
         if (isIOS && !isStandalone) {
-            window.PremiumModal.alert({
-                title: "📲 INSTALAR EN IPHONE",
-                message: "Para recibir avisos en tu iPhone, añade esta App a tu pantalla de inicio:<br><br>1. Pulsa el botón <strong>'Compartir'</strong> (cuadrado con flecha)<br>2. Selecciona <strong>'Añadir a pantalla de inicio'</strong>",
-                type: 'info'
-            });
+            if (window.PremiumModal) {
+                window.PremiumModal.alert({
+                    title: "📲 INSTALAR EN IPHONE",
+                    message: "Para recibir avisos en tu iPhone, añade esta App a tu pantalla de inicio:<br><br>1. Pulsa el botón <strong>'Compartir'</strong> (cuadrado con flecha)<br>2. Selecciona <strong>'Añadir a pantalla de inicio'</strong>",
+                    type: 'info'
+                });
+            }
+            return false;
+        }
+
+        if (!('Notification' in window)) {
+            console.warn("⚠️ API de Notificaciones no soportada en este entorno.");
             return false;
         }
 
         try {
-            console.log("🔔 Solicitando permiso de notificaciones...");
+            console.log("🔔 Solicitando permiso nativo de notificaciones...");
 
-            if (!('Notification' in window)) {
-                console.warn("⚠️ API de Notificaciones no soportada en este entorno.");
+            // PASO 1: Petición de permiso nativo con soporte dual Promise y callback para navegadores móviles
+            let permission = null;
+            try {
+                const req = Notification.requestPermission();
+                if (req && typeof req.then === 'function') {
+                    permission = await req;
+                } else {
+                    permission = await new Promise(resolve => Notification.requestPermission(resolve));
+                }
+            } catch (permErr) {
+                console.warn("⚠️ Fallback por callback en requestPermission:", permErr);
+                permission = await new Promise(resolve => Notification.requestPermission(resolve));
+            }
+
+            if (permission !== 'granted') {
+                const isDenied = permission === 'denied';
+                console.log(`🚫 Permiso no concedido por el usuario (${permission}).`);
+
+                try {
+                    localStorage.setItem('somospadel_push_enabled', 'false');
+                } catch (_) {}
+
+                await this.savePushSubscriptionStatus(false);
+
+                window.dispatchEvent(new CustomEvent('sp_push_permission_changed', {
+                    detail: { granted: false, denied: isDenied }
+                }));
+
+                if (isDenied && window.PremiumModal) {
+                    window.PremiumModal.alert({
+                        title: "AVISO BLOQUEADO",
+                        message: "Has denegado las notificaciones. No podrás recibir avisos de nuevos partidos o plazas libres en tiempo real.",
+                        type: 'warning'
+                    });
+                }
+
                 return false;
             }
 
-            const permission = await Notification.requestPermission();
+            // PASO 2: Permiso concedido - ACTIVACIÓN INSTANTÁNEA (0ms)
+            console.log("✅ Permiso concedido por el navegador.");
 
-            if (permission === 'granted') {
-                console.log("✅ Permiso concedido. Obteniendo Token FCM...");
+            // 1. Guardar de forma síncrona e inmediata en localStorage
+            try {
+                localStorage.setItem('somospadel_push_enabled', 'true');
+            } catch (_) {}
 
-                // VAPID KEY REAL para el proyecto americanas-somospadel
-                const VAPID_KEY = "BD-Ue7u-m6m999_placeholder_pon_tu_clave_aqui";
-                // Nota: El usuario debería reemplazar este placeholder con su clave pública FCM Cloud Messaging
+            // 2. Emitir evento global DE INMEDIATO para actualizar la UI en 0ms
+            window.dispatchEvent(new CustomEvent('sp_push_permission_changed', {
+                detail: { granted: true }
+            }));
 
+            // 3. Disparar notificación push de bienvenida real al dispositivo
+            this.sendWelcomeNotification().catch(err => {
+                console.warn("⚠️ Error en notificación de bienvenida:", err);
+            });
+
+            // 4. Tareas en segundo plano (Firestore, Web Push nativo y FCM) sin bloquear al usuario
+            (async () => {
                 try {
-                    const currentToken = await window.messaging.getToken({
-                        vapidKey: VAPID_KEY.includes('placeholder') ? undefined : VAPID_KEY
-                    });
+                    // Persistir en Firestore en perfil del usuario y subcolección devices
+                    await this.savePushSubscriptionStatus(true);
 
-                    if (currentToken) {
-                        this.token = currentToken;
-                        console.log("🔑 FCM Token Generado:", currentToken);
-                        await this.saveTokenToProfile(currentToken);
-                        return true;
-                    } else {
-                        console.warn("⚠️ No se pudo generar el token (Token vacío).");
+                    let swReg = null;
+                    if ('serviceWorker' in navigator) {
+                        try { swReg = await navigator.serviceWorker.ready; } catch (_) {}
                     }
-                } catch (tokenError) {
-                    console.error("🚨 Error grave obteniendo Token FCM. Posible VAPID incorrecto o Service Worker no registrado:", tokenError);
+
+                    const VAPID_KEY = "BCQ_YjYrpwremCwo-xQhtP1x5TDi39LWQ2fuwnBAcyjxN3bJTD8WtXNYsFM7IDxHd3hzEPn2z7JRsLdT0l2L87E";
+                    let nativePushSub = null;
+
+                    // A. Suscripción nativa Web Push mediante W3C PushManager (funciona aunque FCM falle)
+                    if (swReg && swReg.pushManager && VAPID_KEY && !VAPID_KEY.includes('placeholder')) {
+                        try {
+                            const convertedKey = this._urlB64ToUint8Array(VAPID_KEY);
+                            nativePushSub = await swReg.pushManager.getSubscription();
+                            if (!nativePushSub) {
+                                nativePushSub = await swReg.pushManager.subscribe({
+                                    userVisibleOnly: true,
+                                    applicationServerKey: convertedKey
+                                });
+                            }
+                            console.log("📡 [PushManager] Suscripción nativa Web Push OK:", nativePushSub.endpoint);
+                        } catch (subErr) {
+                            console.warn("⚠️ [PushManager] Aviso en suscripción nativa:", subErr);
+                        }
+                    }
+
+                    // B. Registro de Token FCM si Firebase Messaging está activo
+                    let currentFcmToken = null;
+                    if (window.messaging) {
+                        try {
+                            const tokenOptions = {};
+                            if (VAPID_KEY && !VAPID_KEY.includes('placeholder')) {
+                                tokenOptions.vapidKey = VAPID_KEY;
+                            }
+                            if (swReg) {
+                                tokenOptions.serviceWorkerRegistration = swReg;
+                            }
+                            currentFcmToken = await window.messaging.getToken(tokenOptions);
+                            if (currentFcmToken) {
+                                this.token = currentFcmToken;
+                                console.log("🔑 FCM Token Registrado:", currentFcmToken);
+                            }
+                        } catch (fcmErr) {
+                            console.warn("⚠️ [FCM] Aviso obteniendo token FCM:", fcmErr.message || fcmErr);
+                        }
+                    }
+
+                    // C. Guardar en el perfil del jugador en Firestore con dualidad token / pushSubscription
+                    const primaryToken = currentFcmToken || (nativePushSub ? nativePushSub.endpoint : null);
+                    if (primaryToken || nativePushSub) {
+                        await this.saveTokenToProfile(primaryToken, nativePushSub);
+                    }
+                } catch (bgErr) {
+                    console.warn("⚠️ Sincronización push en segundo plano:", bgErr.message || bgErr);
                 }
-            } else {
-                console.log("🚫 Permiso denegado por el usuario.");
-                window.PremiumModal.alert({
-                    title: "AVISO BLOCK",
-                    message: "Has denegado las notificaciones. No podrás recibir avisos de nuevos partidos en tiempo real.",
-                    type: 'warning'
-                });
-            }
+            })();
+
+            return true;
+
         } catch (e) {
             console.error("🚨 Error en el flujo de permisos:", e);
+            const isGranted = typeof Notification !== 'undefined' && Notification.permission === 'granted';
+            if (isGranted) {
+                try { localStorage.setItem('somospadel_push_enabled', 'true'); } catch (_) {}
+                window.dispatchEvent(new CustomEvent('sp_push_permission_changed', { detail: { granted: true } }));
+                this.savePushSubscriptionStatus(true).catch(() => {});
+            }
+            return isGranted;
         }
-        return false;
     }
 
+    /**
+     * Persiste el estado de suscripción de notificaciones push tanto en localStorage
+     * como en Firestore (perfil del jugador y subcolección de devices).
+     * @param {boolean} granted
+     */
+    async savePushSubscriptionStatus(granted) {
+        try {
+            localStorage.setItem('somospadel_push_enabled', granted ? 'true' : 'false');
+        } catch (storageErr) {
+            console.warn("⚠️ [NotificationService] Error guardando estado push en localStorage:", storageErr);
+        }
+
+        const uid = this.currentUserUid || (window.auth && window.auth.currentUser?.uid) || (window.Store ? window.Store.getState('currentUser')?.uid : null);
+        if (!uid || !window.db) {
+            console.log("ℹ️ [NotificationService] savePushSubscriptionStatus: Usuario no autenticado o Firestore no inicializado.");
+            return;
+        }
+
+        const deviceId = this.getDeviceId();
+        const platform = this.getDevicePlatform();
+        const nowIso = new Date().toISOString();
+        const permStatus = granted ? 'granted' : (typeof Notification !== 'undefined' ? Notification.permission : 'denied');
+        const serverTs = (typeof firebase !== 'undefined' && firebase?.firestore?.FieldValue?.serverTimestamp)
+            ? firebase.firestore.FieldValue.serverTimestamp()
+            : ((window.firebase && window.firebase.firestore && window.firebase.firestore.FieldValue)
+                ? window.firebase.firestore.FieldValue.serverTimestamp()
+                : nowIso);
+
+        try {
+            // 1. Guardar en perfil del usuario
+            const profileData = {
+                push_notifications_enabled: !!granted,
+                push_permission: permStatus,
+                push_platform: platform,
+                push_updated_at: serverTs,
+                last_push_status_update: nowIso
+            };
+            if (granted) {
+                profileData.last_push_enabled_at = nowIso;
+            } else {
+                profileData.last_push_disabled_at = nowIso;
+            }
+
+            await window.db.collection('players').doc(uid).set(profileData, { merge: true });
+
+            // 2. Guardar en subcolección de devices
+            const deviceData = {
+                deviceId: deviceId,
+                platform: platform,
+                push_enabled: !!granted,
+                push_permission: permStatus,
+                userAgent: navigator.userAgent || '',
+                updated_at: serverTs,
+                last_active: nowIso
+            };
+
+            await window.db.collection('players').doc(uid)
+                .collection('devices').doc(deviceId)
+                .set(deviceData, { merge: true });
+
+            console.log(`📡 [NotificationService] Estado push persistido en Firestore: granted=${granted} [${platform} / ${deviceId}]`);
+        } catch (dbErr) {
+            console.error("❌ [NotificationService] Error guardando estado push en Firestore:", dbErr);
+        }
+    }
+
+    /**
+     * Envía una notificación nativa real de prueba/bienvenida al dispositivo
+     * @param {ServiceWorkerRegistration} [swReg]
+     */
+    async sendWelcomeNotification(swReg = null) {
+        if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+        try {
+            let registration = swReg;
+            if (!registration && 'serviceWorker' in navigator) {
+                try {
+                    registration = await navigator.serviceWorker.ready;
+                } catch (swErr) {
+                    console.warn("⚠️ [NotificationService] ServiceWorker no listo para bienvenida:", swErr);
+                }
+            }
+
+            const title = '🎾 ¡Alertas Push Activadas!';
+            const options = {
+                body: 'Ya tienes activados los avisos en tiempo real para partidos, plazas libres y chat.',
+                icon: 'img/logo_somospadel.png',
+                badge: 'img/logo_somospadel.png',
+                data: { url: './', type: 'welcome' },
+                vibrate: [200, 100, 200],
+                tag: 'somospadel-welcome',
+                renotify: true
+            };
+
+            if (registration && typeof registration.showNotification === 'function') {
+                await registration.showNotification(title, options);
+                console.log("🔔 [NotificationService] Notificación de bienvenida enviada vía Service Worker");
+            } else {
+                new Notification(title, options);
+                console.log("🔔 [NotificationService] Notificación de bienvenida enviada vía Window Notification");
+            }
+        } catch (err) {
+            console.warn("⚠️ [NotificationService] No se pudo lanzar la notificación de bienvenida:", err);
+        }
+    }
+
+    /**
+     * Sincroniza automáticamente el estado de permisos y suscripción al iniciar la app.
+     */
     async checkPermissionStatus() {
         if (!('Notification' in window)) return;
 
-        if (Notification.permission === 'granted' && window.messaging) {
-            const token = await window.messaging.getToken();
-            if (token) this.saveTokenToProfile(token);
+        const currentPerm = Notification.permission;
+        console.log(`🔔 [NotificationService] checkPermissionStatus: permiso actual = ${currentPerm}`);
+
+        if (currentPerm === 'granted') {
+            try {
+                localStorage.setItem('somospadel_push_enabled', 'true');
+            } catch (_) {}
+
+            await this.savePushSubscriptionStatus(true);
+
+            // Intentar sincronizar token FCM si messaging está activo
+            if (window.messaging) {
+                try {
+                    let swRegistration = undefined;
+                    if ('serviceWorker' in navigator) {
+                        try {
+                            swRegistration = await navigator.serviceWorker.ready;
+                        } catch (swErr) {
+                            // Fallback silencioso
+                        }
+                    }
+
+                    const VAPID_KEY = "BCQ_YjYrpwremCwo-xQhtP1x5TDi39LWQ2fuwnBAcyjxN3bJTD8WtXNYsFM7IDxHd3hzEPn2z7JRsLdT0l2L87E";
+                    const tokenOptions = {};
+                    if (VAPID_KEY && !VAPID_KEY.includes('placeholder')) {
+                        tokenOptions.vapidKey = VAPID_KEY;
+                    }
+                    if (swRegistration) {
+                        tokenOptions.serviceWorkerRegistration = swRegistration;
+                    }
+
+                    const token = await window.messaging.getToken(tokenOptions);
+                    if (token) {
+                        this.token = token;
+                        await this.saveTokenToProfile(token);
+                    }
+                } catch (e) {
+                    console.warn("⚠️ [NotificationService] Error al sincronizar token existente al inicio:", e);
+                }
+            }
+
+            window.dispatchEvent(new CustomEvent('sp_push_permission_changed', {
+                detail: { granted: true }
+            }));
+        } else if (currentPerm === 'denied') {
+            try {
+                localStorage.setItem('somospadel_push_enabled', 'false');
+            } catch (_) {}
+
+            await this.savePushSubscriptionStatus(false);
+
+            window.dispatchEvent(new CustomEvent('sp_push_permission_changed', {
+                detail: { granted: false, denied: true }
+            }));
+        } else {
+            // 'default' (sin decidir aún)
+            try {
+                const wasEnabled = localStorage.getItem('somospadel_push_enabled') === 'true';
+                if (wasEnabled) {
+                    localStorage.setItem('somospadel_push_enabled', 'false');
+                }
+            } catch (_) {}
+
+            window.dispatchEvent(new CustomEvent('sp_push_permission_changed', {
+                detail: { granted: false, denied: false }
+            }));
         }
     }
 
-    async saveTokenToProfile(token) {
-        const user = window.auth.currentUser;
-        if (!user) return;
+    /**
+     * Sincroniza el token del dispositivo (alias explícito)
+     */
+    async syncDeviceToken(token) {
+        return this.saveTokenToProfile(token);
+    }
 
-        await window.db.collection('players').doc(user.uid).set({
-            fcm_token: token,
-            last_token_update: new Date().toISOString()
-        }, { merge: true });
+    /**
+     * Registra o actualiza el dispositivo en la subcolección players/{userId}/devices/{deviceId}
+     * y mantiene fcm_token en el perfil del jugador para compatibilidad.
+     */
+    async saveTokenToProfile(token, pushSubscription = null) {
+        if (!token && !pushSubscription) return;
+
+        const uid = this.currentUserUid || (window.auth && window.auth.currentUser?.uid) || (window.Store ? window.Store.getState('currentUser')?.uid : null);
+        if (!uid || !window.db) {
+            console.warn("⚠️ [NotificationService] No se puede guardar token: Usuario no autenticado o Firestore no inicializado.");
+            return;
+        }
+
+        const deviceId = this.getDeviceId();
+        const platform = this.getDevicePlatform();
+        const nowIso = new Date().toISOString();
+        const serverTs = (typeof firebase !== 'undefined' && firebase?.firestore?.FieldValue?.serverTimestamp)
+            ? firebase.firestore.FieldValue.serverTimestamp()
+            : ((window.firebase && window.firebase.firestore && window.firebase.firestore.FieldValue)
+                ? window.firebase.firestore.FieldValue.serverTimestamp()
+                : nowIso);
+
+        const subJson = pushSubscription ? (typeof pushSubscription.toJSON === 'function' ? pushSubscription.toJSON() : pushSubscription) : null;
+        const finalToken = token || subJson?.endpoint || '';
+
+        try {
+            // 1. Registrar en subcolección multi-dispositivo players/{userId}/devices/{deviceId}
+            const deviceData = {
+                token: finalToken,
+                deviceId: deviceId,
+                platform: platform,
+                push_enabled: true,
+                push_permission: 'granted',
+                userAgent: navigator.userAgent || '',
+                updated_at: serverTs,
+                last_active: nowIso
+            };
+            if (subJson) {
+                deviceData.subscription = subJson;
+                deviceData.endpoint = subJson.endpoint || '';
+            }
+
+            await window.db.collection('players').doc(uid)
+                .collection('devices').doc(deviceId).set(deviceData, { merge: true });
+
+            // 2. Actualizar campo de compatibilidad en documento raíz de jugador
+            const rootUpdate = {
+                fcm_token: token || finalToken,
+                push_notifications_enabled: true,
+                push_permission: 'granted',
+                last_token_update: nowIso,
+                last_platform: platform
+            };
+            if (subJson) {
+                rootUpdate.push_subscription = subJson;
+            }
+
+            await window.db.collection('players').doc(uid).set(rootUpdate, { merge: true });
+
+            console.log(`📱 [NotificationService] Dispositivo registrado con éxito [${platform} / ${deviceId}]`);
+        } catch (err) {
+            console.error("❌ [NotificationService] Error registrando dispositivo en Firestore:", err);
+        }
     }
 
     /**
      * Marca una notificación como leída
      */
     async markAsRead(notificationId) {
-        const user = window.auth.currentUser;
-        if (!user) return;
+        if (!notificationId) return;
 
-        await window.db.collection('players').doc(user.uid)
-            .collection('notifications').doc(notificationId)
-            .update({ read: true });
+        // 1. Registrar siempre en localStorage para persistencia garantizada
+        try {
+            localStorage.setItem('sp_read_notif_' + notificationId, 'true');
+        } catch (_) {}
 
-        // Intentar cerrar la notificación nativa en la bandeja de entrada
+        if (notificationId === 'system_radar_clima_relocated') {
+            try { localStorage.setItem('sp_radar_relocated_notif_read', 'true'); } catch (_) {}
+        }
+
+        if (String(notificationId).startsWith('evt_')) {
+            try { localStorage.setItem('sp_evt_read_' + notificationId, 'true'); } catch (_) {}
+        }
+
+        // Buscar datos en memoria para asociar broadcastId o eventId
+        const allItems = [
+            ...(this.notifications || []),
+            ...(this.eventNotifications || []),
+            ...(this.chatNotifications || []),
+            ...this._getCancelledEventsLog()
+        ];
+        const targetItem = allItems.find(n => n && (n.id === notificationId || n.data?.broadcastId === notificationId));
+        if (targetItem?.data?.broadcastId) {
+            try { localStorage.setItem('sp_read_notif_' + targetItem.data.broadcastId, 'true'); } catch (_) {}
+        }
+
+        // Marcar en memoria
+        if (targetItem) {
+            targetItem.read = true;
+        }
+        const notifMem = (this.notifications || []).find(n => n && n.id === notificationId);
+        if (notifMem) notifMem.read = true;
+        const evtMem = (this.eventNotifications || []).find(n => n && n.id === notificationId);
+        if (evtMem) evtMem.read = true;
+        const chatMem = (this.chatNotifications || []).find(n => n && n.id === notificationId);
+        if (chatMem) chatMem.read = true;
+
         this.clearNativeNotification(notificationId);
 
-        // Optimistic UI update
-        const notif = this.notifications.find(n => n.id === notificationId);
-        if (notif && !notif.read) {
-            notif.read = true;
-            this.unreadCount = Math.max(0, this.unreadCount - 1);
-            this.notifySubscribers();
+        // Recalcular contador y notificar
+        this.unreadCount = this.getMergedNotifications().filter(n => !n.read).length;
+        this.updateAppBadge();
+        this.notifySubscribers();
+
+        // Si es de Firestore, actualizar en background
+        const uid = this.currentUserUid || (window.auth && window.auth.currentUser?.uid) || (window.Store && window.Store.getState('currentUser')?.uid);
+        if (uid && window.db && !String(notificationId).startsWith('evt_') && !String(notificationId).startsWith('chat_') && notificationId !== 'system_radar_clima_relocated') {
+            try {
+                await window.db.collection('players').doc(uid)
+                    .collection('notifications').doc(notificationId)
+                    .update({ read: true });
+            } catch (e) {
+                console.warn("⚠️ [NotificationService] Error actualizando read en Firestore:", e?.message);
+            }
         }
     }
 
     async deleteNotification(notificationId) {
         console.log("🗑️ [NotificationService] Deleting notification:", notificationId);
 
-        // Soporte para borrar chats (solo local)
-        if (notificationId.startsWith('chat_')) {
-            this.chatNotifications = this.chatNotifications.filter(n => n.id !== notificationId);
-            this.notifySubscribers();
-            return;
-        }
+        if (!notificationId) return;
 
-        const uid = this.currentUserUid || window.auth.currentUser?.uid || window.Store?.getState('currentUser')?.uid;
-        if (!uid) {
-            console.error("❌ [NotificationService] Cannot delete: No user UID found");
-            return;
-        }
-
+        // 1. Lápida de borrado permanente en localStorage SIEMPRE
         try {
-            console.log(`📡 [NotificationService] Deleting from: players/${uid}/notifications/${notificationId}`);
-            await window.db.collection('players').doc(uid)
-                .collection('notifications').doc(notificationId)
-                .delete();
-            console.log("✅ [NotificationService] Firestore delete success");
+            localStorage.setItem('sp_deleted_notif_' + notificationId, 'true');
+            localStorage.setItem('sp_read_notif_' + notificationId, 'true');
+        } catch (_) {}
 
-            // Intentar cerrar la notificación nativa
-            this.clearNativeNotification(notificationId);
+        if (notificationId === 'system_radar_clima_relocated') {
+            try {
+                localStorage.setItem('sp_radar_relocated_notif_read', 'true');
+                localStorage.setItem('sp_radar_relocated_notif_deleted', 'true');
+            } catch (_) {}
+        }
 
-            // Optimistic update
-            this.notifications = this.notifications.filter(n => n.id !== notificationId);
-            this.unreadCount = this.notifications.filter(n => !n.read).length;
-            this.notifySubscribers();
-        } catch (e) {
-            console.error("Error deleting notification:", e);
+        if (String(notificationId).startsWith('evt_')) {
+            try {
+                localStorage.setItem('sp_evt_deleted_' + notificationId, 'true');
+                localStorage.setItem('sp_evt_read_' + notificationId, 'true');
+            } catch (_) {}
+        }
+
+        // 2. Extraer metadatos para lápida profunda (broadcastId, eventId, firma de texto)
+        const allItems = [
+            ...(this.notifications || []),
+            ...(this.eventNotifications || []),
+            ...(this.chatNotifications || []),
+            ...this._getCancelledEventsLog()
+        ];
+        const targetItem = allItems.find(n => n && (n.id === notificationId || n.data?.broadcastId === notificationId || n.data?.eventId === notificationId));
+
+        if (targetItem) {
+            const bId = targetItem.data?.broadcastId || targetItem.broadcastId;
+            if (bId) {
+                try {
+                    localStorage.setItem('sp_deleted_notif_' + bId, 'true');
+                    localStorage.setItem('sp_read_notif_' + bId, 'true');
+                } catch (_) {}
+            }
+            const eId = targetItem.data?.eventId || targetItem.eventId;
+            if (eId) {
+                try {
+                    localStorage.setItem('sp_deleted_notif_' + eId, 'true');
+                    localStorage.setItem('sp_evt_deleted_' + eId, 'true');
+                    localStorage.setItem('sp_read_notif_' + eId, 'true');
+                } catch (_) {}
+            }
+            const t = String(targetItem.title || targetItem.name || '').trim();
+            const b = String(targetItem.body || targetItem.text || targetItem.message || '').trim();
+            if (t || b) {
+                try {
+                    localStorage.setItem(`sp_deleted_sig_${t}|${b}`, 'true');
+                } catch (_) {}
+            }
+        }
+
+        // 3. Si está en sp_cancelled_events_log, retirarlo del array
+        try {
+            const log = this._getCancelledEventsLog();
+            const updated = log.filter(item => {
+                if (!item) return false;
+                if (item.id === notificationId) return false;
+                if (targetItem && targetItem.id === item.id) return false;
+                const itEvtId = item.data?.eventId || item.eventId;
+                if (itEvtId && (itEvtId === notificationId || (targetItem && (targetItem.data?.eventId || targetItem.eventId) === itEvtId))) return false;
+                return true;
+            });
+            localStorage.setItem('sp_cancelled_events_log', JSON.stringify(updated));
+        } catch (_) {}
+
+        // 4. Limpieza en memoria inmediata
+        this.notifications = (this.notifications || []).filter(n => n && n.id !== notificationId && (!targetItem || n.id !== targetItem.id));
+        this.eventNotifications = (this.eventNotifications || []).filter(n => n && n.id !== notificationId && (!targetItem || n.id !== targetItem.id));
+        this.chatNotifications = (this.chatNotifications || []).filter(n => n && n.id !== notificationId && (!targetItem || n.id !== targetItem.id));
+
+        // 5. Cerrar notificación nativa
+        this.clearNativeNotification(notificationId);
+
+        // 6. Recalcular contador y notificar subscribers INMEDIATAMENTE
+        this.unreadCount = this.getMergedNotifications().filter(n => !n.read).length;
+        this.updateAppBadge();
+        this.notifySubscribers();
+
+        // 7. Borrado en Firestore si aplica (background sin bloquear ni revertir local)
+        const uid = this.currentUserUid || (window.auth && window.auth.currentUser?.uid) || (window.Store && window.Store.getState('currentUser')?.uid);
+        if (uid && window.db && !String(notificationId).startsWith('evt_') && !String(notificationId).startsWith('chat_') && notificationId !== 'system_radar_clima_relocated') {
+            try {
+                console.log(`📡 [NotificationService] Deleting from: players/${uid}/notifications/${notificationId}`);
+                await window.db.collection('players').doc(uid)
+                    .collection('notifications').doc(notificationId)
+                    .delete();
+                console.log("✅ [NotificationService] Firestore delete success");
+            } catch (e) {
+                console.warn("⚠️ [NotificationService] Firestore delete failed/offline, local tombstone preserved:", e?.message);
+            }
         }
     }
 
     async deleteAllMyNotifications(skipConfirm = false) {
-        const uid = this.currentUserUid || window.auth.currentUser?.uid || window.Store?.getState('currentUser')?.uid;
-        if (!uid) return;
+        const uid = this.currentUserUid || (window.auth && window.auth.currentUser?.uid) || (window.Store && window.Store.getState('currentUser')?.uid);
 
         if (!skipConfirm && !confirm("¿Seguro que quieres borrar todas tus notificaciones?")) return;
+
+        // 1. Obtener todas las notificaciones actuales y marcar lápida de borrado local permanente
+        try {
+            const allItems = this.getMergedNotifications();
+            allItems.forEach(n => {
+                if (!n || !n.id) return;
+                try {
+                    localStorage.setItem('sp_deleted_notif_' + n.id, 'true');
+                    localStorage.setItem('sp_read_notif_' + n.id, 'true');
+                    if (String(n.id).startsWith('evt_')) {
+                        localStorage.setItem('sp_evt_deleted_' + n.id, 'true');
+                        localStorage.setItem('sp_evt_read_' + n.id, 'true');
+                    }
+                    if (n.data?.broadcastId) {
+                        localStorage.setItem('sp_deleted_notif_' + n.data.broadcastId, 'true');
+                        localStorage.setItem('sp_read_notif_' + n.data.broadcastId, 'true');
+                    }
+                    const t = String(n.title || n.name || '').trim();
+                    const b = String(n.body || n.text || n.message || '').trim();
+                    if (t || b) {
+                        localStorage.setItem(`sp_deleted_sig_${t}|${b}`, 'true');
+                    }
+                } catch (_) {}
+            });
+        } catch (_) {}
+
+        // 2. Limpiar radar y logs de cancelaciones
+        try {
+            localStorage.setItem('sp_radar_relocated_notif_read', 'true');
+            localStorage.setItem('sp_radar_relocated_notif_deleted', 'true');
+            localStorage.removeItem('sp_cancelled_events_log');
+        } catch (_) {}
+
+        // 3. Limpieza en memoria inmediata
+        this.notifications = [];
+        this.eventNotifications = [];
+        this.chatNotifications = [];
+        this.unreadCount = 0;
+        this.clearAllNativeNotifications();
+        this.updateAppBadge();
+        this.notifySubscribers();
+
+        if (!uid || !window.db) return;
 
         try {
             const snapshot = await window.db.collection('players').doc(uid).collection('notifications').get();
@@ -471,34 +2032,63 @@ window.NotificationServiceClass = class NotificationService {
             snapshot.docs.forEach(doc => batch.delete(doc.ref));
             await batch.commit();
 
-            console.log("🧹 [NotificationService] User notifications cleared");
-
-            // Local cleanup
-            this.notifications = [];
-            this.unreadCount = 0;
-            this.clearAllNativeNotifications();
-            this.notifySubscribers();
+            console.log("🧹 [NotificationService] User notifications cleared in Firestore");
         } catch (e) {
             console.error("Error clearing notifications:", e);
         }
     }
 
     async markAllAsRead() {
-        const user = window.auth.currentUser;
-        if (!user) return;
+        try { localStorage.setItem('sp_radar_relocated_notif_read', 'true'); } catch (_) {}
 
-        const batch = window.db.batch();
-        const unread = this.notifications.filter(n => !n.read);
-
-        unread.forEach(n => {
-            const ref = window.db.collection('players').doc(user.uid).collection('notifications').doc(n.id);
-            batch.update(ref, { read: true });
+        // 1. Registrar lectura persistente para todos los items
+        const allItems = this.getMergedNotifications();
+        allItems.forEach(n => {
+            if (!n || !n.id) return;
+            n.read = true;
+            try {
+                localStorage.setItem('sp_read_notif_' + n.id, 'true');
+                if (String(n.id).startsWith('evt_')) {
+                    localStorage.setItem('sp_evt_read_' + n.id, 'true');
+                }
+                if (n.data?.broadcastId) {
+                    localStorage.setItem('sp_read_notif_' + n.data.broadcastId, 'true');
+                }
+            } catch (_) {}
         });
 
-        await batch.commit();
+        if (Array.isArray(this.notifications)) {
+            this.notifications.forEach(n => { if (n) n.read = true; });
+        }
+        if (Array.isArray(this.eventNotifications)) {
+            this.eventNotifications.forEach(n => { if (n) n.read = true; });
+        }
+        if (Array.isArray(this.chatNotifications)) {
+            this.chatNotifications.forEach(n => { if (n) n.read = true; });
+        }
 
-        // Limpiar TODA la bandeja de entrada nativa
+        this.unreadCount = 0;
         this.clearAllNativeNotifications();
+        this.updateAppBadge();
+        this.notifySubscribers();
+
+        // 2. En Firestore si existe sesión
+        const uid = this.currentUserUid || (window.auth && window.auth.currentUser?.uid) || (window.Store && window.Store.getState('currentUser')?.uid);
+        if (uid && window.db) {
+            try {
+                const unreadFirestore = (this.notifications || []).filter(n => n && !n.read);
+                if (unreadFirestore.length > 0) {
+                    const batch = window.db.batch();
+                    unreadFirestore.forEach(n => {
+                        const ref = window.db.collection('players').doc(uid).collection('notifications').doc(n.id);
+                        batch.update(ref, { read: true });
+                    });
+                    await batch.commit();
+                }
+            } catch (e) {
+                console.warn("⚠️ [NotificationService] Error marcando todo leído en Firestore:", e?.message);
+            }
+        }
     }
 
     /**
@@ -688,7 +2278,946 @@ window.NotificationServiceClass = class NotificationService {
             }, 300);
         }, 5000);
     }
+
+    /**
+     * Elimina una notificación de forma global para TODOS los jugadores del sistema.
+     * Solo ejecutable por SuperAdmin.
+     * @param {string} targetId
+     * @param {object} meta { broadcastId, eventId, title, ... }
+     * @returns {Promise<{ success: boolean, deletedFromPlayersCount: number, broadcastDeleted: boolean }>}
+     */
+    async deleteNotificationGlobally(targetId, meta = {}) {
+        if (!targetId && !meta?.broadcastId) {
+            throw new Error("Se requiere targetId o meta.broadcastId para eliminar globalmente.");
+        }
+
+        // Verificación de rol SuperAdmin
+        const currentUser = (window.Store && window.Store.getState('currentUser')) || window.auth?.currentUser || window.AdminAuth?.user || {};
+        const role = (currentUser.role || window.AdminAuth?.user?.role || '').toString().toLowerCase().trim();
+        const isSuperAdmin = ['super_admin', 'superadmin'].includes(role) ||
+            (window.AdminAuth && typeof window.AdminAuth.hasAdminRole === 'function' && window.AdminAuth.hasAdminRole(role));
+
+        if (!isSuperAdmin) {
+            throw new Error("Acceso denegado: Se requieren privilegios de SuperAdmin para purgar notificaciones globalmente.");
+        }
+
+        if (!window.db) {
+            throw new Error("Base de datos Firestore no disponible.");
+        }
+
+        const idToPurge = String(targetId || meta.broadcastId).trim();
+        let broadcastDeleted = false;
+
+        // 1. Borrar documento en la colección 'broadcasts' de Firestore si existe
+        const broadcastIdsToCheck = new Set();
+        if (meta?.broadcastId) broadcastIdsToCheck.add(String(meta.broadcastId).trim());
+        if (idToPurge) broadcastIdsToCheck.add(idToPurge);
+
+        for (const bId of broadcastIdsToCheck) {
+            if (!bId) continue;
+            try {
+                const bRef = window.db.collection('broadcasts').doc(bId);
+                const bSnap = await bRef.get();
+                if (bSnap.exists) {
+                    await bRef.delete();
+                    broadcastDeleted = true;
+                    console.log(`📢 [NotificationService] Broadcast '${bId}' eliminado de Firestore.`);
+                }
+            } catch (bErr) {
+                console.warn(`⚠️ [NotificationService] Error borrando broadcast '${bId}':`, bErr);
+            }
+        }
+
+        // 2. Registrar el ID y todas sus firmas derivadas en system_config/purged_notifications
+        const FieldValue = window.firebase?.firestore?.FieldValue;
+        let evtId = meta?.eventId || meta?.data?.eventId;
+        if (!evtId) {
+            const match = String(idToPurge).match(/^(?:evt_(?:cancelled|new|spot)_(?:entreno|americana)_|notif_cancelled_|notif_deleted_)(.+)$/);
+            if (match) {
+                evtId = match[1];
+            }
+        }
+
+        const purgedIdsToAdd = [idToPurge];
+        if (evtId) {
+            purgedIdsToAdd.push(
+                evtId,
+                `evt_cancelled_entreno_${evtId}`,
+                `evt_cancelled_americana_${evtId}`,
+                `evt_new_entreno_${evtId}`,
+                `evt_new_americana_${evtId}`,
+                `evt_spot_entreno_${evtId}`,
+                `evt_spot_americana_${evtId}`,
+                `notif_cancelled_${evtId}`,
+                `notif_deleted_${evtId}`
+            );
+        }
+        if (meta?.broadcastId && String(meta.broadcastId).trim() !== idToPurge) {
+            purgedIdsToAdd.push(String(meta.broadcastId).trim());
+        }
+        if (meta?.title && String(meta.title).trim()) {
+            purgedIdsToAdd.push(String(meta.title).trim());
+        }
+
+        try {
+            const configRef = window.db.collection('system_config').doc('purged_notifications');
+            if (FieldValue && typeof FieldValue.arrayUnion === 'function') {
+                await configRef.set({
+                    purgedIds: FieldValue.arrayUnion(...purgedIdsToAdd),
+                    updatedAt: FieldValue.serverTimestamp ? FieldValue.serverTimestamp() : new Date().toISOString()
+                }, { merge: true });
+            } else {
+                const docSnap = await configRef.get();
+                const existing = (docSnap.exists && Array.isArray(docSnap.data()?.purgedIds)) ? docSnap.data().purgedIds : [];
+                const merged = Array.from(new Set([...existing, ...purgedIdsToAdd]));
+                await configRef.set({
+                    purgedIds: merged,
+                    updatedAt: new Date().toISOString()
+                }, { merge: true });
+            }
+            console.log("🛡️ [NotificationService] IDs registrados en system_config/purged_notifications:", purgedIdsToAdd);
+        } catch (cfgErr) {
+            console.warn("⚠️ [NotificationService] Error al actualizar purged_notifications en Firestore:", cfgErr);
+        }
+
+        // Actualizar instantáneamente en el Set local y notificar UI
+        if (this.globalPurgedIds) {
+            purgedIdsToAdd.forEach(id => this.globalPurgedIds.add(id));
+        }
+
+        // Limpiar de sp_cancelled_events_log en localStorage
+        try {
+            const rawLogs = localStorage.getItem('sp_cancelled_events_log');
+            if (rawLogs) {
+                const logs = JSON.parse(rawLogs);
+                if (Array.isArray(logs)) {
+                    const remaining = logs.filter(item => {
+                        if (!item) return false;
+                        if (purgedIdsToAdd.includes(item.id)) return false;
+                        const itemEvtId = item.data?.eventId || item.eventId;
+                        if (itemEvtId && (purgedIdsToAdd.includes(itemEvtId) || (evtId && itemEvtId === evtId))) return false;
+                        if (meta?.title && String(item.title || '').trim().toLowerCase() === String(meta.title).trim().toLowerCase()) return false;
+                        return true;
+                    });
+                    localStorage.setItem('sp_cancelled_events_log', JSON.stringify(remaining));
+                }
+            }
+        } catch (_) {}
+
+        // Marcar localmente como eliminados para evitar reaparición
+        purgedIdsToAdd.forEach(id => {
+            try { localStorage.setItem('sp_evt_deleted_' + id, 'true'); } catch (_) {}
+        });
+
+        this.notifySubscribers();
+
+        // 3. Realizar fan-out de borrado en Firestore por lotes (batch) en las subcolecciones 'notifications' de cada jugador
+        let deletedFromPlayersCount = 0;
+        const targetBroadcastId = meta?.broadcastId || idToPurge;
+        const targetTitle = meta?.title ? String(meta.title).trim() : null;
+
+        try {
+            const playersSnap = await window.db.collection('players').get();
+            if (!playersSnap.empty) {
+                const playerDocs = playersSnap.docs;
+                const allRefsToDelete = [];
+
+                const inspectPlayer = async (pDoc) => {
+                    const playerNotifsRef = window.db.collection('players').doc(pDoc.id).collection('notifications');
+                    const matchedRefs = new Map();
+
+                    // Comprobación A: ID idéntico al targetId
+                    try {
+                        const directDoc = await playerNotifsRef.doc(idToPurge).get();
+                        if (directDoc.exists) {
+                            matchedRefs.set(directDoc.ref.path, directDoc.ref);
+                        }
+                    } catch (_) {}
+
+                    // Comprobación B: data.broadcastId === targetBroadcastId
+                    if (targetBroadcastId) {
+                        try {
+                            const bSnap = await playerNotifsRef.where('data.broadcastId', '==', targetBroadcastId).get();
+                            bSnap.forEach(d => matchedRefs.set(d.ref.path, d.ref));
+                        } catch (_) {}
+                    }
+
+                    // Comprobación C: Título coincidente
+                    if (targetTitle) {
+                        try {
+                            const tSnap = await playerNotifsRef.where('title', '==', targetTitle).get();
+                            tSnap.forEach(d => matchedRefs.set(d.ref.path, d.ref));
+                        } catch (_) {}
+                    }
+
+                    // Comprobación D: EventId coincidente
+                    const targetEventId = meta?.eventId || meta?.data?.eventId || (String(idToPurge).startsWith('notif_cancelled_') ? idToPurge.replace('notif_cancelled_', '') : null);
+                    if (targetEventId) {
+                        try {
+                            const eSnap1 = await playerNotifsRef.where('data.eventId', '==', targetEventId).get();
+                            eSnap1.forEach(d => matchedRefs.set(d.ref.path, d.ref));
+                        } catch (_) {}
+                        try {
+                            const eSnap2 = await playerNotifsRef.where('eventId', '==', targetEventId).get();
+                            eSnap2.forEach(d => matchedRefs.set(d.ref.path, d.ref));
+                        } catch (_) {}
+                    }
+
+                    return Array.from(matchedRefs.values());
+                };
+
+                // Inspección paralela por bloques
+                const chunkSize = 20;
+                for (let i = 0; i < playerDocs.length; i += chunkSize) {
+                    const chunk = playerDocs.slice(i, i + chunkSize);
+                    const chunkResults = await Promise.all(chunk.map(inspectPlayer));
+                    chunkResults.forEach(refs => allRefsToDelete.push(...refs));
+                }
+
+                // Borrado en batches de Firestore (hasta 450 ops)
+                deletedFromPlayersCount = allRefsToDelete.length;
+                if (allRefsToDelete.length > 0) {
+                    const batches = [];
+                    let currentBatch = window.db.batch();
+                    let opCount = 0;
+
+                    for (const ref of allRefsToDelete) {
+                        currentBatch.delete(ref);
+                        opCount++;
+                        if (opCount >= 450) {
+                            batches.push(currentBatch.commit());
+                            currentBatch = window.db.batch();
+                            opCount = 0;
+                        }
+                    }
+                    if (opCount > 0) {
+                        batches.push(currentBatch.commit());
+                    }
+                    await Promise.all(batches);
+                    console.log(`🧹 [NotificationService] Borrado fan-out completado: ${deletedFromPlayersCount} notificaciones eliminadas de jugadores.`);
+                }
+            }
+        } catch (fanOutErr) {
+            console.warn("⚠️ [NotificationService] Error durante fan-out de eliminación en jugadores:", fanOutErr);
+        }
+
+        // 4. Retornar resumen del borrado
+        return {
+            success: true,
+            deletedFromPlayersCount,
+            broadcastDeleted
+        };
+    }
+
+    /**
+     * Obtiene los comunicados de 'broadcasts', los avisos del sistema y un muestreo consolidado
+     * para presentarlas al SuperAdmin en la vista de administración.
+     * Devuelve un array ordenado por fecha con campos: id, title, body, type, createdAt, authorName, targetCount.
+     * @returns {Promise<Array<object>>}
+     */
+    async fetchAllGlobalNotifications() {
+        if (!window.db) {
+            console.warn("⚠️ [NotificationService] window.db no disponible para fetchAllGlobalNotifications.");
+            return [];
+        }
+
+        const items = [];
+        const seenIds = new Set();
+
+        // 1. Obtener comunicados de la colección 'broadcasts'
+        try {
+            let broadcastQuery;
+            try {
+                broadcastQuery = await window.db.collection('broadcasts').orderBy('timestamp', 'desc').limit(50).get();
+            } catch (_) {
+                broadcastQuery = await window.db.collection('broadcasts').limit(50).get();
+            }
+
+            broadcastQuery.forEach(doc => {
+                const data = doc.data() || {};
+                let createdAtStr = new Date().toISOString();
+                if (data.createdAt) {
+                    createdAtStr = data.createdAt;
+                } else if (data.timestamp) {
+                    const tsVal = this._getTimestampValue(data.timestamp);
+                    if (tsVal > 0) createdAtStr = new Date(tsVal).toISOString();
+                }
+
+                const item = {
+                    id: doc.id,
+                    title: data.title || 'Comunicado General',
+                    body: data.body || '',
+                    type: data.type || 'broadcast',
+                    createdAt: createdAtStr,
+                    authorName: data.authorName || 'SuperAdmin',
+                    targetCount: data.targetCount || 'Todos',
+                    data: data
+                };
+                seenIds.add(doc.id);
+                items.push(item);
+            });
+        } catch (err) {
+            console.warn("⚠️ [NotificationService] Error al obtener broadcasts:", err);
+        }
+
+        // 2. Avisos del sistema
+        const systemNotifs = [
+            {
+                id: 'system_radar_clima_relocated',
+                title: '🌦️ Radar Táctico y Clima de Pistas',
+                body: 'Nuevo mapa de viento/lluvia y telemetría de pistas en El Prat y Cornellà. ¡Disponible en Americanas y Entrenos!',
+                type: 'system',
+                createdAt: '2026-09-21T09:00:00.000Z',
+                authorName: 'Sistema SomosPadel',
+                targetCount: 'Todos'
+            }
+        ];
+
+        for (const sysItem of systemNotifs) {
+            if (!seenIds.has(sysItem.id) && (!this.globalPurgedIds || !this.globalPurgedIds.has(sysItem.id))) {
+                seenIds.add(sysItem.id);
+                items.push(sysItem);
+            }
+        }
+
+        // 3. Muestreo consolidado de notificaciones de jugadores
+        try {
+            const samplePlayers = await window.db.collection('players').limit(5).get();
+            for (const pDoc of samplePlayers.docs) {
+                try {
+                    const notifsSnap = await window.db.collection('players').doc(pDoc.id).collection('notifications')
+                        .orderBy('timestamp', 'desc').limit(20).get();
+
+                    notifsSnap.forEach(nDoc => {
+                        const nData = nDoc.data() || {};
+                        const bId = nData.data?.broadcastId;
+                        if (bId && seenIds.has(bId)) return;
+                        if (seenIds.has(nDoc.id)) return;
+                        if (this._isItemGloballyPurged({ id: nDoc.id, data: nData.data, title: nData.title })) return;
+
+                        let createdAtStr = new Date().toISOString();
+                        if (nData.timestamp) {
+                            const tsVal = this._getTimestampValue(nData.timestamp);
+                            if (tsVal > 0) createdAtStr = new Date(tsVal).toISOString();
+                        }
+
+                        seenIds.add(nDoc.id);
+                        items.push({
+                            id: nDoc.id,
+                            title: nData.title || 'Aviso General',
+                            body: nData.body || '',
+                            type: nData.type || (bId ? 'broadcast' : 'general'),
+                            createdAt: createdAtStr,
+                            authorName: nData.authorName || 'Organización',
+                            targetCount: 'Jugadores',
+                            data: nData.data || {}
+                        });
+                    });
+                } catch (_) {}
+            }
+        } catch (sampleErr) {
+            console.warn("⚠️ [NotificationService] Error al muestrear notificaciones de jugadores:", sampleErr);
+        }
+
+        // 3.5. Obtener convocatorias canceladas (americanas y entrenos)
+        try {
+            const cancelledCollections = ['americanas', 'entrenos'];
+            for (const colName of cancelledCollections) {
+                try {
+                    const snap = await window.db.collection(colName).get();
+                    snap.forEach(doc => {
+                        const data = doc.data() || {};
+                        const status = String(data.status || '').toLowerCase().trim();
+                        const isCancelled = ['cancelled', 'cancelado', 'suspendido', 'anulado', 'suspended', 'postponed'].includes(status) || Boolean(data.isCancelled);
+                        if (isCancelled) {
+                            const normType = colName === 'entrenos' ? 'entreno' : 'americana';
+                            const notifId = `evt_cancelled_${normType}_${doc.id}`;
+                            const legacyKey = 'notif_cancelled_' + doc.id;
+                            if (seenIds.has(notifId) || seenIds.has(doc.id) || seenIds.has(legacyKey)) return;
+                            if (this._isItemGloballyPurged({ id: notifId, data: { eventId: doc.id }, title: data.name || data.title })) return;
+
+                            const actionLabel = ['suspendido', 'suspended'].includes(status) ? 'Suspendido' : (status === 'anulado' ? 'Anulado' : 'Cancelado');
+                            const reason = data.cancelReason || data.reason || '';
+                            const bodyText = reason
+                                ? `El evento del ${data.date || ''} a las ${data.time || ''} ha sido ${actionLabel.toLowerCase()}: ${reason}`
+                                : `El evento previsto para el ${data.date || ''} a las ${data.time || ''} ha sido cancelado o anulado por la organización.`;
+
+                            seenIds.add(notifId);
+                            seenIds.add(legacyKey);
+                            seenIds.add(doc.id);
+
+                            items.push({
+                                id: notifId,
+                                title: `⛔ ${normType === 'entreno' ? 'Entreno ' + actionLabel : 'Americana ' + actionLabel}: ${data.name || data.title || 'Convocatoria'}`,
+                                body: bodyText,
+                                type: 'event_cancelled',
+                                createdAt: this._extractEventTimestamp(data),
+                                authorName: 'Organización SomosPadel',
+                                targetCount: 'Inscritos / Jugadores',
+                                eventId: doc.id,
+                                data: {
+                                    id: notifId,
+                                    eventId: doc.id,
+                                    eventDate: data.date || '',
+                                    eventTime: data.time || data.startTime || '',
+                                    eventType: normType,
+                                    status: status || 'cancelled',
+                                    isCancelled: true,
+                                    collection: colName
+                                }
+                            });
+                        }
+                    });
+                } catch (colErr) {
+                    console.warn(`⚠️ [NotificationService] Error al consultar ${colName} canceladas:`, colErr);
+                }
+            }
+        } catch (evtErr) {
+            console.warn("⚠️ [NotificationService] Error al cargar eventos cancelados:", evtErr);
+        }
+
+        // 3.6. Incorporar eventos cancelados persistidos en sp_cancelled_events_log
+        try {
+            const cancelledLogs = this._getCancelledEventsLog();
+            for (const cLog of cancelledLogs) {
+                if (!cLog || !cLog.id) continue;
+                const cEvtId = cLog.data?.eventId || cLog.eventId;
+                if (seenIds.has(cLog.id) || (cEvtId && (seenIds.has(cEvtId) || seenIds.has('notif_cancelled_' + cEvtId)))) continue;
+                if (this._isItemGloballyPurged(cLog)) continue;
+
+                seenIds.add(cLog.id);
+                items.push({
+                    id: cLog.id,
+                    title: cLog.title || 'Evento Cancelado',
+                    body: cLog.body || '',
+                    type: 'event_cancelled',
+                    isCancelled: true,
+                    createdAt: cLog.timestamp || new Date().toISOString(),
+                    authorName: 'Organización SomosPadel',
+                    targetCount: 'Todos los jugadores',
+                    eventId: cEvtId,
+                    data: cLog.data || { eventId: cEvtId, isCancelled: true }
+                });
+            }
+        } catch (cLogErr) {
+            console.warn("⚠️ [NotificationService] Error al obtener sp_cancelled_events_log para vista global:", cLogErr);
+        }
+
+        // 4. Excluir las purgadas globalmente
+        const filtered = items.filter(item => !this._isItemGloballyPurged(item));
+
+        // 5. Ordenar por fecha descendente
+        filtered.sort((a, b) => {
+            const timeA = this._getTimestampValue(a.createdAt);
+            const timeB = this._getTimestampValue(b.createdAt);
+            return timeB - timeA;
+        });
+
+        return filtered;
+    }
+
+    /**
+     * Purga en masa todas las notificaciones caducadas, eventos pasados o cancelados
+     * de Firestore (subcolecciones de jugadores y system_config) y de localStorage.
+     * @returns {Promise<{success: boolean, purgedCount: number, deletedFromPlayersCount: number}>}
+     */
+    async purgeExpiredAndOldNotifications(options = {}) {
+        if (!this._isAdminUser()) {
+            throw new Error("No tienes permisos suficientes de SuperAdmin para ejecutar la purga masiva.");
+        }
+        if (!window.db) {
+            throw new Error("Base de datos Firestore no disponible.");
+        }
+
+        const now = Date.now();
+        const olderThanMs = Number(options?.olderThanMs) || (48 * 60 * 60 * 1000); // 48 horas por defecto
+        const purgeThreshold = now - olderThanMs;
+        const purgedIdsToAdd = [];
+        let deletedFromPlayersCount = 0;
+        let purgedCancelledEventsCount = 0;
+
+        try {
+            // 0. Limpiar sp_cancelled_events_log en localStorage de cancelaciones antiguas (>48h) o purgadas
+            try {
+                if (typeof localStorage !== 'undefined') {
+                    const rawLogs = localStorage.getItem('sp_cancelled_events_log');
+                    if (rawLogs) {
+                        const parsedLogs = JSON.parse(rawLogs);
+                        if (Array.isArray(parsedLogs)) {
+                            const remainingLogs = [];
+                            for (const cItem of parsedLogs) {
+                                if (!cItem) continue;
+                                const tsVal = this._getTimestampValue(cItem.timestamp || cItem.createdAt);
+                                const isExpired = !isNaN(tsVal) && (now - tsVal) > olderThanMs;
+                                const isPurged = this._isItemGloballyPurged(cItem);
+                                if (isExpired || isPurged) {
+                                    purgedCancelledEventsCount++;
+                                    if (cItem.id) {
+                                        purgedIdsToAdd.push(cItem.id);
+                                        try { localStorage.setItem('sp_evt_deleted_' + cItem.id, 'true'); } catch (_) {}
+                                    }
+                                    const eId = cItem.data?.eventId || cItem.eventId;
+                                    if (eId) {
+                                        purgedIdsToAdd.push(
+                                            eId,
+                                            `evt_cancelled_entreno_${eId}`,
+                                            `evt_cancelled_americana_${eId}`,
+                                            `evt_new_entreno_${eId}`,
+                                            `evt_new_americana_${eId}`,
+                                            `evt_spot_entreno_${eId}`,
+                                            `evt_spot_americana_${eId}`,
+                                            `notif_cancelled_${eId}`,
+                                            `notif_deleted_${eId}`
+                                        );
+                                    }
+                                } else {
+                                    remainingLogs.push(cItem);
+                                }
+                            }
+                            localStorage.setItem('sp_cancelled_events_log', JSON.stringify(remainingLogs));
+                        }
+                    }
+                }
+            } catch (cErr) {
+                console.warn("⚠️ [NotificationService] Error purgando sp_cancelled_events_log:", cErr);
+            }
+            // 1. Identificar eventos pasados o cancelados en base de datos para registrar sus IDs
+            const cancelledCollections = ['americanas', 'entrenos'];
+            for (const colName of cancelledCollections) {
+                try {
+                    const snap = await window.db.collection(colName).get();
+                    snap.forEach(doc => {
+                        const data = doc.data() || {};
+                        const status = String(data.status || '').toLowerCase().trim();
+                        const isCancelled = ['cancelled', 'cancelado', 'suspendido', 'anulado', 'suspended'].includes(status) || Boolean(data.isCancelled);
+                        
+                        let isPast = false;
+                        if (data.date) {
+                            try {
+                                const d = new Date(data.date);
+                                if (!isNaN(d.getTime()) && (now - d.getTime() > 24 * 60 * 60 * 1000)) {
+                                    isPast = true;
+                                }
+                            } catch (_) {}
+                        }
+
+                        if (isCancelled || isPast) {
+                            purgedIdsToAdd.push(
+                                doc.id,
+                                'notif_cancelled_' + doc.id,
+                                'notif_deleted_' + doc.id,
+                                'evt_cancelled_entreno_' + doc.id,
+                                'evt_cancelled_americana_' + doc.id,
+                                'evt_new_entreno_' + doc.id,
+                                'evt_new_americana_' + doc.id,
+                                'evt_spot_entreno_' + doc.id,
+                                'evt_spot_americana_' + doc.id
+                            );
+                        }
+                    });
+                } catch (_) {}
+            }
+
+            // 2. Recorrer jugadores y eliminar notificaciones obsoletas, pasadas o canceladas
+            const playersSnap = await window.db.collection('players').get();
+            if (!playersSnap.empty) {
+                const allRefsToDelete = [];
+                const inspectPlayer = async (pDoc) => {
+                    const playerNotifsRef = window.db.collection('players').doc(pDoc.id).collection('notifications');
+                    try {
+                        const notifsSnap = await playerNotifsRef.get();
+                        const matched = [];
+                        notifsSnap.forEach(d => {
+                            const data = d.data() || {};
+                            const tsVal = this._getTimestampValue(data.timestamp || data.createdAt);
+                            const nType = String(data.type || '').toLowerCase();
+                            const nTitle = String(data.title || '').toLowerCase();
+                            const eId = data.data?.eventId || data.eventId;
+
+                            const isOld = tsVal > 0 && tsVal < purgeThreshold;
+                            const isCancelled = nType === 'event_cancelled' || nTitle.includes('cancelad') || nTitle.includes('anulad') || (eId && purgedIdsToAdd.includes(eId));
+
+                            if (isOld || isCancelled) {
+                                matched.push(d.ref);
+                                purgedIdsToAdd.push(d.id);
+                            }
+                        });
+                        return matched;
+                    } catch (_) {
+                        return [];
+                    }
+                };
+
+                const chunkSize = 20;
+                for (let i = 0; i < playersSnap.docs.length; i += chunkSize) {
+                    const chunk = playersSnap.docs.slice(i, i + chunkSize);
+                    const chunkResults = await Promise.all(chunk.map(inspectPlayer));
+                    chunkResults.forEach(refs => allRefsToDelete.push(...refs));
+                }
+
+                deletedFromPlayersCount = allRefsToDelete.length;
+                if (allRefsToDelete.length > 0) {
+                    const batches = [];
+                    let currentBatch = window.db.batch();
+                    let opCount = 0;
+                    for (const ref of allRefsToDelete) {
+                        currentBatch.delete(ref);
+                        opCount++;
+                        if (opCount >= 450) {
+                            batches.push(currentBatch.commit());
+                            currentBatch = window.db.batch();
+                            opCount = 0;
+                        }
+                    }
+                    if (opCount > 0) {
+                        batches.push(currentBatch.commit());
+                    }
+                    await Promise.all(batches);
+                }
+            }
+
+            // 3. Persistir en system_config/purged_notifications
+            const uniquePurged = Array.from(new Set(purgedIdsToAdd.filter(Boolean)));
+            if (uniquePurged.length > 0) {
+                const FieldValue = window.firebase?.firestore?.FieldValue;
+                const configRef = window.db.collection('system_config').doc('purged_notifications');
+                if (FieldValue && typeof FieldValue.arrayUnion === 'function') {
+                    await configRef.set({
+                        purgedIds: FieldValue.arrayUnion(...uniquePurged),
+                        updatedAt: FieldValue.serverTimestamp ? FieldValue.serverTimestamp() : new Date().toISOString()
+                    }, { merge: true });
+                } else {
+                    const docSnap = await configRef.get();
+                    const existing = (docSnap.exists && Array.isArray(docSnap.data()?.purgedIds)) ? docSnap.data().purgedIds : [];
+                    await configRef.set({
+                        purgedIds: Array.from(new Set([...existing, ...uniquePurged])),
+                        updatedAt: new Date().toISOString()
+                    }, { merge: true });
+                }
+
+                if (this.globalPurgedIds) {
+                    uniquePurged.forEach(id => this.globalPurgedIds.add(id));
+                }
+            }
+
+            // 4. Limpiar LocalStorage local
+            try {
+                if (typeof localStorage !== 'undefined') {
+                    ['somospadel_notifications', 'sp_notifications_cache', 'sp_read_notifications'].forEach(k => {
+                        try {
+                            const raw = localStorage.getItem(k);
+                            if (raw) {
+                                const parsed = JSON.parse(raw);
+                                if (Array.isArray(parsed)) {
+                                    const cleaned = parsed.filter(item => {
+                                        const id = item.id || item;
+                                        return !this._isItemGloballyPurged({ id, title: item.title, data: item.data });
+                                    });
+                                    localStorage.setItem(k, JSON.stringify(cleaned));
+                                }
+                            }
+                        } catch (_) {}
+                    });
+                }
+            } catch (_) {}
+
+            this.notifySubscribers();
+
+            const totalPurgedCount = deletedFromPlayersCount + purgedCancelledEventsCount + uniquePurged.length;
+            console.log(`🧹 [NotificationService] Purga masiva completada: ${totalPurgedCount} registros procesados (${deletedFromPlayersCount} en bandejas de jugadores, ${purgedCancelledEventsCount} cancelaciones).`);
+
+            return {
+                success: true,
+                purgedCount: totalPurgedCount,
+                purgedCancelledEventsCount,
+                deletedFromPlayersCount
+            };
+        } catch (err) {
+            console.error("❌ [NotificationService] Error en purgeExpiredAndOldNotifications:", err);
+            throw err;
+        }
+    }
+
+    /**
+     * Emite la Noticia del Día a todos los dispositivos registrados en SomosPadel.
+     * Intenta primero vía Cloud Function Callable ('sendDailyNewsPushNow').
+     * Si no está disponible o falla, ejecuta la emisión directa en Firestore (broadcasts + fanout a players).
+     */
+    async sendDailyNewsPushNow(options = {}) {
+        const force = options?.force !== false;
+        const requestedArticleId = options?.articleId || null;
+
+        // 1. Intentar Cloud Function si el SDK de Functions está disponible
+        if (window.firebase && typeof window.firebase.functions === 'function') {
+            try {
+                console.log("☁️ [NotificationService] Invocando Cloud Function 'sendDailyNewsPushNow'...");
+                const sendCallable = window.firebase.functions().httpsCallable('sendDailyNewsPushNow');
+                const res = await sendCallable({ articleId: requestedArticleId, force: true });
+                const data = res && res.data ? res.data : res;
+                if (data && data.success) {
+                    console.log("✅ [NotificationService] Cloud Function 'sendDailyNewsPushNow' ejecutada con éxito:", data);
+                    return data;
+                }
+            } catch (cloudErr) {
+                console.warn("⚠️ [NotificationService] Falló Cloud Function 'sendDailyNewsPushNow', activando emisión directa en Firestore:", cloudErr.message);
+            }
+        }
+
+        // 2. Emisión directa en Firestore (Garantizada)
+        return await this.emitDailyNewsToFirestoreDirectly({ articleId: requestedArticleId, force });
+    }
+
+    /**
+     * Emisión directa cliente en Firestore de la Noticia del Día con réplica a broadcasts y jugadores.
+     */
+    async emitDailyNewsToFirestoreDirectly(options = {}) {
+        if (!window.db) {
+            throw new Error("Base de datos Firestore no disponible para emitir noticia.");
+        }
+
+        const curatedArticles = [
+            {
+                id: 'app-noticia-notificaciones-push-movil',
+                title: '¡Llegan las Notificaciones Push en Vivo a SomosPadel Barcelona!',
+                category: '🚀 NOVEDADES APP',
+                icon: 'bell',
+                summary: 'Ya están activas las notificaciones push en tiempo real en la app: avisos de torneos, entrenos técnicos y bajas de última hora en un solo toque.'
+            },
+            {
+                id: 'cultura-fair-play',
+                title: "Cultura Fair Play: Protocolo de Convivencia y Regla de 'Dos Bolas' ante Dudas",
+                category: '🤝 COMUNIDAD',
+                icon: 'users',
+                summary: 'El respeto al rival y la honestidad en cada bote definen a SomosPadel Barcelona. Descubre el código de etiqueta y cómo resolver bolas dudosas con deportividad ejemplar.'
+            },
+            {
+                id: 'match-point-oro',
+                title: 'El Punto de Oro (40-40): Psicología y Táctica de Resto sin Margen de Error',
+                category: '🧠 MENTAL',
+                icon: 'brain',
+                summary: 'Sin ventajas ni segundas oportunidades: una sola bola decide el juego. Estrategias frías de resto, elección del receptor y gestión de la adrenalina.'
+            },
+            {
+                id: 'palas-control-potencia',
+                title: 'Palas de Control vs Potencia: ¿Qué Formato Maximiza Tu Rendimiento Real?',
+                category: '👟 MATERIAL',
+                icon: 'table-tennis-paddle-ball',
+                summary: 'Redonda, lágrima o diamante: analiza el balance, la dureza del plano y el punto dulce para evitar lesiones de codo y definir con soltura.'
+            },
+            {
+                id: 'nutricion-hidratacion',
+                title: 'Hidratación Inteligente: Por Qué el Agua Sola No Evita el Bajón en el Tercer Set',
+                category: '🍎 NUTRICIÓN',
+                icon: 'bottle-water',
+                summary: 'En 120 minutos de americana pierdes hasta 1.8 litros de sudor y electrolitos clave. Aprende a pautar sales minerales para evitar calambres y niebla mental.'
+            },
+            {
+                id: 'tactica-defensa-cristal',
+                title: 'Defensa de Doble Pared: Los Giros Mecánicos y la Lectura del Rebote',
+                category: '💡 CONSEJOS',
+                icon: 'arrows-spin',
+                summary: 'Acompañar la trayectoria en lugar de perseguir la bola: domina la apertura de apoyos y sal del cristal con globos milimétricos al rincón.'
+            }
+        ];
+
+        let article = null;
+        if (options?.articleId) {
+            article = curatedArticles.find(a => a.id === options.articleId);
+        }
+        if (!article && window.NewsCatalog && typeof window.NewsCatalog.getFullCatalog === 'function') {
+            try {
+                const catalog = window.NewsCatalog.getFullCatalog();
+                if (Array.isArray(catalog) && catalog.length > 0) {
+                    const todayDay = new Date().getDate();
+                    article = catalog[todayDay % catalog.length];
+                }
+            } catch (_) {}
+        }
+        if (!article) {
+            const todayDay = new Date().getDate();
+            article = curatedArticles[todayDay % curatedArticles.length] || curatedArticles[0];
+        }
+
+        const title = `📰 NOTICIA DEL DÍA: ${article.title}`;
+        const body = article.summary || article.snippet || 'Descubre la táctica y novedades de hoy en SomosPadel Barcelona.';
+        const targetUrl = `dashboard?article=${article.id}`;
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        const timestamp = (window.firebase?.firestore?.FieldValue?.serverTimestamp?.()) || new Date();
+
+        // 1. Guardar en broadcasts (dispara push Cloud Function en segundo plano)
+        const broadcastPayload = {
+            title: title,
+            body: body,
+            url: targetUrl,
+            timestamp: timestamp,
+            createdAt: new Date().toISOString(),
+            authorName: 'SomosPadel Journal',
+            createdBy: window.auth?.currentUser?.uid || 'admin',
+            status: 'published',
+            type: 'daily_news',
+            articleId: article.id,
+            category: article.category || 'SOMOSPADEL JOURNAL'
+        };
+
+        let broadcastId = 'bc_daily_' + Date.now();
+        try {
+            const bRef = await window.db.collection('broadcasts').add(broadcastPayload);
+            if (bRef && bRef.id) broadcastId = bRef.id;
+            console.log("📢 [NotificationService] Noticia guardada en 'broadcasts':", broadcastId);
+        } catch (bErr) {
+            console.warn("⚠️ [NotificationService] Aviso guardando en 'broadcasts':", bErr.message);
+        }
+
+        // 2. Replicar a subcolección 'notifications' de jugadores para bandeja in-app inmediata
+        let inAppPlayersCount = 0;
+        try {
+            const playersSnap = await window.db.collection('players').get();
+            if (!playersSnap.empty) {
+                const batches = [];
+                let currentBatch = window.db.batch();
+                let opCount = 0;
+
+                playersSnap.docs.forEach(pDoc => {
+                    const notifRef = window.db.collection('players').doc(pDoc.id).collection('notifications').doc();
+                    currentBatch.set(notifRef, {
+                        title: title,
+                        body: body,
+                        read: false,
+                        timestamp: timestamp,
+                        icon: 'newspaper',
+                        type: 'daily_news',
+                        articleId: article.id,
+                        data: {
+                            url: targetUrl,
+                            broadcastId: broadcastId,
+                            articleId: article.id,
+                            type: 'daily_news'
+                        }
+                    });
+                    opCount++;
+                    inAppPlayersCount++;
+                    if (opCount >= 450) {
+                        batches.push(currentBatch.commit());
+                        currentBatch = window.db.batch();
+                        opCount = 0;
+                    }
+                });
+
+                if (opCount > 0) {
+                    batches.push(currentBatch.commit());
+                }
+                await Promise.all(batches);
+            }
+        } catch (repErr) {
+            console.warn("⚠️ [NotificationService] Aviso en réplica a jugadores:", repErr.message);
+        }
+
+        // 3. Registrar estado en system_config/daily_news_state
+        try {
+            await window.db.collection('system_config').doc('daily_news_state').set({
+                lastSentDate: todayStr,
+                articleId: article.id,
+                title: article.title,
+                summary: body,
+                category: article.category || 'SOMOSPADEL JOURNAL',
+                sentAt: timestamp,
+                sentVia: 'manual_admin_console',
+                targetUrl: targetUrl,
+                inAppPlayersCount
+            }, { merge: true });
+        } catch (stateErr) {
+            console.warn("⚠️ [NotificationService] Aviso registrando daily_news_state:", stateErr.message);
+        }
+
+        return {
+            success: true,
+            title: title,
+            article: {
+                id: article.id,
+                title: article.title,
+                category: article.category,
+                summary: body
+            },
+            broadcastId: broadcastId,
+            date: todayStr,
+            inAppPlayersCount,
+            timestamp: new Date().toISOString()
+        };
+    }
+
+    /**
+     * Delegación estática para eliminar notificaciones globalmente (SuperAdmin)
+     */
+    static async deleteNotificationGlobally(targetId, meta = {}) {
+        if (window.NotificationService && typeof window.NotificationService.deleteNotificationGlobally === 'function') {
+            return await window.NotificationService.deleteNotificationGlobally(targetId, meta);
+        }
+        const instance = new window.NotificationServiceClass();
+        return await instance.deleteNotificationGlobally(targetId, meta);
+    }
+
+    /**
+     * Delegación estática para purgar notificaciones antiguas y caducadas (SuperAdmin)
+     */
+    static async purgeExpiredAndOldNotifications(options = {}) {
+        if (window.NotificationService && typeof window.NotificationService.purgeExpiredAndOldNotifications === 'function') {
+            return await window.NotificationService.purgeExpiredAndOldNotifications(options);
+        }
+        const instance = new window.NotificationServiceClass();
+        return await instance.purgeExpiredAndOldNotifications(options);
+    }
+
+    /**
+     * Delegación estática para emitir la Noticia del Día (SuperAdmin)
+     */
+    static async sendDailyNewsPushNow(options = {}) {
+        if (window.NotificationService && typeof window.NotificationService.sendDailyNewsPushNow === 'function') {
+            return await window.NotificationService.sendDailyNewsPushNow(options);
+        }
+        const instance = new window.NotificationServiceClass();
+        return await instance.sendDailyNewsPushNow(options);
+    }
+
+    /**
+     * Delegación estática para consultar notificaciones globales (SuperAdmin)
+     */
+    static async fetchAllGlobalNotifications() {
+        if (window.NotificationService && typeof window.NotificationService.fetchAllGlobalNotifications === 'function') {
+            return await window.NotificationService.fetchAllGlobalNotifications();
+        }
+        const instance = new window.NotificationServiceClass();
+        return await instance.fetchAllGlobalNotifications();
+    }
+
+    /**
+     * Delegación estática para registrar la eliminación de un evento
+     */
+    static handleEventDeleted(type, id, eventData = {}) {
+        if (window.NotificationService && typeof window.NotificationService.handleEventDeleted === 'function') {
+            window.NotificationService.handleEventDeleted(type, id, eventData);
+        }
+    }
+
+    /**
+     * Delegación estática para registrar la cancelación o suspensión de un evento
+     */
+    static handleEventCancelled(type, id, eventData = {}, reasonOrStatus = '') {
+        if (window.NotificationService && typeof window.NotificationService.handleEventCancelled === 'function') {
+            window.NotificationService.handleEventCancelled(type, id, eventData, reasonOrStatus);
+        }
+    }
 }
 
-// No auto-init. Managed by AppInit.
+// Auto-init defensivo y registro global
+if (typeof window !== 'undefined') {
+    if (!window.NotificationService && window.NotificationServiceClass) {
+        try {
+            window.NotificationService = new window.NotificationServiceClass();
+            console.log("🔔 [NotificationService] Instancia global inicializada automáticamente.");
+        } catch (e) {
+            console.warn("⚠️ [NotificationService] Auto-instancia falló:", e);
+        }
+    }
+}
 console.log("🔔 NotificationService Module Loaded (Class definition)");

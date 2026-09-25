@@ -159,6 +159,13 @@ window.AdminViews.entrenos_create = async function () {
                 <h3 style="color: var(--primary); margin-bottom: 2rem; display: flex; align-items: center; gap: 12px; font-weight:800; font-size: 1.2rem;">
                     <i class="fas fa-plus-circle" style="font-size: 1.5rem; color: #CCFF00;"></i> CREAR NUEVO EVENTO DE ENTRENO
                 </h3>
+
+                <!-- Botones de Preset Rápido -->
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;">
+                    <button type="button" class="btn-micro" onclick="window.applyEntrenoPreset('suizo')" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4);">🇨🇭 Entreno Suizo (2h • 6 Rondas)</button>
+                    <button type="button" class="btn-micro" onclick="window.applyEntrenoPreset('twister')" style="background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4);">🌪️ Twister Dinámico</button>
+                    <button type="button" class="btn-micro" onclick="window.applyEntrenoPreset('fija')" style="background: rgba(14, 165, 233, 0.2); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.4);">🔒 Pareja Fija</button>
+                </div>
                 
                 <form id="create-entreno-form" class="pro-form compact-admin-form">
                     
@@ -198,22 +205,30 @@ window.AdminViews.entrenos_create = async function () {
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>SEDE</label>
-                            <select name="location" class="pro-input">
-                                <option value="Barcelona Pádel el Prat">EL PRAT</option>
-                                <option value="Delfos Cornellá">DELFOS</option>
-                            </select>
+                            <label><i class="fas fa-map-marker-alt" style="color: #38bdf8;"></i> SEDE / CLUB</label>
+                            <div class="sede-combobox-wrapper">
+                                <input type="text" 
+                                       name="location" 
+                                       id="create-entreno-location-input" 
+                                       class="pro-input sede-combobox-input" 
+                                       placeholder="🔍 Buscar o escribir sede / club..." 
+                                       autocomplete="off" 
+                                       required>
+                                <button type="button" class="sede-combobox-toggle" title="Ver lista de sedes">
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div class="sede-combobox-dropdown"></div>
+                            </div>
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px;">
                         <div class="form-group">
                             <label>MODO DE JUEGO</label>
-                            <select name="pair_mode" class="pro-input">
-                                <option value="fixed">🔒 PAREJA FIJA (Manual)</option>
-                                <option value="fixed_admin">👔 PAREJA FIJA (Admin)</option>
-                                <option value="fixed_auto">🤖 PAREJA FIJA (Auto)</option>
-                                <option value="rotating">🌪️ TWISTER / INDIVIDUAL</option>
+                            <select name="pair_mode" id="create-entreno-pair-mode" class="pro-input" onchange="window.updatePairModeHelper(this, 'create-entreno-pair-mode-desc')">
+                                <option value="fixed">🔒 PAREJA FIJA</option>
+                                <option value="rotating" selected>🌪️ TWISTER INDIVIDUAL</option>
+                                <option value="swiss">🇨🇭 SUIZO (Americana / Entreno Suizo)</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -226,6 +241,10 @@ window.AdminViews.entrenos_create = async function () {
                                 <option value="cancelled">⛔ ANULADO</option>
                             </select>
                         </div>
+                    </div>
+
+                    <!-- EXPLICACIÓN DINÁMICA DEL MODO DE JUEGO -->
+                    <div id="create-entreno-pair-mode-desc" style="background: rgba(59, 130, 246, 0.08); border-left: 3px solid #3b82f6; padding: 8px 12px; border-radius: 8px; font-size: 0.72rem; color: #cbd5e1; margin-bottom: 15px; line-height: 1.35;">
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
@@ -368,7 +387,7 @@ function renderEntrenoCard(e) {
                     </div>
                     <div style="display: flex; gap: 0.8rem; font-size: 0.75rem; color: #333333; flex-wrap: wrap; align-items: center;">
                          <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-calendar-alt" style="color: #60A5FA;"></i> <span style="color:#333; font-weight: 600;">${formatDate(e.date)}</span></span>
-                         <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-clock" style="color: #A78BFA;"></i> <span style="color:#333; font-weight: 600;">${e.time || '10:00'}</span></span>
+                         <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-clock" style="color: #A78BFA;"></i> <span style="color:#333; font-weight: 600;">${e.time ? (e.time_end && !e.time.includes('-') ? `${e.time} - ${e.time_end}` : e.time) : '10:00'}${durationText ? ` (${durationText})` : ''}</span></span>
                          <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-signal" style="color: #F59E0B;"></i> <span style="color:#333; font-weight: 700;">Niv. ${levelText}</span></span>
                          <span onclick='window.openEditEntrenoModal(${JSON.stringify(e).replace(/'/g, "&#39;")})' style="cursor:pointer; display: flex; align-items: center; gap: 5px;" title="Gestionar participantes">
                             <i class="fas fa-users" style="color: #10B981;"></i> <span style="color:#000; font-weight:800;">${playersCount}</span><span style="opacity:0.5;">/${maxPlayers}</span>
@@ -419,6 +438,13 @@ function renderEntrenoCard(e) {
                     ` : ''}
 
                     <button class="btn-micro" 
+                            style="background: #a855f7 !important; color: #fff !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
+                            onclick="window.openManualRoundModal('${e.id}', 'entreno', 1)" 
+                            title="Definir Ronda Manual (Admin/Superadmin)">
+                        <i class="fas fa-sliders" style="font-size: 0.85rem; color: #fff !important;"></i>
+                    </button>
+
+                    <button class="btn-micro" 
                             style="background: #25D366 !important; color: #fff !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
                             onclick="window.launchWhatsAppShareEntreno('${e.id}')"
                             title="WhatsApp">
@@ -459,9 +485,60 @@ window.selectCreateEntrenoImage = (url) => {
     }
 };
 
+window.applyEntrenoPreset = (type) => {
+    const form = document.getElementById('create-entreno-form');
+    if (!form) return;
+
+    if (type === 'suizo') {
+        const nameInput = form.querySelector('[name=name]');
+        if (nameInput) nameInput.value = '🇨🇭 ENTRENO SUIZO';
+        const pairMode = form.querySelector('[name=pair_mode]');
+        if (pairMode) pairMode.value = 'swiss';
+        const courts = form.querySelector('[name=max_courts]');
+        if (courts) courts.value = '3';
+        const rounds = form.querySelector('[name=rounds_count]');
+        if (rounds) rounds.value = '6';
+        const tStart = form.querySelector('[name=time]');
+        const tEnd = form.querySelector('[name=time_end]');
+        if (tStart) tStart.value = '10:00';
+        if (tEnd) tEnd.value = '12:00';
+        if (window.selectCreateEntrenoImage) window.selectCreateEntrenoImage('img/entreno masculino prat.jpg');
+    } else if (type === 'twister') {
+        const nameInput = form.querySelector('[name=name]');
+        if (nameInput) nameInput.value = '🌪️ ENTRENO TWISTER DINÁMICO';
+        const pairMode = form.querySelector('[name=pair_mode]');
+        if (pairMode) pairMode.value = 'rotating';
+        const courts = form.querySelector('[name=max_courts]');
+        if (courts) courts.value = '4';
+        const rounds = form.querySelector('[name=rounds_count]');
+        if (rounds) rounds.value = '6';
+        if (window.selectCreateEntrenoImage) window.selectCreateEntrenoImage('img/entreno fem indoor.jpg');
+    } else if (type === 'fija') {
+        const nameInput = form.querySelector('[name=name]');
+        if (nameInput) nameInput.value = '🔒 ENTRENO PAREJA FIJA';
+        const pairMode = form.querySelector('[name=pair_mode]');
+        if (pairMode) pairMode.value = 'fixed';
+        const courts = form.querySelector('[name=max_courts]');
+        if (courts) courts.value = '4';
+        const rounds = form.querySelector('[name=rounds_count]');
+        if (rounds) rounds.value = '6';
+        if (window.selectCreateEntrenoImage) window.selectCreateEntrenoImage('img/ball-mixta.png');
+    }
+
+    const pairModeEl = form.querySelector('[name=pair_mode]');
+    if (pairModeEl && window.updatePairModeHelper) {
+        window.updatePairModeHelper(pairModeEl, 'create-entreno-pair-mode-desc');
+    }
+};
+
 function setupCreateForm() {
     const form = document.getElementById('create-entreno-form');
     if (!form) return;
+
+    // Attach Sede Combobox
+    if (window.setupSedeCombobox) {
+        window.setupSedeCombobox('create-entreno-location-input');
+    }
 
     // Auto-Sync Logic (Images & Names)
     const cat = form.querySelector('[name=category]');
@@ -473,6 +550,12 @@ function setupCreateForm() {
     // Pre-fill date with today
     if (date && !date.value) {
         date.valueAsDate = new Date();
+    }
+
+    const pairMode = form.querySelector('[name=pair_mode]');
+    if (pairMode && window.updatePairModeHelper) {
+        pairMode.onchange = () => window.updatePairModeHelper(pairMode, 'create-entreno-pair-mode-desc');
+        window.updatePairModeHelper(pairMode, 'create-entreno-pair-mode-desc');
     }
 
     const sync = () => {
@@ -665,6 +748,24 @@ window.openEditEntrenoModal = async (entreno) => {
         if (input) input.value = value;
     }
 
+    // Normalizar time y time_end si vienen combinados o sin separar
+    if (entreno.time && entreno.time.includes('-')) {
+        const parts = entreno.time.split('-').map(s => s.trim());
+        const tStartInput = form.querySelector('[name="time"]');
+        const tEndInput = form.querySelector('[name="time_end"]');
+        if (tStartInput && parts[0]) tStartInput.value = parts[0].slice(0, 5);
+        if (tEndInput && (!entreno.time_end || !tEndInput.value) && parts[1]) tEndInput.value = parts[1].slice(0, 5);
+    }
+
+    // Setup Sede Combobox & Sync Sede
+    if (window.setupSedeCombobox) {
+        window.setupSedeCombobox('edit-entreno-location-input');
+    }
+    const locationInput = form.querySelector('[name=location]');
+    if (locationInput) {
+        locationInput.value = entreno.location || entreno.sede || '';
+    }
+
     // Ensure level fields have values if undefined
     const minInput = form.querySelector('[name="level_min"]');
     if (minInput && (entreno.level_min === undefined || entreno.level_min === null || entreno.level_min === '')) {
@@ -675,9 +776,17 @@ window.openEditEntrenoModal = async (entreno) => {
         maxInput.value = '4.5';
     }
 
-    // Special Image Preview
-    const preview = document.getElementById('edit-entreno-img-preview');
-    if (preview && entreno.image_url) preview.src = entreno.image_url;
+    // Special Image Preview & Dropzone
+    if (window.updateAmericanaImagePreview) {
+        window.updateAmericanaImagePreview(entreno.image_url || '', 'edit-entreno-img-preview');
+        window.setupAmericanaDropzone('edit-entreno-img-dropzone', 'edit-entreno-file-input', 'edit-entreno-img-input', 'edit-entreno-img-preview');
+    } else {
+        const preview = document.getElementById('edit-entreno-img-preview');
+        if (preview && entreno.image_url) {
+            preview.src = entreno.image_url;
+            preview.style.display = 'block';
+        }
+    }
 
     modal.classList.remove('hidden');
     modal.style.display = 'flex';
@@ -686,14 +795,25 @@ window.openEditEntrenoModal = async (entreno) => {
     const pairModeSelect = form.querySelector('[name=pair_mode]');
     const pairsArea = document.getElementById('entreno-fixed-pairs-area');
 
+    if (pairModeSelect) {
+        if (entreno.pair_mode === 'swiss' || entreno.pair_mode === 'rotating') {
+            pairModeSelect.value = entreno.pair_mode;
+        } else {
+            pairModeSelect.value = 'fixed';
+        }
+    }
+
     const togglePairsArea = () => {
         if (pairsArea) {
-            const val = pairModeSelect.value;
-            if (val === 'fixed' || val === 'fixed_admin' || val === 'fixed_auto') {
+            const val = pairModeSelect?.value;
+            if (val === 'fixed') {
                 pairsArea.style.display = 'block';
             } else {
                 pairsArea.style.display = 'none';
             }
+        }
+        if (window.updatePairModeHelper) {
+            window.updatePairModeHelper(pairModeSelect, 'edit-entreno-pair-mode-desc');
         }
     };
 
@@ -735,6 +855,14 @@ window.openEditEntrenoModal = async (entreno) => {
         const id = data.id;
         delete data.id;
 
+        // Sincronización de pistas y plazas
+        if (data.max_courts || data.courts) {
+            const courts = parseInt(data.max_courts || data.courts) || 4;
+            data.max_courts = courts;
+            data.courts = courts;
+            data.max_players = courts * 4;
+        }
+
         try {
             await EventService.updateEvent('entreno', id, data);
             alert("✅ Guardado");
@@ -756,19 +884,23 @@ window.closeEntrenoModal = () => {
 window.launchWhatsAppShareEntreno = async (id) => {
     console.log("🔗 launchWhatsAppShareEntreno called for:", id);
     try {
-        // 1. Intentar obtener el entreno desde la memoria activa (instantáneo, 0 peticiones de red)
-        let evt = window._currentEntrenosCache?.find(e => e.id === id);
+        let evt = null;
 
-        // 2. Si no está en memoria, consultar EventService con fallback a CacheService
-        if (!evt && window.EventService) {
+        // 1. Siempre consultar Firestore primero para tener datos 100% reales y actualizados
+        if (window.EventService) {
             try {
                 evt = await EventService.getById('entreno', id);
             } catch (fetchErr) {
-                console.warn("⚠️ [launchWhatsAppShareEntreno] Error al consultar Firestore, buscando en caché local:", fetchErr.message);
-                if (window.CacheService) {
-                    const cached = await window.CacheService.get('entrenos', 'all');
-                    evt = cached?.find(e => e.id === id);
-                }
+                console.warn("⚠️ [launchWhatsAppShareEntreno] Error al consultar Firestore:", fetchErr.message);
+            }
+        }
+
+        // 2. Fallback a memoria activa / caché local si falla la red
+        if (!evt) {
+            evt = window._currentEntrenosCache?.find(e => e.id === id);
+            if (!evt && window.CacheService) {
+                const cached = await window.CacheService.get('entrenos', 'all');
+                evt = cached?.find(e => e.id === id);
             }
         }
 
@@ -795,8 +927,71 @@ window.launchWhatsAppShareEntreno = async (id) => {
 
 window.selectEntrenoImage = (url) => {
     const input = document.getElementById('edit-entreno-img-input');
-    if (input) input.value = url;
+    if (input) {
+        input.value = url;
+        if (window.updateAmericanaImagePreview) {
+            window.updateAmericanaImagePreview(url, 'edit-entreno-img-preview');
+        } else {
+            const preview = document.getElementById('edit-entreno-img-preview');
+            if (preview) {
+                preview.src = url;
+                preview.style.display = 'block';
+            }
+        }
+    }
 };
+
+if (!window.updatePairModeHelper) {
+    window.updatePairModeHelper = function(selectEl, descContainerId) {
+        const container = document.getElementById(descContainerId);
+        if (!container) return;
+        const mode = selectEl ? selectEl.value : 'fixed';
+
+        if (mode === 'swiss') {
+            container.innerHTML = `
+                <div style="display:flex; align-items:flex-start; gap:8px;">
+                    <span style="font-size: 1.15rem; line-height: 1;">🇨🇭</span>
+                    <div>
+                        <strong style="color: #ef4444; font-size: 0.76rem; text-transform: uppercase;">Modalidad Sistema Suizo (Express 2h):</strong>
+                        <div style="color: #cbd5e1; font-size: 0.72rem; margin-top: 2px;">
+                            Inscripción individual. 6 rondas express de juego efectivo (2 horas). Los juegos ganados son tus puntos acumulados. Tras cada ronda los 4 mejores van a Pista 1, siguientes a Pista 2, restantes a Pista 3, cruzando parejas sin repetir compañero.
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.style.borderLeftColor = '#ef4444';
+            container.style.background = 'rgba(239, 68, 68, 0.08)';
+        } else if (mode === 'rotating') {
+            container.innerHTML = `
+                <div style="display:flex; align-items:flex-start; gap:8px;">
+                    <span style="font-size: 1.15rem; line-height: 1;">🌪️</span>
+                    <div>
+                        <strong style="color: #60a5fa; font-size: 0.76rem; text-transform: uppercase;">Modalidad Twister Individual:</strong>
+                        <div style="color: #cbd5e1; font-size: 0.72rem; margin-top: 2px;">
+                            Inscripción individual. Los jugadores rotan y cambian de pareja y de rivales en cada ronda según su puntuación. ¡El sistema calcula los cruces y pistas automáticamente!
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.style.borderLeftColor = '#3b82f6';
+            container.style.background = 'rgba(59, 130, 246, 0.08)';
+        } else {
+            container.innerHTML = `
+                <div style="display:flex; align-items:flex-start; gap:8px;">
+                    <span style="font-size: 1.15rem; line-height: 1;">🔒</span>
+                    <div>
+                        <strong style="color: #CCFF00; font-size: 0.76rem; text-transform: uppercase;">Modalidad Pareja Fija:</strong>
+                        <div style="color: #cbd5e1; font-size: 0.72rem; margin-top: 2px;">
+                            Los jugadores compiten en dupla cerrada de principio a fin con el mismo compañero. En la columna derecha podrás vincular parejas manualmente y asignarles pistas.
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.style.borderLeftColor = '#CCFF00';
+            container.style.background = 'rgba(204, 255, 0, 0.06)';
+        }
+    };
+}
 
 window.openAddPlayerToEntrenoSelector = async (eventId) => {
     if (!window.PremiumModal) return alert("PremiumModal no disponible");

@@ -1,5 +1,10 @@
-
-
+# Node Dependencies
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+firebase-debug.log*
 
 # Python
 __pycache__/
@@ -11,23 +16,34 @@ env/
 venv/
 *.egg-info/
 
-# Database
+# Database & Local Data
 *.db
 *.sqlite
 *.sqlite3
 
-# IDE
+# IDE & OS
 .vscode/
 .idea/
 *.swp
 *.swo
-
-# OS
 .DS_Store
 Thumbs.db
 
-# Logs
+# Logs & Temp
 *.log
+.edge_v8_out.txt
+temp.html
+temp_*.html
+summapadel_test.txt
+
+# Screenshots & QA artefacts
+scoreboard_landscape.png
+scoreboard_portrait.png
+story_feed_modal_open.png
+story_feed_pro_mobile.png
+story_modal_pro.png
+story_nav_verified.png
+story_widget_pro.png
 
 # Agent & Temp Folders
 .agent/
@@ -36,5 +52,3 @@ brain/
 chrome_data/
 backups/
 scratch/
-summapadel_test.txt
-temp.html

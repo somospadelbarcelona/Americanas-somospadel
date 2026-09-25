@@ -60,6 +60,17 @@
                 text: "#72a800",
                 desc: "Jugador oficial miembro de la comunidad SomosPadel BCN, con acceso a torneos cerrados y ranking oficial."
             },
+            player_americanas: {
+                name: "JUGADOR AMERICANAS",
+                emoji: "🏆",
+                icon: "fa-trophy",
+                color: "#CCFF00",
+                bg: "linear-gradient(135deg, rgba(204, 255, 0, 0.15) 0%, rgba(14, 165, 233, 0.15) 100%)",
+                border: "1px solid rgba(204, 255, 0, 0.4)",
+                shadow: "0 0 15px rgba(204, 255, 0, 0.15)",
+                text: "#72a800",
+                desc: "Jugador registrado para americanas (oficiales y clubes asociados) y torneos. Acceso a Inicio, Americanas, Torneos, Perfil y Ranking de Americanas."
+            },
             player: {
                 name: "JUGADOR EXTERNO",
                 emoji: "👤",
@@ -81,6 +92,17 @@
                 shadow: "0 0 15px rgba(245, 158, 11, 0.15)",
                 text: "#d97706",
                 desc: "Socio comercial o patrocinador del club que colabora activamente en la gestión de premios y patrocinio de eventos."
+            },
+            organizer: {
+                name: "ORGANIZADOR",
+                emoji: "🏛️",
+                icon: "fa-building-columns",
+                color: "#0ea5e9",
+                bg: "linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(37, 99, 235, 0.15) 100%)",
+                border: "1px solid rgba(14, 165, 233, 0.4)",
+                shadow: "0 0 15px rgba(14, 165, 233, 0.2)",
+                text: "#0284c7",
+                desc: "Organizador oficial o club asociado. Acceso exclusivo en el panel de control para crear y gestionar sus torneos y americanas."
             }
         },
 

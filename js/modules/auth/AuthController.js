@@ -11,19 +11,37 @@
                 this.init();
             }
 
-            // Global Helper for UI switching
+            // Global Helper for UI switching with Segmented Tab sync
             window.toggleAuthMode = (mode) => {
                 const loginForm = document.getElementById('login-form');
                 const registerForm = document.getElementById('register-form');
+                const tabLogin = document.getElementById('tab-auth-login');
+                const tabRegister = document.getElementById('tab-auth-register');
 
                 if (!loginForm || !registerForm) return;
 
                 if (mode === 'register') {
                     loginForm.classList.add('hidden');
                     registerForm.classList.remove('hidden');
+                    if (tabRegister) {
+                        tabRegister.classList.add('active');
+                        tabRegister.setAttribute('aria-selected', 'true');
+                    }
+                    if (tabLogin) {
+                        tabLogin.classList.remove('active');
+                        tabLogin.setAttribute('aria-selected', 'false');
+                    }
                 } else {
                     registerForm.classList.add('hidden');
                     loginForm.classList.remove('hidden');
+                    if (tabLogin) {
+                        tabLogin.classList.add('active');
+                        tabLogin.setAttribute('aria-selected', 'true');
+                    }
+                    if (tabRegister) {
+                        tabRegister.classList.remove('active');
+                        tabRegister.setAttribute('aria-selected', 'false');
+                    }
                 }
             };
         }
@@ -85,10 +103,15 @@
                         } else {
                             console.log("✅ Login Success!");
 
-                            // 🧠 [PRO] MEMORIA DE USUARIO: Guardar para la próxima vez
-                            if (phone) {
+                            // 🧠 [PRO] MEMORIA DE USUARIO: Guardar para la próxima vez según preferencia
+                            const rememberCheck = document.getElementById('auth-remember-device');
+                            const shouldRemember = !rememberCheck || rememberCheck.checked;
+                            if (phone && shouldRemember) {
                                 localStorage.setItem('remembered_phone', phone);
                                 localStorage.setItem('remembered_pwd', password);
+                            } else if (!shouldRemember) {
+                                localStorage.removeItem('remembered_phone');
+                                localStorage.removeItem('remembered_pwd');
                             }
 
                             if (scanner) scanner.style.display = 'none';
@@ -105,8 +128,8 @@
 
                             if (authModal) {
                                 if (scanner) {
-                                    scanner.style.display = 'block'; // láser para barrido final
-                                    scanner.style.animation = 'scanLineSweep 0.8s ease-in-out infinite';
+                                    scanner.style.display = 'block';
+                                    scanner.style.animation = 'scanLineSweep 0.2s ease-in-out infinite';
                                 }
                                 authModal.classList.add('dematerialize');
                                 if (appShell) appShell.classList.remove('hidden');
@@ -118,7 +141,7 @@
                                     if (!window.Router) {
                                         window.location.reload();
                                     }
-                                }, 800);
+                                }, 180);
                             } else {
                                 if (appShell) appShell.classList.remove('hidden');
                                 if (!window.Router) {

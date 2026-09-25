@@ -48,11 +48,14 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
                 if (!event) throw new Error("Event not found");
 
                 // Determine Mode
-                let isFixedPairs = (event.pair_mode === APP_CONSTANTS.PAIR_MODES.FIXED) ||
-                    (event.fixed_pairs && event.fixed_pairs.length > 0);
+                const isSwiss = (event.pair_mode === 'swiss') ||
+                    (event.name && event.name.toUpperCase().includes('SUIZ'));
+
+                let isFixedPairs = !isSwiss && ((event.pair_mode === APP_CONSTANTS.PAIR_MODES.FIXED) ||
+                    (event.fixed_pairs && event.fixed_pairs.length > 0));
 
                 // HEURISTIC: Force Fixed Pairs if name contains "FIJA" or "FIJO" (Case Insensitive)
-                if (!isFixedPairs && event.name && (event.name.toUpperCase().includes('FIJA') || event.name.toUpperCase().includes('FIJO'))) {
+                if (!isSwiss && !isFixedPairs && event.name && (event.name.toUpperCase().includes('FIJA') || event.name.toUpperCase().includes('FIJO'))) {
                     console.log(`🔒 Heuristic: Detected "FIJA/FIJO" in name "${event.name}". Forcing FIXED PAIRS mode.`);
                     isFixedPairs = true;
                 }
@@ -114,14 +117,17 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
 
                         return this._createMatches(eventId, FixedPairsLogic.generatePozoRound(updatedPairs, roundNum, effectiveCourts), eventType);
                     } else {
-                        // Rotating Logic
+                        // Rotating / Swiss Logic
                         const players = event.players || [];
                         let movedPlayers;
-                        console.log(`🔄 Generating Rotating Round ${roundNum} for ${eventType}...`);
 
                         if (!window.RotatingPozoLogic) throw new Error("RotatingPozoLogic not loaded");
 
-                        if (eventType === 'entreno') {
+                        if (isSwiss) {
+                            console.log(`🇨🇭 Generating Swiss Round ${roundNum} for ${eventType}...`);
+                            const allFinishedMatches = matches.filter(m => m.status === 'finished');
+                            movedPlayers = RotatingPozoLogic.updatePlayerCourtsSwiss(players, allFinishedMatches, effectiveCourts);
+                        } else if (eventType === 'entreno') {
                             // Entreno R2+: Use Standard Pozo Movement
                             console.log("🏃‍♂️ Using Entreno Pozo Movement...");
                             movedPlayers = RotatingPozoLogic.updatePlayerCourts(players, prevRoundMatches, effectiveCourts, 'open');
@@ -133,7 +139,7 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
                         await collection.update(eventId, { players: movedPlayers });
                         console.log("✅ Player courts updated.");
 
-                        const genCategory = eventType === 'entreno' ? 'entreno' : event.category;
+                        const genCategory = isSwiss ? 'open' : (eventType === 'entreno' ? 'entreno' : event.category);
                         const newMatches = RotatingPozoLogic.generateRound(movedPlayers, roundNum, effectiveCourts, genCategory);
 
                         console.log(`✨ Generated ${newMatches.length} new matches.`);
@@ -217,8 +223,8 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
                         });
                         await collection.update(eventId, { players });
 
-                        // FIX: For entrenos, always use 'entreno' category so _createEntrenoPairs is used
-                        const genCat = eventType === 'entreno' ? 'entreno' : event.category;
+                        // FIX: For entrenos, always use 'entreno' category so _createEntrenoPairs is used (unless Swiss mode)
+                        const genCat = isSwiss ? 'open' : (eventType === 'entreno' ? 'entreno' : event.category);
                         return this._createMatches(eventId, RotatingPozoLogic.generateRound(players, 1, effectiveCourts, genCat), eventType);
                     }
                 }
@@ -562,6 +568,88 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
 
                 console.log(`✅ Substitution complete. Updated ${updatesCount} matches in ${winningCollection}.`);
                 return updatesCount;
+            },
+
+            /**
+             * Guardar una ronda definida manualmente por ADMIN o SUPERADMIN.
+             */
+            async saveManualRound(eventId, eventType, roundNum, matchesData, restingPlayers = []) {
+                console.log(`✍️ MatchMakingService: Guardando ronda manual ${roundNum} para ${eventType} ${eventId}...`);
+                
+                // 1. Validar permisos de administrador
+                const user = window.AdminAuth?.user || 
+                    (window.AuthService?.getCurrentUser && window.AuthService.getCurrentUser()) ||
+                    JSON.parse(localStorage.getItem('adminUser') || localStorage.getItem('currentUser') || 'null');
+                const role = (user?.role || '').toLowerCase().trim();
+                const isAuthorized = ['super_admin', 'superadmin', 'admin', 'admin_player'].includes(role);
+                
+                if (!isAuthorized) {
+                    throw new Error("Acceso denegado: Solo ADMIN y SUPERADMIN pueden definir rondas manuales.");
+                }
+
+                const colName = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
+                const dbCol = window.db.collection(colName);
+                const rNum = parseInt(roundNum);
+
+                // 2. Eliminar partidos existentes no terminados para esta ronda
+                const snap = await dbCol.where('americana_id', '==', eventId).where('round', '==', rNum).get();
+                const batch = window.db.batch();
+
+                snap.docs.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+
+                // 3. Crear los nuevos partidos definidos manualmente
+                matchesData.forEach(m => {
+                    const newDocRef = dbCol.doc();
+                    const payload = {
+                        ...m,
+                        americana_id: eventId,
+                        round: rNum,
+                        court: parseInt(m.court),
+                        status: 'scheduled',
+                        score_a: 0,
+                        score_b: 0,
+                        is_manual: true,
+                        createdAt: new Date().toISOString()
+                    };
+                    batch.set(newDocRef, payload);
+                });
+
+                // 4. Actualizar el evento
+                const eventCol = (eventType === 'entreno') ? window.FirebaseDB?.entrenos : window.FirebaseDB?.americanas;
+                if (eventCol) {
+                    const eventDoc = await eventCol.getById(eventId);
+                    const updates = {};
+
+                    // Si estaba en 'open' o 'pairing', pasar a 'live'
+                    if (eventDoc && (eventDoc.status === 'open' || eventDoc.status === 'pairing')) {
+                        updates.status = 'live';
+                    }
+
+                    // Actualizar current_court en los jugadores del evento
+                    if (eventDoc && eventDoc.players) {
+                        const updatedPlayers = eventDoc.players.map(p => {
+                            const match = matchesData.find(m => 
+                                (m.team_a_ids || []).includes(p.id) || (m.team_b_ids || []).includes(p.id)
+                            );
+                            if (match) {
+                                return { ...p, current_court: parseInt(match.court) };
+                            } else {
+                                return { ...p, current_court: null };
+                            }
+                        });
+                        updates.players = updatedPlayers;
+                    }
+
+                    if (Object.keys(updates).length > 0) {
+                        await eventCol.update(eventId, updates);
+                    }
+                }
+
+                await batch.commit();
+                console.log(`✅ Ronda manual ${rNum} guardada exitosamente con ${matchesData.length} pistas.`);
+                return true;
             }
         };
 

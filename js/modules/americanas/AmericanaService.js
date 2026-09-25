@@ -6,23 +6,89 @@
         constructor() {
             // Centralized loading via AppInit guarantees dependencies are ready.
             this.db = this._getCollectionService('americana');
+            this._cachedActiveEvents = null;
+            this._lastEventsCacheTime = 0;
+            this._eventsCacheTTL = 60000; // 60s TTL (45-60s)
+            this._activeEventsPendingPromise = null;
+
+            // Invalida la memoria caché cuando se produce una modificación global
+            if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+                window.addEventListener('eventModified', () => {
+                    this.invalidateActiveEventsCache();
+                });
+            }
         }
 
-        validateGender(category, userGender) {
-            const cat = (category || 'open').toLowerCase();
-            const g = (userGender || '').toLowerCase();
-            const isChico = g === 'm' || g === 'chico' || g === 'male';
-            const isChica = g === 'f' || g === 'chica' || g === 'female';
+        /**
+         * Invalida la memoria caché local de eventos activos
+         */
+        invalidateActiveEventsCache() {
+            this._cachedActiveEvents = null;
+            this._lastEventsCacheTime = 0;
+        }
 
-            if (cat === 'masculina' && !isChico) {
-                throw new Error("⛔ Categoría MASCULINA: Solo permitida para chicos.");
+        invalidateCache() {
+            this.invalidateActiveEventsCache();
+        }
+
+        validateGender(category, userGender, eventName = '') {
+            const rawCat = (category || '').toLowerCase().trim();
+            const rawName = (eventName || '').toLowerCase().trim();
+            const g = (userGender || '').toLowerCase().trim();
+
+            const isChico = ['m', 'chico', 'male', 'masculino', 'hombre', 'boy'].includes(g);
+            const isChica = ['f', 'chica', 'female', 'femenina', 'femenino', 'mujer', 'girl'].includes(g);
+
+            // Determinar tipo de categoría normalizada
+            let catType = 'open';
+            if (
+                ['female', 'femenina', 'femenino', 'chicas', 'mujeres'].includes(rawCat) ||
+                rawCat.includes('fem') ||
+                rawName.includes('femenin') ||
+                rawName.includes('chicas')
+            ) {
+                catType = 'female';
+            } else if (
+                ['mixed', 'mixto', 'mixta'].includes(rawCat) ||
+                rawCat.includes('mix') ||
+                rawName.includes('mixt')
+            ) {
+                catType = 'mixed';
+            } else if (
+                ['male', 'masculino', 'masculina', 'chicos', 'hombres'].includes(rawCat) ||
+                rawCat.includes('masc') ||
+                rawName.includes('masculin') ||
+                rawName.includes('chicos')
+            ) {
+                catType = 'male';
+            } else if (rawCat === 'open' || rawName.includes('open')) {
+                catType = 'open';
+            } else if (rawCat) {
+                // Por defecto masculino si viene indicada categoría estándar
+                catType = 'male';
             }
-            if (cat === 'femenina' && !isChica) {
-                throw new Error("⛔ Categoría FEMENINA: Solo permitida para chicas.");
+
+            // Regla: Chico solo Masculino o Mixto. Chica solo Femenino o Mixto.
+            if (catType === 'male' && !isChico) {
+                if (isChica) {
+                    throw new Error("⛔ Categoría MASCULINA: Este evento es exclusivo para chicos. Como chica, puedes apuntarte a eventos Femeninos o Mixtos.");
+                } else {
+                    throw new Error("⛔ Debes definir tu género (chico/chica) en tu perfil para apuntarte a este evento masculino.");
+                }
             }
-            if (cat === 'mixta' && !isChico && !isChica) {
-                throw new Error("⛔ Categoría MIXTA: Debes definir tu género en el perfil.");
+
+            if (catType === 'female' && !isChica) {
+                if (isChico) {
+                    throw new Error("⛔ Categoría FEMENINA: Este evento es exclusivo para chicas. Como chico, puedes apuntarte a eventos Masculinos o Mixtos.");
+                } else {
+                    throw new Error("⛔ Debes definir tu género (chico/chica) en tu perfil para apuntarte a este evento femenino.");
+                }
             }
+
+            if (catType === 'mixed' && !isChico && !isChica) {
+                throw new Error("⛔ Categoría MIXTA: Debes definir tu género en el perfil antes de inscribirte.");
+            }
+
             return true;
         }
 
@@ -30,14 +96,20 @@
          * Normaliza fechas de DD/MM/YYYY a YYYY-MM-DD para comparaciones/sorting
          */
         _normalizeDate(d) {
+            if (window.EventService && typeof window.EventService.normalizeDate === 'function') {
+                return window.EventService.normalizeDate(d);
+            }
             if (!d) return '9999-99-99';
             if (d.includes('/')) {
-                const parts = d.split('/');
-                if (parts[2]?.length === 4) { // DD/MM/YYYY
-                    return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                const parts = d.split('/').map(p => p.trim());
+                if (parts.length >= 2) {
+                    const day = parts[0].padStart(2, '0');
+                    const month = parts[1].padStart(2, '0');
+                    const year = parts[2] ? (parts[2].length === 2 ? '20' + parts[2] : parts[2]) : String(new Date().getFullYear());
+                    return `${year}-${month}-${day}`;
                 }
             }
-            return d; // Asumimos YYYY-MM-DD
+            return d;
         }
 
         /**
@@ -52,13 +124,18 @@
             return null;
         }
 
-        async getActiveAmericanas() {
+        async getActiveAmericanas(options = {}) {
             try {
+                // Reutiliza getAllActiveEvents para beneficiarse de la caché en memoria y la optimización de Firestore
+                const allActive = await this.getAllActiveEvents(options);
+                if (Array.isArray(allActive)) {
+                    return allActive.filter(e => e.type === 'americana');
+                }
                 if (!this.db) return [];
-                const all = await this.db.getAll();
-                const today = new Date().toISOString().split('T')[0];
-                return all
-                    .filter(a => a.status !== 'finished' && (this._normalizeDate(a.date) >= today || a.status === 'live'))
+                const all = await this.db.getAll({ forceRefresh: false });
+                const isFinished = (e) => window.EventService ? window.EventService.isEventFinished(e) : (e.status === 'finished');
+                return (all || [])
+                    .filter(a => !isFinished(a))
                     .sort((a, b) => {
                         const dateA = this._normalizeDate(a.date);
                         const dateB = this._normalizeDate(b.date);
@@ -91,43 +168,206 @@
         }
 
         /**
-         * Unified method to fetch both Americanas and Entrenos for Dashboard
+         * Consulta optimizada y acotada de eventos recientes/activos evitando escaneo masivo histórico.
+         * Aprovecha CacheService y aplica límites e índices inteligentes en Firestore.
          */
-        async getAllActiveEvents() {
+        async _fetchRecentCollectionDocs(firestore, collectionName, limitCount = 40, forceRefresh = false) {
+            const cacheKey = `recent_${collectionName}_${limitCount}`;
+
+            // 1. Aprovechar CacheService / IndexedDB si está disponible
+            if (!forceRefresh && window.CacheService && typeof window.CacheService.get === 'function') {
+                try {
+                    const cached = await window.CacheService.get('database', cacheKey);
+                    if (Array.isArray(cached) && cached.length > 0) {
+                        return cached;
+                    }
+                } catch (_) {}
+            }
+
+            let docs = [];
+
+            // 2. Consulta acotada directa a Firestore
+            if (firestore && typeof firestore.collection === 'function') {
+                const colRef = firestore.collection(collectionName);
+                let snap = null;
+
+                // 2.1 Ordenar por fecha descendente acotado a los últimos 30-40 eventos
+                try {
+                    snap = await colRef.orderBy('date', 'desc').limit(limitCount).get();
+                } catch (orderErr) {
+                    console.warn(`⚠️ [AmericanaService] Fallo consulta orderBy('date') para ${collectionName}:`, orderErr?.message || orderErr);
+                }
+
+                // 2.2 Si orderBy falló (p.ej. falta de índice o formato), intentar filtrar por estados activos
+                if (!snap) {
+                    try {
+                        const activeStatuses = ['open', 'draft', 'in_progress', 'active', 'en_curso', 'live', 'ready', 'scheduled'];
+                        snap = await colRef.where('status', 'in', activeStatuses).limit(limitCount).get();
+                    } catch (statusErr) {
+                        console.warn(`⚠️ [AmericanaService] Fallo consulta por status para ${collectionName}:`, statusErr?.message || statusErr);
+                    }
+                }
+
+                // 2.3 Fallback plano con limit para jamás descargar la historia completa del club
+                if (!snap) {
+                    try {
+                        snap = await colRef.limit(limitCount).get();
+                    } catch (limitErr) {
+                        console.warn(`⚠️ [AmericanaService] Fallo consulta limit para ${collectionName}:`, limitErr?.message || limitErr);
+                    }
+                }
+
+                if (snap?.docs) {
+                    docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                }
+            }
+
+            // 3. Fallback a CollectionService / DatabaseService si firestore directo no devolvió datos
+            if (!docs.length) {
+                try {
+                    const svcType = collectionName === 'entrenos' ? 'entreno' : 'americana';
+                    const colSvc = this._getCollectionService(svcType);
+                    if (colSvc && typeof colSvc.getAll === 'function') {
+                        const allDocs = await this._withTimeout(
+                            colSvc.getAll({ forceRefresh: false }),
+                            3000,
+                            []
+                        );
+                        if (Array.isArray(allDocs)) {
+                            docs = allDocs.slice(0, limitCount);
+                        }
+                    }
+                } catch (svcErr) {
+                    console.warn(`⚠️ [AmericanaService] Fallo fallback servicio para ${collectionName}:`, svcErr);
+                }
+            }
+
+            // 4. Guardar en CacheService para acelerar sucesivas consultas
+            if (docs.length > 0 && window.CacheService && typeof window.CacheService.set === 'function') {
+                try {
+                    window.CacheService.set('database', cacheKey, docs, 60000).catch(() => {});
+                } catch (_) {}
+            }
+
+            return docs;
+        }
+
+        /**
+         * Unified method to fetch both Americanas and Entrenos for Dashboard.
+         * Incorpora caché en memoria (TTL 60s), deduplicación de peticiones en vuelo,
+         * y consultas acotadas a Firestore para evitar descargas masivas históricas.
+         * @param {Object|boolean} [options={}] - Opciones de consulta ({ forceRefresh, limit }) o boolean forceRefresh
+         * @returns {Promise<Array>} Array de eventos activos ordenados cronológicamente
+         */
+        async getAllActiveEvents(options = {}) {
+            const isOptionsObj = options && typeof options === 'object';
+            const forceRefresh = options === true || !!(isOptionsObj && options.forceRefresh);
+            const queryLimit = (isOptionsObj && typeof options.limit === 'number' && options.limit > 0) ? options.limit : 40;
+
+            const now = Date.now();
+
+            // 1. ⚡ Retorno inmediato si la caché en memoria sigue viva (0ms de latencia)
+            if (!forceRefresh && this._cachedActiveEvents && (now - this._lastEventsCacheTime < this._eventsCacheTTL)) {
+                return [...this._cachedActiveEvents];
+            }
+
+            // 2. 🛡️ Deduplicación de peticiones en vuelo (evita consultas simultáneas idénticas en arranque)
+            if (!forceRefresh && this._activeEventsPendingPromise) {
+                return await this._activeEventsPendingPromise;
+            }
+
+            this._activeEventsPendingPromise = (async () => {
+                try {
+                    let ams = [];
+                    let ents = [];
+
+                    // 1. Prioridad: Si EventsController ya tiene cargados entrenos y americanas en memoria en tiempo real
+                    const isBgReady = !!window.EventsController?.state?.bgInitialized;
+                    if (window.EventsController?.state) {
+                        if (Array.isArray(window.EventsController.state.americanas) && window.EventsController.state.americanas.length > 0) {
+                            ams = [...window.EventsController.state.americanas];
+                        }
+                        if (Array.isArray(window.EventsController.state.entrenos) && window.EventsController.state.entrenos.length > 0) {
+                            ents = [...window.EventsController.state.entrenos];
+                        }
+                    }
+
+                    // 2. Si alguna colección falta o está vacía y no está lista en tiempo real, consultar Firestore de forma acotada
+                    if (!isBgReady && (!ams.length || !ents.length)) {
+                        try {
+                            const firestore = window.db || (window.firebase && typeof window.firebase.firestore === 'function' ? window.firebase.firestore() : null);
+                            const [fetchedAms, fetchedEnts] = await Promise.all([
+                                (!ams.length) ? this._fetchRecentCollectionDocs(firestore, 'americanas', queryLimit, forceRefresh) : Promise.resolve(ams),
+                                (!ents.length) ? this._fetchRecentCollectionDocs(firestore, 'entrenos', queryLimit, forceRefresh) : Promise.resolve(ents)
+                            ]);
+                            if (!ams.length && fetchedAms) ams = fetchedAms;
+                            if (!ents.length && fetchedEnts) ents = fetchedEnts;
+                        } catch (dbErr) {
+                            console.warn("⚠️ [AmericanaService] Fallo consulta acotada Firestore:", dbErr);
+                        }
+                    }
+
+                    // 3. Fallback a CollectionService si todavía faltan datos
+                    if (!ams.length || !ents.length) {
+                        const fetchAms = !ams.length ? (this._getCollectionService('americana')?.getAll({ forceRefresh: false }) || []) : Promise.resolve(ams);
+                        const fetchEnts = !ents.length ? (this._getCollectionService('entreno')?.getAll({ forceRefresh: false }) || []) : Promise.resolve(ents);
+
+                        const results = await this._withTimeout(
+                            Promise.all([fetchAms, fetchEnts]),
+                            4000,
+                            [ams, ents]
+                        );
+                        if (!ams.length && Array.isArray(results[0])) ams = results[0].slice(0, queryLimit);
+                        if (!ents.length && Array.isArray(results[1])) ents = results[1].slice(0, queryLimit);
+                    }
+
+                    const all = [
+                        ...ams.map(e => {
+                            const title = (e.name || e.title || e.eventName || '').toLowerCase();
+                            const format = (e.format || e.mode || '').toLowerCase();
+                            const isEnt = e.type === 'entreno' || title.includes('entreno') || title.includes('pozo') || title.includes('clase') || format.includes('entreno') || format.includes('pozo');
+                            return { ...e, type: isEnt ? 'entreno' : (e.type || 'americana') };
+                        }),
+                        ...ents.map(e => ({ ...e, type: 'entreno' }))
+                    ];
+
+                    const isFinished = (e) => {
+                        if (!e) return true;
+                        const st = (e.status || '').toLowerCase().trim();
+                        if (['finished', 'finalizado', 'completed', 'cancelled'].includes(st)) return true;
+                        if (window.EventService && typeof window.EventService.isEventFinished === 'function') {
+                            return window.EventService.isEventFinished(e);
+                        }
+                        return false;
+                    };
+
+                    const activeEvents = all
+                        .filter(e => !isFinished(e))
+                        .sort((a, b) => {
+                            const dateA = this._normalizeDate(a.date);
+                            const dateB = this._normalizeDate(b.date);
+                            return new Date(dateA + 'T' + (a.time || '00:00')) - new Date(dateB + 'T' + (b.time || '00:00'));
+                        });
+
+                    // Guardar en la caché local en memoria con timestamp
+                    this._cachedActiveEvents = activeEvents;
+                    this._lastEventsCacheTime = Date.now();
+
+                    return activeEvents;
+                } catch (error) {
+                    console.error("Error fetching all active events:", error);
+                    if (this._cachedActiveEvents && this._cachedActiveEvents.length > 0) {
+                        return [...this._cachedActiveEvents];
+                    }
+                    return [];
+                }
+            })();
+
             try {
-                const results = await this._withTimeout(
-                    Promise.all([
-                        this._getCollectionService('americana')?.getAll() || [],
-                        this._getCollectionService('entreno')?.getAll() || []
-                    ]),
-                    4000,
-                    [[], []]
-                );
-
-                const [ams, ents] = results;
-
-                const all = [
-                    ...ams.map(e => {
-                        const title = (e.name || e.title || e.eventName || '').toLowerCase();
-                        const format = (e.format || e.mode || '').toLowerCase();
-                        const isEnt = e.type === 'entreno' || title.includes('entreno') || title.includes('pozo') || title.includes('clase') || format.includes('entreno') || format.includes('pozo');
-                        return { ...e, type: isEnt ? 'entreno' : (e.type || 'americana') };
-                    }),
-                    ...ents.map(e => ({ ...e, type: 'entreno' }))
-                ];
-
-                const today = new Date().toISOString().split('T')[0];
-
-                return all
-                    .filter(e => e.status !== 'finished' && (this._normalizeDate(e.date) >= today || e.status === 'live'))
-                    .sort((a, b) => {
-                        const dateA = this._normalizeDate(a.date);
-                        const dateB = this._normalizeDate(b.date);
-                        return new Date(dateA + 'T' + (a.time || '00:00')) - new Date(dateB + 'T' + (b.time || '00:00'));
-                    });
-            } catch (error) {
-                console.error("Error fetching all active events:", error);
-                return [];
+                const results = await this._activeEventsPendingPromise;
+                return [...results];
+            } finally {
+                this._activeEventsPendingPromise = null;
             }
         }
 
@@ -161,7 +401,7 @@
                     throw new Error("El evento se ha llenado hace unos instantes.");
                 }
 
-                this.validateGender(event.category, user.gender);
+                this.validateGender(event.category, user.gender, event.name);
 
                 // 2. PREPARAR DATOS
                 const newPlayerData = {
@@ -196,6 +436,7 @@
 
                 // 4. ESCRITURA ATÓMICA DE ARRAY (Soporta alta concurrencia)
                 await eventRef.update(updates);
+                this.invalidateActiveEventsCache();
                 console.log(`✅ ${logId} Inscripción completada con éxito.`);
 
                 // 5. TAREAS DE FONDO (Sin esperar a que terminen)
@@ -247,6 +488,7 @@
                     registeredPlayers: firebase.firestore.FieldValue.arrayRemove(...itemsToRemove),
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp() // 🚀 FORZAR NOTIFICACIÓN
                 });
+                this.invalidateActiveEventsCache();
 
                 console.log(`✅ ${logId} Baja completada.`);
 
@@ -291,7 +533,7 @@
                 const collectionName = (type === 'entreno') ? 'entrenos' : 'americanas';
                 const eventRef = db.collection(collectionName).doc(eventId);
 
-                return await db.runTransaction(async (transaction) => {
+                const res = await db.runTransaction(async (transaction) => {
                     const doc = await transaction.get(eventRef);
                     if (!doc.exists) throw new Error("Evento no encontrado");
                     const event = doc.data();
@@ -300,7 +542,7 @@
 
                     if (waitlist.find(p => (p.uid || p.id) === currentUid)) throw new Error("Ya estás en lista de espera.");
 
-                    this.validateGender(event.category, user.gender);
+                    this.validateGender(event.category, user.gender, event.name);
 
                     waitlist.push({
                         uid: currentUid, id: currentUid,
@@ -311,6 +553,8 @@
                     transaction.update(eventRef, { waitlist });
                     return { success: true };
                 });
+                if (res?.success) this.invalidateActiveEventsCache();
+                return res;
             } catch (err) { return { success: false, error: err.message }; }
         }
 
@@ -320,7 +564,7 @@
                 const collectionName = (type === 'entreno') ? 'entrenos' : 'americanas';
                 const eventRef = db.collection(collectionName).doc(eventId);
 
-                return await db.runTransaction(async (transaction) => {
+                const res = await db.runTransaction(async (transaction) => {
                     const doc = await transaction.get(eventRef);
                     if (!doc.exists) throw new Error("Evento no encontrado");
                     const event = doc.data();
@@ -329,6 +573,8 @@
                     transaction.update(eventRef, { waitlist: newWaitlist });
                     return { success: true };
                 });
+                if (res?.success) this.invalidateActiveEventsCache();
+                return res;
             } catch (err) { return { success: false, error: err.message }; }
         }
 
@@ -410,11 +656,13 @@
 
         async createAmericana(data) {
             if (!data.name || !data.date) throw new Error("Invalid Americana Data");
-            return await this.db.create({
+            const result = await this.db.create({
                 ...data,
                 status: 'draft',
                 registeredPlayers: []
             });
+            this.invalidateActiveEventsCache();
+            return result;
         }
 
         /**

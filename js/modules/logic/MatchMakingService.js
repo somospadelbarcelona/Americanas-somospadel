@@ -61,8 +61,10 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
 
                 try {
                     // Determine Mode
+                    const isSwiss = (event.pair_mode === 'swiss') ||
+                        (event.name && event.name.toUpperCase().includes('SUIZ'));
                     const M = APP_CONSTANTS.PAIR_MODES;
-                    const isFixedPairs = event.pair_mode === M.FIXED || event.pair_mode === M.FIXED_ADMIN || event.pair_mode === M.FIXED_AUTO;
+                    const isFixedPairs = !isSwiss && (event.pair_mode === M.FIXED || event.pair_mode === M.FIXED_ADMIN || event.pair_mode === M.FIXED_AUTO);
 
                     // --- CRITICAL IDEMPOTENCY CHECK (DB Level) ---
                     const checkColl = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
@@ -153,13 +155,17 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
                             let movedPlayers;
                             if (!window.RotatingPozoLogic) throw new Error("RotatingPozoLogic not loaded");
 
-                            if (eventType === 'entreno') {
+                            if (isSwiss) {
+                                console.log(`🇨🇭 [MatchMaking] Generando Ronda Suiza ${roundNum} para ${eventType}...`);
+                                const allFinishedMatches = (matches || []).filter(m => m.status === 'finished');
+                                movedPlayers = RotatingPozoLogic.updatePlayerCourtsSwiss(players, allFinishedMatches, effectiveCourts);
+                            } else if (eventType === 'entreno') {
                                 movedPlayers = RotatingPozoLogic.updatePlayerCourts(players, prevRoundMatches, effectiveCourts, 'open');
                             } else {
                                 movedPlayers = RotatingPozoLogic.updatePlayerCourts(players, prevRoundMatches, effectiveCourts, event.category);
                             }
                             await collection.update(eventId, { players: movedPlayers });
-                            const genCategory = eventType === 'entreno' ? 'entreno' : event.category;
+                            const genCategory = isSwiss ? 'open' : (eventType === 'entreno' ? 'entreno' : event.category);
                             return await this._createMatches(eventId, RotatingPozoLogic.generateRound(movedPlayers, roundNum, effectiveCourts, genCategory), eventType);
                         }
 
@@ -196,7 +202,8 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
                             players.forEach((p, i) => p.current_court = Math.floor(i / 4) + 1);
                             await collection.update(eventId, { players });
 
-                            return await this._createMatches(eventId, RotatingPozoLogic.generateRound(players, 1, effectiveCourts, event.category), eventType);
+                            const genCat = isSwiss ? 'open' : (eventType === 'entreno' ? 'entreno' : event.category);
+                            return await this._createMatches(eventId, RotatingPozoLogic.generateRound(players, 1, effectiveCourts, genCat), eventType);
                         }
                     }
                 } finally {

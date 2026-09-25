@@ -140,6 +140,7 @@
         }
 
         async handleAuthStateChange(user) {
+            const cachedUser = (window.Store && window.Store.getState('currentUser')) || {};
             let playerData = null;
             try {
                 // UNIFICATION MAGIC: Find the REAL player profile using UID or phone
@@ -148,13 +149,14 @@
                 console.error("Error fetching player data on auth state change", e);
             }
 
-            // Create base user object
+            // Create base user object, preserving cached fields
             const finalUser = {
+                ...cachedUser,
                 id: user.uid, // Default to Auth UID
                 uid: user.uid,
                 email: user.email,
-                displayName: user.displayName,
-                ...playerData // Overwrite with DB data (name, role, level, etc.)
+                displayName: user.displayName || cachedUser.displayName,
+                ...(playerData || {})
             };
 
             // ID MERGING STRATEGY
@@ -165,6 +167,12 @@
                 finalUser.mergedIds.push(playerData.id);
                 // Vital: Make the primary ID the Player ID for data consistency if it exists
                 finalUser.id = playerData.id;
+            }
+
+            // Evitar disparar setState si la información de sesión no ha cambiado
+            if (cachedUser && cachedUser.id === finalUser.id && cachedUser.role === finalUser.role && cachedUser.name === finalUser.name && cachedUser.level === finalUser.level) {
+                console.log("⚡ [AuthService] Datos de sesión idénticos al cache local. Omitiendo re-render.");
+                return;
             }
 
             window.Store.setState('currentUser', finalUser);
@@ -275,6 +283,18 @@
 
                 } catch (localError) {
                     console.error("Local auth also failed:", localError);
+                    if (localError.message && localError.message.includes('INTERNAL ASSERTION FAILED')) {
+                        console.warn("🚨 [AuthService] Firestore assertion detectado. Purgando caché de IndexedDB...");
+                        try {
+                            if (window.indexedDB && window.indexedDB.deleteDatabase) {
+                                window.indexedDB.deleteDatabase('firestore/[DEFAULT]/americanas-somospadel/main');
+                            }
+                        } catch (_) {}
+                        return { 
+                            success: false, 
+                            error: "Conexión reiniciada con éxito. Por favor, pulsa 'INICIAR SESIÓN' de nuevo." 
+                        };
+                    }
                     return { success: false, error: localError.message || "Credenciales incorrectas" };
                 }
             }

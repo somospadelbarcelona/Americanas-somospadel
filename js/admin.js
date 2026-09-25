@@ -42,7 +42,63 @@ window.AdminAuth = {
     hasAdminRole(role) {
         if (!role) return false;
         const r = role.toString().toLowerCase().trim();
-        return ['super_admin', 'superadmin', 'admin', 'admin_player', 'captain', 'capitan', 'capitanes', 'organizador', 'organizadores'].includes(r);
+        return ['super_admin', 'superadmin', 'admin', 'admin_player', 'captain', 'capitan', 'capitanes', 'organizador', 'organizadores', 'organizer', 'organizers'].includes(r);
+    },
+
+    applyRoleRestrictions() {
+        if (!this.user) return;
+        const role = (this.user.role || '').toString().toLowerCase().trim();
+        const isOrganizer = ['organizer', 'organizador', 'organizadores', 'organizers'].includes(role);
+
+        if (isOrganizer) {
+            console.log("🏛️ [AdminAuth] Modo Organizador Club activo. Ocultando pestañas no autorizadas...");
+            
+            const sidebar = document.getElementById('admin-sidebar');
+            if (sidebar) {
+                // Ocultar todos los submenús excepto el de Americanas
+                const wrappers = sidebar.querySelectorAll('.submenu-wrapper');
+                wrappers.forEach(w => {
+                    const hasAmericana = w.querySelector('.nav-group-americana') || w.querySelector('[data-view^="americanas"]');
+                    if (!hasAmericana) {
+                        w.style.setProperty('display', 'none', 'important');
+                    } else {
+                        w.style.setProperty('display', 'flex', 'important');
+                        w.classList.add('expanded');
+                        const content = w.querySelector('.submenu-content');
+                        if (content) {
+                            content.style.setProperty('display', 'flex', 'important');
+                            content.style.maxHeight = '600px';
+                            content.style.opacity = '1';
+                            content.style.pointerEvents = 'auto';
+                        }
+                    }
+                });
+
+                // Ocultar botones individuales de navegación que no sean Americanas
+                const topButtons = sidebar.querySelectorAll('.nav-menu > button.nav-item-pro');
+                topButtons.forEach(btn => {
+                    const view = btn.getAttribute('data-view') || '';
+                    if (!view.includes('americana') && !view.includes('matches')) {
+                        btn.style.setProperty('display', 'none', 'important');
+                    }
+                });
+            }
+
+            // Adaptar la insignia de rol en el perfil
+            const roleEl = document.querySelector('.admin-profile-pro .role');
+            if (roleEl) {
+                roleEl.innerHTML = 'ORGANIZADOR / CLUB 🏛️';
+                roleEl.style.color = '#0ea5e9';
+                roleEl.style.fontWeight = '900';
+            }
+        }
+
+        // 🛡️ Ocultar consola de emergencia excepto para Superadmin
+        const isSuperAdmin = ['super_admin', 'superadmin'].includes(role);
+        const emergencyBtn = document.getElementById('emergency-console-trigger-btn');
+        if (emergencyBtn) {
+            emergencyBtn.style.setProperty('display', isSuperAdmin ? 'block' : 'none', 'important');
+        }
     },
 
     async init() {
@@ -57,6 +113,7 @@ window.AdminAuth = {
                 modal.classList.add('hidden');
             }
             this.updateProfileUI();
+            this.applyRoleRestrictions();
 
             // 🔐 FIX: Siempre establecer sesión Firebase Auth ANTES de cargar cualquier vista
             // Sin esto, Firestore devuelve permission-denied porque request.auth == null
@@ -129,7 +186,8 @@ window.AdminAuth = {
         const ACCESS_CODES = {
             '212121': { role: 'super_admin', name: 'Super Admin' },
             '501501': { role: 'admin', name: 'Admin' },
-            '262524': { role: 'captain', name: 'Capitán' }
+            '262524': { role: 'captain', name: 'Capitán' },
+            '808808': { role: 'organizer', name: 'Organizador Club' }
         };
 
         try {
@@ -199,8 +257,11 @@ window.AdminAuth = {
         localStorage.setItem('adminUser', JSON.stringify(user));
         document.getElementById('admin-auth-modal').style.display = 'none';
         this.updateProfileUI();
+        this.applyRoleRestrictions();
+        const role = (user.role || '').toString().toLowerCase().trim();
+        const isOrganizer = ['organizer', 'organizador', 'organizadores', 'organizers'].includes(role);
         const hashView = window.location.hash ? window.location.hash.replace('#', '').split('?')[0].trim() : null;
-        const targetView = hashView || sessionStorage.getItem('admin_last_view') || 'users';
+        const targetView = hashView || sessionStorage.getItem('admin_last_view') || (isOrganizer ? 'americanas_mgmt' : 'users');
         window.loadAdminView(targetView);
     },
 
@@ -245,7 +306,21 @@ window._currentAdminNavId = 0;
 window._currentAdminView = null;
 
 window.loadAdminView = async function (rawViewName) {
-    const viewName = String(rawViewName || 'users').split('?')[0].trim();
+    const role = (window.AdminAuth?.user?.role || '').toString().toLowerCase().trim();
+    const isOrganizer = ['organizer', 'organizador', 'organizadores', 'organizers'].includes(role);
+
+    let viewName = String(rawViewName || (isOrganizer ? 'americanas_mgmt' : 'users')).split('?')[0].trim();
+
+    // 🔒 RESTRICCIÓN ESTRICTA DE ACCESO PARA ORGANIZADORES:
+    // Solo pueden ver y gestionar Americanas y Resultados de americanas
+    if (isOrganizer) {
+        const allowedViews = ['americanas_mgmt', 'americanas_create', 'matches', 'simulator_empty', 'events'];
+        if (!allowedViews.includes(viewName)) {
+            console.warn(`🔒 [Seguridad Organizador] Acceso restringido a "${viewName}". Redirigiendo a americanas_mgmt.`);
+            viewName = 'americanas_mgmt';
+        }
+    }
+
     window._currentAdminView = viewName;
     const navId = ++window._currentAdminNavId;
     console.log(`🧭 [Navigation #${navId}] Navigate to:`, viewName);
@@ -265,6 +340,16 @@ window.loadAdminView = async function (rawViewName) {
     document.getElementById('admin-sidebar')?.classList.remove('open');
     document.getElementById('sidebar-overlay')?.classList.remove('active');
 
+    // Re-apply role restrictions to keep sidebar locked
+    if (window.AdminAuth && typeof window.AdminAuth.applyRoleRestrictions === 'function') {
+        window.AdminAuth.applyRoleRestrictions();
+    }
+
+    // Cleanup listeners de la vista anterior antes de navegar
+    if (window.AdminCommunity && typeof window.AdminCommunity.destroy === 'function') {
+        window.AdminCommunity.destroy();
+    }
+
     const content = document.getElementById('content-area');
     if (content) content.innerHTML = '<div class="loader"></div>';
 
@@ -282,6 +367,9 @@ window.loadAdminView = async function (rawViewName) {
         }
         else if ((viewName === 'americanas_mgmt' || viewName === 'events') && window.AdminViews.americanas_mgmt) {
             await window.AdminViews.americanas_mgmt();
+        }
+        else if (viewName === 'americanas_create' && window.AdminViews && window.AdminViews.americanas_create) {
+            await window.AdminViews.americanas_create();
         }
 
         else if (viewName === 'network_pulse') {
@@ -335,6 +423,13 @@ window.loadAdminView = async function (rawViewName) {
         else if (viewName === 'tournaments_mgmt') {
             if (window.AdminTournaments) window.AdminTournaments.init();
             else throw new Error("Tournaments Module not loaded");
+        }
+        else if (viewName === 'notifications_manager') {
+            if (window.AdminViews && window.AdminViews.notifications_manager) {
+                await window.AdminViews.notifications_manager();
+            } else {
+                throw new Error("Notifications Manager Module not loaded");
+            }
         }
         else {
             // Fallback for Simulator or others not yet refactored logic
