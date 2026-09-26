@@ -67,6 +67,9 @@ runSubtest("Crónica Post-Torneo con IA & Instagram Stories", "test-tournament-c
 // 12. Radar de Climatología Avanzado & Alertas de Lluvia QA
 runSubtest("Radar de Climatología Avanzado & Alertas de Lluvia", "test-weather-radar-complete-qa.js");
 
+// 13. Visualización Completa de 6 Rondas & Tabs Compactos QA
+runSubtest("Visualización Completa de 6 Rondas & Tabs Compactos", "test-round-tabs-qa.js");
+
 console.log("\n================================================================");
 console.log(" RESUMEN GLOBAL DE CALIDAD:");
 reports.forEach(r => {
