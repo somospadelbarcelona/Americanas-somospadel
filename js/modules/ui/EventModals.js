@@ -245,10 +245,18 @@
 
             document.getElementById('btn-next-round').onclick = async () => {
                 const btn = document.getElementById('btn-next-round');
+                const originalHtml = btn.innerHTML;
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO SIGUIENTE RONDA...';
                 btn.style.opacity = '0.85';
                 btn.style.pointerEvents = 'none';
-                if (onNextRound) await onNextRound();
+                try {
+                    if (onNextRound) await onNextRound();
+                } catch (err) {
+                    console.error("❌ [EventModals] Error al avanzar ronda:", err);
+                    btn.innerHTML = '<span>🚀 REINTENTAR SIGUIENTE RONDA</span>';
+                    btn.style.opacity = '1';
+                    btn.style.pointerEvents = 'auto';
+                }
             };
 
             document.getElementById('btn-edit-round').onclick = () => {

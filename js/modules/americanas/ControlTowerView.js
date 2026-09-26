@@ -427,6 +427,7 @@
                             this.roundPromptDismissedFor = null;
                         } catch (e) {
                             window.PremiumModal.alert({ title: "❌ ERROR", message: e.message, type: 'error' });
+                            throw e;
                         }
                     }
                 },

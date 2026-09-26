@@ -1,13 +1,13 @@
 // ============================================================================
 // 🎾 SOMOSPADEL PWA SERVICE WORKER
-// Versión: somospadel-pwa-v2.0.5
+// Versión: somospadel-pwa-v2.0.6
 // Estrategias:
 //  - Documentos de navegación: Network First con fallback a caché offline
 //  - Recursos estáticos pesados (fuentes, imágenes, CSS, JS): Stale-While-Revalidate / Cache First
 //  - Firestore y APIs externas: Excluidas de caché (conexión directa)
 // ============================================================================
 
-const CACHE_NAME = 'somospadel-pwa-v2.0.5';
+const CACHE_NAME = 'somospadel-pwa-v2.0.6';
 
 // Recursos críticos para el funcionamiento offline básico (App Shell)
 const PRECACHE_ASSETS = [
@@ -15,6 +15,8 @@ const PRECACHE_ASSETS = [
     './index.html',
     './admin.html',
     './manifest.json',
+    './js/fixed-pairs-logic.js',
+    './js/rotating-pozo-logic.js',
     './css/theme-playtomic.css',
     './css/notifications.css',
     './css/nav-mobile.css',

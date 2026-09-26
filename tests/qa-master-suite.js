@@ -55,6 +55,9 @@ runSubtest("Inicio de Comunidad (CommunityHome QA)", "test-community-home-qa.js"
 // 8. Gamification & Achievements System QA
 runSubtest("Gamificación y Logros (Achievements QA)", "test-gamification-qa.js");
 
+// 9. Round Advancement & Matchmaking Modes QA (Fixed Pairs, Twister, Suizo)
+runSubtest("Avance de Rondas y Modalidades (Fixed, Twister, Suizo)", "test-round-advancement-qa.js");
+
 console.log("\n================================================================");
 console.log(" RESUMEN GLOBAL DE CALIDAD:");
 reports.forEach(r => {
