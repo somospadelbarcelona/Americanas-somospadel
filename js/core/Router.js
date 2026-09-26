@@ -22,8 +22,9 @@
                 'clima': () => this.handleControllerTab('EventsController', 'meteo'),
                 'weather': () => this.handleControllerTab('EventsController', 'meteo'),
                 'meteo': () => this.handleControllerTab('EventsController', 'meteo'),
-                'comunidad': () => this.handleCommunityRoute('teams'),
-                'community': () => this.handleCommunityRoute('teams'),
+                'comunidad': () => this.handleCommunityRoute('home'),
+                'community': () => this.handleCommunityRoute('home'),
+                'community_home': () => this.handleCommunityRoute('home'),
                 'equipos': () => this.handleCommunityRoute('teams'),
                 'teams': () => this.handleCommunityRoute('teams'),
                 'tournaments': () => this.handleCommunityRoute('tournaments'),
@@ -183,14 +184,20 @@
             }
         }
 
-        handleCommunityRoute(subTab = 'teams') {
+        handleCommunityRoute(subTab = 'home') {
             window.activeCommunitySubTab = subTab;
 
             const onDone = () => {
                 this.attachCommunitySubmenu(subTab);
             };
 
-            if (subTab === 'teams') {
+            if (subTab === 'home') {
+                this.executeControllerInit('CommunityHomeController', 'comunidad', (c) => {
+                    c.init();
+                    setTimeout(onDone, 60);
+                    setTimeout(onDone, 200);
+                });
+            } else if (subTab === 'teams') {
                 this.executeControllerInit('TeamController', 'teams', (c) => {
                     c.init();
                     setTimeout(onDone, 60);
@@ -229,7 +236,7 @@
                         window.showInscriptionsComingSoon();
                     }
                 }, 50);
-                // Volver a comunidad/equipos en lugar de cargar inscripciones
+                // Volver a comunidad en lugar de cargar inscripciones
                 this.navigate('comunidad', false, true);
                 setTimeout(onDone, 60);
             } else if (subTab === 'tournaments') {
@@ -245,9 +252,11 @@
             const content = document.getElementById('content-area');
             if (!content) return;
 
-            // Determinar la subpestaña canónica activa (entrenos, teams, my_team, agenda, inscriptions, records)
-            let currentTab = activeSubTab || window.activeCommunitySubTab || 'teams';
-            if (['comunidad', 'community', 'equipos', 'teams'].includes(currentTab)) {
+            // Determinar la subpestaña canónica activa (home, entrenos, teams, my_team, agenda, inscriptions, records)
+            let currentTab = activeSubTab || window.activeCommunitySubTab || 'home';
+            if (['comunidad', 'community', 'home', 'community_home'].includes(currentTab)) {
+                currentTab = 'home';
+            } else if (['equipos', 'teams'].includes(currentTab)) {
                 currentTab = 'teams';
             } else if (['entrenos', 'partidas_abiertas'].includes(currentTab)) {
                 currentTab = 'entrenos';
@@ -374,7 +383,7 @@
         cleanupPreviousRoute(prevRoute, newRoute) {
             if (prevRoute && prevRoute === newRoute) return;
 
-            const isCommunity = ['comunidad', 'community', 'equipos', 'teams', 'entrenos', 'partidas_abiertas', 'agenda', 'tournaments', 'my_team', 'records', 'inscriptions', 'inscripciones'].includes(newRoute);
+            const isCommunity = ['comunidad', 'community', 'community_home', 'equipos', 'teams', 'entrenos', 'partidas_abiertas', 'agenda', 'tournaments', 'my_team', 'records', 'inscriptions', 'inscripciones'].includes(newRoute);
             const isAmericanas = ['events', 'americanas', 'finished_americanas', 'agenda_americanas', 'help_americanas', 'meteo', 'clima', 'weather'].includes(newRoute);
 
             if (!isCommunity && !isAmericanas) {
@@ -386,13 +395,14 @@
             const controllersToCleanup = [
                 { name: 'DashboardView', routes: ['dashboard', 'journal', 'blog'] },
                 { name: 'DashboardController', routes: ['dashboard', 'journal', 'blog'] },
+                { name: 'CommunityHomeController', routes: ['comunidad', 'community', 'community_home'] },
                 { name: 'EventsController', routes: ['events', 'americanas', 'finished_americanas', 'agenda_americanas', 'help_americanas', 'finished', 'agenda', 'results', 'entrenos', 'partidas_abiertas', 'meteo', 'clima', 'weather'] },
                 { name: 'ControlTowerView', routes: ['live'] },
                 { name: 'TVView', routes: ['tv'] },
                 { name: 'PlayerController', routes: ['profile'] },
                 { name: 'RecordsController', routes: ['records'] },
                 { name: 'RankingController', routes: ['ranking'] },
-                { name: 'TeamController', routes: ['teams', 'equipos', 'comunidad', 'community', 'my_team'] },
+                { name: 'TeamController', routes: ['teams', 'equipos', 'my_team'] },
                 { name: 'TournamentController', routes: ['tournaments'] }
             ];
 

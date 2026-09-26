@@ -348,114 +348,224 @@
             const isFiltered = this.hasActiveFilters();
 
             return `
-                <div class="filters-container" style="padding: 10px 12px 18px; display: flex; flex-direction: column; gap: 10px; background: transparent;">
-                    <!-- Live Search Bar -->
-                    <div style="position: relative; width: 100%;">
-                        <i class="fas fa-search" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #64748b; font-size: 0.8rem;"></i>
-                        <input type="text" 
-                               id="events-live-search-input"
-                               placeholder="Buscar por sede, formato o nivel (ej: Prat, Twister, 3.5)..." 
-                               value="${currentSearch.replace(/"/g, '&quot;')}"
-                               oninput="window.EventsController.setFilter('searchQuery', this.value)"
-                               style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.04); border: 1.5px solid ${currentSearch ? '#CCFF00' : 'rgba(255,255,255,0.08)'}; border-radius: 14px; padding: 9px 36px 9px 38px; color: #ffffff; font-size: 0.74rem; font-weight: 800; font-family: 'Outfit', sans-serif; outline: none; transition: border-color 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.25);"
-                               onfocus="this.style.borderColor='#CCFF00';"
-                               onblur="if(!this.value) this.style.borderColor='rgba(255,255,255,0.08)';">
-                        ${currentSearch ? `
-                            <button onclick="window.EventsController.setFilter('searchQuery', '')" 
-                                    title="Borrar búsqueda"
-                                    style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: #94a3b8; cursor: pointer; font-size: 0.85rem; padding: 4px; display: flex; align-items: center;">
-                                <i class="fas fa-times-circle"></i>
-                            </button>
-                        ` : ''}
-                    </div>
+                <div class="filters-container" style="
+                    margin: 8px 10px 14px 10px;
+                    padding: 12px 14px;
+                    background: linear-gradient(145deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 41, 59, 0.9) 100%);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-radius: 18px;
+                    box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.35);
+                    backdrop-filter: blur(14px);
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                    font-family: 'Outfit', sans-serif;
+                ">
+                    <style>
+                        .filter-search-input:focus {
+                            border-color: #CCFF00 !important;
+                            box-shadow: 0 0 12px rgba(204, 255, 0, 0.22) !important;
+                        }
+                        .filter-view-pill {
+                            padding: 6px 11px;
+                            border-radius: 9px;
+                            border: none;
+                            font-weight: 900;
+                            font-size: 0.65rem;
+                            cursor: pointer;
+                            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 5px;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        }
+                        .filter-cat-btn {
+                            flex: 1;
+                            min-width: 68px;
+                            white-space: nowrap;
+                            padding: 8px 6px;
+                            border-radius: 11px;
+                            font-size: 0.68rem;
+                            font-weight: 900;
+                            letter-spacing: 0.3px;
+                            text-transform: uppercase;
+                            cursor: pointer;
+                            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                            display: inline-flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 4px;
+                        }
+                        .filter-quick-chip {
+                            white-space: nowrap;
+                            padding: 5px 12px;
+                            border-radius: 10px;
+                            font-size: 0.65rem;
+                            font-weight: 900;
+                            cursor: pointer;
+                            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 5px;
+                        }
+                        @media (max-width: 480px) {
+                            .cat-label-full { display: none; }
+                            .cat-label-short { display: inline; }
+                            .view-label-full { display: none; }
+                            .view-label-short { display: inline; }
+                        }
+                        @media (min-width: 481px) {
+                            .cat-label-full { display: inline; }
+                            .cat-label-short { display: none; }
+                            .view-label-full { display: inline; }
+                            .view-label-short { display: none; }
+                        }
+                    </style>
 
-                    <!-- View Mode Toggle & Reset Chips -->
-                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 2px;">
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <span style="font-size: 0.64rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.6px;">
-                                <i class="fas fa-layer-group" style="color: #CCFF00; font-size: 0.65rem; margin-right: 3px;"></i> Vista:
-                            </span>
-                            <div style="background: rgba(255, 255, 255, 0.05); border: 1.5px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 2px; display: inline-flex; gap: 3px;">
-                                <button type="button" 
-                                        onclick="window.EventsController.setViewMode('detailed')" 
-                                        title="Vista Completa (Con cartel, fotos y detalles)"
-                                        style="padding: 5px 12px; border-radius: 9px; border: none; font-weight: 950; font-size: 0.66rem; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 5px; text-transform: uppercase; ${this.state.viewMode === 'detailed' ? 'background: #CCFF00; color: #000; box-shadow: 0 2px 8px rgba(204,255,0,0.35);' : 'background: transparent; color: #94a3b8;'}">
-                                    <i class="fas fa-th-large"></i> Completa
-                                </button>
-                                <button type="button" 
-                                        onclick="window.EventsController.setViewMode('compact')" 
-                                        title="Vista Minimizada (Ideal cuando hay muchos eventos)"
-                                        style="padding: 5px 12px; border-radius: 9px; border: none; font-weight: 950; font-size: 0.66rem; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 5px; text-transform: uppercase; ${this.state.viewMode === 'compact' ? 'background: #CCFF00; color: #000; box-shadow: 0 2px 8px rgba(204,255,0,0.35);' : 'background: transparent; color: #94a3b8;'}">
-                                    <i class="fas fa-bars"></i> Minimizada
-                                </button>
-                            </div>
-                        </div>
-
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            ${isFiltered ? `
+                    <!-- ROW 1: LIVE SEARCH & COMPACT VIEW TOGGLE -->
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <!-- Search Bar -->
+                        <div style="position: relative; flex: 1; min-width: 0;">
+                            <i class="fas fa-search" style="position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: #64748b; font-size: 0.78rem;"></i>
+                            <input type="text" 
+                                   id="events-live-search-input"
+                                   class="filter-search-input"
+                                   placeholder="Buscar por sede, formato o nivel..." 
+                                   value="${currentSearch.replace(/"/g, '&quot;')}"
+                                   oninput="window.EventsController.setFilter('searchQuery', this.value)"
+                                   style="width: 100%; box-sizing: border-box; background: rgba(15, 23, 42, 0.65); border: 1.5px solid ${currentSearch ? '#CCFF00' : 'rgba(255,255,255,0.12)'}; border-radius: 12px; padding: 8px 34px 8px 34px; color: #ffffff; font-size: 0.74rem; font-weight: 800; font-family: 'Outfit', sans-serif; outline: none; transition: border-color 0.2s, box-shadow 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.25);"
+                                   onfocus="this.style.borderColor='#CCFF00';"
+                                   onblur="if(!this.value) this.style.borderColor='rgba(255,255,255,0.12)';">
+                            ${currentSearch ? `
                                 <button type="button"
-                                        onclick="window.EventsController.resetFilters()"
-                                        title="Quitar todos los filtros"
-                                        style="background: rgba(204, 255, 0, 0.12); border: 1px solid rgba(204, 255, 0, 0.4); color: #CCFF00; padding: 5px 10px; border-radius: 9px; font-size: 0.62rem; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.15s;">
-                                    <i class="fas fa-rotate-left"></i>
-                                    <span>LIMPIAR</span>
+                                        onclick="window.EventsController.setFilter('searchQuery', '')" 
+                                        title="Borrar búsqueda"
+                                        style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: #94a3b8; cursor: pointer; font-size: 0.85rem; padding: 4px; display: flex; align-items: center;"
+                                        onmouseover="this.style.color='#ffffff';"
+                                        onmouseout="this.style.color='#94a3b8';">
+                                    <i class="fas fa-times-circle"></i>
                                 </button>
                             ` : ''}
+                        </div>
 
-                            <!-- Quick Action: Ampliar / Minimizar Todo -->
+                        <!-- View Toggle: Completa vs Minimizada -->
+                        <div style="background: rgba(15, 23, 42, 0.65); border: 1.5px solid rgba(255, 255, 255, 0.12); border-radius: 12px; padding: 2px; display: inline-flex; align-items: center; gap: 2px; flex-shrink: 0;">
                             <button type="button" 
-                                    onclick="window.EventsController.toggleAllCardsExpansion(${this.state.viewMode === 'compact'})" 
-                                    title="${this.state.viewMode === 'compact' ? 'Ampliar todas las tarjetas' : 'Minimizar todas las tarjetas'}"
-                                    style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12); color: #cbd5e1; padding: 5px 10px; border-radius: 9px; font-size: 0.62rem; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.15s;"
-                                    onmouseover="this.style.color='#CCFF00'; this.style.borderColor='rgba(204,255,0,0.4)';"
-                                    onmouseout="this.style.color='#cbd5e1'; this.style.borderColor='rgba(255,255,255,0.12)';">
-                                <i class="fas ${this.state.viewMode === 'compact' ? 'fa-expand-alt' : 'fa-compress-alt'}"></i>
-                                <span>${this.state.viewMode === 'compact' ? 'Ampliar' : 'Minimizar'}</span>
+                                    class="filter-view-pill"
+                                    onclick="window.EventsController.setViewMode('detailed')" 
+                                    title="Vista Completa (Con cartel, fotos y detalles)"
+                                    style="${this.state.viewMode === 'detailed' ? 'background: #CCFF00; color: #000; box-shadow: 0 2px 8px rgba(204,255,0,0.35);' : 'background: transparent; color: #94a3b8;'}">
+                                <i class="fas fa-th-large" style="font-size: 0.72rem;"></i>
+                                <span class="view-label-full">COMPLETA</span>
+                                <span class="view-label-short">CARD</span>
+                            </button>
+                            <button type="button" 
+                                    class="filter-view-pill"
+                                    onclick="window.EventsController.setViewMode('compact')" 
+                                    title="Vista Minimizada (Lista rápida de eventos)"
+                                    style="${this.state.viewMode === 'compact' ? 'background: #CCFF00; color: #000; box-shadow: 0 2px 8px rgba(204,255,0,0.35);' : 'background: transparent; color: #94a3b8;'}">
+                                <i class="fas fa-bars" style="font-size: 0.72rem;"></i>
+                                <span class="view-label-full">MINIMIZADA</span>
+                                <span class="view-label-short">LISTA</span>
                             </button>
                         </div>
                     </div>
 
-                    <!-- Status Filters (Activos, Plazas, En Directo) -->
-                    <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
-                        <button onclick="window.EventsController.setFilter('status', 'all')" 
-                                style="white-space: nowrap; padding: 6px 14px; border-radius: 12px; font-size: 0.66rem; font-weight: 900; border: 1.5px solid ${currentStatus === 'all' ? '#CCFF00' : 'rgba(255,255,255,0.08)'}; cursor: pointer; transition: all 0.2s; 
-                                ${currentStatus === 'all' ? 'background: #CCFF00; color: #000; box-shadow: 0 0 10px rgba(204,255,0,0.3);' : 'background: rgba(255,255,255,0.04); color: #94a3b8;'}">
-                            <i class="fas fa-layer-group" style="font-size: 0.6rem; margin-right: 4px;"></i>TODOS (${totalCount})
+                    <!-- ROW 2: CATEGORY SEGMENTED TABS -->
+                    <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
+                        <button type="button"
+                                class="filter-cat-btn"
+                                onclick="window.EventsController.setFilter('category', 'all')" 
+                                style="border: 1.5px solid ${currentCat === 'all' ? '#CCFF00' : 'rgba(255,255,255,0.08)'}; ${currentCat === 'all' ? 'background: #CCFF00; color: #000; box-shadow: 0 0 10px rgba(204,255,0,0.3);' : 'background: rgba(255,255,255,0.04); color: #94a3b8;'}">
+                            <span>TODAS</span>
+                            <span style="font-size: 0.6rem; opacity: 0.85; font-weight: 950;">(${totalCount})</span>
                         </button>
-                        <button onclick="window.EventsController.setFilter('status', 'available')" 
-                                style="white-space: nowrap; padding: 6px 14px; border-radius: 12px; font-size: 0.66rem; font-weight: 900; border: 1.5px solid ${currentStatus === 'available' ? '#22c55e' : 'rgba(255,255,255,0.08)'}; cursor: pointer; transition: all 0.2s; 
-                                ${currentStatus === 'available' ? 'background: #22c55e; color: #000; box-shadow: 0 0 10px rgba(34,197,94,0.35);' : 'background: rgba(255,255,255,0.04); color: #94a3b8;'}">
-                            <i class="fas fa-user-plus" style="font-size: 0.6rem; margin-right: 4px;"></i>CON PLAZAS (${availableCount})
+                        <button type="button"
+                                class="filter-cat-btn"
+                                onclick="window.EventsController.setFilter('category', 'male')" 
+                                style="border: 1.5px solid ${currentCat === 'male' ? '#0ea5e9' : 'rgba(255,255,255,0.08)'}; ${currentCat === 'male' ? 'background: #0ea5e9; color: #fff; box-shadow: 0 0 10px rgba(14,165,233,0.35);' : 'background: rgba(255,255,255,0.04); color: #94a3b8;'}">
+                            <i class="fas fa-mars" style="color: ${currentCat === 'male' ? '#fff' : '#0ea5e9'}; font-size: 0.68rem;"></i>
+                            <span class="cat-label-full">MASCULINO</span>
+                            <span class="cat-label-short">MASC</span>
+                            <span style="font-size: 0.6rem; opacity: 0.85; font-weight: 950;">(${maleCount})</span>
                         </button>
-                        ${liveCount > 0 ? `
-                            <button onclick="window.EventsController.setFilter('status', 'live')" 
-                                    style="white-space: nowrap; padding: 6px 14px; border-radius: 12px; font-size: 0.66rem; font-weight: 900; border: 1.5px solid ${currentStatus === 'live' ? '#ef4444' : 'rgba(255,255,255,0.08)'}; cursor: pointer; transition: all 0.2s; 
-                                    ${currentStatus === 'live' ? 'background: #ef4444; color: #fff; box-shadow: 0 0 10px rgba(239,68,68,0.4);' : 'background: rgba(255,255,255,0.04); color: #94a3b8;'}">
-                                <i class="fas fa-broadcast-tower" style="font-size: 0.6rem; margin-right: 4px; animation: pulse 1.5s infinite;"></i>EN JUEGO (${liveCount})
-                            </button>
-                        ` : ''}
+                        <button type="button"
+                                class="filter-cat-btn"
+                                onclick="window.EventsController.setFilter('category', 'female')" 
+                                style="border: 1.5px solid ${currentCat === 'female' ? '#ec4899' : 'rgba(255,255,255,0.08)'}; ${currentCat === 'female' ? 'background: #ec4899; color: #fff; box-shadow: 0 0 10px rgba(236,72,153,0.35);' : 'background: rgba(255,255,255,0.04); color: #94a3b8;'}">
+                            <i class="fas fa-venus" style="color: ${currentCat === 'female' ? '#fff' : '#ec4899'}; font-size: 0.68rem;"></i>
+                            <span class="cat-label-full">FEMENINO</span>
+                            <span class="cat-label-short">FEM</span>
+                            <span style="font-size: 0.6rem; opacity: 0.85; font-weight: 950;">(${femaleCount})</span>
+                        </button>
+                        <button type="button"
+                                class="filter-cat-btn"
+                                onclick="window.EventsController.setFilter('category', 'mixed')" 
+                                style="border: 1.5px solid ${currentCat === 'mixed' ? '#eab308' : 'rgba(255,255,255,0.08)'}; ${currentCat === 'mixed' ? 'background: #eab308; color: #000; box-shadow: 0 0 10px rgba(234,179,8,0.35);' : 'background: rgba(255,255,255,0.04); color: #94a3b8;'}">
+                            <i class="fas fa-venus-mars" style="color: ${currentCat === 'mixed' ? '#000' : '#eab308'}; font-size: 0.68rem;"></i>
+                            <span class="cat-label-full">MIXTA</span>
+                            <span class="cat-label-short">MIX</span>
+                            <span style="font-size: 0.6rem; opacity: 0.85; font-weight: 950;">(${mixedCount})</span>
+                        </button>
                     </div>
 
-                    <!-- Month Filters -->
-                    <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
-                        <button onclick="window.EventsController.setFilter('month', 'all')" 
-                                style="white-space: nowrap; padding: 7px 16px; border-radius: 12px; font-size: 0.68rem; font-weight: 900; border: 1.5px solid ${currentMonth === 'all' ? '#CCFF00' : 'rgba(255,255,255,0.08)'}; cursor: pointer; transition: all 0.2s; 
-                                ${currentMonth === 'all' ? 'background: #CCFF00; color: #000; box-shadow: 0 0 12px rgba(204,255,0,0.3);' : 'background: rgba(255,255,255,0.04); color: #94a3b8;'}">TODO</button>
-                        ${months.map(m => {
+                    <!-- ROW 3: QUICK CHIPS (Disponibilidad, En Juego, Meses, Limpiar) -->
+                    <div style="display: flex; align-items: center; gap: 6px; overflow-x: auto; padding-bottom: 2px; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
+                        <!-- Con Plazas Toggle -->
+                        <button type="button"
+                                class="filter-quick-chip"
+                                onclick="window.EventsController.setFilter('status', '${currentStatus === 'available' ? 'all' : 'available'}')" 
+                                title="${currentStatus === 'available' ? 'Mostrar todos los eventos' : 'Filtrar solo con plazas libres'}"
+                                style="border: 1.5px solid ${currentStatus === 'available' ? '#22c55e' : 'rgba(255,255,255,0.08)'}; ${currentStatus === 'available' ? 'background: #22c55e; color: #000; box-shadow: 0 0 10px rgba(34,197,94,0.35);' : 'background: rgba(255,255,255,0.04); color: #cbd5e1;'}">
+                            <i class="fas ${currentStatus === 'available' ? 'fa-check-circle' : 'fa-user-plus'}" style="font-size: 0.65rem; color: ${currentStatus === 'available' ? '#000' : '#22c55e'};"></i>
+                            <span>CON PLAZAS (${availableCount})</span>
+                        </button>
+
+                        <!-- En Juego Live Pill -->
+                        ${liveCount > 0 ? `
+                            <button type="button"
+                                    class="filter-quick-chip"
+                                    onclick="window.EventsController.setFilter('status', '${currentStatus === 'live' ? 'all' : 'live'}')" 
+                                    title="Filtrar eventos en directo"
+                                    style="border: 1.5px solid ${currentStatus === 'live' ? '#ef4444' : 'rgba(255,255,255,0.08)'}; ${currentStatus === 'live' ? 'background: #ef4444; color: #fff; box-shadow: 0 0 10px rgba(239,68,68,0.4);' : 'background: rgba(255,255,255,0.04); color: #cbd5e1;'}">
+                                <i class="fas fa-broadcast-tower" style="font-size: 0.65rem; color: ${currentStatus === 'live' ? '#fff' : '#ef4444'}; animation: pulse 1.5s infinite;"></i>
+                                <span>EN JUEGO (${liveCount})</span>
+                            </button>
+                        ` : ''}
+
+                        <!-- Meses (Only when > 1 month available) -->
+                        ${months.length > 1 ? months.map(m => {
                             const [year, month] = m.split('-');
                             const label = `${monthLabels[month] || month} '${year.slice(2)}`;
                             const countInMonth = evList.filter(e => e.normDate && e.normDate.startsWith(m)).length;
                             const isActive = currentMonth === m;
-                            return `<button onclick="window.EventsController.setFilter('month', '${m}')" style="white-space: nowrap; padding: 7px 16px; border-radius: 12px; font-size: 0.68rem; font-weight: 900; border: 1.5px solid ${isActive ? '#CCFF00' : 'rgba(255,255,255,0.08)'}; cursor: pointer; transition: all 0.2s; ${isActive ? 'background: #CCFF00; color: #000; box-shadow: 0 0 12px rgba(204,255,0,0.3);' : 'background: rgba(255,255,255,0.04); color: #94a3b8;'}">${label} (${countInMonth})</button>`;
-                        }).join('')}
-                    </div>
+                            return `
+                                <button type="button"
+                                        class="filter-quick-chip"
+                                        onclick="window.EventsController.setFilter('month', '${isActive ? 'all' : m}')" 
+                                        title="${isActive ? 'Quitar filtro de mes' : `Filtrar por ${label}`}"
+                                        style="border: 1.5px solid ${isActive ? '#CCFF00' : 'rgba(255,255,255,0.08)'}; ${isActive ? 'background: #CCFF00; color: #000; box-shadow: 0 0 10px rgba(204,255,0,0.3);' : 'background: rgba(255,255,255,0.04); color: #cbd5e1;'}">
+                                    <i class="far fa-calendar-alt" style="font-size: 0.6rem; color: ${isActive ? '#000' : '#CCFF00'};"></i>
+                                    <span>${label} (${countInMonth})</span>
+                                    ${isActive ? `<i class="fas fa-times" style="font-size: 0.55rem; margin-left: 2px;"></i>` : ''}
+                                </button>
+                            `;
+                        }).join('') : ''}
 
-                    <!-- Category Filters -->
-                    <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
-                        <button onclick="window.EventsController.setFilter('category', 'all')" style="white-space: nowrap; padding: 7px 16px; border-radius: 12px; font-size: 0.68rem; font-weight: 900; border: 1.5px solid ${currentCat === 'all' ? '#CCFF00' : 'rgba(255,255,255,0.08)'}; cursor: pointer; transition: all 0.2s; ${currentCat === 'all' ? 'background: #CCFF00; color: #000; box-shadow: 0 0 12px rgba(204,255,0,0.3);' : 'background: rgba(255,255,255,0.04); color: #94a3b8;'}">TODAS (${totalCount})</button>
-                        <button onclick="window.EventsController.setFilter('category', 'male')" style="white-space: nowrap; padding: 7px 16px; border-radius: 12px; font-size: 0.68rem; font-weight: 900; border: 1.5px solid ${currentCat === 'male' ? '#0ea5e9' : 'rgba(255,255,255,0.08)'}; cursor: pointer; transition: all 0.2s; ${currentCat === 'male' ? 'background: #0ea5e9; color: #fff; box-shadow: 0 0 12px rgba(14,165,233,0.35);' : 'background: rgba(255,255,255,0.04); color: #94a3b8;'}">MASCULINO (${maleCount})</button>
-                        <button onclick="window.EventsController.setFilter('category', 'female')" style="white-space: nowrap; padding: 7px 16px; border-radius: 12px; font-size: 0.68rem; font-weight: 900; border: 1.5px solid ${currentCat === 'female' ? '#ec4899' : 'rgba(255,255,255,0.08)'}; cursor: pointer; transition: all 0.2s; ${currentCat === 'female' ? 'background: #ec4899; color: #fff; box-shadow: 0 0 12px rgba(236,72,153,0.35);' : 'background: rgba(255,255,255,0.04); color: #94a3b8;'}">FEMENINO (${femaleCount})</button>
-                        <button onclick="window.EventsController.setFilter('category', 'mixed')" style="white-space: nowrap; padding: 7px 16px; border-radius: 12px; font-size: 0.68rem; font-weight: 900; border: 1.5px solid ${currentCat === 'mixed' ? '#eab308' : 'rgba(255,255,255,0.08)'}; cursor: pointer; transition: all 0.2s; ${currentCat === 'mixed' ? 'background: #eab308; color: #000; box-shadow: 0 0 12px rgba(234,179,8,0.35);' : 'background: rgba(255,255,255,0.04); color: #94a3b8;'}">MIXTA (${mixedCount})</button>
+                        <!-- Reset / Limpiar Button -->
+                        ${isFiltered ? `
+                            <button type="button"
+                                    class="filter-quick-chip"
+                                    onclick="window.EventsController.resetFilters()"
+                                    title="Quitar todos los filtros"
+                                    style="margin-left: auto; border: 1.5px solid rgba(204, 255, 0, 0.45); background: rgba(204, 255, 0, 0.12); color: #CCFF00;"
+                                    onmouseover="this.style.background='#CCFF00'; this.style.color='#000';"
+                                    onmouseout="this.style.background='rgba(204, 255, 0, 0.12)'; this.style.color='#CCFF00';">
+                                <i class="fas fa-rotate-left" style="font-size: 0.6rem;"></i>
+                                <span>LIMPIAR</span>
+                            </button>
+                        ` : ''}
                     </div>
                 </div>
             `;

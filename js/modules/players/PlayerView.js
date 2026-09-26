@@ -7,9 +7,37 @@
     class PlayerView {
         constructor() {
             this.charts = {}; // Store chart instances
-            this.activeTab = 'ai_performance'; // 'ai_performance' | 'attributes'
+            this.activeTab = 'ai_performance'; // 'ai_performance' | 'attributes' | 'achievements'
             this.forceDemoMode = false;
             this.currentAiHistoryData = null;
+            this.currentAchievementsData = null;
+            this.activeBadgeFilter = 'all';
+            this._setupAchievementsListener();
+        }
+
+        _setupAchievementsListener() {
+            if (this._achievementsListenerSetup) return;
+            this._achievementsListenerSetup = true;
+            if (typeof window !== 'undefined') {
+                window.addEventListener('onAchievementUnlocked', (e) => {
+                    this.handleAchievementUnlocked(e?.detail);
+                });
+            }
+        }
+
+        handleAchievementUnlocked(detail) {
+            this.haptic(100);
+            if (this.activeTab === 'achievements') {
+                this.refreshAchievementsTab();
+            }
+        }
+
+        refreshAchievementsTab() {
+            const user = window.Store ? window.Store.getState('currentUser') : null;
+            const data = window.Store ? window.Store.getState('playerStats') : null;
+            if (user) {
+                this.renderAchievementsTab(user, data, true);
+            }
         }
 
         setProfileTab(tabName) {
@@ -447,15 +475,19 @@
                         </div>
                     </div>
 
-                    <!-- PROFILE SEGMENTED TABS CONTROLLER (Rendimiento IA vs Ficha & Atributos) -->
-                    <div style="background: #ffffff; border-bottom: 1px solid #e2e8f0; padding: 12px 16px; display: flex; justify-content: center; gap: 10px; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 20px rgba(0,0,0,0.02);">
+                    <!-- PROFILE SEGMENTED TABS CONTROLLER (Rendimiento IA vs Ficha & Atributos vs Logros & Misiones) -->
+                    <div style="background: #ffffff; border-bottom: 1px solid #e2e8f0; padding: 12px 10px; display: flex; justify-content: center; gap: 8px; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 20px rgba(0,0,0,0.02); overflow-x: auto; -webkit-overflow-scrolling: touch;">
                         <button class="profile-tab-btn-pill haptic-feedback" data-tab="ai_performance" onclick="window.PlayerView.setProfileTab('ai_performance')" 
-                                style="flex: 1; max-width: 220px; padding: 11px 16px; border-radius: 14px; font-weight: 900; font-size: 0.78rem; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; ${this.activeTab === 'ai_performance' ? 'background: #0F172A; color: #ffffff; box-shadow: 0 4px 14px rgba(15,23,42,0.15);' : 'background: #f1f5f9; color: #64748B;'}">
+                                style="flex: 1; min-width: 100px; max-width: 170px; padding: 10px 8px; border-radius: 14px; font-weight: 900; font-size: 0.74rem; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; white-space: nowrap; ${this.activeTab === 'ai_performance' ? 'background: #0F172A; color: #ffffff; box-shadow: 0 4px 14px rgba(15,23,42,0.15);' : 'background: #f1f5f9; color: #64748B;'}">
                             <i class="fas fa-chart-line" style="${this.activeTab === 'ai_performance' ? 'color: #CCFF00;' : 'color: #94A3B8;'}"></i> Rendimiento IA
                         </button>
                         <button class="profile-tab-btn-pill haptic-feedback" data-tab="attributes" onclick="window.PlayerView.setProfileTab('attributes')" 
-                                style="flex: 1; max-width: 220px; padding: 11px 16px; border-radius: 14px; font-weight: 900; font-size: 0.78rem; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; ${this.activeTab === 'attributes' ? 'background: #0F172A; color: #ffffff; box-shadow: 0 4px 14px rgba(15,23,42,0.15);' : 'background: #f1f5f9; color: #64748B;'}">
+                                style="flex: 1; min-width: 100px; max-width: 170px; padding: 10px 8px; border-radius: 14px; font-weight: 900; font-size: 0.74rem; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; white-space: nowrap; ${this.activeTab === 'attributes' ? 'background: #0F172A; color: #ffffff; box-shadow: 0 4px 14px rgba(15,23,42,0.15);' : 'background: #f1f5f9; color: #64748B;'}">
                             <i class="fas fa-user-astronaut" style="${this.activeTab === 'attributes' ? 'color: #3B82F6;' : 'color: #94A3B8;'}"></i> Ficha & Atributos
+                        </button>
+                        <button class="profile-tab-btn-pill haptic-feedback" data-tab="achievements" onclick="window.PlayerView.setProfileTab('achievements')" 
+                                style="flex: 1; min-width: 100px; max-width: 170px; padding: 10px 8px; border-radius: 14px; font-weight: 900; font-size: 0.74rem; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; white-space: nowrap; ${this.activeTab === 'achievements' ? 'background: #0F172A; color: #ffffff; box-shadow: 0 4px 14px rgba(15,23,42,0.15);' : 'background: #f1f5f9; color: #64748B;'}">
+                            <i class="fas fa-trophy" style="${this.activeTab === 'achievements' ? 'color: #F59E0B;' : 'color: #94A3B8;'}"></i> Logros & Misiones
                         </button>
                     </div>
 
@@ -487,15 +519,16 @@
 
             // Actualizar botones de pestañas
             document.querySelectorAll('.profile-tab-btn-pill').forEach(btn => {
-                const isAi = btn.dataset.tab === 'ai_performance';
-                const isActive = (this.activeTab === 'ai_performance' && isAi) || (this.activeTab === 'attributes' && !isAi);
+                const tab = btn.dataset.tab;
+                const isActive = this.activeTab === tab;
                 btn.style.background = isActive ? '#0F172A' : '#f1f5f9';
                 btn.style.color = isActive ? '#ffffff' : '#64748B';
                 btn.style.boxShadow = isActive ? '0 4px 14px rgba(15,23,42,0.15)' : 'none';
                 const icon = btn.querySelector('i');
                 if (icon) {
-                    if (isAi) icon.style.color = isActive ? '#CCFF00' : '#94A3B8';
-                    else icon.style.color = isActive ? '#3B82F6' : '#94A3B8';
+                    if (tab === 'ai_performance') icon.style.color = isActive ? '#CCFF00' : '#94A3B8';
+                    else if (tab === 'attributes') icon.style.color = isActive ? '#3B82F6' : '#94A3B8';
+                    else if (tab === 'achievements') icon.style.color = isActive ? '#F59E0B' : '#94A3B8';
                 }
             });
 
@@ -518,6 +551,8 @@
                         this.loadAndRenderRealAiHistory(myName, userLevel, userId);
                     }, 100);
                 }
+            } else if (this.activeTab === 'achievements') {
+                this.renderAchievementsTab(user, data);
             } else {
                 // Pestaña Ficha & Atributos
                 body.innerHTML = this.renderAttributesTabHtml(data, user);
@@ -535,6 +570,577 @@
                         window.DashboardView.renderActivityFeed('profile-activity-root');
                     }
                 }, 100);
+            }
+        }
+
+        // ==========================================
+        // 🏆 SISTEMA DE GAMIFICACIÓN, LOGROS Y MISIONES
+        // ==========================================
+
+        getTierColor(tier) {
+            const t = (tier || '').toLowerCase();
+            switch (t) {
+                case 'bronze':
+                case 'bronce':
+                    return '#CD7F32';
+                case 'silver':
+                case 'plata':
+                    return '#C0C0C0';
+                case 'gold':
+                case 'oro':
+                    return '#FFD700';
+                case 'diamond':
+                case 'diamante':
+                    return '#00F0FF';
+                default:
+                    return '#CCFF00';
+            }
+        }
+
+        getTierLabel(tier) {
+            const t = (tier || '').toLowerCase();
+            switch (t) {
+                case 'bronze':
+                case 'bronce':
+                    return 'Bronce';
+                case 'silver':
+                case 'plata':
+                    return 'Plata';
+                case 'gold':
+                case 'oro':
+                    return 'Oro';
+                case 'diamond':
+                case 'diamante':
+                    return 'Diamante';
+                default:
+                    return 'Especial';
+            }
+        }
+
+        async renderAchievementsTab(user, data, forceReload = false) {
+            const body = document.getElementById('player-profile-tab-body');
+            if (!body) return;
+
+            // Si ya tenemos datos evaluados y no forzamos recarga, pintar directamente
+            if (this.currentAchievementsData && !forceReload) {
+                body.innerHTML = this.renderAchievementsTabHtml(this.currentAchievementsData, user);
+                return;
+            }
+
+            // Esqueleto de carga visual con estética ultra-premium
+            body.innerHTML = `
+                <div style="background:#ffffff; border-radius:24px; padding:50px 20px; text-align:center; border:1px solid #e2e8f0; box-shadow:0 4px 20px rgba(0,0,0,0.02);">
+                    <div style="display:inline-block; font-size:2.6rem; animation:pulse 1.6s infinite; color:#F59E0B; margin-bottom:12px;">🏆</div>
+                    <div style="font-size:0.9rem; font-weight:950; color:#0F172A; text-transform:uppercase; letter-spacing:1px;">CALIBRANDO LOGROS Y MISIONES...</div>
+                    <p style="font-size:0.75rem; color:#64748B; margin:6px auto 0; max-width:320px; font-weight:500; line-height:1.45;">Evaluando estadísticas oficiales, rachas, misiones semanales y puntos de honor XP...</p>
+                </div>
+            `;
+
+            try {
+                let service = window.AchievementsService;
+                if (!service) {
+                    await new Promise(res => setTimeout(res, 200));
+                    service = window.AchievementsService;
+                }
+
+                if (!service) {
+                    throw new Error("AchievementsService no disponible");
+                }
+
+                const history = this.currentAiHistoryData || data?.recentMatches || [];
+                const stats = data?.stats || {};
+
+                const evalResult = await service.evaluatePlayerAchievements(user, stats, history);
+                this.currentAchievementsData = evalResult;
+
+                if (this.activeTab === 'achievements') {
+                    body.innerHTML = this.renderAchievementsTabHtml(evalResult, user);
+                }
+            } catch (err) {
+                console.error("⚠️ [PlayerView] Error cargando logros:", err);
+                if (this.activeTab === 'achievements') {
+                    body.innerHTML = `
+                        <div style="background:#ffffff; border-radius:24px; padding:35px 20px; text-align:center; border:1px solid #e2e8f0;">
+                            <div style="font-size:2.2rem; margin-bottom:8px;">⚠️</div>
+                            <div style="font-size:0.88rem; font-weight:900; color:#0F172A;">No se pudieron sincronizar los logros en este momento</div>
+                            <button onclick="window.PlayerView.refreshAchievementsTab()" style="margin-top:14px; background:#0F172A; color:#CCFF00; border:none; padding:10px 20px; border-radius:14px; font-weight:900; font-size:0.75rem; cursor:pointer; text-transform:uppercase; letter-spacing:0.8px;">REINTENTAR</button>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        renderAchievementsTabHtml(evalResult, user) {
+            if (!evalResult) return '';
+
+            const levelInfo = evalResult.levelInfo || evalResult.level || {
+                level: 1,
+                title: 'Iniciado del Club',
+                icon: '🥉',
+                currentXp: evalResult.totalXp || 0,
+                minXp: 0,
+                nextXp: 200,
+                xpToNext: 200,
+                progressPercent: 0,
+                isMaxLevel: false
+            };
+
+            const totalXp = evalResult.totalXp || 0;
+            const allBadges = evalResult.badges || evalResult.allBadges || [];
+            const unlockedBadges = evalResult.unlockedBadges || allBadges.filter(b => b.unlocked);
+            const unlockedCount = evalResult.unlockedCount ?? unlockedBadges.length;
+            const totalBadges = evalResult.totalBadges ?? allBadges.length;
+            const weeklyMissions = evalResult.weeklyMissions || [];
+            const completedMissionsCount = weeklyMissions.filter(m => m.completed).length;
+            const remainingTimeText = weeklyMissions[0]?.remainingTimeText || '3d restantes';
+
+            return `
+                <div class="achievements-tab-wrapper fade-in" style="max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; font-family: 'Outfit', sans-serif;">
+                    
+                    <style id="sp-gamification-responsive-styles">
+                        .achievements-badges-grid {
+                            display: grid;
+                            grid-template-columns: repeat(2, 1fr);
+                            gap: 12px;
+                        }
+                        @media (min-width: 640px) {
+                            .achievements-badges-grid {
+                                grid-template-columns: repeat(3, 1fr);
+                                gap: 14px;
+                            }
+                        }
+                        .sp-badge-card {
+                            transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+                        }
+                        .sp-badge-card:hover {
+                            transform: translateY(-2px);
+                        }
+                        .sp-badge-card:active {
+                            transform: scale(0.97);
+                        }
+                        .sp-filter-pill-scroll::-webkit-scrollbar {
+                            display: none;
+                        }
+                    </style>
+
+                    <!-- 🎖️ CABECERA DE HONOR Y XP (ULTRA-PREMIUM DARK / GLASSMORPHISM) -->
+                    <div style="background: linear-gradient(135deg, #090d16 0%, #0f172a 55%, #1e1b4b 100%); border: 1.5px solid rgba(245, 158, 11, 0.35); border-radius: 26px; padding: 22px 20px; position: relative; overflow: hidden; box-shadow: 0 16px 40px rgba(0,0,0,0.35), 0 0 25px rgba(204,255,0,0.06); color: #ffffff;">
+                        <!-- Ambient glows -->
+                        <div style="position: absolute; top: -50px; right: -50px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(204,255,0,0.15) 0%, transparent 70%); pointer-events: none;"></div>
+                        <div style="position: absolute; bottom: -50px; left: -50px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(245,158,11,0.18) 0%, transparent 70%); pointer-events: none;"></div>
+                        
+                        <!-- Level & Title Row -->
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; position: relative; z-index: 2;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 56px; height: 56px; border-radius: 18px; background: rgba(245, 158, 11, 0.12); border: 2px solid #F59E0B; display: flex; align-items: center; justify-content: center; font-size: 1.9rem; box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);">
+                                    ${levelInfo.icon}
+                                </div>
+                                <div>
+                                    <span style="font-size: 0.62rem; font-weight: 900; color: #F59E0B; letter-spacing: 1.5px; text-transform: uppercase; display: flex; align-items: center; gap: 5px;">
+                                        <i class="fas fa-medal"></i> RANGO SOMOSPÁDEL
+                                    </span>
+                                    <h3 style="font-size: 1.28rem; font-weight: 950; color: #ffffff; margin: 2px 0 0; text-transform: uppercase; letter-spacing: -0.5px; line-height: 1.15;">
+                                        Nivel ${levelInfo.level} · ${levelInfo.title}
+                                    </h3>
+                                </div>
+                            </div>
+                            <div style="text-align: right; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 6px 12px;">
+                                <div style="font-size: 1.35rem; font-weight: 950; color: #CCFF00; line-height: 1;">${totalXp} <span style="font-size: 0.72rem; color: #94A3B8;">XP</span></div>
+                                <div style="font-size: 0.58rem; font-weight: 900; color: #F59E0B; text-transform: uppercase; margin-top: 2px;">
+                                    ${levelInfo.isMaxLevel ? 'RANGO MÁXIMO' : `Faltan ${levelInfo.xpToNext} XP`}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Barra de Progreso XP -->
+                        <div style="margin-top: 18px; position: relative; z-index: 2;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 0.65rem; font-weight: 800;">
+                                <span style="color: #94A3B8;">PROGRESO DEL RANGO</span>
+                                <span style="color: #CCFF00; font-weight: 950;">${levelInfo.progressPercent}% COMPLETADO</span>
+                            </div>
+                            <div style="width: 100%; height: 9px; background: rgba(255,255,255,0.08); border-radius: 99px; overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,0.08);">
+                                <div style="width: ${levelInfo.progressPercent}%; height: 100%; background: linear-gradient(90deg, #F59E0B 0%, #CCFF00 100%); border-radius: 99px; box-shadow: 0 0 12px rgba(204,255,0,0.5); transition: width 0.8s ease;"></div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.62rem; color: #94A3B8; font-weight: 700; margin-top: 5px;">
+                                <span>${levelInfo.minXp} XP</span>
+                                <span>${levelInfo.isMaxLevel ? '👑 Élite Suprema' : `Siguiente: Nivel ${levelInfo.level + 1} (${levelInfo.nextXp} XP)`}</span>
+                            </div>
+                        </div>
+
+                        <!-- Contadores Rápidos KPI -->
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08); position: relative; z-index: 2;">
+                            <!-- Total XP -->
+                            <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 10px 6px; text-align: center;">
+                                <div style="font-size: 0.55rem; font-weight: 900; color: #CCFF00; text-transform: uppercase; letter-spacing: 0.8px;">TOTAL XP</div>
+                                <div style="font-size: 1.35rem; font-weight: 950; color: #ffffff; margin-top: 2px; line-height: 1.1;">${totalXp}</div>
+                                <div style="font-size: 0.55rem; color: #94A3B8; font-weight: 700; margin-top: 2px;">EXPERIENCIA</div>
+                            </div>
+                            <!-- Trofeos -->
+                            <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 10px 6px; text-align: center;">
+                                <div style="font-size: 0.55rem; font-weight: 900; color: #F59E0B; text-transform: uppercase; letter-spacing: 0.8px;">TROFEOS</div>
+                                <div style="font-size: 1.35rem; font-weight: 950; color: #ffffff; margin-top: 2px; line-height: 1.1;">${unlockedCount}/${totalBadges}</div>
+                                <div style="font-size: 0.55rem; color: #94A3B8; font-weight: 700; margin-top: 2px;">${Math.round((unlockedCount / (totalBadges || 1)) * 100)}% DESBLOQUEADO</div>
+                            </div>
+                            <!-- Misiones -->
+                            <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 10px 6px; text-align: center;">
+                                <div style="font-size: 0.55rem; font-weight: 900; color: #38BDF8; text-transform: uppercase; letter-spacing: 0.8px;">MISIONES</div>
+                                <div style="font-size: 1.35rem; font-weight: 950; color: #ffffff; margin-top: 2px; line-height: 1.1;">${completedMissionsCount}/${weeklyMissions.length}</div>
+                                <div style="font-size: 0.55rem; color: #94A3B8; font-weight: 700; margin-top: 2px;">ACTIVAS ESTA SEMANA</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 🎯 MISIONES DE LA SEMANA -->
+                    <div style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 24px; padding: 18px 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.02);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 0.85rem; font-weight: 950; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    🎯 MISIONES DE LA SEMANA
+                                </span>
+                            </div>
+                            <span style="background: rgba(245, 158, 11, 0.12); color: #B45309; border: 1.5px solid rgba(245, 158, 11, 0.35); padding: 4px 10px; border-radius: 99px; font-size: 0.65rem; font-weight: 900; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 4px;">
+                                ⏱️ ${remainingTimeText}
+                            </span>
+                        </div>
+                        <p style="font-size: 0.72rem; color: #64748B; margin: 0 0 14px; font-weight: 500;">
+                            Cumple estos objetivos semanales en americanas y entrenamientos para conseguir recompensas de XP extra.
+                        </p>
+
+                        <!-- Lista de Misiones -->
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            ${weeklyMissions.map(m => `
+                                <div style="background: ${m.completed ? 'rgba(16,185,129,0.04)' : '#f8fafc'}; border: 1.5px solid ${m.completed ? 'rgba(16,185,129,0.35)' : '#e2e8f0'}; border-radius: 18px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.01);">
+                                    <div style="width: 44px; height: 44px; border-radius: 14px; background: ${m.completed ? 'rgba(16,185,129,0.12)' : '#ffffff'}; border: 1px solid ${m.completed ? 'rgba(16,185,129,0.3)' : '#e2e8f0'}; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; flex-shrink: 0;">
+                                        ${m.icon}
+                                    </div>
+                                    <div style="flex: 1; min-width: 0;">
+                                        <div style="display: flex; align-items: center; gap: 6px;">
+                                            <span style="font-size: 0.82rem; font-weight: 950; color: #0F172A; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${m.title}</span>
+                                            ${m.completed ? '<span style="background:#10B981; color:#ffffff; font-size:0.56rem; font-weight:950; padding:1px 6px; border-radius:99px; letter-spacing:0.5px;">✓ COMPLETADA</span>' : ''}
+                                        </div>
+                                        <div style="font-size: 0.68rem; color: #64748B; margin: 2px 0 5px; font-weight: 500; line-height: 1.3;">
+                                            ${m.description}
+                                        </div>
+                                        <div style="width: 100%; height: 5px; background: #e2e8f0; border-radius: 99px; overflow: hidden;">
+                                            <div style="width: ${m.progress}%; height: 100%; background: ${m.completed ? '#10B981' : 'linear-gradient(90deg, #F59E0B, #CCFF00)'}; border-radius: 99px;"></div>
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between; font-size: 0.6rem; color: #94A3B8; font-weight: 800; margin-top: 3px;">
+                                            <span>${m.currentValue} / ${m.targetValue}</span>
+                                            <span>${m.progress}%</span>
+                                        </div>
+                                    </div>
+                                    <div style="text-align: right; flex-shrink: 0; min-width: 60px;">
+                                        <div style="font-size: 0.88rem; font-weight: 950; color: ${m.completed ? '#10B981' : '#F59E0B'};">+${m.xp} XP</div>
+                                        <div style="font-size: 0.55rem; color: #94A3B8; font-weight: 800; text-transform: uppercase;">${m.completed ? 'OBTENIDO' : 'PREMIO'}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- 🏆 FILTROS DE VITRINA DE INSIGNIAS -->
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <div>
+                                <div style="font-size: 0.88rem; font-weight: 950; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px;">
+                                    <span>🏆 VITRINA DE INSIGNIAS</span>
+                                    <span style="font-size: 0.65rem; font-weight: 900; color: #F59E0B; background: #fef3c7; border: 1px solid #fde68a; padding: 2px 8px; border-radius: 99px;">${unlockedCount}/${totalBadges}</span>
+                                </div>
+                                <div style="font-size: 0.7rem; color: #64748B; font-weight: 500; margin-top: 2px;">Toca cualquier insignia para ver detalles y compartirla con la comunidad.</div>
+                            </div>
+                        </div>
+
+                        <!-- Filtros píldora -->
+                        <div class="sp-filter-pill-scroll" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
+                            ${[
+                                { id: 'all', label: 'Todos' },
+                                { id: 'unlocked', label: 'Desbloqueados' },
+                                { id: 'in_progress', label: 'En Progreso' },
+                                { id: 'match', label: 'Partidos' },
+                                { id: 'streak', label: 'Rachas' },
+                                { id: 'club', label: 'Club' }
+                            ].map(f => {
+                                const isActive = (this.activeBadgeFilter || 'all') === f.id;
+                                return `
+                                    <button class="achievement-filter-pill haptic-feedback" data-filter="${f.id}" onclick="window.PlayerView.setBadgeFilter('${f.id}')"
+                                            style="padding: 7px 15px; border-radius: 99px; font-weight: 900; font-size: 0.72rem; cursor: pointer; white-space: nowrap; transition: all 0.2s; ${isActive ? 'background: #0F172A; color: #CCFF00; border: 1.5px solid #CCFF00; box-shadow: 0 4px 12px rgba(204,255,0,0.2);' : 'background: #ffffff; color: #64748B; border: 1px solid #e2e8f0;'}">
+                                        ${f.label}
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+
+                        <!-- Grid de Insignias (2 col en móvil, 3 col en desktop) -->
+                        <div id="sp-achievements-badges-grid-container" class="achievements-badges-grid" style="margin-top: 14px;">
+                            ${this.renderBadgesGridHtml(evalResult)}
+                        </div>
+                    </div>
+
+                </div>
+            `;
+        }
+
+        renderBadgesGridHtml(evalResult) {
+            if (!evalResult) return '';
+            const allBadges = evalResult.badges || evalResult.allBadges || [];
+            const filter = this.activeBadgeFilter || 'all';
+
+            const filtered = allBadges.filter(badge => {
+                if (filter === 'all') return true;
+                if (filter === 'unlocked') return badge.unlocked;
+                if (filter === 'in_progress') return !badge.unlocked;
+                if (filter === 'match') return badge.category === 'match';
+                if (filter === 'streak') return badge.category === 'streak';
+                if (filter === 'club') return badge.category === 'loyalty' || badge.category === 'special' || badge.category === 'level';
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                return `
+                    <div style="grid-column: 1 / -1; background: #ffffff; border-radius: 20px; padding: 35px 20px; text-align: center; border: 1px dashed #cbd5e1;">
+                        <div style="font-size: 2.2rem; margin-bottom: 8px;">🔍</div>
+                        <div style="font-size: 0.85rem; font-weight: 950; color: #0F172A; text-transform: uppercase;">No hay insignias en esta categoría</div>
+                        <p style="font-size: 0.72rem; color: #64748B; margin: 4px 0 0;">Prueba a seleccionar otro filtro para explorar tu vitrina.</p>
+                    </div>
+                `;
+            }
+
+            return filtered.map(badge => this.renderBadgeCardHtml(badge)).join('');
+        }
+
+        renderBadgeCardHtml(badge) {
+            const isUnlocked = Boolean(badge.unlocked);
+            const tierColor = this.getTierColor(badge.tier);
+            const tierLabel = this.getTierLabel(badge.tier);
+
+            if (isUnlocked) {
+                return `
+                    <div class="sp-badge-card haptic-feedback" onclick="window.PlayerView.showAchievementModal('${badge.id}')"
+                         style="background: #ffffff; border: 1.5px solid ${tierColor}; border-radius: 20px; padding: 14px; display: flex; flex-direction: column; justify-content: space-between; position: relative; box-shadow: 0 4px 16px ${tierColor}25, 0 1px 3px rgba(0,0,0,0.04); cursor: pointer; min-height: 165px;">
+                        
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <div style="width: 44px; height: 44px; border-radius: 14px; background: ${tierColor}15; border: 1.5px solid ${tierColor}55; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; box-shadow: 0 0 12px ${tierColor}30;">
+                                    ${badge.icon}
+                                </div>
+                                <span style="background: ${tierColor}; color: #0F172A; font-size: 0.55rem; font-weight: 950; padding: 2px 7px; border-radius: 99px; letter-spacing: 0.5px; text-transform: uppercase;">
+                                    ${tierLabel}
+                                </span>
+                            </div>
+
+                            <div style="font-size: 0.85rem; font-weight: 950; color: #0F172A; margin-top: 10px; line-height: 1.2; text-transform: uppercase; letter-spacing: -0.2px;">
+                                ${badge.title}
+                            </div>
+                            <div style="font-size: 0.68rem; color: #64748B; font-weight: 500; margin-top: 4px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                ${badge.description}
+                            </div>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 8px; border-top: 1px solid #f1f5f9;">
+                            <span style="color: #10B981; font-size: 0.64rem; font-weight: 900; display: flex; align-items: center; gap: 3px;">
+                                <i class="fas fa-check-circle"></i> DESBLOQUEADO
+                            </span>
+                            <span style="color: #0F172A; background: #f1f5f9; padding: 2px 6px; border-radius: 8px; font-weight: 950; font-size: 0.65rem; border: 1px solid #e2e8f0;">
+                                +${badge.xp} XP
+                            </span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                return `
+                    <div class="sp-badge-card haptic-feedback" onclick="window.PlayerView.showAchievementModal('${badge.id}')"
+                         style="background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 20px; padding: 14px; display: flex; flex-direction: column; justify-content: space-between; position: relative; cursor: pointer; opacity: 0.85; min-height: 165px;">
+                        
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <div style="position: relative; width: 44px; height: 44px;">
+                                    <div style="width: 44px; height: 44px; border-radius: 14px; background: #f1f5f9; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; filter: grayscale(90%) opacity(0.6);">
+                                        ${badge.icon}
+                                    </div>
+                                    <div style="position: absolute; bottom: -3px; right: -3px; background: #0F172A; color: #CCFF00; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.55rem; border: 1.5px solid #ffffff; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
+                                        <i class="fas fa-lock"></i>
+                                    </div>
+                                </div>
+                                <span style="background: #e2e8f0; color: #64748B; font-size: 0.55rem; font-weight: 900; padding: 2px 7px; border-radius: 99px; letter-spacing: 0.5px; text-transform: uppercase;">
+                                    ${tierLabel}
+                                </span>
+                            </div>
+
+                            <div style="font-size: 0.85rem; font-weight: 950; color: #334155; margin-top: 10px; line-height: 1.2; text-transform: uppercase; letter-spacing: -0.2px;">
+                                ${badge.title}
+                            </div>
+                            <div style="font-size: 0.68rem; color: #94A3B8; font-weight: 500; margin-top: 4px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                ${badge.description}
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 10px;">
+                            <div style="width: 100%; height: 5px; background: #e2e8f0; border-radius: 99px; overflow: hidden;">
+                                <div style="width: ${badge.progress}%; height: 100%; background: linear-gradient(90deg, #94A3B8, #64748B); border-radius: 99px;"></div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font-size: 0.62rem; font-weight: 800; color: #64748B;">
+                                <span>${badge.currentValue || 0} / ${badge.targetValue || badge.requirement}</span>
+                                <span style="color: #94a3b8;">+${badge.xp} XP</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        setBadgeFilter(filterKey) {
+            this.haptic(15);
+            this.activeBadgeFilter = filterKey;
+
+            const pills = document.querySelectorAll('.achievement-filter-pill');
+            pills.forEach(pill => {
+                const isActive = pill.dataset.filter === filterKey;
+                pill.style.background = isActive ? '#0F172A' : '#ffffff';
+                pill.style.color = isActive ? '#CCFF00' : '#64748B';
+                pill.style.border = isActive ? '1.5px solid #CCFF00' : '1px solid #e2e8f0';
+                pill.style.boxShadow = isActive ? '0 4px 12px rgba(204,255,0,0.2)' : 'none';
+            });
+
+            const gridContainer = document.getElementById('sp-achievements-badges-grid-container');
+            if (gridContainer && this.currentAchievementsData) {
+                gridContainer.innerHTML = this.renderBadgesGridHtml(this.currentAchievementsData);
+            }
+        }
+
+        showAchievementModal(badgeId) {
+            this.haptic(30);
+            const existing = document.getElementById('achievement-detail-modal');
+            if (existing) existing.remove();
+
+            const allBadges = this.currentAchievementsData?.allBadges || this.currentAchievementsData?.badges || [];
+            let badge = allBadges.find(b => b.id === badgeId);
+            if (!badge && window.AchievementsService) {
+                badge = window.AchievementsService.getBadgeById(badgeId);
+            }
+            if (!badge) return;
+
+            const isUnlocked = Boolean(badge.unlocked);
+            const tierColor = this.getTierColor(badge.tier);
+            const tierLabel = this.getTierLabel(badge.tier);
+
+            const modal = document.createElement('div');
+            modal.id = 'achievement-detail-modal';
+            modal.style.cssText = 'position:fixed; inset:0; z-index:30000; background:rgba(15,23,42,0.7); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); display:flex; align-items:center; justify-content:center; padding:16px; opacity:0; transition:opacity 0.25s ease; font-family:"Outfit", sans-serif;';
+
+            modal.innerHTML = `
+                <div style="background:#ffffff; border-radius:28px; width:100%; max-width:440px; padding:26px 22px; box-shadow:0 25px 60px rgba(0,0,0,0.3); border:1.5px solid ${isUnlocked ? tierColor : '#e2e8f0'}; display:flex; flex-direction:column; gap:16px; text-align:center; transform:translateY(20px); transition:transform 0.25s ease; position:relative; overflow:hidden;">
+                    
+                    <!-- Ambient Header Glow -->
+                    <div style="position:absolute; top:-60px; left:50%; transform:translateX(-50%); width:220px; height:120px; background:radial-gradient(circle, ${isUnlocked ? tierColor : '#94A3B8'}33 0%, transparent 70%); pointer-events:none;"></div>
+
+                    <!-- Top Bar -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; position:relative; z-index:2;">
+                        <span style="background:${tierColor}20; color:${tierColor}; border:1px solid ${tierColor}55; font-size:0.6rem; font-weight:950; padding:3px 10px; border-radius:99px; text-transform:uppercase; letter-spacing:1px;">
+                            ${tierLabel} · +${badge.xp} XP
+                        </span>
+                        <button onclick="window.PlayerView.closeAchievementModal()" style="background:#f1f5f9; border:none; width:34px; height:34px; border-radius:12px; font-weight:900; color:#64748B; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.9rem;">✕</button>
+                    </div>
+
+                    <!-- Hero Badge Icon -->
+                    <div style="display:flex; justify-content:center; margin:6px 0; position:relative; z-index:2;">
+                        <div style="width:84px; height:84px; border-radius:26px; background:${isUnlocked ? `${tierColor}18` : '#f1f5f9'}; border:2.5px solid ${isUnlocked ? tierColor : '#cbd5e1'}; display:flex; align-items:center; justify-content:center; font-size:3.2rem; box-shadow:${isUnlocked ? `0 0 25px ${tierColor}45` : 'none'};">
+                            ${badge.icon}
+                        </div>
+                    </div>
+
+                    <!-- Title & Description -->
+                    <div style="position:relative; z-index:2;">
+                        <h3 style="font-size:1.35rem; font-weight:950; color:#0F172A; margin:0; text-transform:uppercase; letter-spacing:-0.5px;">${badge.title}</h3>
+                        <p style="font-size:0.8rem; color:#64748B; margin:8px auto 0; font-weight:500; line-height:1.45; max-width:340px;">${badge.description}</p>
+                    </div>
+
+                    <!-- Progress / Unlock Status -->
+                    <div style="position:relative; z-index:2;">
+                        ${isUnlocked ? `
+                            <div style="background:rgba(16,185,129,0.08); border:1.5px solid rgba(16,185,129,0.3); border-radius:18px; padding:12px 16px; text-align:center;">
+                                <div style="font-size:0.75rem; font-weight:950; color:#10B981; display:flex; align-items:center; justify-content:center; gap:6px; text-transform:uppercase; letter-spacing:0.8px;">
+                                    <i class="fas fa-check-circle"></i> ¡INSIGNIA DESBLOQUEADA!
+                                </div>
+                                <div style="font-size:0.72rem; color:#475569; font-weight:600; margin-top:3px;">
+                                    ${badge.unlockedAt ? `Conseguida el ${new Date(badge.unlockedAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}` : 'Insignia oficial activa en tu vitrina de SomosPádel.'}
+                                </div>
+                            </div>
+                        ` : `
+                            <div style="background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:18px; padding:14px 16px; text-align:left;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.68rem; font-weight:900; color:#64748B;">
+                                    <span>ESTADO DE PROGRESO</span>
+                                    <span style="color:#0F172A; font-weight:950;">${badge.progress}%</span>
+                                </div>
+                                <div style="width:100%; height:7px; background:#e2e8f0; border-radius:99px; overflow:hidden; margin:8px 0 6px;">
+                                    <div style="width:${badge.progress}%; height:100%; background:linear-gradient(90deg, #F59E0B, #CCFF00); border-radius:99px;"></div>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; font-size:0.65rem; color:#64748B; font-weight:700;">
+                                    <span>Objetivo: ${badge.targetValue || badge.requirement}</span>
+                                    <span>Actual: ${badge.currentValue || 0}</span>
+                                </div>
+                            </div>
+                        `}
+                    </div>
+
+                    <!-- Actions -->
+                    <div style="display:flex; flex-direction:column; gap:8px; margin-top:4px; position:relative; z-index:2;">
+                        ${isUnlocked ? `
+                            <button onclick="window.PlayerView.shareAchievement('${badge.id}')" class="haptic-feedback"
+                                    style="width:100%; height:46px; background:linear-gradient(135deg, #25D366, #128C7E); color:#ffffff; border:none; border-radius:16px; font-weight:950; font-size:0.78rem; text-transform:uppercase; letter-spacing:1px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 15px rgba(37,211,102,0.3);">
+                                <i class="fab fa-whatsapp" style="font-size:1.1rem;"></i> COMPARTIR EN WHATSAPP
+                            </button>
+                        ` : ''}
+                        <button onclick="window.PlayerView.closeAchievementModal()" class="haptic-feedback"
+                                style="width:100%; height:42px; background:${isUnlocked ? '#f1f5f9' : '#0F172A'}; color:${isUnlocked ? '#64748B' : '#CCFF00'}; border:none; border-radius:16px; font-weight:900; font-size:0.75rem; cursor:pointer; text-transform:uppercase; letter-spacing:0.8px;">
+                            ${isUnlocked ? 'CERRAR' : '¡A POR ELLO!'}
+                        </button>
+                    </div>
+
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            requestAnimationFrame(() => {
+                modal.style.opacity = '1';
+                modal.firstElementChild.style.transform = 'translateY(0)';
+            });
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) window.PlayerView.closeAchievementModal();
+            });
+        }
+
+        closeAchievementModal() {
+            this.haptic(20);
+            const modal = document.getElementById('achievement-detail-modal');
+            if (!modal) return;
+            modal.style.opacity = '0';
+            if (modal.firstElementChild) modal.firstElementChild.style.transform = 'translateY(20px)';
+            setTimeout(() => modal.remove(), 250);
+        }
+
+        shareAchievement(badgeId) {
+            this.haptic(40);
+            const allBadges = this.currentAchievementsData?.allBadges || this.currentAchievementsData?.badges || [];
+            let badge = allBadges.find(b => b.id === badgeId);
+            if (!badge && window.AchievementsService) {
+                badge = window.AchievementsService.getBadgeById(badgeId);
+            }
+            if (!badge) return;
+
+            const text = `🏆 ¡He desbloqueado la insignia "${badge.title}" en SomosPádel BCN! 🎾 Sumando +${badge.xp} XP a mi perfil oficial. ¡A por más! 🔥 #SomosPadel #PadelBarcelona`;
+
+            if (navigator.share) {
+                navigator.share({
+                    title: `Logro en SomosPádel: ${badge.title}`,
+                    text: text,
+                    url: window.location.href
+                }).catch(() => {
+                    const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+                    window.open(waUrl, '_blank');
+                });
+            } else {
+                const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+                window.open(waUrl, '_blank');
             }
         }
 

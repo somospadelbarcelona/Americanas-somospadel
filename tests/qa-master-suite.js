@@ -49,6 +49,12 @@ runSubtest("Smart Ticker & Campaña Equipos", "test-smart-ticker-season-campaign
 // 6. Battle Ready Modal QA
 runSubtest("Battle Ready Modal QA", "test-battle-ready-qa.js");
 
+// 7. Community Home Hub QA
+runSubtest("Inicio de Comunidad (CommunityHome QA)", "test-community-home-qa.js");
+
+// 8. Gamification & Achievements System QA
+runSubtest("Gamificación y Logros (Achievements QA)", "test-gamification-qa.js");
+
 console.log("\n================================================================");
 console.log(" RESUMEN GLOBAL DE CALIDAD:");
 reports.forEach(r => {
