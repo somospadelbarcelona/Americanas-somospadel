@@ -58,6 +58,15 @@ runSubtest("Gamificación y Logros (Achievements QA)", "test-gamification-qa.js"
 // 9. Round Advancement & Matchmaking Modes QA (Fixed Pairs, Twister, Suizo)
 runSubtest("Avance de Rondas y Modalidades (Fixed, Twister, Suizo)", "test-round-advancement-qa.js");
 
+// 10. Bolsa de Suplentes SOS & Matchmaking Inteligente QA
+runSubtest("Bolsa de Suplentes SOS & Matchmaking Inteligente", "test-sos-substitutes-complete-qa.js");
+
+// 11. Resumen Crónica Post-Torneo con IA & Instagram Stories QA
+runSubtest("Crónica Post-Torneo con IA & Instagram Stories", "test-tournament-chronicle-complete-qa.js");
+
+// 12. Radar de Climatología Avanzado & Alertas de Lluvia QA
+runSubtest("Radar de Climatología Avanzado & Alertas de Lluvia", "test-weather-radar-complete-qa.js");
+
 console.log("\n================================================================");
 console.log(" RESUMEN GLOBAL DE CALIDAD:");
 reports.forEach(r => {

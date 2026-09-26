@@ -464,6 +464,12 @@
             );
         }
 
+        openChronicleAI() {
+            if (window.TournamentChronicleModal) {
+                window.TournamentChronicleModal.open(this.currentAmericanaDoc, this.allMatches);
+            }
+        }
+
         openEventSummaryFlyer() {
             const maxRound = (this.allMatches && this.allMatches.length > 0)
                 ? Math.max(...this.allMatches.map(m => parseInt(m.round || 1)))
@@ -1094,6 +1100,12 @@
                        ${tabs}
                    </div>
                    <div style="display:flex; align-items:center; gap:6px; flex-shrink: 0;">
+                       <button type="button" onclick="window.ControlTowerView ? window.ControlTowerView.openChronicleAI() : (window.TournamentChronicleModal?.open())"
+                               title="Generar Crónica Épica de la Jornada"
+                               style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.35) 0%, rgba(204, 255, 0, 0.18) 100%); color: #CCFF00; border: 1px solid rgba(139, 92, 246, 0.7); padding: 4px 10px; border-radius: 20px; font-size: 0.64rem; font-weight: 950; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s; box-shadow: 0 0 10px rgba(139,92,246,0.35);">
+                           <span style="font-size: 0.75rem;">✨</span>
+                           <span>CRÓNICA ÉPICA</span>
+                       </button>
                        <button type="button" onclick="window.ControlTowerView ? window.ControlTowerView.openEventSummaryFlyer() : null"
                                title="Ver flyer de clasificación para compartir en WhatsApp o Instagram"
                                style="background: #0f172a; color: #CCFF00; border: 1px solid rgba(204, 255, 0, 0.45); padding: 4px 10px; border-radius: 20px; font-size: 0.64rem; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.18);">
@@ -1218,6 +1230,13 @@
                             ` : isRoundComplete ? `
                                 <!-- AVANCE DE RONDA / FINALIZACIÓN -->
                                 ${isLastPlannedRound ? `
+                                    <button type="button" onclick="event.stopPropagation(); window.ControlTowerView.openChronicleAI();"
+                                            class="btn-primary-pro"
+                                            style="padding: 14px 20px; font-size: 0.90rem; background: linear-gradient(135deg, #8B5CF6 0%, #4C1D95 100%); color: #ffffff; border: 1px solid rgba(204, 255, 0, 0.5); border-radius: 16px; font-weight: 1000; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 8px 25px rgba(139, 92, 246, 0.35); cursor: pointer; transition: transform 0.15s ease; margin-bottom: 8px;">
+                                        <span style="font-size: 1.1rem;">✨</span>
+                                        <span>📰 CRÓNICA ÉPICA DE LA JORNADA</span>
+                                        <span style="background: #CCFF00; color: #000; font-size: 0.58rem; padding: 2px 6px; border-radius: 6px; font-weight: 950;">NUEVO</span>
+                                    </button>
                                     <button type="button" id="btn-finish-and-standings" 
                                             onclick="event.stopPropagation(); window.ControlTowerView.finishTournament();"
                                             class="btn-primary-pro"

@@ -157,23 +157,29 @@ window.AdminAuth = {
             const savedView = sessionStorage.getItem('admin_last_view');
             const targetInitialView = hashView || savedView || 'users';
 
-            setTimeout(() => {
-                if (!window._currentAdminView && window.loadAdminView) {
-                    window.loadAdminView(targetInitialView);
-                }
+            // Cargar la vista inicial de inmediato sin retrasos innecesarios
+            if (!window._currentAdminView && window.loadAdminView) {
+                window.loadAdminView(targetInitialView);
+            }
 
+            // Escalonar agentes de fondo para no saturar CPU ni red durante el renderizado inicial
+            const scheduleBackgroundAgents = () => {
                 // --- BATSEÑAL 2.0 (Proactive Agent) ---
                 if (window.BatSignalAgent) {
                     window.BatSignalAgent.init();
                 }
 
                 // --- AUTOBLOG CRON PASIVO ---
-                setTimeout(() => {
-                    if (window.AutoBlogEngine && typeof window.AutoBlogEngine.checkAndGeneratePassive === 'function') {
-                        window.AutoBlogEngine.checkAndGeneratePassive();
-                    }
-                }, 1500);
-            }, 300);
+                if (window.AutoBlogEngine && typeof window.AutoBlogEngine.checkAndGeneratePassive === 'function') {
+                    window.AutoBlogEngine.checkAndGeneratePassive();
+                }
+            };
+
+            if ('requestIdleCallback' in window) {
+                window.requestIdleCallback(scheduleBackgroundAgents, { timeout: 8000 });
+            } else {
+                setTimeout(scheduleBackgroundAgents, 5000);
+            }
         } else {
             console.log("🔒 No active session. Waiting for PIN...");
             if (localStorage.getItem('admin_remember_pin')) {
@@ -364,6 +370,10 @@ window.loadAdminView = async function (rawViewName) {
             } else {
                 throw new Error("Season Campaign Admin Module not loaded");
             }
+        }
+        else if (viewName === 'sos_substitutes') {
+            if (window.AdminSosSubstitutes) await window.AdminSosSubstitutes.render();
+            else throw new Error("AdminSosSubstitutes Module not loaded");
         }
         else if ((viewName === 'americanas_mgmt' || viewName === 'events') && window.AdminViews.americanas_mgmt) {
             await window.AdminViews.americanas_mgmt();

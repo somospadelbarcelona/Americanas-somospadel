@@ -1,14 +1,14 @@
 /**
  * ControlTowerSummary.js
- * MÃ³dulo unificado "RESUMEN" en Torre de Control (Entrenos & Americanas).
- * Fusiona de forma armÃ³nica lo mejor de Stats y Summary:
- * - Cabecera oficial & Botonera de difusiÃ³n rÃ¡pida (WhatsApp & Flyer Instagram HD)
- * - Podio de Honor Estelar (1Âº CampeÃ³n, 2Âº SubcampeÃ³n, 3Âº Tercer puesto)
- * - CrÃ³nica PeriodÃ­stica Express & MVP de la Jornada
- * - 4 MÃ©tricas Globales del Evento
+ * Módulo unificado "RESUMEN" en Torre de Control (Entrenos & Americanas).
+ * Fusiona de forma armónica lo mejor de Stats y Summary:
+ * - Cabecera oficial & Botonera de difusión rápida (WhatsApp & Flyer Instagram HD)
+ * - Podio de Honor Estelar (1º Campeón, 2º Subcampeón, 3º Tercer puesto)
+ * - Crónica Periodística Express & MVP de la Jornada
+ * - 4 Métricas Globales del Evento
  * - "Datos que Nadie Ve" (8 Insignias y Premios Secretos)
- * - GrÃ¡ficos Visuales Interactivos en SVG nativo y responsivo
- * - Centro de comparticiÃ³n y Generador de Flyer HD 1080x1920 para Instagram Stories
+ * - Gráficos Visuales Interactivos en SVG nativo y responsivo
+ * - Centro de compartición y Generador de Flyer HD 1080x1920 para Instagram Stories
  * 
  * SomosPadel BCN - Pro Sports Edition
  */
@@ -26,7 +26,7 @@
         static activeCompetitivenessCategory = null; // null | 'tight' | 'medium' | 'blowout'
 
         /**
-         * Renderiza la vista unificada y completa del Resumen de CompeticiÃ³n
+         * Renderiza la vista unificada y completa del Resumen de Competición
          */
         static render(matches, eventDoc) {
             this.lastMatches = matches || [];
@@ -40,7 +40,7 @@
                 return this._renderEmptyState(eventDoc);
             }
 
-            // 1. CÃ¡lculos de ClasificaciÃ³n y Modalidad
+            // 1. Cálculos de Clasificación y Modalidad
             const isEntreno = !!eventDoc?.isEntreno;
             const isSwiss = !!(eventDoc?.pair_mode === 'swiss' || eventDoc?.isSwiss || (eventDoc?.name || '').toUpperCase().includes('SUIZ'));
             const isFija = !isSwiss && !!(eventDoc?.is_fija || (eventDoc?.pair_mode || '').toLowerCase().includes('fix') || (eventDoc?.name || '').toUpperCase().includes('FIJA'));
@@ -71,7 +71,7 @@
             const p2 = ranking[1] || { name: 'Por disputar', points: 0, diff: 0, won: 0, played: 0 };
             const p3 = ranking[2] || { name: 'Por disputar', points: 0, diff: 0, won: 0, played: 0 };
 
-            // Partidos en pista 1 para el campeÃ³n (MVP)
+            // Partidos en pista 1 para el campeón (MVP)
             const _toArr = (raw) => Array.isArray(raw) ? raw : (typeof raw === 'string' && raw ? raw.split(/\s*\/\s*/) : []);
             let p1Court1Count = 0;
             finishedMatches.forEach(m => {
@@ -84,7 +84,7 @@
             });
             const p1WinPct = p1.played > 0 ? Math.round((p1.won / p1.played) * 100) : 100;
 
-            // 3. Resumen y MÃ©tricas Globales
+            // 3. Resumen y Métricas Globales
             const totalGames = finishedMatches.reduce((acc, m) => acc + (parseInt(m.score_a || 0) + parseInt(m.score_b || 0)), 0);
             const totalMatches = finishedMatches.length;
             const avgGamesPerMatch = totalMatches > 0 ? (totalGames / totalMatches).toFixed(1) : '0.0';
@@ -92,24 +92,24 @@
             let intensityLevel = 'Equilibrada';
             let intensityColor = '#0ea5e9';
             if (parseFloat(avgGamesPerMatch) >= 6.4) {
-                intensityLevel = 'FrenÃ©tica (TensiÃ³n MÃ¡xima)';
+                intensityLevel = 'Frenética (Tensión Máxima)';
                 intensityColor = '#ef4444';
             } else if (parseFloat(avgGamesPerMatch) >= 5.2) {
                 intensityLevel = 'Alta Competitividad';
                 intensityColor = '#10b981';
             }
 
-            // 4. "DATOS QUE NADIE VE" (8 Insignias & MÃ©tricas Secretas)
+            // 4. "DATOS QUE NADIE VE" (8 Insignias & Métricas Secretas)
             const badges = this._calculateBadges(finishedMatches, ranking);
 
-            // 5. Preparar CrÃ³nica PeriodÃ­stica Express & Texto Compartible
+            // 5. Preparar Crónica Periodística Express & Texto Compartible
             const amName = eventDoc?.name || (isEntreno ? 'Entreno SomosPadel' : 'Americana SomosPadel');
             const eventDate = eventDoc?.date || 'Fecha por confirmar';
             const categoryLabel = (eventDoc?.category === 'female' ? 'FEMENINO' : eventDoc?.category === 'male' ? 'MASCULINO' : eventDoc?.category === 'mixed' ? 'MIXTO' : (eventDoc?.category || 'OPEN')).toUpperCase();
             const humanDate = this._formatHumanDate(eventDoc?.date || 'Hoy');
 
-            const chronicleHeadline = `Â¡${p1.name} reina en una jornada de mÃ¡xima intensidad!`;
-            const chronicleSubheadline = `CrÃ³nica oficial de ${amName}: ${totalMatches} partidos al lÃ­mite, ${totalGames} juegos disputados y podio definido con enorme entrega.`;
+            const chronicleHeadline = `¡${p1.name} reina en una jornada de máxima intensidad!`;
+            const chronicleSubheadline = `Crónica oficial de ${amName}: ${totalMatches} partidos al límite, ${totalGames} juegos disputados y podio definido con enorme entrega.`;
 
             // Construir texto optimizado para WhatsApp y guardarlo
             this._prepareShareTexts({
@@ -242,13 +242,20 @@
                             <div class="sp-hero2-meta">
                                 <i class="fas fa-calendar-alt" style="color:#38bdf8;font-size:.62rem"></i>
                                 <b>${eventDate}</b>
-                                <span>â€¢</span>
+                                <span>•</span>
                                 <span>${totalMatches} partidos</span>
-                                <span>â€¢</span>
+                                <span>•</span>
                                 <span>${totalGames} juegos</span>
                             </div>
                         </div>
-                        <div style="display:flex;gap:6px;flex-shrink:0;margin-top:2px">
+                        <div style="display:flex;gap:6px;flex-shrink:0;margin-top:2px;align-items:center">
+                            <button type="button" onclick="window.ControlTowerSummary.openChronicleAI()" title="Generar Crónica Épica del Torneo"
+                                    style="background:linear-gradient(135deg,rgba(139,92,246,.25),rgba(204,255,0,.15));border:1px solid rgba(139,92,246,.6);color:#CCFF00;height:34px;padding:0 12px;border-radius:10px;display:flex;align-items:center;gap:6px;cursor:pointer;transition:transform .15s,box-shadow .15s;font-size:.72rem;font-weight:950;box-shadow:0 0 14px rgba(139,92,246,.3)"
+                                    onmouseover="this.style.transform='scale(1.05)';this.style.boxShadow='0 0 18px rgba(204,255,0,.4)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 0 14px rgba(139,92,246,.3)'">
+                                <span style="font-size:.9rem">✨</span>
+                                <span>CRÓNICA ÉPICA</span>
+                                <span style="background:#CCFF00;color:#000;font-size:.55rem;padding:1px 5px;border-radius:4px;font-weight:950">NUEVO</span>
+                            </button>
                             <button type="button" onclick="window.ControlTowerSummary.shareWhatsApp()" title="WhatsApp"
                                     style="background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.35);color:#22c55e;width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .15s;font-size:.9rem"
                                     onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
@@ -264,25 +271,25 @@
                 </div>
 
                 <!-- B: KPIs GLOBALES -->
-                <div class="sp-s2-lbl sp-s2-fade"><i class="fas fa-chart-bar" style="color:#ccff00"></i> MÃ‰TRICAS DEL EVENTO</div>
+                <div class="sp-s2-lbl sp-s2-fade"><i class="fas fa-chart-bar" style="color:#ccff00"></i> MÉTRICAS DEL EVENTO</div>
                 <div class="sp-kpi2 sp-s2-fade">
                     <div class="sp-kpi2-card">
-                        <div class="sp-kpi2-icon">ðŸŽ¾</div>
+                        <div class="sp-kpi2-icon">🎾</div>
                         <div class="sp-kpi2-num" style="color:#fff">${totalMatches}</div>
                         <div class="sp-kpi2-lbl">Partidos</div>
                     </div>
                     <div class="sp-kpi2-card">
-                        <div class="sp-kpi2-icon">ðŸ’¥</div>
+                        <div class="sp-kpi2-icon">💥</div>
                         <div class="sp-kpi2-num" style="color:#ccff00">${totalGames}</div>
                         <div class="sp-kpi2-lbl">Juegos totales</div>
                     </div>
                     <div class="sp-kpi2-card">
-                        <div class="sp-kpi2-icon">ðŸ“Š</div>
+                        <div class="sp-kpi2-icon">📊</div>
                         <div class="sp-kpi2-num" style="color:#38bdf8">${avgGamesPerMatch}</div>
                         <div class="sp-kpi2-lbl">Media j/partido</div>
                     </div>
                     <div class="sp-kpi2-card">
-                        <div class="sp-kpi2-icon">âš¡</div>
+                        <div class="sp-kpi2-icon">⚡</div>
                         <div class="sp-kpi2-num" style="color:${intensityColor};font-size:1rem;margin-top:6px">${intensityLevel.split(' ')[0]}</div>
                         <div class="sp-kpi2-lbl">Intensidad</div>
                     </div>
@@ -291,31 +298,31 @@
                 <!-- C: PODIO VISUAL -->
                 <div class="sp-s2-lbl sp-s2-fade"><i class="fas fa-medal" style="color:#facc15"></i> PODIO DE HONOR</div>
                 <div class="sp-podium2 sp-s2-fade">
-                    <!-- 2Âº -->
+                    <!-- 2º -->
                     <div class="sp-pod-col" style="background:linear-gradient(180deg,rgba(203,213,225,.14) 0,rgba(20,30,50,.85) 100%);border:1.5px solid rgba(203,213,225,.3);min-height:170px">
                         <div class="sp-pod-avatar" style="background:#cbd5e1;color:#0f172a">${this._getInitials(p2.name)}</div>
-                        <div style="font-size:1.5rem;line-height:1;margin-bottom:3px">ðŸ¥ˆ</div>
-                        <div style="font-size:.58rem;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px">2Âº SUBCAMPEÃ“N</div>
+                        <div style="font-size:1.5rem;line-height:1;margin-bottom:3px">🥈</div>
+                        <div style="font-size:.58rem;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px">2º SUBCAMPEÓN</div>
                         <div style="font-size:.8rem;font-weight:1000;color:#fff;word-break:break-word;line-height:1.2;margin:4px 0">${p2.name}</div>
                         <div class="sp-pod-pts" style="background:rgba(203,213,225,.15);color:#f1f5f9">${p2.points||0} pts</div>
                         <div class="sp-pod-wl">${p2.won||0}V/${p2.played||0}P</div>
                         <div class="sp-pbar-track" style="width:100%"><div class="sp-pbar-fill" style="--w:${p1.points>0?Math.round((p2.points||0)/p1.points*100):0}%;background:linear-gradient(90deg,#94a3b8,#cbd5e1)"></div></div>
                     </div>
-                    <!-- 1Âº CAMPEÃ“N (mÃ¡s alto) -->
+                    <!-- 1º CAMPEÓN (más alto) -->
                     <div class="sp-pod-col" style="background:linear-gradient(180deg,rgba(250,204,21,.22) 0,rgba(20,30,50,.98) 100%);border:2px solid #facc15;min-height:210px;box-shadow:0 0 30px rgba(250,204,21,.22)">
-                        <div style="position:absolute;top:-11px;background:#facc15;color:#000;font-size:.58rem;font-weight:1000;padding:2px 10px;border-radius:12px;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">ðŸ‘‘ 1Âº CAMPEÃ“N</div>
+                        <div style="position:absolute;top:-11px;background:#facc15;color:#000;font-size:.58rem;font-weight:1000;padding:2px 10px;border-radius:12px;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">👑 1º CAMPEÓN</div>
                         <div class="sp-pod-avatar" style="background:linear-gradient(135deg,#facc15,#f59e0b);color:#000;width:48px;height:48px;font-size:.95rem;border:2px solid #fff">${this._getInitials(p1.name)}</div>
-                        <div style="font-size:1.9rem;line-height:1;margin-bottom:3px">ðŸ¥‡</div>
-                        <div style="font-size:.6rem;font-weight:1000;color:#facc15;text-transform:uppercase;letter-spacing:.5px">CAMPEÃ“N OFICIAL</div>
+                        <div style="font-size:1.9rem;line-height:1;margin-bottom:3px">🥇</div>
+                        <div style="font-size:.6rem;font-weight:1000;color:#facc15;text-transform:uppercase;letter-spacing:.5px">CAMPEÓN OFICIAL</div>
                         <div style="font-size:.9rem;font-weight:1000;color:#fff;word-break:break-word;line-height:1.2;margin:4px 0">${p1.name}</div>
-                        <div class="sp-pod-pts" style="background:rgba(250,204,21,.22);border:1px solid rgba(250,204,21,.4);color:#fef08a">${p1.points||0} pts Â· ${p1.diff>=0?'+':''}${p1.diff||0}</div>
-                        <div style="font-size:.62rem;color:#facc15;font-weight:900;margin-top:3px">${p1.won||0}V Â· ${p1WinPct}% efect.</div>
+                        <div class="sp-pod-pts" style="background:rgba(250,204,21,.22);border:1px solid rgba(250,204,21,.4);color:#fef08a">${p1.points||0} pts · ${p1.diff>=0?'+':''}${p1.diff||0}</div>
+                        <div style="font-size:.62rem;color:#facc15;font-weight:900;margin-top:3px">${p1.won||0}V · ${p1WinPct}% efect.</div>
                         <div class="sp-pbar-track" style="width:100%"><div class="sp-pbar-fill" style="--w:100%;background:linear-gradient(90deg,#facc15,#ccff00)"></div></div>
                     </div>
-                    <!-- 3Âº -->
+                    <!-- 3º -->
                     <div class="sp-pod-col" style="background:linear-gradient(180deg,rgba(217,119,6,.14) 0,rgba(20,30,50,.85) 100%);border:1.5px solid rgba(217,119,6,.3);min-height:160px">
                         <div class="sp-pod-avatar" style="background:#d97706;color:#fff">${this._getInitials(p3.name)}</div>
-                        <div style="font-size:1.4rem;line-height:1;margin-bottom:3px">ðŸ¥‰</div>
+                        <div style="font-size:1.4rem;line-height:1;margin-bottom:3px">🥉</div>
                         <div style="font-size:.58rem;font-weight:900;color:#fbbf24;text-transform:uppercase;letter-spacing:.5px">3ER PUESTO</div>
                         <div style="font-size:.8rem;font-weight:1000;color:#fff;word-break:break-word;line-height:1.2;margin:4px 0">${p3.name}</div>
                         <div class="sp-pod-pts" style="background:rgba(217,119,6,.2);color:#fde68a">${p3.points||0} pts</div>
@@ -332,7 +339,7 @@
                         <div style="flex:1;min-width:160px">
                             <div class="sp-mvp2-pill"><i class="fas fa-crown"></i> MVP DE LA JORNADA</div>
                             <div class="sp-mvp2-name">${p1.name}</div>
-                            <div style="font-size:.7rem;color:#94a3b8;line-height:1.3">${isEntreno?'Temple y dominio en Pista 1. Supo gestionar cada bola caliente bajo mÃ¡xima exigencia.':'ActuaciÃ³n formidable de principio a fin. Regularidad sÃ³lida en cada turno para conquistar la cima.'}</div>
+                            <div style="font-size:.7rem;color:#94a3b8;line-height:1.3">${isEntreno?'Temple y dominio en Pista 1. Supo gestionar cada bola caliente bajo máxima exigencia.':'Actuación formidable de principio a fin. Regularidad sólida en cada turno para conquistar la cima.'}</div>
                         </div>
                     </div>
                     <div class="sp-mvp2-chips">
@@ -343,8 +350,8 @@
                     </div>
                 </div>
 
-                <!-- E: GRÃFICOS INTERACTIVOS -->
-                <div class="sp-s2-lbl sp-s2-fade"><i class="fas fa-chart-line" style="color:#38bdf8"></i> EVOLUCIÃ“N POR RONDAS</div>
+                <!-- E: GRÁFICOS INTERACTIVOS -->
+                <div class="sp-s2-lbl sp-s2-fade"><i class="fas fa-chart-line" style="color:#38bdf8"></i> EVOLUCIÓN POR RONDAS</div>
                 <div class="sp-chart-card2 sp-s2-fade">
                     <div id="sp-evolution-chart-container">
                         ${this._renderEvolutionChartSVG(finishedMatches, ranking)}
@@ -354,7 +361,7 @@
                 <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:14px">
                     <div class="sp-chart-card2 sp-s2-fade">
                         <div class="sp-chart-title2"><i class="fas fa-fire" style="color:#f43f5e"></i> COMPETITIVIDAD</div>
-                        <div class="sp-chart-sub2">DistribuciÃ³n de los partidos por nivel de igualda</div>
+                        <div class="sp-chart-sub2">Distribución de los partidos por nivel de igualda</div>
                         <div id="sp-competitiveness-container">
                             ${this._renderCompetitivenessDonutSVG(finishedMatches)}
                         </div>
@@ -370,7 +377,7 @@
                 <div class="sp-s2-lbl sp-s2-fade"><i class="fas fa-fingerprint" style="color:#ccff00"></i> DATOS QUE NADIE VE <span style="font-size:.6rem;background:rgba(204,255,0,.1);color:#ccff00;padding:2px 7px;border-radius:8px;margin-left:4px;font-weight:900">8 INSIGNIAS</span></div>
                 <div class="sp-badges2 sp-s2-fade">
                     <div class="sp-badge2">
-                        <div class="sp-badge2-icon" style="background:rgba(250,204,21,.13);color:#facc15">ðŸ‘‘</div>
+                        <div class="sp-badge2-icon" style="background:rgba(250,204,21,.13);color:#facc15">👑</div>
                         <div style="flex:1;min-width:0">
                             <div class="sp-badge2-lbl" style="color:#facc15">REY / REINA PISTA 1</div>
                             <div class="sp-badge2-name">${badges.court1King.name}</div>
@@ -378,7 +385,7 @@
                         </div>
                     </div>
                     <div class="sp-badge2">
-                        <div class="sp-badge2-icon" style="background:rgba(56,189,248,.13);color:#38bdf8">ðŸ›¡ï¸</div>
+                        <div class="sp-badge2-icon" style="background:rgba(56,189,248,.13);color:#38bdf8">🛡️</div>
                         <div style="flex:1;min-width:0">
                             <div class="sp-badge2-lbl" style="color:#38bdf8">MURALLA DEFENSIVA</div>
                             <div class="sp-badge2-name">${badges.defenseWall.name}</div>
@@ -386,7 +393,7 @@
                         </div>
                     </div>
                     <div class="sp-badge2">
-                        <div class="sp-badge2-icon" style="background:rgba(239,68,68,.13);color:#ef4444">ðŸ”¥</div>
+                        <div class="sp-badge2-icon" style="background:rgba(239,68,68,.13);color:#ef4444">🔥</div>
                         <div style="flex:1;min-width:0">
                             <div class="sp-badge2-lbl" style="color:#ef4444">RACHA IMBATIBLE</div>
                             <div class="sp-badge2-name">${badges.unbeatableStreak.name}</div>
@@ -394,39 +401,39 @@
                         </div>
                     </div>
                     <div class="sp-badge2">
-                        <div class="sp-badge2-icon" style="background:rgba(168,85,247,.13);color:#a855f7">âš”ï¸</div>
+                        <div class="sp-badge2-icon" style="background:rgba(168,85,247,.13);color:#a855f7">⚔️</div>
                         <div style="flex:1;min-width:0">
-                            <div class="sp-badge2-lbl" style="color:#c084fc">PARTIDO MÃS Ã‰PICO</div>
+                            <div class="sp-badge2-lbl" style="color:#c084fc">PARTIDO MÁS ÉPICO</div>
                             <div class="sp-badge2-name">${badges.epicMatch.title}</div>
                             <div class="sp-badge2-detail">${badges.epicMatch.detail}</div>
                         </div>
                     </div>
                     <div class="sp-badge2">
-                        <div class="sp-badge2-icon" style="background:rgba(16,185,129,.13);color:#10b981">ðŸŽ¯</div>
+                        <div class="sp-badge2-icon" style="background:rgba(16,185,129,.13);color:#10b981">🎯</div>
                         <div style="flex:1;min-width:0">
-                            <div class="sp-badge2-lbl" style="color:#34d399">TÃNDEM MÃS LETAL</div>
+                            <div class="sp-badge2-lbl" style="color:#34d399">TÁNDEM MÁS LETAL</div>
                             <div class="sp-badge2-name">${badges.deadlyTandem.name}</div>
                             <div class="sp-badge2-detail">${badges.deadlyTandem.detail}</div>
                         </div>
                     </div>
                     <div class="sp-badge2">
-                        <div class="sp-badge2-icon" style="background:rgba(249,115,22,.13);color:#f97316">ðŸš€</div>
+                        <div class="sp-badge2-icon" style="background:rgba(249,115,22,.13);color:#f97316">🚀</div>
                         <div style="flex:1;min-width:0">
-                            <div class="sp-badge2-lbl" style="color:#fb923c">EFECTO DIÃ‰SEL</div>
+                            <div class="sp-badge2-lbl" style="color:#fb923c">EFECTO DIÉSEL</div>
                             <div class="sp-badge2-name">${badges.dieselEffect.name}</div>
                             <div class="sp-badge2-detail">${badges.dieselEffect.detail}</div>
                         </div>
                     </div>
                     <div class="sp-badge2">
-                        <div class="sp-badge2-icon" style="background:rgba(204,255,0,.13);color:#ccff00">ðŸ’£</div>
+                        <div class="sp-badge2-icon" style="background:rgba(204,255,0,.13);color:#ccff00">💣</div>
                         <div style="flex:1;min-width:0">
-                            <div class="sp-badge2-lbl" style="color:#ccff00">MÃXIMO CAÃ‘ONERO</div>
+                            <div class="sp-badge2-lbl" style="color:#ccff00">MÁXIMO CAÑONERO</div>
                             <div class="sp-badge2-name">${badges.topScorer.name}</div>
                             <div class="sp-badge2-detail">${badges.topScorer.detail}</div>
                         </div>
                     </div>
                     <div class="sp-badge2">
-                        <div class="sp-badge2-icon" style="background:rgba(99,102,241,.13);color:#6366f1">ðŸ“ˆ</div>
+                        <div class="sp-badge2-icon" style="background:rgba(99,102,241,.13);color:#6366f1">📈</div>
                         <div style="flex:1;min-width:0">
                             <div class="sp-badge2-lbl" style="color:#818cf8">IMPACTO ELO</div>
                             <div class="sp-badge2-name">${badges.eloImpact.name}</div>
@@ -435,34 +442,45 @@
                     </div>
                 </div>
 
-                <!-- G: CRÃ“NICA PERIODÃSTICA -->
-                <div class="sp-s2-lbl sp-s2-fade"><i class="fas fa-newspaper" style="color:#38bdf8"></i> CRÃ“NICA OFICIAL</div>
+                <!-- G: CRÓNICA PERIODÍSTICA -->
+                <div class="sp-s2-lbl sp-s2-fade"><i class="fas fa-newspaper" style="color:#38bdf8"></i> CRÓNICA OFICIAL</div>
                 <div class="sp-chronicle2 sp-s2-fade">
                     <div class="sp-chronicle2-headline">${chronicleHeadline}</div>
                     <div class="sp-chronicle2-sub">${chronicleSubheadline}</div>
                     <div class="sp-chronicle2-body">
-                        El ambiente vivido en <strong>${amName}</strong> fue puro espectÃ¡culo de pÃ¡del. A lo largo de los <strong>${totalMatches} partidos oficiales</strong> y los <strong>${totalGames} juegos disputados</strong> (media de <strong>${avgGamesPerMatch} j/partido</strong>), la paridad y la intensidad marcaron cada rotaciÃ³n de pista.
-                        ${p2.name!=='Por disputar'?`<strong>${p2.name}</strong> firmÃ³ una actuaciÃ³n soberbia conquistando la plata con ${p2.won} victorias y ${p2.points} puntos. `:''}
-                        ${p3.name!=='Por disputar'?`Mientras que <strong>${p3.name}</strong> completÃ³ el podio con ${p3.points} puntos. `:''}
-                        ðŸ¤ Â¡Gracias a todos por el compaÃ±erismo y nivel exhibido!
+                        El ambiente vivido en <strong>${amName}</strong> fue puro espectáculo de pádel. A lo largo de los <strong>${totalMatches} partidos oficiales</strong> y los <strong>${totalGames} juegos disputados</strong> (media de <strong>${avgGamesPerMatch} j/partido</strong>), la paridad y la intensidad marcaron cada rotación de pista.
+                        ${p2.name!=='Por disputar'?`<strong>${p2.name}</strong> firmó una actuación soberbia conquistando la plata con ${p2.won} victorias y ${p2.points} puntos. `:''}
+                        ${p3.name!=='Por disputar'?`Mientras que <strong>${p3.name}</strong> completó el podio con ${p3.points} puntos. `:''}
+                        🤝 ¡Gracias a todos por el compañerismo y nivel exhibido!
                     </div>
                     <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px">
+                        <button type="button" onclick="window.ControlTowerSummary.openChronicleAI()"
+                                style="background:linear-gradient(135deg,#8B5CF6 0%,#6D28D9 100%);border:1px solid rgba(204,255,0,.6);color:#ffffff;font-size:.72rem;font-weight:950;padding:6px 14px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 4px 14px rgba(139,92,246,.35)">
+                            <span style="font-size:.85rem">✨</span> CRÓNICA ÉPICA & STORY 9:16
+                            <span style="background:#CCFF00;color:#000;font-size:.55rem;padding:1px 5px;border-radius:4px;font-weight:950">DESTACADO</span>
+                        </button>
                         <button type="button" onclick="window.ControlTowerSummary.copyChronicle(this)"
                                 style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);color:#94a3b8;font-size:.68rem;font-weight:900;padding:5px 11px;border-radius:9px;cursor:pointer;display:inline-flex;align-items:center;gap:5px">
                             <i class="fas fa-copy"></i> Copiar para WhatsApp
                         </button>
                         <button type="button" onclick="window.ControlTowerView.switchTab('standings')"
                                 style="background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.25);color:#38bdf8;font-size:.68rem;font-weight:900;padding:5px 11px;border-radius:9px;cursor:pointer;display:inline-flex;align-items:center;gap:5px">
-                            <i class="fas fa-list-ol"></i> Ver clasificaciÃ³n completa
+                            <i class="fas fa-list-ol"></i> Ver clasificación completa
                         </button>
                     </div>
                 </div>
 
                 <!-- H: BOTONES COMPARTIR -->
                 <div class="sp-share2 sp-s2-fade">
-                    <div class="sp-share2-title">ðŸŽ¾ Â¡PRESUME DE TU TORNEO!</div>
-                    <div class="sp-share2-sub">Comparte el informe completo con podio e insignias, o genera tu Flyer HD para Instagram Stories.</div>
+                    <div class="sp-share2-title">🎾 ¡PRESUME DE TU TORNEO!</div>
+                    <div class="sp-share2-sub">Comparte el informe completo con podio e insignias, o genera tu crónica épica para Instagram Stories y WhatsApp.</div>
                     <div class="sp-share2-btns">
+                        <button type="button" class="sp-action-btn" onclick="window.ControlTowerSummary.openChronicleAI()"
+                                style="grid-column: 1 / -1; background:linear-gradient(135deg,#8B5CF6 0%,#4C1D95 60%,#090E17 100%);border:1px solid rgba(204,255,0,.6);color:#fff;box-shadow:0 6px 20px rgba(139,92,246,.45);margin-bottom:4px;display:flex;align-items:center;justify-content:center;gap:8px">
+                            <span style="font-size:1.15rem">✨</span>
+                            <span style="font-weight:950;letter-spacing:.3px">GENERAR CRÓNICA ÉPICA & STORY HD</span>
+                            <span style="background:#CCFF00;color:#000;font-size:.58rem;padding:2px 6px;border-radius:6px;font-weight:950;margin-left:4px">ÉPICA</span>
+                        </button>
                         <button type="button" class="sp-action-btn" onclick="window.ControlTowerSummary.shareWhatsApp()"
                                 style="background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;box-shadow:0 5px 18px rgba(37,211,102,.28)">
                             <i class="fab fa-whatsapp" style="font-size:1.05rem"></i> COMPARTIR EN WHATSAPP
@@ -488,10 +506,10 @@
                         <i class="fas fa-chart-line" style="font-size: 2.2rem; color: #ccff00;"></i>
                     </div>
                     <h3 style="font-weight: 1000; color: #ffffff; font-size: 1.25rem; margin: 0 0 8px 0; letter-spacing: -0.3px;">
-                        RESUMEN DE COMPETICIÃ“N EN PREPARACIÃ“N
+                        RESUMEN DE COMPETICIÓN EN PREPARACIÓN
                     </h3>
                     <p style="font-size: 0.8rem; max-width: 360px; margin: 0 auto 20px; line-height: 1.4; color: #94a3b8;">
-                        El podio de honor, el MVP, los grÃ¡ficos interactivos, las 8 insignias secretas y el flyer HD se generarÃ¡n automÃ¡ticamente en cuanto se confirmen los marcadores.
+                        El podio de honor, el MVP, los gráficos interactivos, las 8 insignias secretas y el flyer HD se generarán automáticamente en cuanto se confirmen los marcadores.
                     </p>
                     <button type="button" onclick="window.ControlTowerView.switchTab('results')"
                             style="background: #0f172a; border: 1.5px solid #ccff00; color: #ccff00; padding: 11px 24px; border-radius: 14px; font-weight: 900; font-size: 0.76rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
@@ -507,7 +525,7 @@
          */
         static _getInitials(name) {
             if (!name || typeof name !== 'string') return 'SP';
-            const clean = name.replace(/[^a-zA-ZÃ¡Ã©Ã­Ã³ÃºÃÃ‰ÃÃ“ÃšÃ±Ã‘\s]/g, '').trim();
+            const clean = name.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '').trim();
             const parts = clean.split(/\s+/).filter(Boolean);
             if (parts.length === 0) return 'SP';
             if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
@@ -515,7 +533,7 @@
         }
 
         /**
-         * Despliegue de la crÃ³nica completa
+         * Despliegue de la crónica completa
          */
         static toggleChronicleFull() {
             const el = document.getElementById('sp-chronicle-expanded-text');
@@ -526,7 +544,7 @@
             if (btn) {
                 btn.innerHTML = isHidden 
                     ? '<i class="fas fa-chevron-up"></i> <span>Ocultar detalles</span>' 
-                    : '<i class="fas fa-book-open"></i> <span>Leer crÃ³nica completa</span>';
+                    : '<i class="fas fa-book-open"></i> <span>Leer crónica completa</span>';
             }
         }
 
@@ -535,7 +553,7 @@
         }
 
         /**
-         * Copiar crÃ³nica o resumen al portapapeles
+         * Copiar crónica o resumen al portapapeles
          */
         static copyChronicle(btnElement) {
             const text = this.lastChronicleText || '';
@@ -544,7 +562,7 @@
                 navigator.clipboard.writeText(text).then(() => {
                     if (btnElement) {
                         const originalHtml = btnElement.innerHTML;
-                        btnElement.innerHTML = '<i class="fas fa-check" style="color: #22c55e;"></i> <span style="color: #22c55e;">Â¡Copiado!</span>';
+                        btnElement.innerHTML = '<i class="fas fa-check" style="color: #22c55e;"></i> <span style="color: #22c55e;">¡Copiado!</span>';
                         setTimeout(() => {
                             if (btnElement) btnElement.innerHTML = originalHtml;
                         }, 2200);
@@ -587,44 +605,44 @@
          */
         static _prepareShareTexts(d) {
             const b = d.badges;
-            let wp = `ðŸŽ¾ðŸ”¥ *INFORME OFICIAL SOMOSPADEL BCN â€¢ RESUMEN DE COMPETICIÃ“N* ðŸ”¥ðŸŽ¾\n`;
-            wp += `â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n`;
-            wp += `ðŸ† *${d.amName.toUpperCase()}*\n`;
-            wp += `ðŸ“… *Fecha:* ${d.humanDate} | *Modalidad:* ${d.categoryLabel}\n`;
-            wp += `ðŸ“Š *Balance:* ${d.totalMatches} partidos oficiales | ${d.totalGames} juegos disputados (Media: ${d.avgGamesPerMatch} j/p)\n\n`;
+            let wp = `🎾🔥 *INFORME OFICIAL SOMOSPADEL BCN • RESUMEN DE COMPETICIÓN* 🔥🎾\n`;
+            wp += `━━━━━━━━━━━━━━━━━━━━\n`;
+            wp += `🏆 *${d.amName.toUpperCase()}*\n`;
+            wp += `📅 *Fecha:* ${d.humanDate} | *Modalidad:* ${d.categoryLabel}\n`;
+            wp += `📊 *Balance:* ${d.totalMatches} partidos oficiales | ${d.totalGames} juegos disputados (Media: ${d.avgGamesPerMatch} j/p)\n\n`;
 
-            wp += `ðŸ‘‘ *MVP & LÃDER INDISCUTIBLE: ${d.p1.name.toUpperCase()}*\n`;
-            wp += `ExhibiciÃ³n magistral coronando la cima del evento con *${d.p1.points} puntos*, *${d.p1.won} victorias* (efectividad del *${d.p1WinPct}%*)${d.p1Court1Count > 0 ? ` y *${d.p1Court1Count} partidos en Pista 1*` : ''}.\n\n`;
+            wp += `👑 *MVP & LÍDER INDISCUTIBLE: ${d.p1.name.toUpperCase()}*\n`;
+            wp += `Exhibición magistral coronando la cima del evento con *${d.p1.points} puntos*, *${d.p1.won} victorias* (efectividad del *${d.p1WinPct}%*)${d.p1Court1Count > 0 ? ` y *${d.p1Court1Count} partidos en Pista 1*` : ''}.\n\n`;
 
-            wp += `ðŸ¥‡ðŸ¥ˆðŸ¥‰ *PODIO DE HONOR ESTELAR*\n`;
-            wp += `â€¢ ðŸ¥‡ 1Âº Lugar: *${d.p1.name}* (${d.p1.points} pts | Dif: ${d.p1.diff >= 0 ? '+' : ''}${d.p1.diff})\n`;
-            wp += `â€¢ ðŸ¥ˆ 2Âº SubcampeÃ³n: *${d.p2.name}* (${d.p2.points} pts | Dif: ${d.p2.diff >= 0 ? '+' : ''}${d.p2.diff})\n`;
-            wp += `â€¢ ðŸ¥‰ 3Âº Tercer puesto: *${d.p3.name}* (${d.p3.points} pts | Dif: ${d.p3.diff >= 0 ? '+' : ''}${d.p3.diff})\n\n`;
+            wp += `🥇🥈🥉 *PODIO DE HONOR ESTELAR*\n`;
+            wp += `• 🥇 1º Lugar: *${d.p1.name}* (${d.p1.points} pts | Dif: ${d.p1.diff >= 0 ? '+' : ''}${d.p1.diff})\n`;
+            wp += `• 🥈 2º Subcampeón: *${d.p2.name}* (${d.p2.points} pts | Dif: ${d.p2.diff >= 0 ? '+' : ''}${d.p2.diff})\n`;
+            wp += `• 🥉 3º Tercer puesto: *${d.p3.name}* (${d.p3.points} pts | Dif: ${d.p3.diff >= 0 ? '+' : ''}${d.p3.diff})\n\n`;
 
-            wp += `âš¡ *DATOS QUE NADIE VE (INSIGNIAS OFICIALES)*\n`;
-            wp += `ðŸ‘‘ *Rey Pista 1:* ${b.court1King.name} (${b.court1King.detail})\n`;
-            wp += `ðŸ›¡ï¸ *Muralla Defensiva:* ${b.defenseWall.name} (${b.defenseWall.detail})\n`;
-            wp += `ðŸ”¥ *Racha Imbatible:* ${b.unbeatableStreak.name} (${b.unbeatableStreak.detail})\n`;
-            wp += `âš”ï¸ *Partido MÃ¡s Ã‰pico:* ${b.epicMatch.title} (${b.epicMatch.detail})\n`;
-            wp += `ðŸŽ¯ *TÃ¡ndem MÃ¡s Letal:* ${b.deadlyTandem.name} (${b.deadlyTandem.detail})\n`;
-            wp += `ðŸš€ *Efecto DiÃ©sel:* ${b.dieselEffect.name} (${b.dieselEffect.detail})\n`;
-            wp += `ðŸ’£ *MÃ¡ximo CaÃ±onero:* ${b.topScorer.name} (${b.topScorer.detail})\n`;
-            wp += `ðŸ“ˆ *Impacto ELO:* ${b.eloImpact.name} (${b.eloImpact.detail})\n\n`;
+            wp += `⚡ *DATOS QUE NADIE VE (INSIGNIAS OFICIALES)*\n`;
+            wp += `👑 *Rey Pista 1:* ${b.court1King.name} (${b.court1King.detail})\n`;
+            wp += `🛡️ *Muralla Defensiva:* ${b.defenseWall.name} (${b.defenseWall.detail})\n`;
+            wp += `🔥 *Racha Imbatible:* ${b.unbeatableStreak.name} (${b.unbeatableStreak.detail})\n`;
+            wp += `⚔️ *Partido Más Épico:* ${b.epicMatch.title} (${b.epicMatch.detail})\n`;
+            wp += `🎯 *Tándem Más Letal:* ${b.deadlyTandem.name} (${b.deadlyTandem.detail})\n`;
+            wp += `🚀 *Efecto Diésel:* ${b.dieselEffect.name} (${b.dieselEffect.detail})\n`;
+            wp += `💣 *Máximo Cañonero:* ${b.topScorer.name} (${b.topScorer.detail})\n`;
+            wp += `📈 *Impacto ELO:* ${b.eloImpact.name} (${b.eloImpact.detail})\n\n`;
 
-            wp += `â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n`;
-            wp += `ðŸ¤ *EspÃ­ritu SomosPadel:* Â¡Gracias a todos los jugadores por su entrega, deportividad y pasiÃ³n en cada punto! Los marcadores ya computan para el *Nivel Oficial SomosPadel BCN*.\n\n`;
-            wp += `ðŸ“² *Consulta clasificaciones completas y fotos en:* https://somospadelbcn.com`;
+            wp += `━━━━━━━━━━━━━━━━━━━━\n`;
+            wp += `🤝 *Espíritu SomosPadel:* ¡Gracias a todos los jugadores por su entrega, deportividad y pasión en cada punto! Los marcadores ya computan para el *Nivel Oficial SomosPadel BCN*.\n\n`;
+            wp += `📲 *Consulta clasificaciones completas y fotos en:* https://somospadelbcn.com`;
 
             this.lastChronicleText = wp;
         }
 
         /**
-         * Comparte el informe oficial con formato periodÃ­stico por WhatsApp
+         * Comparte el informe oficial con formato periodístico por WhatsApp
          */
         static shareWhatsApp() {
             const text = this.lastChronicleText;
             if (!text) {
-                alert('AÃºn no hay datos de partidos confirmados para compartir.');
+                alert('Aún no hay datos de partidos confirmados para compartir.');
                 return;
             }
 
@@ -637,7 +655,7 @@
         }
 
         /**
-         * ClasificaciÃ³n de emergencia si StandingsService no estuviese presente
+         * Clasificación de emergencia si StandingsService no estuviese presente
          */
         static _calculateFallbackRanking(matches) {
             const stats = {};
@@ -679,7 +697,7 @@
         }
 
         /**
-         * CÃ¡lculo riguroso de las 8 Insignias Secretas
+         * Cálculo riguroso de las 8 Insignias Secretas
          */
         static _calculateBadges(matches, ranking) {
             const activeRanking = ranking.filter(p => (p.played || 0) > 0);
@@ -731,7 +749,7 @@
             const avgConceded = ((wall.gamesLost || 0) / (wall.played || 1)).toFixed(1);
             const defenseWall = {
                 name: wall.name,
-                detail: `Solo encajÃ³ ${avgConceded} juegos/partido (${wall.gamesLost || 0} encajados en ${wall.played} partidos)`
+                detail: `Solo encajó ${avgConceded} juegos/partido (${wall.gamesLost || 0} encajados en ${wall.played} partidos)`
             };
 
             // 3. Racha Imbatible (mayor racha consecutiva de victorias)
@@ -766,7 +784,7 @@
                 detail: `${topStreak.max} victorias consecutivas sin conocer la derrota`
             };
 
-            // 4. Partido MÃ¡s Ã‰pico (menor diferencia de juegos y mayor total de juegos)
+            // 4. Partido Más Épico (menor diferencia de juegos y mayor total de juegos)
             let epic = null;
             let bestEpicScore = 999;
             let maxEpicTotal = -1;
@@ -785,18 +803,18 @@
 
             let epicMatch = {
                 title: 'Partido en disputa',
-                detail: 'MÃ¡xima igualdad en todas las pistas'
+                detail: 'Máxima igualdad en todas las pistas'
             };
             if (epic) {
                 const teamA = (Array.isArray(epic.team_a_names) ? epic.team_a_names.join(' & ') : epic.team_a_names) || 'Equipo A';
                 const teamB = (Array.isArray(epic.team_b_names) ? epic.team_b_names.join(' & ') : epic.team_b_names) || 'Equipo B';
                 epicMatch = {
                     title: `${epic.score_a} - ${epic.score_b} (Pista ${epic.court || 1})`,
-                    detail: `${teamA} vs ${teamB} â€¢ Batalla de ${parseInt(epic.score_a || 0) + parseInt(epic.score_b || 0)} juegos totales`
+                    detail: `${teamA} vs ${teamB} • Batalla de ${parseInt(epic.score_a || 0) + parseInt(epic.score_b || 0)} juegos totales`
                 };
             }
 
-            // 5. TÃ¡ndem / Pareja MÃ¡s Letal (mayor diferencial positivo conjunto)
+            // 5. Tándem / Pareja Más Letal (mayor diferencial positivo conjunto)
             let bestTandem = { name: 'Por definir', diff: -99, score: '0-0', round: 1 };
             matches.forEach(m => {
                 const scA = parseInt(m.score_a || 0);
@@ -822,7 +840,7 @@
                     : `+${bestTandem.diff} juegos de diferencia (${bestTandem.score} en Ronda ${bestTandem.round})`
             };
 
-            // 6. Efecto DiÃ©sel / Remontada (mayor progresiÃ³n 2Âª mitad vs 1Âª mitad)
+            // 6. Efecto Diésel / Remontada (mayor progresión 2ª mitad vs 1ª mitad)
             const maxRound = Math.max(...matches.map(m => parseInt(m.round || 1)), 1);
             const midRound = Math.ceil(maxRound / 2);
             const playerHalfPoints = {};
@@ -861,10 +879,10 @@
 
             const dieselEffect = {
                 name: bestDiesel.name,
-                detail: `+${bestDiesel.diff > 0 ? bestDiesel.diff.toFixed(1) : '1.5'} juegos de progresiÃ³n en la segunda mitad del torneo`
+                detail: `+${bestDiesel.diff > 0 ? bestDiesel.diff.toFixed(1) : '1.5'} juegos de progresión en la segunda mitad del torneo`
             };
 
-            // 7. MÃ¡ximo CaÃ±onero (mayor promedio y total anotado)
+            // 7. Máximo Cañonero (mayor promedio y total anotado)
             const sortedByPoints = [...activeRanking].sort((a, b) => b.points - a.points);
             const scorer = sortedByPoints[0] || { name: 'Por definir', points: 0, played: 1 };
             const avgScored = ((scorer.points || 0) / (scorer.played || 1)).toFixed(1);
@@ -874,10 +892,10 @@
             };
 
             // 8. Impacto ELO / Nivel Oficial
-            const bestPerformer = ranking[0] || { name: 'LÃ­der del Torneo' };
+            const bestPerformer = ranking[0] || { name: 'Líder del Torneo' };
             const eloImpact = {
                 name: `${bestPerformer.name} (+24 pts ELO)`,
-                detail: `Rendimiento de Nivel Oficial Ã‰lite (+18 pts promedio en el Top Tier)`
+                detail: `Rendimiento de Nivel Oficial Élite (+18 pts promedio en el Top Tier)`
             };
 
             return {
@@ -936,7 +954,7 @@
         }
 
         /**
-         * SelecciÃ³n de jugador interactivo en el grÃ¡fico de evoluciÃ³n
+         * Selección de jugador interactivo en el gráfico de evolución
          * @param {number|string} playerIndex 0..3 para Top 4, o -1/'all' para ver todos
          */
         static selectEvolutionPlayer(playerIndex) {
@@ -945,7 +963,7 @@
         }
 
         /**
-         * Alterna el modo de visualizaciÃ³n: 'accumulated' vs 'round'
+         * Alterna el modo de visualización: 'accumulated' vs 'round'
          */
         static toggleEvolutionMode(mode) {
             if (mode === 'accumulated' || mode === 'round') {
@@ -957,7 +975,7 @@
         }
 
         /**
-         * Muestra tooltip interactivo y actualiza el banner tÃ¡ctil
+         * Muestra tooltip interactivo y actualiza el banner táctil
          */
         static showEvolutionTooltip(dotEl, text, isClick = false) {
             const livePill = document.getElementById('sp-evolution-live-pill');
@@ -989,7 +1007,7 @@
         }
 
         /**
-         * Alterna la categorÃ­a de competitividad seleccionada ('tight' | 'medium' | 'blowout')
+         * Alterna la categoría de competitividad seleccionada ('tight' | 'medium' | 'blowout')
          */
         static toggleCompetitivenessCategory(cat) {
             if (this.activeCompetitivenessCategory === cat) {
@@ -1001,7 +1019,7 @@
         }
 
         /**
-         * Actualiza en caliente el DOM del grÃ¡fico de evoluciÃ³n
+         * Actualiza en caliente el DOM del gráfico de evolución
          */
         static _updateEvolutionDOM() {
             const container = document.getElementById('sp-evolution-chart-container');
@@ -1021,7 +1039,7 @@
         }
 
         /**
-         * 1. GrÃ¡fico SVG de EvoluciÃ³n Ronda a Ronda (Top 4) - 100% Interactivo y Legible
+         * 1. Gráfico SVG de Evolución Ronda a Ronda (Top 4) - 100% Interactivo y Legible
          */
         static _renderEvolutionChartSVG(matches, ranking) {
             matches = matches || this.lastMatches || [];
@@ -1032,7 +1050,7 @@
                 return `
                     <div style="text-align: center; padding: 25px 15px; color: #94a3b8; font-size: 0.78rem;">
                         <i class="fas fa-chart-line" style="font-size: 1.5rem; color: #64748b; margin-bottom: 8px; display: block;"></i>
-                        No hay suficientes partidos o clasificaciÃ³n disponible para trazar la evoluciÃ³n.
+                        No hay suficientes partidos o clasificación disponible para trazar la evolución.
                     </div>
                 `;
             }
@@ -1198,7 +1216,7 @@
 
                 pointsCoords.forEach(p => {
                     const rNum = rounds[p.rIdx];
-                    const tooltipText = `${s.name} â€¢ Ronda ${rNum}: +${p.roundData.ptsInRound} pts en este partido (Total acumulado: ${p.roundData.cumulative} pts)`;
+                    const tooltipText = `${s.name} • Ronda ${rNum}: +${p.roundData.ptsInRound} pts en este partido (Total acumulado: ${p.roundData.cumulative} pts)`;
                     const escapedTooltip = ControlTowerSummary._escapeAttr(tooltipText);
 
                     const dotRadius = isSelected ? (isAllSelected ? 6 : 7) : 4;
@@ -1206,7 +1224,7 @@
                     const dotStroke = '#0b1120';
                     const dotStrokeW = isSelected ? 2.5 : 1.5;
 
-                    // Etiqueta numÃ©rica sobre el punto para no tener que adivinar con el eje Y
+                    // Etiqueta numérica sobre el punto para no tener que adivinar con el eje Y
                     let numericLabel = '';
                     if (isSelected) {
                         const labelY = (p.cy - 12 < 14) ? p.cy + 18 : p.cy - 12;
@@ -1225,7 +1243,7 @@
                                     onmouseenter="window.ControlTowerSummary.showEvolutionTooltip(this, this.getAttribute('data-tooltip'))"
                                     onmouseleave="window.ControlTowerSummary.hideEvolutionTooltip()"
                                     onclick="window.ControlTowerSummary.showEvolutionTooltip(this, this.getAttribute('data-tooltip'), true)"/>
-                            <!-- Ãrea tÃ¡ctil amplia para dispositivos mÃ³viles -->
+                            <!-- Área táctil amplia para dispositivos móviles -->
                             <circle cx="${p.cx.toFixed(1)}" cy="${p.cy.toFixed(1)}" r="18" fill="transparent" style="cursor: pointer;"
                                     data-tooltip="${escapedTooltip}"
                                     onmouseenter="window.ControlTowerSummary.showEvolutionTooltip(this, this.getAttribute('data-tooltip'))"
@@ -1237,7 +1255,7 @@
                 });
             });
 
-            // SVG Defs para Glow NeÃ³n
+            // SVG Defs para Glow Neón
             const defsGlow = `
                 <defs>
                     ${playerSeries.map((s, idx) => `
@@ -1274,13 +1292,13 @@
                             </button>
                         `;
                     }).join('')}
-                    <!-- BotÃ³n Todos -->
+                    <!-- Botón Todos -->
                     <button type="button" onclick="window.ControlTowerSummary.selectEvolutionPlayer(-1)"
                             style="flex: 1 1 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 14px; border-radius: 14px; cursor: pointer; transition: all 0.2s ease;
                             ${isAllSelected 
                                 ? `border: 2px solid #ffffff; background: rgba(255, 255, 255, 0.12); box-shadow: 0 0 16px rgba(255,255,255,0.3); transform: translateY(-1px);` 
                                 : `border: 1px solid rgba(255, 255, 255, 0.08); background: rgba(15, 23, 42, 0.5); opacity: 0.72;`}">
-                        <span style="font-size: 0.85rem;">ðŸ‘¥</span>
+                        <span style="font-size: 0.85rem;">👥</span>
                         <span style="font-size: 0.76rem; font-weight: 900; color: #ffffff;">Comparar Todos (Top 4)</span>
                     </button>
                 </div>
@@ -1291,7 +1309,7 @@
                 <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
                     <div>
                         <div style="font-size: 0.85rem; font-weight: 1000; color: #ffffff; letter-spacing: 0.3px;">
-                            ðŸ“Š EVOLUCIÃ“N DE PUNTOS RONDA A RONDA (TOP 4)
+                            📊 EVOLUCIÓN DE PUNTOS RONDA A RONDA (TOP 4)
                         </div>
                         <div style="font-size: 0.68rem; color: #94a3b8;">
                             Haz tap en cualquier jugador para resaltar su trayectoria y ver su desglose
@@ -1304,14 +1322,14 @@
                                 ${currentMode === 'accumulated' 
                                     ? 'background: #0284c7; color: #ffffff; box-shadow: 0 2px 10px rgba(2,132,199,0.5);' 
                                     : 'background: transparent; color: #94a3b8;'}">
-                            ðŸ“ˆ Puntos Acumulados
+                            📈 Puntos Acumulados
                         </button>
                         <button type="button" onclick="window.ControlTowerSummary.toggleEvolutionMode('round')"
                                 style="border: none; border-radius: 9px; padding: 6px 12px; font-size: 0.7rem; font-weight: 950; cursor: pointer; transition: all 0.2s;
                                 ${currentMode === 'round' 
                                     ? 'background: #0284c7; color: #ffffff; box-shadow: 0 2px 10px rgba(2,132,199,0.5);' 
                                     : 'background: transparent; color: #94a3b8;'}">
-                            ðŸ“Š Juegos por Ronda
+                            📊 Juegos por Ronda
                         </button>
                     </div>
                 </div>
@@ -1320,7 +1338,7 @@
             // Banner interactivo para touch
             const liveBannerHTML = `
                 <div id="sp-evolution-live-pill" style="min-height: 32px; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.6); border: 1px dashed rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 5px 12px; margin-bottom: 12px; font-size: 0.72rem; color: #94a3b8; transition: all 0.25s;">
-                    <span>ðŸ’¡ Toca o pasa el cursor sobre cualquier punto del grÃ¡fico para ver detalles de la ronda</span>
+                    <span>💡 Toca o pasa el cursor sobre cualquier punto del gráfico para ver detalles de la ronda</span>
                 </div>
             `;
 
@@ -1338,7 +1356,7 @@
                                 </span>
                                 <div>
                                     <div style="font-size: 0.9rem; font-weight: 1000; color: #ffffff;">Desglose Ronda a Ronda de ${sel.name}</div>
-                                    <div style="font-size: 0.68rem; color: #94a3b8;">${sel.totalPoints} pts totales â€¢ ${sel.won}/${sel.played} partidos ganados (${winPct}%)</div>
+                                    <div style="font-size: 0.68rem; color: #94a3b8;">${sel.totalPoints} pts totales • ${sel.won}/${sel.played} partidos ganados (${winPct}%)</div>
                                 </div>
                             </div>
                             <span style="background: rgba(0,0,0,0.4); border: 1px solid ${sel.color}; color: ${sel.color}; font-size: 0.72rem; font-weight: 950; padding: 4px 10px; border-radius: 10px;">
@@ -1359,7 +1377,7 @@
 
                                 const tagColor = d.isWin ? '#22c55e' : (d.isTie ? '#38bdf8' : '#f59e0b');
                                 const tagBg = d.isWin ? 'rgba(34, 197, 94, 0.14)' : (d.isTie ? 'rgba(56, 189, 248, 0.14)' : 'rgba(245, 158, 11, 0.14)');
-                                const tagText = d.isWin ? 'Â¡VICTORIA! ðŸ†' : (d.isTie ? 'EMPATE âš–ï¸' : 'DISPUTADO âš”ï¸');
+                                const tagText = d.isWin ? '¡VICTORIA! 🏆' : (d.isTie ? 'EMPATE ⚖️' : 'DISPUTADO ⚔️');
 
                                 return `
                                     <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 10px 14px; display: flex; flex-direction: column; gap: 6px;">
@@ -1381,7 +1399,7 @@
                                         </div>
                                         <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.68rem; color: #94a3b8; flex-wrap: wrap; gap: 4px; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 4px;">
                                             <span>
-                                                ${d.partner ? `ðŸŽ¾ Pareja: <strong style="color: #cbd5e1;">${d.partner}</strong> â€¢ ` : ''}Rivales: <strong style="color: #cbd5e1;">${d.oppString}</strong>
+                                                ${d.partner ? `🎾 Pareja: <strong style="color: #cbd5e1;">${d.partner}</strong> • ` : ''}Rivales: <strong style="color: #cbd5e1;">${d.oppString}</strong>
                                             </span>
                                             <span style="color: #cbd5e1; font-weight: 800;">
                                                 Acumulado: <strong style="color: ${sel.color};">${d.cumulative} pts</strong>
@@ -1398,7 +1416,7 @@
                 breakdownHTML = `
                     <div style="margin-top: 16px; background: rgba(15, 23, 42, 0.85); border: 1.5px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 16px;">
                         <div style="font-size: 0.85rem; font-weight: 1000; color: #ffffff; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                            <span>ðŸ‘¥</span> Resumen Comparativo Top 4 (Ronda a Ronda)
+                            <span>👥</span> Resumen Comparativo Top 4 (Ronda a Ronda)
                         </div>
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); gap: 10px;">
                             ${playerSeries.map((s, idx) => {
@@ -1407,7 +1425,7 @@
                                 return `
                                     <div style="background: rgba(255,255,255,0.03); border: 1px solid ${s.color}44; border-radius: 12px; padding: 10px; text-align: center;">
                                         <span style="width: 24px; height: 24px; border-radius: 50%; background: ${s.color}; color: #0b1120; font-weight: 950; font-size: 0.65rem; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 4px;">
-                                            ${idx + 1}Âº
+                                            ${idx + 1}º
                                         </span>
                                         <div style="font-size: 0.75rem; font-weight: 900; color: #ffffff; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                             ${s.name}
@@ -1448,7 +1466,7 @@
         }
 
         /**
-         * 2. GrÃ¡fico Donut de Competitividad - 100% Interactivo, PrÃ¡ctico y Visual
+         * 2. Gráfico Donut de Competitividad - 100% Interactivo, Práctico y Visual
          */
         static _renderCompetitivenessDonutSVG(matches) {
             matches = matches || this.lastMatches || [];
@@ -1460,14 +1478,14 @@
                 return `
                     <div style="text-align: center; padding: 25px 15px; color: #94a3b8; font-size: 0.78rem;">
                         <i class="fas fa-chart-pie" style="font-size: 1.5rem; color: #64748b; margin-bottom: 8px; display: block;"></i>
-                        AÃºn no hay marcadores finalizados para calcular la competitividad.
+                        Aún no hay marcadores finalizados para calcular la competitividad.
                     </div>
                 `;
             }
 
             const tightMatches = []; // diff <= 2 (Partidos de Infarto)
             const mediumMatches = []; // diff 3-4 (Partidos Disputados)
-            const blowoutMatches = []; // diff >= 5 (Victorias CÃ³modas / Claros)
+            const blowoutMatches = []; // diff >= 5 (Victorias Cómodas / Claros)
 
             finishedMatches.forEach(m => {
                 const sA = parseInt(m.score_a || 0);
@@ -1507,7 +1525,7 @@
 
             const activeCat = this.activeCompetitivenessCategory; // null | 'tight' | 'medium' | 'blowout'
 
-            // Donut center label dinÃ¡mico
+            // Donut center label dinámico
             let centerCount = total;
             let centerLabel = 'PARTIDOS';
             let centerColor = '#ffffff';
@@ -1522,47 +1540,47 @@
                 centerColor = '#0ea5e9';
             } else if (activeCat === 'blowout') {
                 centerCount = blowoutMatches.length;
-                centerLabel = 'CÃ“MODOS';
+                centerLabel = 'CÓMODOS';
                 centerColor = '#10b981';
             }
 
             const categories = [
                 {
                     key: 'tight',
-                    icon: 'âš¡',
-                    title: 'Partidos de Infarto (â‰¤2 dif)',
+                    icon: '⚡',
+                    title: 'Partidos de Infarto (≤2 dif)',
                     badge: 'INFARTO',
-                    desc: 'Marcadores al lÃ­mite: 6-5, 7-6, 6-4... Puntos de oro agÃ³nicos',
+                    desc: 'Marcadores al límite: 6-5, 7-6, 6-4... Puntos de oro agónicos',
                     color: '#ef4444',
                     matches: tightMatches,
                     pct: pTight,
-                    tensionBadge: 'Â¡FINAL DE INFARTO! âš¡',
+                    tensionBadge: '¡FINAL DE INFARTO! ⚡',
                     tensionColor: '#ef4444',
                     tensionBg: 'rgba(239, 68, 68, 0.2)'
                 },
                 {
                     key: 'medium',
-                    icon: 'âš”ï¸',
+                    icon: '⚔️',
                     title: 'Partidos Disputados (3-4 dif)',
                     badge: 'DISPUTADOS',
-                    desc: 'Peleados y con buen intercambio tÃ¡ctico: 6-3, 6-2...',
+                    desc: 'Peleados y con buen intercambio táctico: 6-3, 6-2...',
                     color: '#0ea5e9',
                     matches: mediumMatches,
                     pct: pMedium,
-                    tensionBadge: 'Â¡PARTIDO DISPUTADO! âš”ï¸',
+                    tensionBadge: '¡PARTIDO DISPUTADO! ⚔️',
                     tensionColor: '#0ea5e9',
                     tensionBg: 'rgba(14, 165, 233, 0.2)'
                 },
                 {
                     key: 'blowout',
-                    icon: 'ðŸŽ¯',
-                    title: 'Victorias CÃ³modas / Claros (â‰¥5 dif)',
-                    badge: 'CÃ“MODOS',
+                    icon: '🎯',
+                    title: 'Victorias Cómodas / Claros (≥5 dif)',
+                    badge: 'CÓMODOS',
                     desc: 'Dominio contundente de pista: 6-1, 6-0...',
                     color: '#10b981',
                     matches: blowoutMatches,
                     pct: pBlowout,
-                    tensionBadge: 'Â¡VICTORIA CLARA! ðŸŽ¯',
+                    tensionBadge: '¡VICTORIA CLARA! 🎯',
                     tensionColor: '#10b981',
                     tensionBg: 'rgba(16, 185, 129, 0.2)'
                 }
@@ -1575,10 +1593,10 @@
                     <!-- Header -->
                     <div style="margin-bottom: 14px;">
                         <div style="font-size: 0.85rem; font-weight: 1000; color: #ffffff; letter-spacing: 0.3px;">
-                            âš–ï¸ TERMÃ“METRO DONUT DE COMPETITIVIDAD
+                            ⚖️ TERMÓMETRO DONUT DE COMPETITIVIDAD
                         </div>
                         <div style="font-size: 0.68rem; color: #94a3b8;">
-                            TensiÃ³n real de los partidos â€¢ Pulsa en el Donut o en las tarjetas para desplegar los partidos
+                            Tensión real de los partidos • Pulsa en el Donut o en las tarjetas para desplegar los partidos
                         </div>
                     </div>
 
@@ -1634,7 +1652,7 @@
                             </div>
                         </div>
 
-                        <!-- 3 Tarjetas TÃ¡ctiles Interactivas -->
+                        <!-- 3 Tarjetas Táctiles Interactivas -->
                         <div style="display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 220px;">
                             ${categories.map(cat => {
                                 const isOpen = activeCat === cat.key;
@@ -1660,10 +1678,10 @@
                                         <div style="height: 6px; border-radius: 4px; background: rgba(255, 255, 255, 0.08); overflow: hidden; margin-bottom: 6px;">
                                             <div style="height: 100%; width: ${cat.pct}%; background: ${cat.color}; border-radius: 4px; box-shadow: 0 0 8px ${cat.color};"></div>
                                         </div>
-                                        <!-- BotÃ³n interactivo: Ver partidos -->
+                                        <!-- Botón interactivo: Ver partidos -->
                                         <div style="display: flex; justify-content: flex-end;">
                                             <span style="font-size: 0.68rem; font-weight: 950; color: ${cat.color}; display: inline-flex; align-items: center; gap: 4px;">
-                                                ${isOpen ? 'Ocultar partidos â–´' : `Ver ${cat.matches.length} partidos â–¾`}
+                                                ${isOpen ? 'Ocultar partidos ▴' : `Ver ${cat.matches.length} partidos ▾`}
                                             </span>
                                         </div>
                                     </div>
@@ -1681,18 +1699,18 @@
                                         ${activeCategoryObj.icon} ${activeCategoryObj.title}
                                     </div>
                                     <div style="font-size: 0.68rem; color: #94a3b8;">
-                                        ${activeCategoryObj.matches.length} partidos disputados en esta categorÃ­a
+                                        ${activeCategoryObj.matches.length} partidos disputados en esta categoría
                                     </div>
                                 </div>
                                 <button type="button" onclick="window.ControlTowerSummary.toggleCompetitivenessCategory('${activeCategoryObj.key}')"
                                         style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #ffffff; padding: 4px 10px; border-radius: 8px; font-size: 0.68rem; font-weight: 900; cursor: pointer;">
-                                    Cerrar âœ•
+                                    Cerrar ✕
                                 </button>
                             </div>
 
                             ${activeCategoryObj.matches.length === 0 ? `
                                 <div style="text-align: center; padding: 20px; color: #94a3b8; font-size: 0.78rem;">
-                                    No se registraron partidos en esta categorÃ­a en esta jornada.
+                                    No se registraron partidos en esta categoría en esta jornada.
                                 </div>
                             ` : `
                                 <div style="display: flex; flex-direction: column; gap: 10px;">
@@ -1704,7 +1722,7 @@
                                                 <!-- Top Row: Court, Round, Tension Badge -->
                                                 <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
                                                     <span style="font-size: 0.72rem; font-weight: 900; color: #94a3b8;">
-                                                        Pista ${m.court} â€¢ Ronda ${m.round}
+                                                        Pista ${m.court} • Ronda ${m.round}
                                                     </span>
                                                     <span style="background: ${activeCategoryObj.tensionBg}; border: 1px solid ${activeCategoryObj.tensionColor}; color: ${activeCategoryObj.tensionColor}; padding: 2px 8px; border-radius: 8px; font-size: 0.65rem; font-weight: 950; letter-spacing: 0.5px; box-shadow: 0 0 8px ${activeCategoryObj.tensionColor}44;">
                                                         ${activeCategoryObj.tensionBadge}
@@ -1739,7 +1757,7 @@
 
                                                 <!-- Bottom Row: Difference & Total games -->
                                                 <div style="text-align: center; font-size: 0.66rem; color: #64748b; border-top: 1px dashed rgba(255,255,255,0.06); padding-top: 5px;">
-                                                    Diferencia de tan solo <strong style="color: ${activeCategoryObj.color}; font-weight: 900;">${m.diff} ${m.diff === 1 ? 'juego' : 'juegos'}</strong> â€¢ Total: ${m.scoreA + m.scoreB} juegos disputados
+                                                    Diferencia de tan solo <strong style="color: ${activeCategoryObj.color}; font-weight: 900;">${m.diff} ${m.diff === 1 ? 'juego' : 'juegos'}</strong> • Total: ${m.scoreA + m.scoreB} juegos disputados
                                                 </div>
                                             </div>
                                         `;
@@ -1753,7 +1771,7 @@
         }
 
         /**
-         * 3. GrÃ¡fico de Barras de Actividad por Pistas
+         * 3. Gráfico de Barras de Actividad por Pistas
          */
         static _renderCourtsActivityBars(matches) {
             const courts = {};
@@ -1777,10 +1795,10 @@
                             <div>
                                 <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; font-weight: 900; margin-bottom: 4px;">
                                     <span style="color: ${isC1 ? '#facc15' : '#e2e8f0'}; display: inline-flex; align-items: center; gap: 5px;">
-                                        ${isC1 ? 'ðŸ‘‘ PISTA 1 (CENTRAL)' : `PISTA ${c.court}`}
+                                        ${isC1 ? '👑 PISTA 1 (CENTRAL)' : `PISTA ${c.court}`}
                                     </span>
                                     <span style="color: #94a3b8;">
-                                        <b style="color: #ffffff;">${c.games}</b> juegos â€¢ ${avg} j/p (${c.matches} partidos)
+                                        <b style="color: #ffffff;">${c.games}</b> juegos • ${avg} j/p (${c.matches} partidos)
                                     </span>
                                 </div>
                                 <div style="width: 100%; height: 10px; background: rgba(255,255,255,0.06); border-radius: 10px; overflow: hidden;">
@@ -1794,12 +1812,12 @@
         }
 
         /**
-         * Abre el modal del Flyer deportivo de Alta DefiniciÃ³n (HTML5 Canvas 1080x1920)
+         * Abre el modal del Flyer deportivo de Alta Definición (HTML5 Canvas 1080x1920)
          */
         static openInstagramFlyerModal() {
             const data = this.lastSummaryData;
             if (!data) {
-                alert('AÃºn no hay datos de partidos confirmados para generar el flyer.');
+                alert('Aún no hay datos de partidos confirmados para generar el flyer.');
                 return;
             }
 
@@ -1820,12 +1838,12 @@
                     <!-- Modal Header -->
                     <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <span style="color: #ccff00; font-size: 1.2rem;">ðŸ“¸</span>
+                            <span style="color: #ccff00; font-size: 1.2rem;">📸</span>
                             <span style="font-weight: 1000; font-size: 0.95rem; letter-spacing: 0.5px;">FLYER OFICIAL INSTAGRAM HD</span>
                         </div>
                         <button type="button" onclick="window.ControlTowerSummary.closeInstagramFlyerModal()"
                                 style="background: rgba(255,255,255,0.1); border: none; color: #cbd5e1; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-weight: 900; font-size: 1rem; display: flex; align-items: center; justify-content: center;">
-                            âœ•
+                            ✕
                         </button>
                     </div>
 
@@ -1881,7 +1899,7 @@
             ctx.fillStyle = bgGrad;
             ctx.fillRect(0, 0, w, h);
 
-            // Resplandores NeÃ³n
+            // Resplandores Neón
             const glow1 = ctx.createRadialGradient(900, 200, 50, 900, 200, 600);
             glow1.addColorStop(0, 'rgba(204, 255, 0, 0.16)');
             glow1.addColorStop(1, 'transparent');
@@ -1894,7 +1912,7 @@
             ctx.fillStyle = glow2;
             ctx.fillRect(0, 0, w, h);
 
-            // Borde NeÃ³n Exterior
+            // Borde Neón Exterior
             ctx.strokeStyle = '#CCFF00';
             ctx.lineWidth = 10;
             this._roundRect(ctx, 35, 35, w - 70, h - 70, 36, false, true);
@@ -1903,18 +1921,18 @@
             ctx.fillStyle = '#CCFF00';
             ctx.font = '900 32px Outfit, sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText('SOMOSPADEL BCN â€¢ PRO TOUR', w / 2, 130);
+            ctx.fillText('SOMOSPADEL BCN • PRO TOUR', w / 2, 130);
 
-            // CategorÃ­a Tag Pill
+            // Categoría Tag Pill
             const categoryText = (data.eventDoc?.category || 'PRO').toUpperCase();
             ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
             this._roundRect(ctx, w / 2 - 130, 165, 260, 48, 24, true, false);
             ctx.fillStyle = '#38bdf8';
             ctx.font = '800 22px Outfit, sans-serif';
-            ctx.fillText(`CATEGORÃA ${categoryText}`, w / 2, 198);
+            ctx.fillText(`CATEGORÍA ${categoryText}`, w / 2, 198);
 
             // Nombre del Torneo / Entreno
-            const eventName = (data.eventDoc?.name || 'TORNEO DE PÃDEL').toUpperCase();
+            const eventName = (data.eventDoc?.name || 'TORNEO DE PÁDEL').toUpperCase();
             ctx.fillStyle = '#ffffff';
             ctx.font = '1000 52px Outfit, sans-serif';
             ctx.fillText(this._truncateText(ctx, eventName, 900), w / 2, 290);
@@ -1924,7 +1942,7 @@
             ctx.font = '700 26px Outfit, sans-serif';
             ctx.fillText(data.eventDoc?.date || 'Fecha Oficial SomosPadel', w / 2, 335);
 
-            // LÃ­nea divisoria NeÃ³n
+            // Línea divisoria Neón
             const lineGrad = ctx.createLinearGradient(150, 0, w - 150, 0);
             lineGrad.addColorStop(0, 'transparent');
             lineGrad.addColorStop(0.5, '#CCFF00');
@@ -1939,9 +1957,9 @@
             // 3. PODIO DE HONOR ESTELAR
             ctx.fillStyle = '#facc15';
             ctx.font = '900 32px Outfit, sans-serif';
-            ctx.fillText('ðŸ† PODIO DE HONOR', w / 2, 435);
+            ctx.fillText('🏆 PODIO DE HONOR', w / 2, 435);
 
-            // 1Âº Puesto Card (Gran Tarjeta Central Dorada)
+            // 1º Puesto Card (Gran Tarjeta Central Dorada)
             const p1 = data.p1;
             const goldGrad = ctx.createLinearGradient(100, 470, w - 100, 680);
             goldGrad.addColorStop(0, 'rgba(250, 204, 21, 0.22)');
@@ -1953,7 +1971,7 @@
 
             ctx.fillStyle = '#facc15';
             ctx.font = '1000 68px Outfit, sans-serif';
-            ctx.fillText('ðŸ¥‡ 1Âº CAMPEÃ“N', w / 2, 550);
+            ctx.fillText('🥇 1º CAMPEÓN', w / 2, 550);
 
             ctx.fillStyle = '#ffffff';
             ctx.font = '1000 48px Outfit, sans-serif';
@@ -1961,13 +1979,13 @@
 
             ctx.fillStyle = '#fef08a';
             ctx.font = '800 30px Outfit, sans-serif';
-            ctx.fillText(`${p1.points || 0} PUNTOS  â€¢  DIF: ${p1.diff >= 0 ? '+' : ''}${p1.diff || 0}`, w / 2, 660);
+            ctx.fillText(`${p1.points || 0} PUNTOS  •  DIF: ${p1.diff >= 0 ? '+' : ''}${p1.diff || 0}`, w / 2, 660);
 
-            // 2Âº y 3er Puesto (Lado a Lado)
+            // 2º y 3er Puesto (Lado a Lado)
             const p2 = data.p2;
             const p3 = data.p3;
 
-            // 2Âº Puesto Plata
+            // 2º Puesto Plata
             ctx.fillStyle = 'rgba(203, 213, 225, 0.12)';
             ctx.strokeStyle = '#cbd5e1';
             ctx.lineWidth = 3;
@@ -1975,7 +1993,7 @@
 
             ctx.fillStyle = '#cbd5e1';
             ctx.font = '900 36px Outfit, sans-serif';
-            ctx.fillText('ðŸ¥ˆ 2Âº PUESTO', 317, 770);
+            ctx.fillText('🥈 2º PUESTO', 317, 770);
             ctx.fillStyle = '#ffffff';
             ctx.font = '1000 32px Outfit, sans-serif';
             ctx.fillText(this._truncateText(ctx, p2.name, 370), 317, 825);
@@ -1991,7 +2009,7 @@
 
             ctx.fillStyle = '#fbbf24';
             ctx.font = '900 36px Outfit, sans-serif';
-            ctx.fillText('ðŸ¥‰ 3Âº PUESTO', 762, 770);
+            ctx.fillText('🥉 3º PUESTO', 762, 770);
             ctx.fillStyle = '#ffffff';
             ctx.font = '1000 32px Outfit, sans-serif';
             ctx.fillText(this._truncateText(ctx, p3.name, 370), 762, 825);
@@ -2002,14 +2020,14 @@
             // 4. Cuadro de Insignias Clave (Grid 2x2)
             ctx.fillStyle = '#CCFF00';
             ctx.font = '900 30px Outfit, sans-serif';
-            ctx.fillText('âš¡ INSIGNIAS & DATOS DESTACADOS', w / 2, 940);
+            ctx.fillText('⚡ INSIGNIAS & DATOS DESTACADOS', w / 2, 940);
 
             const b = data.badges;
             const bCards = [
-                { icon: 'ðŸ‘‘', title: 'REY PISTA 1', name: b.court1King.name, sub: b.court1King.detail, color: '#facc15' },
-                { icon: 'ðŸ›¡ï¸', title: 'MURALLA', name: b.defenseWall.name, sub: b.defenseWall.detail, color: '#38bdf8' },
-                { icon: 'ðŸ”¥', title: 'RACHA IMBATIBLE', name: b.unbeatableStreak.name, sub: b.unbeatableStreak.detail, color: '#ef4444' },
-                { icon: 'âš”ï¸', title: 'PARTIDO Ã‰PICO', name: b.epicMatch.title, sub: b.epicMatch.detail, color: '#c084fc' }
+                { icon: '👑', title: 'REY PISTA 1', name: b.court1King.name, sub: b.court1King.detail, color: '#facc15' },
+                { icon: '🛡️', title: 'MURALLA', name: b.defenseWall.name, sub: b.defenseWall.detail, color: '#38bdf8' },
+                { icon: '🔥', title: 'RACHA IMBATIBLE', name: b.unbeatableStreak.name, sub: b.unbeatableStreak.detail, color: '#ef4444' },
+                { icon: '⚔️', title: 'PARTIDO ÉPICO', name: b.epicMatch.title, sub: b.epicMatch.detail, color: '#c084fc' }
             ];
 
             const startY = 970;
@@ -2041,7 +2059,7 @@
                 ctx.fillText(this._truncateText(ctx, card.sub, bCardW - 50), x + 25, y + 125);
             });
 
-            // 5. Barra de EstadÃ­sticas Globales
+            // 5. Barra de Estadísticas Globales
             const barY = 1350;
             ctx.fillStyle = 'rgba(204, 255, 0, 0.08)';
             ctx.strokeStyle = 'rgba(204, 255, 0, 0.3)';
@@ -2073,7 +2091,7 @@
             ctx.font = '800 20px Outfit, sans-serif';
             ctx.fillText('PROMEDIO J/P', w - 240, barY + 98);
 
-            // 6. Pie de PÃ¡gina / Marca de Agua
+            // 6. Pie de Página / Marca de Agua
             ctx.textAlign = 'center';
             ctx.fillStyle = '#ffffff';
             ctx.font = '900 26px Outfit, sans-serif';
@@ -2081,11 +2099,11 @@
 
             ctx.fillStyle = '#ccff00';
             ctx.font = '800 22px Outfit, sans-serif';
-            ctx.fillText('SOMOSPADELBCN.COM â€¢ @SOMOSPADELBCN', w / 2, 1720);
+            ctx.fillText('SOMOSPADELBCN.COM • @SOMOSPADELBCN', w / 2, 1720);
 
             ctx.fillStyle = 'rgba(255,255,255,0.4)';
             ctx.font = '600 18px Outfit, sans-serif';
-            ctx.fillText('TecnologÃ­a Torre de Control v6.0 â€¢ Todos los derechos reservados', w / 2, 1765);
+            ctx.fillText('Tecnología Torre de Control v6.0 • Todos los derechos reservados', w / 2, 1765);
         }
 
         /**
@@ -2138,7 +2156,7 @@
         }
 
         /**
-         * Compartir historia de Instagram vÃ­a Web Share API
+         * Compartir historia de Instagram vía Web Share API
          */
         static shareFlyerToStory() {
             const canvas = document.getElementById('sp-flyer-canvas');
@@ -2158,14 +2176,14 @@
                         await navigator.share({
                             files: [file],
                             title: 'Flyer SomosPadel BCN',
-                            text: `Â¡Resultados oficiales de ${this.lastEventDoc?.name || 'SomosPadel'}!`
+                            text: `¡Resultados oficiales de ${this.lastEventDoc?.name || 'SomosPadel'}!`
                         });
                     } catch (e) {
                         console.log('Share cancelado o no soportado:', e);
                     }
                 } else {
                     this.downloadFlyer();
-                    alert('Tu navegador no soporta compartir imÃ¡genes directamente. El Flyer HD se ha descargado a tu galerÃ­a para que puedas subirlo a tu historia de Instagram o WhatsApp.');
+                    alert('Tu navegador no soporta compartir imágenes directamente. El Flyer HD se ha descargado a tu galería para que puedas subirlo a tu historia de Instagram o WhatsApp.');
                 }
             }, 'image/png');
         }
@@ -2175,6 +2193,20 @@
          */
         static shareInstagramStory() {
             return this.shareFlyerToStory();
+        }
+
+        /**
+         * Abre la experiencia interactiva de Crónica Épica con IA y Story HD
+         */
+        static openChronicleAI() {
+            if (window.TournamentChronicleModal) {
+                window.TournamentChronicleModal.open(
+                    ControlTowerSummary.lastSummaryData?.eventDoc,
+                    ControlTowerSummary.lastSummaryData?.matches
+                );
+            } else {
+                console.warn('[ControlTowerSummary] TournamentChronicleModal no está cargado aún.');
+            }
         }
 
         /**

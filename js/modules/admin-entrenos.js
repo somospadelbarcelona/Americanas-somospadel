@@ -444,6 +444,15 @@ function renderEntrenoCard(e) {
                         <i class="fas fa-sliders" style="font-size: 0.85rem; color: #fff !important;"></i>
                     </button>
 
+                    ${(e.status === 'finished') ? `
+                    <button class="btn-micro" 
+                            style="background: linear-gradient(135deg, #8B5CF6, #6D28D9) !important; color: #CCFF00 !important; border: 1px solid rgba(204, 255, 0, 0.5); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; box-shadow: 0 0 10px rgba(139, 92, 246, 0.4);" 
+                            onclick="window.launchAIChronicleEntreno('${e.id}')" 
+                            title="Crónica Épica IA & Story 9:16">
+                        <span style="font-size: 0.95rem;">✨</span>
+                    </button>
+                    ` : ''}
+
                     <button class="btn-micro" 
                             style="background: #25D366 !important; color: #fff !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
                             onclick="window.launchWhatsAppShareEntreno('${e.id}')"
@@ -920,6 +929,47 @@ window.launchWhatsAppShareEntreno = async (id) => {
         }
     } catch (err) {
         console.error("❌ Error en launchWhatsAppShareEntreno:", err);
+    }
+};
+
+// Crónica Épica Post-Torneo para Entrenos
+window.launchAIChronicleEntreno = async (id) => {
+    console.log("✨ launchAIChronicleEntreno called for:", id);
+    try {
+        let evt = null;
+        if (window.EventService) {
+            try {
+                evt = await EventService.getById('entreno', id);
+            } catch (e) {
+                console.warn("⚠️ Error fetching entreno:", e);
+            }
+        }
+        if (!evt) {
+            evt = window._currentEntrenosCache?.find(e => e.id === id);
+        }
+
+        // Obtener partidos del entreno
+        let matches = [];
+        if (window.FirebaseDB?.matches) {
+            try {
+                if (typeof window.FirebaseDB.matches.getByAmericanaId === 'function') {
+                    matches = await window.FirebaseDB.matches.getByAmericanaId(id);
+                } else if (typeof window.FirebaseDB.matches.getAll === 'function') {
+                    const allM = await window.FirebaseDB.matches.getAll();
+                    matches = allM.filter(m => m.americanaId === id || m.tournamentId === id);
+                }
+            } catch (mErr) {
+                console.warn("⚠️ Error recuperando partidos del entreno:", mErr);
+            }
+        }
+
+        if (window.TournamentChronicleModal) {
+            window.TournamentChronicleModal.open(evt, matches);
+        } else {
+            alert("El servicio de crónica no está disponible en este momento.");
+        }
+    } catch (err) {
+        console.error("❌ Error en launchAIChronicleEntreno:", err);
     }
 };
 

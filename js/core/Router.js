@@ -35,7 +35,8 @@
                 'my_team': () => this.handleCommunityRoute('my_team'),
                 'records': () => this.handleCommunityRoute('records'),
                 'inscriptions': () => this.handleCommunityRoute('inscriptions'),
-                'inscripciones': () => this.handleCommunityRoute('inscriptions')
+                'inscripciones': () => this.handleCommunityRoute('inscriptions'),
+                'sos': () => this.handleSosRoute()
             };
 
             // Determinar la ruta inicial desde el hash de la URL o parámetros de consulta (Deep Linking)
@@ -246,6 +247,15 @@
                     setTimeout(onDone, 200);
                 });
             }
+        }
+
+        handleSosRoute() {
+            this.navigate('dashboard', false, true);
+            setTimeout(() => {
+                if (window.SosSubstitutesWidget && typeof window.SosSubstitutesWidget.scrollToWidget === 'function') {
+                    window.SosSubstitutesWidget.scrollToWidget();
+                }
+            }, 350);
         }
 
         attachCommunitySubmenu(activeSubTab) {

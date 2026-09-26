@@ -1309,6 +1309,68 @@
                 </div>
             `;
         }
+
+        /**
+         * Otorga XP adicional directamente a un usuario (ej. Bonificación por Rescate SOS)
+         * @param {string|object} userOrId
+         * @param {number} xpAmount
+         * @param {string} reason
+         * @param {object} meta
+         */
+        async awardBonusXp(userOrId, xpAmount = 150, reason = 'Bono Especial', meta = {}) {
+            const uid = (typeof userOrId === 'object' && userOrId !== null) ? (userOrId.uid || userOrId.id) : userOrId;
+            if (!uid || uid === 'guest' || uid === 'anonymous') return null;
+
+            try {
+                const cached = this.loadCachedGamification(uid) || { unlockedBadges: {}, completedMissions: {}, totalXp: 0 };
+                const prevXp = cached.totalXp || 0;
+                const newTotalXp = prevXp + Math.max(0, parseInt(xpAmount, 10) || 0);
+                const levelInfo = this.calculateLevel(newTotalXp);
+
+                const updated = {
+                    ...cached,
+                    totalXp: newTotalXp,
+                    level: levelInfo,
+                    lastBonus: {
+                        amount: xpAmount,
+                        reason,
+                        meta,
+                        timestamp: new Date().toISOString()
+                    }
+                };
+
+                this.saveCachedGamification(uid, updated);
+
+                // Sincronizar con Firestore si está disponible
+                if (typeof window !== 'undefined' && window.db) {
+                    const docRef = window.db
+                        .collection(CONFIG.FIRESTORE_COLLECTION)
+                        .doc(uid)
+                        .collection(CONFIG.FIRESTORE_SUBCOLLECTION)
+                        .doc('summary');
+
+                    await docRef.set({
+                        totalXp: newTotalXp,
+                        levelInfo,
+                        lastBonus: updated.lastBonus,
+                        updatedAt: (window.firebase?.firestore?.FieldValue?.serverTimestamp) ? 
+                            window.firebase.firestore.FieldValue.serverTimestamp() : new Date().toISOString()
+                    }, { merge: true });
+                }
+
+                // Disparar evento
+                if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+                    window.dispatchEvent(new CustomEvent('onXpGained', {
+                        detail: { uid, xp: xpAmount, totalXp: newTotalXp, reason, level: levelInfo }
+                    }));
+                }
+
+                return updated;
+            } catch (err) {
+                console.warn("[AchievementsService] Error otorgando bonus XP:", err);
+                return null;
+            }
+        }
     }
 
     // Instancia única singleton

@@ -45,6 +45,15 @@
         }
     };
 
+    // Global handler for Event Weather & Radar Modal
+    window.openEventWeather = (eventId) => {
+        if (window.EventsController && typeof window.EventsController.openEventWeather === 'function') {
+            window.EventsController.openEventWeather(eventId);
+        } else if (window.EventWeatherModal && typeof window.EventWeatherModal.open === 'function') {
+            window.EventWeatherModal.open(typeof eventId === 'object' ? eventId : { id: eventId });
+        }
+    };
+
     // Global handler for TV Mode
     window.openTVMode = (id, type) => {
         if (window.TVView) {
@@ -3305,6 +3314,7 @@
                                     ` : ''}
 
                                     ${levelFeedbackHtml}
+                                    ${this.renderWeatherRadarTag(evt, false)}
                                     ${isEventPrivate ? `
                                         <span style="background: rgba(239,68,68,0.2); color: #f87171; border: 1px solid rgba(239,68,68,0.4); padding: 1.5px 5px; border-radius: 6px; font-size: 0.52rem; font-weight: 900; flex-shrink: 0;">
                                             <i class="fas fa-lock" style="font-size: 0.5rem;"></i>
@@ -3565,6 +3575,7 @@
                                 `}
                                 ${levelBadgeHtml}
                                 ${levelFeedbackHtml}
+                                ${this.renderWeatherRadarTag(evt, true)}
                                 ${evt.organizer ? `
                                     <span style="background: rgba(204,255,0,0.12); color: #CCFF00; border: 1px solid rgba(204,255,0,0.3); padding: 2.5px 7px; border-radius: 7px; font-size: 0.6rem; font-weight: 850; display: inline-flex; align-items: center; gap: 4px;">
                                         <i class="fas fa-user-tie" style="font-size: 0.55rem;"></i> ${evt.organizer}
@@ -3759,6 +3770,93 @@
                         </div>
                     </div>
                 </div>
+            `;
+        }
+
+        /**
+         * Abre el modal de predicción horaria exacta y radar de lluvia/viento para un evento
+         * @param {string|Object} eventId Id del evento o documento del evento
+         */
+        openEventWeather(eventId) {
+            if (!eventId) return;
+            let evt = (typeof eventId === 'object' && eventId !== null) ? eventId : null;
+            if (!evt) {
+                const all = (typeof this.getAllSortedEvents === 'function')
+                    ? this.getAllSortedEvents()
+                    : [...(this.state.americanas || []), ...(this.state.entrenos || [])];
+                evt = all.find(e => String(e.id) === String(eventId) || String(e._id) === String(eventId)) || { id: eventId };
+            }
+            if (window.EventWeatherModal && typeof window.EventWeatherModal.open === 'function') {
+                window.EventWeatherModal.open(evt);
+            } else {
+                console.warn('[EventsController] window.EventWeatherModal no está disponible');
+            }
+        }
+
+        /**
+         * Renderiza el tag interactivo del Radar Meteorológico para tarjetas de eventos
+         * @param {Object} evt Datos del evento
+         * @param {boolean} isDetailed Si es para la vista expandida/detallada
+         */
+        renderWeatherRadarTag(evt, isDetailed = false) {
+            if (!evt) return '';
+
+            let rainProb = evt.weatherRainProb !== undefined ? evt.weatherRainProb : (evt.maxRainProb || null);
+            let temp = evt.weatherTemp !== undefined ? evt.weatherTemp : (evt.avgTemp || null);
+            let riskLevel = evt.weatherRiskLevel || evt.riskLevel || null;
+
+            // Consultar datos cacheados de WeatherService si existen
+            if (rainProb === null && window.WeatherService) {
+                try {
+                    const loc = window.WeatherService.resolveLocation(evt);
+                    const cacheKey = `sp_weather_forecast_hourly_${loc.lat.toFixed(4)}_${loc.lon.toFixed(4)}`;
+                    const cached = window.WeatherService._getWeatherCache ? window.WeatherService._getWeatherCache(cacheKey) : null;
+                    if (cached && Array.isArray(cached.time)) {
+                        const dateStr = window.WeatherService._normalizeDate(evt.date || evt.normDate);
+                        const startHour = window.WeatherService._extractHour(evt.time, 18);
+                        for (let i = 0; i < cached.time.length; i++) {
+                            if (cached.time[i].startsWith(dateStr)) {
+                                const h = parseInt(cached.time[i].substring(11, 13), 10);
+                                if (h === startHour) {
+                                    temp = cached.temperature_2m ? Math.round(cached.temperature_2m[i]) : 22;
+                                    rainProb = cached.precipitation_probability ? Math.round(cached.precipitation_probability[i]) : 0;
+                                    if (rainProb >= 70) riskLevel = 'high';
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                } catch (e) {
+                    // Ignorar errores en cache check
+                }
+            }
+
+            const displayTemp = (temp !== null && !isNaN(temp)) ? `${temp}ºC` : '22ºC';
+            const isHighRain = (riskLevel === 'high' || (rainProb !== null && rainProb >= 70));
+
+            // Tag con alerta activa de lluvia (>=70% o riesgo alto)
+            if (isHighRain) {
+                const probText = (rainProb !== null && !isNaN(rainProb)) ? `${rainProb}%` : '75%';
+                return `
+                    <span onclick="event.stopPropagation(); window.EventsController.openEventWeather('${evt.id}')" 
+                          title="⚠️ Alta probabilidad de lluvia en tu horario. Toca para ver telemetría y radar"
+                          style="cursor: pointer; background: rgba(239, 68, 68, 0.22); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.45); padding: ${isDetailed ? '2.5px 7px' : '1.5px 6px'}; border-radius: 7px; font-size: ${isDetailed ? '0.6rem' : '0.55rem'}; font-weight: 950; display: inline-flex; align-items: center; gap: 3.5px; animation: pulse 1.5s infinite; flex-shrink: 0; box-shadow: 0 0 10px rgba(239,68,68,0.3); transition: transform 0.15s ease;"
+                          onmouseover="this.style.transform='scale(1.05)';"
+                          onmouseout="this.style.transform='scale(1)';">
+                        <i class="fas fa-cloud-showers-heavy" style="color: #f87171;"></i> ${probText} LLUVIA • RADAR
+                    </span>
+                `;
+            }
+
+            // Tag estándar informativo con temperatura y radar
+            return `
+                <span onclick="event.stopPropagation(); window.EventsController.openEventWeather('${evt.id}')" 
+                      title="Ver predicción horaria exacta, viento y radar en vivo"
+                      style="cursor: pointer; background: rgba(56, 189, 248, 0.14); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.35); padding: ${isDetailed ? '2.5px 7px' : '1.5px 6px'}; border-radius: 7px; font-size: ${isDetailed ? '0.6rem' : '0.55rem'}; font-weight: 900; display: inline-flex; align-items: center; gap: 3.5px; flex-shrink: 0; transition: all 0.15s ease;"
+                      onmouseover="this.style.background='rgba(56, 189, 248, 0.25)'; this.style.borderColor='#38bdf8'; this.style.transform='scale(1.05)';"
+                      onmouseout="this.style.background='rgba(56, 189, 248, 0.14)'; this.style.borderColor='rgba(56, 189, 248, 0.35)'; this.style.transform='scale(1)';">
+                    <i class="fas fa-cloud-sun" style="color: #38bdf8;"></i> ${displayTemp} • RADAR
+                </span>
             `;
         }
 

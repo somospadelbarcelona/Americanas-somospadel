@@ -4610,7 +4610,6 @@
                     console.warn("⚠️ [DashboardView] New event popup error:", e);
                 }
 
-                // HeroCard eliminado
 
                 // 0.2 Render Action Grid — GUARD: solo actualiza si el HTML cambia
                 try {
