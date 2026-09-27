@@ -240,6 +240,26 @@
                 window.open('https://wa.me/34649219350?text=Hola%20SomosPadel%20BCN!%20Tengo%20una%20consulta%20sobre%20las%20americanas%20y%20partidas.', '_blank');
             };
 
+            window.openClubInstagram = () => {
+                window.closeDrawer?.();
+                window.PlayerView?.haptic?.(15);
+                if (window.SocialChannelsService) {
+                    window.SocialChannelsService.openInstagram();
+                } else {
+                    window.open('https://www.instagram.com/somospadelbarcelona_/?hl=es', '_blank');
+                }
+            };
+
+            window.openClubFacebook = () => {
+                window.closeDrawer?.();
+                window.PlayerView?.haptic?.(15);
+                if (window.SocialChannelsService) {
+                    window.SocialChannelsService.openFacebook();
+                } else {
+                    window.open('https://www.facebook.com/?locale=es_ES', '_blank');
+                }
+            };
+
             window.showAmericanasRulesModal = function() {
                 window.closeDrawer?.();
                 window.PlayerView?.haptic?.(20);
@@ -1179,6 +1199,24 @@
                                         <span class="drawer-row-title">WhatsApp Oficial</span>
                                         <i class="fas fa-chevron-right drawer-row-chevron"></i>
                                     </div>
+
+                                    <div class="drawer-nav-row" onclick="window.openClubInstagram()">
+                                        <div class="drawer-row-icon" style="background: rgba(225, 48, 108, 0.18); color: #e1306c; border: 1px solid rgba(225, 48, 108, 0.35);">
+                                            <i class="fab fa-instagram"></i>
+                                        </div>
+                                        <span class="drawer-row-title">Instagram Oficial</span>
+                                        <span class="drawer-row-badge" style="background: rgba(225, 48, 108, 0.2); color: #ff6492; border: 1px solid rgba(225, 48, 108, 0.35);">STORIES</span>
+                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
+                                    </div>
+
+                                    <div class="drawer-nav-row" onclick="window.openClubFacebook()">
+                                        <div class="drawer-row-icon" style="background: rgba(24, 119, 242, 0.18); color: #1877f2; border: 1px solid rgba(24, 119, 242, 0.35);">
+                                            <i class="fab fa-facebook-f"></i>
+                                        </div>
+                                        <span class="drawer-row-title">Facebook del Club</span>
+                                        <span class="drawer-row-badge" style="background: rgba(24, 119, 242, 0.2); color: #60a5fa; border: 1px solid rgba(24, 119, 242, 0.35);">COMUNIDAD</span>
+                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1199,7 +1237,7 @@
                                             <i class="fas fa-id-card"></i>
                                         </div>
                                         <span class="drawer-row-title">Carta de Jugador FUT</span>
-                                        <span class="drawer-row-badge" style="background: rgba(251, 191, 36, 0.2); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.4);">PRO</span>
+                                        <span class="drawer-row-badge" style="background: rgba(225, 48, 108, 0.2); color: #ff6492; border: 1px solid rgba(225, 48, 108, 0.35); font-weight: 900;">STORY 9:16</span>
                                         <i class="fas fa-chevron-right drawer-row-chevron"></i>
                                     </div>
                                 </div>

@@ -129,7 +129,8 @@
                     searchQuery: ''
                 },
                 viewMode: (() => {
-                    try { return localStorage.getItem('sp_events_view_mode') || 'compact'; } catch(e) { return 'compact'; }
+                    try { localStorage.setItem('sp_events_view_mode', 'compact'); } catch(e) {}
+                    return 'compact';
                 })(),
                 expandedCards: new Set(),
                 collapsedCards: new Set(),
@@ -619,7 +620,7 @@
                 const evt = allSorted.find(e => e.id === evtId);
                 if (evt) {
                     const temp = document.createElement('div');
-                    temp.innerHTML = this.renderCard(evt, evt.status === 'finished');
+                    temp.innerHTML = this.renderCard(evt, this.isEventFinished(evt));
                     const newEl = temp.firstElementChild;
                     if (newEl) {
                         cardEl.replaceWith(newEl);
@@ -1145,10 +1146,10 @@
 
             const tabs = isAmericanasSection ? [
                 { id: 'events', label: 'AMERICANAS', icon: 'fa-trophy' },
+                { id: 'finished_americanas', label: 'FINALIZADAS', icon: 'fa-history' },
                 { id: 'agenda_americanas', label: 'AGENDA', icon: 'fa-calendar-check' },
                 { id: 'help_americanas', label: 'INFO', icon: 'fa-info-circle' },
-                { id: 'meteo', label: 'CLIMA & RADAR', icon: 'fa-cloud-sun' },
-                { id: 'finished_americanas', label: 'FINALIZADAS', icon: 'fa-history' }
+                { id: 'meteo', label: 'CLIMA & RADAR', icon: 'fa-cloud-sun' }
             ] : [];
 
             const navHtml = isAmericanasSection ? `
@@ -1308,10 +1309,10 @@
             if (isEntrenosSection) {
                 const entrenosTabs = [
                     { id: 'entrenos', label: 'ENTRENOS', icon: 'fa-table-tennis' },
+                    { id: 'finished', label: 'FINALIZADAS', icon: 'fa-history' },
                     { id: 'agenda', label: 'AGENDA', icon: 'fa-calendar-check' },
                     { id: 'help', label: 'INFO', icon: 'fa-info-circle' },
-                    { id: 'meteo', label: 'CLIMA & RADAR', icon: 'fa-cloud-sun' },
-                    { id: 'finished', label: 'FINALIZADAS', icon: 'fa-history' }
+                    { id: 'meteo', label: 'CLIMA & RADAR', icon: 'fa-cloud-sun' }
                 ];
                 entrenosSubmenuHtml = `
                     <div class="entrenos-subnav-container" style="
@@ -2909,6 +2910,23 @@
                             </div>
                             <div style="height: 4px; flex: 1; background: rgba(255,255,255,0.05); border-radius: 10px;"></div>
                         </div>
+                    <!-- CARD OFICIAL DE FOTOS EN FACEBOOK -->
+                    <div style="background: linear-gradient(135deg, rgba(24,119,242,0.12) 0%, rgba(10,25,47,0.06) 100%); border: 1.5px solid rgba(24,119,242,0.35); border-radius: 20px; padding: 16px 18px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 14px; min-width: 0;">
+                            <div style="width: 44px; height: 44px; border-radius: 12px; background: #1877f2; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.35rem; flex-shrink: 0; box-shadow: 0 4px 14px rgba(24,119,242,0.35);">
+                                <i class="fab fa-facebook-f"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.68rem; font-weight: 900; color: #1877f2; text-transform: uppercase; letter-spacing: 0.5px;">GALERÍA DE LA COMUNIDAD</div>
+                                <div style="font-size: 1rem; font-weight: 950; color: #0a192f; line-height: 1.2;">¿Buscas las fotos de tu americana?</div>
+                                <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Todos los podios y mejores momentos subidos en HD a Facebook.</div>
+                            </div>
+                        </div>
+                        <button type="button" onclick="window.SocialChannelsService ? window.SocialChannelsService.openFacebook() : window.open('https://www.facebook.com/?locale=es_ES','_blank')"
+                                style="background: #1877f2; color: #ffffff; border: none; padding: 10px 18px; border-radius: 12px; font-weight: 950; font-size: 0.78rem; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(24,119,242,0.3);">
+                            <span>VER ÁLBUMES</span>
+                            <i class="fas fa-arrow-right" style="font-size: 0.7rem;"></i>
+                        </button>
                     </div>
 
                     <!-- DARK FILTER BAR -->
@@ -3012,7 +3030,9 @@
             const isLive = evt.status === 'live';
             const isPairing = evt.status === 'pairing';
             const isCancelled = evt.status === 'cancelled';
-            const isEntreno = evt.type === 'entreno';
+            const isEntreno = evt.type === 'entreno' || (evt.name && evt.name.toUpperCase().includes('ENTRENO'));
+            const isFinishedEffective = isFinished || this.isEventFinished(evt) || evt.status === 'finished' || evt.status === 'completed' || evt.status === 'finalizado';
+            isFinished = isFinishedEffective;
 
             // Waitlist Logic
             const waitlist = evt.waitlist || [];
@@ -3113,7 +3133,7 @@
                 cardAction = "window.PremiumModal.alert({ title: '⛔ ANULADO', message: 'Este evento ha sido cancelado.', type: 'error' })";
                 fabAction = cardAction;
             } else if (isFinished || evt.status === 'finished') {
-                btnLabel = 'VER'; btnIcon = 'fa-history'; btnColor = '#64748b';
+                btnLabel = isEntreno ? 'FINALIZADO' : 'FINALIZADA'; btnIcon = 'fa-history'; btnColor = '#475569';
                 cardAction = `window.openResultsView('${evt.id}', '${evt.type || 'americana'}')`;
                 fabAction = cardAction;
             } else if (isLive) {
@@ -3146,7 +3166,7 @@
             }
 
             // Si es privada y no está desbloqueada por el usuario (y no es admin) -> Bloqueo con contraseña
-            if (isEventPrivate && !isEventUnlocked) {
+            if (isEventPrivate && !isEventUnlocked && !isFinished && !isCancelled) {
                 btnLabel = 'CLAVE ACCESO 🔒';
                 btnIcon = 'fa-key';
                 btnColor = '#ef4444';
@@ -3337,8 +3357,8 @@
                                         <i class="fas fa-location-dot" style="color: #38bdf8; font-size: 0.58rem;"></i> ${evt.sede || evt.location || 'SomosPadel'}
                                     </span>
                                     <span style="color: rgba(255,255,255,0.2); flex-shrink: 0;">•</span>
-                                    <span id="event-players-label-${evt.id}" style="color: ${isFull ? '#ef4444' : '#CCFF00'}; font-weight: 900; flex-shrink: 0;">
-                                        ${playerCount}/${maxPlayers} ${isFull ? 'COMPLETO' : 'plz'}
+                                    <span id="event-players-label-${evt.id}" style="color: ${isFinished ? '#94a3b8' : (isFull ? '#ef4444' : '#CCFF00')}; font-weight: 900; flex-shrink: 0;">
+                                        ${playerCount}/${maxPlayers} ${isFinished ? 'plz' : (isFull ? 'COMPLETO' : 'plz')}
                                     </span>
                                     <i id="event-players-icon-${evt.id}" style="display: none;"></i>
                                     <span style="color: rgba(255,255,255,0.2); flex-shrink: 0;">•</span>
@@ -3354,8 +3374,8 @@
                                         onclick="event.stopPropagation(); ${fabAction}" 
                                         aria-label="${btnLabel}"
                                         style="
-                                            background: ${isLive ? '#FF2D55' : (isJoined ? '#00E36D' : (isGenderMismatch ? 'rgba(255, 255, 255, 0.08)' : (isFull ? '#eab308' : '#CCFF00')))} !important;
-                                            color: ${isLive ? '#ffffff' : (isGenderMismatch ? '#94a3b8' : '#000000')} !important;
+                                            background: ${isFinished ? '#334155' : (isLive ? '#FF2D55' : (isJoined ? '#00E36D' : (isGenderMismatch ? 'rgba(255, 255, 255, 0.08)' : (isFull ? '#eab308' : '#CCFF00'))))} !important;
+                                            color: ${isFinished || isLive ? '#ffffff' : (isGenderMismatch ? '#94a3b8' : '#000000')} !important;
                                             border: ${isGenderMismatch ? '1px solid rgba(255, 255, 255, 0.15)' : 'none'} !important;
                                             padding: 8px 11px;
                                             border-radius: 11px;
@@ -3373,8 +3393,8 @@
                                         onmouseover="this.style.transform='scale(1.04)';"
                                         onmouseout="this.style.transform='scale(1)';"
                                 >
-                                    <i id="event-fab-icon-${evt.id}" class="fas ${btnIcon}" style="font-size: 0.65rem; color: ${isLive ? '#ffffff' : (isGenderMismatch ? '#94a3b8' : '#000000')} !important;"></i>
-                                    <span id="event-fab-label-${evt.id}" style="white-space: nowrap; color: ${isLive ? '#ffffff' : (isGenderMismatch ? '#94a3b8' : '#000000')} !important;">${isGenderMismatch && !isJoined ? btnLabel : (btnLabel === 'CLAVE ACCESO 🔒' ? 'CLAVE' : (btnLabel === 'DENTRO' ? 'DENTRO' : (isFull && !isJoined ? 'ESPERA' : 'UNIRME')))}</span>
+                                    <i id="event-fab-icon-${evt.id}" class="fas ${btnIcon}" style="font-size: 0.65rem; color: ${isFinished || isLive ? '#ffffff' : (isGenderMismatch ? '#94a3b8' : '#000000')} !important;"></i>
+                                    <span id="event-fab-label-${evt.id}" style="white-space: nowrap; color: ${isFinished || isLive ? '#ffffff' : (isGenderMismatch ? '#94a3b8' : '#000000')} !important;">${isFinished ? btnLabel : (isCancelled ? 'ANULADO' : (isLive ? 'LIVE' : (isGenderMismatch && !isJoined ? btnLabel : (btnLabel === 'CLAVE ACCESO 🔒' ? 'CLAVE' : (btnLabel === 'DENTRO' ? 'DENTRO' : (isFull && !isJoined ? 'ESPERA' : 'UNIRME'))))))}</span>
                                 </button>
 
                                 <!-- Chevron Button for Expand -->
@@ -3651,14 +3671,14 @@
                                     </div>
                                     <div style="display: flex; align-items: center; gap: 5px; flex-shrink: 0;">
                                         ${urgencyHtml}
-                                        <span id="event-status-capacity-${evt.id}" style="font-size: 0.62rem; font-weight: 950; color: ${isFull ? '#FF3B30' : categoryColor}; text-transform: uppercase; letter-spacing: 0.4px;">${isFull ? 'COMPLETO' : 'DISPONIBLE'}</span>
+                                        <span id="event-status-capacity-${evt.id}" style="font-size: 0.62rem; font-weight: 950; color: ${isFinished ? '#94a3b8' : (isFull ? '#FF3B30' : categoryColor)}; text-transform: uppercase; letter-spacing: 0.4px;">${isFinished ? (isEntreno ? 'FINALIZADO' : 'FINALIZADA') : (isFull ? 'COMPLETO' : 'DISPONIBLE')}</span>
                                     </div>
                                 </div>
                                 <div style="width: 100%; height: 5px; background: rgba(255,255,255,0.06); border-radius: 10px; overflow: hidden;">
                                     <div id="event-progress-bar-${evt.id}" style="width: ${progress}%; height: 100%; background: ${progressColor}; box-shadow: 0 0 10px ${progressColor}55; transition: width 0.3s ease;"></div>
                                 </div>
                                 <div id="event-waitlist-label-${evt.id}">
-                                    ${waitlist.length > 0 ? `<div style="margin-top: 4px; font-size: 0.62rem; font-weight: 900; color: #eab308; text-transform: uppercase;">+${waitlist.length} EN ESPERA</div>` : ''}
+                                    ${(!isFinished && waitlist.length > 0) ? `<div style="margin-top: 4px; font-size: 0.62rem; font-weight: 900; color: #eab308; text-transform: uppercase;">+${waitlist.length} EN ESPERA</div>` : ''}
                                 </div>
                             </div>
 
@@ -7599,7 +7619,7 @@
                 const card = document.getElementById(`event-card-${evt.id}`);
                 if (!card) return;
 
-                const isEntreno = evt.type === 'entreno';
+                const isEntreno = evt.type === 'entreno' || (evt.name && evt.name.toUpperCase().includes('ENTRENO'));
 
                 // 1. Update Player Count & Capacity
                 const players = (evt.players && evt.players.length > 0) ? evt.players : (evt.registeredPlayers || []);
@@ -7619,16 +7639,17 @@
                         if (icon) icon.style.color = isFull ? '#FF3B30' : (isEntreno ? '#06b6d4' : '#FF2D55');
                     }
                 }
+                const isFinished = evt.status === 'finished' || evt.status === 'completed' || evt.status === 'finalizado' || this.isEventFinished(evt);
+
                 const wlLabel = document.getElementById(`event-waitlist-label-${evt.id}`);
                 if (wlLabel) {
-                    const newWl = waitlist.length > 0 ? `<div style="margin-top: 5px; font-size: 0.65rem; font-weight: 900; color: #eab308; text-transform: uppercase;">+${waitlist.length} EN ESPERA</div>` : '';
+                    const newWl = (!isFinished && waitlist.length > 0) ? `<div style="margin-top: 5px; font-size: 0.65rem; font-weight: 900; color: #eab308; text-transform: uppercase;">+${waitlist.length} EN ESPERA</div>` : '';
                     if (wlLabel.innerHTML !== newWl) wlLabel.innerHTML = newWl;
                 }
 
                 // 2. Update FAB & Actions
                 const isJoined = players.some(p => p.uid === uid || p.id === uid);
                 const isLive = evt.status === 'live';
-                const isFinished = evt.status === 'finished';
                 const isCancelled = evt.status === 'cancelled';
                 const isPairing = evt.status === 'pairing';
                 const isWaitlistPending = evt.waitlist_pending_user && (evt.waitlist_pending_user.uid === uid);
@@ -7652,7 +7673,7 @@
                     cardAction = "window.PremiumModal.alert({ title: '⛔ ANULADO', message: 'Este evento ha sido cancelado por la organización.', type: 'error' })";
                     fabAction = cardAction;
                 } else if (isFinished) {
-                    btnLabel = 'VER'; btnIcon = 'fa-history'; btnColor = '#64748b';
+                    btnLabel = isEntreno ? 'FINALIZADO' : 'FINALIZADA'; btnIcon = 'fa-history'; btnColor = '#475569';
                     cardAction = `window.openResultsView('${evt.id}', '${evt.type || 'americana'}')`;
                     fabAction = cardAction;
                 } else if (isLive) {
@@ -7753,7 +7774,7 @@
                     const isMinCard = card.classList.contains('card-view-minimized');
                     let displayLabel = btnLabel;
                     if (isMinCard) {
-                        displayLabel = isGenderMismatch && !isJoined ? btnLabel : (btnLabel === 'CLAVE ACCESO 🔒' ? 'CLAVE' : (btnLabel === 'DENTRO' ? 'DENTRO' : (isFull && !isJoined ? 'ESPERA' : 'UNIRME')));
+                        displayLabel = isFinished ? btnLabel : (isCancelled ? 'ANULADO' : (isLive ? 'LIVE' : (isGenderMismatch && !isJoined ? btnLabel : (btnLabel === 'CLAVE ACCESO 🔒' ? 'CLAVE' : (btnLabel === 'DENTRO' ? 'DENTRO' : (isFull && !isJoined ? 'ESPERA' : 'UNIRME'))))));
                     }
                     if (fabLabel && fabLabel.innerText !== displayLabel) {
                         fabLabel.innerText = displayLabel;

@@ -266,6 +266,11 @@
                                     onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
                                 <i class="fab fa-instagram"></i>
                             </button>
+                            <button type="button" onclick="window.SocialChannelsService ? window.SocialChannelsService.openFacebook() : window.open('https://www.facebook.com/?locale=es_ES','_blank')" title="Ver Álbum de Fotos en Facebook"
+                                    style="background:rgba(24,119,242,.14);border:1px solid rgba(24,119,242,.45);color:#1877f2;width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .15s;font-size:.9rem"
+                                    onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+                                <i class="fab fa-facebook-f"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -488,6 +493,10 @@
                         <button type="button" class="sp-action-btn" onclick="window.ControlTowerSummary.openInstagramFlyerModal()"
                                 style="background:linear-gradient(135deg,#e1306c,#833ab4 50%,#fd1d1d);color:#fff;box-shadow:0 5px 18px rgba(225,48,108,.32)">
                             <i class="fab fa-instagram" style="font-size:1.05rem"></i> FLYER INSTAGRAM HD
+                        </button>
+                        <button type="button" class="sp-action-btn" onclick="window.SocialChannelsService ? window.SocialChannelsService.openFacebook() : window.open('https://www.facebook.com/?locale=es_ES','_blank')"
+                                style="grid-column: 1 / -1; background:linear-gradient(135deg,#1877f2,#0d5cb6);color:#fff;box-shadow:0 5px 18px rgba(24,119,242,.32);display:flex;align-items:center;justify-content:center;gap:8px">
+                            <i class="fab fa-facebook" style="font-size:1.15rem"></i> VER ÁLBUM DE FOTOS EN FACEBOOK
                         </button>
                     </div>
                 </div>
@@ -1869,6 +1878,14 @@
                                 style="flex: 1; min-width: 140px; background: linear-gradient(135deg, #e1306c 0%, #833ab4 50%, #fd1d1d 100%); color: #ffffff; border: none; padding: 12px; border-radius: 14px; font-weight: 950; font-size: 0.75rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 18px rgba(225, 48, 108, 0.4);">
                             <i class="fab fa-instagram"></i>
                             <span>COMPARTIR HISTORIA</span>
+                        </button>
+                    </div>
+
+                    <!-- Mención oficial en redes -->
+                    <div style="width: 100%; margin-top: 10px; background: rgba(225,48,108,0.12); border: 1px dashed rgba(225,48,108,0.4); border-radius: 12px; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                        <span style="font-size: 0.68rem; color: #ff9ebb; font-weight: 700;">Etiqueta a <strong style="color: #fff;">@somospadelbarcelona_</strong> en tu historia</span>
+                        <button type="button" onclick="window.SocialChannelsService ? window.SocialChannelsService.copyTag(this) : null" style="background: rgba(255,255,255,0.15); border: none; color: #fff; padding: 4px 8px; border-radius: 8px; font-size: 0.65rem; font-weight: 900; cursor: pointer;">
+                            <i class="fas fa-copy"></i> Copiar
                         </button>
                     </div>
                 </div>

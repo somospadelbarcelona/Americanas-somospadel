@@ -108,6 +108,33 @@
                                 </div>
                                 <i class="fas fa-arrow-right ch-wa-arrow"></i>
                             </a>
+
+                            <!-- SUB-BARRA SOCIALES OFICIALES (INSTAGRAM & FACEBOOK) -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; width: 100%; max-width: 580px;">
+                                <a href="https://www.instagram.com/somospadelbarcelona_/?hl=es" target="_blank" rel="noopener noreferrer"
+                                   onclick="window.PlayerView?.haptic?.(15);"
+                                   style="display: flex; align-items: center; justify-content: center; gap: 10px; background: rgba(225, 48, 108, 0.16); border: 1.5px solid rgba(225, 48, 108, 0.4); border-radius: 16px; padding: 12px 14px; text-decoration: none; color: #ffffff; transition: all 0.2s; box-shadow: 0 4px 15px rgba(225,48,108,0.2);">
+                                    <div style="width: 32px; height: 32px; border-radius: 10px; background: linear-gradient(45deg, #f09433, #dc2743, #bc1888); display: flex; align-items: center; justify-content: center; font-size: 1.05rem; color: #fff; flex-shrink: 0; box-shadow: 0 2px 8px rgba(220,39,67,0.35);">
+                                        <i class="fab fa-instagram"></i>
+                                    </div>
+                                    <div style="text-align: left; min-width: 0;">
+                                        <div style="font-size: 0.78rem; font-weight: 900; line-height: 1.1;">Instagram</div>
+                                        <div style="font-size: 0.63rem; color: #ff9ebb; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@somospadelbarcelona_</div>
+                                    </div>
+                                </a>
+
+                                <a href="https://www.facebook.com/?locale=es_ES" target="_blank" rel="noopener noreferrer"
+                                   onclick="window.PlayerView?.haptic?.(15);"
+                                   style="display: flex; align-items: center; justify-content: center; gap: 10px; background: rgba(24, 119, 242, 0.16); border: 1.5px solid rgba(24, 119, 242, 0.4); border-radius: 16px; padding: 12px 14px; text-decoration: none; color: #ffffff; transition: all 0.2s; box-shadow: 0 4px 15px rgba(24,119,242,0.2);">
+                                    <div style="width: 32px; height: 32px; border-radius: 10px; background: #1877f2; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; color: #fff; flex-shrink: 0; box-shadow: 0 2px 8px rgba(24,119,242,0.35);">
+                                        <i class="fab fa-facebook-f"></i>
+                                    </div>
+                                    <div style="text-align: left; min-width: 0;">
+                                        <div style="font-size: 0.78rem; font-weight: 900; line-height: 1.1;">Facebook</div>
+                                        <div style="font-size: 0.63rem; color: #93c5fd; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Somos Padel BCN</div>
+                                    </div>
+                                </a>
+                            </div>
                         </div>
                     </header>
 
@@ -329,6 +356,104 @@
                             </div>
                             <div class="ch-contact-visual">
                                 <i class="fas fa-comments"></i>
+                            </div>
+                    <!-- SECCIÓN 6: COMUNIDAD EN REDES (INSTAGRAM & FACEBOOK) -->
+                    <section class="ch-social-showcase-section" style="margin-top: 36px; margin-bottom: 20px;">
+                        <div class="ch-section-header">
+                            <div>
+                                <h2 class="ch-section-title">
+                                    <i class="fab fa-instagram" style="color: #e1306c; margin-right: 8px;"></i>
+                                    SOMOSPADEL EN REDES SOCIALES
+                                </h2>
+                                <p class="ch-section-subtitle">Fotos de las americanas, podios semanales, vídeos y el auténtico tercer tiempo</p>
+                            </div>
+                        </div>
+
+                        <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 24px; padding: 22px; color: #ffffff; border: 1.5px solid rgba(204,255,0,0.3); box-shadow: 0 10px 30px rgba(0,0,0,0.15); position: relative; overflow: hidden;">
+                            <div style="position: absolute; top: -30px; right: -30px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(225,48,108,0.25) 0%, transparent 70%); pointer-events: none;"></div>
+
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
+                                <div>
+                                    <span style="background: rgba(204, 255, 0, 0.15); color: #CCFF00; border: 1px solid rgba(204, 255, 0, 0.4); padding: 3px 10px; border-radius: 12px; font-size: 0.68rem; font-weight: 900; letter-spacing: 0.5px;">
+                                        📸 SÉ PROTAGONISTA
+                                    </span>
+                                    <h3 style="margin: 8px 0 4px; font-size: 1.2rem; font-weight: 950; color: #ffffff;">
+                                        ¡Etiquétanos y sal en la app!
+                                    </h3>
+                                    <p style="margin: 0; font-size: 0.8rem; color: #94a3b8; line-height: 1.4;">
+                                        Sube tus fotos y vídeos mencionando a <strong style="color: #CCFF00;">@somospadelbarcelona_</strong> con el hashtag <strong style="color: #38bdf8;">#SomosPadelBCN</strong>.
+                                    </p>
+                                </div>
+                                <button type="button" onclick="window.SocialChannelsService?.copyTag(this)" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #ffffff; padding: 8px 14px; border-radius: 12px; font-size: 0.74rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                                    <i class="fas fa-copy"></i> Copiar @somospadelbarcelona_
+                                </button>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;">
+                                <!-- Instagram Box -->
+                                <div onclick="window.openClubInstagram ? window.openClubInstagram() : window.open('https://www.instagram.com/somospadelbarcelona_/?hl=es', '_blank')"
+                                     style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(225, 48, 108, 0.4); border-radius: 18px; padding: 16px; cursor: pointer; transition: transform 0.2s;"
+                                     onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                                        <div style="width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(45deg, #f09433, #dc2743, #bc1888); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: #fff; box-shadow: 0 4px 12px rgba(220,39,67,0.35);">
+                                            <i class="fab fa-instagram"></i>
+                                        </div>
+                                        <div>
+                                            <div style="font-weight: 900; font-size: 0.95rem; color: #fff;">Instagram Oficial</div>
+                                            <div style="font-size: 0.72rem; color: #ff6492; font-weight: 700;">@somospadelbarcelona_</div>
+                                        </div>
+                                    </div>
+                                    <p style="font-size: 0.74rem; color: #cbd5e1; margin: 0 0 10px; line-height: 1.35;">
+                                        Fotos oficiales de tus partidos, los mejores puntazos en Reels y todos los podios de cada fin de semana.
+                                    </p>
+                                    <div style="color: #CCFF00; font-weight: 900; font-size: 0.76rem; display: flex; align-items: center; gap: 6px;">
+                                        <span>Seguir en Instagram</span>
+                                        <i class="fas fa-arrow-right" style="font-size: 0.65rem;"></i>
+                                    </div>
+                                </div>
+
+                                <!-- Facebook Box -->
+                                <div onclick="window.openClubFacebook ? window.openClubFacebook() : window.open('https://www.facebook.com/?locale=es_ES', '_blank')"
+                                     style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(24, 119, 242, 0.4); border-radius: 18px; padding: 16px; cursor: pointer; transition: transform 0.2s;"
+                                     onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                                        <div style="width: 42px; height: 42px; border-radius: 12px; background: #1877f2; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: #fff; box-shadow: 0 4px 12px rgba(24,119,242,0.35);">
+                                            <i class="fab fa-facebook-f"></i>
+                                        </div>
+                                        <div>
+                                            <div style="font-weight: 900; font-size: 0.95rem; color: #fff;">Facebook Oficial</div>
+                                            <div style="font-size: 0.72rem; color: #60a5fa; font-weight: 700;">Somos Padel Barcelona</div>
+                                        </div>
+                                    </div>
+                                    <p style="font-size: 0.74rem; color: #cbd5e1; margin: 0 0 10px; line-height: 1.35;">
+                                        Álbumes completos de torneos en alta definición, eventos del club y toda la actualidad de la comunidad.
+                                    </p>
+                                    <div style="color: #60a5fa; font-weight: 900; font-size: 0.76rem; display: flex; align-items: center; gap: 6px;">
+                                        <span>Visitar Facebook</span>
+                                        <i class="fas fa-arrow-right" style="font-size: 0.65rem;"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- BANNER CONCURSO MENSUAL: FOTO & PUNTAZO DEL MES -->
+                            <div style="margin-top: 14px; background: linear-gradient(135deg, rgba(234, 179, 8, 0.15) 0%, rgba(225, 48, 108, 0.15) 100%); border: 1.5px dashed rgba(234, 179, 8, 0.45); border-radius: 18px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
+                                <div style="display: flex; align-items: center; gap: 14px; min-width: 240px; flex: 1;">
+                                    <div style="font-size: 2rem; line-height: 1; filter: drop-shadow(0 2px 6px rgba(234,179,8,0.4));">🏆</div>
+                                    <div>
+                                        <div style="color: #facc15; font-size: 0.72rem; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase;">
+                                            Concurso Mensual de la Comunidad
+                                        </div>
+                                        <div style="color: #ffffff; font-size: 1rem; font-weight: 950; margin: 2px 0;">
+                                            👕 El Puntazo y La Foto del Mes
+                                        </div>
+                                        <div style="color: #cbd5e1; font-size: 0.75rem; line-height: 1.35;">
+                                            Gana una <strong>Americana gratis</strong> participando en Instagram con <strong style="color: #38bdf8;">#SomosPadelBCN</strong>.
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" onclick="window.openSocialContestModal ? window.openSocialContestModal() : null" style="background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); color: #0f172a; border: none; padding: 10px 18px; border-radius: 12px; font-weight: 950; font-size: 0.78rem; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(234, 179, 8, 0.35); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+                                    <i class="fas fa-trophy"></i> Ver Bases & Participar
+                                </button>
                             </div>
                         </div>
                     </section>

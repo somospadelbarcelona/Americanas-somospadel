@@ -181,10 +181,12 @@
 
         /**
          * Devuelve las alertas SOS activas y no expiradas, ordenadas por urgencia
-         * (las más próximas primero). Incluye seeds defensivos si está vacío.
+         * (las más próximas primero).
+         * @param {Object} [options] Opciones de consulta: { realOnly: boolean, allowMockSeeds: boolean }
          * @returns {Promise<Array<Object>>} Lista de alertas activas
          */
-        async getActiveSosAlerts() {
+        async getActiveSosAlerts(options = {}) {
+            const allowMockSeeds = (options.realOnly === true || options.allowMockSeeds === false) ? false : true;
             try {
                 let alerts = [];
                 const db = this._getDb();
@@ -223,8 +225,8 @@
                     return isStillValid;
                 });
 
-                // 4. Mock / Seed defensivo: si no hay alertas activas, proveer alertas de demostración para hoy
-                if (alerts.length === 0) {
+                // 4. Mock / Seed defensivo: solo si allowMockSeeds es true
+                if (alerts.length === 0 && allowMockSeeds) {
                     console.log('ℹ️ [SosSubstitutesService] No hay alertas activas en base de datos. Activando Mock Seed dinámico para hoy...');
                     const seedAlerts = this._getDynamicSeedAlerts();
                     alerts = seedAlerts;
@@ -242,7 +244,7 @@
                 return alerts;
             } catch (error) {
                 console.error('❌ [SosSubstitutesService] Error al obtener alertas activas:', error);
-                return this._getDynamicSeedAlerts();
+                return allowMockSeeds ? this._getDynamicSeedAlerts() : [];
             }
         }
 
@@ -512,9 +514,11 @@
          * Obtiene la lista de suplentes de guardia hoy ordenados por cercanía de nivel
          * @param {number|null} filterLevel Nivel objetivo de referencia
          * @param {string|null} filterSide Posición preferida ('drive', 'reves', 'any')
+         * @param {Object} [options] Opciones: { realOnly: boolean, allowMockSeeds: boolean }
          * @returns {Promise<Array<Object>>} Lista de suplentes disponibles
          */
-        async getAvailableSubstitutes(filterLevel = null, filterSide = null) {
+        async getAvailableSubstitutes(filterLevel = null, filterSide = null, options = {}) {
+            const allowMockSeeds = (options.realOnly === true || options.allowMockSeeds === false) ? false : true;
             try {
                 const todayStr = this._getTodayDateString();
                 let substitutes = [];
@@ -546,8 +550,8 @@
                     }
                 }
 
-                // 3. Si sigue vacío (nadie anotado), usar semillas dinámicas para hoy
-                if (substitutes.length === 0) {
+                // 3. Si sigue vacío (nadie anotado), usar semillas dinámicas solo si se permite mock
+                if (substitutes.length === 0 && allowMockSeeds) {
                     substitutes = this._getDynamicSeedSubstitutes();
                 }
 
@@ -580,7 +584,304 @@
                 return filteredSubstitutes;
             } catch (error) {
                 console.error('❌ [SosSubstitutesService] Error al obtener suplentes de guardia:', error);
-                return this._getDynamicSeedSubstitutes();
+                return allowMockSeeds ? this._getDynamicSeedSubstitutes() : [];
+            }
+        }
+
+        /**
+         * Obtiene todos los jugadores reales de SomosPadel BCN (BBDD real)
+         * Enriquecidos con estado de guardia, género normalizado y teléfono.
+         * @param {Object} [options] Filtros opcionales: { gender, side, levelMin, levelMax, search, forceRefresh }
+         * @returns {Promise<Array<Object>>} Lista de jugadores reales
+         */
+        async getClubPlayers(options = {}) {
+            try {
+                let rawPlayers = [];
+
+                // 1. Memoria instantánea del admin o Store (0ms)
+                if (typeof window !== 'undefined') {
+                    if (Array.isArray(window.allUsersCache) && window.allUsersCache.length > 0) {
+                        rawPlayers = window.allUsersCache;
+                    } else if (Array.isArray(window._allPlayersCache) && window._allPlayersCache.length > 0) {
+                        rawPlayers = window._allPlayersCache;
+                    }
+                }
+                // 2. Intentar desde FirebaseDB con timeout
+                if ((!rawPlayers || rawPlayers.length === 0) && typeof window !== 'undefined' && window.FirebaseDB && window.FirebaseDB.players) {
+                    try {
+                        rawPlayers = await Promise.race([
+                            window.FirebaseDB.players.getAll(options.forceRefresh || false),
+                            new Promise(resolve => setTimeout(() => resolve([]), 2000))
+                        ]);
+                    } catch (e) {
+                        console.warn("⚠️ [SosSubstitutesService] Error leyendo FirebaseDB.players:", e.message);
+                    }
+                }
+                // 3. Fallback directo a Firestore con timeout
+                if ((!rawPlayers || rawPlayers.length === 0) && this._getDb()) {
+                    try {
+                        const snap = await Promise.race([
+                            this._getDb().collection('players').get(),
+                            new Promise(resolve => setTimeout(() => resolve({ docs: [] }), 2000))
+                        ]);
+                        if (snap && snap.docs) {
+                            rawPlayers = snap.docs.map(d => ({ ...d.data(), id: d.id, uid: d.data().uid || d.id }));
+                        }
+                    } catch (fsErr) {
+                        console.warn("⚠️ [SosSubstitutesService] Error leyendo Firestore 'players':", fsErr.message);
+                    }
+                }
+
+                // Obtener suplentes con guardia activa hoy para cruzar datos
+                const todayStr = this._getTodayDateString();
+                const guardUids = new Set();
+                try {
+                    const db = this._getDb();
+                    if (db) {
+                        const poolSnap = await db.collection(CONFIG.COLLECTIONS.POOL)
+                            .where('isAvailable', '==', true)
+                            .where('date', '==', todayStr)
+                            .get();
+                        if (poolSnap && !poolSnap.empty) {
+                            poolSnap.forEach(d => guardUids.add(d.id));
+                        }
+                    }
+                } catch (_) {}
+
+                // Normalizar jugadores reales
+                let normalized = (rawPlayers || []).map(p => {
+                    const uid = p.id || p.uid || `user_${Math.random()}`;
+                    const rawGender = String(p.gender || p.sexo || '').toLowerCase().trim();
+                    let gender = 'chico';
+                    if (rawGender.includes('chica') || rawGender.includes('fem') || rawGender === 'f') {
+                        gender = 'chica';
+                    } else if (rawGender.includes('chico') || rawGender.includes('masc') || rawGender === 'm') {
+                        gender = 'chico';
+                    } else {
+                        gender = p.gender || 'chico';
+                    }
+
+                    const rawSide = String(p.side || p.preferred_side || p.posicion || 'any').toLowerCase().trim();
+                    let side = 'any';
+                    if (rawSide.includes('dri')) side = 'drive';
+                    else if (rawSide.includes('rev')) side = 'reves';
+
+                    const level = parseFloat(p.level || p.playtomic_level || p.self_rate_level || 3.5);
+                    const isGuard = guardUids.has(uid) || (typeof localStorage !== 'undefined' && localStorage.getItem(CONFIG.STORAGE_KEYS.AVAILABILITY_PREFIX + uid) === 'true');
+
+                    return {
+                        id: uid,
+                        uid: uid,
+                        name: (p.name || p.displayName || 'Jugador SomosPadel').toUpperCase(),
+                        phone: (p.phone || p.telefono || '').toString().trim(),
+                        level: isNaN(level) ? 3.5 : level,
+                        side: side,
+                        gender: gender,
+                        role: p.role || 'player',
+                        team_somospadel: p.team_somospadel || [],
+                        status: p.status || 'active',
+                        photoURL: p.photoURL || p.photo_url || null,
+                        isAvailableToday: isGuard,
+                        raw: p
+                    };
+                });
+
+                // Filtrar según opciones
+                if (options.gender && options.gender !== 'all') {
+                    normalized = normalized.filter(p => p.gender === options.gender);
+                }
+                if (options.side && options.side !== 'all') {
+                    normalized = normalized.filter(p => p.side === options.side || p.side === 'any');
+                }
+                if (options.levelMin !== undefined && !isNaN(parseFloat(options.levelMin))) {
+                    normalized = normalized.filter(p => p.level >= parseFloat(options.levelMin));
+                }
+                if (options.levelMax !== undefined && !isNaN(parseFloat(options.levelMax))) {
+                    normalized = normalized.filter(p => p.level <= parseFloat(options.levelMax));
+                }
+                if (options.onlyGuardToday) {
+                    normalized = normalized.filter(p => p.isAvailableToday);
+                }
+                if (options.search) {
+                    const q = options.search.toLowerCase().trim();
+                    normalized = normalized.filter(p => p.name.toLowerCase().includes(q) || p.phone.includes(q));
+                }
+
+                return normalized;
+            } catch (err) {
+                console.error("❌ [SosSubstitutesService] Error al obtener jugadores reales del club:", err);
+                return [];
+            }
+        }
+
+        /**
+         * Difusión masiva de convocatoria para rellenar entrenos y partidos (Capitanes & SuperAdmin)
+         * Envía comunicados en la app, notificaciones push, opcionalmente crea Alerta SOS
+         * y genera enlaces directos de WhatsApp para los jugadores seleccionados.
+         * @param {Object} data 
+         * @returns {Promise<Object>}
+         */
+        async broadcastConvocatoria(data = {}) {
+            try {
+                const title = (data.title || '⚡ Plaza disponible en SomosPádel').trim();
+                const body = (data.body || 'Se necesita jugador para completar convocatoria.').trim();
+                const url = (data.url || 'entrenos').trim();
+                const targetAudience = data.targetAudience || 'all'; // 'all', 'male', 'mixed', 'female'
+                const levelMin = parseFloat(data.levelMin) || 1.0;
+                const levelMax = parseFloat(data.levelMax) || 7.0;
+                const eventId = data.eventId || null;
+                const eventType = data.eventType || 'entrenos';
+                const sendPush = data.sendPush !== false;
+                const createSos = data.createSosAlert === true;
+
+                const db = this._getDb();
+                const nowIso = new Date().toISOString();
+                const currentUser = this._getCurrentUser() || {};
+                const authorName = currentUser.name || currentUser.displayName || 'Capitán / Organización';
+
+                // 1. Obtener los destinatarios reales
+                let targetPlayers = await this.getClubPlayers({
+                    gender: targetAudience === 'male' ? 'chico' : (targetAudience === 'female' ? 'chica' : 'all'),
+                    levelMin: levelMin,
+                    levelMax: levelMax
+                });
+
+                // Si la audiencia es mixta, asegurarse de incluir tanto chicos como chicas
+                if (targetAudience === 'mixed') {
+                    targetPlayers = await this.getClubPlayers({ levelMin, levelMax });
+                }
+
+                // 2. Guardar en la colección 'broadcasts' de Firestore
+                let broadcastId = `bc_conv_${Date.now()}`;
+                const broadcastPayload = {
+                    title,
+                    body,
+                    url,
+                    targetAudience,
+                    levelRange: `${levelMin} - ${levelMax}`,
+                    eventId,
+                    eventType,
+                    recipientCount: targetPlayers.length,
+                    authorName,
+                    authorId: currentUser.uid || currentUser.id || 'admin',
+                    createdAt: nowIso,
+                    type: 'convocatoria',
+                    status: 'published'
+                };
+
+                if (db) {
+                    try {
+                        const bRef = await db.collection('broadcasts').add(broadcastPayload);
+                        if (bRef && bRef.id) broadcastId = bRef.id;
+                        console.log(`📢 [SosSubstitutesService] Convocatoria registrada en 'broadcasts': ${broadcastId}`);
+                    } catch (bErr) {
+                        console.warn("⚠️ [SosSubstitutesService] Aviso guardando en broadcasts:", bErr.message);
+                    }
+                }
+
+                // 3. Crear Alerta SOS si se solicitó
+                let createdSosAlert = null;
+                if (createSos) {
+                    try {
+                        createdSosAlert = await this.createSosAlert({
+                            eventId: eventId,
+                            eventType: eventType,
+                            eventName: data.eventName || title,
+                            date: data.date || this._getTodayDateString(),
+                            time: data.time || '19:30',
+                            court: data.court || 'Pista Principal',
+                            sideNeeded: data.sideNeeded || 'any',
+                            levelMin: levelMin,
+                            levelMax: levelMax,
+                            bonusXp: 150
+                        });
+                    } catch (sosErr) {
+                        console.warn("⚠️ [SosSubstitutesService] Error al crear alerta SOS complementaria:", sosErr.message);
+                    }
+                }
+
+                // 4. Fan-out de notificaciones a los jugadores destinatarios en Firestore
+                let notifiedCount = 0;
+                if (sendPush && db && targetPlayers.length > 0) {
+                    try {
+                        const canBatch = typeof db.batch === 'function' || (window.firebase && window.firebase.firestore && typeof window.firebase.firestore().batch === 'function');
+                        if (canBatch) {
+                            const getNewBatch = () => (typeof db.batch === 'function') ? db.batch() : window.firebase.firestore().batch();
+                            const BATCH_SIZE = 450;
+                            for (let i = 0; i < targetPlayers.length; i += BATCH_SIZE) {
+                                const chunk = targetPlayers.slice(i, i + BATCH_SIZE);
+                                const batch = getNewBatch();
+                                chunk.forEach(player => {
+                                    const notifRef = db.collection('players').doc(player.id).collection('notifications').doc();
+                                    batch.set(notifRef, {
+                                        title,
+                                        body,
+                                        url,
+                                        read: false,
+                                        timestamp: (window.firebase && window.firebase.firestore && window.firebase.firestore.FieldValue)
+                                            ? window.firebase.firestore.FieldValue.serverTimestamp()
+                                            : new Date(),
+                                        createdAt: nowIso,
+                                        data: {
+                                            broadcastId,
+                                            eventId,
+                                            eventType,
+                                            type: 'convocatoria_entreno',
+                                            sosAlertId: createdSosAlert ? createdSosAlert.id : null
+                                        },
+                                        icon: 'triangle-exclamation'
+                                    });
+                                });
+                                await batch.commit();
+                                notifiedCount += chunk.length;
+                            }
+                        } else {
+                            // Fallback individual si batch no está expuesto directamente
+                            const promises = targetPlayers.slice(0, 100).map(player => {
+                                return db.collection('players').doc(player.id).collection('notifications').add({
+                                    title,
+                                    body,
+                                    url,
+                                    read: false,
+                                    timestamp: new Date(),
+                                    createdAt: nowIso,
+                                    data: {
+                                        broadcastId,
+                                        eventId,
+                                        eventType,
+                                        type: 'convocatoria_entreno',
+                                        sosAlertId: createdSosAlert ? createdSosAlert.id : null
+                                    },
+                                    icon: 'triangle-exclamation'
+                                }).catch(() => {});
+                            });
+                            await Promise.all(promises);
+                            notifiedCount = targetPlayers.length;
+                        }
+                    } catch (pushErr) {
+                        console.warn("⚠️ [SosSubstitutesService] Error en fan-out de notificaciones:", pushErr.message);
+                    }
+                }
+
+                // 5. Emitir evento global
+                this._dispatchCustomEvent('onConvocatoriaBroadcasted', {
+                    broadcastId,
+                    targetAudience,
+                    recipientCount: targetPlayers.length,
+                    notifiedCount
+                });
+
+                return {
+                    success: true,
+                    broadcastId,
+                    targetPlayers,
+                    recipientCount: targetPlayers.length,
+                    notifiedCount,
+                    sosAlert: createdSosAlert
+                };
+            } catch (error) {
+                console.error("❌ [SosSubstitutesService] Error en broadcastConvocatoria:", error);
+                throw error;
             }
         }
 

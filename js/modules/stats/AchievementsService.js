@@ -221,6 +221,30 @@
                 };
             }
         },
+        {
+            id: 'embajador_social',
+            title: 'Embajador del Club',
+            description: 'Sigue las redes oficiales de SomosPadel Barcelona (Instagram & Facebook).',
+            icon: '⭐',
+            category: CONFIG.CATEGORIES.SPECIAL,
+            tier: CONFIG.TIERS.GOLD,
+            xp: 150,
+            requirement: 1,
+            evaluate: (stats = {}, history = [], user = {}) => {
+                const uid = user?.uid || user?.id || 'guest';
+                let isFollower = false;
+                try {
+                    const localClaimed = localStorage.getItem(`sp_social_claimed_${uid}`) || localStorage.getItem('sp_social_claimed_guest');
+                    isFollower = !!(user?.socialAmbassador || stats?.socialAmbassador || localClaimed);
+                } catch(e) {}
+                return {
+                    unlocked: isFollower,
+                    progress: isFollower ? 100 : 0,
+                    currentValue: isFollower ? 'Desbloqueado' : 'Pendiente',
+                    targetValue: 'Instagram & Facebook'
+                };
+            }
+        },
         // Logros complementarios de alto engagement
         {
             id: 'primera_victoria',

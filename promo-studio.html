@@ -1832,6 +1832,10 @@
             </div>
         </div>
         <div class="header-actions">
+            <button class="btn-header" id="btn-open-copilot" onclick="openCopilotAlexModal()" style="background: linear-gradient(135deg, rgba(204,255,0,0.18) 0%, rgba(0,229,255,0.18) 100%); border: 1.5px solid var(--primary); color: #ffffff; font-weight: 900; box-shadow: 0 0 15px var(--primary-glow);">
+                <i class="fas fa-bolt" style="color: var(--primary)"></i> Copiloto para Alex
+                <span class="brand-badge" style="font-size: 0.58rem; padding: 1px 5px; margin-left: 2px;">IA</span>
+            </button>
             <button class="btn-header" onclick="openCopiesModal()">
                 <i class="fas fa-comment-dots" style="color: var(--primary)"></i> Textos WhatsApp / Insta
             </button>
@@ -1861,6 +1865,36 @@
         
         <!-- SIDEBAR CONTROLS -->
         <aside class="controls-panel">
+            
+            <!-- 0. COPILOTO ALEX FLASH ACCESOS -->
+            <div class="section-box" style="background: linear-gradient(145deg, rgba(12, 17, 29, 0.95) 0%, rgba(20, 28, 46, 0.95) 100%); border: 1.5px solid var(--primary); box-shadow: 0 8px 24px rgba(204,255,0,0.15);">
+                <div class="section-title" style="margin-bottom: 8px;">
+                    <span style="color: var(--primary); font-weight: 900; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-robot" style="font-size: 1rem;"></i> MODO COPILOTO PARA ALEX
+                    </span>
+                    <span class="brand-badge" style="background: #00e5ff; color: #000; font-size: 0.6rem;">ACTIVO</span>
+                </div>
+                <p style="font-size: 0.73rem; color: #cbd5e1; margin-bottom: 12px; line-height: 1.35;">
+                    Asistente automatizado para promocionar el club, las americanas y las redes sociales (@somospadelbarcelona_) con 1 clic.
+                </p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <button type="button" class="btn-preset-mini" style="background: rgba(204,255,0,0.12); border: 1px solid rgba(204,255,0,0.4); color: #fff; padding: 8px 10px; border-radius: 10px; font-size: 0.72rem; font-weight: 800; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 6px;" onclick="applyCopilotMission('concurso')">
+                        <span>👕</span> Concurso Mes
+                    </button>
+                    <button type="button" class="btn-preset-mini" style="background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.4); color: #fff; padding: 8px 10px; border-radius: 10px; font-size: 0.72rem; font-weight: 800; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 6px;" onclick="applyCopilotMission('embajador')">
+                        <span>⭐</span> Reto +150 XP
+                    </button>
+                    <button type="button" class="btn-preset-mini" style="background: rgba(24,119,242,0.15); border: 1px solid rgba(24,119,242,0.4); color: #fff; padding: 8px 10px; border-radius: 10px; font-size: 0.72rem; font-weight: 800; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 6px;" onclick="applyCopilotMission('facebook')">
+                        <span>📸</span> Fotos Facebook
+                    </button>
+                    <button type="button" class="btn-preset-mini" style="background: rgba(225,48,108,0.15); border: 1px solid rgba(225,48,108,0.4); color: #fff; padding: 8px 10px; border-radius: 10px; font-size: 0.72rem; font-weight: 800; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 6px;" onclick="applyCopilotMission('futcard')">
+                        <span>🃏</span> Carta FUT Story
+                    </button>
+                </div>
+                <button type="button" onclick="openCopilotAlexModal()" style="margin-top: 10px; width: 100%; padding: 10px; border-radius: 12px; background: linear-gradient(135deg, var(--primary) 0%, #a2cc00 100%); color: #000; font-weight: 950; font-size: 0.76rem; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 14px var(--primary-glow);">
+                    <i class="fas fa-wand-magic-sparkles"></i> Abrir Centro de Mando Copiloto
+                </button>
+            </div>
             
             <!-- 1. FORMATO DE PUBLICACIÓN -->
             <div class="section-box">
@@ -2382,6 +2416,96 @@ https://somospadelbarcelona.web.app</div>
         </div>
     </div>
 
+    <!-- MODAL MODO COPILOTO PARA ALEX -->
+    <div class="modal-overlay" id="copilot-alex-modal">
+        <div class="modal-box" style="max-width: 680px; width: 95%; max-height: 90vh;">
+            <div class="modal-header" style="background: linear-gradient(90deg, rgba(204,255,0,0.12) 0%, rgba(0,229,255,0.08) 100%);">
+                <div class="modal-title" style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-bolt" style="color: var(--primary);"></i>
+                    <span>MODO COPILOTO PARA ALEX • MARKETING & SOCIAL STUDIO</span>
+                </div>
+                <button class="modal-close" onclick="closeCopilotAlexModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem;">
+                
+                <!-- Selector de Misiones -->
+                <div style="font-size: 0.75rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+                    SELECCIONA TU MISIÓN DE MARKETING DE HOY:
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin-bottom: 16px;">
+                    <button type="button" class="copilot-mission-tab active" id="copilot-tab-concurso" onclick="selectCopilotMissionTab('concurso')" style="padding: 10px 8px; border-radius: 12px; background: rgba(204,255,0,0.15); border: 1.5px solid var(--primary); color: #fff; font-size: 0.75rem; font-weight: 900; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center;">
+                        <span style="font-size: 1.3rem;">👕</span>
+                        <span>Concurso Mes</span>
+                    </button>
+                    <button type="button" class="copilot-mission-tab" id="copilot-tab-embajador" onclick="selectCopilotMissionTab('embajador')" style="padding: 10px 8px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: #fff; font-size: 0.75rem; font-weight: 900; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center;">
+                        <span style="font-size: 1.3rem;">⭐</span>
+                        <span>Reto +150 XP</span>
+                    </button>
+                    <button type="button" class="copilot-mission-tab" id="copilot-tab-facebook" onclick="selectCopilotMissionTab('facebook')" style="padding: 10px 8px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: #fff; font-size: 0.75rem; font-weight: 900; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center;">
+                        <span style="font-size: 1.3rem;">📸</span>
+                        <span>Fotos Facebook</span>
+                    </button>
+                    <button type="button" class="copilot-mission-tab" id="copilot-tab-futcard" onclick="selectCopilotMissionTab('futcard')" style="padding: 10px 8px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: #fff; font-size: 0.75rem; font-weight: 900; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center;">
+                        <span style="font-size: 1.3rem;">🃏</span>
+                        <span>Carta FUT</span>
+                    </button>
+                    <button type="button" class="copilot-mission-tab" id="copilot-tab-torneo" onclick="selectCopilotMissionTab('torneo')" style="padding: 10px 8px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: #fff; font-size: 0.75rem; font-weight: 900; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center;">
+                        <span style="font-size: 1.3rem;">🏆</span>
+                        <span>Americana VIP</span>
+                    </button>
+                </div>
+
+                <!-- Detalle de la Misión y Acciones Instantáneas -->
+                <div id="copilot-mission-panel" style="background: var(--bg-surface); border: 1px solid var(--border-glass); border-radius: 18px; padding: 18px; margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <div id="copilot-mission-title" style="font-size: 1.05rem; font-weight: 950; color: var(--primary);">
+                            👕 Concurso: El Puntazo y la Foto del Mes
+                        </div>
+                        <span id="copilot-mission-badge" style="background: rgba(204,255,0,0.15); color: var(--primary); font-size: 0.65rem; font-weight: 900; padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(204,255,0,0.3);">
+                            PROMO VIRAL
+                        </span>
+                    </div>
+                    <div id="copilot-mission-desc" style="font-size: 0.8rem; color: #cbd5e1; line-height: 1.4; margin-bottom: 14px;">
+                        Promociona el concurso mensual en Instagram Stories o Feed. Los jugadores participan subiendo su foto o vídeo con #SomosPadelBCN para ganar una americana gratis.
+                    </div>
+
+                    <!-- Cuadro de Copy Listo -->
+                    <div style="font-size: 0.72rem; font-weight: 800; color: #38bdf8; text-transform: uppercase; margin-bottom: 6px;">
+                        Texto para Instagram (Copy + Hashtags Oficiales):
+                    </div>
+                    <div id="copilot-copy-box" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; font-size: 0.8rem; line-height: 1.45; color: #f1f5f9; white-space: pre-line; max-height: 160px; overflow-y: auto; margin-bottom: 16px; font-family: var(--font-body);">
+                    </div>
+
+                    <!-- Botones de Acción Instantánea -->
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <button type="button" id="btn-copilot-1click" onclick="executeCopilot1Click()" style="background: linear-gradient(135deg, var(--primary) 0%, #00e5ff 100%); color: #000; border: none; padding: 14px 20px; border-radius: 14px; font-weight: 950; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 20px rgba(204,255,0,0.35); transition: transform 0.2s;">
+                            <i class="fas fa-rocket"></i> <span>1 Clic: Generar Cartel HD & Copiar Texto para Instagram</span>
+                        </button>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <button type="button" id="btn-copilot-copy-only" onclick="copyCopilotCurrentText(this)" style="background: rgba(255,255,255,0.08); border: 1px solid var(--border-glass); color: #fff; padding: 10px 14px; border-radius: 10px; font-size: 0.78rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                <i class="fas fa-copy"></i> Copiar Solo Texto
+                            </button>
+                            <button type="button" id="btn-copilot-copy-wa" onclick="copyCopilotWaText(this)" style="background: rgba(37,211,102,0.15); border: 1px solid rgba(37,211,102,0.35); color: #25D366; padding: 10px 14px; border-radius: 10px; font-size: 0.78rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                <i class="fab fa-whatsapp"></i> Copiar para WhatsApp
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enlaces Rápidos a Canales Oficiales -->
+                <div style="display: flex; gap: 8px; justify-content: space-between; align-items: center;">
+                    <a href="https://www.instagram.com/somospadelbarcelona_/?hl=es" target="_blank" style="flex: 1; background: linear-gradient(45deg, #e6683c, #cc2366); color: #fff; text-decoration: none; padding: 8px 12px; border-radius: 10px; font-size: 0.74rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        <i class="fab fa-instagram"></i> Abrir Instagram (@somospadelbarcelona_)
+                    </a>
+                    <a href="https://www.facebook.com/?locale=es_ES" target="_blank" style="flex: 1; background: #1877f2; color: #fff; text-decoration: none; padding: 8px 12px; border-radius: 10px; font-size: 0.74rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        <i class="fab fa-facebook-f"></i> Abrir Facebook del Club
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
     <!-- CANVAS OCULTO PARA GRABACIÓN DE VIDEO -->
     <canvas id="recording-canvas"></canvas>
 
@@ -2485,6 +2609,12 @@ https://somospadelbarcelona.web.app</div>
             if (window.location.protocol === 'file:') {
                 const notice = document.getElementById('file-protocol-notice');
                 if (notice) notice.style.display = 'flex';
+            }
+
+            // Detección de Modo Copiloto por URL (?mode=copilot o #copilot)
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('mode') === 'copilot' || window.location.hash === '#copilot') {
+                setTimeout(() => openCopilotAlexModal(), 400);
             }
 
             window.addEventListener('resize', () => {
@@ -3272,6 +3402,287 @@ https://somospadelbarcelona.web.app</div>
                 console.error('Error al copiar texto:', err);
             });
         }
+
+        // ================================================================
+        // ⚡ MODO COPILOTO PARA ALEX (MARKETING & SOCIAL STUDIO)
+        // ================================================================
+        let currentCopilotMission = 'concurso';
+
+        const copilotMissions = {
+            concurso: {
+                title: "👕 Concurso: El Puntazo y la Foto del Mes",
+                badge: "PROMO VIRAL",
+                desc: "Promociona el concurso mensual. Los jugadores participan subiendo fotos/vídeos con #SomosPadelBCN para ganar una americana gratis.",
+                template: {
+                    format: 'story',
+                    badge: "👕 CONCURSO OFICIAL MENSUAL • SOMOSPADEL BCN",
+                    title: "EL PUNTAZO &\nLA FOTO DEL MES",
+                    subtitle: "Americana gratis con #SomosPadelBCN. Sube tu foto o vídeo en la pista mencionando a @somospadelbarcelona_ y gana tu plaza gratis cada mes.",
+                    features: "📸 Sube Foto o Vídeo | 🎾 Mención @somospadelbarcelona_ | 🔥 Hashtag #SomosPadelBCN | 🥇 Premio: Americana Gratis",
+                    cta: "¡SUBE TU HISTORIA Y PARTICIPA!",
+                    bg: "img/blog_action_smash.png",
+                    color: "#CCFF00",
+                    playerName: "FOTO DEL MES",
+                    ovr: "99",
+                    pos: "TOP",
+                    stats: "ATQ:98, DEF:95, POT:99, CTL:96, SIN:99%, RES:94",
+                    eventStatus: "🎁 PREMIO MENSUAL",
+                    eventLoc: "📸 INSTAGRAM OFICIAL",
+                    eventSpots: "AMERICANA GRATIS",
+                    eventLevel: "TODOS LOS NIVELES"
+                },
+                instaCopy: "👕🎾 ¡LANZAMOS EL CONCURSO DEL MES EN SOMOSPADEL BARCELONA! 🏆🔥\n\n¿Quieres ganar una AMERICANA 100% GRATIS este mes? 🎁\n\nParticipar es súper fácil:\n1️⃣ Graba tu mejor puntazo o sácate una foto en tu americana, entreno o tercer tiempo en el club.\n2️⃣ Súbelo a tu Instagram (Story, Reel o Post) etiquetando a @somospadelbarcelona_\n3️⃣ Incluye el hashtag oficial #SomosPadelBCN\n\n🥇 La foto o vídeo más top del mes se lleva una inscripción de americana gratuita para el próximo fin de semana.\n\n📲 Toda la info y bases completas dentro de la App oficial:\nhttps://somospadelbarcelona.web.app\n\n¡A por ese puntazo! 🎾⚡\n#SomosPadelBCN #PadelBarcelona #AmericanasPadel #PadelAddict #PadelCatalunya #BarcelonaPadel",
+                waCopy: "🎾 *CONCURSO DEL MES SOMOSPADEL BARCELONA* 👕🔥\n\n¡Gana una *AMERICANA 100% GRATIS* este mes!\n\n👉 *Cómo participar:*\n1. Sube tu mejor foto o puntazo a Instagram.\n2. Etiqueta a *@somospadelbarcelona_*\n3. Usa el hashtag *#SomosPadelBCN*\n\n¡Al finalizar el mes anunciamos al ganador/a!\n📲 Info completa en la app: https://somospadelbarcelona.web.app"
+            },
+            embajador: {
+                title: "⭐ Reto: Insignia Embajador del Club (+150 XP)",
+                badge: "GAMIFICACIÓN",
+                desc: "Anuncia el nuevo reto de gamificación para que todos los jugadores sigan a SomosPadel en Instagram y Facebook.",
+                template: {
+                    format: 'story',
+                    badge: "⭐ NUEVO RETO DE GAMIFICACIÓN EN LA APP",
+                    title: "CONVIÉRTETE EN\nEMBAJADOR DEL CLUB",
+                    subtitle: "Sigue las redes oficiales de SomosPadel Barcelona en Instagram y Facebook y reclama tu Insignia Dorada Oficial y +150 XP en tu perfil.",
+                    features: "⭐ Insignia Dorada Oficial | 📈 +150 XP Inmediatos | 📸 Instagram @somospadelbarcelona_ | 📘 Facebook Somos Padel BCN",
+                    cta: "¡ENTRA A LA APP Y RECLÁMALA!",
+                    bg: "img/blog_player_victory.png",
+                    color: "#f59e0b",
+                    playerName: "EMBAJADOR CLUB",
+                    ovr: "98",
+                    pos: "VIP",
+                    stats: "ATQ:97, DEF:95, POT:98, CTL:96, SIN:100%, RES:95",
+                    eventStatus: "⭐ +150 XP OFICIALES",
+                    eventLoc: "📱 EN LA APP SOMOSPADEL",
+                    eventSpots: "INSIGNIA DORADA",
+                    eventLevel: "TODOS LOS JUGADORES"
+                },
+                instaCopy: "⭐ ¡CONVIÉRTETE EN EMBAJADOR OFICIAL DE SOMOSPADEL BARCELONA! 🎾✨\n\nHemos añadido un nuevo reto a la App:\nConsigue la Insignia Dorada Oficial ⭐ \"Embajador del Club\" y suma +150 XP directos a tu nivel de jugador.\n\n👉 ¿Cómo reclamarla?\n1. Síguenos en Instagram (@somospadelbarcelona_) y en Facebook.\n2. Entra al Dashboard de la app y pulsa en \"Reclamar Recompensa\".\n3. ¡Listo! Tu insignia brillará en tu vitrina de trofeos y perfil.\n\n📲 Entra a la app y reclámala ahora:\nhttps://somospadelbarcelona.web.app\n#SomosPadelBCN #EmbajadorSomosPadel #PadelBarcelona",
+                waCopy: "⭐ *NUEVO RETO EN LA APP: INSIGNIA EMBAJADOR DEL CLUB* ⭐\n\nSigue a SomosPadel en Instagram (*@somospadelbarcelona_*) y Facebook para desbloquear la insignia de oro y *+150 XP* en tu perfil.\n\n📲 Reclámala ya en la app: https://somospadelbarcelona.web.app"
+            },
+            facebook: {
+                title: "📸 Álbumes de Fotos del Finde en Facebook",
+                badge: "COMUNIDAD & FOTOS",
+                desc: "Avisa a los jugadores de que todas las fotos en alta definición de la americana ya están colgadas en el Facebook del club.",
+                template: {
+                    format: 'square',
+                    badge: "📸 GALERÍA OFICIAL DE LA COMUNIDAD",
+                    title: "FOTOS Y PODIOS\nYA EN FACEBOOK",
+                    subtitle: "¿Jugaste la americana este fin de semana? Ya están subidas todas las fotos de los partidos, podios y el tercer tiempo en Facebook.",
+                    features: "📷 Fotos HD de cada Pista | 🥇 Podios y Premios | 🍻 El Tercer Tiempo | 👥 Etiquétate con tu Pareja",
+                    cta: "¡VER ÁLBUM COMPLETO EN FACEBOOK!",
+                    bg: "img/pista_padel_azul.png",
+                    color: "#00e5ff",
+                    playerName: "ÁLBUM FINDE",
+                    ovr: "99",
+                    pos: "FOTO",
+                    stats: "ATQ:99, DEF:98, POT:99, CTL:99, SIN:100%, RES:99",
+                    eventStatus: "📸 ÁLBUMES HD",
+                    eventLoc: "📘 FACEBOOK SOMOS PADEL",
+                    eventSpots: "DESCARGA GRATIS",
+                    eventLevel: "TODAS LAS FOTOS"
+                },
+                instaCopy: "📸 ¡FOTOS DEL FIN DE SEMANA YA DISPONIBLES EN HD! 🎾🎉\n\n¿Jugaste en las americanas del fin de semana? ¡Ya hemos subido la galería completa con todas las fotos de los partidos, podios y el tercer tiempo!\n\n📘 Mira el álbum completo en nuestra página oficial de Facebook:\n👉 Somos Padel Barcelona (https://www.facebook.com/?locale=es_ES)\n\nEtiquétate con tu compañero y guárdate tus mejores fotos. ¡Nos vemos en la pista el próximo fin de semana! 🏆⚡\n#SomosPadelBCN #FotosPadel #AmericanasPadel #PadelBarcelona",
+                waCopy: "📸 *¡YA TENÉIS LAS FOTOS DE LA AMERICANA EN FACEBOOK!* 🎾🎉\n\nPodéis ver el álbum en alta definición y descargaros vuestras fotos de los partidos y podio aquí:\n👉 https://www.facebook.com/?locale=es_ES\n\n¡Etiquetaos y compartidlas con vuestros compañeros! 🔥"
+            },
+            futcard: {
+                title: "🃏 Carta de Jugador FUT para Instagram Stories",
+                badge: "VIRAL STORIES",
+                desc: "Anima a los jugadores a sacar su cromo oficial estilo EA FC y compartirlo en Stories mencionando al club.",
+                template: {
+                    format: 'story',
+                    badge: "🃏 CARTA OFICIAL DE JUGADOR • ESTILO FIFA",
+                    title: "SUBE TU CARTA FUT\nA INSTAGRAM STORY",
+                    subtitle: "Genera tu cromo de jugador con estadísticas reales de nivel, compártelo en Stories de Instagram mencionando a @somospadelbarcelona_ y te reposteamos.",
+                    features: "📊 Rating y Stats Reales | 📱 Formato Story 9:16 | ⚡ Repost en Cuenta Oficial | 🥇 Presume de Nivel",
+                    cta: "¡SACA TU CARTA EN LA APP!",
+                    bg: "img/blog_court_night.png",
+                    color: "#ff007f",
+                    playerName: "TU NOMBRE AQUÍ",
+                    ovr: "97",
+                    pos: "REV",
+                    stats: "ATQ:96, DEF:94, POT:97, CTL:93, SIN:99%, RES:92",
+                    eventStatus: "🃏 CARTA FUT",
+                    eventLoc: "📸 INSTAGRAM STORY",
+                    eventSpots: "COMPARTIR EN 9:16",
+                    eventLevel: "RATING OFICIAL"
+                },
+                instaCopy: "¿Conoces ya tu valoración oficial en Barcelona? 🃏⚡\nEn SomosPadel cada jugador tiene su Carta FUT con estadísticas reales de Ataque, Control, Potencia y ELO.\n\nEntra a tu perfil en la app, pulsa en \"Compartir Carta en Story\", etiquétanos en @somospadelbarcelona_ y te reposteamos en nuestra cuenta oficial 🚀🎾\n\n📲 Descubre tu carta gratis aquí:\nhttps://somospadelbarcelona.web.app\n#SomosPadelBCN #FUTPadel #CartaPadel #PadelBarcelona",
+                waCopy: "🃏 *¿YA TIENES TU CARTA DE JUGADOR ESTILO FIFA?* 🎾🔥\n\nEntra en la app de SomosPadel, mira tus estadísticas y sube tu carta a Stories mencionando a *@somospadelbarcelona_* para que te reposteemos.\n\n📲 Mírala aquí gratis: https://somospadelbarcelona.web.app"
+            },
+            torneo: {
+                title: "🏆 Convocatoria Oficial de Americana VIP",
+                badge: "CONVOCATORIA",
+                desc: "Publica la convocatoria de la próxima americana con marcador TV, pistas panorámicas y trofeos.",
+                template: {
+                    format: 'story',
+                    badge: "🏆 AMERICANAS OFICIALES SOMOSPADEL BCN",
+                    title: "PRÓXIMA AMERICANA\nCON MARCADORES TV",
+                    subtitle: "2 horas non-stop en pistas cubiertas de cristal, sistema de rotación automática en pantallas de TV, trofeos y welcome pack.",
+                    features: "⚡ 2h Non-Stop en Pista | 📺 Marcadores TV en Vivo | 🥇 Trofeos y Premios | 🍻 Tercer Tiempo con Amigos",
+                    cta: "¡RESERVA TU PLAZA ANTES DEL CIERRE!",
+                    bg: "img/pista_padel_azul.png",
+                    color: "#CCFF00",
+                    playerName: "CAMPEÓN",
+                    ovr: "99",
+                    pos: "PRO",
+                    stats: "ATQ:98, DEF:95, POT:99, CTL:94, SIN:98%, RES:96",
+                    eventStatus: "⚡ PLAZAS LIMITADAS",
+                    eventLoc: "📍 SUMMAPADEL / DELFOS",
+                    eventSpots: "INSCRIPCIÓN EN LA APP",
+                    eventLevel: "TODOS LOS NIVELES"
+                },
+                instaCopy: "🏆 ¡NUEVA AMERICANA SOMOSPADEL BARCELONA! 🎾⚡\n\nEste fin de semana volvemos a la pista con el mejor formato de torneo:\n✅ 2 horas non-stop\n✅ Pistas panorámicas de cristal\n✅ Marcador en pantallas de TV en vivo\n✅ Premios y trofeos para campeones\n✅ El auténtico tercer tiempo con la comunidad\n\n⚡ Plazas estrictamente limitadas.\n📲 Reserva tu plaza directa en la app:\nhttps://somospadelbarcelona.web.app\n\n#SomosPadelBCN #PadelBarcelona #AmericanasPadel #PadelAddict",
+                waCopy: "🏆 *NUEVA AMERICANA SOMOSPADEL BCN* 🎾⚡\n\n📅 Próximo Fin de Semana\n📍 Pistas Panorámicas de Cristal\n⚡ Marcador en pantalla de TV y trofeos\n\n¡Plazas limitadas por nivel! Reserva la tuya antes de que se agoten en la app:\n👉 https://somospadelbarcelona.web.app"
+            }
+        };
+
+        function openCopilotAlexModal() {
+            const modal = document.getElementById('copilot-alex-modal');
+            if (modal) {
+                modal.classList.add('active');
+                selectCopilotMissionTab(currentCopilotMission || 'concurso');
+            }
+        }
+
+        function closeCopilotAlexModal() {
+            const modal = document.getElementById('copilot-alex-modal');
+            if (modal) modal.classList.remove('active');
+        }
+
+        function selectCopilotMissionTab(missionKey) {
+            currentCopilotMission = missionKey;
+            const mission = copilotMissions[missionKey] || copilotMissions.concurso;
+
+            const tabs = ['concurso', 'embajador', 'facebook', 'futcard', 'torneo'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`copilot-tab-${t}`);
+                if (btn) {
+                    if (t === missionKey) {
+                        btn.style.background = 'rgba(204,255,0,0.15)';
+                        btn.style.borderColor = 'var(--primary)';
+                    } else {
+                        btn.style.background = 'rgba(255,255,255,0.05)';
+                        btn.style.borderColor = 'var(--border-glass)';
+                    }
+                }
+            });
+
+            const titleEl = document.getElementById('copilot-mission-title');
+            if (titleEl) titleEl.innerText = mission.title;
+            const badgeEl = document.getElementById('copilot-mission-badge');
+            if (badgeEl) badgeEl.innerText = mission.badge;
+            const descEl = document.getElementById('copilot-mission-desc');
+            if (descEl) descEl.innerText = mission.desc;
+            const copyBox = document.getElementById('copilot-copy-box');
+            if (copyBox) copyBox.innerText = mission.instaCopy;
+
+            applyCopilotMission(missionKey, false);
+        }
+
+        function applyCopilotMission(missionKey, autoClose = false) {
+            currentCopilotMission = missionKey;
+            const mission = copilotMissions[missionKey] || copilotMissions.concurso;
+            const t = mission.template;
+
+            if (t.format && t.format !== currentFormat) {
+                const targetBtn = Array.from(document.querySelectorAll('.format-btn')).find(b => b.innerText.toLowerCase().includes(t.format));
+                setFormat(t.format, targetBtn);
+            }
+
+            if (document.getElementById('input-badge')) document.getElementById('input-badge').value = t.badge;
+            if (document.getElementById('input-title')) document.getElementById('input-title').value = t.title;
+            if (document.getElementById('input-subtitle')) document.getElementById('input-subtitle').value = t.subtitle;
+            if (document.getElementById('input-features')) document.getElementById('input-features').value = t.features;
+            if (document.getElementById('input-cta')) document.getElementById('input-cta').value = t.cta;
+            if (document.getElementById('input-player-name')) document.getElementById('input-player-name').value = t.playerName;
+            if (document.getElementById('input-player-ovr')) document.getElementById('input-player-ovr').value = t.ovr;
+            if (document.getElementById('input-player-pos')) document.getElementById('input-player-pos').value = t.pos;
+            if (document.getElementById('input-player-stats')) document.getElementById('input-player-stats').value = t.stats;
+
+            if (t.eventStatus && document.getElementById('input-event-status')) document.getElementById('input-event-status').value = t.eventStatus;
+            if (t.eventLoc && document.getElementById('input-event-loc')) document.getElementById('input-event-loc').value = t.eventLoc;
+            if (t.eventSpots && document.getElementById('input-event-spots')) document.getElementById('input-event-spots').value = t.eventSpots;
+            if (t.eventLevel && document.getElementById('input-event-level')) document.getElementById('input-event-level').value = t.eventLevel;
+
+            const targetPill = Array.from(document.querySelectorAll('.color-pill')).find(p => p.style.color === t.color || p.getAttribute('style')?.includes(t.color));
+            setAccentColor(t.color, targetPill);
+
+            const targetThumb = Array.from(document.querySelectorAll('.bg-thumb')).find(th => th.querySelector('img') && th.querySelector('img').src.includes(t.bg));
+            setBackgroundImage(t.bg, targetThumb);
+
+            updateFlyerContent();
+            updateFutCard();
+            updateEventPill();
+
+            if (autoClose) {
+                closeCopilotAlexModal();
+            }
+        }
+
+        async function executeCopilot1Click() {
+            const mission = copilotMissions[currentCopilotMission] || copilotMissions.concurso;
+            applyCopilotMission(currentCopilotMission, false);
+
+            try {
+                await navigator.clipboard.writeText(mission.instaCopy);
+            } catch (e) {
+                console.warn("Clipboard write error:", e);
+            }
+
+            downloadFlyerImage('png');
+
+            const btn = document.getElementById('btn-copilot-1click');
+            if (btn) {
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i> ¡Cartel HD Descargado y Copy de Insta Copiado!';
+                btn.style.background = '#00e5ff';
+                btn.style.color = '#000';
+                setTimeout(() => {
+                    btn.innerHTML = originalHtml;
+                    btn.style.background = '';
+                    btn.style.color = '';
+                }, 3500);
+            }
+        }
+
+        function copyCopilotCurrentText(btn) {
+            const mission = copilotMissions[currentCopilotMission] || copilotMissions.concurso;
+            navigator.clipboard.writeText(mission.instaCopy).then(() => {
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i> ¡Copiado!';
+                btn.style.background = 'var(--primary)';
+                btn.style.color = '#000';
+                setTimeout(() => {
+                    btn.innerHTML = originalHtml;
+                    btn.style.background = '';
+                    btn.style.color = '';
+                }, 2000);
+            });
+        }
+
+        function copyCopilotWaText(btn) {
+            const mission = copilotMissions[currentCopilotMission] || copilotMissions.concurso;
+            navigator.clipboard.writeText(mission.waCopy).then(() => {
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i> ¡Copiado para WhatsApp!';
+                btn.style.background = '#25D366';
+                btn.style.color = '#000';
+                setTimeout(() => {
+                    btn.innerHTML = originalHtml;
+                    btn.style.background = '';
+                    btn.style.color = '';
+                }, 2000);
+            });
+        }
+
+        // Exponer funciones del Copiloto globalmente
+        window.openCopilotAlexModal = openCopilotAlexModal;
+        window.closeCopilotAlexModal = closeCopilotAlexModal;
+        window.selectCopilotMissionTab = selectCopilotMissionTab;
+        window.applyCopilotMission = applyCopilotMission;
+        window.executeCopilot1Click = executeCopilot1Click;
+        window.copyCopilotCurrentText = copyCopilotCurrentText;
+        window.copyCopilotWaText = copyCopilotWaText;
     </script>
 </body>
 </html>

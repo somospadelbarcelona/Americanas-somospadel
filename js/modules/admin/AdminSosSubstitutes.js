@@ -1,14 +1,16 @@
 /**
  * AdminSosSubstitutes.js
  * 
- * 🚨 PANEL DE GESTIÓN ADMINISTRATIVA: BOLSA DE SUPLENTES SOS & GUARDIA ACTIVA
- * SomosPádel BCN
+ * 🚨 PANEL DE CONVOCATORIAS, SUPLENTES SOS Y MENSAJERÍA MASIVA
+ * SomosPádel BCN - Herramienta para Capitanes y Super Administradores
  * 
- * Vista administrativa dedicada para coordinar emergencias de última hora,
- * asignación inteligente de suplentes, bolsa de guardia en vivo y seguimiento de rescates.
+ * Funcionalidades 100% con datos reales:
+ * 1. Control de entrenos masculinos, mixtos y americanas con huecos libres.
+ * 2. Herramienta de difusión masiva (Push in-app + WhatsApp) segmentada por género (Masculino / Mixto) y nivel.
+ * 3. Gestión y publicación de Alertas SOS de última hora (+150 XP).
+ * 4. Censo completo de jugadores reales del club con WhatsApp directo y asignación manual inmediata.
  * 
- * Expuesto globalmente en `window.AdminSosSubstitutes`.
- * Hook registrado en `window.AdminViews.sos_substitutes`.
+ * Expuesto en `window.AdminSosSubstitutes`.
  */
 
 (function (global) {
@@ -19,16 +21,22 @@
             this.container = null;
             this.activeAlerts = [];
             this.substitutes = [];
+            this.realPlayers = [];
+            this.incompleteEvents = [];
             this.rescuesHistory = [];
-            this.filterSide = 'all';
+            this.filterGender = 'all'; // 'all', 'chico', 'chica'
+            this.filterSide = 'all';   // 'all', 'drive', 'reves'
+            this.filterGuard = 'all';  // 'all', 'guard'
+            this.filterEventCat = 'all'; // 'all', 'male', 'mixed', 'female', 'americana'
             this.searchQuery = '';
-            this.selectedAlertForAssignment = null;
             this.initialized = false;
         }
 
         /**
          * Inicializa y renderiza la vista en el contenedor administrativo
-         * @param {HTMLElement|string|null} targetContainer 
+         */
+        /**
+         * Inicializa y renderiza la vista en el contenedor administrativo
          */
         async render(targetContainer = null) {
             const container = (typeof targetContainer === 'string')
@@ -44,94 +52,395 @@
             this.container.innerHTML = this._getLoadingHtml();
 
             try {
-                await this._fetchData();
-                this._renderDashboard();
-                this._setupListeners();
-                this._updateSidebarBadge();
+                // Dar hasta 4.5s para que Firebase resuelva consultas reales
+                await Promise.race([
+                    this._fetchData(),
+                    new Promise(resolve => setTimeout(resolve, 4500))
+                ]);
             } catch (error) {
-                console.error("❌ [AdminSosSubstitutes] Error al renderizar vista administrativa:", error);
-                this.container.innerHTML = this._getErrorHtml(error.message);
+                console.warn("⚠️ [AdminSosSubstitutes] Renderizado defensivo tras incidencia:", error);
             }
+
+            this._renderDashboard();
+            this._setupListeners();
+            this._updateSidebarBadge();
+
+            // Sincronización reactiva en segundo plano por si la red tardó más de 4.5s
+            this._fetchData().then(() => {
+                if (this.container && this.container.querySelector('#admin-sos-dashboard-root')) {
+                    this._renderDashboard();
+                    this._setupListeners();
+                    this._updateSidebarBadge();
+                }
+            }).catch(e => console.warn("⚠️ [AdminSosSubstitutes] Error en background sync:", e));
         }
 
         /**
-         * Carga los datos de alertas, suplentes e historial
+         * Obtiene la instancia de Firestore disponible
+         */
+        _getDb() {
+            if (typeof window !== 'undefined' && window.db) return window.db;
+            if (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
+                try { return firebase.firestore(); } catch (_) {}
+            }
+            return null;
+        }
+
+        /**
+         * Carga datos 100% reales desde Firestore y servicios de la app
+         * Ejecución paralela, resiliente y protegida contra timeouts para renderizar siempre de inmediato.
          * @private
          */
         async _fetchData() {
             const service = this._getService();
-            if (!service) {
-                throw new Error("El servicio SosSubstitutesService no está disponible.");
+
+            const withTimeout = (promise, ms = 4500, fallback = []) => {
+                return Promise.race([
+                    promise,
+                    new Promise(resolve => setTimeout(() => resolve(fallback), ms))
+                ]).catch(err => {
+                    console.warn("⚠️ [AdminSosSubstitutes] Fallback tras error o timeout:", err.message);
+                    return fallback;
+                });
+            };
+
+            // 1. Memoria instantánea previa (0ms)
+            if (Array.isArray(window.allUsersCache) && window.allUsersCache.length > 0) {
+                this.realPlayers = this._normalizePlayers(window.allUsersCache);
+            } else if (Array.isArray(window._allPlayersCache) && window._allPlayersCache.length > 0) {
+                this.realPlayers = this._normalizePlayers(window._allPlayersCache);
             }
 
-            // 1. Alertas SOS Activas
-            try {
-                this.activeAlerts = await service.getActiveSosAlerts();
-            } catch (e) {
-                console.warn("⚠️ [AdminSosSubstitutes] Error obteniendo alertas activas:", e);
-                this.activeAlerts = [];
-            }
+            // 2. Ejecución en paralelo de todas las fuentes
+            const [alertsRes, playersRes, subsRes, eventsRes, rescuesRes] = await Promise.allSettled([
+                withTimeout((async () => {
+                    if (service && typeof service.getActiveSosAlerts === 'function') {
+                        return await service.getActiveSosAlerts({ realOnly: true, allowMockSeeds: false });
+                    }
+                    return [];
+                })(), 4000, []),
 
-            // 2. Suplentes de Guardia Hoy
-            try {
-                this.substitutes = await service.getAvailableSubstitutes();
-            } catch (e) {
-                console.warn("⚠️ [AdminSosSubstitutes] Error obteniendo suplentes:", e);
-                this.substitutes = [];
-            }
+                withTimeout((async () => {
+                    if (this.realPlayers && this.realPlayers.length > 0) return this.realPlayers;
+                    if (service && typeof service.getClubPlayers === 'function') {
+                        return await service.getClubPlayers({ realOnly: true });
+                    }
+                    if (window.FirebaseDB && window.FirebaseDB.players) {
+                        const raw = await window.FirebaseDB.players.getAll(false);
+                        return this._normalizePlayers(raw);
+                    }
+                    return [];
+                })(), 4000, this.realPlayers || []),
 
-            // 3. Historial de Rescates
-            this.rescuesHistory = this._loadRescuesHistory();
+                withTimeout((async () => {
+                    if (service && typeof service.getAvailableSubstitutes === 'function') {
+                        return await service.getAvailableSubstitutes(null, null, { realOnly: true, allowMockSeeds: false });
+                    }
+                    return [];
+                })(), 3000, []),
+
+                withTimeout((async () => {
+                    return await this._loadIncompleteEvents();
+                })(), 4500, []),
+
+                withTimeout((async () => {
+                    return await this._loadRealRescuesHistory();
+                })(), 2500, [])
+            ]);
+
+            if (alertsRes.status === 'fulfilled' && Array.isArray(alertsRes.value)) this.activeAlerts = alertsRes.value;
+            if (playersRes.status === 'fulfilled' && Array.isArray(playersRes.value) && playersRes.value.length > 0) this.realPlayers = playersRes.value;
+            if (subsRes.status === 'fulfilled' && Array.isArray(subsRes.value)) this.substitutes = subsRes.value;
+            if (eventsRes.status === 'fulfilled' && Array.isArray(eventsRes.value)) this.incompleteEvents = eventsRes.value;
+            if (rescuesRes.status === 'fulfilled' && Array.isArray(rescuesRes.value)) this.rescuesHistory = rescuesRes.value;
         }
 
         /**
-         * Carga el historial de rescates desde caché y Firestore si existe
-         * @private
+         * Normaliza un array crudo de jugadores
          */
-        _loadRescuesHistory() {
-            const cachedAlerts = (this._getService() && typeof this._getService()._getCachedAlerts === 'function')
-                ? this._getService()._getCachedAlerts()
-                : [];
+        _normalizePlayers(rawList = []) {
+            return (rawList || []).map(p => {
+                const uid = p.id || p.uid || `p_${Math.random()}`;
+                const rawGender = String(p.gender || p.sexo || '').toLowerCase().trim();
+                let gender = 'chico';
+                if (rawGender.includes('chica') || rawGender.includes('fem') || rawGender === 'f') {
+                    gender = 'chica';
+                }
 
-            const filled = cachedAlerts.filter(a => a && (a.status === 'filled' || a.assignedPlayer));
+                const rawSide = String(p.side || p.preferred_side || 'any').toLowerCase().trim();
+                let side = 'any';
+                if (rawSide.includes('dri')) side = 'drive';
+                else if (rawSide.includes('rev')) side = 'reves';
 
-            // Si está vacío, proveer registro de auditoría representativo
-            if (filled.length === 0) {
-                return [
-                    {
-                        id: 'hist_demo_1',
-                        eventName: 'Torneo Americano Nocturno',
-                        date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                        time: '20:30',
-                        court: 'Pista 1',
-                        assignedPlayer: { name: 'DANI ROVIRA', level: 4.25, side: 'Revés' },
-                        bonusXp: 150,
-                        status: 'filled'
-                    },
-                    {
-                        id: 'hist_demo_2',
-                        eventName: 'Entreno Técnico Alta Intensidad',
-                        date: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString().split('T')[0],
-                        time: '19:00',
-                        court: 'Pista 3',
-                        assignedPlayer: { name: 'MARTA SOLER', level: 3.80, side: 'Drive' },
-                        bonusXp: 150,
-                        status: 'filled'
-                    },
-                    {
-                        id: 'hist_demo_3',
-                        eventName: 'Americana Mixta Fin de Semana',
-                        date: new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString().split('T')[0],
-                        time: '11:00',
-                        court: 'Pista Central',
-                        assignedPlayer: { name: 'SERGI GÓMEZ', level: 4.50, side: 'Cualquiera' },
-                        bonusXp: 150,
-                        status: 'filled'
+                const level = parseFloat(p.level || p.playtomic_level || p.self_rate_level || 3.5);
+
+                return {
+                    id: uid,
+                    uid: uid,
+                    name: (p.name || p.displayName || 'Jugador').toUpperCase(),
+                    phone: (p.phone || p.telefono || '').toString().trim(),
+                    level: isNaN(level) ? 3.5 : level,
+                    side: side,
+                    gender: gender,
+                    role: p.role || 'player',
+                    team_somospadel: p.team_somospadel || [],
+                    status: p.status || 'active',
+                    photoURL: p.photoURL || p.photo_url || null,
+                    isAvailableToday: false,
+                    raw: p
+                };
+            });
+        }
+
+        /**
+         * Obtiene la lista cruda de entrenos desde todas las fuentes (Memoria, Cache, EventService, FirebaseDB, Firestore)
+         */
+        async _fetchRawEntrenos() {
+            // 1. Memoria rápida
+            if (Array.isArray(window._currentEntrenosCache) && window._currentEntrenosCache.length > 0) {
+                return window._currentEntrenosCache;
+            }
+            // 2. Caché persistente CacheService
+            if (window.CacheService) {
+                try {
+                    const cached = await window.CacheService.get('entrenos', 'all');
+                    if (Array.isArray(cached) && cached.length > 0) return cached;
+                } catch (_) {}
+            }
+            // 3. EventService
+            if (window.EventService && typeof window.EventService.getAll === 'function') {
+                try {
+                    const evts = await window.EventService.getAll('entreno');
+                    if (Array.isArray(evts) && evts.length > 0) {
+                        window._currentEntrenosCache = evts;
+                        return evts;
                     }
-                ];
+                } catch (e) {
+                    console.warn("⚠️ [AdminSosSubstitutes] EventService.getAll('entreno') falló:", e.message);
+                }
+            }
+            // 4. FirebaseDB
+            if (window.FirebaseDB && window.FirebaseDB.entrenos) {
+                try {
+                    const evts = await window.FirebaseDB.entrenos.getAll();
+                    if (Array.isArray(evts) && evts.length > 0) {
+                        window._currentEntrenosCache = evts;
+                        return evts;
+                    }
+                } catch (e) {
+                    console.warn("⚠️ [AdminSosSubstitutes] FirebaseDB.entrenos.getAll() falló:", e.message);
+                }
+            }
+            // 5. Firestore directo sin ordenación restrictiva
+            const db = this._getDb();
+            if (db) {
+                try {
+                    const snap = await db.collection('entrenos').get();
+                    if (snap && snap.docs && snap.docs.length > 0) {
+                        const evts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                        window._currentEntrenosCache = evts;
+                        return evts;
+                    }
+                } catch (e) {
+                    console.warn("⚠️ [AdminSosSubstitutes] db.collection('entrenos').get() falló:", e.message);
+                }
+            }
+            return [];
+        }
+
+        /**
+         * Obtiene la lista cruda de americanas desde todas las fuentes
+         */
+        async _fetchRawAmericanas() {
+            // 1. Memoria previa
+            if (Array.isArray(window._currentAmericanasCache) && window._currentAmericanasCache.length > 0) {
+                return window._currentAmericanasCache;
+            }
+            // 2. Caché persistente CacheService
+            if (window.CacheService) {
+                try {
+                    const cached = await window.CacheService.get('americanas', 'all');
+                    if (Array.isArray(cached) && cached.length > 0) return cached;
+                } catch (_) {}
+            }
+            // 3. EventService
+            if (window.EventService && typeof window.EventService.getAll === 'function') {
+                try {
+                    const evts = await window.EventService.getAll('americana');
+                    if (Array.isArray(evts) && evts.length > 0) {
+                        window._currentAmericanasCache = evts;
+                        return evts;
+                    }
+                } catch (e) {
+                    console.warn("⚠️ [AdminSosSubstitutes] EventService.getAll('americana') falló:", e.message);
+                }
+            }
+            // 4. FirebaseDB
+            if (window.FirebaseDB && window.FirebaseDB.americanas) {
+                try {
+                    const evts = await window.FirebaseDB.americanas.getAll();
+                    if (Array.isArray(evts) && evts.length > 0) {
+                        window._currentAmericanasCache = evts;
+                        return evts;
+                    }
+                } catch (e) {
+                    console.warn("⚠️ [AdminSosSubstitutes] FirebaseDB.americanas.getAll() falló:", e.message);
+                }
+            }
+            // 5. Firestore directo
+            const db = this._getDb();
+            if (db) {
+                try {
+                    const snap = await db.collection('americanas').get();
+                    if (snap && snap.docs && snap.docs.length > 0) {
+                        const evts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                        window._currentAmericanasCache = evts;
+                        return evts;
+                    }
+                } catch (e) {
+                    console.warn("⚠️ [AdminSosSubstitutes] db.collection('americanas').get() falló:", e.message);
+                }
+            }
+            return [];
+        }
+
+        /**
+         * Carga entrenos y americanas que tengan plazas vacantes reales
+         */
+        async _loadIncompleteEvents() {
+            const list = [];
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+            // Ejecución en paralelo simultáneo de ambas fuentes para máxima velocidad
+            const [rawEntrenos, rawAmericanas] = await Promise.all([
+                this._fetchRawEntrenos(),
+                this._fetchRawAmericanas()
+            ]);
+
+            const processEvent = (e, type) => {
+                if (!e || !e.id) return;
+                const status = String(e.status || 'open').toLowerCase().trim();
+
+                // Descartar eventos finalizados o cancelados
+                if (status === 'cancelled' || status === 'cancelado' || status === 'anulado' ||
+                    status === 'finished' || status === 'finalizado' || status === 'completed') {
+                    return;
+                }
+
+                // Normalización de fecha
+                let dateStr = String(e.date || '').trim();
+                if (dateStr.includes('/')) {
+                    const parts = dateStr.split('/').map(p => p.trim());
+                    if (parts.length >= 2) {
+                        const day = parts[0].padStart(2, '0');
+                        const month = parts[1].padStart(2, '0');
+                        const year = parts[2] ? (parts[2].length === 2 ? '20' + parts[2] : parts[2]) : String(now.getFullYear());
+                        dateStr = `${year}-${month}-${day}`;
+                    }
+                }
+
+                // Si la fecha ya pasó y NO está explícitamente en open/live/pairing, omitir
+                const isActiveStatus = (status === 'open' || status === 'live' || status === 'pairing' || status === 'abierta');
+                if (dateStr && /^\d{4}-\d{2}-\d{2}$/.test(dateStr) && dateStr < todayStr && !isActiveStatus) {
+                    return;
+                }
+
+                // Cálculo robusto de capacidad y plazas libres
+                const maxCourts = parseInt(e.max_courts || e.courts, 10) || 4;
+                const maxPlayers = parseInt(e.max_players, 10) || (maxCourts * 4);
+
+                let currentCount = 0;
+                if (Array.isArray(e.players)) {
+                    currentCount = e.players.length;
+                } else if (Array.isArray(e.registeredPlayers)) {
+                    currentCount = e.registeredPlayers.length;
+                } else if (e.players && typeof e.players === 'object') {
+                    currentCount = Object.keys(e.players).length;
+                } else if (typeof e.participants_count === 'number') {
+                    currentCount = e.participants_count;
+                }
+
+                const freeSlots = Math.max(0, maxPlayers - currentCount);
+
+                // Normalización inteligente de categoría (male, mixed, female, open)
+                const rawCat = String(e.category || '').toLowerCase().trim();
+                const rawName = String(e.name || e.title || '').toLowerCase();
+                let category = 'open';
+                if (rawCat.includes('masc') || rawCat === 'male' || rawCat === 'chicos' || rawName.includes('masc') || rawName.includes('chico') || rawName.includes('hombre')) {
+                    category = 'male';
+                } else if (rawCat.includes('fem') || rawCat === 'female' || rawCat === 'chicas' || rawName.includes('fem') || rawName.includes('chica') || rawName.includes('mujer')) {
+                    category = 'female';
+                } else if (rawCat.includes('mixt') || rawCat === 'mixed' || rawName.includes('mixt')) {
+                    category = 'mixed';
+                }
+
+                if (freeSlots > 0) {
+                    list.push({
+                        id: e.id,
+                        type,
+                        name: (e.name || e.title || (type === 'entreno' ? 'Entreno Táctico' : 'Americana SomosPadel')).toUpperCase(),
+                        date: dateStr || e.date || 'Hoy',
+                        time: e.time || '19:30',
+                        court: e.court || e.pista || 'Pista Principal',
+                        category,
+                        levelMin: parseFloat(e.level_min || e.level || 3.0),
+                        levelMax: parseFloat(e.level_max || e.level || 4.5),
+                        maxPlayers,
+                        currentPlayers: currentCount,
+                        freeSlots,
+                        raw: e
+                    });
+                }
+            };
+
+            (rawEntrenos || []).forEach(e => processEvent(e, 'entreno'));
+            (rawAmericanas || []).forEach(e => processEvent(e, 'americana'));
+
+            // Ordenar por fecha y hora más cercana
+            list.sort((a, b) => {
+                const dA = `${a.date} ${a.time}`;
+                const dB = `${b.date} ${b.time}`;
+                return dA.localeCompare(dB);
+            });
+
+            return list;
+        }
+
+        /**
+         * Carga historial de rescates reales (status: 'filled') desde Firestore y caché local
+         */
+        async _loadRealRescuesHistory() {
+            const list = [];
+            const db = (typeof window !== 'undefined' && window.db) ? window.db : null;
+
+            if (db) {
+                try {
+                    const snap = await Promise.race([
+                        db.collection('sos_alerts').where('status', '==', 'filled').limit(15).get(),
+                        new Promise(resolve => setTimeout(() => resolve({ empty: true, forEach: () => {} }), 1500))
+                    ]);
+                    if (snap && !snap.empty) {
+                        snap.forEach(doc => {
+                            const d = doc.data();
+                            list.push({ ...d, id: doc.id });
+                        });
+                    }
+                } catch (e) {
+                    console.warn("⚠️ [AdminSosSubstitutes] Error no crítico leyendo rescates:", e.message);
+                }
             }
 
-            return filled;
+            // Si está vacío, consultar caché local real
+            if (list.length === 0 && this._getService() && typeof this._getService()._getCachedAlerts === 'function') {
+                try {
+                    const cached = this._getService()._getCachedAlerts();
+                    const filled = (cached || []).filter(a => a && a.status === 'filled');
+                    list.push(...filled);
+                } catch (_) {}
+            }
+
+            return list;
         }
 
         /**
@@ -139,145 +448,245 @@
          * @private
          */
         _renderDashboard() {
-            const activeCount = this.activeAlerts.length;
-            const subsCount = this.substitutes.length;
+            const activeSosCount = this.activeAlerts.length;
+            const incompleteCount = this.incompleteEvents.length;
+            const playersCount = this.realPlayers.length;
             const rescuedCount = this.rescuesHistory.length;
-            const coverageRatio = activeCount === 0 ? '100%' : '98.5%';
 
-            const filteredSubs = this._getFilteredSubstitutes();
+            const maleEventsCount = this.incompleteEvents.filter(e => {
+                const cat = String(e.category || '').toLowerCase();
+                const name = String(e.name || '').toLowerCase();
+                return cat === 'male' || cat.includes('masc') || name.includes('masc') || name.includes('chico') || cat === 'open';
+            }).length;
+            const mixedEventsCount = this.incompleteEvents.filter(e => {
+                const cat = String(e.category || '').toLowerCase();
+                const name = String(e.name || '').toLowerCase();
+                return cat === 'mixed' || cat.includes('mixt') || name.includes('mixt') || cat === 'open';
+            }).length;
+            const femEventsCount = this.incompleteEvents.filter(e => {
+                const cat = String(e.category || '').toLowerCase();
+                const name = String(e.name || '').toLowerCase();
+                return cat === 'female' || cat.includes('fem') || name.includes('fem') || name.includes('chica') || cat === 'open';
+            }).length;
+
+            const filteredPlayers = this._getFilteredPlayers();
+            const filteredEvents = this._getFilteredEvents();
 
             this.container.innerHTML = `
                 <div class="admin-sos-wrapper" style="
                     padding: 24px;
-                    max-width: 1400px;
+                    max-width: 1440px;
                     margin: 0 auto;
                     font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
                     color: #0f172a;
                     box-sizing: border-box;
                 ">
                     <!-- ========================================== -->
-                    <!-- A. CABECERA DE TELEMETRÍA SOS & KPIS       -->
+                    <!-- A. CABECERA: CONVOCATORIAS & MENSAJERÍA     -->
                     <!-- ========================================== -->
                     <div style="
                         background: linear-gradient(135deg, #090e1a 0%, #0f172a 60%, #1e293b 100%);
                         border: 1.5px solid rgba(239, 68, 68, 0.4);
                         box-shadow: 0 16px 36px -10px rgba(239, 68, 68, 0.25), 0 0 25px rgba(239, 68, 68, 0.1);
                         border-radius: 24px;
-                        padding: 26px 28px;
+                        padding: 28px 30px;
                         margin-bottom: 28px;
                         color: #ffffff;
                         position: relative;
                         overflow: hidden;
                     ">
                         <!-- Brillo estético de fondo -->
-                        <div style="position: absolute; top: -60px; right: -60px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(239, 68, 68, 0.25) 0%, rgba(239, 68, 68, 0) 70%); pointer-events: none;"></div>
+                        <div style="position: absolute; top: -70px; right: -70px; width: 260px; height: 260px; background: radial-gradient(circle, rgba(239, 68, 68, 0.3) 0%, rgba(239, 68, 68, 0) 70%); pointer-events: none;"></div>
 
                         <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px; position: relative; z-index: 2;">
-                            <div style="max-width: 720px;">
-                                <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(239, 68, 68, 0.18); border: 1px solid rgba(239, 68, 68, 0.45); padding: 4px 12px; border-radius: 100px; margin-bottom: 12px;">
-                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #EF4444; box-shadow: 0 0 8px #EF4444; animation: sosPulse 1.4s infinite;"></span>
-                                    <span style="font-size: 0.72rem; font-weight: 900; letter-spacing: 0.8px; text-transform: uppercase; color: #fca5a5;">Módulo de Contingencias & Bajas</span>
+                            <div style="max-width: 760px;">
+                                <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); padding: 4px 14px; border-radius: 100px; margin-bottom: 12px;">
+                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #EF4444; box-shadow: 0 0 10px #EF4444; animation: sosPulse 1.4s infinite;"></span>
+                                    <span style="font-size: 0.72rem; font-weight: 900; letter-spacing: 0.8px; text-transform: uppercase; color: #fca5a5;">Módulo Oficial de Convocatorias & Bajas</span>
                                 </div>
                                 <h1 style="margin: 0 0 8px 0; font-size: 1.95rem; font-weight: 950; letter-spacing: -0.5px; color: #ffffff; display: flex; align-items: center; gap: 12px;">
-                                    <span>🚨 BOLSA DE SUPLENTES SOS & GUARDIA ACTIVA</span>
+                                    <span>🚨 CONVOCATORIAS, SUPLENTES SOS Y MENSAJERÍA MASIVA</span>
                                 </h1>
                                 <p style="margin: 0; font-size: 0.95rem; color: #94a3b8; line-height: 1.5; font-weight: 450;">
-                                    Gestión de emergencias de última hora, suplentes de guardia y asignación inteligente para Americanas y Entrenos.
+                                    Herramienta para Capitanes y Super Admin: rellena entrenos masculinos y mixtos, publica alertas SOS y manda mensajes directos a todos los jugadores del club.
                                 </p>
                             </div>
 
-                            <!-- Botón Acción Principal -->
-                            <div>
-                                <button id="btn-open-create-sos-modal" style="
-                                    background: linear-gradient(135deg, #EF4444 0%, #b91c1c 100%);
-                                    color: #ffffff;
+                            <!-- Botones Acción Principal -->
+                            <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+                                <button id="btn-open-broadcast-modal" style="
+                                    background: #CCFF00;
+                                    color: #000000;
                                     border: none;
-                                    padding: 14px 24px;
+                                    padding: 13px 22px;
                                     border-radius: 14px;
-                                    font-size: 0.95rem;
-                                    font-weight: 900;
+                                    font-size: 0.92rem;
+                                    font-weight: 950;
                                     cursor: pointer;
                                     display: inline-flex;
                                     align-items: center;
                                     gap: 10px;
-                                    box-shadow: 0 8px 24px rgba(239, 68, 68, 0.45), 0 0 15px rgba(239, 68, 68, 0.3);
-                                    transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease;
-                                " onmouseover="this.style.transform='translateY(-2px) scale(1.02)';" onmouseout="this.style.transform='translateY(0) scale(1)';">
+                                    box-shadow: 0 8px 24px rgba(204, 255, 0, 0.4);
+                                    transition: transform 0.15s ease;
+                                " onmouseover="this.style.transform='scale(1.03)';" onmouseout="this.style.transform='scale(1)';">
                                     <i class="fas fa-bullhorn" style="font-size: 1.1rem;"></i>
-                                    <span>PUBLICAR ALERTA SOS URGENTE</span>
+                                    <span>ENVIAR MENSAJE A JUGADORES</span>
+                                </button>
+
+                                <button id="btn-open-create-sos-modal" style="
+                                    background: linear-gradient(135deg, #EF4444 0%, #b91c1c 100%);
+                                    color: #ffffff;
+                                    border: none;
+                                    padding: 13px 20px;
+                                    border-radius: 14px;
+                                    font-size: 0.92rem;
+                                    font-weight: 900;
+                                    cursor: pointer;
+                                    display: inline-flex;
+                                    align-items: center;
+                                    gap: 8px;
+                                    box-shadow: 0 8px 24px rgba(239, 68, 68, 0.35);
+                                    transition: transform 0.15s ease;
+                                " onmouseover="this.style.transform='scale(1.03)';" onmouseout="this.style.transform='scale(1)';">
+                                    <i class="fas fa-fire"></i>
+                                    <span>PUBLICAR ALERTA SOS</span>
+                                </button>
+
+                                <button id="btn-refresh-sos-data" title="Actualizar Datos en Vivo" style="
+                                    background: rgba(255, 255, 255, 0.1);
+                                    color: #ffffff;
+                                    border: 1px solid rgba(255, 255, 255, 0.2);
+                                    width: 44px;
+                                    height: 44px;
+                                    border-radius: 12px;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    cursor: pointer;
+                                    transition: background 0.15s ease;
+                                " onmouseover="this.style.background='rgba(255, 255, 255, 0.2)';" onmouseout="this.style.background='rgba(255, 255, 255, 0.1)';">
+                                    <i class="fas fa-sync-alt"></i>
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Grid de KPIs Rápidos -->
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 20px;">
-                            <!-- KPI 1 -->
+                        <!-- Grid de KPIs Reales -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 20px;">
                             <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 14px 18px;">
-                                <div style="font-size: 0.72rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Alertas Activas Urgentes</div>
+                                <div style="font-size: 0.72rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Alertas SOS Activas</div>
                                 <div style="display: flex; align-items: baseline; gap: 8px;">
-                                    <span style="font-size: 1.85rem; font-weight: 950; color: ${activeCount > 0 ? '#EF4444' : '#CCFF00'};">${activeCount}</span>
-                                    <span style="font-size: 0.78rem; font-weight: 700; color: #cbd5e1;">${activeCount === 1 ? 'incidencia' : 'incidencias'}</span>
+                                    <span style="font-size: 1.85rem; font-weight: 950; color: ${activeSosCount > 0 ? '#EF4444' : '#CCFF00'};">${activeSosCount}</span>
+                                    <span style="font-size: 0.78rem; font-weight: 700; color: #cbd5e1;">en curso</span>
                                 </div>
                             </div>
-                            <!-- KPI 2 -->
+
                             <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 14px 18px;">
-                                <div style="font-size: 0.72rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Suplentes en Guardia Hoy</div>
+                                <div style="font-size: 0.72rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Entrenos con Huecos</div>
                                 <div style="display: flex; align-items: baseline; gap: 8px;">
-                                    <span style="font-size: 1.85rem; font-weight: 950; color: #38BDF8;">${subsCount}</span>
-                                    <span style="font-size: 0.78rem; font-weight: 700; color: #cbd5e1;">disponibles</span>
+                                    <span style="font-size: 1.85rem; font-weight: 950; color: #f59e0b;">${incompleteCount}</span>
+                                    <span style="font-size: 0.78rem; font-weight: 700; color: #cbd5e1;">requieren relleno</span>
                                 </div>
                             </div>
-                            <!-- KPI 3 -->
+
+                            <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 14px 18px;">
+                                <div style="font-size: 0.72rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Jugadores Reales en BBDD</div>
+                                <div style="display: flex; align-items: baseline; gap: 8px;">
+                                    <span style="font-size: 1.85rem; font-weight: 950; color: #38BDF8;">${playersCount}</span>
+                                    <span style="font-size: 0.78rem; font-weight: 700; color: #cbd5e1;">contactables</span>
+                                </div>
+                            </div>
+
                             <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 14px 18px;">
                                 <div style="font-size: 0.72rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Plazas Rescatadas</div>
                                 <div style="display: flex; align-items: baseline; gap: 8px;">
-                                    <span style="font-size: 1.85rem; font-weight: 950; color: #F59E0B;">${rescuedCount}</span>
-                                    <span style="font-size: 0.78rem; font-weight: 700; color: #cbd5e1;">éxitos recientes</span>
-                                </div>
-                            </div>
-                            <!-- KPI 4 -->
-                            <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 14px 18px;">
-                                <div style="font-size: 0.72rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Ratio de Cobertura</div>
-                                <div style="display: flex; align-items: baseline; gap: 8px;">
-                                    <span style="font-size: 1.85rem; font-weight: 950; color: #CCFF00;">${coverageRatio}</span>
-                                    <span style="font-size: 0.78rem; font-weight: 700; color: #cbd5e1;">efectividad</span>
+                                    <span style="font-size: 1.85rem; font-weight: 950; color: #10B981;">${rescuedCount}</span>
+                                    <span style="font-size: 0.78rem; font-weight: 700; color: #cbd5e1;">éxitos reales</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- ========================================== -->
-                    <!-- B. PANEL DE ALERTAS DE EMERGENCIA ACTIVAS   -->
-                    <!-- ========================================== -->
+                    <!-- ============================================================ -->
+                    <!-- B. SECCIÓN: ENTRENOS Y AMERICANAS CON PLAZAS LIBRES (RELLENAR)-->
+                    <!-- ============================================================ -->
+                    <div style="margin-bottom: 34px;">
+                        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px; margin-bottom: 16px;">
+                            <div>
+                                <h2 style="margin: 0; font-size: 1.35rem; font-weight: 900; color: #0f172a; display: flex; align-items: center; gap: 10px;">
+                                    <span style="background: #fef3c7; color: #b45309; width: 34px; height: 34px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.05rem;">⚡</span>
+                                    <span>Entrenos y Americanas con Plazas Libres (${this.incompleteEvents.length})</span>
+                                </h2>
+                                <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #64748b;">
+                                    Selecciona un entreno masculino o mixto para mandar difusión masiva o asignar un jugador real con 1 clic.
+                                </p>
+                            </div>
+
+                            <!-- Filtro de Categoría de Entreno -->
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <button class="btn-evt-filter ${this.filterEventCat === 'all' ? 'active' : ''}" data-cat="all" style="
+                                    background: ${this.filterEventCat === 'all' ? '#0f172a' : '#f1f5f9'};
+                                    color: ${this.filterEventCat === 'all' ? '#ffffff' : '#475569'};
+                                    border: none; padding: 6px 14px; border-radius: 8px; font-size: 0.78rem; font-weight: 850; cursor: pointer;
+                                ">Todos (${this.incompleteEvents.length})</button>
+
+                                <button class="btn-evt-filter ${this.filterEventCat === 'male' ? 'active' : ''}" data-cat="male" style="
+                                    background: ${this.filterEventCat === 'male' ? '#0284c7' : '#e0f2fe'};
+                                    color: ${this.filterEventCat === 'male' ? '#ffffff' : '#0369a1'};
+                                    border: none; padding: 6px 14px; border-radius: 8px; font-size: 0.78rem; font-weight: 850; cursor: pointer;
+                                ">👦 Masculino (${maleEventsCount})</button>
+
+                                <button class="btn-evt-filter ${this.filterEventCat === 'mixed' ? 'active' : ''}" data-cat="mixed" style="
+                                    background: ${this.filterEventCat === 'mixed' ? '#7c3aed' : '#f3e8ff'};
+                                    color: ${this.filterEventCat === 'mixed' ? '#ffffff' : '#6d28d9'};
+                                    border: none; padding: 6px 14px; border-radius: 8px; font-size: 0.78rem; font-weight: 850; cursor: pointer;
+                                ">👫 Mixto (${mixedEventsCount})</button>
+
+                                <button class="btn-evt-filter ${this.filterEventCat === 'female' ? 'active' : ''}" data-cat="female" style="
+                                    background: ${this.filterEventCat === 'female' ? '#db2777' : '#fce7f3'};
+                                    color: ${this.filterEventCat === 'female' ? '#ffffff' : '#be185d'};
+                                    border: none; padding: 6px 14px; border-radius: 8px; font-size: 0.78rem; font-weight: 850; cursor: pointer;
+                                ">👧 Femenino (${femEventsCount})</button>
+                            </div>
+                        </div>
+
+                        ${filteredEvents.length === 0 ? `
+                            <div style="background: #ffffff; border: 1.5px dashed #cbd5e1; border-radius: 20px; padding: 36px 20px; text-align: center; color: #64748b;">
+                                <div style="font-size: 2.2rem; margin-bottom: 8px;">🎾✅</div>
+                                <h3 style="margin: 0 0 6px 0; font-size: 1.1rem; font-weight: 850; color: #0f172a;">No hay entrenos incompletos con este filtro</h3>
+                                <p style="margin: 0; font-size: 0.85rem; color: #64748b;">Todos los entrenos seleccionados tienen sus plazas cubiertas o no hay convocatorias activas.</p>
+                            </div>
+                        ` : `
+                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 18px;">
+                                ${filteredEvents.map(evt => this._renderIncompleteEventCard(evt)).join('')}
+                            </div>
+                        `}
+                    </div>
+
+                    <!-- ============================================================ -->
+                    <!-- C. SECCIÓN: ALERTAS SOS ACTIVAS EN VIVO (URGENCIAS REALES)    -->
+                    <!-- ============================================================ -->
                     <div style="margin-bottom: 34px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                             <div>
                                 <h2 style="margin: 0; font-size: 1.35rem; font-weight: 900; color: #0f172a; display: flex; align-items: center; gap: 8px;">
                                     <i class="fas fa-triangle-exclamation" style="color: #EF4444;"></i>
-                                    <span>Llamadas de Emergencia Activas (${activeCount})</span>
+                                    <span>Llamadas de Emergencia SOS Activas (${this.activeAlerts.length})</span>
                                 </h2>
-                                <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #64748b;">Bajas de última hora esperando suplente. Asigna un jugador manual o espera postulación.</p>
+                                <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #64748b;">Alertas publicadas activas en la App de los jugadores esperando suplente.</p>
                             </div>
-                            ${activeCount > 0 ? `
+                            ${this.activeAlerts.length > 0 ? `
                                 <span style="background: rgba(239, 68, 68, 0.12); color: #b91c1c; font-size: 0.75rem; font-weight: 850; padding: 4px 12px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.25);">
                                     ⚡ En Radar de Jugadores
                                 </span>
                             ` : ''}
                         </div>
 
-                        ${activeCount === 0 ? `
-                            <div style="
-                                background: #ffffff;
-                                border: 1.5px dashed #cbd5e1;
-                                border-radius: 20px;
-                                padding: 42px 24px;
-                                text-align: center;
-                                color: #64748b;
-                            ">
-                                <div style="font-size: 2.8rem; margin-bottom: 12px;">🎾🟢</div>
-                                <h3 style="margin: 0 0 6px 0; font-size: 1.15rem; font-weight: 850; color: #0f172a;">Todas las pistas cubiertas al 100%</h3>
-                                <p style="margin: 0 auto; max-width: 480px; font-size: 0.88rem; color: #64748b;">
-                                    No hay avisos de bajas de última hora en este instante. Si surge un hueco imprevisto, pulsa el botón superior para lanzar una alerta SOS a la comunidad.
+                        ${this.activeAlerts.length === 0 ? `
+                            <div style="background: #ffffff; border: 1.5px dashed #cbd5e1; border-radius: 20px; padding: 32px 20px; text-align: center; color: #64748b;">
+                                <div style="font-size: 2.2rem; margin-bottom: 8px;">🎾🟢</div>
+                                <h3 style="margin: 0 0 6px 0; font-size: 1.1rem; font-weight: 850; color: #0f172a;">Sin alertas SOS urgentes activas</h3>
+                                <p style="margin: 0 auto; max-width: 480px; font-size: 0.85rem; color: #64748b;">
+                                    No hay incidencias abiertas en este instante. Si surge una baja imprevista, pulsa "Publicar Alerta SOS" o envía un mensaje masivo a los jugadores.
                                 </p>
                             </div>
                         ` : `
@@ -287,9 +696,9 @@
                         `}
                     </div>
 
-                    <!-- ========================================== -->
-                    <!-- C. BOLSA DE GUARDIA EN TIEMPO REAL         -->
-                    <!-- ========================================== -->
+                    <!-- ============================================================ -->
+                    <!-- D. SECCIÓN: DIRECTORIO DE JUGADORES REALES & BOLSA DE GUARDIA -->
+                    <!-- ============================================================ -->
                     <div style="
                         background: #ffffff;
                         border: 1px solid #e2e8f0;
@@ -301,145 +710,370 @@
                         <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px; margin-bottom: 20px;">
                             <div>
                                 <h2 style="margin: 0; font-size: 1.35rem; font-weight: 900; color: #0f172a; display: flex; align-items: center; gap: 8px;">
-                                    <i class="fas fa-shield-halved" style="color: #0284c7;"></i>
-                                    <span>Bolsa de Guardia en Tiempo Real ("Jugadores Disponibles Hoy")</span>
+                                    <i class="fas fa-users" style="color: #0284c7;"></i>
+                                    <span>Directorio de Jugadores Reales (${this.realPlayers.length}) & Contacto Rápido</span>
                                 </h2>
-                                <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #64748b;">Jugadores del club listos para acudir a pista en caso de imprevisto.</p>
+                                <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #64748b;">
+                                    Filtra por chicos, chicas o lado para enviar WhatsApp personalizado o convocar directamente a pista.
+                                </p>
                             </div>
 
-                            <!-- Filtros y Buscador -->
+                            <!-- Filtros y Buscador de Jugadores -->
                             <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+                                <!-- Filtro Género -->
                                 <div style="display: flex; background: #f1f5f9; padding: 3px; border-radius: 10px; border: 1px solid #e2e8f0;">
-                                    <button class="btn-sub-filter ${this.filterSide === 'all' ? 'active' : ''}" data-side="all" style="
-                                        background: ${this.filterSide === 'all' ? '#ffffff' : 'transparent'};
-                                        border: none;
-                                        padding: 6px 14px;
-                                        border-radius: 8px;
-                                        font-size: 0.78rem;
-                                        font-weight: 850;
-                                        color: ${this.filterSide === 'all' ? '#0f172a' : '#64748b'};
-                                        cursor: pointer;
-                                        box-shadow: ${this.filterSide === 'all' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none'};
+                                    <button class="btn-player-gender ${this.filterGender === 'all' ? 'active' : ''}" data-gender="all" style="
+                                        background: ${this.filterGender === 'all' ? '#ffffff' : 'transparent'};
+                                        border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 850;
+                                        color: ${this.filterGender === 'all' ? '#0f172a' : '#64748b'}; cursor: pointer;
                                     ">Todos</button>
-                                    <button class="btn-sub-filter ${this.filterSide === 'drive' ? 'active' : ''}" data-side="drive" style="
+                                    <button class="btn-player-gender ${this.filterGender === 'chico' ? 'active' : ''}" data-gender="chico" style="
+                                        background: ${this.filterGender === 'chico' ? '#ffffff' : 'transparent'};
+                                        border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 850;
+                                        color: ${this.filterGender === 'chico' ? '#0284c7' : '#64748b'}; cursor: pointer;
+                                    ">👦 Chicos</button>
+                                    <button class="btn-player-gender ${this.filterGender === 'chica' ? 'active' : ''}" data-gender="chica" style="
+                                        background: ${this.filterGender === 'chica' ? '#ffffff' : 'transparent'};
+                                        border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 850;
+                                        color: ${this.filterGender === 'chica' ? '#db2777' : '#64748b'}; cursor: pointer;
+                                    ">👧 Chicas</button>
+                                </div>
+
+                                <!-- Filtro Lado -->
+                                <div style="display: flex; background: #f1f5f9; padding: 3px; border-radius: 10px; border: 1px solid #e2e8f0;">
+                                    <button class="btn-player-side ${this.filterSide === 'all' ? 'active' : ''}" data-side="all" style="
+                                        background: ${this.filterSide === 'all' ? '#ffffff' : 'transparent'};
+                                        border: none; padding: 6px 10px; border-radius: 8px; font-size: 0.78rem; font-weight: 850;
+                                        color: ${this.filterSide === 'all' ? '#0f172a' : '#64748b'}; cursor: pointer;
+                                    ">Lado: Todos</button>
+                                    <button class="btn-player-side ${this.filterSide === 'drive' ? 'active' : ''}" data-side="drive" style="
                                         background: ${this.filterSide === 'drive' ? '#ffffff' : 'transparent'};
-                                        border: none;
-                                        padding: 6px 14px;
-                                        border-radius: 8px;
-                                        font-size: 0.78rem;
-                                        font-weight: 850;
-                                        color: ${this.filterSide === 'drive' ? '#0f172a' : '#64748b'};
-                                        cursor: pointer;
-                                        box-shadow: ${this.filterSide === 'drive' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none'};
+                                        border: none; padding: 6px 10px; border-radius: 8px; font-size: 0.78rem; font-weight: 850;
+                                        color: ${this.filterSide === 'drive' ? '#0f172a' : '#64748b'}; cursor: pointer;
                                     ">Drive</button>
-                                    <button class="btn-sub-filter ${this.filterSide === 'reves' ? 'active' : ''}" data-side="reves" style="
+                                    <button class="btn-player-side ${this.filterSide === 'reves' ? 'active' : ''}" data-side="reves" style="
                                         background: ${this.filterSide === 'reves' ? '#ffffff' : 'transparent'};
-                                        border: none;
-                                        padding: 6px 14px;
-                                        border-radius: 8px;
-                                        font-size: 0.78rem;
-                                        font-weight: 850;
-                                        color: ${this.filterSide === 'reves' ? '#0f172a' : '#64748b'};
-                                        cursor: pointer;
-                                        box-shadow: ${this.filterSide === 'reves' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none'};
+                                        border: none; padding: 6px 10px; border-radius: 8px; font-size: 0.78rem; font-weight: 850;
+                                        color: ${this.filterSide === 'reves' ? '#0f172a' : '#64748b'}; cursor: pointer;
                                     ">Revés</button>
                                 </div>
 
+                                <!-- Buscador -->
                                 <div style="position: relative;">
                                     <i class="fas fa-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.85rem;"></i>
-                                    <input type="text" id="admin-sos-search-input" placeholder="Buscar por nombre..." value="${this.searchQuery}" style="
-                                        height: 38px;
-                                        padding: 6px 12px 6px 34px;
-                                        border-radius: 10px;
-                                        border: 1px solid #cbd5e1;
-                                        font-size: 0.85rem;
-                                        min-width: 200px;
+                                    <input type="text" id="admin-sos-search-input" placeholder="Buscar jugador o teléfono..." value="${this.searchQuery}" style="
+                                        height: 38px; padding: 6px 12px 6px 34px; border-radius: 10px; border: 1px solid #cbd5e1; font-size: 0.85rem; min-width: 220px;
                                     ">
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Tabla de Suplentes -->
+                        <!-- Tabla de Jugadores Reales -->
                         <div style="overflow-x: auto;">
                             <table style="width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.9rem;">
                                 <thead>
                                     <tr style="background: #f8fafc; color: #475569; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.6px;">
-                                        <th style="padding: 12px 16px; text-align: left; border-top-left-radius: 12px; border-bottom: 1px solid #e2e8f0;">Jugador</th>
+                                        <th style="padding: 12px 16px; text-align: left; border-top-left-radius: 12px; border-bottom: 1px solid #e2e8f0;">Jugador Real</th>
+                                        <th style="padding: 12px 16px; text-align: center; border-bottom: 1px solid #e2e8f0;">Género</th>
                                         <th style="padding: 12px 16px; text-align: center; border-bottom: 1px solid #e2e8f0;">Nivel</th>
-                                        <th style="padding: 12px 16px; text-align: center; border-bottom: 1px solid #e2e8f0;">Posición</th>
-                                        <th style="padding: 12px 16px; text-align: left; border-bottom: 1px solid #e2e8f0;">Franja Horaria</th>
+                                        <th style="padding: 12px 16px; text-align: center; border-bottom: 1px solid #e2e8f0;">Lado</th>
                                         <th style="padding: 12px 16px; text-align: center; border-bottom: 1px solid #e2e8f0;">Estado</th>
-                                        <th style="padding: 12px 16px; text-align: right; border-top-right-radius: 12px; border-bottom: 1px solid #e2e8f0;">Acción Directa</th>
+                                        <th style="padding: 12px 16px; text-align: right; border-top-right-radius: 12px; border-bottom: 1px solid #e2e8f0;">Acciones de Convocatoria</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${filteredSubs.length === 0 ? `
+                                    ${filteredPlayers.length === 0 ? `
                                         <tr>
                                             <td colspan="6" style="padding: 32px; text-align: center; color: #94a3b8;">
-                                                No se encontraron suplentes con los filtros seleccionados.
+                                                No se encontraron jugadores con los filtros seleccionados.
                                             </td>
                                         </tr>
-                                    ` : filteredSubs.map(sub => this._renderSubstituteRow(sub)).join('')}
+                                    ` : filteredPlayers.slice(0, 50).map(player => this._renderPlayerRow(player)).join('')}
                                 </tbody>
                             </table>
+                            ${filteredPlayers.length > 50 ? `
+                                <div style="padding: 12px; text-align: center; font-size: 0.8rem; color: #64748b; background: #f8fafc; border-top: 1px solid #e2e8f0;">
+                                    Mostrando los primeros 50 jugadores de ${filteredPlayers.length}. Usa el buscador para afinar.
+                                </div>
+                            ` : ''}
                         </div>
                     </div>
 
-                    <!-- ========================================== -->
-                    <!-- D. HISTORIAL DE RESCATES                   -->
-                    <!-- ========================================== -->
-                    <div style="
-                        background: #ffffff;
-                        border: 1px solid #e2e8f0;
-                        border-radius: 22px;
-                        padding: 24px;
-                        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-                    ">
+                    <!-- ============================================================ -->
+                    <!-- E. SECCIÓN: HISTORIAL DE RESCATES REALES                      -->
+                    <!-- ============================================================ -->
+                    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 22px; padding: 24px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);">
                         <h2 style="margin: 0 0 16px 0; font-size: 1.25rem; font-weight: 900; color: #0f172a; display: flex; align-items: center; gap: 8px;">
                             <i class="fas fa-clock-rotate-left" style="color: #10b981;"></i>
-                            <span>Historial de Rescates & Coberturas Recientes</span>
+                            <span>Historial de Rescates & Plazas SOS Cubiertas</span>
                         </h2>
 
-                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px;">
-                            ${this.rescuesHistory.slice(0, 6).map(item => `
-                                <div style="
-                                    background: #f8fafc;
-                                    border: 1px solid #e2e8f0;
-                                    border-radius: 14px;
-                                    padding: 14px 16px;
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: space-between;
-                                    gap: 12px;
-                                ">
-                                    <div>
-                                        <div style="font-size: 0.88rem; font-weight: 850; color: #0f172a;">${this._escapeHtml(item.eventName || 'Evento')}</div>
-                                        <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">
-                                            ${item.date} ${item.time ? '• ' + item.time : ''} • ${this._escapeHtml(item.court || 'Pista')}
+                        ${this.rescuesHistory.length === 0 ? `
+                            <div style="padding: 20px; text-align: center; color: #94a3b8; font-size: 0.85rem;">
+                                No se registran rescates cerrados todavía. Cuando un jugador cubra una plaza SOS, aparecerá registrado aquí.
+                            </div>
+                        ` : `
+                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px;">
+                                ${this.rescuesHistory.slice(0, 6).map(item => `
+                                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                                        <div>
+                                            <div style="font-size: 0.88rem; font-weight: 850; color: #0f172a;">${this._escapeHtml(item.eventName || 'Evento')}</div>
+                                            <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">
+                                                ${item.date || 'Reciente'} ${item.time ? '• ' + item.time : ''} • ${this._escapeHtml(item.court || 'Pista')}
+                                            </div>
+                                            <div style="font-size: 0.8rem; font-weight: 750; color: #0284c7; margin-top: 4px;">
+                                                👤 Rescatado por: <strong>${this._escapeHtml(item.assignedPlayer?.name || 'Jugador')}</strong>
+                                            </div>
                                         </div>
-                                        <div style="font-size: 0.8rem; font-weight: 750; color: #0284c7; margin-top: 4px;">
-                                            👤 Cubierto por: <strong>${this._escapeHtml(item.assignedPlayer?.name || 'Suplente')}</strong>
+                                        <div style="text-align: right;">
+                                            <span style="background: rgba(16, 185, 129, 0.15); color: #047857; font-weight: 950; font-size: 0.72rem; padding: 4px 8px; border-radius: 6px;">
+                                                +${item.bonusXp || 150} XP
+                                            </span>
                                         </div>
                                     </div>
-                                    <div style="text-align: right;">
-                                        <span style="background: rgba(16, 185, 129, 0.15); color: #047857; font-weight: 950; font-size: 0.72rem; padding: 4px 8px; border-radius: 6px;">
-                                            +${item.bonusXp || 150} XP
-                                        </span>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
+                                `).join('')}
+                            </div>
+                        `}
                     </div>
                 </div>
 
-                <!-- MODALES ADMINISTRATIVOS -->
+                <!-- MODALES ROOT -->
                 <div id="admin-sos-modal-root"></div>
             `;
         }
 
         /**
-         * Renderiza una tarjeta de alerta activa
-         * @private
+         * Renderiza la tarjeta de un entreno o americana que necesita jugadores
+         */
+        _renderIncompleteEventCard(evt) {
+            const isMale = evt.category === 'male';
+            const isMixed = evt.category === 'mixed';
+            const isFemale = evt.category === 'female';
+
+            let catBadge = `<span style="background:#e2e8f0; color:#475569; padding:3px 8px; border-radius:6px; font-size:0.7rem; font-weight:850;">OPEN / TODOS</span>`;
+            if (isMale) {
+                catBadge = `<span style="background:rgba(2,132,199,0.15); color:#0284c7; border:1px solid rgba(2,132,199,0.3); padding:3px 8px; border-radius:6px; font-size:0.72rem; font-weight:900;">👦 MASCULINO</span>`;
+            } else if (isMixed) {
+                catBadge = `<span style="background:rgba(124,58,237,0.15); color:#7c3aed; border:1px solid rgba(124,58,237,0.3); padding:3px 8px; border-radius:6px; font-size:0.72rem; font-weight:900;">👫 MIXTO</span>`;
+            } else if (isFemale) {
+                catBadge = `<span style="background:rgba(219,39,119,0.15); color:#db2777; border:1px solid rgba(219,39,119,0.3); padding:3px 8px; border-radius:6px; font-size:0.72rem; font-weight:900;">👧 FEMENINO</span>`;
+            }
+
+            const typeLabel = evt.type === 'entreno' ? 'ENTRENO' : 'AMERICANA';
+
+            return `
+                <div class="incomplete-event-card" style="
+                    background: #ffffff;
+                    border: 1.5px solid #cbd5e1;
+                    border-radius: 18px;
+                    padding: 18px;
+                    box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                ">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 10px;">
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span style="background: #0f172a; color: #fff; font-size: 0.68rem; font-weight: 900; padding: 2px 7px; border-radius: 6px;">${typeLabel}</span>
+                                ${catBadge}
+                            </div>
+                            <span style="background: #fee2e2; color: #dc2626; font-size: 0.72rem; font-weight: 950; padding: 3px 8px; border-radius: 8px; border: 1px solid #fca5a5;">
+                                ¡FALTA ${evt.freeSlots} ${evt.freeSlots === 1 ? 'PLAZA' : 'PLAZAS'}!
+                            </span>
+                        </div>
+
+                        <h3 style="margin: 0 0 8px 0; font-size: 1.05rem; font-weight: 900; color: #0f172a; line-height: 1.3;">
+                            ${this._escapeHtml(evt.name)}
+                        </h3>
+
+                        <!-- Info Detallada -->
+                        <div style="background: #f8fafc; border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; font-size: 0.8rem; line-height: 1.6; color: #334155;">
+                            <div><i class="far fa-calendar" style="width:16px; color:#64748b;"></i> <strong>Fecha:</strong> ${evt.date} • ${evt.time}h</div>
+                            <div><i class="fas fa-table-tennis-paddle-ball" style="width:16px; color:#64748b;"></i> <strong>Pista:</strong> ${this._escapeHtml(evt.court)}</div>
+                            <div><i class="fas fa-chart-line" style="width:16px; color:#64748b;"></i> <strong>Nivel:</strong> ${evt.levelMin.toFixed(2)} - ${evt.levelMax.toFixed(2)}</div>
+                            <div><i class="fas fa-users" style="width:16px; color:#64748b;"></i> <strong>Inscritos:</strong> <span style="font-weight: 850; color: #0f172a;">${evt.currentPlayers}</span> / ${evt.maxPlayers}</div>
+                        </div>
+                    </div>
+
+                    <!-- Botones de Acción Rápida -->
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <button class="btn-broadcast-for-event" data-event-id="${evt.id}" data-event-type="${evt.type}" data-event-name="${this._escapeHtml(evt.name)}" data-category="${evt.category}" data-date="${evt.date}" data-time="${evt.time}" data-court="${this._escapeHtml(evt.court)}" data-level-min="${evt.levelMin}" data-level-max="${evt.levelMax}" data-free-slots="${evt.freeSlots}" style="
+                            background: #0f172a;
+                            color: #CCFF00;
+                            border: 1px solid rgba(204, 255, 0, 0.4);
+                            padding: 9px 12px;
+                            border-radius: 10px;
+                            font-size: 0.82rem;
+                            font-weight: 900;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 8px;
+                            transition: all 0.15s ease;
+                        " onmouseover="this.style.background='#1e293b';" onmouseout="this.style.background='#0f172a';">
+                            <i class="fas fa-bullhorn"></i>
+                            <span>Difundir Mensaje a ${isMale ? 'Chicos' : (isMixed ? 'Mixtos' : 'Jugadores')}</span>
+                        </button>
+
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn-assign-player-to-event" data-event-id="${evt.id}" data-event-type="${evt.type}" data-event-name="${this._escapeHtml(evt.name)}" style="
+                                flex: 1;
+                                background: #f1f5f9;
+                                color: #0f172a;
+                                border: 1px solid #cbd5e1;
+                                padding: 8px 10px;
+                                border-radius: 8px;
+                                font-size: 0.78rem;
+                                font-weight: 850;
+                                cursor: pointer;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                gap: 6px;
+                            " onmouseover="this.style.background='#e2e8f0';" onmouseout="this.style.background='#f1f5f9';">
+                                <i class="fas fa-user-plus" style="color: #0284c7;"></i>
+                                <span>Asignar Jugador</span>
+                            </button>
+
+                            <button class="btn-create-sos-for-event" data-event-id="${evt.id}" data-event-type="${evt.type}" data-event-name="${this._escapeHtml(evt.name)}" data-date="${evt.date}" data-time="${evt.time}" data-court="${this._escapeHtml(evt.court)}" data-level-min="${evt.levelMin}" data-level-max="${evt.levelMax}" title="Lanzar Alerta SOS Urgente (+150 XP)" style="
+                                background: rgba(239, 68, 68, 0.1);
+                                color: #b91c1c;
+                                border: 1px solid rgba(239, 68, 68, 0.25);
+                                padding: 8px 12px;
+                                border-radius: 8px;
+                                font-size: 0.78rem;
+                                font-weight: 850;
+                                cursor: pointer;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                gap: 6px;
+                            " onmouseover="this.style.background='rgba(239, 68, 68, 0.2)';" onmouseout="this.style.background='rgba(239, 68, 68, 0.1)';">
+                                <i class="fas fa-fire"></i>
+                                <span>SOS +150 XP</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        /**
+         * Renderiza una fila de jugador real en la tabla
+         */
+        _renderPlayerRow(player) {
+            const side = this._formatSide(player.side);
+            const levelVal = player.level.toFixed(2);
+            const phone = player.phone.replace(/[^0-9]/g, '');
+            const isMale = player.gender === 'chico';
+
+            // Mensaje proactivo de WhatsApp para convocar
+            const firstName = player.name.split(' ')[0];
+            const waText = encodeURIComponent(
+                `¡Hola ${firstName}! 🎾 Te contactamos de SomosPádel BCN. Tenemos un hueco disponible en pista para entreno/partido de tu nivel (${levelVal}). ¿Te apetece jugar? ¡Confírmanos por aquí o reserva tu plaza en la App! 🏆`
+            );
+
+            let waHref = '#';
+            let waClick = '';
+            if (phone) {
+                const fullPhone = phone.startsWith('34') ? phone : `34${phone}`;
+                waHref = `https://wa.me/${fullPhone}?text=${waText}`;
+            } else {
+                waClick = `alert('⚠️ El jugador ${this._escapeHtml(player.name)} no tiene teléfono registrado.'); return false;`;
+            }
+
+            return `
+                <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;" onmouseover="this.style.background='#f8fafc';" onmouseout="this.style.background='transparent';">
+                    <td style="padding: 12px 16px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="
+                                width: 36px;
+                                height: 36px;
+                                border-radius: 50%;
+                                background: ${isMale ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' : 'linear-gradient(135deg, #db2777 0%, #be185d 100%)'};
+                                color: #ffffff;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-weight: 900;
+                                font-size: 0.85rem;
+                            ">
+                                ${this._getInitials(player.name)}
+                            </div>
+                            <div>
+                                <div style="font-weight: 850; color: #0f172a;">${this._escapeHtml(player.name)}</div>
+                                <div style="font-size: 0.75rem; color: #64748b;">${phone ? '+' + phone : 'Sin teléfono'}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="padding: 12px 16px; text-align: center;">
+                        <span style="background: ${isMale ? 'rgba(2,132,199,0.1)' : 'rgba(219,39,119,0.1)'}; color: ${isMale ? '#0369a1' : '#be185d'}; font-weight: 900; font-size: 0.72rem; padding: 3px 8px; border-radius: 6px;">
+                            ${isMale ? '👦 CHICO' : '👧 CHICA'}
+                        </span>
+                    </td>
+                    <td style="padding: 12px 16px; text-align: center;">
+                        <span style="background: #e0f2fe; color: #0369a1; font-weight: 900; font-size: 0.8rem; padding: 4px 8px; border-radius: 8px;">
+                            ${levelVal}
+                        </span>
+                    </td>
+                    <td style="padding: 12px 16px; text-align: center;">
+                        <span style="font-weight: 750; color: #475569;">${side}</span>
+                    </td>
+                    <td style="padding: 12px 16px; text-align: center;">
+                        ${player.isAvailableToday ? `
+                            <span style="background: rgba(16, 185, 129, 0.15); color: #047857; font-weight: 850; font-size: 0.72rem; padding: 4px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 4px;">
+                                <span style="width: 6px; height: 6px; border-radius: 50%; background: #10b981;"></span>
+                                Guardia Hoy
+                            </span>
+                        ` : `
+                            <span style="color: #94a3b8; font-size: 0.75rem; font-weight: 600;">Comunidad</span>
+                        `}
+                    </td>
+                    <td style="padding: 12px 16px; text-align: right;">
+                        <div style="display: inline-flex; gap: 6px; align-items: center;">
+                            <a href="${waHref}" target="_blank" rel="noopener noreferrer" onclick="${waClick}" style="
+                                background: #25D366;
+                                color: #ffffff;
+                                text-decoration: none;
+                                padding: 7px 12px;
+                                border-radius: 8px;
+                                font-size: 0.78rem;
+                                font-weight: 850;
+                                display: inline-flex;
+                                align-items: center;
+                                gap: 6px;
+                                box-shadow: 0 2px 8px rgba(37, 211, 102, 0.25);
+                            ">
+                                <i class="fab fa-whatsapp"></i>
+                                <span>WhatsApp</span>
+                            </a>
+
+                            <button class="btn-assign-direct-player" data-player-id="${player.id}" data-player-name="${this._escapeHtml(player.name)}" title="Inscribir en un entreno" style="
+                                background: #0f172a;
+                                color: #ffffff;
+                                border: none;
+                                padding: 7px 10px;
+                                border-radius: 8px;
+                                font-size: 0.78rem;
+                                font-weight: 850;
+                                cursor: pointer;
+                                display: inline-flex;
+                                align-items: center;
+                                gap: 4px;
+                            ">
+                                <i class="fas fa-plus"></i>
+                                <span>Convocar</span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+
+        /**
+         * Renderiza una tarjeta de alerta SOS activa
          */
         _renderAlertCard(alert) {
             const sideLabel = this._formatSide(alert.sideNeeded);
@@ -462,7 +1096,6 @@
                     justify-content: space-between;
                 ">
                     <div>
-                        <!-- Header de la Alerta -->
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 12px;">
                             <div style="display: inline-flex; align-items: center; gap: 6px; background: #fee2e2; color: #991b1b; padding: 3px 10px; border-radius: 8px; font-size: 0.72rem; font-weight: 900;">
                                 <i class="fas fa-fire"></i>
@@ -477,7 +1110,6 @@
                             ${this._escapeHtml(alert.eventName || 'Evento')}
                         </h3>
 
-                        <!-- Info Grid -->
                         <div style="background: #f8fafc; border-radius: 12px; padding: 12px; margin: 12px 0; font-size: 0.82rem; line-height: 1.6; color: #334155;">
                             <div><i class="far fa-clock" style="color: #64748b; width: 16px;"></i> <strong>Hora:</strong> ${alert.time || '19:30'} • ${alert.date || 'Hoy'}</div>
                             <div><i class="fas fa-table-tennis-paddle-ball" style="color: #64748b; width: 16px;"></i> <strong>Pista:</strong> ${this._escapeHtml(alert.court || 'Pista Principal')}</div>
@@ -485,7 +1117,7 @@
                             <div><i class="fas fa-arrows-left-right" style="color: #64748b; width: 16px;"></i> <strong>Lado:</strong> <span style="font-weight: 800; color: #b91c1c;">${sideLabel}</span></div>
                         </div>
 
-                        <!-- Postulaciones y Compatibilidad -->
+                        <!-- Postulaciones -->
                         <div style="margin-bottom: 14px;">
                             <div style="font-size: 0.75rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 6px;">
                                 Candidatos Postulados (${candidates.length})
@@ -496,21 +1128,19 @@
                                 </div>
                             ` : `
                                 <div style="display: flex; flex-direction: column; gap: 6px;">
-                                    ${candidates.map(cand => {
-                                        const compat = this._getService() ? this._getService().calculateCompatibility(cand, alert) : { score: 85 };
-                                        return `
-                                            <div style="display: flex; align-items: center; justify-content: space-between; background: #f1f5f9; padding: 6px 10px; border-radius: 8px; font-size: 0.78rem;">
-                                                <span style="font-weight: 750; color: #0f172a;">${this._escapeHtml(cand.name)}</span>
-                                                <span style="font-weight: 900; color: #0284c7;">${compat.score}% match</span>
-                                            </div>
-                                        `;
-                                    }).join('')}
+                                    ${candidates.map(cand => `
+                                        <div style="display: flex; align-items: center; justify-content: space-between; background: #f1f5f9; padding: 6px 10px; border-radius: 8px; font-size: 0.78rem;">
+                                            <span style="font-weight: 750; color: #0f172a;">${this._escapeHtml(cand.name)}</span>
+                                            <button class="btn-confirm-assign-candidate" data-alert-id="${alert.id}" data-uid="${cand.uid || cand.id}" style="background: #0f172a; color: #fff; border: none; padding: 3px 8px; border-radius: 6px; font-weight: 800; font-size: 0.72rem; cursor: pointer;">
+                                                Aceptar
+                                            </button>
+                                        </div>
+                                    `).join('')}
                                 </div>
                             `}
                         </div>
                     </div>
 
-                    <!-- Botones de Acción de la Alerta -->
                     <div style="display: flex; gap: 8px; margin-top: 8px;">
                         <button class="btn-assign-sub-manual" data-alert-id="${alert.id}" style="
                             flex: 1;
@@ -526,10 +1156,9 @@
                             align-items: center;
                             justify-content: center;
                             gap: 6px;
-                            transition: background 0.15s ease;
-                        " onmouseover="this.style.background='#1e293b';" onmouseout="this.style.background='#0f172a';">
+                        ">
                             <i class="fas fa-user-check"></i>
-                            <span>Asignar Suplente</span>
+                            <span>Asignar Jugador Real</span>
                         </button>
 
                         <button class="btn-cancel-alert" data-alert-id="${alert.id}" title="Cancelar Alerta" style="
@@ -543,8 +1172,7 @@
                             align-items: center;
                             justify-content: center;
                             cursor: pointer;
-                            transition: background 0.15s ease;
-                        " onmouseover="this.style.background='#fca5a5';" onmouseout="this.style.background='#fee2e2';">
+                        ">
                             <i class="fas fa-trash-can"></i>
                         </button>
                     </div>
@@ -553,160 +1181,815 @@
         }
 
         /**
-         * Renderiza una fila de suplente en la tabla
-         * @private
-         */
-        _renderSubstituteRow(sub) {
-            const side = this._formatSide(sub.side);
-            const slotText = this._formatTimeSlot(sub.timeSlot);
-            const levelVal = parseFloat(sub.level || 3.5).toFixed(2);
-            const phone = (sub.phone || '').toString().trim().replace(/[^0-9]/g, '');
-
-            // Mensaje proactivo de WhatsApp
-            const firstName = (sub.name || 'Compañero').split(' ')[0];
-            const waText = encodeURIComponent(
-                `¡Hola ${firstName}! 🎾 Te contactamos de urgencia desde la organización de SomosPádel BCN. Tenemos una plaza urgente SOS de última hora para hoy. Tu perfil encaja excelente (${levelVal} | ${side}). La plaza está bonificada con +150 XP de honor. ¿Te gustaría cubrirla? Confírmanos por aquí. ¡Muchas gracias!`
-            );
-
-            // Normalización para enlace WhatsApp
-            let waHref = '#';
-            let waClick = '';
-            if (phone) {
-                const fullPhone = phone.startsWith('34') ? phone : `34${phone}`;
-                waHref = `https://wa.me/${fullPhone}?text=${waText}`;
-            } else {
-                waClick = `alert('⚠️ El jugador ${this._escapeHtml(sub.name)} no tiene teléfono registrado en el sistema. Puedes editarlo en la sección Base de Datos.'); return false;`;
-            }
-
-            return `
-                <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;" onmouseover="this.style.background='#f8fafc';" onmouseout="this.style.background='transparent';">
-                    <td style="padding: 12px 16px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <div style="
-                                width: 36px;
-                                height: 36px;
-                                border-radius: 50%;
-                                background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-                                color: #ffffff;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                font-weight: 900;
-                                font-size: 0.85rem;
-                            ">
-                                ${this._getInitials(sub.name)}
-                            </div>
-                            <div>
-                                <div style="font-weight: 850; color: #0f172a;">${this._escapeHtml(sub.name)}</div>
-                                <div style="font-size: 0.75rem; color: #64748b;">${phone ? '+' + phone : 'Sin teléfono'}</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td style="padding: 12px 16px; text-align: center;">
-                        <span style="background: #e0f2fe; color: #0369a1; font-weight: 900; font-size: 0.8rem; padding: 4px 8px; border-radius: 8px;">
-                            ${levelVal}
-                        </span>
-                    </td>
-                    <td style="padding: 12px 16px; text-align: center;">
-                        <span style="font-weight: 750; color: #475569;">${side}</span>
-                    </td>
-                    <td style="padding: 12px 16px;">
-                        <span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: #334155;">
-                            <i class="far fa-clock" style="color: #64748b;"></i>
-                            ${slotText}
-                        </span>
-                    </td>
-                    <td style="padding: 12px 16px; text-align: center;">
-                        <span style="background: rgba(16, 185, 129, 0.15); color: #047857; font-weight: 850; font-size: 0.72rem; padding: 4px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 4px;">
-                            <span style="width: 6px; height: 6px; border-radius: 50%; background: #10b981;"></span>
-                            Guardia Activa
-                        </span>
-                    </td>
-                    <td style="padding: 12px 16px; text-align: right;">
-                        <a href="${waHref}" target="_blank" rel="noopener noreferrer" onclick="${waClick}" style="
-                            background: #25D366;
-                            color: #ffffff;
-                            text-decoration: none;
-                            padding: 8px 14px;
-                            border-radius: 10px;
-                            font-size: 0.8rem;
-                            font-weight: 850;
-                            display: inline-flex;
-                            align-items: center;
-                            gap: 6px;
-                            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
-                            transition: transform 0.15s ease;
-                        " onmouseover="this.style.transform='scale(1.03)';" onmouseout="this.style.transform='scale(1)';">
-                            <i class="fab fa-whatsapp" style="font-size: 1rem;"></i>
-                            <span>WhatsApp</span>
-                        </a>
-                    </td>
-                </tr>
-            `;
-        }
-
-        /**
-         * Configura los eventos e interactividad
-         * @private
+         * Configura los eventos e interactividad del panel
          */
         _setupListeners() {
-            // 1. Botón Abrir Modal Crear Alerta SOS
-            const btnOpenCreate = document.getElementById('btn-open-create-sos-modal');
-            if (btnOpenCreate) {
-                btnOpenCreate.addEventListener('click', () => this._openCreateAlertModal());
+            // 1. Botón Abrir Modal de Difusión / Mensajería
+            const btnBroadcast = document.getElementById('btn-open-broadcast-modal');
+            if (btnBroadcast) {
+                btnBroadcast.onclick = () => this.openBroadcastModal();
             }
 
-            // 2. Botones de Filtrado de Suplentes por Lado
-            const filterBtns = this.container.querySelectorAll('.btn-sub-filter');
-            filterBtns.forEach(btn => {
-                btn.addEventListener('click', (e) => {
+            // 2. Botón Crear Alerta SOS
+            const btnCreateSos = document.getElementById('btn-open-create-sos-modal');
+            if (btnCreateSos) {
+                btnCreateSos.onclick = () => this.openCreateAlertModal();
+            }
+
+            // 3. Botón Refrescar Datos en Vivo
+            const btnRefresh = document.getElementById('btn-refresh-sos-data');
+            if (btnRefresh) {
+                btnRefresh.onclick = () => this.render();
+            }
+
+            // 4. Filtros de Categoría de Entrenos
+            this.container.querySelectorAll('.btn-evt-filter').forEach(btn => {
+                btn.onclick = (e) => {
+                    this.filterEventCat = e.currentTarget.getAttribute('data-cat') || 'all';
+                    this._renderDashboard();
+                    this._setupListeners();
+                };
+            });
+
+            // 5. Botones "Difundir Mensaje" desde tarjeta de entreno
+            this.container.querySelectorAll('.btn-broadcast-for-event').forEach(btn => {
+                btn.onclick = (e) => {
+                    const ds = e.currentTarget.dataset;
+                    this.openBroadcastModal({
+                        eventId: ds.eventId,
+                        eventType: ds.eventType,
+                        eventName: ds.eventName,
+                        category: ds.category,
+                        date: ds.date,
+                        time: ds.time,
+                        court: ds.court,
+                        levelMin: ds.levelMin,
+                        levelMax: ds.levelMax,
+                        freeSlots: ds.freeSlots
+                    });
+                };
+            });
+
+            // 6. Botones "Asignar Jugador" a un entreno
+            this.container.querySelectorAll('.btn-assign-player-to-event').forEach(btn => {
+                btn.onclick = (e) => {
+                    const ds = e.currentTarget.dataset;
+                    this.openAssignPlayerToEventModal(ds.eventId, ds.eventType, ds.eventName);
+                };
+            });
+
+            // 7. Botones "Lanzar Alerta SOS" para un entreno
+            this.container.querySelectorAll('.btn-create-sos-for-event').forEach(btn => {
+                btn.onclick = (e) => {
+                    const ds = e.currentTarget.dataset;
+                    this.openCreateAlertModal({
+                        eventId: ds.eventId,
+                        eventType: ds.eventType,
+                        eventName: ds.eventName,
+                        date: ds.date,
+                        time: ds.time,
+                        court: ds.court,
+                        levelMin: ds.levelMin,
+                        levelMax: ds.levelMax
+                    });
+                };
+            });
+
+            // 8. Filtros de Jugadores (Género)
+            this.container.querySelectorAll('.btn-player-gender').forEach(btn => {
+                btn.onclick = (e) => {
+                    this.filterGender = e.currentTarget.getAttribute('data-gender') || 'all';
+                    this._renderDashboard();
+                    this._setupListeners();
+                };
+            });
+
+            // 9. Filtros de Jugadores (Lado)
+            this.container.querySelectorAll('.btn-player-side').forEach(btn => {
+                btn.onclick = (e) => {
                     this.filterSide = e.currentTarget.getAttribute('data-side') || 'all';
                     this._renderDashboard();
                     this._setupListeners();
-                });
+                };
             });
 
-            // 3. Buscador de Suplentes en Tiempo Real
+            // 10. Buscador de Jugadores en Vivo
             const searchInput = document.getElementById('admin-sos-search-input');
             if (searchInput) {
-                searchInput.addEventListener('input', (e) => {
+                searchInput.oninput = (e) => {
                     this.searchQuery = e.target.value.toLowerCase().trim();
                     this._renderDashboard();
                     this._setupListeners();
-                    const inputRef = document.getElementById('admin-sos-search-input');
-                    if (inputRef) {
-                        inputRef.focus();
-                        inputRef.setSelectionRange(inputRef.value.length, inputRef.value.length);
+                    const ref = document.getElementById('admin-sos-search-input');
+                    if (ref) {
+                        ref.focus();
+                        ref.setSelectionRange(ref.value.length, ref.value.length);
                     }
-                });
+                };
             }
 
-            // 4. Botones Asignar Suplente Manual
-            const assignBtns = this.container.querySelectorAll('.btn-assign-sub-manual');
-            assignBtns.forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const alertId = e.currentTarget.getAttribute('data-alert-id');
-                    this._openAssignModal(alertId);
-                });
+            // 11. Botón "Convocar" directo desde la fila de jugador
+            this.container.querySelectorAll('.btn-assign-direct-player').forEach(btn => {
+                btn.onclick = (e) => {
+                    const pid = e.currentTarget.getAttribute('data-player-id');
+                    this.openDirectPlayerConvocarModal(pid);
+                };
             });
 
-            // 5. Botones Cancelar Alerta
-            const cancelBtns = this.container.querySelectorAll('.btn-cancel-alert');
-            cancelBtns.forEach(btn => {
-                btn.addEventListener('click', async (e) => {
+            // 12. Asignar Suplente Manual a Alerta SOS
+            this.container.querySelectorAll('.btn-assign-sub-manual').forEach(btn => {
+                btn.onclick = (e) => {
                     const alertId = e.currentTarget.getAttribute('data-alert-id');
-                    if (confirm("¿Estás seguro de que deseas cancelar esta alerta SOS? Se retirará de la lista activa.")) {
+                    this.openAssignPlayerToAlertModal(alertId);
+                };
+            });
+
+            // 13. Cancelar Alerta SOS
+            this.container.querySelectorAll('.btn-cancel-alert').forEach(btn => {
+                btn.onclick = async (e) => {
+                    const alertId = e.currentTarget.getAttribute('data-alert-id');
+                    if (confirm("¿Estás seguro de cancelar esta alerta SOS? Se retirará de la App.")) {
                         await this._cancelAlert(alertId);
                     }
-                });
+                };
+            });
+
+            // 14. Aceptar candidato postulado
+            this.container.querySelectorAll('.btn-confirm-assign-candidate').forEach(btn => {
+                btn.onclick = async (e) => {
+                    const alertId = e.currentTarget.getAttribute('data-alert-id');
+                    const uid = e.currentTarget.getAttribute('data-uid');
+                    const targetSub = this.realPlayers.find(p => (p.id || p.uid) === uid);
+                    if (targetSub) {
+                        await this._assignPlayerToAlert(alertId, targetSub);
+                    }
+                };
             });
         }
 
+        // =========================================================================
+        // MODAL 1: 📢 DIFUSIÓN Y MENSAJES A TODOS LOS JUGADORES (HERRAMIENTA CLAVE)
+        // =========================================================================
+
         /**
-         * Abre modal administrativo para crear una nueva alerta SOS
-         * @private
+         * Abre el modal interactivo de emisión de mensajes a jugadores
+         * Con selector de entrenos, filtros por género (masculino/mixto), nivel, WhatsApp y Push
          */
-        _openCreateAlertModal() {
+        openBroadcastModal(prefill = null) {
+            const modalRoot = document.getElementById('admin-sos-modal-root');
+            if (!modalRoot) return;
+
+            // Determinar audiencia predeterminada según el evento
+            let defaultAudience = 'all';
+            let defaultLevelMin = 3.0;
+            let defaultLevelMax = 5.0;
+
+            if (prefill) {
+                if (prefill.category === 'male') defaultAudience = 'male';
+                else if (prefill.category === 'mixed') defaultAudience = 'mixed';
+                else if (prefill.category === 'female') defaultAudience = 'female';
+
+                if (prefill.levelMin) defaultLevelMin = parseFloat(prefill.levelMin);
+                if (prefill.levelMax) defaultLevelMax = parseFloat(prefill.levelMax);
+            }
+
+            // Generar plantilla de texto
+            const getTemplateText = (aud, evt) => {
+                if (evt) {
+                    const slots = evt.freeSlots || 1;
+                    const catName = evt.category === 'male' ? 'MASCULINO' : (evt.category === 'mixed' ? 'MIXTO' : 'DE PÁDEL');
+                    return {
+                        title: `⚡ ¡Hueco urgente en Entreno ${catName}!`,
+                        body: `¡Hola padeleros! Tenemos ${slots} ${slots === 1 ? 'plaza libre' : 'plazas libres'} para el Entreno ${catName} de hoy (${evt.time}h en ${evt.court}). Nivel: ${parseFloat(evt.levelMin).toFixed(2)} - ${parseFloat(evt.levelMax).toFixed(2)}. ¡Inscríbete ya en la App antes de que vuele!`
+                    };
+                }
+                if (aud === 'male') {
+                    return {
+                        title: `🎾 Plaza disponible en Entreno Masculino`,
+                        body: `¡Atención chicos! Tenemos plazas disponibles para completar entreno masculino esta semana. Revisa la sección Entrenos en la App y únete.`
+                    };
+                }
+                if (aud === 'mixed') {
+                    return {
+                        title: `👫 Convocatoria Entreno Mixto SomosPadel`,
+                        body: `Buscamos jugadores y jugadoras para completar las pistas del entreno mixto. ¡Ven a entrenar y disfrutar de un gran ambiente!`
+                    };
+                }
+                return {
+                    title: `📢 Convocatoria Abierta SomosPadel BCN`,
+                    body: `Nuevas plazas abiertas para entrenos y torneos de esta semana. ¡Reserva tu plaza desde la App oficial!`
+                };
+            };
+
+            const initialTmpl = getTemplateText(defaultAudience, prefill);
+
+            modalRoot.innerHTML = `
+                <div id="sos-broadcast-overlay" style="
+                    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+                    background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px);
+                    z-index: 99999; display: flex; align-items: center; justify-content: center; padding: 16px;
+                ">
+                    <div style="
+                        background: #ffffff; border-radius: 24px; max-width: 720px; width: 100%;
+                        max-height: 92vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+                        border: 1px solid #cbd5e1; font-family: 'Outfit', 'Inter', sans-serif; color: #0f172a;
+                    ">
+                        <!-- Cabecera -->
+                        <div style="background: linear-gradient(135deg, #090e1a 0%, #0f172a 100%); padding: 22px 26px; color: #ffffff; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(204, 255, 0, 0.15); display: flex; align-items: center; justify-content: center; color: #CCFF00; font-size: 1.25rem;">
+                                    <i class="fas fa-bullhorn"></i>
+                                </div>
+                                <div>
+                                    <h3 style="margin: 0; font-size: 1.15rem; font-weight: 950; color: #ffffff;">MANDAR MENSAJE A JUGADORES</h3>
+                                    <p style="margin: 2px 0 0 0; font-size: 0.75rem; color: #94a3b8;">Herramienta para Capitanes y Admin: rellenar entrenos mixtos y masculinos</p>
+                                </div>
+                            </div>
+                            <button id="btn-close-broadcast-modal" style="background: transparent; border: none; color: #94a3b8; font-size: 1.3rem; cursor: pointer;">&times;</button>
+                        </div>
+
+                        <!-- Formulario de Envío -->
+                        <form id="form-sos-broadcast" style="padding: 24px; display: flex; flex-direction: column; gap: 18px;">
+                            <!-- Paso 1: Seleccionar Entreno a rellenar -->
+                            <div>
+                                <label style="display: block; font-size: 0.78rem; font-weight: 850; color: #475569; text-transform: uppercase; margin-bottom: 6px;">
+                                    1. Entreno / Convocatoria a Rellenar
+                                </label>
+                                <select id="broadcast-event-select" class="pro-input" style="width: 100%; height: 44px; border-radius: 12px; border: 1.5px solid #cbd5e1; padding: 0 12px; font-weight: 700; font-size: 0.88rem;">
+                                    <option value="none">-- Mensaje General / Sin vincular a un entreno específico --</option>
+                                    ${this.incompleteEvents.map(evt => `
+                                        <option value="${evt.id}" data-type="${evt.type}" data-name="${this._escapeHtml(evt.name)}" data-cat="${evt.category}" data-date="${evt.date}" data-time="${evt.time}" data-court="${this._escapeHtml(evt.court)}" data-lmin="${evt.levelMin}" data-lmax="${evt.levelMax}" data-free="${evt.freeSlots}" ${prefill && prefill.eventId === evt.id ? 'selected' : ''}>
+                                            [${evt.category.toUpperCase()}] ${evt.name} - ${evt.date} ${evt.time}h (${evt.freeSlots} plazas libres)
+                                        </option>
+                                    `).join('')}
+                                </select>
+                            </div>
+
+                            <!-- Paso 2: Selección de Audiencia / Destinatarios -->
+                            <div>
+                                <label style="display: block; font-size: 0.78rem; font-weight: 850; color: #475569; text-transform: uppercase; margin-bottom: 8px;">
+                                    2. ¿A quién enviar el mensaje? (Filtro de Destinatarios)
+                                </label>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px;">
+                                    <label style="border: 1.5px solid ${defaultAudience === 'all' ? '#0f172a' : '#e2e8f0'}; background: ${defaultAudience === 'all' ? '#f8fafc' : '#fff'}; border-radius: 12px; padding: 10px 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 0.82rem;">
+                                        <input type="radio" name="targetAudience" value="all" ${defaultAudience === 'all' ? 'checked' : ''} style="accent-color: #0f172a;">
+                                        <span>🎾 Todos</span>
+                                    </label>
+
+                                    <label style="border: 1.5px solid ${defaultAudience === 'male' ? '#0284c7' : '#e2e8f0'}; background: ${defaultAudience === 'male' ? '#f0f9ff' : '#fff'}; border-radius: 12px; padding: 10px 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 0.82rem;">
+                                        <input type="radio" name="targetAudience" value="male" ${defaultAudience === 'male' ? 'checked' : ''} style="accent-color: #0284c7;">
+                                        <span style="color: #0369a1;">👦 Solo Chicos</span>
+                                    </label>
+
+                                    <label style="border: 1.5px solid ${defaultAudience === 'mixed' ? '#7c3aed' : '#e2e8f0'}; background: ${defaultAudience === 'mixed' ? '#faf5ff' : '#fff'}; border-radius: 12px; padding: 10px 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 0.82rem;">
+                                        <input type="radio" name="targetAudience" value="mixed" ${defaultAudience === 'mixed' ? 'checked' : ''} style="accent-color: #7c3aed;">
+                                        <span style="color: #6d28d9;">👫 Mixtos</span>
+                                    </label>
+
+                                    <label style="border: 1.5px solid ${defaultAudience === 'female' ? '#db2777' : '#e2e8f0'}; background: ${defaultAudience === 'female' ? '#fdf2f8' : '#fff'}; border-radius: 12px; padding: 10px 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 0.82rem;">
+                                        <input type="radio" name="targetAudience" value="female" ${defaultAudience === 'female' ? 'checked' : ''} style="accent-color: #db2777;">
+                                        <span style="color: #be185d;">👧 Solo Chicas</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Filtro de Rango de Nivel -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                                <div>
+                                    <label style="display: block; font-size: 0.75rem; font-weight: 800; color: #64748b; margin-bottom: 4px;">Nivel Mínimo</label>
+                                    <input type="number" step="0.25" id="broadcast-level-min" value="${defaultLevelMin}" class="pro-input" style="width: 100%; height: 38px; border-radius: 10px; border: 1px solid #cbd5e1; padding: 0 10px; font-weight: 700;">
+                                </div>
+                                <div>
+                                    <label style="display: block; font-size: 0.75rem; font-weight: 800; color: #64748b; margin-bottom: 4px;">Nivel Máximo</label>
+                                    <input type="number" step="0.25" id="broadcast-level-max" value="${defaultLevelMax}" class="pro-input" style="width: 100%; height: 38px; border-radius: 10px; border: 1px solid #cbd5e1; padding: 0 10px; font-weight: 700;">
+                                </div>
+                            </div>
+
+                            <!-- Contador de Jugadores Destinatarios en Vivo -->
+                            <div id="broadcast-audience-counter-badge" style="background: rgba(2, 132, 199, 0.08); border: 1px solid rgba(2, 132, 199, 0.25); border-radius: 12px; padding: 10px 14px; font-size: 0.82rem; color: #0369a1; display: flex; align-items: center; gap: 10px;">
+                                <i class="fas fa-user-group" style="font-size: 1.1rem;"></i>
+                                <span>Calculando audiencia de jugadores reales...</span>
+                            </div>
+
+                            <!-- Paso 3: Mensaje -->
+                            <div>
+                                <label style="display: block; font-size: 0.78rem; font-weight: 850; color: #475569; text-transform: uppercase; margin-bottom: 6px;">
+                                    3. Título del Mensaje / Notificación
+                                </label>
+                                <input type="text" id="broadcast-title-input" required value="${this._escapeHtml(initialTmpl.title)}" class="pro-input" style="width: 100%; height: 42px; border-radius: 10px; border: 1px solid #cbd5e1; padding: 0 12px; font-weight: 700; font-size: 0.9rem;">
+                            </div>
+
+                            <div>
+                                <label style="display: block; font-size: 0.78rem; font-weight: 850; color: #475569; text-transform: uppercase; margin-bottom: 6px;">
+                                    Cuerpo del Mensaje (Push, Notificaciones y WhatsApp)
+                                </label>
+                                <textarea id="broadcast-body-input" rows="7" required class="pro-input" style="width: 100%; border-radius: 10px; border: 1px solid #cbd5e1; padding: 10px 12px; font-size: 0.9rem; line-height: 1.4; resize: vertical; min-height: 140px; color: #0f172a; background: #ffffff; font-family: 'Outfit', 'Inter', sans-serif;">${this._escapeHtml(initialTmpl.body)}</textarea>
+                            </div>
+
+                            <!-- Opciones Adicionales de Envío -->
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <p style="margin: 0 0 4px 0; font-size: 0.75rem; font-weight: 850; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">4. Opciones de Envío</p>
+
+                                <label for="check-send-push" style="display: flex; align-items: center; gap: 14px; background: #f0f9ff; border: 1.5px solid #bae6fd; border-radius: 12px; padding: 12px 14px; cursor: pointer;">
+                                    <input type="checkbox" id="check-send-push" checked style="width: 18px; height: 18px; min-width: 18px; accent-color: #0284c7; cursor: pointer;">
+                                    <div>
+                                        <div style="font-size: 0.88rem; font-weight: 800; color: #0369a1;">📱 Notificación Push + In-App</div>
+                                        <div style="font-size: 0.75rem; color: #0284c7; margin-top: 2px;">Envía una notificación a la app de los jugadores seleccionados</div>
+                                    </div>
+                                </label>
+
+                                <label for="check-create-sos-alert" style="display: flex; align-items: center; gap: 14px; background: #fff5f5; border: 1.5px solid #fecaca; border-radius: 12px; padding: 12px 14px; cursor: pointer;">
+                                    <input type="checkbox" id="check-create-sos-alert" checked style="width: 18px; height: 18px; min-width: 18px; accent-color: #EF4444; cursor: pointer;">
+                                    <div>
+                                        <div style="font-size: 0.88rem; font-weight: 800; color: #dc2626;">🚨 Publicar Alerta SOS en la App</div>
+                                        <div style="font-size: 0.75rem; color: #ef4444; margin-top: 2px;">Aparece en el feed de SOS para todos + bonificación de +150 XP</div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Herramienta de WhatsApp Copia Rápida -->
+                            <div style="background: rgba(37, 211, 102, 0.08); border: 1px solid rgba(37, 211, 102, 0.3); border-radius: 14px; padding: 14px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <span style="font-weight: 850; font-size: 0.82rem; color: #15803d; display: flex; align-items: center; gap: 6px;">
+                                        <i class="fab fa-whatsapp" style="font-size: 1.1rem;"></i>
+                                        <span>DIFUSIÓN WHATSAPP DIRECTA</span>
+                                    </span>
+                                    <div style="display: flex; gap: 8px;">
+                                        <button type="button" id="btn-copy-wa-text" style="background: #25D366; color: #fff; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 850; cursor: pointer;">
+                                            <i class="far fa-copy"></i> Copiar Texto
+                                        </button>
+                                        <button type="button" id="btn-open-wa-web" style="background: #0f172a; color: #fff; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 850; cursor: pointer;">
+                                            <i class="fab fa-whatsapp"></i> Abrir WhatsApp
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="wa-preview-text" style="font-family: monospace; font-size: 0.82rem; color: #1e293b; background: #ffffff; padding: 10px; border-radius: 8px; border: 1px solid #bbf7d0; max-height: 160px; overflow-y: auto; line-height: 1.5;"></div>
+                            </div>
+
+                            <!-- Botones Acción Final -->
+                            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px;">
+                                <button type="button" id="btn-cancel-broadcast" style="background: #f1f5f9; color: #475569; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 800; cursor: pointer;">
+                                    Cancelar
+                                </button>
+                                <button type="submit" id="btn-submit-broadcast" style="background: #CCFF00; color: #000; border: none; padding: 12px 26px; border-radius: 12px; font-weight: 950; font-size: 0.92rem; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(204, 255, 0, 0.4);">
+                                    <i class="fas fa-paper-plane"></i>
+                                    <span>🚀 ENVIAR MENSAJE AHORA</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+
+            // Vincular Lógica Interactiva del Modal
+            const overlay = document.getElementById('sos-broadcast-overlay');
+            const closeBtn = document.getElementById('btn-close-broadcast-modal');
+            const cancelBtn = document.getElementById('btn-cancel-broadcast');
+            const form = document.getElementById('form-sos-broadcast');
+            const eventSelect = document.getElementById('broadcast-event-select');
+            const titleInput = document.getElementById('broadcast-title-input');
+            const bodyInput = document.getElementById('broadcast-body-input');
+            const levelMinInput = document.getElementById('broadcast-level-min');
+            const levelMaxInput = document.getElementById('broadcast-level-max');
+            const badgeCounter = document.getElementById('broadcast-audience-counter-badge');
+            const waPreview = document.getElementById('wa-preview-text');
+            const copyWaBtn = document.getElementById('btn-copy-wa-text');
+            const openWaBtn = document.getElementById('btn-open-wa-web');
+
+            const closeModal = () => { modalRoot.innerHTML = ''; };
+            closeBtn.onclick = closeModal;
+            cancelBtn.onclick = closeModal;
+            overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
+
+            // Función para actualizar contador de audiencia y preview de WhatsApp
+            const updateAudienceAndPreview = () => {
+                const aud = form.querySelector('input[name="targetAudience"]:checked')?.value || 'all';
+                const lMin = parseFloat(levelMinInput.value) || 1.0;
+                const lMax = parseFloat(levelMaxInput.value) || 7.0;
+
+                const matching = this.realPlayers.filter(p => {
+                    if (aud === 'male' && p.gender !== 'chico') return false;
+                    if (aud === 'female' && p.gender !== 'chica') return false;
+                    if (p.level < lMin || p.level > lMax) return false;
+                    return true;
+                });
+
+                let audLabel = 'Todos los jugadores';
+                if (aud === 'male') audLabel = 'Jugadores Masculinos (Chicos)';
+                else if (aud === 'mixed') audLabel = 'Jugadores Mixtos (Chicos y Chicas)';
+                else if (aud === 'female') audLabel = 'Jugadoras Femeninas (Chicas)';
+
+                badgeCounter.innerHTML = `
+                    <i class="fas fa-check-circle" style="color: #10b981; font-size: 1.1rem;"></i>
+                    <span>Audiencia: <strong>${matching.length} jugadores reales</strong> (${audLabel} • Nivel ${lMin.toFixed(2)} a ${lMax.toFixed(2)})</span>
+                `;
+
+                // Preview WhatsApp
+                const t = titleInput.value.trim();
+                const b = bodyInput.value.trim();
+                const fullWa = `*${t}*\n\n${b}\n\n👉 *SomosPádel BCN*`;
+                waPreview.textContent = fullWa;
+            };
+
+            // Event Listeners
+            form.querySelectorAll('input[name="targetAudience"]').forEach(r => {
+                r.onchange = () => {
+                    const aud = r.value;
+                    const opt = eventSelect.options[eventSelect.selectedIndex];
+                    const evtData = opt.value !== 'none' ? opt.dataset : null;
+                    const tmpl = getTemplateText(aud, evtData);
+                    titleInput.value = tmpl.title;
+                    bodyInput.value = tmpl.body;
+                    updateAudienceAndPreview();
+                };
+            });
+
+            levelMinInput.oninput = updateAudienceAndPreview;
+            levelMaxInput.oninput = updateAudienceAndPreview;
+            titleInput.oninput = updateAudienceAndPreview;
+            bodyInput.oninput = updateAudienceAndPreview;
+
+            // Al cambiar de entreno
+            eventSelect.onchange = () => {
+                const opt = eventSelect.options[eventSelect.selectedIndex];
+                if (opt.value !== 'none') {
+                    const ds = opt.dataset;
+                    if (ds.cat === 'male') {
+                        form.querySelector('input[name="targetAudience"][value="male"]').checked = true;
+                    } else if (ds.cat === 'mixed') {
+                        form.querySelector('input[name="targetAudience"][value="mixed"]').checked = true;
+                    } else if (ds.cat === 'female') {
+                        form.querySelector('input[name="targetAudience"][value="female"]').checked = true;
+                    }
+
+                    if (ds.lmin) levelMinInput.value = ds.lmin;
+                    if (ds.lmax) levelMaxInput.value = ds.lmax;
+
+                    const tmpl = getTemplateText(ds.cat, ds);
+                    titleInput.value = tmpl.title;
+                    bodyInput.value = tmpl.body;
+                }
+                updateAudienceAndPreview();
+            };
+
+            // Copiar texto para WhatsApp
+            copyWaBtn.onclick = () => {
+                const text = waPreview.textContent;
+                navigator.clipboard.writeText(text).then(() => {
+                    alert("📋 ¡Mensaje copiado al portapapeles! Ya puedes pegarlo en los grupos de WhatsApp de SomosPádel.");
+                }).catch(() => {
+                    alert("Texto: \n" + text);
+                });
+            };
+
+            // Abrir WhatsApp Web
+            openWaBtn.onclick = () => {
+                const text = encodeURIComponent(waPreview.textContent);
+                window.open(`https://wa.me/?text=${text}`, '_blank');
+            };
+
+            // Inicializar cálculos
+            updateAudienceAndPreview();
+
+            // Submit del Formulario de Difusión
+            form.onsubmit = async (e) => {
+                e.preventDefault();
+                const submitBtn = document.getElementById('btn-submit-broadcast');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> <span>EMITIENDO MENSAJE...</span>`;
+
+                const targetAud = form.querySelector('input[name="targetAudience"]:checked')?.value || 'all';
+                const lMin = parseFloat(levelMinInput.value) || 1.0;
+                const lMax = parseFloat(levelMaxInput.value) || 7.0;
+                const title = titleInput.value.trim();
+                const body = bodyInput.value.trim();
+                const sendPush = document.getElementById('check-send-push').checked;
+                const createSos = document.getElementById('check-create-sos-alert').checked;
+
+                const selOpt = eventSelect.options[eventSelect.selectedIndex];
+                const eventId = selOpt.value !== 'none' ? selOpt.value : null;
+                const eventType = selOpt.dataset?.type || 'entrenos';
+                const eventName = selOpt.dataset?.name || title;
+                const eventDate = selOpt.dataset?.date || new Date().toISOString().split('T')[0];
+                const eventTime = selOpt.dataset?.time || '19:30';
+                const eventCourt = selOpt.dataset?.court || 'Pista Principal';
+
+                try {
+                    const service = this._getService();
+                    if (!service) throw new Error("Servicio SosSubstitutesService no disponible.");
+
+                    const res = await service.broadcastConvocatoria({
+                        title,
+                        body,
+                        url: eventType === 'americana' ? 'americanas' : 'entrenos',
+                        targetAudience: targetAud,
+                        levelMin: lMin,
+                        levelMax: lMax,
+                        eventId,
+                        eventType,
+                        eventName,
+                        date: eventDate,
+                        time: eventTime,
+                        court: eventCourt,
+                        sendPush,
+                        createSosAlert: createSos
+                    });
+
+                    await this.render();
+
+                    // Pantalla de confirmación detallada dentro del modal
+                    const formEl = document.getElementById('form-sos-broadcast');
+                    if (formEl) {
+                        formEl.innerHTML = `
+                            <div style="text-align: center; padding: 10px 0 20px 0;">
+                                <div style="width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #d1fae5, #6ee7b7); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto; font-size: 2rem;">
+                                    ✅
+                                </div>
+                                <h2 style="margin: 0 0 6px 0; font-size: 1.3rem; font-weight: 950; color: #0f172a;">¡Mensaje enviado con éxito!</h2>
+                                <p style="margin: 0; font-size: 0.85rem; color: #64748b;">Resumen de todo lo que se ejecutó:</p>
+                            </div>
+
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+
+                                <div style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 14px;">
+                                    <div style="font-size: 1.6rem;">👥</div>
+                                    <div>
+                                        <div style="font-size: 0.78rem; font-weight: 800; color: #16a34a; text-transform: uppercase;">Jugadores notificados en la App</div>
+                                        <div style="font-size: 1.4rem; font-weight: 950; color: #15803d;">${res.recipientCount} jugadores reales</div>
+                                        <div style="font-size: 0.73rem; color: #4ade80; margin-top: 2px;">Notificación In-App creada en cada cuenta ✓</div>
+                                    </div>
+                                </div>
+
+                                ${sendPush ? `
+                                <div style="background: #f0f9ff; border: 1.5px solid #7dd3fc; border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 14px;">
+                                    <div style="font-size: 1.6rem;">📱</div>
+                                    <div>
+                                        <div style="font-size: 0.78rem; font-weight: 800; color: #0284c7; text-transform: uppercase;">Notificación Push enviada</div>
+                                        <div style="font-size: 0.88rem; font-weight: 700; color: #0369a1;">Entregada a ${res.notifiedCount || res.recipientCount} dispositivos ✓</div>
+                                        <div style="font-size: 0.73rem; color: #38bdf8; margin-top: 2px;">Aparecerá en la pantalla de notificaciones del móvil</div>
+                                    </div>
+                                </div>
+                                ` : `
+                                <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; opacity: 0.6;">
+                                    <div style="font-size: 1.6rem;">📵</div>
+                                    <div style="font-size: 0.85rem; color: #94a3b8;">Push desactivada — no se envió notificación al dispositivo</div>
+                                </div>
+                                `}
+
+                                ${createSos ? `
+                                <div style="background: #fff5f5; border: 1.5px solid #fca5a5; border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 14px;">
+                                    <div style="font-size: 1.6rem;">🚨</div>
+                                    <div>
+                                        <div style="font-size: 0.78rem; font-weight: 800; color: #dc2626; text-transform: uppercase;">Alerta SOS publicada en el feed</div>
+                                        <div style="font-size: 0.88rem; font-weight: 700; color: #b91c1c;">${res.sosAlert ? 'ID: ' + res.sosAlert.id : 'Publicada'} ✓</div>
+                                        <div style="font-size: 0.73rem; color: #f87171; margin-top: 2px;">+150 XP de bonificación activados para quien responda</div>
+                                    </div>
+                                </div>
+                                ` : `
+                                <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; opacity: 0.6;">
+                                    <div style="font-size: 1.6rem;">🔕</div>
+                                    <div style="font-size: 0.85rem; color: #94a3b8;">Alerta SOS no activada — no se publicó en el feed</div>
+                                </div>
+                                `}
+
+                                <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                                    <div>
+                                        <div style="font-size: 0.72rem; font-weight: 800; color: #94a3b8; text-transform: uppercase;">ID de Registro en Firestore</div>
+                                        <code style="font-size: 0.78rem; color: #475569;">${res.broadcastId || '—'}</code>
+                                    </div>
+                                    <i class="fas fa-database" style="color: #cbd5e1; font-size: 1rem;"></i>
+                                </div>
+
+                            </div>
+
+                            <div style="margin-top: 20px; display: flex; justify-content: center;">
+                                <button id="btn-close-broadcast-success" style="background: #0f172a; color: #CCFF00; border: none; padding: 13px 32px; border-radius: 12px; font-weight: 950; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                                    <i class="fas fa-check"></i> Cerrar y volver al panel
+                                </button>
+                            </div>
+                        `;
+                        document.getElementById('btn-close-broadcast-success')?.addEventListener('click', closeModal);
+                    } else {
+                        closeModal();
+                    }
+                } catch (err) {
+                    console.error("❌ Error emitiendo convocatoria:", err);
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = `<i class="fas fa-paper-plane"></i> <span>Reintentar Envío</span>`;
+                    alert("Error al enviar el mensaje: " + err.message);
+                }
+            };
+        }
+
+        // =========================================================================
+        // MODAL 2: 👤 ASIGNAR JUGADOR REAL A UN ENTRENO
+        // =========================================================================
+
+        /**
+         * Abre modal para seleccionar y asignar un jugador real a un entreno incompleto
+         */
+        openAssignPlayerToEventModal(eventId, eventType, eventName) {
+            const modalRoot = document.getElementById('admin-sos-modal-root');
+            if (!modalRoot) return;
+
+            modalRoot.innerHTML = `
+                <div id="assign-player-event-overlay" style="
+                    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+                    background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px);
+                    z-index: 99999; display: flex; align-items: center; justify-content: center; padding: 16px;
+                ">
+                    <div style="
+                        background: #ffffff; border-radius: 24px; max-width: 600px; width: 100%;
+                        max-height: 88vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+                        border: 1px solid #cbd5e1; font-family: 'Outfit', 'Inter', sans-serif;
+                    ">
+                        <div style="background: #0f172a; padding: 20px 24px; color: #ffffff; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10;">
+                            <div>
+                                <h3 style="margin: 0; font-size: 1.15rem; font-weight: 900; color: #ffffff;">Asignar Jugador Real a Convocatoria</h3>
+                                <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #94a3b8;">${this._escapeHtml(eventName)}</p>
+                            </div>
+                            <button id="btn-close-assign-event-modal" style="background: transparent; border: none; color: #94a3b8; font-size: 1.3rem; cursor: pointer;">&times;</button>
+                        </div>
+
+                        <div style="padding: 20px;">
+                            <div style="margin-bottom: 14px;">
+                                <input type="text" id="assign-event-search-input" placeholder="Buscar jugador por nombre o teléfono..." style="
+                                    width: 100%; height: 42px; border-radius: 12px; border: 1px solid #cbd5e1; padding: 0 14px; font-size: 0.88rem; font-weight: 600;
+                                ">
+                            </div>
+
+                            <div id="assign-event-players-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 400px; overflow-y: auto;">
+                                <!-- Se rellena dinámicamente -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const overlay = document.getElementById('assign-player-event-overlay');
+            const closeBtn = document.getElementById('btn-close-assign-event-modal');
+            const searchInput = document.getElementById('assign-event-search-input');
+            const listEl = document.getElementById('assign-event-players-list');
+
+            const closeModal = () => { modalRoot.innerHTML = ''; };
+            closeBtn.onclick = closeModal;
+            overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
+
+            const renderList = (filter = '') => {
+                const q = filter.toLowerCase().trim();
+                const matched = this.realPlayers.filter(p => !q || p.name.toLowerCase().includes(q) || p.phone.includes(q));
+
+                if (matched.length === 0) {
+                    listEl.innerHTML = `<div style="padding: 24px; text-align: center; color: #94a3b8;">No se encontraron jugadores reales con ese criterio.</div>`;
+                    return;
+                }
+
+                listEl.innerHTML = matched.slice(0, 30).map(p => `
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="width: 34px; height: 34px; border-radius: 50%; background: ${p.gender === 'chico' ? '#0284c7' : '#db2777'}; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 0.8rem;">
+                                ${this._getInitials(p.name)}
+                            </div>
+                            <div>
+                                <div style="font-weight: 850; font-size: 0.88rem; color: #0f172a;">${this._escapeHtml(p.name)}</div>
+                                <div style="font-size: 0.75rem; color: #64748b;">Nivel ${p.level.toFixed(2)} • ${this._formatSide(p.side)} ${p.phone ? '• ' + p.phone : ''}</div>
+                            </div>
+                        </div>
+
+                        <button class="btn-do-assign-player" data-player-id="${p.id}" style="background: #0f172a; color: #fff; border: none; padding: 7px 14px; border-radius: 8px; font-weight: 850; font-size: 0.78rem; cursor: pointer;">
+                            Inscribir
+                        </button>
+                    </div>
+                `).join('');
+
+                listEl.querySelectorAll('.btn-do-assign-player').forEach(btn => {
+                    btn.onclick = async (e) => {
+                        const pid = e.currentTarget.dataset.playerId;
+                        const playerObj = this.realPlayers.find(p => p.id === pid);
+                        if (!playerObj) return;
+
+                        btn.disabled = true;
+                        btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
+
+                        try {
+                            if (window.ParticipantService && typeof window.ParticipantService.addPlayer === 'function') {
+                                await window.ParticipantService.addPlayer(eventId, eventType, playerObj.raw || playerObj);
+                            } else {
+                                throw new Error("ParticipantService no disponible para registrar jugador.");
+                            }
+
+                            closeModal();
+                            await this.render();
+                            alert(`✅ ¡Jugador ${playerObj.name} inscrito con éxito en ${eventName}!`);
+                        } catch (err) {
+                            alert("❌ Error al inscribir jugador: " + err.message);
+                            btn.disabled = false;
+                            btn.textContent = "Inscribir";
+                        }
+                    };
+                });
+            };
+
+            searchInput.oninput = (e) => renderList(e.target.value);
+            renderList();
+        }
+
+        /**
+         * Abre modal para convocar a un jugador específico a alguno de los entrenos con plazas libres
+         */
+        openDirectPlayerConvocarModal(playerId) {
+            const player = this.realPlayers.find(p => p.id === playerId);
+            if (!player) return;
+
+            if (this.incompleteEvents.length === 0) {
+                alert(`⚠️ No hay entrenos ni americanas con plazas libres en este momento para asignar a ${player.name}.`);
+                return;
+            }
+
+            const modalRoot = document.getElementById('admin-sos-modal-root');
+            if (!modalRoot) return;
+
+            modalRoot.innerHTML = `
+                <div id="direct-convocar-overlay" style="
+                    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+                    background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px);
+                    z-index: 99999; display: flex; align-items: center; justify-content: center; padding: 16px;
+                ">
+                    <div style="background: #ffffff; border-radius: 24px; max-width: 520px; width: 100%; padding: 24px; font-family: 'Outfit', sans-serif;">
+                        <h3 style="margin: 0 0 6px 0; font-size: 1.15rem; font-weight: 900; color: #0f172a;">
+                            Inscribir a ${this._escapeHtml(player.name)}
+                        </h3>
+                        <p style="margin: 0 0 16px 0; font-size: 0.82rem; color: #64748b;">
+                            Nivel ${player.level.toFixed(2)} • ${player.gender === 'chico' ? 'Chico' : 'Chica'} • ${this._formatSide(player.side)}
+                        </p>
+
+                        <div style="font-size: 0.78rem; font-weight: 850; color: #475569; text-transform: uppercase; margin-bottom: 8px;">
+                            Selecciona la Convocatoria / Entreno:
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; margin-bottom: 20px;">
+                            ${this.incompleteEvents.map(evt => `
+                                <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 12px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <div style="font-weight: 850; font-size: 0.88rem; color: #0f172a;">${this._escapeHtml(evt.name)}</div>
+                                        <div style="font-size: 0.75rem; color: #64748b;">${evt.date} ${evt.time}h • ${evt.court} (${evt.freeSlots} plazas)</div>
+                                    </div>
+                                    <button class="btn-confirm-direct-enroll" data-event-id="${evt.id}" data-event-type="${evt.type}" data-event-name="${this._escapeHtml(evt.name)}" style="background: #0f172a; color: #fff; border: none; padding: 7px 12px; border-radius: 8px; font-weight: 850; font-size: 0.78rem; cursor: pointer;">
+                                        Asignar
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <div style="display: flex; justify-content: flex-end;">
+                            <button id="btn-cancel-direct-convocar" style="background: #f1f5f9; color: #475569; border: none; padding: 10px 18px; border-radius: 10px; font-weight: 800; cursor: pointer;">
+                                Cerrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const overlay = document.getElementById('direct-convocar-overlay');
+            const cancelBtn = document.getElementById('btn-cancel-direct-convocar');
+            const closeModal = () => { modalRoot.innerHTML = ''; };
+
+            cancelBtn.onclick = closeModal;
+            overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
+
+            overlay.querySelectorAll('.btn-confirm-direct-enroll').forEach(btn => {
+                btn.onclick = async (e) => {
+                    const ds = e.currentTarget.dataset;
+                    btn.disabled = true;
+                    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
+
+                    try {
+                        if (window.ParticipantService && typeof window.ParticipantService.addPlayer === 'function') {
+                            await window.ParticipantService.addPlayer(ds.eventId, ds.eventType, player.raw || player);
+                        } else {
+                            throw new Error("ParticipantService no disponible.");
+                        }
+
+                        closeModal();
+                        await this.render();
+                        alert(`✅ ¡${player.name} asignado con éxito a ${ds.eventName}!`);
+                    } catch (err) {
+                        alert("❌ Error: " + err.message);
+                        btn.disabled = false;
+                        btn.textContent = "Asignar";
+                    }
+                };
+            });
+        }
+
+        // =========================================================================
+        // MODAL 3: 🚨 CREAR ALERTA SOS URGENTE
+        // =========================================================================
+
+        /**
+         * Abre modal para crear una nueva alerta SOS
+         */
+        openCreateAlertModal(prefill = null) {
             const modalRoot = document.getElementById('admin-sos-modal-root');
             if (!modalRoot) return;
 
@@ -714,94 +1997,59 @@
 
             modalRoot.innerHTML = `
                 <div id="create-sos-modal-backdrop" style="
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100vw;
-                    height: 100vh;
-                    background: rgba(15, 23, 42, 0.75);
-                    backdrop-filter: blur(6px);
-                    z-index: 99999;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 16px;
+                    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+                    background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(6px);
+                    z-index: 99999; display: flex; align-items: center; justify-content: center; padding: 16px;
                 ">
                     <div style="
-                        background: #ffffff;
-                        border-radius: 24px;
-                        max-width: 550px;
-                        width: 100%;
-                        overflow: hidden;
-                        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-                        border: 1px solid #cbd5e1;
-                        font-family: 'Outfit', 'Inter', sans-serif;
-                        color: #0f172a;
-                        animation: scaleIn 0.2s ease-out;
+                        background: #ffffff; border-radius: 24px; max-width: 550px; width: 100%;
+                        overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+                        border: 1px solid #cbd5e1; font-family: 'Outfit', 'Inter', sans-serif; color: #0f172a;
                     ">
-                        <!-- Cabecera Modal -->
-                        <div style="
-                            background: linear-gradient(135deg, #090e1a 0%, #0f172a 100%);
-                            padding: 20px 24px;
-                            color: #ffffff;
-                            display: flex;
-                            justify-content: space-between;
-                            align-items: center;
-                        ">
+                        <div style="background: linear-gradient(135deg, #090e1a 0%, #0f172a 100%); padding: 20px 24px; color: #ffffff; display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 <span style="font-size: 1.4rem;">🚨</span>
                                 <h3 style="margin: 0; font-size: 1.2rem; font-weight: 900; color: #ffffff;">Publicar Alerta SOS Urgente</h3>
                             </div>
-                            <button id="btn-close-sos-create-modal" style="background: transparent; border: none; color: #94a3b8; font-size: 1.2rem; cursor: pointer;">
-                                <i class="fas fa-times"></i>
-                            </button>
+                            <button id="btn-close-sos-create-modal" style="background: transparent; border: none; color: #94a3b8; font-size: 1.2rem; cursor: pointer;">&times;</button>
                         </div>
 
-                        <!-- Formulario -->
                         <form id="form-create-sos-alert" style="padding: 24px;">
                             <div style="margin-bottom: 16px;">
                                 <label style="display: block; font-size: 0.78rem; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 6px;">
                                     Tipo de Evento
                                 </label>
                                 <select name="eventType" class="pro-input" style="width: 100%; height: 42px; border-radius: 10px; border: 1px solid #cbd5e1; padding: 0 12px; font-weight: 600;">
-                                    <option value="americana">🏆 Torneo Americano</option>
-                                    <option value="entrenos">🎓 Sesión de Entreno</option>
+                                    <option value="entrenos" ${prefill && prefill.eventType === 'entreno' ? 'selected' : ''}>🎓 Sesión de Entreno</option>
+                                    <option value="americana" ${prefill && prefill.eventType === 'americana' ? 'selected' : ''}>🏆 Torneo Americano</option>
                                 </select>
                             </div>
 
                             <div style="margin-bottom: 16px;">
                                 <label style="display: block; font-size: 0.78rem; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 6px;">
-                                    Nombre del Evento / Torneo
+                                    Nombre del Evento
                                 </label>
-                                <input type="text" name="eventName" required placeholder="Ej: Americana Nocturna Prime BCN" value="Americana de Competición BCN" class="pro-input" style="width: 100%; height: 42px; border-radius: 10px; border: 1px solid #cbd5e1; padding: 0 12px; font-weight: 600;">
+                                <input type="text" name="eventName" required placeholder="Ej: Entreno Masculino de Competición" value="${prefill ? this._escapeHtml(prefill.eventName) : 'Entreno SomosPádel BCN'}" class="pro-input" style="width: 100%; height: 42px; border-radius: 10px; border: 1px solid #cbd5e1; padding: 0 12px; font-weight: 600;">
                             </div>
 
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
                                 <div>
-                                    <label style="display: block; font-size: 0.78rem; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 6px;">
-                                        Fecha
-                                    </label>
-                                    <input type="date" name="date" value="${today}" required class="pro-input" style="width: 100%; height: 42px; border-radius: 10px; border: 1px solid #cbd5e1; padding: 0 12px;">
+                                    <label style="display: block; font-size: 0.78rem; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 6px;">Fecha</label>
+                                    <input type="date" name="date" value="${prefill && prefill.date ? prefill.date : today}" required class="pro-input" style="width: 100%; height: 42px; border-radius: 10px; border: 1px solid #cbd5e1; padding: 0 12px;">
                                 </div>
                                 <div>
-                                    <label style="display: block; font-size: 0.78rem; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 6px;">
-                                        Horario
-                                    </label>
-                                    <input type="text" name="time" value="19:30" placeholder="19:30" required class="pro-input" style="width: 100%; height: 42px; border-radius: 10px; border: 1px solid #cbd5e1; padding: 0 12px;">
+                                    <label style="display: block; font-size: 0.78rem; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 6px;">Horario</label>
+                                    <input type="text" name="time" value="${prefill && prefill.time ? prefill.time : '19:30'}" placeholder="19:30" required class="pro-input" style="width: 100%; height: 42px; border-radius: 10px; border: 1px solid #cbd5e1; padding: 0 12px;">
                                 </div>
                             </div>
 
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
                                 <div>
-                                    <label style="display: block; font-size: 0.78rem; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 6px;">
-                                        Pista Asignada
-                                    </label>
-                                    <input type="text" name="court" value="Pista 1" placeholder="Ej: Pista 2" required class="pro-input" style="width: 100%; height: 42px; border-radius: 10px; border: 1px solid #cbd5e1; padding: 0 12px;">
+                                    <label style="display: block; font-size: 0.78rem; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 6px;">Pista Asignada</label>
+                                    <input type="text" name="court" value="${prefill && prefill.court ? this._escapeHtml(prefill.court) : 'Pista 1'}" placeholder="Ej: Pista 2" required class="pro-input" style="width: 100%; height: 42px; border-radius: 10px; border: 1px solid #cbd5e1; padding: 0 12px;">
                                 </div>
                                 <div>
-                                    <label style="display: block; font-size: 0.78rem; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 6px;">
-                                        Posición / Lado Requerido
-                                    </label>
+                                    <label style="display: block; font-size: 0.78rem; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 6px;">Lado Requerido</label>
                                     <select name="sideNeeded" class="pro-input" style="width: 100%; height: 42px; border-radius: 10px; border: 1px solid #cbd5e1; padding: 0 12px; font-weight: 600;">
                                         <option value="any">🔄 Cualquiera / Indiferente</option>
                                         <option value="reves">🛡️ Revés (Izquierda)</option>
@@ -812,16 +2060,12 @@
 
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px;">
                                 <div>
-                                    <label style="display: block; font-size: 0.78rem; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 6px;">
-                                        Nivel Mínimo
-                                    </label>
-                                    <input type="number" step="0.25" name="levelMin" value="3.25" class="pro-input" style="width: 100%; height: 42px; border-radius: 10px; border: 1px solid #cbd5e1; padding: 0 12px;">
+                                    <label style="display: block; font-size: 0.78rem; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 6px;">Nivel Mínimo</label>
+                                    <input type="number" step="0.25" name="levelMin" value="${prefill && prefill.levelMin ? prefill.levelMin : 3.0}" class="pro-input" style="width: 100%; height: 42px; border-radius: 10px; border: 1px solid #cbd5e1; padding: 0 12px;">
                                 </div>
                                 <div>
-                                    <label style="display: block; font-size: 0.78rem; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 6px;">
-                                        Nivel Máximo
-                                    </label>
-                                    <input type="number" step="0.25" name="levelMax" value="4.50" class="pro-input" style="width: 100%; height: 42px; border-radius: 10px; border: 1px solid #cbd5e1; padding: 0 12px;">
+                                    <label style="display: block; font-size: 0.78rem; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 6px;">Nivel Máximo</label>
+                                    <input type="number" step="0.25" name="levelMax" value="${prefill && prefill.levelMax ? prefill.levelMax : 4.5}" class="pro-input" style="width: 100%; height: 42px; border-radius: 10px; border: 1px solid #cbd5e1; padding: 0 12px;">
                                 </div>
                             </div>
 
@@ -834,7 +2078,7 @@
                                 <button type="button" id="btn-cancel-create-sos" style="background: #f1f5f9; color: #475569; border: none; padding: 10px 18px; border-radius: 10px; font-weight: 750; cursor: pointer;">
                                     Cancelar
                                 </button>
-                                <button type="submit" style="background: linear-gradient(135deg, #EF4444 0%, #b91c1c 100%); color: #ffffff; border: none; padding: 10px 22px; border-radius: 10px; font-weight: 900; cursor: pointer; box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);">
+                                <button type="submit" style="background: linear-gradient(135deg, #EF4444 0%, #b91c1c 100%); color: #ffffff; border: none; padding: 10px 22px; border-radius: 10px; font-weight: 900; cursor: pointer;">
                                     🚀 Publicar Alerta Inmediata
                                 </button>
                             </div>
@@ -843,232 +2087,188 @@
                 </div>
             `;
 
-            // Listeners del modal
             const closeBtn = document.getElementById('btn-close-sos-create-modal');
             const cancelBtn = document.getElementById('btn-cancel-create-sos');
             const backdrop = document.getElementById('create-sos-modal-backdrop');
             const form = document.getElementById('form-create-sos-alert');
-
             const closeModal = () => { modalRoot.innerHTML = ''; };
 
             if (closeBtn) closeBtn.onclick = closeModal;
             if (cancelBtn) cancelBtn.onclick = closeModal;
             if (backdrop) {
-                backdrop.onclick = (e) => {
-                    if (e.target === backdrop) closeModal();
-                };
+                backdrop.onclick = (e) => { if (e.target === backdrop) closeModal(); };
             }
 
-            if (form) {
-                form.onsubmit = async (e) => {
-                    e.preventDefault();
-                    const formData = new FormData(form);
-                    const alertData = {
-                        eventType: formData.get('eventType'),
-                        eventName: formData.get('eventName'),
-                        date: formData.get('date'),
-                        time: formData.get('time'),
-                        court: formData.get('court'),
-                        sideNeeded: formData.get('sideNeeded'),
-                        levelMin: parseFloat(formData.get('levelMin')) || 3.0,
-                        levelMax: parseFloat(formData.get('levelMax')) || 4.5,
-                        bonusXp: 150
-                    };
+            form.onsubmit = async (e) => {
+                e.preventDefault();
+                const formData = new FormData(form);
+                const alertData = {
+                    eventId: prefill?.eventId || null,
+                    eventType: formData.get('eventType'),
+                    eventName: formData.get('eventName'),
+                    date: formData.get('date'),
+                    time: formData.get('time'),
+                    court: formData.get('court'),
+                    sideNeeded: formData.get('sideNeeded'),
+                    levelMin: parseFloat(formData.get('levelMin')) || 3.0,
+                    levelMax: parseFloat(formData.get('levelMax')) || 4.5,
+                    bonusXp: 150
+                };
 
-                    try {
-                        const service = this._getService();
-                        if (service) {
-                            await service.createSosAlert(alertData);
-                        }
-                        closeModal();
-                        await this.render(this.container);
-                        alert("✅ Alerta SOS publicada con éxito y radar activado.");
-                    } catch (err) {
-                        alert("❌ Error al publicar alerta SOS: " + err.message);
+                try {
+                    const service = this._getService();
+                    if (service) {
+                        await service.createSosAlert(alertData);
                     }
-                };
-            }
+                    closeModal();
+                    await this.render();
+                    alert("✅ Alerta SOS publicada con éxito en la App.");
+                } catch (err) {
+                    alert("❌ Error al publicar alerta SOS: " + err.message);
+                }
+            };
         }
 
-        /**
-         * Abre modal para asignar suplente manual a una alerta
-         * @private
-         */
-        _openAssignModal(alertId) {
+        // =========================================================================
+        // MODAL 4: 👤 ASIGNAR JUGADOR REAL A ALERTA SOS
+        // =========================================================================
+
+        openAssignPlayerToAlertModal(alertId) {
             const alertObj = this.activeAlerts.find(a => a.id === alertId);
             if (!alertObj) return;
 
             const modalRoot = document.getElementById('admin-sos-modal-root');
             if (!modalRoot) return;
 
-            // Suplentes ordenados por compatibilidad con la alerta
-            const service = this._getService();
-            const evaluatedSubs = this.substitutes.map(sub => {
-                const compat = service ? service.calculateCompatibility(sub, alertObj) : { score: 75, label: 'Compatible' };
-                return { ...sub, compat };
-            }).sort((a, b) => b.compat.score - a.compat.score);
-
             modalRoot.innerHTML = `
-                <div id="assign-sos-modal-backdrop" style="
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100vw;
-                    height: 100vh;
-                    background: rgba(15, 23, 42, 0.75);
-                    backdrop-filter: blur(6px);
-                    z-index: 99999;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 16px;
+                <div id="assign-alert-overlay" style="
+                    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+                    background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px);
+                    z-index: 99999; display: flex; align-items: center; justify-content: center; padding: 16px;
                 ">
-                    <div style="
-                        background: #ffffff;
-                        border-radius: 24px;
-                        max-width: 600px;
-                        width: 100%;
-                        max-height: 85vh;
-                        overflow-y: auto;
-                        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-                        border: 1px solid #cbd5e1;
-                        font-family: 'Outfit', 'Inter', sans-serif;
-                        color: #0f172a;
-                    ">
-                        <!-- Cabecera -->
-                        <div style="
-                            background: #0f172a;
-                            padding: 20px 24px;
-                            color: #ffffff;
-                            display: flex;
-                            justify-content: space-between;
-                            align-items: center;
-                            position: sticky;
-                            top: 0;
-                            z-index: 10;
-                        ">
+                    <div style="background: #ffffff; border-radius: 24px; max-width: 600px; width: 100%; max-height: 85vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3); font-family: 'Outfit', sans-serif;">
+                        <div style="background: #0f172a; padding: 20px 24px; color: #ffffff; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10;">
                             <div>
-                                <h3 style="margin: 0; font-size: 1.15rem; font-weight: 900; color: #ffffff;">Asignar Suplente a Plaza SOS</h3>
+                                <h3 style="margin: 0; font-size: 1.15rem; font-weight: 900; color: #ffffff;">Asignar Jugador a Alerta SOS</h3>
                                 <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #94a3b8;">${this._escapeHtml(alertObj.eventName)} (${alertObj.time})</p>
                             </div>
-                            <button id="btn-close-assign-modal" style="background: transparent; border: none; color: #94a3b8; font-size: 1.2rem; cursor: pointer;">
-                                <i class="fas fa-times"></i>
-                            </button>
+                            <button id="btn-close-alert-assign-modal" style="background: transparent; border: none; color: #94a3b8; font-size: 1.3rem; cursor: pointer;">&times;</button>
                         </div>
 
-                        <!-- Lista de Suplentes -->
                         <div style="padding: 20px;">
-                            <div style="font-size: 0.8rem; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 12px;">
-                                Suplentes de Guardia Ordenados por Afinidad
+                            <input type="text" id="assign-alert-search" placeholder="Buscar jugador por nombre..." style="width: 100%; height: 40px; border-radius: 10px; border: 1px solid #cbd5e1; padding: 0 12px; margin-bottom: 12px; font-size: 0.85rem;">
+                            
+                            <div id="assign-alert-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 350px; overflow-y: auto;">
+                                <!-- Se rellena dinámicamente -->
                             </div>
-
-                            ${evaluatedSubs.length === 0 ? `
-                                <div style="padding: 20px; text-align: center; color: #94a3b8;">
-                                    No hay suplentes disponibles en este momento.
-                                </div>
-                            ` : `
-                                <div style="display: flex; flex-direction: column; gap: 10px;">
-                                    ${evaluatedSubs.map(sub => `
-                                        <div style="
-                                            background: #f8fafc;
-                                            border: 1.5px solid ${sub.compat.score >= 80 ? '#bbf7d0' : '#e2e8f0'};
-                                            border-radius: 14px;
-                                            padding: 12px 16px;
-                                            display: flex;
-                                            align-items: center;
-                                            justify-content: space-between;
-                                            gap: 12px;
-                                        ">
-                                            <div style="display: flex; align-items: center; gap: 10px;">
-                                                <div style="width: 38px; height: 38px; border-radius: 50%; background: #0284c7; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 0.85rem;">
-                                                    ${this._getInitials(sub.name)}
-                                                </div>
-                                                <div>
-                                                    <div style="font-weight: 850; font-size: 0.92rem; color: #0f172a;">${this._escapeHtml(sub.name)}</div>
-                                                    <div style="font-size: 0.78rem; color: #64748b;">
-                                                        Nivel ${parseFloat(sub.level || 3.5).toFixed(2)} • ${this._formatSide(sub.side)}
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div style="display: flex; align-items: center; gap: 10px;">
-                                                <span style="font-weight: 900; font-size: 0.82rem; color: ${sub.compat.score >= 80 ? '#15803d' : '#0284c7'};">
-                                                    ${sub.compat.score}% match
-                                                </span>
-                                                <button class="btn-confirm-assign" data-uid="${sub.uid || sub.id}" data-name="${this._escapeHtml(sub.name)}" style="
-                                                    background: #0f172a;
-                                                    color: #ffffff;
-                                                    border: none;
-                                                    padding: 8px 14px;
-                                                    border-radius: 8px;
-                                                    font-size: 0.8rem;
-                                                    font-weight: 850;
-                                                    cursor: pointer;
-                                                ">
-                                                    Asignar
-                                                </button>
-                                            </div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            `}
                         </div>
                     </div>
                 </div>
             `;
 
-            const closeBtn = document.getElementById('btn-close-assign-modal');
-            const backdrop = document.getElementById('assign-sos-modal-backdrop');
+            const overlay = document.getElementById('assign-alert-overlay');
+            const closeBtn = document.getElementById('btn-close-alert-assign-modal');
+            const searchInput = document.getElementById('assign-alert-search');
+            const listEl = document.getElementById('assign-alert-list');
             const closeModal = () => { modalRoot.innerHTML = ''; };
 
-            if (closeBtn) closeBtn.onclick = closeModal;
-            if (backdrop) {
-                backdrop.onclick = (e) => {
-                    if (e.target === backdrop) closeModal();
-                };
-            }
+            closeBtn.onclick = closeModal;
+            overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
 
-            const confirmBtns = modalRoot.querySelectorAll('.btn-confirm-assign');
-            confirmBtns.forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    const uid = e.currentTarget.getAttribute('data-uid');
-                    const targetSub = this.substitutes.find(s => (s.uid || s.id) === uid);
-                    if (!targetSub) return;
+            const renderPlayers = (filter = '') => {
+                const q = filter.toLowerCase().trim();
+                const matched = this.realPlayers.filter(p => !q || p.name.toLowerCase().includes(q) || p.phone.includes(q));
 
-                    try {
-                        if (service) {
-                            await service.joinSosAlert(alertId, targetSub);
-                        }
+                listEl.innerHTML = matched.slice(0, 30).map(p => `
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between;">
+                        <div>
+                            <div style="font-weight: 850; font-size: 0.88rem; color: #0f172a;">${this._escapeHtml(p.name)}</div>
+                            <div style="font-size: 0.75rem; color: #64748b;">Nivel ${p.level.toFixed(2)} • ${this._formatSide(p.side)}</div>
+                        </div>
+                        <button class="btn-do-assign-to-alert" data-player-id="${p.id}" style="background: #0f172a; color: #fff; border: none; padding: 6px 12px; border-radius: 8px; font-weight: 850; font-size: 0.78rem; cursor: pointer;">
+                            Cubrir Plaza
+                        </button>
+                    </div>
+                `).join('');
+
+                listEl.querySelectorAll('.btn-do-assign-to-alert').forEach(btn => {
+                    btn.onclick = async (e) => {
+                        const pid = e.currentTarget.dataset.playerId;
+                        const targetSub = this.realPlayers.find(p => p.id === pid);
+                        if (!targetSub) return;
                         closeModal();
-                        await this.render(this.container);
-                        alert(`🎉 ¡Plaza asignada con éxito a ${targetSub.name}! Se le han otorgado +150 XP de honor.`);
-                    } catch (err) {
-                        alert("❌ Error al asignar suplente: " + err.message);
-                    }
+                        await this._assignPlayerToAlert(alertId, targetSub);
+                    };
                 });
-            });
+            };
+
+            searchInput.oninput = (e) => renderPlayers(e.target.value);
+            renderPlayers();
         }
 
-        /**
-         * Cancela una alerta SOS activa
-         * @private
-         */
+        async _assignPlayerToAlert(alertId, player) {
+            try {
+                const service = this._getService();
+                if (service) {
+                    await service.joinSosAlert(alertId, player.raw || player);
+                }
+                await this.render();
+                alert(`🎉 ¡Plaza cubierta con éxito por ${player.name}! Se le han otorgado +150 XP de honor.`);
+            } catch (err) {
+                alert("❌ Error al asignar suplente: " + err.message);
+            }
+        }
+
         async _cancelAlert(alertId) {
             try {
                 const service = this._getService();
                 if (service) {
-                    await service.cancelSosAlert(alertId, "Cancelada administrativamente");
+                    await service.cancelSosAlert(alertId, "Cancelada por la administración");
                 }
-                await this.render(this.container);
+                await this.render();
             } catch (err) {
                 alert("❌ Error al cancelar alerta: " + err.message);
             }
         }
 
-        /**
-         * Actualiza el badge en el sidebar
-         * @private
-         */
+        _getFilteredPlayers() {
+            return this.realPlayers.filter(p => {
+                if (this.filterGender !== 'all' && p.gender !== this.filterGender) return false;
+
+                if (this.filterSide !== 'all') {
+                    if (this.filterSide === 'drive' && p.side !== 'drive' && p.side !== 'any') return false;
+                    if (this.filterSide === 'reves' && p.side !== 'reves' && p.side !== 'any') return false;
+                }
+
+                if (this.filterGuard === 'guard' && !p.isAvailableToday) return false;
+
+                if (this.searchQuery) {
+                    const q = this.searchQuery;
+                    if (!p.name.toLowerCase().includes(q) && !p.phone.includes(q)) return false;
+                }
+
+                return true;
+            });
+        }
+
+        _getFilteredEvents() {
+            return this.incompleteEvents.filter(evt => {
+                if (this.filterEventCat === 'all') return true;
+                const cat = String(evt.category || '').toLowerCase();
+                const name = String(evt.name || '').toLowerCase();
+                if (this.filterEventCat === 'male') {
+                    return cat === 'male' || cat.includes('masc') || name.includes('masc') || name.includes('chico') || cat === 'open';
+                }
+                if (this.filterEventCat === 'mixed') {
+                    return cat === 'mixed' || cat.includes('mixt') || name.includes('mixt') || cat === 'open';
+                }
+                if (this.filterEventCat === 'female') {
+                    return cat === 'female' || cat.includes('fem') || name.includes('fem') || name.includes('chica') || cat === 'open';
+                }
+                return true;
+            });
+        }
+
         _updateSidebarBadge() {
             const badge = document.getElementById('sidebar-sos-badge');
             if (badge) {
@@ -1082,31 +2282,6 @@
             }
         }
 
-        /**
-         * Retorna suplentes filtrados por lado y búsqueda
-         * @private
-         */
-        _getFilteredSubstitutes() {
-            return this.substitutes.filter(sub => {
-                if (this.filterSide !== 'all') {
-                    const side = (sub.side || '').toLowerCase();
-                    if (this.filterSide === 'drive' && !side.includes('dri') && side !== 'any') return false;
-                    if (this.filterSide === 'reves' && !side.includes('rev') && side !== 'any') return false;
-                }
-
-                if (this.searchQuery) {
-                    const name = (sub.name || '').toLowerCase();
-                    if (!name.includes(this.searchQuery)) return false;
-                }
-
-                return true;
-            });
-        }
-
-        /**
-         * Helper para obtener servicio SOS
-         * @private
-         */
         _getService() {
             return (typeof window !== 'undefined' && window.SosSubstitutesService)
                 ? window.SosSubstitutesService
@@ -1119,12 +2294,6 @@
             if (s.includes('rev')) return 'Revés';
             if (s.includes('dri')) return 'Drive';
             return 'Cualquiera';
-        }
-
-        _formatTimeSlot(slot) {
-            if (slot === 'mananas') return 'Mañanas (9:00 - 14:00)';
-            if (slot === 'tardes') return 'Tardes (17:00 - 22:30)';
-            return 'Todo el día';
         }
 
         _getInitials(name) {
@@ -1148,10 +2317,10 @@
 
         _getLoadingHtml() {
             return `
-                <div style="padding: 60px 20px; text-align: center;">
-                    <div class="loader" style="margin: 0 auto 16px auto;"></div>
-                    <div style="font-weight: 850; font-size: 1.1rem; color: #0f172a;">Cargando Bolsa de Suplentes SOS...</div>
-                    <div style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">Sincronizando alertas y suplentes de guardia en tiempo real</div>
+                <div style="padding: 70px 20px; text-align: center;">
+                    <i class="fas fa-circle-notch fa-spin" style="font-size: 2.5rem; color: #ef4444; margin-bottom: 16px;"></i>
+                    <div style="font-weight: 850; font-size: 1.15rem; color: #0f172a;">Sincronizando Convocatorias y Jugadores Reales...</div>
+                    <div style="font-size: 0.85rem; color: #64748b; margin-top: 6px;">Conectando con la base de datos de SomosPádel BCN</div>
                 </div>
             `;
         }
@@ -1160,7 +2329,7 @@
             return `
                 <div style="padding: 40px 20px; text-align: center; max-width: 500px; margin: 0 auto;">
                     <div style="font-size: 2.5rem; margin-bottom: 12px;">⚠️</div>
-                    <h3 style="margin: 0 0 8px 0; color: #b91c1c; font-weight: 900;">Error al cargar Suplentes SOS</h3>
+                    <h3 style="margin: 0 0 8px 0; color: #b91c1c; font-weight: 900;">Error al cargar Convocatorias SOS</h3>
                     <p style="margin: 0 0 16px 0; font-size: 0.88rem; color: #64748b;">${this._escapeHtml(msg)}</p>
                     <button onclick="window.AdminSosSubstitutes.render()" class="btn-primary-pro" style="padding: 10px 20px; border-radius: 10px; font-weight: 850; cursor: pointer;">
                         Reintentar
@@ -1174,12 +2343,11 @@
     const adminSosInstance = new AdminSosSubstitutes();
     global.AdminSosSubstitutes = adminSosInstance;
 
-    // Hook en window.AdminViews para interoperabilidad con el router del admin
     if (!global.AdminViews) {
         global.AdminViews = {};
     }
     global.AdminViews.sos_substitutes = () => adminSosInstance.render();
 
-    console.log('🚨 [AdminSosSubstitutes] Módulo Administrativo de Suplentes SOS cargado con éxito.');
+    console.log('🚨 [AdminSosSubstitutes] Módulo de Convocatorias, Bajas y Mensajería Real cargado con éxito.');
 
 })(typeof window !== 'undefined' ? window : this);

@@ -70,6 +70,15 @@ runSubtest("Radar de Climatología Avanzado & Alertas de Lluvia", "test-weather-
 // 13. Visualización Completa de 6 Rondas & Tabs Compactos QA
 runSubtest("Visualización Completa de 6 Rondas & Tabs Compactos", "test-round-tabs-qa.js");
 
+// 14. Centro de Control & Auditoría de Lógica de Torneos y Entrenos QA
+runSubtest("Centro de Control & Auditoría de Lógica de Torneos y Entrenos", "test-tournament-logic-lab-complete-qa.js");
+
+// 15. Frontend Enhancements & Clonación Ficticia Lógica Lab QA
+runSubtest("Mejoras de Frontend & Clonación Lógica Lab", "test-logic-lab-frontend-enhancements.js");
+
+// 16. Eventos Finalizados y Reordenación de Submenús QA
+runSubtest("Eventos Finalizados & Submenús Inmediatos", "test-finished-events-and-submenus-qa.js");
+
 console.log("\n================================================================");
 console.log(" RESUMEN GLOBAL DE CALIDAD:");
 reports.forEach(r => {
