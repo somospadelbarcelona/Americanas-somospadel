@@ -803,22 +803,384 @@ class NotificationUi {
 
         this.close();
 
-        if (actionUrl) {
-            if (window.Router) {
-                window.Router.navigate(actionUrl);
-            } else {
-                window.location.hash = `#${actionUrl}`;
+        // 1. Obtener objeto completo de la notificación
+        const allNotifs = window.NotificationService ? (window.NotificationService.getMergedNotifications() || []) : [];
+        const rawItem = allNotifs.find(n => n && (n.id === id || n.data?.broadcastId === id || n.data?.eventId === id));
+        const item = this._normalizeNotificationItem(rawItem || { id, actionUrl, eventId, action });
+
+        const fullText = `${item.title} ${item.body} ${item.actionUrl || ''}`.toLowerCase();
+        const itemId = String(id || '');
+
+        // 2. CASO A: NOTIFICACIÓN DE CLIMA / RADAR METEOROLÓGICO
+        if (item.category === 'clima' || itemId.includes('weather') || itemId.includes('clima') || itemId.includes('radar') || actionUrl === 'clima' || fullText.includes('meteorol')) {
+            if (window.EventWeatherModal && typeof window.EventWeatherModal.open === 'function') {
+                window.EventWeatherModal.open({ court: item.sede || 'El Prat', name: 'Pistas SomosPádel' });
+                return;
             }
+            if (window.Router) {
+                window.Router.navigate('clima');
+                return;
+            }
+            this.showDetailModal(item);
             return;
         }
 
-        if (eventId) {
-            if (window.EventsController && window.EventsController.openLiveEvent) {
-                window.EventsController.openLiveEvent(eventId, 'americana', action);
-            } else if (window.Router) {
-                window.Router.navigate('live', { eventId, action });
+        // 3. CASO B: NOTICIA DEL JOURNAL (BAJADA DE PARED, MATERIAL, CONSEJOS)
+        if (itemId.includes('journal') || item.tag?.label?.includes('JOURNAL') || fullText.includes('journal') || rawItem?.type === 'daily_news') {
+            this.showJournalArticleModal(item);
+            return;
+        }
+
+        // 4. CASO C: NOTICIA RELEVANTE DEL DÍA / TITULARES APP
+        if (itemId.includes('headline') || fullText.includes('relevante') || item.tag?.label?.includes('NOTICIA DEL DÍA')) {
+            this.showHeadlineNewsModal(item);
+            return;
+        }
+
+        // 5. CASO D: EVENTO EN VIVO / AMERICANA / ENTRENO CON EVENT ID
+        const resolvedEventId = eventId || item.eventId || item.data?.eventId;
+        if (resolvedEventId) {
+            if (window.EventsController && typeof window.EventsController.openLiveEvent === 'function') {
+                const eventType = item.category === 'entrenos' ? 'entreno' : 'americana';
+                window.EventsController.openLiveEvent(resolvedEventId, eventType, action);
+                return;
+            }
+            if (window.Router) {
+                window.Router.navigate('live', { eventId: resolvedEventId, action });
+                return;
+            }
+            if (window.loadAdminView) {
+                window.loadAdminView('events');
+                return;
             }
         }
+
+        // 6. CASO E: RUTAS ESPECÍFICAS DE SECCIÓN (americanas, entrenos, ranking, comunidad, etc.)
+        if (actionUrl && !['dashboard', 'home', 'inicio'].includes(actionUrl.toLowerCase())) {
+            if (window.Router) {
+                window.Router.navigate(actionUrl);
+                return;
+            }
+            if (window.loadAdminView) {
+                window.loadAdminView(actionUrl);
+                return;
+            }
+            window.location.hash = `#${actionUrl}`;
+            return;
+        }
+
+        // 7. CASO F: COMUNICADO GENERAL / AVISO (Si es dashboard o no tiene destino específico, abrir el visor modal para leerlo completo)
+        this.showDetailModal(item);
+    }
+
+    /**
+     * Muestra un modal de lectura completo para artículos del Journal
+     */
+    showJournalArticleModal(item) {
+        document.getElementById('notif-content-modal-overlay')?.remove();
+
+        const isWallSmash = String(item.id || '').includes('wall_smash') || String(item.title || '').toLowerCase().includes('bajada');
+        const isCarbon = String(item.id || '').includes('carbon_padel') || String(item.title || '').toLowerCase().includes('carbono');
+
+        let imgUrl = 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?q=80&w=1200&auto=format&fit=crop';
+        let fullArticleHtml = '';
+
+        if (isWallSmash) {
+            imgUrl = 'https://images.unsplash.com/photo-1599474924187-334a4ae5bd3c?q=80&w=1200&auto=format&fit=crop';
+            fullArticleHtml = `
+                <p style="margin: 0 0 14px 0; font-size: 0.95rem; line-height: 1.6; color: #334155;">
+                    Cuando el rival lanza un globo corto que rebota alto en el cristal de fondo, tienes la oportunidad de oro para ejecutar una <strong>bajada de pared ofensiva</strong>.
+                </p>
+                <div style="background: #f0fdf4; border-left: 4px solid #10b981; padding: 12px 16px; border-radius: 8px; margin: 16px 0;">
+                    <strong style="color: #047857; display: block; margin-bottom: 4px;">💡 Regla de Oro en Pista:</strong>
+                    <span style="color: #065f46; font-size: 0.9rem;">No busques reventar la bola; una bajada dirigida al cuerpo del rival en la red o hacia el espacio central entre ambos genera un punto casi seguro o una volea forzada fácil de rematar.</span>
+                </div>
+                <h4 style="margin: 18px 0 8px 0; font-size: 1.05rem; color: #0f172a; font-weight: 850;">Técnica Paso a Paso:</h4>
+                <ul style="margin: 0 0 16px 20px; padding: 0; color: #475569; font-size: 0.9rem; line-height: 1.6;">
+                    <li><strong>Armado Alto Inmediato:</strong> Prepara la pala arriba antes de que la bola impacte en el cristal de fondo.</li>
+                    <li><strong>Apoyo Firme:</strong> Carga el peso en el pie trasero y transfiérelo hacia adelante en el punto de contacto.</li>
+                    <li><strong>Aceleración de Muñeca:</strong> Acompaña el golpe de arriba hacia abajo para generar efecto cortado y mantener la bola baja.</li>
+                </ul>
+            `;
+        } else if (isCarbon) {
+            imgUrl = 'https://images.unsplash.com/photo-1617083934555-563d61a29f8f?q=80&w=1200&auto=format&fit=crop';
+            fullArticleHtml = `
+                <p style="margin: 0 0 14px 0; font-size: 0.95rem; line-height: 1.6; color: #334155;">
+                    Jugar en las pistas de Barcelona (El Prat y Cornellà) cerca de la costa significa que la <strong>humedad nocturna</strong> modifica sensiblemente el comportamiento de la bola y los materiales de tu pala.
+                </p>
+                <div style="background: #ecfdf5; border-left: 4px solid #059669; padding: 12px 16px; border-radius: 8px; margin: 16px 0;">
+                    <strong style="color: #047857; display: block; margin-bottom: 4px;">🔬 Material Science:</strong>
+                    <span style="color: #065f46; font-size: 0.9rem;">El carbono 12K y 24K aporta rigidez estructural, pero con humedad alta la bola pesa más. Una goma Black EVA Soft proporciona la salida extra necesaria para no perder profundidad en las pistas con moqueta azul rápida.</span>
+                </div>
+                <h4 style="margin: 18px 0 8px 0; font-size: 1.05rem; color: #0f172a; font-weight: 850;">Consejos para la Moqueta Azul:</h4>
+                <ul style="margin: 0 0 16px 20px; padding: 0; color: #475569; font-size: 0.9rem; line-height: 1.6;">
+                    <li><strong>Presión de Pelotas:</strong> Utiliza botes presurizados para contrarrestar la pérdida de rebote en los cristales fríos.</li>
+                    <li><strong>Suela de Espiga (Clay):</strong> Esencial para un agarre firme en la moqueta rizada con arena de sílice sin resbalar en arrancadas rápidas.</li>
+                </ul>
+            `;
+        } else {
+            fullArticleHtml = `
+                <p style="margin: 0 0 14px 0; font-size: 0.95rem; line-height: 1.6; color: #334155;">
+                    ${item.body}
+                </p>
+            `;
+        }
+
+        const overlay = document.createElement('div');
+        overlay.id = 'notif-content-modal-overlay';
+        overlay.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(15, 23, 42, 0.78); backdrop-filter: blur(8px);
+            z-index: 100000; display: flex; align-items: center; justify-content: center;
+            padding: 16px; box-sizing: border-box; font-family: 'Outfit', 'Inter', sans-serif;
+        `;
+
+        overlay.innerHTML = `
+            <div style="
+                background: #ffffff; border-radius: 24px; max-width: 620px; width: 100%;
+                max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4);
+                border: 1px solid #cbd5e1; position: relative;
+            ">
+                <!-- Cabecera con Imagen HD -->
+                <div style="
+                    height: 190px; width: 100%; position: relative; overflow: hidden;
+                    border-top-left-radius: 24px; border-top-right-radius: 24px;
+                    background: url('${imgUrl}') center/cover no-repeat;
+                ">
+                    <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,23,42,0.2) 0%, rgba(15,23,42,0.85) 100%);"></div>
+                    <button id="btn-close-notif-modal" type="button" style="
+                        position: absolute; top: 14px; right: 14px; width: 36px; height: 36px;
+                        border-radius: 50%; background: rgba(0,0,0,0.5); color: #ffffff; border: 1px solid rgba(255,255,255,0.2);
+                        cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+                    ">&times;</button>
+                    <div style="position: absolute; bottom: 16px; left: 20px; right: 20px;">
+                        <span style="background: #10b981; color: #ffffff; font-size: 0.72rem; font-weight: 900; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.5px; text-transform: uppercase;">
+                            <i class="fas fa-newspaper"></i> SOMOSPADEL JOURNAL
+                        </span>
+                        <h2 style="margin: 8px 0 0 0; font-size: 1.25rem; font-weight: 950; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.6); line-height: 1.3;">
+                            ${item.title}
+                        </h2>
+                    </div>
+                </div>
+
+                <!-- Contenido -->
+                <div style="padding: 22px 24px;">
+                    <div style="display: flex; gap: 14px; margin-bottom: 16px; font-size: 0.78rem; font-weight: 750; color: #64748b; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
+                        <span><i class="far fa-clock"></i> 3 min lectura</span>
+                        <span><i class="fas fa-award"></i> Técnica & Material</span>
+                        <span><i class="fas fa-feather-pointed"></i> Editorial SomosPádel</span>
+                    </div>
+
+                    ${fullArticleHtml}
+
+                    <div style="margin-top: 24px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; border-top: 1px solid #f1f5f9; padding-top: 18px;">
+                        <button id="btn-modal-dismiss" type="button" style="
+                            background: #f1f5f9; color: #475569; border: none; padding: 11px 20px;
+                            border-radius: 12px; font-weight: 800; font-size: 0.88rem; cursor: pointer;
+                        ">
+                            Cerrar
+                        </button>
+                        <button id="btn-modal-action" type="button" style="
+                            background: #0f172a; color: #CCFF00; border: none; padding: 11px 24px;
+                            border-radius: 12px; font-weight: 950; font-size: 0.9rem; cursor: pointer;
+                            display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(15,23,42,0.25);
+                        ">
+                            <i class="fas fa-book-open"></i> <span>Ver más en el Journal</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        const closeModal = () => overlay.remove();
+        overlay.querySelector('#btn-close-notif-modal')?.addEventListener('click', closeModal);
+        overlay.querySelector('#btn-modal-dismiss')?.addEventListener('click', closeModal);
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+
+        overlay.querySelector('#btn-modal-action')?.addEventListener('click', () => {
+            closeModal();
+            if (window.Router) {
+                window.Router.navigate('journal');
+            } else if (window.loadAdminView) {
+                window.loadAdminView('dashboard_home');
+            } else {
+                window.location.hash = '#journal';
+            }
+        });
+    }
+
+    /**
+     * Muestra un modal de lectura completo para la Noticia Relevante del Día
+     */
+    showHeadlineNewsModal(item) {
+        document.getElementById('notif-content-modal-overlay')?.remove();
+
+        const imgUrl = 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1200&auto=format&fit=crop';
+        const overlay = document.createElement('div');
+        overlay.id = 'notif-content-modal-overlay';
+        overlay.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(15, 23, 42, 0.78); backdrop-filter: blur(8px);
+            z-index: 100000; display: flex; align-items: center; justify-content: center;
+            padding: 16px; box-sizing: border-box; font-family: 'Outfit', 'Inter', sans-serif;
+        `;
+
+        overlay.innerHTML = `
+            <div style="
+                background: #ffffff; border-radius: 24px; max-width: 620px; width: 100%;
+                max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4);
+                border: 1px solid #cbd5e1; position: relative;
+            ">
+                <!-- Cabecera con Imagen HD -->
+                <div style="
+                    height: 190px; width: 100%; position: relative; overflow: hidden;
+                    border-top-left-radius: 24px; border-top-right-radius: 24px;
+                    background: url('${imgUrl}') center/cover no-repeat;
+                ">
+                    <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,23,42,0.2) 0%, rgba(15,23,42,0.85) 100%);"></div>
+                    <button id="btn-close-notif-modal" type="button" style="
+                        position: absolute; top: 14px; right: 14px; width: 36px; height: 36px;
+                        border-radius: 50%; background: rgba(0,0,0,0.5); color: #ffffff; border: 1px solid rgba(255,255,255,0.2);
+                        cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+                    ">&times;</button>
+                    <div style="position: absolute; bottom: 16px; left: 20px; right: 20px;">
+                        <span style="background: #ea580c; color: #ffffff; font-size: 0.72rem; font-weight: 900; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.5px; text-transform: uppercase;">
+                            <i class="fas fa-fire"></i> NOTICIA RELEVANTE DEL DÍA
+                        </span>
+                        <h2 style="margin: 8px 0 0 0; font-size: 1.25rem; font-weight: 950; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.6); line-height: 1.3;">
+                            ${item.title}
+                        </h2>
+                    </div>
+                </div>
+
+                <!-- Contenido -->
+                <div style="padding: 22px 24px;">
+                    <div style="display: flex; gap: 14px; margin-bottom: 16px; font-size: 0.78rem; font-weight: 750; color: #64748b; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
+                        <span><i class="fas fa-calendar-day"></i> Hoy</span>
+                        <span><i class="fas fa-bolt"></i> Sistema SomosPádel</span>
+                        <span><i class="fas fa-trophy"></i> Temporada 2026/2027</span>
+                    </div>
+
+                    <p style="margin: 0 0 14px 0; font-size: 0.95rem; line-height: 1.6; color: #334155;">
+                        La comunidad de <strong>SomosPádel Barcelona</strong> abre la nueva temporada competitiva con un sistema de juego totalmente renovado tanto para entrenos como para torneos.
+                    </p>
+
+                    <div style="background: #fff7ed; border-left: 4px solid #f97316; padding: 14px 16px; border-radius: 10px; margin: 16px 0;">
+                        <strong style="color: #c2410c; display: block; margin-bottom: 6px; font-size: 0.92rem;">✨ Novedades Principales en la App:</strong>
+                        <ul style="margin: 0 0 0 18px; padding: 0; color: #7c2d12; font-size: 0.88rem; line-height: 1.5;">
+                            <li><strong>Ranking Interactivo en Vivo:</strong> Puntos actualizados en cada ronda y tabla de ascensos/descensos.</li>
+                            <li><strong>Cromos PadelFut Oficiales:</strong> Ficha coleccionable con tus estadísticas de smash, defensa y resistencia.</li>
+                            <li><strong>Bonus +150 XP en Alertas SOS:</strong> Recompensas especiales para quienes cubran bajas de última hora.</li>
+                        </ul>
+                    </div>
+
+                    <p style="margin: 0 0 14px 0; font-size: 0.92rem; line-height: 1.6; color: #475569;">
+                        Ya puedes consultar tu ficha de jugador, revisar el calendario de americanas abiertas y apuntarte a las próximas sesiones en pista desde la barra de navegación.
+                    </p>
+
+                    <div style="margin-top: 24px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; border-top: 1px solid #f1f5f9; padding-top: 18px;">
+                        <button id="btn-close-headline-dismiss" type="button" style="
+                            background: #f1f5f9; color: #475569; border: none; padding: 11px 20px;
+                            border-radius: 12px; font-weight: 800; font-size: 0.88rem; cursor: pointer;
+                        ">
+                            Cerrar
+                        </button>
+                        <button id="btn-headline-action" type="button" style="
+                            background: #0f172a; color: #CCFF00; border: none; padding: 11px 24px;
+                            border-radius: 12px; font-weight: 950; font-size: 0.9rem; cursor: pointer;
+                            display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(15,23,42,0.25);
+                        ">
+                            <i class="fas fa-trophy"></i> <span>Ver Ranking & Torneos</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        const closeModal = () => overlay.remove();
+        overlay.querySelector('#btn-close-notif-modal')?.addEventListener('click', closeModal);
+        overlay.querySelector('#btn-close-headline-dismiss')?.addEventListener('click', closeModal);
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+
+        overlay.querySelector('#btn-headline-action')?.addEventListener('click', () => {
+            closeModal();
+            if (window.Router) {
+                window.Router.navigate('ranking');
+            } else if (window.loadAdminView) {
+                window.loadAdminView('results');
+            } else {
+                window.location.hash = '#ranking';
+            }
+        });
+    }
+
+    /**
+     * Muestra un modal de lectura general para cualquier comunicado o aviso oficial
+     */
+    showDetailModal(item) {
+        document.getElementById('notif-content-modal-overlay')?.remove();
+
+        const overlay = document.createElement('div');
+        overlay.id = 'notif-content-modal-overlay';
+        overlay.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(15, 23, 42, 0.78); backdrop-filter: blur(8px);
+            z-index: 100000; display: flex; align-items: center; justify-content: center;
+            padding: 16px; box-sizing: border-box; font-family: 'Outfit', 'Inter', sans-serif;
+        `;
+
+        overlay.innerHTML = `
+            <div style="
+                background: #ffffff; border-radius: 24px; max-width: 560px; width: 100%;
+                max-height: 88vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4);
+                border: 1px solid #cbd5e1; position: relative; padding: 26px;
+            ">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+                    <div style="display: inline-flex; align-items: center; gap: 8px; background: #f1f5f9; padding: 4px 12px; border-radius: 100px;">
+                        <span style="font-size: 0.75rem; font-weight: 850; color: #475569; text-transform: uppercase;">
+                            ${item.tag?.label || 'AVISO SOMOSPADEL'}
+                        </span>
+                    </div>
+                    <button id="btn-close-detail-modal" type="button" style="
+                        background: transparent; border: none; font-size: 1.4rem; color: #94a3b8;
+                        cursor: pointer; line-height: 1; padding: 4px;
+                    ">&times;</button>
+                </div>
+
+                <h3 style="margin: 0 0 12px 0; font-size: 1.25rem; font-weight: 950; color: #0f172a; line-height: 1.35;">
+                    ${item.title}
+                </h3>
+
+                <div style="display: flex; gap: 12px; font-size: 0.75rem; color: #64748b; margin-bottom: 16px;">
+                    <span><i class="far fa-clock"></i> ${item.timeFormatted || 'Reciente'}</span>
+                    <span><i class="fas fa-location-dot"></i> ${item.sede || 'SomosPádel BCN'}</span>
+                </div>
+
+                <div style="font-size: 0.95rem; line-height: 1.6; color: #334155; white-space: pre-line; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px; margin-bottom: 20px;">
+                    ${item.body}
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button id="btn-detail-dismiss" type="button" style="
+                        background: #0f172a; color: #CCFF00; border: none; padding: 12px 28px;
+                        border-radius: 12px; font-weight: 950; font-size: 0.9rem; cursor: pointer;
+                    ">
+                        Entendido
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        const closeModal = () => overlay.remove();
+        overlay.querySelector('#btn-close-detail-modal')?.addEventListener('click', closeModal);
+        overlay.querySelector('#btn-detail-dismiss')?.addEventListener('click', closeModal);
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
     }
 
     handleDeleteOne(id, event) {

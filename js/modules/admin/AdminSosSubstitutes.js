@@ -305,6 +305,102 @@
         }
 
         /**
+         * Formatea la fecha y hora de forma natural en español:
+         * - Si es hoy: 'hoy (18:00h)'
+         * - Si es mañana: 'mañana (18:00h)'
+         * - Si es otra fecha: 'el sábado 10 de octubre a las 18:00h'
+         */
+        _formatFriendlyDatePhrase(dateStr, timeStr) {
+            if (!dateStr || String(dateStr).trim().toLowerCase() === 'hoy') {
+                return timeStr ? `hoy (${timeStr}h)` : 'hoy';
+            }
+            if (String(dateStr).trim().toLowerCase() === 'mañana') {
+                return timeStr ? `mañana (${timeStr}h)` : 'mañana';
+            }
+
+            try {
+                const now = new Date();
+                const yNow = now.getFullYear();
+                const mNow = now.getMonth();
+                const dNow = now.getDate();
+                const todayStr = `${yNow}-${String(mNow + 1).padStart(2, '0')}-${String(dNow).padStart(2, '0')}`;
+
+                const tom = new Date(yNow, mNow, dNow + 1);
+                const tomStr = `${tom.getFullYear()}-${String(tom.getMonth() + 1).padStart(2, '0')}-${String(tom.getDate()).padStart(2, '0')}`;
+
+                let clean = String(dateStr).trim();
+                let targetY, targetM, targetD;
+
+                if (clean.includes('/')) {
+                    const p = clean.split('/').map(Number);
+                    if (p.length >= 2) {
+                        targetD = p[0];
+                        targetM = p[1];
+                        targetY = p[2] ? (p[2] < 100 ? 2000 + p[2] : p[2]) : yNow;
+                    }
+                } else if (clean.includes('-')) {
+                    const p = clean.split('-').map(Number);
+                    if (p[0] > 1000) {
+                        targetY = p[0];
+                        targetM = p[1];
+                        targetD = p[2];
+                    } else {
+                        targetD = p[0];
+                        targetM = p[1];
+                        targetY = p[2] ? (p[2] < 100 ? 2000 + p[2] : p[2]) : yNow;
+                    }
+                }
+
+                if (targetY && targetM && targetD) {
+                    const targetIso = `${targetY}-${String(targetM).padStart(2, '0')}-${String(targetD).padStart(2, '0')}`;
+                    if (targetIso === todayStr) {
+                        return timeStr ? `hoy (${timeStr}h)` : 'hoy';
+                    }
+                    if (targetIso === tomStr) {
+                        return timeStr ? `mañana (${timeStr}h)` : 'mañana';
+                    }
+
+                    const targetDate = new Date(targetY, targetM - 1, targetD);
+                    const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+                    const monthNames = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+                    const dayWeek = dayNames[targetDate.getDay()] || '';
+                    const monthName = monthNames[targetDate.getMonth()] || '';
+                    return `el ${dayWeek} ${targetD} de ${monthName}${timeStr ? ` a las ${timeStr}h` : ''}`;
+                }
+            } catch (_) {}
+
+            return `${dateStr}${timeStr ? ` (${timeStr}h)` : ''}`;
+        }
+
+        /**
+         * Formatea la fecha corta para badges y selectores (ej: 'Sáb 10 Oct')
+         */
+        _formatShortDate(dateStr) {
+            if (!dateStr || String(dateStr).trim().toLowerCase() === 'hoy') return 'Hoy';
+            if (String(dateStr).trim().toLowerCase() === 'mañana') return 'Mañana';
+            try {
+                let clean = String(dateStr).trim();
+                let y, m, d;
+                const now = new Date();
+                if (clean.includes('/')) {
+                    const p = clean.split('/').map(Number);
+                    d = p[0]; m = p[1]; y = p[2] ? (p[2] < 100 ? 2000 + p[2] : p[2]) : now.getFullYear();
+                } else if (clean.includes('-')) {
+                    const p = clean.split('-').map(Number);
+                    if (p[0] > 1000) { y = p[0]; m = p[1]; d = p[2]; }
+                    else { d = p[0]; m = p[1]; y = p[2] ? (p[2] < 100 ? 2000 + p[2] : p[2]) : now.getFullYear(); }
+                }
+                if (y && m && d) {
+                    const dt = new Date(y, m - 1, d);
+                    const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+                    const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+                    return `${days[dt.getDay()]} ${d} ${months[dt.getMonth()]}`;
+                }
+            } catch (_) {}
+            return dateStr;
+        }
+
+        /**
          * Carga entrenos y americanas que tengan plazas vacantes reales
          */
         async _loadIncompleteEvents() {
@@ -382,7 +478,7 @@
                         name: (e.name || e.title || (type === 'entreno' ? 'Entreno Táctico' : 'Americana SomosPadel')).toUpperCase(),
                         date: dateStr || e.date || 'Hoy',
                         time: e.time || '19:30',
-                        court: e.court || e.pista || 'Pista Principal',
+                        court: e.court || e.pista || e.location || e.club || e.sede || 'Pistas Centrales',
                         category,
                         levelMin: parseFloat(e.level_min || e.level || 3.0),
                         levelMax: parseFloat(e.level_max || e.level || 4.5),
@@ -889,7 +985,7 @@
 
                         <!-- Info Detallada -->
                         <div style="background: #f8fafc; border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; font-size: 0.8rem; line-height: 1.6; color: #334155;">
-                            <div><i class="far fa-calendar" style="width:16px; color:#64748b;"></i> <strong>Fecha:</strong> ${evt.date} • ${evt.time}h</div>
+                            <div><i class="far fa-calendar" style="width:16px; color:#64748b;"></i> <strong>Fecha:</strong> ${this._formatShortDate(evt.date)} • ${evt.time}h</div>
                             <div><i class="fas fa-table-tennis-paddle-ball" style="width:16px; color:#64748b;"></i> <strong>Pista:</strong> ${this._escapeHtml(evt.court)}</div>
                             <div><i class="fas fa-chart-line" style="width:16px; color:#64748b;"></i> <strong>Nivel:</strong> ${evt.levelMin.toFixed(2)} - ${evt.levelMax.toFixed(2)}</div>
                             <div><i class="fas fa-users" style="width:16px; color:#64748b;"></i> <strong>Inscritos:</strong> <span style="font-weight: 850; color: #0f172a;">${evt.currentPlayers}</span> / ${evt.maxPlayers}</div>
@@ -1111,8 +1207,8 @@
                         </h3>
 
                         <div style="background: #f8fafc; border-radius: 12px; padding: 12px; margin: 12px 0; font-size: 0.82rem; line-height: 1.6; color: #334155;">
-                            <div><i class="far fa-clock" style="color: #64748b; width: 16px;"></i> <strong>Hora:</strong> ${alert.time || '19:30'} • ${alert.date || 'Hoy'}</div>
-                            <div><i class="fas fa-table-tennis-paddle-ball" style="color: #64748b; width: 16px;"></i> <strong>Pista:</strong> ${this._escapeHtml(alert.court || 'Pista Principal')}</div>
+                            <div><i class="far fa-clock" style="color: #64748b; width: 16px;"></i> <strong>Hora:</strong> ${this._formatShortDate(alert.date)} • ${alert.time || '19:30'}h</div>
+                            <div><i class="fas fa-table-tennis-paddle-ball" style="color: #64748b; width: 16px;"></i> <strong>Pista:</strong> ${this._escapeHtml(alert.court || 'Pistas Centrales')}</div>
                             <div><i class="fas fa-chart-line" style="color: #64748b; width: 16px;"></i> <strong>Nivel:</strong> ${levelRange}</div>
                             <div><i class="fas fa-arrows-left-right" style="color: #64748b; width: 16px;"></i> <strong>Lado:</strong> <span style="font-weight: 800; color: #b91c1c;">${sideLabel}</span></div>
                         </div>
@@ -1353,14 +1449,28 @@
                 if (prefill.levelMax) defaultLevelMax = parseFloat(prefill.levelMax);
             }
 
-            // Generar plantilla de texto
+            // Generar plantilla de texto dinámica y contextualizada
             const getTemplateText = (aud, evt) => {
                 if (evt) {
-                    const slots = evt.freeSlots || 1;
-                    const catName = evt.category === 'male' ? 'MASCULINO' : (evt.category === 'mixed' ? 'MIXTO' : 'DE PÁDEL');
+                    const slots = parseInt(evt.freeSlots || evt.free || evt.free_slots || 1, 10);
+                    const catRaw = String(evt.category || evt.cat || aud || 'all').toLowerCase();
+                    let catName = 'DE PÁDEL';
+                    if (catRaw.includes('masc') || catRaw === 'male' || catRaw === 'chicos') catName = 'MASCULINO';
+                    else if (catRaw.includes('mixt') || catRaw === 'mixed') catName = 'MIXTO';
+                    else if (catRaw.includes('fem') || catRaw === 'female' || catRaw === 'chicas') catName = 'FEMENINO';
+
+                    const isAmericana = evt.type === 'americana' || (evt.name && String(evt.name).toUpperCase().includes('AMERICANA'));
+                    const typeName = isAmericana ? 'la Americana' : 'el Entreno';
+                    const courtName = evt.court || evt.pista || evt.location || evt.club || evt.sede || 'Pistas Centrales';
+                    const timeStr = evt.time || '19:30';
+                    const dateStr = evt.date || '';
+                    const datePhrase = this._formatFriendlyDatePhrase(dateStr, timeStr);
+                    const lMin = parseFloat(evt.levelMin || evt.lmin || defaultLevelMin || 1.0);
+                    const lMax = parseFloat(evt.levelMax || evt.lmax || defaultLevelMax || 7.0);
+
                     return {
-                        title: `⚡ ¡Hueco urgente en Entreno ${catName}!`,
-                        body: `¡Hola padeleros! Tenemos ${slots} ${slots === 1 ? 'plaza libre' : 'plazas libres'} para el Entreno ${catName} de hoy (${evt.time}h en ${evt.court}). Nivel: ${parseFloat(evt.levelMin).toFixed(2)} - ${parseFloat(evt.levelMax).toFixed(2)}. ¡Inscríbete ya en la App antes de que vuele!`
+                        title: `⚡ ¡Hueco urgente en ${typeName} ${catName}!`,
+                        body: `¡Hola padeleros! Tenemos ${slots} ${slots === 1 ? 'plaza libre' : 'plazas libres'} para ${typeName} ${catName} ${datePhrase} (en ${courtName}). Nivel: ${lMin.toFixed(2)} - ${lMax.toFixed(2)}. ¡Inscríbete ya en la App antes de que vuele!`
                     };
                 }
                 if (aud === 'male') {
@@ -1382,6 +1492,23 @@
             };
 
             const initialTmpl = getTemplateText(defaultAudience, prefill);
+
+            // Asegurar que si prefill existe, esté en la lista y seleccionado
+            const eventsOptions = [...this.incompleteEvents];
+            if (prefill && prefill.eventId && !eventsOptions.some(e => String(e.id) === String(prefill.eventId))) {
+                eventsOptions.unshift({
+                    id: prefill.eventId,
+                    type: prefill.eventType || 'entreno',
+                    name: prefill.eventName || 'Entreno',
+                    category: prefill.category || 'male',
+                    date: prefill.date || 'Hoy',
+                    time: prefill.time || '19:30',
+                    court: prefill.court || 'Pistas Centrales',
+                    levelMin: parseFloat(prefill.levelMin || 3.0),
+                    levelMax: parseFloat(prefill.levelMax || 4.5),
+                    freeSlots: parseInt(prefill.freeSlots || 1, 10)
+                });
+            }
 
             modalRoot.innerHTML = `
                 <div id="sos-broadcast-overlay" style="
@@ -1417,9 +1544,9 @@
                                 </label>
                                 <select id="broadcast-event-select" class="pro-input" style="width: 100%; height: 44px; border-radius: 12px; border: 1.5px solid #cbd5e1; padding: 0 12px; font-weight: 700; font-size: 0.88rem;">
                                     <option value="none">-- Mensaje General / Sin vincular a un entreno específico --</option>
-                                    ${this.incompleteEvents.map(evt => `
-                                        <option value="${evt.id}" data-type="${evt.type}" data-name="${this._escapeHtml(evt.name)}" data-cat="${evt.category}" data-date="${evt.date}" data-time="${evt.time}" data-court="${this._escapeHtml(evt.court)}" data-lmin="${evt.levelMin}" data-lmax="${evt.levelMax}" data-free="${evt.freeSlots}" ${prefill && prefill.eventId === evt.id ? 'selected' : ''}>
-                                            [${evt.category.toUpperCase()}] ${evt.name} - ${evt.date} ${evt.time}h (${evt.freeSlots} plazas libres)
+                                    ${eventsOptions.map(evt => `
+                                        <option value="${evt.id}" data-type="${evt.type}" data-name="${this._escapeHtml(evt.name)}" data-cat="${evt.category}" data-date="${evt.date}" data-time="${evt.time}" data-court="${this._escapeHtml(evt.court)}" data-lmin="${evt.levelMin}" data-lmax="${evt.levelMax}" data-free="${evt.freeSlots}" ${prefill && String(prefill.eventId) === String(evt.id) ? 'selected' : ''}>
+                                            [${(evt.category || 'OPEN').toUpperCase()}] ${evt.name} • ${this._formatShortDate(evt.date)} ${evt.time}h (${evt.freeSlots} plazas libres)
                                         </option>
                                     `).join('')}
                                 </select>
@@ -1627,8 +1754,10 @@
                 r.onchange = () => {
                     const aud = r.value;
                     const opt = eventSelect.options[eventSelect.selectedIndex];
-                    const evtData = opt.value !== 'none' ? opt.dataset : null;
-                    const tmpl = getTemplateText(aud, evtData);
+                    const foundEvt = opt.value !== 'none'
+                        ? (eventsOptions.find(e => String(e.id) === String(opt.value)) || opt.dataset)
+                        : null;
+                    const tmpl = getTemplateText(aud, foundEvt);
                     titleInput.value = tmpl.title;
                     bodyInput.value = tmpl.body;
                     updateAudienceAndPreview();
@@ -1665,8 +1794,10 @@
                     } else if (tpl === 'convocatoria') {
                         const aud = form.querySelector('input[name="targetAudience"]:checked')?.value || 'all';
                         const opt = eventSelect.options[eventSelect.selectedIndex];
-                        const ds = opt.value !== 'none' ? opt.dataset : null;
-                        const tmpl = getTemplateText(aud, ds);
+                        const foundEvt = opt.value !== 'none'
+                            ? (eventsOptions.find(e => String(e.id) === String(opt.value)) || opt.dataset)
+                            : null;
+                        const tmpl = getTemplateText(aud, foundEvt);
                         titleInput.value = tmpl.title;
                         bodyInput.value = tmpl.body;
                     }
@@ -1683,18 +1814,43 @@
                 const opt = eventSelect.options[eventSelect.selectedIndex];
                 if (opt.value !== 'none') {
                     const ds = opt.dataset;
-                    if (ds.cat === 'male') {
-                        form.querySelector('input[name="targetAudience"][value="male"]').checked = true;
-                    } else if (ds.cat === 'mixed') {
-                        form.querySelector('input[name="targetAudience"][value="mixed"]').checked = true;
-                    } else if (ds.cat === 'female') {
-                        form.querySelector('input[name="targetAudience"][value="female"]').checked = true;
+                    const foundEvt = eventsOptions.find(e => String(e.id) === String(opt.value)) || {
+                        id: opt.value,
+                        type: ds.type,
+                        name: ds.name,
+                        category: ds.cat,
+                        date: ds.date,
+                        time: ds.time,
+                        court: ds.court,
+                        levelMin: ds.lmin,
+                        levelMax: ds.lmax,
+                        freeSlots: ds.free
+                    };
+
+                    const cat = String(foundEvt.category || ds.cat || '').toLowerCase();
+                    if (cat === 'male' || cat.includes('masc')) {
+                        const rMale = form.querySelector('input[name="targetAudience"][value="male"]');
+                        if (rMale) rMale.checked = true;
+                    } else if (cat === 'mixed' || cat.includes('mixt')) {
+                        const rMix = form.querySelector('input[name="targetAudience"][value="mixed"]');
+                        if (rMix) rMix.checked = true;
+                    } else if (cat === 'female' || cat.includes('fem')) {
+                        const rFem = form.querySelector('input[name="targetAudience"][value="female"]');
+                        if (rFem) rFem.checked = true;
                     }
 
-                    if (ds.lmin) levelMinInput.value = ds.lmin;
-                    if (ds.lmax) levelMaxInput.value = ds.lmax;
+                    if (foundEvt.levelMin !== undefined) levelMinInput.value = foundEvt.levelMin;
+                    else if (ds.lmin) levelMinInput.value = ds.lmin;
 
-                    const tmpl = getTemplateText(ds.cat, ds);
+                    if (foundEvt.levelMax !== undefined) levelMaxInput.value = foundEvt.levelMax;
+                    else if (ds.lmax) levelMaxInput.value = ds.lmax;
+
+                    const tmpl = getTemplateText(foundEvt.category || ds.cat, foundEvt);
+                    titleInput.value = tmpl.title;
+                    bodyInput.value = tmpl.body;
+                } else {
+                    const aud = form.querySelector('input[name="targetAudience"]:checked')?.value || 'all';
+                    const tmpl = getTemplateText(aud, null);
                     titleInput.value = tmpl.title;
                     bodyInput.value = tmpl.body;
                 }
@@ -1737,11 +1893,13 @@
 
                 const selOpt = eventSelect.options[eventSelect.selectedIndex];
                 const eventId = selOpt.value !== 'none' ? selOpt.value : null;
-                const eventType = selOpt.dataset?.type || 'entrenos';
-                const eventName = selOpt.dataset?.name || title;
-                const eventDate = selOpt.dataset?.date || new Date().toISOString().split('T')[0];
-                const eventTime = selOpt.dataset?.time || '19:30';
-                const eventCourt = selOpt.dataset?.court || 'Pista Principal';
+                const foundEvt = eventId ? eventsOptions.find(e => String(e.id) === String(eventId)) : null;
+
+                const eventType = foundEvt?.type || selOpt.dataset?.type || 'entrenos';
+                const eventName = foundEvt?.name || selOpt.dataset?.name || title;
+                const eventDate = foundEvt?.date || selOpt.dataset?.date || new Date().toISOString().split('T')[0];
+                const eventTime = foundEvt?.time || selOpt.dataset?.time || '19:30';
+                const eventCourt = foundEvt?.court || selOpt.dataset?.court || 'Pistas Centrales';
 
                 try {
                     const service = this._getService();
