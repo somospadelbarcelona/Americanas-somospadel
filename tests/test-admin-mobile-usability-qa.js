@@ -107,6 +107,24 @@ test('css/style.css y admin.html aseguran que .main-wrapper y .workspace-area oc
     }
 });
 
+test('css/style.css y admin.html limpian el top-bar en móvil ocultando force-refresh, telemetría y AI', () => {
+    if (!cssCode.includes('#force-refresh-btn') || !cssCode.includes('#admin-telemetry-trigger')) {
+        throw new Error('Falta regla de ocultación de force-refresh y telemetría en css/style.css');
+    }
+    if (!adminHtml.includes('#force-refresh-btn') || !adminHtml.includes('#admin-telemetry-trigger')) {
+        throw new Error('Falta regla de ocultación de force-refresh y telemetría en admin.html');
+    }
+});
+
+test('css/style.css y admin.html adaptan .dashboard-header-pro y tabs de resultados a 1 columna en móvil', () => {
+    if (!cssCode.includes('.dashboard-header-pro') || !cssCode.includes('grid-template-columns: 1fr !important')) {
+        throw new Error('Falta adaptación responsive para .dashboard-header-pro en css/style.css');
+    }
+    if (!adminHtml.includes('.dashboard-header-pro') || !adminHtml.includes('grid-template-columns: 1fr !important')) {
+        throw new Error('Falta adaptación responsive para .dashboard-header-pro en admin.html');
+    }
+});
+
 // 4. Integración en js/admin.js
 test('js/admin.js invoca window.updateMobileSubnav en loadAdminView', () => {
     if (!adminJs.includes('window.updateMobileSubnav(viewName)')) {
