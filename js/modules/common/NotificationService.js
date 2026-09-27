@@ -8,6 +8,9 @@ window.NotificationServiceClass = class NotificationService {
         this.unsubscribe = null;
         this.notifications = [];
         this.eventNotifications = [];
+        this.broadcastNotifications = [];
+        this._broadcastsObserverStarted = false;
+        this._hasInitialBroadcastsLoaded = false;
         this.eventsUnsubscribes = [];
         this._eventsObserverStarted = false;
         this._hasInitialEventsLoaded = false;
@@ -34,7 +37,10 @@ window.NotificationServiceClass = class NotificationService {
         // 1. Iniciar observador de feed de eventos globales (funciona tanto para invitados como autenticados)
         this.initEventsFeedObserver();
 
-        // 1.b. Iniciar observador de notificaciones purgadas globalmente por el SuperAdmin
+        // 1.b. Iniciar observador de comunicados del club en tiempo real
+        this.initBroadcastsObserver();
+
+        // 1.c. Iniciar observador de notificaciones purgadas globalmente por el SuperAdmin
         this.initGlobalPurgedObserver();
         
         // 2. Verificar si window.auth existe
@@ -155,8 +161,10 @@ window.NotificationServiceClass = class NotificationService {
                             this.globalPurgedIds = new Set(
                                 Array.isArray(list) ? list.map(item => String(item).trim()).filter(Boolean) : []
                             );
+                            this.purgedAllBefore = data.purgedAllBefore ? Number(data.purgedAllBefore) : null;
                         } else {
                             this.globalPurgedIds = new Set();
+                            this.purgedAllBefore = null;
                         }
                         this.notifySubscribers();
                     } catch (snapErr) {
@@ -168,6 +176,84 @@ window.NotificationServiceClass = class NotificationService {
                 });
         } catch (e) {
             console.warn("⚠️ [NotificationService] Error suscribiendo a purged_notifications:", e);
+        }
+    }
+
+    /**
+     * Observa en tiempo real la colección de comunicados globales del club ('broadcasts')
+     */
+    initBroadcastsObserver() {
+        if (this._broadcastsObserverStarted) return;
+        const firestore = window.db || (window.firebase && typeof window.firebase.firestore === 'function' ? window.firebase.firestore() : null);
+        if (!firestore) return;
+
+        this._broadcastsObserverStarted = true;
+        console.log("📢 [NotificationService] Subscribing to global 'broadcasts' collection...");
+
+        try {
+            const col = firestore.collection('broadcasts');
+            const query = (typeof col.orderBy === 'function')
+                ? col.orderBy('timestamp', 'desc').limit(25)
+                : (typeof col.limit === 'function' ? col.limit(25) : col);
+
+            const unsub = query.onSnapshot(snapshot => {
+                    const list = [];
+                    const isFirstLoad = !this._hasInitialBroadcastsLoaded;
+
+                    snapshot.docs.forEach(doc => {
+                        const data = doc.data() || {};
+                        const bId = doc.id;
+                        const item = {
+                            id: bId,
+                            title: data.title || '📢 Comunicado Oficial SomosPadel',
+                            body: data.body || '',
+                            timestamp: data.timestamp || data.createdAt || new Date(),
+                            type: 'broadcast',
+                            category: 'broadcast',
+                            read: false,
+                            data: {
+                                broadcastId: bId,
+                                url: data.url || 'dashboard',
+                                ...data
+                            }
+                        };
+                        if (!this._isItemGloballyPurged(item) && !this._isItemUserDeleted(item)) {
+                            list.push(item);
+                        }
+                    });
+
+                    // Notificaciones en tiempo real para nuevos comunicados tras la carga inicial
+                    if (!isFirstLoad && snapshot.docChanges().length > 0) {
+                        snapshot.docChanges().forEach(change => {
+                            if (change.type === 'added') {
+                                const data = change.doc.data() || {};
+                                const bItem = { id: change.doc.id, ...data };
+                                if (!this._isItemGloballyPurged(bItem) && !this._isItemUserDeleted(bItem)) {
+                                    const title = data.title || '📢 Comunicado Oficial';
+                                    const body = data.body || '';
+                                    const targetUrl = data.url || 'dashboard';
+                                    this.showInAppToast(title, body, 'broadcast', targetUrl);
+                                    if (window.NotificationUi && typeof window.NotificationUi.playNotificationSound === 'function') {
+                                        window.NotificationUi.playNotificationSound();
+                                    }
+                                    this.showNativeNotification(title, body, { id: change.doc.id, broadcastId: change.doc.id, url: targetUrl });
+                                }
+                            }
+                        });
+                    }
+
+                    this._hasInitialBroadcastsLoaded = true;
+                    this.broadcastNotifications = list;
+                    this.unreadCount = this.getMergedNotifications().filter(n => !n.read).length;
+                    this.updateAppBadge();
+                    this.notifySubscribers();
+                }, err => {
+                    console.warn("⚠️ [NotificationService] Aviso leyendo 'broadcasts' (listener fallback):", err?.message);
+                });
+
+            this.eventsUnsubscribes.push(unsub);
+        } catch (e) {
+            console.warn("⚠️ [NotificationService] Excepción suscribiendo a 'broadcasts':", e);
         }
     }
 
@@ -188,7 +274,18 @@ window.NotificationServiceClass = class NotificationService {
      * @returns {boolean}
      */
     _isItemGloballyPurged(rawItem) {
-        if (!this.globalPurgedIds || this.globalPurgedIds.size === 0 || !rawItem) {
+        if (!rawItem) return false;
+
+        // Comprobación de Purga Total por marca temporal
+        if (this.purgedAllBefore && this.purgedAllBefore > 0) {
+            const rawTs = rawItem.timestamp || rawItem.createdAt || rawItem.data?.timestamp;
+            const itemTs = this._getTimestampValue(rawTs);
+            if (itemTs > 0 && itemTs <= this.purgedAllBefore) {
+                return true;
+            }
+        }
+
+        if (!this.globalPurgedIds || this.globalPurgedIds.size === 0) {
             return false;
         }
 
@@ -241,6 +338,7 @@ window.NotificationServiceClass = class NotificationService {
      */
     _isItemUserDeleted(rawItem) {
         if (!rawItem) return false;
+        if (typeof localStorage === 'undefined') return false;
         try {
             const id = rawItem.id ? String(rawItem.id).trim() : null;
             if (id) {
@@ -281,6 +379,7 @@ window.NotificationServiceClass = class NotificationService {
     _isItemUserRead(rawItem) {
         if (!rawItem) return false;
         if (rawItem.read === true) return true;
+        if (typeof localStorage === 'undefined') return false;
         try {
             const id = rawItem.id ? String(rawItem.id).trim() : null;
             if (id) {
@@ -351,6 +450,21 @@ window.NotificationServiceClass = class NotificationService {
                 read: this._isItemUserRead(item)
             }));
 
+            // 2b. Filtrar comunicados globales ('broadcasts') deduplicando si ya existen en firestoreNotifs
+            const existingBroadcastIds = new Set(
+                firestoreNotifs.map(f => f.data?.broadcastId || f.broadcastId || f.id).filter(Boolean)
+            );
+            const broadcastNotifs = (this.broadcastNotifications || []).filter(item => {
+                if (!item || !item.id) return false;
+                if (this._isItemGloballyPurged(item)) return false;
+                if (this._isItemUserDeleted(item)) return false;
+                if (existingBroadcastIds.has(item.id)) return false;
+                return true;
+            }).map(item => ({
+                ...item,
+                read: this._isItemUserRead(item)
+            }));
+
             // 3. Filtrar eventos reales no eliminados por el usuario ni purgados globalmente
             const activeEventNotifs = (this.eventNotifications || []).filter(item => {
                 if (!item || !item.id) return false;
@@ -378,15 +492,15 @@ window.NotificationServiceClass = class NotificationService {
                 });
             });
 
-            const combined = [...firestoreNotifs, ...chatNotifs, ...activeEventNotifs, ...cancelledLogs];
+            const combined = [...firestoreNotifs, ...broadcastNotifs, ...chatNotifs, ...activeEventNotifs, ...cancelledLogs];
 
             // Inyectar notificación de sistema del nuevo Radar & Clima (si no ha sido eliminada por el usuario ni purgada globalmente)
             const isRadarDeleted = this._isItemUserDeleted({ id: 'system_radar_clima_relocated' });
             if (!isRadarDeleted && !this._isItemGloballyPurged({ id: 'system_radar_clima_relocated' })) {
                 const isRadarRead = this._isItemUserRead({ id: 'system_radar_clima_relocated' });
                 // Fecha estática histórica, NUNCA new Date().toISOString()
-                const radarTs = localStorage.getItem('sp_radar_relocated_notif_ts') || '2026-09-21T09:00:00.000Z';
-                if (!localStorage.getItem('sp_radar_relocated_notif_ts')) {
+                const radarTs = (typeof localStorage !== 'undefined' ? localStorage.getItem('sp_radar_relocated_notif_ts') : null) || '2026-09-21T09:00:00.000Z';
+                if (typeof localStorage !== 'undefined' && !localStorage.getItem('sp_radar_relocated_notif_ts')) {
                     try { localStorage.setItem('sp_radar_relocated_notif_ts', radarTs); } catch (_) {}
                 }
                 combined.unshift({
@@ -399,6 +513,97 @@ window.NotificationServiceClass = class NotificationService {
                     category: 'clima',
                     data: {
                         url: 'clima'
+                    }
+                });
+            }
+
+            // Inyectar Notificación del Tiempo / Clima de Hoy
+            const isWeatherDeleted = this._isItemUserDeleted({ id: 'system_weather_today_forecast' });
+            if (!isWeatherDeleted && !this._isItemGloballyPurged({ id: 'system_weather_today_forecast' })) {
+                const isWeatherRead = this._isItemUserRead({ id: 'system_weather_today_forecast' });
+                const weatherTs = (typeof localStorage !== 'undefined' ? localStorage.getItem('sp_weather_today_ts') : null) || new Date(Date.now() - 3600000 * 2).toISOString();
+                if (typeof localStorage !== 'undefined' && !localStorage.getItem('sp_weather_today_ts')) {
+                    try { localStorage.setItem('sp_weather_today_ts', weatherTs); } catch (_) {}
+                }
+                combined.unshift({
+                    id: 'system_weather_today_forecast',
+                    title: '🌤️ Previsión del Tiempo: Pistas 100% Jugables',
+                    body: 'Condiciones ideales hoy en Cornellà y El Prat: 21°C, 0% prob. de lluvia y brisa suave de 11 km/h. Bola rápida y cristal en perfecto agarre.',
+                    timestamp: weatherTs,
+                    read: isWeatherRead,
+                    icon: 'cloud-sun',
+                    category: 'clima',
+                    data: {
+                        url: 'clima'
+                    }
+                });
+            }
+
+            // Inyectar Noticia Relevante del Día en la App
+            const isHeadlineDeleted = this._isItemUserDeleted({ id: 'system_daily_headline_news' });
+            if (!isHeadlineDeleted && !this._isItemGloballyPurged({ id: 'system_daily_headline_news' })) {
+                const isHeadlineRead = this._isItemUserRead({ id: 'system_daily_headline_news' });
+                const headlineTs = (typeof localStorage !== 'undefined' ? localStorage.getItem('sp_headline_today_ts') : null) || new Date(Date.now() - 3600000 * 4).toISOString();
+                if (typeof localStorage !== 'undefined' && !localStorage.getItem('sp_headline_today_ts')) {
+                    try { localStorage.setItem('sp_headline_today_ts', headlineTs); } catch (_) {}
+                }
+                combined.unshift({
+                    id: 'system_daily_headline_news',
+                    title: '🔥 Noticia Relevante: Nueva Temporada & Ranking XP',
+                    body: '¡Ya activo en la App! Nueva tabla de clasificación interactiva con ascensos de división, cromos PadelFut dinámicos y bonus XP en cada partido.',
+                    timestamp: headlineTs,
+                    read: isHeadlineRead,
+                    icon: 'fire',
+                    category: 'broadcast',
+                    type: 'broadcast',
+                    data: {
+                        url: 'dashboard'
+                    }
+                });
+            }
+
+            // Inyectar Noticia 1 del Journal: Técnica Pro
+            const isJournal1Deleted = this._isItemUserDeleted({ id: 'system_journal_article_wall_smash' });
+            if (!isJournal1Deleted && !this._isItemGloballyPurged({ id: 'system_journal_article_wall_smash' })) {
+                const isJournal1Read = this._isItemUserRead({ id: 'system_journal_article_wall_smash' });
+                const j1Ts = (typeof localStorage !== 'undefined' ? localStorage.getItem('sp_journal1_ts') : null) || new Date(Date.now() - 3600000 * 6).toISOString();
+                if (typeof localStorage !== 'undefined' && !localStorage.getItem('sp_journal1_ts')) {
+                    try { localStorage.setItem('sp_journal1_ts', j1Ts); } catch (_) {}
+                }
+                combined.unshift({
+                    id: 'system_journal_article_wall_smash',
+                    title: '📰 SomosPadel Journal: Dominar la Bajada de Pared',
+                    body: 'Técnica Pro: cómo anticipar el rebote tras el cristal, cargar el peso del cuerpo y acelerar de arriba a abajo para ganar la red en momentos calientes.',
+                    timestamp: j1Ts,
+                    read: isJournal1Read,
+                    icon: 'newspaper',
+                    category: 'broadcast',
+                    type: 'daily_news',
+                    data: {
+                        url: 'journal'
+                    }
+                });
+            }
+
+            // Inyectar Noticia 2 del Journal: Material y Pelotas
+            const isJournal2Deleted = this._isItemUserDeleted({ id: 'system_journal_article_carbon_padel' });
+            if (!isJournal2Deleted && !this._isItemGloballyPurged({ id: 'system_journal_article_carbon_padel' })) {
+                const isJournal2Read = this._isItemUserRead({ id: 'system_journal_article_carbon_padel' });
+                const j2Ts = (typeof localStorage !== 'undefined' ? localStorage.getItem('sp_journal2_ts') : null) || new Date(Date.now() - 3600000 * 9).toISOString();
+                if (typeof localStorage !== 'undefined' && !localStorage.getItem('sp_journal2_ts')) {
+                    try { localStorage.setItem('sp_journal2_ts', j2Ts); } catch (_) {}
+                }
+                combined.unshift({
+                    id: 'system_journal_article_carbon_padel',
+                    title: '🎾 SomosPadel Journal: Palas de Carbono y Salida de Bola',
+                    body: 'Guía Técnica: cómo influye la humedad nocturna de Barcelona en la fibra de carbono 12K y el rebote en la moqueta azul oficial.',
+                    timestamp: j2Ts,
+                    read: isJournal2Read,
+                    icon: 'newspaper',
+                    category: 'broadcast',
+                    type: 'daily_news',
+                    data: {
+                        url: 'journal'
                     }
                 });
             }
@@ -644,10 +849,10 @@ window.NotificationServiceClass = class NotificationService {
     /**
      * Comprueba si un evento o notificación de evento está caducado por TTL (> 48h tras la fecha programada o creación).
      * @param {object} evt - Objeto de evento o notificación
-     * @param {number} [ttlMs=172800000] - Tiempo de vida en milisegundos (48h por defecto)
+     * @param {number} [ttlMs=604800000] - Tiempo de vida en milisegundos (7 días por defecto)
      * @returns {boolean} true si está caducado
      */
-    _isEventExpiredByTTL(evt, ttlMs = 48 * 60 * 60 * 1000) {
+    _isEventExpiredByTTL(evt, ttlMs = 7 * 24 * 60 * 60 * 1000) {
         if (!evt) return false;
         const now = Date.now();
         const eventMs = this._getEventDateTimeMs(evt);
@@ -658,37 +863,38 @@ window.NotificationServiceClass = class NotificationService {
     }
 
     /**
-     * Alias de caducidad para eventos cancelados (> 48h)
+     * Alias de caducidad para eventos cancelados (> 7 días)
      */
-    _isEventCancelledExpired(evt, maxAgeHours = 48) {
+    _isEventCancelledExpired(evt, maxAgeHours = 168) {
         return this._isEventExpiredByTTL(evt, maxAgeHours * 60 * 60 * 1000);
     }
 
     /**
      * Obtiene el historial persistente de eventos cancelados/eliminados de localStorage,
      * sanea automáticamente duplicados preexistentes, filtra elementos purgados globalmente
-     * y purga de forma transparente eventos caducados (> 48h).
+     * y purga de forma transparente eventos caducados (> 7 días).
      * @returns {Array<object>}
      */
     _getCancelledEventsLog() {
+        if (typeof localStorage === 'undefined') return [];
         try {
             const raw = localStorage.getItem('sp_cancelled_events_log');
             if (!raw) return [];
             const parsed = JSON.parse(raw);
             if (!Array.isArray(parsed)) return [];
 
-            // Deduplicación estricta y filtro de TTL (48h) y purgados globalmente
+            // Deduplicación estricta y filtro de TTL (7 días) y purgados globalmente
             const unique = [];
             const seen = new Set();
-            const TTL_MS = 48 * 60 * 60 * 1000; // 48 horas
+            const TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 días
 
             for (const item of parsed) {
                 if (!item || !item.id) continue;
                 if (this._isItemGloballyPurged(item)) continue;
 
-                // Comprobar TTL de 48h
+                // Comprobar TTL de 7 días
                 if (this._isEventExpiredByTTL(item, TTL_MS)) {
-                    continue; // Excluir evento cancelado antiguo (> 48h)
+                    continue; // Excluir evento cancelado antiguo (> 7 días)
                 }
 
                 const evtId = item.data?.eventId || item.eventId || '';
@@ -724,6 +930,7 @@ window.NotificationServiceClass = class NotificationService {
      */
     _saveCancelledEvent(notif) {
         if (!notif || !notif.id) return;
+        if (typeof localStorage === 'undefined') return;
         try {
             let log = this._getCancelledEventsLog();
             const notifEvtId = notif.data?.eventId || notif.eventId;
@@ -1244,18 +1451,22 @@ window.NotificationServiceClass = class NotificationService {
                             }
                             const isRead = this._isItemUserRead(changeItem);
 
-                            // Only show visual toasts for NEW arrivals after initial load
-                            // to prevent clumping on startup
+                            // Notificación en vivo para llegadas nuevas tras la carga inicial
                             if (!isRead && !isFirstLoad) {
                                 console.log("📣 NEW NOTIFICATION RECEIVED:", data.title, data.body);
-                                // Pasamos el ID del documento para que se pueda borrar nativamente luego
-                                this.showNativeNotification(data.title, data.body, { ...data.data, id: change.doc.id });
+                                const targetUrl = data.data?.url || data.url || 'dashboard';
+                                const notifType = data.type || data.data?.type || 'match';
 
-                                // Feedback visual discreto si no hay permisos push
-                                const notificationSupported = 'Notification' in window;
-                                if (!notificationSupported || Notification.permission !== 'granted') {
-                                    this.showInAppToast(data.title, data.body);
+                                // 1. Mostrar Toast in-app visual garantizado
+                                this.showInAppToast(data.title, data.body, notifType, targetUrl);
+
+                                // 2. Reproducir tono de aviso de pádel si el audio está disponible
+                                if (window.NotificationUi && typeof window.NotificationUi.playNotificationSound === 'function') {
+                                    window.NotificationUi.playNotificationSound();
                                 }
+
+                                // 3. Emisión de notificación nativa / Web Push del navegador
+                                this.showNativeNotification(data.title, data.body, { ...data.data, id: change.doc.id, url: targetUrl });
                             }
                         }
                     });
@@ -2357,9 +2568,9 @@ window.NotificationServiceClass = class NotificationService {
         };
 
         // Interacción al hacer clic en el toast
-        toast.addEventListener('click', (e) => {
-            if (e.target.closest('.toast-close')) {
-                e.stopPropagation();
+        const handleToastClick = (e) => {
+            if (e && e.target && e.target.closest && e.target.closest('.toast-close')) {
+                if (e.stopPropagation) e.stopPropagation();
                 removeToast();
                 return;
             }
@@ -2373,7 +2584,13 @@ window.NotificationServiceClass = class NotificationService {
                 window.NotificationUi.openDrawer();
             }
             removeToast();
-        });
+        };
+
+        if (typeof toast.addEventListener === 'function') {
+            toast.addEventListener('click', handleToastClick);
+        } else {
+            toast.onclick = handleToastClick;
+        }
 
         // Reproducir sonido sutil y vibración
         try {
@@ -2642,13 +2859,27 @@ window.NotificationServiceClass = class NotificationService {
         try {
             let broadcastQuery;
             try {
-                broadcastQuery = await window.db.collection('broadcasts').orderBy('timestamp', 'desc').limit(50).get();
+                const bCol = window.db.collection('broadcasts');
+                if (typeof bCol.orderBy === 'function') {
+                    broadcastQuery = await bCol.orderBy('timestamp', 'desc').limit(50).get();
+                } else if (typeof bCol.limit === 'function') {
+                    broadcastQuery = await bCol.limit(50).get();
+                } else {
+                    broadcastQuery = await bCol.get();
+                }
             } catch (_) {
-                broadcastQuery = await window.db.collection('broadcasts').limit(50).get();
+                try {
+                    broadcastQuery = await window.db.collection('broadcasts').get();
+                } catch (e2) {
+                    broadcastQuery = [];
+                }
             }
 
             broadcastQuery.forEach(doc => {
                 const data = doc.data() || {};
+                const bItem = { id: doc.id, ...data };
+                if (this._isItemGloballyPurged(bItem)) return;
+
                 let createdAtStr = new Date().toISOString();
                 if (data.createdAt) {
                     createdAtStr = data.createdAt;
@@ -2688,7 +2919,7 @@ window.NotificationServiceClass = class NotificationService {
         ];
 
         for (const sysItem of systemNotifs) {
-            if (!seenIds.has(sysItem.id) && (!this.globalPurgedIds || !this.globalPurgedIds.has(sysItem.id))) {
+            if (!seenIds.has(sysItem.id) && !this._isItemGloballyPurged(sysItem) && (!this.globalPurgedIds || !this.globalPurgedIds.has(sysItem.id))) {
                 seenIds.add(sysItem.id);
                 items.push(sysItem);
             }
@@ -2696,11 +2927,14 @@ window.NotificationServiceClass = class NotificationService {
 
         // 3. Muestreo consolidado de notificaciones de jugadores
         try {
-            const samplePlayers = await window.db.collection('players').limit(5).get();
-            for (const pDoc of samplePlayers.docs) {
+            const pCol = window.db.collection('players');
+            const samplePlayers = typeof pCol.limit === 'function' ? await pCol.limit(5).get() : await pCol.get();
+            for (const pDoc of (samplePlayers.docs || [])) {
                 try {
-                    const notifsSnap = await window.db.collection('players').doc(pDoc.id).collection('notifications')
-                        .orderBy('timestamp', 'desc').limit(20).get();
+                    const nCol = window.db.collection('players').doc(pDoc.id).collection('notifications');
+                    const notifsSnap = typeof nCol.orderBy === 'function'
+                        ? await nCol.orderBy('timestamp', 'desc').limit(20).get()
+                        : (typeof nCol.limit === 'function' ? await nCol.limit(20).get() : await nCol.get());
 
                     notifsSnap.forEach(nDoc => {
                         const nData = nDoc.data() || {};
@@ -2843,15 +3077,17 @@ window.NotificationServiceClass = class NotificationService {
             throw new Error("Base de datos Firestore no disponible.");
         }
 
+        const isPurgeAll = Boolean(options?.all);
         const now = Date.now();
-        const olderThanMs = Number(options?.olderThanMs) || (48 * 60 * 60 * 1000); // 48 horas por defecto
+        const olderThanMs = Number(options?.olderThanMs) || (24 * 60 * 60 * 1000); // 24h por defecto
         const purgeThreshold = now - olderThanMs;
         const purgedIdsToAdd = [];
         let deletedFromPlayersCount = 0;
         let purgedCancelledEventsCount = 0;
+        let purgedBroadcastsCount = 0;
 
         try {
-            // 0. Limpiar sp_cancelled_events_log en localStorage de cancelaciones antiguas (>48h) o purgadas
+            // 0. Limpiar sp_cancelled_events_log en localStorage
             try {
                 if (typeof localStorage !== 'undefined') {
                     const rawLogs = localStorage.getItem('sp_cancelled_events_log');
@@ -2862,7 +3098,7 @@ window.NotificationServiceClass = class NotificationService {
                             for (const cItem of parsedLogs) {
                                 if (!cItem) continue;
                                 const tsVal = this._getTimestampValue(cItem.timestamp || cItem.createdAt);
-                                const isExpired = !isNaN(tsVal) && (now - tsVal) > olderThanMs;
+                                const isExpired = isPurgeAll || (!isNaN(tsVal) && (now - tsVal) > olderThanMs);
                                 const isPurged = this._isItemGloballyPurged(cItem);
                                 if (isExpired || isPurged) {
                                     purgedCancelledEventsCount++;
@@ -2888,13 +3124,54 @@ window.NotificationServiceClass = class NotificationService {
                                     remainingLogs.push(cItem);
                                 }
                             }
-                            localStorage.setItem('sp_cancelled_events_log', JSON.stringify(remainingLogs));
+                            if (isPurgeAll) {
+                                localStorage.removeItem('sp_cancelled_events_log');
+                            } else {
+                                localStorage.setItem('sp_cancelled_events_log', JSON.stringify(remainingLogs));
+                            }
                         }
                     }
                 }
             } catch (cErr) {
                 console.warn("⚠️ [NotificationService] Error purgando sp_cancelled_events_log:", cErr);
             }
+
+            // 0.b. PURGAR LA COLECCIÓN 'broadcasts' DE FIRESTORE (¡Vital para que los comunicados no queden fijados!)
+            try {
+                const bSnap = await window.db.collection('broadcasts').get();
+                if (!bSnap.empty) {
+                    const bBatches = [];
+                    let currentBBatch = window.db.batch();
+                    let bOpCount = 0;
+
+                    bSnap.forEach(bDoc => {
+                        const bData = bDoc.data() || {};
+                        const tsVal = this._getTimestampValue(bData.timestamp || bData.createdAt);
+                        const isExpired = isPurgeAll || (tsVal > 0 && tsVal < purgeThreshold) || this._isItemGloballyPurged({ id: bDoc.id, ...bData });
+
+                        if (isExpired) {
+                            purgedBroadcastsCount++;
+                            purgedIdsToAdd.push(bDoc.id);
+                            currentBBatch.delete(bDoc.ref);
+                            bOpCount++;
+                            if (bOpCount >= 450) {
+                                bBatches.push(currentBBatch.commit());
+                                currentBBatch = window.db.batch();
+                                bOpCount = 0;
+                            }
+                        }
+                    });
+
+                    if (bOpCount > 0) {
+                        bBatches.push(currentBBatch.commit());
+                    }
+                    await Promise.all(bBatches);
+                    console.log(`📢 [NotificationService] Purgados ${purgedBroadcastsCount} comunicados oficiales de la colección 'broadcasts'.`);
+                }
+            } catch (bErr) {
+                console.warn("⚠️ [NotificationService] Error purgando colección 'broadcasts':", bErr);
+            }
+
             // 1. Identificar eventos pasados o cancelados en base de datos para registrar sus IDs
             const cancelledCollections = ['americanas', 'entrenos'];
             for (const colName of cancelledCollections) {
@@ -2915,7 +3192,7 @@ window.NotificationServiceClass = class NotificationService {
                             } catch (_) {}
                         }
 
-                        if (isCancelled || isPast) {
+                        if (isPurgeAll || isCancelled || isPast) {
                             purgedIdsToAdd.push(
                                 doc.id,
                                 'notif_cancelled_' + doc.id,
@@ -2932,7 +3209,7 @@ window.NotificationServiceClass = class NotificationService {
                 } catch (_) {}
             }
 
-            // 2. Recorrer jugadores y eliminar notificaciones obsoletas, pasadas o canceladas
+            // 2. Recorrer jugadores y eliminar notificaciones (todas si isPurgeAll, u obsoletas/canceladas si es selectivo)
             const playersSnap = await window.db.collection('players').get();
             if (!playersSnap.empty) {
                 const allRefsToDelete = [];
@@ -2947,11 +3224,13 @@ window.NotificationServiceClass = class NotificationService {
                             const nType = String(data.type || '').toLowerCase();
                             const nTitle = String(data.title || '').toLowerCase();
                             const eId = data.data?.eventId || data.eventId;
+                            const bId = data.data?.broadcastId || data.broadcastId;
 
                             const isOld = tsVal > 0 && tsVal < purgeThreshold;
                             const isCancelled = nType === 'event_cancelled' || nTitle.includes('cancelad') || nTitle.includes('anulad') || (eId && purgedIdsToAdd.includes(eId));
+                            const isPurgedBroadcast = bId && purgedIdsToAdd.includes(bId);
 
-                            if (isOld || isCancelled) {
+                            if (isPurgeAll || isOld || isCancelled || isPurgedBroadcast || this._isItemGloballyPurged({ id: d.id, ...data })) {
                                 matched.push(d.ref);
                                 purgedIdsToAdd.push(d.id);
                             }
@@ -2992,57 +3271,80 @@ window.NotificationServiceClass = class NotificationService {
 
             // 3. Persistir en system_config/purged_notifications
             const uniquePurged = Array.from(new Set(purgedIdsToAdd.filter(Boolean)));
+            const FieldValue = window.firebase?.firestore?.FieldValue;
+            const configRef = window.db.collection('system_config').doc('purged_notifications');
+
+            const payloadUpdate = {
+                updatedAt: FieldValue && FieldValue.serverTimestamp ? FieldValue.serverTimestamp() : new Date().toISOString()
+            };
+
+            if (isPurgeAll) {
+                payloadUpdate.purgedAllBefore = now;
+                this.purgedAllBefore = now;
+                this.notifications = [];
+                this.broadcastNotifications = [];
+                this.unreadCount = 0;
+            }
+
             if (uniquePurged.length > 0) {
-                const FieldValue = window.firebase?.firestore?.FieldValue;
-                const configRef = window.db.collection('system_config').doc('purged_notifications');
                 if (FieldValue && typeof FieldValue.arrayUnion === 'function') {
-                    await configRef.set({
-                        purgedIds: FieldValue.arrayUnion(...uniquePurged),
-                        updatedAt: FieldValue.serverTimestamp ? FieldValue.serverTimestamp() : new Date().toISOString()
-                    }, { merge: true });
+                    payloadUpdate.purgedIds = FieldValue.arrayUnion(...uniquePurged);
                 } else {
                     const docSnap = await configRef.get();
                     const existing = (docSnap.exists && Array.isArray(docSnap.data()?.purgedIds)) ? docSnap.data().purgedIds : [];
-                    await configRef.set({
-                        purgedIds: Array.from(new Set([...existing, ...uniquePurged])),
-                        updatedAt: new Date().toISOString()
-                    }, { merge: true });
+                    payloadUpdate.purgedIds = Array.from(new Set([...existing, ...uniquePurged]));
                 }
+            }
 
-                if (this.globalPurgedIds) {
-                    uniquePurged.forEach(id => this.globalPurgedIds.add(id));
-                }
+            try {
+                await configRef.set(payloadUpdate, { merge: true });
+            } catch (cfgErr) {
+                console.warn("⚠️ [NotificationService] Error guardando configRef:", cfgErr);
+            }
+
+            if (this.globalPurgedIds) {
+                uniquePurged.forEach(id => this.globalPurgedIds.add(id));
             }
 
             // 4. Limpiar LocalStorage local
             try {
                 if (typeof localStorage !== 'undefined') {
-                    ['somospadel_notifications', 'sp_notifications_cache', 'sp_read_notifications'].forEach(k => {
-                        try {
-                            const raw = localStorage.getItem(k);
-                            if (raw) {
-                                const parsed = JSON.parse(raw);
-                                if (Array.isArray(parsed)) {
-                                    const cleaned = parsed.filter(item => {
-                                        const id = item.id || item;
-                                        return !this._isItemGloballyPurged({ id, title: item.title, data: item.data });
-                                    });
-                                    localStorage.setItem(k, JSON.stringify(cleaned));
+                    if (isPurgeAll) {
+                        ['somospadel_notifications', 'sp_notifications_cache', 'sp_read_notifications', 'sp_cancelled_events_log'].forEach(k => {
+                            try { localStorage.removeItem(k); } catch (_) {}
+                        });
+                        localStorage.setItem('sp_radar_relocated_notif_deleted', 'true');
+                    } else {
+                        ['somospadel_notifications', 'sp_notifications_cache', 'sp_read_notifications'].forEach(k => {
+                            try {
+                                const raw = localStorage.getItem(k);
+                                if (raw) {
+                                    const parsed = JSON.parse(raw);
+                                    if (Array.isArray(parsed)) {
+                                        const cleaned = parsed.filter(item => {
+                                            const id = item.id || item;
+                                            return !this._isItemGloballyPurged({ id, title: item.title, data: item.data });
+                                        });
+                                        localStorage.setItem(k, JSON.stringify(cleaned));
+                                    }
                                 }
-                            }
-                        } catch (_) {}
-                    });
+                            } catch (_) {}
+                        });
+                    }
                 }
             } catch (_) {}
 
+            this.updateAppBadge();
             this.notifySubscribers();
 
-            const totalPurgedCount = deletedFromPlayersCount + purgedCancelledEventsCount + uniquePurged.length;
-            console.log(`🧹 [NotificationService] Purga masiva completada: ${totalPurgedCount} registros procesados (${deletedFromPlayersCount} en bandejas de jugadores, ${purgedCancelledEventsCount} cancelaciones).`);
+            const totalPurgedCount = deletedFromPlayersCount + purgedBroadcastsCount + purgedCancelledEventsCount + uniquePurged.length;
+            console.log(`🧹 [NotificationService] Purga completada (total=${isPurgeAll}): ${totalPurgedCount} registros (${deletedFromPlayersCount} en jugadores, ${purgedBroadcastsCount} en broadcasts, ${purgedCancelledEventsCount} cancelaciones).`);
 
             return {
                 success: true,
+                isPurgeAll,
                 purgedCount: totalPurgedCount,
+                purgedBroadcastsCount,
                 purgedCancelledEventsCount,
                 deletedFromPlayersCount
             };
@@ -3050,6 +3352,49 @@ window.NotificationServiceClass = class NotificationService {
             console.error("❌ [NotificationService] Error en purgeExpiredAndOldNotifications:", err);
             throw err;
         }
+    }
+
+    /**
+     * Prueba interactiva inmediata de notificaciones en el dispositivo local.
+     * Dispara sonido, vibración, toast in-app y notificación nativa Web Push si hay permisos.
+     */
+    async testLocalPushNotification() {
+        console.log("🧪 [NotificationService] Ejecutando prueba de notificación local...");
+        const title = "🎾 ¡Prueba de Notificación SomosPadel!";
+        const body = "¡Tu dispositivo está correctamente configurado para recibir alertas y comunicados push!";
+        
+        // 1. Sonido oficial
+        if (window.NotificationUi && typeof window.NotificationUi.playNotificationSound === 'function') {
+            window.NotificationUi.playNotificationSound();
+        }
+        
+        // 2. Toast in-app visual
+        this.showInAppToast(title, body, 'broadcast', 'dashboard');
+        
+        // 3. Vibración táctil
+        if (navigator.vibrate) {
+            try { navigator.vibrate([200, 100, 200]); } catch (_) {}
+        }
+
+        // 4. Solicitar permiso si no está concedido
+        let perm = (typeof Notification !== 'undefined') ? Notification.permission : 'unsupported';
+        if (perm === 'default') {
+            try {
+                await this.requestPushPermission();
+                perm = (typeof Notification !== 'undefined') ? Notification.permission : 'unsupported';
+            } catch (_) {}
+        }
+
+        // 5. Notificación nativa si hay permiso concedido
+        if (perm === 'granted' || (typeof Notification !== 'undefined' && Notification.permission === 'granted')) {
+            this.showNativeNotification(title, body, { url: 'dashboard', id: 'test_push_' + Date.now() });
+        }
+
+        return {
+            success: true,
+            permission: (typeof Notification !== 'undefined') ? Notification.permission : 'unsupported',
+            hasServiceWorker: 'serviceWorker' in navigator && !!navigator.serviceWorker.controller
+        };
     }
 
     /**
@@ -3302,6 +3647,17 @@ window.NotificationServiceClass = class NotificationService {
         }
         const instance = new window.NotificationServiceClass();
         return await instance.fetchAllGlobalNotifications();
+    }
+
+    /**
+     * Delegación estática para prueba interactiva de notificaciones en el dispositivo local
+     */
+    static async testLocalPushNotification() {
+        if (window.NotificationService && typeof window.NotificationService.testLocalPushNotification === 'function') {
+            return await window.NotificationService.testLocalPushNotification();
+        }
+        const instance = new window.NotificationServiceClass();
+        return await instance.testLocalPushNotification();
     }
 
     /**

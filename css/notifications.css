@@ -824,6 +824,32 @@ body.notif-drawer-open {
     box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
 }
 
+/* 5.b. JOURNAL & NOTICIAS: Verde Esmeralda Editorial */
+.tag-news, .notif-card-avatar.tag-news {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}
+.notif-card-action-btn.tag-news {
+    background: #059669;
+    color: #ffffff;
+    border: 1px solid #047857;
+    box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);
+}
+
+/* 5.c. NOTICIA DESTACADA / RELEVANTE: Fuego / Naranja Neón */
+.tag-hot, .notif-card-avatar.tag-hot {
+    background: #fff7ed;
+    color: #c2410c;
+    border: 1px solid #fed7aa;
+}
+.notif-card-action-btn.tag-hot {
+    background: #ea580c;
+    color: #ffffff;
+    border: 1px solid #c2410c;
+    box-shadow: 0 2px 8px rgba(234, 88, 12, 0.3);
+}
+
 /* 6. EVENTOS CANCELADOS, SUSPENDIDOS O ELIMINADOS */
 .notif-card-row.theme-cancelled {
     background: rgba(239, 68, 68, 0.04) !important;

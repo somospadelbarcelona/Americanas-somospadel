@@ -1341,8 +1341,8 @@
 
             // Determinar audiencia predeterminada según el evento
             let defaultAudience = 'all';
-            let defaultLevelMin = 3.0;
-            let defaultLevelMax = 5.0;
+            let defaultLevelMin = 1.0;
+            let defaultLevelMax = 7.0;
 
             if (prefill) {
                 if (prefill.category === 'male') defaultAudience = 'male';
@@ -1471,6 +1471,30 @@
                                 <span>Calculando audiencia de jugadores reales...</span>
                             </div>
 
+                            <!-- Selector de Plantillas Rápidas (Clima, Journal, Noticia del Día) -->
+                            <div>
+                                <label style="display: block; font-size: 0.78rem; font-weight: 850; color: #475569; text-transform: uppercase; margin-bottom: 6px;">
+                                    ⚡ Plantillas Rápidas (1 Clic)
+                                </label>
+                                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                    <button type="button" class="btn-quick-tpl" data-tpl="clima" style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; padding: 7px 12px; border-radius: 10px; font-size: 0.78rem; font-weight: 850; cursor: pointer; transition: transform 0.1s ease;">
+                                        🌤️ Tiempo & Clima de Pistas
+                                    </button>
+                                    <button type="button" class="btn-quick-tpl" data-tpl="journal_bajada" style="background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; padding: 7px 12px; border-radius: 10px; font-size: 0.78rem; font-weight: 850; cursor: pointer; transition: transform 0.1s ease;">
+                                        📰 Journal: Bajada de Pared
+                                    </button>
+                                    <button type="button" class="btn-quick-tpl" data-tpl="journal_material" style="background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; padding: 7px 12px; border-radius: 10px; font-size: 0.78rem; font-weight: 850; cursor: pointer; transition: transform 0.1s ease;">
+                                        🎾 Journal: Material & Pelotas
+                                    </button>
+                                    <button type="button" class="btn-quick-tpl" data-tpl="noticia_dia" style="background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; padding: 7px 12px; border-radius: 10px; font-size: 0.78rem; font-weight: 850; cursor: pointer; transition: transform 0.1s ease;">
+                                        🔥 Noticia Relevante del Día
+                                    </button>
+                                    <button type="button" class="btn-quick-tpl" data-tpl="convocatoria" style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; padding: 7px 12px; border-radius: 10px; font-size: 0.78rem; font-weight: 850; cursor: pointer; transition: transform 0.1s ease;">
+                                        📢 Convocatoria General
+                                    </button>
+                                </div>
+                            </div>
+
                             <!-- Paso 3: Mensaje -->
                             <div>
                                 <label style="display: block; font-size: 0.78rem; font-weight: 850; color: #475569; text-transform: uppercase; margin-bottom: 6px;">
@@ -1556,7 +1580,14 @@
             const copyWaBtn = document.getElementById('btn-copy-wa-text');
             const openWaBtn = document.getElementById('btn-open-wa-web');
 
-            const closeModal = () => { modalRoot.innerHTML = ''; };
+            const closeModal = async () => { 
+                modalRoot.innerHTML = ''; 
+                try {
+                    await this.render();
+                } catch (rErr) {
+                    console.warn("Aviso al refrescar tras cerrar modal:", rErr);
+                }
+            };
             closeBtn.onclick = closeModal;
             cancelBtn.onclick = closeModal;
             overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
@@ -1608,6 +1639,44 @@
             levelMaxInput.oninput = updateAudienceAndPreview;
             titleInput.oninput = updateAudienceAndPreview;
             bodyInput.oninput = updateAudienceAndPreview;
+
+            // Gestión de Plantillas Rápidas (Clima, Journal, Noticia del Día)
+            form.querySelectorAll('.btn-quick-tpl').forEach(btn => {
+                btn.onclick = () => {
+                    const tpl = btn.dataset.tpl;
+                    const sosCheck = document.getElementById('check-create-sos-alert');
+
+                    if (tpl === 'clima') {
+                        titleInput.value = '🌤️ Previsión del Tiempo: Pistas 100% Jugables';
+                        bodyInput.value = 'Condiciones excelentes hoy en Cornellà y El Prat: 21°C, 0% probabilidad de lluvia y brisa suave de 11 km/h. Pistas descubiertas en estado perfecto para jugar.';
+                        if (sosCheck) sosCheck.checked = false;
+                    } else if (tpl === 'journal_bajada') {
+                        titleInput.value = '📰 SomosPadel Journal: Dominar la Bajada de Pared';
+                        bodyInput.value = 'Técnica Pro: cómo anticipar el rebote tras el cristal, cargar el peso del cuerpo y acelerar de arriba a abajo para definir o forzar el error del rival.';
+                        if (sosCheck) sosCheck.checked = false;
+                    } else if (tpl === 'journal_material') {
+                        titleInput.value = '🎾 SomosPadel Journal: Palas de Carbono y Salida de Bola';
+                        bodyInput.value = 'Guía de Material: cómo influye la humedad nocturna de Barcelona en la fibra de carbono 12K y el rebote en la moqueta azul oficial del club.';
+                        if (sosCheck) sosCheck.checked = false;
+                    } else if (tpl === 'noticia_dia') {
+                        titleInput.value = '🔥 Noticia Relevante: Nueva Temporada & Ranking XP';
+                        bodyInput.value = '¡Ya activo en la App! Estrenamos tabla de clasificación en vivo con ascensos de división, cromos PadelFut dinámicos y bonus XP en cada partido.';
+                        if (sosCheck) sosCheck.checked = false;
+                    } else if (tpl === 'convocatoria') {
+                        const aud = form.querySelector('input[name="targetAudience"]:checked')?.value || 'all';
+                        const opt = eventSelect.options[eventSelect.selectedIndex];
+                        const ds = opt.value !== 'none' ? opt.dataset : null;
+                        const tmpl = getTemplateText(aud, ds);
+                        titleInput.value = tmpl.title;
+                        bodyInput.value = tmpl.body;
+                    }
+
+                    // Destacar visualmente el botón seleccionado
+                    form.querySelectorAll('.btn-quick-tpl').forEach(b => b.style.outline = 'none');
+                    btn.style.outline = '2.5px solid #0f172a';
+                    updateAudienceAndPreview();
+                };
+            });
 
             // Al cambiar de entreno
             eventSelect.onchange = () => {
@@ -1695,81 +1764,95 @@
                         createSosAlert: createSos
                     });
 
-                    await this.render();
+                    // Feedback sonoro y toast en pantalla
+                    if (window.NotificationService) {
+                        try {
+                            if (typeof window.NotificationService.showInAppToast === 'function') {
+                                window.NotificationService.showInAppToast("📢 ¡Mensaje Enviado!", `${res.recipientCount} jugadores reales notificados.`);
+                            }
+                            if (typeof window.NotificationService.showNativeNotification === 'function') {
+                                window.NotificationService.showNativeNotification(title, body, { url: eventType === 'americana' ? 'americanas' : 'entrenos' });
+                            }
+                        } catch (_) {}
+                    }
+                    if (window.NotificationUi && typeof window.NotificationUi.playNotificationSound === 'function') {
+                        try { window.NotificationUi.playNotificationSound(); } catch (_) {}
+                    }
 
                     // Pantalla de confirmación detallada dentro del modal
                     const formEl = document.getElementById('form-sos-broadcast');
                     if (formEl) {
                         formEl.innerHTML = `
                             <div style="text-align: center; padding: 10px 0 20px 0;">
-                                <div style="width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #d1fae5, #6ee7b7); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto; font-size: 2rem;">
+                                <div style="width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #d1fae5, #6ee7b7); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto; font-size: 2.2rem; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.35);">
                                     ✅
                                 </div>
-                                <h2 style="margin: 0 0 6px 0; font-size: 1.3rem; font-weight: 950; color: #0f172a;">¡Mensaje enviado con éxito!</h2>
-                                <p style="margin: 0; font-size: 0.85rem; color: #64748b;">Resumen de todo lo que se ejecutó:</p>
+                                <h2 style="margin: 0 0 6px 0; font-size: 1.4rem; font-weight: 950; color: #0f172a;">¡Mensaje enviado con éxito!</h2>
+                                <p style="margin: 0; font-size: 0.88rem; color: #64748b;">El comunicado ha sido procesado y registrado correctamente.</p>
                             </div>
 
-                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
 
-                                <div style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 14px;">
-                                    <div style="font-size: 1.6rem;">👥</div>
+                                <div style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 14px; padding: 14px 18px; display: flex; align-items: center; gap: 14px;">
+                                    <div style="font-size: 1.8rem;">👥</div>
                                     <div>
                                         <div style="font-size: 0.78rem; font-weight: 800; color: #16a34a; text-transform: uppercase;">Jugadores notificados en la App</div>
-                                        <div style="font-size: 1.4rem; font-weight: 950; color: #15803d;">${res.recipientCount} jugadores reales</div>
-                                        <div style="font-size: 0.73rem; color: #4ade80; margin-top: 2px;">Notificación In-App creada en cada cuenta ✓</div>
+                                        <div style="font-size: 1.45rem; font-weight: 950; color: #15803d;">${res.recipientCount} jugadores reales</div>
+                                        <div style="font-size: 0.75rem; color: #16a34a; margin-top: 2px;">Notificación In-App registrada en el buzón de cada jugador ✓</div>
                                     </div>
                                 </div>
 
                                 ${sendPush ? `
-                                <div style="background: #f0f9ff; border: 1.5px solid #7dd3fc; border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 14px;">
-                                    <div style="font-size: 1.6rem;">📱</div>
+                                <div style="background: #f0f9ff; border: 1.5px solid #7dd3fc; border-radius: 14px; padding: 14px 18px; display: flex; align-items: center; gap: 14px;">
+                                    <div style="font-size: 1.8rem;">📱</div>
                                     <div>
-                                        <div style="font-size: 0.78rem; font-weight: 800; color: #0284c7; text-transform: uppercase;">Notificación Push enviada</div>
-                                        <div style="font-size: 0.88rem; font-weight: 700; color: #0369a1;">Entregada a ${res.notifiedCount || res.recipientCount} dispositivos ✓</div>
-                                        <div style="font-size: 0.73rem; color: #38bdf8; margin-top: 2px;">Aparecerá en la pantalla de notificaciones del móvil</div>
+                                        <div style="font-size: 0.78rem; font-weight: 800; color: #0284c7; text-transform: uppercase;">Notificación Push y Móvil</div>
+                                        <div style="font-size: 0.95rem; font-weight: 800; color: #0369a1;">Procesada para ${res.notifiedCount || res.recipientCount} dispositivos ✓</div>
+                                        <div style="font-size: 0.75rem; color: #0284c7; margin-top: 2px;">Aparecerá en los teléfonos con la PWA o permisos de notificación activos</div>
                                     </div>
                                 </div>
                                 ` : `
-                                <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; opacity: 0.6;">
-                                    <div style="font-size: 1.6rem;">📵</div>
-                                    <div style="font-size: 0.85rem; color: #94a3b8;">Push desactivada — no se envió notificación al dispositivo</div>
+                                <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; opacity: 0.7;">
+                                    <div style="font-size: 1.8rem;">📵</div>
+                                    <div style="font-size: 0.88rem; color: #64748b; font-weight: 600;">Push desactivada — no se emitió push al móvil</div>
                                 </div>
                                 `}
 
                                 ${createSos ? `
-                                <div style="background: #fff5f5; border: 1.5px solid #fca5a5; border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 14px;">
-                                    <div style="font-size: 1.6rem;">🚨</div>
+                                <div style="background: #fff5f5; border: 1.5px solid #fca5a5; border-radius: 14px; padding: 14px 18px; display: flex; align-items: center; gap: 14px;">
+                                    <div style="font-size: 1.8rem;">🚨</div>
                                     <div>
                                         <div style="font-size: 0.78rem; font-weight: 800; color: #dc2626; text-transform: uppercase;">Alerta SOS publicada en el feed</div>
-                                        <div style="font-size: 0.88rem; font-weight: 700; color: #b91c1c;">${res.sosAlert ? 'ID: ' + res.sosAlert.id : 'Publicada'} ✓</div>
-                                        <div style="font-size: 0.73rem; color: #f87171; margin-top: 2px;">+150 XP de bonificación activados para quien responda</div>
+                                        <div style="font-size: 0.95rem; font-weight: 800; color: #b91c1c;">${res.sosAlert ? 'ID: ' + res.sosAlert.id : 'Publicada'} ✓</div>
+                                        <div style="font-size: 0.75rem; color: #dc2626; margin-top: 2px;">+150 XP de bonificación activados para quien responda</div>
                                     </div>
                                 </div>
                                 ` : `
-                                <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; opacity: 0.6;">
-                                    <div style="font-size: 1.6rem;">🔕</div>
+                                <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; opacity: 0.6;">
+                                    <div style="font-size: 1.8rem;">🔕</div>
                                     <div style="font-size: 0.85rem; color: #94a3b8;">Alerta SOS no activada — no se publicó en el feed</div>
                                 </div>
                                 `}
 
-                                <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                                <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; gap: 8px;">
                                     <div>
-                                        <div style="font-size: 0.72rem; font-weight: 800; color: #94a3b8; text-transform: uppercase;">ID de Registro en Firestore</div>
-                                        <code style="font-size: 0.78rem; color: #475569;">${res.broadcastId || '—'}</code>
+                                        <div style="font-size: 0.72rem; font-weight: 800; color: #64748b; text-transform: uppercase;">ID de Registro en Firestore</div>
+                                        <code style="font-size: 0.82rem; font-weight: 700; color: #0f172a;">${res.broadcastId || '—'}</code>
                                     </div>
-                                    <i class="fas fa-database" style="color: #cbd5e1; font-size: 1rem;"></i>
+                                    <i class="fas fa-database" style="color: #94a3b8; font-size: 1.1rem;"></i>
                                 </div>
 
                             </div>
 
-                            <div style="margin-top: 20px; display: flex; justify-content: center;">
-                                <button id="btn-close-broadcast-success" style="background: #0f172a; color: #CCFF00; border: none; padding: 13px 32px; border-radius: 12px; font-weight: 950; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                    <i class="fas fa-check"></i> Cerrar y volver al panel
+                            <div style="margin-top: 24px; display: flex; justify-content: center;">
+                                <button id="btn-close-broadcast-success" type="button" style="background: #0f172a; color: #CCFF00; border: none; padding: 14px 34px; border-radius: 14px; font-weight: 950; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 20px rgba(15, 23, 42, 0.25);">
+                                    <i class="fas fa-check"></i> <span>Cerrar y volver al panel</span>
                                 </button>
                             </div>
                         `;
                         document.getElementById('btn-close-broadcast-success')?.addEventListener('click', closeModal);
                     } else {
+                        alert("✅ ¡Mensaje enviado con éxito a " + res.recipientCount + " jugadores!");
                         closeModal();
                     }
                 } catch (err) {

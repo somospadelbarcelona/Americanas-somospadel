@@ -873,6 +873,21 @@
                 console.warn("⚠️ [AdminNotifications] Error en fan-out de jugadores:", err);
             }
 
+            // 3. Feedback local interactivo inmediato (Toast + Sonido + Push nativo para el emisor)
+            try {
+                if (window.NotificationService && typeof window.NotificationService.showInAppToast === 'function') {
+                    window.NotificationService.showInAppToast(title.trim(), body.trim(), 'broadcast', targetUrl);
+                }
+                if (window.NotificationUi && typeof window.NotificationUi.playNotificationSound === 'function') {
+                    window.NotificationUi.playNotificationSound();
+                }
+                if (window.NotificationService && typeof window.NotificationService.showNativeNotification === 'function') {
+                    window.NotificationService.showNativeNotification(title.trim(), body.trim(), { url: targetUrl, id: broadcastRef.id });
+                }
+            } catch (fbErr) {
+                console.warn("⚠️ [AdminNotifications] Aviso en feedback local:", fbErr);
+            }
+
             return broadcastRef.id;
         }
 
@@ -919,6 +934,10 @@
 
         async purgeExpiredAndOld(options = {}) {
             return await this.purgeExpiredAndOldNotifications(options);
+        }
+
+        async purgeAllNotifications() {
+            return await this.purgeExpiredAndOldNotifications({ all: true });
         }
     }
 

@@ -472,17 +472,45 @@ class NotificationUi {
             if (window.PlayerView?.haptic) {
                 window.PlayerView.haptic(15);
             }
+
+            // 1. Si no hay permisos concedidos, solicitarlos activamente
+            const notificationSupported = typeof Notification !== 'undefined';
+            if (notificationSupported && Notification.permission !== 'granted') {
+                if (window.NotificationService && typeof window.NotificationService.requestPushPermission === 'function') {
+                    const granted = await window.NotificationService.requestPushPermission();
+                    if (!granted) {
+                        if (window.NotificationService.showInAppToast) {
+                            window.NotificationService.showInAppToast(
+                                '⚠️ Permiso no concedido',
+                                'Para recibir alertas en tu dispositivo, pulsa "Permitir" en el navegador.',
+                                'warning'
+                            );
+                        }
+                        this.renderPushPermissionBox();
+                        return;
+                    }
+                }
+            }
+
+            // 2. Feedback in-app inmediato
             if (window.NotificationService && window.NotificationService.showInAppToast) {
                 window.NotificationService.showInAppToast(
                     '🎾 Notificación de prueba enviada',
-                    'Comprueba el panel de notificaciones de tu dispositivo.',
+                    'Alerta emitida a tu dispositivo y sincronizada en tu bandeja.',
                     'success'
                 );
             } else if (window.Toast) {
                 window.Toast.show('🎾 Notificación de prueba enviada', 'success');
             }
+
+            // 3. Enviar notificación al dispositivo y registrar en la bandeja
             if (window.NotificationService && typeof window.NotificationService.sendWelcomeNotification === 'function') {
                 await window.NotificationService.sendWelcomeNotification();
+            }
+
+            this.renderPushPermissionBox();
+            if (this.isOpen) {
+                this.renderList();
             }
         } catch (err) {
             console.warn('[NotificationUi] Error al enviar notificación de prueba:', err);
@@ -716,14 +744,34 @@ class NotificationUi {
             defaultTitle = '💬 Mensaje de la Comunidad';
             defaultBody = 'Nuevos mensajes en el canal del torneo.';
         }
-        // E. PRIORIDAD 5: COMUNICADOS OFICIALES
-        else if (fullText.includes('comunicado') || fullText.includes('aviso') || fullText.includes('oficial') || fullText.includes('urgente') || fullText.includes('noticia')) {
+        // E. PRIORIDAD 5: NOTICIAS DEL JOURNAL SOMOSPADEL
+        else if (fullText.includes('journal') || rawType === 'daily_news' || rawUrl === 'journal' || rawUrl === 'noticias') {
             category = 'broadcast';
-            tag = { label: 'COMUNICADO', icon: 'fa-bullhorn', isSvg: false, cssClass: 'tag-broadcast', cardThemeClass: 'theme-broadcast' };
-            actionLabel = '📢 VER AVISO';
-            actionUrl = 'dashboard';
-            defaultTitle = '📢 Comunicado Oficial SomosPadel';
-            defaultBody = 'Información importante de la organización y calendario del club.';
+            tag = { label: 'SOMOSPADEL JOURNAL', icon: 'fa-newspaper', isSvg: false, cssClass: 'tag-news', cardThemeClass: 'theme-broadcast' };
+            actionLabel = '📰 LEER JOURNAL';
+            actionUrl = 'journal';
+            defaultTitle = '📰 SomosPadel Journal';
+            defaultBody = 'Actualidad, consejos técnicos y guías de material para la comunidad.';
+            metaPills.push({ icon: 'fa-book-open', text: 'Journal Oficial' });
+        }
+        // F. PRIORIDAD 6: NOTICIA RELEVANTE / COMUNICADOS OFICIALES
+        else if (fullText.includes('relevante') || fullText.includes('destacad') || fullText.includes('comunicado') || fullText.includes('aviso') || fullText.includes('oficial') || fullText.includes('urgente') || fullText.includes('noticia')) {
+            const isHot = fullText.includes('relevante') || fullText.includes('destacad') || fullText.includes('ranking') || fullText.includes('temporada');
+            category = 'broadcast';
+            tag = { 
+                label: isHot ? 'NOTICIA DEL DÍA' : 'COMUNICADO', 
+                icon: isHot ? 'fa-fire' : 'fa-bullhorn', 
+                isSvg: false, 
+                cssClass: isHot ? 'tag-hot' : 'tag-broadcast', 
+                cardThemeClass: 'theme-broadcast' 
+            };
+            actionLabel = isHot ? '🔥 VER NOTICIA' : '📢 VER AVISO';
+            actionUrl = rawUrl || 'dashboard';
+            defaultTitle = isHot ? '🔥 Noticia Relevante del Día' : '📢 Comunicado Oficial SomosPadel';
+            defaultBody = 'Información importante de la organización y novedades de la app.';
+            if (isHot) {
+                metaPills.push({ icon: 'fa-fire', text: 'Destacada Hoy' });
+            }
         }
 
         const finalTitle = rawTitle.length > 0 ? rawTitle : defaultTitle;

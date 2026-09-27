@@ -766,6 +766,8 @@
                     authorId: currentUser.uid || currentUser.id || 'admin',
                     createdAt: nowIso,
                     type: 'convocatoria',
+                    topic: 'all_players',
+                    icon: 'bullhorn',
                     status: 'published'
                 };
 

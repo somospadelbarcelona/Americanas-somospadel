@@ -48,6 +48,10 @@ service cloud.firestore {
           allow create: if isAuthenticated();
           allow update, delete: if isOwner(playerId) || isAdmin();
       }
+      
+      match /devices/{deviceId} {
+          allow read, write: if isOwner(playerId) || isAdmin();
+      }
     }
 
     // ==========================================
@@ -153,6 +157,22 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow create: if isAdmin() || (isAuthenticated() && request.resource.data.userId == request.auth.uid);
       allow update, delete: if isAdmin();
+    }
+
+    // ==========================================
+    // COMUNICADOS GLOBALES DEL CLUB (BROADCASTS)
+    // ==========================================
+    match /broadcasts/{broadcastId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ==========================================
+    // CONFIGURACIÓN DEL SISTEMA (PURGED NOTIFS, METADATOS)
+    // ==========================================
+    match /system_config/{configId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     // Regla global de cierre

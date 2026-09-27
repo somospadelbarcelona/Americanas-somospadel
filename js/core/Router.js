@@ -9,6 +9,8 @@
                 'dashboard': () => this.renderDashboard(),
                 'journal': () => this.renderDashboard(),
                 'blog': () => this.renderDashboard(),
+                'noticias': () => this.renderDashboard(),
+                'news': () => this.renderDashboard(),
                 'americanas': () => this.handleControllerTab('EventsController', 'events'),
                 'events': () => this.handleControllerTab('EventsController', 'events'),
                 'finished_americanas': () => this.handleControllerTab('EventsController', 'finished_americanas'),
