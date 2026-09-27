@@ -1477,16 +1477,35 @@ window.AdminViews.users = async function () {
                 userData.password = await window.FirebaseDB.security.hashPassword(pwd.trim());
             }
 
-            if (id) {
-                // UPDATE
-                await FirebaseDB.players.update(id, userData);
-                window.PremiumModal.alert({ title: "✅ ACTUALIZADO", message: "Jugador actualizado correctamente." });
-            } else {
-                // CREATE
-                // Validations for new user
-                if (!userData.phone) throw new Error("El teléfono es obligatorio.");
-                await FirebaseDB.players.create(userData); // Assuming create handles ID generation or logic
-                window.PremiumModal.alert({ title: "✅ REGISTRADO", message: "Jugador registrado correctamente." });
+            const saveOperation = async () => {
+                if (id) {
+                    // UPDATE
+                    await FirebaseDB.players.update(id, userData);
+                    window.PremiumModal.alert({ title: "✅ ACTUALIZADO", message: "Jugador actualizado correctamente." });
+                } else {
+                    // CREATE
+                    // Validations for new user
+                    if (!userData.phone) throw new Error("El teléfono es obligatorio.");
+                    await FirebaseDB.players.create(userData);
+                    window.PremiumModal.alert({ title: "✅ REGISTRADO", message: "Jugador registrado correctamente." });
+                }
+            };
+
+            try {
+                await saveOperation();
+            } catch (saveErr) {
+                const sMsg = (saveErr?.message || String(saveErr)).toLowerCase();
+                if (sMsg.includes('client has already been terminated') || sMsg.includes('failed-precondition')) {
+                    console.warn("⚠️ [admin-users] Fallo de cliente terminado al guardar. Re-inicializando Firestore y reintentando...");
+                    if (window.reinitializeFirestore) {
+                        await window.reinitializeFirestore();
+                        await saveOperation();
+                    } else {
+                        throw saveErr;
+                    }
+                } else {
+                    throw saveErr;
+                }
             }
 
             // Refresh & Close

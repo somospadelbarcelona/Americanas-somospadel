@@ -108,7 +108,40 @@ window.addEventListener('unhandledrejection', function (event) {
     }
 });
 
-// Helper seguro para consultas Firestore con auto-recuperación ante aserciones corruptas de IndexedDB
+// Recuperación automática de Firestore si el cliente queda terminado o desincronizado
+async function reinitializeFirestore() {
+    console.warn("🔄 [FirebaseInit] Re-inicializando cliente de Firestore ante desconexión o cliente terminado...");
+    try {
+        if (window.db && typeof window.db.terminate === 'function') {
+            await window.db.terminate().catch(() => {});
+        }
+    } catch (_) {}
+
+    try {
+        if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length > 0) {
+            try {
+                await firebase.app().delete();
+            } catch (delErr) {
+                console.warn("⚠️ [FirebaseInit] firebase.app().delete() fallback:", delErr?.message);
+            }
+        }
+        if (typeof firebase !== 'undefined' && window.FIREBASE_CONFIG) {
+            const app = firebase.initializeApp(window.FIREBASE_CONFIG);
+            db = app.firestore();
+            auth = app.auth();
+            window.db = db;
+            window.auth = auth;
+            console.log("✅ [FirebaseInit] Firestore y Auth re-inicializados correctamente.");
+            return db;
+        }
+    } catch (err) {
+        console.error("❌ [FirebaseInit] Fallo crítico al re-inicializar Firebase:", err);
+    }
+    return window.db || db;
+}
+window.reinitializeFirestore = reinitializeFirestore;
+
+// Helper seguro para consultas Firestore con auto-recuperación ante aserciones corruptas o terminaciones
 async function safeFirestoreGet(ref, options) {
     if (!ref) throw new Error("safeFirestoreGet: ref no válida");
     try {
@@ -116,17 +149,26 @@ async function safeFirestoreGet(ref, options) {
     } catch (err) {
         const msg = (err && (err.message || String(err))) || '';
         const lowerMsg = msg.toLowerCase();
+        
         if (
+            lowerMsg.includes('the client has already been terminated') ||
             lowerMsg.includes('internal assertion failed') ||
             lowerMsg.includes('unexpected state') ||
             lowerMsg.includes('assertion failed')
         ) {
-            console.warn("⚠️ [safeFirestoreGet] Assertion failure en caché local detectado. Purgando IndexedDB y reintentando con { source: 'server' }...", msg);
+            console.warn("⚠️ [safeFirestoreGet] Fallo de persistencia/terminación detectado. Auto-recuperando...", msg);
             try {
-                window.indexedDB?.deleteDatabase?.('firestore/[DEFAULT]/americanas-somospadel/main');
-                window.indexedDB?.deleteDatabase?.('firestore/[DEFAULT]');
-            } catch (_) {}
-            return await ref.get({ source: 'server' });
+                const freshDb = await reinitializeFirestore();
+                if (freshDb && ref.path) {
+                    const freshDoc = freshDb.doc(ref.path);
+                    return options ? await freshDoc.get(options) : await freshDoc.get();
+                } else if (freshDb && ref.id) {
+                    const freshCol = freshDb.collection(ref.id);
+                    return options ? await freshCol.get(options) : await freshCol.get();
+                }
+            } catch (recoveryErr) {
+                console.error("❌ [safeFirestoreGet] Fallo al recuperar tras terminación:", recoveryErr);
+            }
         }
         throw err;
     }
@@ -306,16 +348,31 @@ const FirebaseDB = {
             if (!db) throw new Error("Firebase DB not initialized yet");
 
             const fetchFn = async () => {
+                const currentDb = window.db || db;
                 try {
-                    const snapshot = await safeFirestoreGet(db.collection('players'));
+                    const snapshot = await safeFirestoreGet(currentDb.collection('players'));
                     return snapshot.docs.map(doc => {
                         const data = doc.data();
                         return { ...data, id: doc.id, uid: data.uid || doc.id };
                     });
                 } catch (err) {
+                    const msg = (err?.message || String(err)).toLowerCase();
+                    if (msg.includes('client has already been terminated') || msg.includes('internal assertion')) {
+                        console.warn("⚠️ [fetchFn] Firestore terminado en getAll. Auto-recuperando...", err);
+                        try {
+                            const freshDb = await reinitializeFirestore();
+                            const snapshot = await freshDb.collection('players').get();
+                            return snapshot.docs.map(doc => {
+                                const data = doc.data();
+                                return { ...data, id: doc.id, uid: data.uid || doc.id };
+                            });
+                        } catch (recErr) {
+                            console.error("❌ [fetchFn] Falló recuperación en getAll:", recErr);
+                        }
+                    }
                     console.warn("⚠️ [fetchFn] Firestore server fetch failed, attempting offline cache fallback:", err.message);
                     try {
-                        const cacheSnapshot = await db.collection('players').get({ source: 'cache' });
+                        const cacheSnapshot = await currentDb.collection('players').get({ source: 'cache' });
                         if (cacheSnapshot && !cacheSnapshot.empty) {
                             console.log("🛡️ [fetchFn] Retrieved", cacheSnapshot.size, "players from Firestore offline cache.");
                             return cacheSnapshot.docs.map(doc => {
@@ -443,37 +500,73 @@ const FirebaseDB = {
                 created_at: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            let docRef;
-            if (data.id) {
-                await db.collection('players').doc(data.id).set(payload);
-                docRef = db.collection('players').doc(data.id);
-            } else {
-                docRef = await db.collection('players').add(payload);
+            const performCreate = async (targetDb) => {
+                let docRef;
+                if (data.id) {
+                    await targetDb.collection('players').doc(data.id).set(payload);
+                    docRef = targetDb.collection('players').doc(data.id);
+                } else {
+                    docRef = await targetDb.collection('players').add(payload);
+                }
+
+                // Invalidate Cache
+                if (window.CacheService) window.CacheService.remove('players', 'all');
+                await _updatePlayersSyncToken();
+
+                const doc = await safeFirestoreGet(docRef);
+                return { ...doc.data(), id: doc.id };
+            };
+
+            try {
+                const currentDb = window.db || db;
+                return await performCreate(currentDb);
+            } catch (err) {
+                const msg = (err?.message || String(err)).toLowerCase();
+                if (
+                    msg.includes('client has already been terminated') ||
+                    msg.includes('failed-precondition') ||
+                    msg.includes('internal assertion') ||
+                    msg.includes('unexpected state')
+                ) {
+                    console.warn("⚠️ [players.create] Cliente Firestore terminado/inestable. Re-inicializando y reintentando...", err);
+                    const freshDb = await reinitializeFirestore();
+                    return await performCreate(freshDb);
+                }
+                throw err;
             }
-
-            // Invalidate Cache
-            if (window.CacheService) window.CacheService.remove('players', 'all');
-            await _updatePlayersSyncToken();
-
-            const doc = await safeFirestoreGet(docRef);
-            return { ...doc.data(), id: doc.id };
         },
 
         async update(id, data) {
             const cleanId = (id || "").toString().trim();
             if (!cleanId) throw new Error("ID de jugador no válido para actualizar");
 
-            try {
-                await db.collection('players').doc(cleanId).update(data);
+            const performUpdate = async (targetDb) => {
+                await targetDb.collection('players').doc(cleanId).update(data);
                 // Invalidate Cache
                 if (window.CacheService) window.CacheService.remove('players', 'all');
                 await _updatePlayersSyncToken();
 
-                const doc = await safeFirestoreGet(db.collection('players').doc(cleanId));
+                const doc = await safeFirestoreGet(targetDb.collection('players').doc(cleanId));
                 return { id: doc.id, ...doc.data() };
+            };
+
+            try {
+                const currentDb = window.db || db;
+                return await performUpdate(currentDb);
             } catch (err) {
+                const msg = (err?.message || String(err)).toLowerCase();
+                if (
+                    msg.includes('client has already been terminated') ||
+                    msg.includes('failed-precondition') ||
+                    msg.includes('internal assertion') ||
+                    msg.includes('unexpected state')
+                ) {
+                    console.warn("⚠️ [players.update] Cliente Firestore terminado/inestable. Re-inicializando y reintentando...", err);
+                    const freshDb = await reinitializeFirestore();
+                    return await performUpdate(freshDb);
+                }
                 console.error("Error in FirebaseDB.players.update:", err);
-                if (err.message.includes("permission-denied")) {
+                if (err.message && err.message.includes("permission-denied")) {
                     throw new Error("No tienes permisos de escritura en la base de datos Firestore.");
                 }
                 throw err;
@@ -484,13 +577,29 @@ const FirebaseDB = {
             const cleanId = (id || "").toString().trim();
             if (!cleanId) throw new Error("ID de jugador no especificado");
 
-            const docRef = db.collection('players').doc(cleanId);
-            try {
+            const performDelete = async (targetDb) => {
+                const docRef = targetDb.collection('players').doc(cleanId);
                 await docRef.delete();
                 // Invalidate Cache
                 if (window.CacheService) window.CacheService.remove('players', 'all');
                 await _updatePlayersSyncToken();
+            };
+
+            try {
+                const currentDb = window.db || db;
+                await performDelete(currentDb);
             } catch (err) {
+                const msg = (err?.message || String(err)).toLowerCase();
+                if (
+                    msg.includes('client has already been terminated') ||
+                    msg.includes('failed-precondition') ||
+                    msg.includes('internal assertion')
+                ) {
+                    console.warn("⚠️ [players.delete] Cliente Firestore terminado. Re-inicializando y reintentando...", err);
+                    const freshDb = await reinitializeFirestore();
+                    await performDelete(freshDb);
+                    return;
+                }
                 console.error("Error direct deleting:", err);
                 throw new Error(`Error de Firebase: ${err.message}`);
             }

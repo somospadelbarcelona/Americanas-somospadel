@@ -1172,6 +1172,12 @@ window.AdminViews.dashboard_home = async function () {
                 color: #ccff00;
             }
 
+            .badge-proximo {
+                background: rgba(14, 165, 233, 0.2);
+                border: 1px solid rgba(14, 165, 233, 0.6);
+                color: #38bdf8;
+            }
+
             .motor-badge-dot {
                 width: 6px;
                 height: 6px;
@@ -1726,6 +1732,33 @@ window.AdminViews.dashboard_home = async function () {
         }
 
         let cardsHtml = '';
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        // Helper para fechas amigables en español
+        function formatFriendlyDate(dateStr, timeStr) {
+            if (!dateStr || dateStr === 'Hoy') return timeStr ? `${timeStr}h` : 'Hora por confirmar';
+            if (dateStr === todayStr) {
+                return `Hoy • ${timeStr || '18:00'}h`;
+            }
+            try {
+                let y, m, d;
+                if (dateStr.includes('-')) {
+                    [y, m, d] = dateStr.split('-').map(Number);
+                } else if (dateStr.includes('/')) {
+                    const p = dateStr.split('/').map(Number);
+                    [d, m, y] = [p[0], p[1], p[2]];
+                }
+                if (y && m && d) {
+                    const dt = new Date(y, m - 1, d);
+                    const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+                    const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+                    const dayName = days[dt.getDay()] || '';
+                    const monthName = months[dt.getMonth()] || '';
+                    return `${dayName} ${d} ${monthName} • ${timeStr || '18:00'}h`;
+                }
+            } catch(e) {}
+            return `${dateStr} • ${timeStr || ''}`;
+        }
 
         // 1. Tarjetas de Americanas Activas
         liveAmericanasData.forEach(ev => {
@@ -1736,16 +1769,31 @@ window.AdminViews.dashboard_home = async function () {
             const time = ev.time || ev.startTime || '18:00';
             const format = (ev.format || ev.type || 'Twister').toString().toUpperCase();
             
-            // Conteo de inscritos y capacidad
+            // Pistas y Plazas reales de la americana
+            const courts = parseInt(ev.max_courts || ev.courts || ev.num_courts || 0);
             const registered = Array.isArray(ev.registeredPlayers) 
                 ? ev.registeredPlayers.length 
                 : (Array.isArray(ev.players) ? ev.players.length : (ev.currentPlayers || 0));
-            const max = ev.maxPlayers || ev.totalSlots || 16;
+            const max = parseInt(ev.max_players || ev.maxPlayers || ev.totalSlots || (courts > 0 ? courts * 4 : 16));
             const pct = Math.min(100, Math.round((registered / (max || 1)) * 100));
 
             const rawStatus = (ev.status || '').toLowerCase();
             const isEnPista = ['in_progress', 'live', 'en_curso', 'jugando'].includes(rawStatus);
+            const isToday = (ev.date || '') === todayStr;
             const isFull = registered >= max;
+
+            let badgeText = '🟢 ABIERTA';
+            let badgeClass = 'badge-abierta';
+            if (isEnPista) {
+                badgeText = '🔴 EN PISTA';
+                badgeClass = 'badge-en-pista';
+            } else if (isToday) {
+                badgeText = '🎾 HOY EN PISTA';
+                badgeClass = 'badge-en-pista';
+            } else if (ev.date && ev.date > todayStr) {
+                badgeText = '📅 PRÓXIMA';
+                badgeClass = 'badge-proximo';
+            }
 
             const barColor = isFull ? 'bar-green' : (isEnPista ? 'bar-amber' : 'bar-blue');
 
@@ -1756,19 +1804,20 @@ window.AdminViews.dashboard_home = async function () {
                     </div>
                     <div class="motor-live-card-content">
                         <div class="motor-live-card-topbar">
-                            <span class="motor-live-badge-live ${isEnPista ? 'badge-en-pista' : 'badge-abierta'}">
-                                <span class="motor-badge-dot"></span> ${isEnPista ? '🔴 EN PISTA' : '🟢 ABIERTA'}
+                            <span class="motor-live-badge-live ${badgeClass}">
+                                <span class="motor-badge-dot"></span> ${badgeText}
                             </span>
                             <span class="motor-live-type-pill">${format}</span>
                         </div>
                         <h4 class="motor-live-card-title">${name}</h4>
                         <div class="motor-live-card-meta">
                             <span><i class="fas fa-location-dot"></i> ${club}</span>
-                            <span><i class="fas fa-clock"></i> ${time} • ${date}</span>
+                            <span><i class="fas fa-table-tennis-paddle-ball"></i> <strong>${courts > 0 ? `${courts} Pistas` : '4 Pistas'}</strong></span>
+                            <span><i class="fas fa-clock"></i> ${formatFriendlyDate(date, time)}</span>
                         </div>
                         <div class="motor-live-occupancy-wrap">
                             <div class="motor-live-occupancy-labels">
-                                <span>Inscripción: <strong>${registered}/${max} Jugadores</strong></span>
+                                <span>Inscripción: <strong>${registered}/${max} Jugadores</strong> ${courts > 0 ? `(${courts} Pistas)` : ''}</span>
                                 <span class="motor-live-occupancy-pct">${pct}%</span>
                             </div>
                             <div class="motor-live-progress-bar-track">
@@ -1788,19 +1837,41 @@ window.AdminViews.dashboard_home = async function () {
             `;
         });
 
-        // 2. Tarjetas de Entrenos Activos / Hoy
+        // 2. Tarjetas de Entrenos Activos / Próximos
         liveEntrenosData.forEach(en => {
-            const poster = en.posterUrl || en.imageUrl || 'img/entreno todo delfos.jpg';
+            const poster = en.posterUrl || en.imageUrl || en.image_url || 'img/entreno todo delfos.jpg';
             const title = en.title || en.name || 'Entrenamiento Técnico Somospadel';
             const club = en.location || en.club || en.sede || 'Club Somospadel BCN';
             const date = en.date || 'Hoy';
             const time = en.time || en.startTime || '18:00';
             
+            // Pistas y Plazas reales del entreno (max_courts * 4 alumnos por pista)
+            const courts = parseInt(en.max_courts || en.courts || en.num_courts || en.pistas || 0);
             const registered = Array.isArray(en.registeredPlayers) 
                 ? en.registeredPlayers.length 
                 : (Array.isArray(en.players) ? en.players.length : (en.currentPlayers || 0));
-            const max = en.maxPlayers || en.slots || 8;
+            const max = parseInt(en.max_players || en.maxPlayers || en.slots || (courts > 0 ? courts * 4 : (en.players && en.players.length > 8 ? 12 : 8)));
             const pct = Math.min(100, Math.round((registered / (max || 1)) * 100));
+
+            const rawStatus = (en.status || '').toLowerCase();
+            const isEnPista = ['in_progress', 'live', 'en_curso', 'jugando'].includes(rawStatus);
+            const isToday = (en.date || '') === todayStr;
+            const isFull = registered >= max;
+
+            let badgeText = '🟢 CONVOCATORIA ABIERTA';
+            let badgeClass = 'badge-abierta';
+            if (isEnPista) {
+                badgeText = '🔴 EN PISTA';
+                badgeClass = 'badge-en-pista';
+            } else if (isToday) {
+                badgeText = '🎾 ENTRENO HOY';
+                badgeClass = 'badge-entreno';
+            } else if (en.date && en.date > todayStr) {
+                badgeText = '📅 PRÓXIMO ENTRENO';
+                badgeClass = 'badge-proximo';
+            }
+
+            const barColor = isFull ? 'bar-green' : (isEnPista ? 'bar-amber' : 'bar-lime');
 
             cardsHtml += `
                 <div class="motor-live-card live-card-entreno" onclick="window.loadAdminView('entrenos_mgmt')">
@@ -1809,23 +1880,24 @@ window.AdminViews.dashboard_home = async function () {
                     </div>
                     <div class="motor-live-card-content">
                         <div class="motor-live-card-topbar">
-                            <span class="motor-live-badge-live badge-entreno">
-                                <span class="motor-badge-dot"></span> 🎾 ENTRENO HOY
+                            <span class="motor-live-badge-live ${badgeClass}">
+                                <span class="motor-badge-dot"></span> ${badgeText}
                             </span>
                             <span class="motor-live-type-pill">ACADEMIA</span>
                         </div>
                         <h4 class="motor-live-card-title">${title}</h4>
                         <div class="motor-live-card-meta">
                             <span><i class="fas fa-location-dot"></i> ${club}</span>
-                            <span><i class="fas fa-clock"></i> ${time} • ${date}</span>
+                            <span><i class="fas fa-table-tennis-paddle-ball"></i> <strong>${courts > 0 ? `${courts} Pistas` : (max >= 12 ? '3 Pistas' : '2 Pistas')}</strong></span>
+                            <span><i class="fas fa-clock"></i> ${formatFriendlyDate(date, time)}</span>
                         </div>
                         <div class="motor-live-occupancy-wrap">
                             <div class="motor-live-occupancy-labels">
-                                <span>Plazas: <strong>${registered}/${max} Alumnos</strong></span>
+                                <span>Plazas: <strong>${registered}/${max} Alumnos</strong> ${courts > 0 ? `(${courts} Pistas)` : ''}</span>
                                 <span class="motor-live-occupancy-pct">${pct}%</span>
                             </div>
                             <div class="motor-live-progress-bar-track">
-                                <div class="motor-live-progress-bar-fill bar-lime" style="width: ${pct}%"></div>
+                                <div class="motor-live-progress-bar-fill ${barColor}" style="width: ${pct}%"></div>
                             </div>
                         </div>
                         <div class="motor-live-card-actions" onclick="event.stopPropagation()">
@@ -1863,6 +1935,14 @@ window.AdminViews.dashboard_home = async function () {
                 }
             });
 
+            activeEvents.sort((a, b) => {
+                const aLive = ['in_progress', 'live', 'en_curso'].includes((a.status || '').toLowerCase());
+                const bLive = ['in_progress', 'live', 'en_curso'].includes((b.status || '').toLowerCase());
+                if (aLive && !bLive) return -1;
+                if (!aLive && bLive) return 1;
+                return (a.date || '').localeCompare(b.date || '');
+            });
+
             liveAmericanasData = activeEvents.slice(0, 6);
             const el = document.getElementById('motor-stat-americanas');
             if (el) el.textContent = countTotalActive;
@@ -1872,20 +1952,29 @@ window.AdminViews.dashboard_home = async function () {
         // Recarga de entrenos
         window.db.collection('entrenos').get().then(snap => {
             let activeTrainings = [];
-            let countToday = 0;
+            let countActive = 0;
             snap.forEach(doc => {
                 const data = { id: doc.id, ...doc.data() };
                 const st = (data.status || '').toLowerCase();
-                const isClosed = ['finished', 'cancelled', 'completed'].includes(st);
-                if (!isClosed && (data.date === todayStr || ['active', 'open', 'in_progress'].includes(st))) {
-                    countToday++;
+                const isClosed = ['finished', 'cancelled', 'completed', 'finalizada'].includes(st);
+                const isTodayOrFuture = !data.date || data.date >= todayStr;
+                if (!isClosed && (isTodayOrFuture || ['active', 'open', 'in_progress', 'live'].includes(st))) {
+                    countActive++;
                     activeTrainings.push(data);
                 }
             });
 
+            activeTrainings.sort((a, b) => {
+                const aLive = ['in_progress', 'live', 'en_curso'].includes((a.status || '').toLowerCase());
+                const bLive = ['in_progress', 'live', 'en_curso'].includes((b.status || '').toLowerCase());
+                if (aLive && !bLive) return -1;
+                if (!aLive && bLive) return 1;
+                return (a.date || '').localeCompare(b.date || '');
+            });
+
             liveEntrenosData = activeTrainings.slice(0, 4);
             const el = document.getElementById('motor-stat-entrenos');
-            if (el) el.textContent = countToday;
+            if (el) el.textContent = countActive;
             renderLiveEventsCards();
         }).catch(err => console.warn("Error escaneando entrenos:", err));
     };
@@ -1950,22 +2039,31 @@ window.AdminViews.dashboard_home = async function () {
         // 3. Sincronización en vivo: ENTRENOS HOY & ACTIVOS
         const unsubEntrenos = window.db.collection('entrenos').onSnapshot(snap => {
             let activeTrainings = [];
-            let countToday = 0;
+            let countActive = 0;
 
             snap.forEach(doc => {
                 const data = { id: doc.id, ...doc.data() };
                 const st = (data.status || '').toLowerCase();
-                const isClosed = ['finished', 'cancelled', 'completed'].includes(st);
-                if (!isClosed && (data.date === todayStr || ['active', 'open', 'in_progress'].includes(st))) {
-                    countToday++;
+                const isClosed = ['finished', 'cancelled', 'completed', 'finalizada'].includes(st);
+                const isTodayOrFuture = !data.date || data.date >= todayStr;
+                if (!isClosed && (isTodayOrFuture || ['active', 'open', 'in_progress', 'live'].includes(st))) {
+                    countActive++;
                     activeTrainings.push(data);
                 }
+            });
+
+            activeTrainings.sort((a, b) => {
+                const aLive = ['in_progress', 'live', 'en_curso'].includes((a.status || '').toLowerCase());
+                const bLive = ['in_progress', 'live', 'en_curso'].includes((b.status || '').toLowerCase());
+                if (aLive && !bLive) return -1;
+                if (!aLive && bLive) return 1;
+                return (a.date || '').localeCompare(b.date || '');
             });
 
             liveEntrenosData = activeTrainings.slice(0, 4);
 
             const statEl = document.getElementById('motor-stat-entrenos');
-            if (statEl) statEl.textContent = countToday;
+            if (statEl) statEl.textContent = countActive;
 
             renderLiveEventsCards();
         }, err => {

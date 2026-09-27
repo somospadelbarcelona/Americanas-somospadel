@@ -375,11 +375,224 @@
         }
 
         /* --- 📱 RESPONSIVE DRAWER & MATTE LIGHT ADAPTATIONS (ADMIN) --- */
+        .admin-mobile-subnav {
+            display: none;
+        }
+
         @media (max-width: 1024px) {
+            .app-shell {
+                display: flex !important;
+                flex-direction: column !important;
+                width: 100% !important;
+                max-width: 100vw !important;
+                height: 100% !important;
+                height: 100dvh !important;
+                overflow: hidden !important;
+                position: relative !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* Sidebar Drawer Off-Canvas por defecto fuera de pantalla */
+            #admin-sidebar.sidebar-pro,
             .sidebar-pro {
+                position: fixed !important;
+                top: 0 !important;
+                bottom: 0 !important;
+                left: 0 !important;
+                width: 295px !important;
+                max-width: 85vw !important;
+                height: 100% !important;
+                height: 100dvh !important;
+                z-index: 9999 !important;
                 background: #ffffff !important;
                 color: #0f172a !important;
                 border-right: 1px solid #cbd5e1 !important;
+                transform: translateX(-105%) !important;
+                transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease !important;
+                overflow-y: auto !important;
+                overflow-x: hidden !important;
+                -webkit-overflow-scrolling: touch;
+                box-shadow: none !important;
+                margin: 0 !important;
+            }
+
+            /* Mostrar Sidebar únicamente cuando tenga .open o .active */
+            #admin-sidebar.sidebar-pro.open,
+            #admin-sidebar.sidebar-pro.active,
+            .sidebar-pro.open,
+            .sidebar-pro.active {
+                transform: translateX(0) !important;
+                box-shadow: 20px 0 50px rgba(15, 23, 42, 0.4) !important;
+            }
+
+            /* Overlay con backdrop blur y z-index 9998 */
+            #sidebar-overlay.sidebar-overlay {
+                display: none !important;
+                position: fixed !important;
+                inset: 0 !important;
+                background: rgba(15, 23, 42, 0.68) !important;
+                backdrop-filter: blur(6px) !important;
+                -webkit-backdrop-filter: blur(6px) !important;
+                z-index: 9998 !important;
+                opacity: 0 !important;
+                pointer-events: none !important;
+                transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            }
+
+            #sidebar-overlay.sidebar-overlay.active {
+                display: block !important;
+                opacity: 1 !important;
+                pointer-events: auto !important;
+            }
+
+            /* Main Workspace 100% width sin aplastamiento */
+            .main-wrapper {
+                width: 100% !important;
+                max-width: 100vw !important;
+                height: 100% !important;
+                height: 100dvh !important;
+                flex: 1 !important;
+                min-width: 0 !important;
+                display: flex !important;
+                flex-direction: column !important;
+                overflow: hidden !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .workspace-area {
+                width: 100% !important;
+                max-width: 100vw !important;
+                margin: 0 !important;
+                padding: 1rem 0.85rem !important;
+                box-sizing: border-box !important;
+                flex: 1 !important;
+                overflow-y: auto !important;
+                overflow-x: hidden !important;
+            }
+
+            /* Botón Hamburguesa Táctil */
+            .admin-hamburger-btn {
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                width: 42px !important;
+                height: 42px !important;
+                border-radius: 12px !important;
+                background: #ffffff !important;
+                border: 1.5px solid #cbd5e1 !important;
+                color: #0f172a !important;
+                font-size: 1.2rem !important;
+                cursor: pointer !important;
+                flex-shrink: 0 !important;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+                touch-action: manipulation !important;
+                margin-right: 10px !important;
+            }
+
+            .admin-hamburger-btn:active {
+                transform: scale(0.92) !important;
+                background: #f1f5f9 !important;
+            }
+
+            /* 📱 BARRA DE NAVEGACIÓN RÁPIDA / SUBSECCIONES MÓVIL (QUICK NAV) */
+            .admin-mobile-subnav {
+                display: flex !important;
+                align-items: center !important;
+                width: 100% !important;
+                max-width: 100vw !important;
+                background: #ffffff !important;
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 8px 10px !important;
+                box-sizing: border-box !important;
+                overflow: hidden !important;
+                flex-shrink: 0 !important;
+                z-index: 100 !important;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+            }
+
+            .mobile-subnav-container {
+                display: flex !important;
+                align-items: center !important;
+                gap: 8px !important;
+                overflow-x: auto !important;
+                overflow-y: hidden !important;
+                white-space: nowrap !important;
+                width: 100% !important;
+                padding: 4px 6px 7px 6px !important;
+                -webkit-overflow-scrolling: touch !important;
+                scrollbar-width: thin !important;
+                scrollbar-color: #ccff00 rgba(15, 23, 42, 0.08) !important;
+            }
+
+            .mobile-subnav-container::-webkit-scrollbar {
+                display: block !important;
+                height: 4px !important;
+            }
+
+            .mobile-subnav-container::-webkit-scrollbar-track {
+                background: rgba(15, 23, 42, 0.06) !important;
+                border-radius: 4px !important;
+            }
+
+            .mobile-subnav-container::-webkit-scrollbar-thumb {
+                background: #ccff00 !important;
+                border-radius: 4px !important;
+                box-shadow: 0 0 6px rgba(204, 255, 0, 0.6) !important;
+            }
+
+            .mobile-subnav-container::-webkit-scrollbar-thumb:active {
+                background: #a3cc00 !important;
+            }
+
+            .subnav-chip {
+                display: inline-flex !important;
+                align-items: center !important;
+                gap: 6px !important;
+                padding: 7px 14px !important;
+                border-radius: 9999px !important;
+                font-size: 0.78rem !important;
+                font-weight: 700 !important;
+                background: #f8fafc !important;
+                color: #475569 !important;
+                border: 1px solid #cbd5e1 !important;
+                cursor: pointer !important;
+                flex-shrink: 0 !important;
+                text-decoration: none !important;
+                transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+                user-select: none !important;
+                -webkit-tap-highlight-color: transparent !important;
+                line-height: 1.2 !important;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+            }
+
+            .subnav-chip i {
+                font-size: 0.8rem !important;
+                color: #64748b !important;
+            }
+
+            .subnav-chip:active {
+                transform: scale(0.95) !important;
+            }
+
+            .subnav-chip.active {
+                background: #0f172a !important;
+                color: #ccff00 !important;
+                border-color: #0f172a !important;
+                box-shadow: 0 2px 10px rgba(15, 23, 42, 0.3) !important;
+                font-weight: 800 !important;
+            }
+
+            .subnav-chip.active i {
+                color: #ccff00 !important;
+            }
+
+            .subnav-chip.chip-menu-toggle {
+                background: #f1f5f9 !important;
+                border-color: #94a3b8 !important;
+                color: #0f172a !important;
+                font-weight: 800 !important;
             }
 
             .sidebar-pro * {
@@ -1568,6 +1781,13 @@
                 </div>
             </header>
 
+            <!-- 📱 BARRA DE NAVEGACIÓN RÁPIDA / SUBSECCIONES MÓVIL (QUICK NAV) -->
+            <nav id="admin-mobile-subnav" class="admin-mobile-subnav" aria-label="Navegación Rápida de Secciones">
+                <div class="mobile-subnav-container" id="mobile-subnav-container">
+                    <!-- Inyectado dinámicamente según la sección activa -->
+                </div>
+            </nav>
+
             <div class="workspace-area">
                 <div id="content-area">
                     <div class="loading-container">
@@ -2664,47 +2884,63 @@
                         sidebar.classList.add('open');
                         sidebar.classList.add('active');
                         if (overlay) overlay.classList.add('active');
+                        document.body.style.overflow = 'hidden';
+                        if (window.navigator?.vibrate) {
+                            try { window.navigator.vibrate(10); } catch (e) {}
+                        }
                     } else {
                         sidebar.classList.remove('open');
                         sidebar.classList.remove('active');
                         if (overlay) overlay.classList.remove('active');
+                        document.body.style.removeProperty('overflow');
                     }
                 };
+
+                // Asegurar que al cargar admin.html en móvil, el sidebar NUNCA arranque con 'open' ni 'active'
+                window.ensureSidebarClosedOnMobile = function () {
+                    if (window.innerWidth <= 1024) {
+                        const sidebar = document.getElementById('admin-sidebar');
+                        const overlay = document.getElementById('sidebar-overlay');
+                        if (sidebar) {
+                            sidebar.classList.remove('open');
+                            sidebar.classList.remove('active');
+                        }
+                        if (overlay) {
+                            overlay.classList.remove('active');
+                        }
+                        document.body.style.removeProperty('overflow');
+                    }
+                };
+                window.ensureSidebarClosedOnMobile();
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', window.ensureSidebarClosedOnMobile);
+                }
             </script>
 
             <!-- Mobile Responsive Styles -->
             <style>
                 /* Drawer Overlay */
                 .sidebar-overlay {
-                    display: none;
-                    position: fixed;
-                    inset: 0;
-                    background: rgba(15, 23, 42, 0.65);
-                    backdrop-filter: blur(4px);
-                    -webkit-backdrop-filter: blur(4px);
-                    z-index: 2150;
-                    opacity: 0;
-                    pointer-events: none;
-                    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+                    display: none !important;
+                    position: fixed !important;
+                    inset: 0 !important;
+                    background: rgba(15, 23, 42, 0.68) !important;
+                    backdrop-filter: blur(6px) !important;
+                    -webkit-backdrop-filter: blur(6px) !important;
+                    z-index: 9998 !important;
+                    opacity: 0 !important;
+                    pointer-events: none !important;
+                    transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
                 }
 
                 .sidebar-overlay.active {
-                    opacity: 1;
-                    pointer-events: auto;
+                    display: block !important;
+                    opacity: 1 !important;
+                    pointer-events: auto !important;
                 }
 
                 @media (max-width: 1024px) {
-                    .sidebar-overlay {
-                        display: block !important;
-                    }
-                }
-
-                    /* 
-                       ADAPTACIÓN DE CONTENIDO MÓVIL (Tablas y Formularios)
-                       ----------------------------------------------------
-                    */
-
-                    /* 1. Layout General y Tipografía */
+                    /* Layout General y Tipografía */
                     body,
                     .app-shell {
                         font-size: 14px !important;
@@ -2726,79 +2962,9 @@
                     /* MODAL MOBILE FIXES */
                     .modal-content {
                         max-height: 90vh !important;
-                        /* Ensure it fits on screen */
                         overflow-y: auto !important;
-                        /* Allow scrolling */
                         -webkit-overflow-scrolling: touch;
                         padding-bottom: 50px !important;
-                        /* Space for bottom content */
-                    }
-
-                    /* --- MOBILE MODAL FIXES --- */
-                    @media (max-width: 480px) {
-                        .modal-content {
-                            width: 95% !important;
-                            max-height: 90vh !important;
-                            overflow-y: auto !important;
-                            padding: 15px !important;
-                        }
-
-                        .modal-body {
-                            display: flex;
-                            flex-direction: column;
-                        }
-
-                        .modal-body>div {
-                            width: 100% !important;
-                        }
-                    }
-
-                    /* --- WOW EFFECTS (LIVE MATCHES) --- */
-                    @keyframes neonPulse {
-                        0% {
-                            box-shadow: 0 0 5px rgba(204, 255, 0, 0.2), 0 0 10px rgba(204, 255, 0, 0.1);
-                            border-color: rgba(204, 255, 0, 0.5);
-                        }
-
-                        50% {
-                            box-shadow: 0 0 20px rgba(204, 255, 0, 0.6), 0 0 30px rgba(204, 255, 0, 0.4);
-                            border-color: #CCFF00;
-                        }
-
-                        100% {
-                            box-shadow: 0 0 5px rgba(204, 255, 0, 0.2), 0 0 10px rgba(204, 255, 0, 0.1);
-                            border-color: rgba(204, 255, 0, 0.5);
-                        }
-                    }
-
-                    .match-card-live {
-                        animation: neonPulse 2s infinite ease-in-out;
-                        background: radial-gradient(circle at center, rgba(204, 255, 0, 0.03) 0%, rgba(255, 255, 255, 1) 100%) !important;
-                        transform: scale(1.02);
-                        z-index: 10;
-                        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-                    }
-
-                    .status-badge-live {
-                        background: #CCFF00;
-                        color: black !important;
-                        box-shadow: 0 0 10px #ccff00;
-                        padding: 4px 12px !important;
-                        border-radius: 12px;
-                        font-size: 0.7rem !important;
-                        font-weight: 900 !important;
-                        text-transform: uppercase;
-                        animation: blink 1s infinite alternate;
-                    }
-
-                    @keyframes blink {
-                        from {
-                            opacity: 1;
-                        }
-
-                        to {
-                            opacity: 0.7;
-                        }
                     }
 
                     /* Fix specific form layouts on mobile */
@@ -2810,6 +2976,72 @@
                     .modal-content div[style*="grid-template-columns"] {
                         grid-template-columns: 1fr !important;
                         gap: 10px !important;
+                    }
+                }
+
+                @media (max-width: 480px) {
+                    .modal-content {
+                        width: 95% !important;
+                        max-height: 90vh !important;
+                        overflow-y: auto !important;
+                        padding: 15px !important;
+                    }
+
+                    .modal-body {
+                        display: flex;
+                        flex-direction: column;
+                    }
+
+                    .modal-body>div {
+                        width: 100% !important;
+                    }
+                }
+
+                /* --- WOW EFFECTS (LIVE MATCHES) --- */
+                @keyframes neonPulse {
+                    0% {
+                        box-shadow: 0 0 5px rgba(204, 255, 0, 0.2), 0 0 10px rgba(204, 255, 0, 0.1);
+                        border-color: rgba(204, 255, 0, 0.5);
+                    }
+
+                    50% {
+                        box-shadow: 0 0 20px rgba(204, 255, 0, 0.6), 0 0 30px rgba(204, 255, 0, 0.4);
+                        border-color: #CCFF00;
+                    }
+
+                    100% {
+                        box-shadow: 0 0 5px rgba(204, 255, 0, 0.2), 0 0 10px rgba(204, 255, 0, 0.1);
+                        border-color: rgba(204, 255, 0, 0.5);
+                    }
+                }
+
+                .match-card-live {
+                    animation: neonPulse 2s infinite ease-in-out;
+                    background: radial-gradient(circle at center, rgba(204, 255, 0, 0.03) 0%, rgba(255, 255, 255, 1) 100%) !important;
+                    transform: scale(1.02);
+                    z-index: 10;
+                    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+                }
+
+                .status-badge-live {
+                    background: #CCFF00;
+                    color: black !important;
+                    box-shadow: 0 0 10px #ccff00;
+                    padding: 4px 12px !important;
+                    border-radius: 12px;
+                    font-size: 0.7rem !important;
+                    font-weight: 900 !important;
+                    text-transform: uppercase;
+                    animation: blink 1s infinite alternate;
+                }
+
+                @keyframes blink {
+                    from {
+                        opacity: 1;
+                    }
+
+                    to {
+                        opacity: 0.7;
                     }
                 }
 
@@ -3279,9 +3511,105 @@
             }
         }
 
+        // =========================================================================
+        // 📱 BARRA DE NAVEGACIÓN RÁPIDA / SUBSECCIONES MÓVIL (QUICK NAV HORIZONTAL)
+        // =========================================================================
+        window.ADMIN_ALL_MOBILE_SUBNAV = [
+            // 1. 🎓 ENTRENOS (¡PRIMERA VISIBLE A LA IZQUIERDA!)
+            { view: 'entrenos_mgmt', label: 'Entrenos', icon: 'fa-graduation-cap', isPrimary: true },
+            { view: 'entrenos_create', label: '+ Crear Entreno', icon: 'fa-plus-circle' },
+            { view: 'entrenos_results', label: 'Resultados', icon: 'fa-bullseye' },
+            { view: 'entrenos_simulator', label: 'Simulador Entrenos', icon: 'fa-rotate' },
+
+            // 2. 🏆 AMERICANAS
+            { view: 'americanas_mgmt', label: 'Americanas', icon: 'fa-calendar-check', isPrimary: true },
+            { view: 'americanas_create', label: '+ Crear Americana', icon: 'fa-plus' },
+            { view: 'matches', label: 'Marcadores', icon: 'fa-trophy' },
+            { view: 'simulator_empty', label: 'Simulador Rotaciones', icon: 'fa-dice' },
+
+            // 3. 🎾 PARTIDAS ABIERTAS
+            { view: 'open_matches_mgmt', label: 'Partidas Abiertas', icon: 'fa-table-tennis-paddle-ball', isPrimary: true },
+            { view: 'open_matches_create', label: '+ Crear Partida', icon: 'fa-plus' },
+            { view: 'open_matches_results', label: 'Resultados Partidas', icon: 'fa-award' },
+
+            // 4. 👥 JUGADORES & CLUB
+            { view: 'users', label: 'Jugadores', icon: 'fa-users', isPrimary: true },
+            { view: 'sos_substitutes', label: 'SOS Suplentes', icon: 'fa-user-clock' },
+            { view: 'season_campaign', label: 'Equipos 2027', icon: 'fa-shield-halved' },
+
+            // 5. 📈 MARKETING & BLOG
+            { view: 'analytics', label: 'Analytics', icon: 'fa-chart-line', isPrimary: true },
+            { view: 'blog_posts', label: 'Blog', icon: 'fa-newspaper' },
+            { href: 'promo-studio.html?mode=copilot', label: 'Copiloto Alex', icon: 'fa-wand-magic-sparkles', target: '_blank' },
+
+            // 6. 🛠️ SISTEMA & MANTENIMIENTO
+            { view: 'logic_lab', label: 'Logic Lab', icon: 'fa-flask-vial', isPrimary: true },
+            { view: 'database_health', label: 'Diagnóstico BD', icon: 'fa-stethoscope' },
+            { view: 'system_telemetry', label: 'Telemetría', icon: 'fa-chart-pie' },
+            { view: 'network_pulse', label: 'OP Center', icon: 'fa-heartbeat' },
+            { view: 'fix_players', label: 'Reparar', icon: 'fa-wrench' },
+            { view: 'notifications_manager', label: 'Alertas', icon: 'fa-bell-slash' },
+
+            // 7. 🏠 INICIO MOTOR
+            { view: 'dashboard_home', label: 'Inicio', icon: 'fa-gauge-high', isPrimary: true }
+        ];
+
+        window.updateMobileSubnav = function(activeView) {
+            const container = document.getElementById('mobile-subnav-container');
+            if (!container) return;
+            const view = activeView || sessionStorage.getItem('admin_last_view') || 'entrenos_mgmt';
+            
+            const role = (window.AdminAuth?.user?.role || '').toString().toLowerCase().trim();
+            const isOrganizer = ['organizer', 'organizador', 'organizadores', 'organizers'].includes(role);
+
+            let html = '';
+            window.ADMIN_ALL_MOBILE_SUBNAV.forEach(item => {
+                if (isOrganizer && item.view && !item.view.startsWith('americanas') && !item.view.startsWith('entrenos') && item.view !== 'dashboard_home') {
+                    return;
+                }
+                const isCurrent = item.view === view || (item.view === 'dashboard_home' && view === 'home');
+                if (item.href) {
+                    html += `
+                        <a href="${item.href}" target="${item.target || '_self'}" class="subnav-chip">
+                            <i class="fas ${item.icon}"></i>
+                            <span>${item.label}</span>
+                        </a>`;
+                } else {
+                    html += `
+                        <button type="button" class="subnav-chip ${isCurrent ? 'active' : ''} ${item.isPrimary ? 'chip-primary' : ''}" 
+                            onclick="window.loadAdminView && window.loadAdminView('${item.view}')" 
+                            data-view="${item.view}">
+                            <i class="fas ${item.icon}"></i>
+                            <span>${item.label}</span>
+                        </button>`;
+                }
+            });
+
+            // Botón chip para abrir el menú completo lateral
+            html += `
+                <button type="button" class="subnav-chip chip-menu-toggle" onclick="window.toggleAdminSidebar && window.toggleAdminSidebar(true)" title="Ver todas las secciones">
+                    <i class="fas fa-bars"></i>
+                    <span>Menú</span>
+                </button>`;
+
+            container.innerHTML = html;
+
+            requestAnimationFrame(() => {
+                if (!activeView || activeView === 'entrenos_mgmt' || activeView === 'dashboard_home') {
+                    // Si es inicio o entrenos_mgmt, mantener ENTRENOS 100% visible a la izquierda
+                    container.scrollTo({ left: 0, behavior: 'smooth' });
+                } else {
+                    const activeChip = container.querySelector('.subnav-chip.active');
+                    if (activeChip) {
+                        activeChip.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                    }
+                }
+            });
+        };
+
         // Auto-cierre del drawer en móvil al seleccionar cualquier opción de navegación
         document.addEventListener('click', function(e) {
-            const item = e.target.closest('.nav-item-pro, .submenu-item');
+            const item = e.target.closest('.nav-item-pro, .submenu-item, .nav-item-back, .nav-item-logout');
             if (item && !item.classList.contains('submenu-trigger')) {
                 if (window.innerWidth <= 1024 && typeof window.toggleAdminSidebar === 'function') {
                     window.toggleAdminSidebar(false);
@@ -3289,7 +3617,7 @@
             }
         });
         
-        // Decorador e interceptor de loadAdminView para mantener los submenús actualizados al navegar
+        // Decorador e interceptor de loadAdminView para mantener los submenús y quick subnav actualizados
         (function() {
             const checkRouterInterval = setInterval(() => {
                 if (typeof window.loadAdminView === 'function') {
@@ -3311,11 +3639,20 @@
                             });
                             
                             autoExpandActiveSubmenu();
+                            if (typeof window.updateMobileSubnav === 'function') {
+                                window.updateMobileSubnav(viewName);
+                            }
                         }, 50);
                     };
                     
-                    console.log("🛡️ Hook de Submenús y Drawer inyectado con éxito.");
+                    console.log("🛡️ Hook de Submenús, Drawer y Mobile Quick Nav inyectado con éxito.");
                     setTimeout(autoExpandActiveSubmenu, 1000);
+                    setTimeout(() => {
+                        const initialView = sessionStorage.getItem('admin_last_view') || 'dashboard_home';
+                        if (typeof window.updateMobileSubnav === 'function') {
+                            window.updateMobileSubnav(initialView);
+                        }
+                    }, 300);
                 }
             }, 100);
             

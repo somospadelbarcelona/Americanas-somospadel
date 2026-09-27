@@ -371,6 +371,11 @@ window.loadAdminView = async function (rawViewName) {
         document.getElementById('sidebar-overlay')?.classList.remove('active');
     }
 
+    // Sincronizar barra superior de navegación rápida móvil (Quick Nav / Subsecciones)
+    if (typeof window.updateMobileSubnav === 'function') {
+        window.updateMobileSubnav(viewName);
+    }
+
     // Re-apply role restrictions to keep sidebar locked
     if (window.AdminAuth && typeof window.AdminAuth.applyRoleRestrictions === 'function') {
         window.AdminAuth.applyRoleRestrictions();
