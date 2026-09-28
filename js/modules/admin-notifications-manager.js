@@ -125,8 +125,14 @@
             try {
                 if (window.db) {
                     const snap = await window.db.collection('system_config').doc('purged_notifications').get();
-                    if (snap.exists && Array.isArray(snap.data()?.purgedIds)) {
-                        return snap.data().purgedIds.length;
+                    if (snap.exists) {
+                        const data = snap.data() || {};
+                        if (typeof data.purgedCount === 'number') {
+                            return data.purgedCount;
+                        }
+                        if (Array.isArray(data.purgedIds)) {
+                            return data.purgedIds.length;
+                        }
                     }
                 }
                 if (window.NotificationService?.globalPurgedIds) {
@@ -304,13 +310,13 @@
                 // Limpieza instantánea reactiva
                 this.items = [];
                 this.filteredItems = [];
-                this.purgedCount += totalPurged;
+                this.purgedCount = 0;
                 this.render();
 
                 if (window.PremiumModal && typeof window.PremiumModal.alert === 'function') {
                     await window.PremiumModal.alert({
                         title: "💥 PURGA TOTAL COMPLETADA",
-                        message: `Bandejas 100% limpias: Se han eliminado <strong>${totalPurged}</strong> registros (${bcPurged} comunicados oficiales en broadcasts y ${plPurged} en jugadores).`,
+                        message: `Bandejas 100% limpias: Se han eliminado <strong>${totalPurged}</strong> registros (${bcPurged} comunicados oficiales en broadcasts y ${plPurged} en jugadores). Contadores restablecidos a 0.`,
                         type: 'success'
                     });
                 } else {
@@ -334,6 +340,74 @@
                 if (btn) {
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fas fa-radiation"></i> 💥 Purga Total (Vaciar Todo)';
+                    btn.style.opacity = '1';
+                }
+            }
+        }
+
+        /**
+         * Vaciar permanentemente el historial acumulado de purgas realizadas (contador a 0)
+         */
+        async clearPurgedRegistry() {
+            let confirmed = false;
+            if (window.PremiumModal && typeof window.PremiumModal.confirm === 'function') {
+                confirmed = await window.PremiumModal.confirm({
+                    title: "🗑️ ¿VACIAR HISTORIAL DE PURGAS REALIZADAS?",
+                    message: "Esta acción <strong>eliminará para siempre</strong> el registro acumulado de purgas realizadas y dejará el contador en <strong>0</strong>. El bloqueo de seguridad seguirá activo para que las alertas antiguas no vuelvan a salir jamás.",
+                    confirmText: "VACIAR Y PONER A 0",
+                    cancelText: "CANCELAR",
+                    type: 'danger'
+                });
+            } else {
+                confirmed = window.confirm("¿Vaciar permanentemente el historial de purgas realizadas y poner el contador a 0?");
+            }
+
+            if (!confirmed) return;
+
+            const btn = document.getElementById('btn-clear-purged-registry');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Vaciando...';
+                btn.style.opacity = '0.7';
+            }
+
+            try {
+                if (window.NotificationService && typeof window.NotificationService.resetPurgedRegistry === 'function') {
+                    await window.NotificationService.resetPurgedRegistry();
+                } else if (window.AdminNotifications && typeof window.AdminNotifications.resetPurgedRegistry === 'function') {
+                    await window.AdminNotifications.resetPurgedRegistry();
+                } else if (window.NotificationServiceClass && typeof window.NotificationServiceClass.resetPurgedRegistry === 'function') {
+                    await window.NotificationServiceClass.resetPurgedRegistry();
+                }
+
+                this.purgedCount = 0;
+                await this.loadData();
+                this.render();
+
+                if (window.PremiumModal && typeof window.PremiumModal.alert === 'function') {
+                    await window.PremiumModal.alert({
+                        title: "🧹 HISTORIAL DE PURGAS VACIADO",
+                        message: "El registro de purgas realizadas se ha vaciado por completo para siempre. El contador ha quedado en 0 y la base de datos optimizada.",
+                        type: 'success'
+                    });
+                } else {
+                    alert("✅ Historial de purgas vaciado con éxito (contador a 0).");
+                }
+            } catch (err) {
+                console.error("❌ Error vaciando historial de purgas:", err);
+                if (window.PremiumModal && typeof window.PremiumModal.alert === 'function') {
+                    await window.PremiumModal.alert({
+                        title: "❌ ERROR AL VACIAR PURGAS",
+                        message: "Ocurrió un error al vaciar el registro: " + (err.message || err),
+                        type: 'danger'
+                    });
+                } else {
+                    alert("Error: " + (err.message || err));
+                }
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-broom"></i> Vaciar';
                     btn.style.opacity = '1';
                 }
             }
@@ -874,15 +948,25 @@
                         </div>
 
                         <!-- Métrica 4: Purgas Realizadas -->
-                        <div style="background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); border: 1px solid #e2e8f0; border-radius: 18px; padding: 1.4rem; display: flex; align-items: center; gap: 1.25rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
-                            <div style="width: 52px; height: 52px; border-radius: 14px; background: rgba(239, 68, 68, 0.15); color: #dc2626; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
-                                <i class="fas fa-trash-can"></i>
+                        <div style="background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); border: 1px solid #e2e8f0; border-radius: 18px; padding: 1.4rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+                            <div style="display: flex; align-items: center; gap: 1.25rem;">
+                                <div style="width: 52px; height: 52px; border-radius: 14px; background: rgba(239, 68, 68, 0.15); color: #dc2626; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+                                    <i class="fas fa-trash-can"></i>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;">Purgas Realizadas</div>
+                                    <div style="font-size: 2rem; font-weight: 950; color: #0f172a; line-height: 1.1; margin-top: 4px;">${purgesDone}</div>
+                                    <div style="font-size: 0.72rem; color: #dc2626; font-weight: 700; margin-top: 2px;">Bloqueadas globalmente</div>
+                                </div>
                             </div>
-                            <div>
-                                <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;">Purgas Realizadas</div>
-                                <div style="font-size: 2rem; font-weight: 950; color: #0f172a; line-height: 1.1; margin-top: 4px;">${purgesDone}</div>
-                                <div style="font-size: 0.72rem; color: #dc2626; font-weight: 700; margin-top: 2px;">Bloqueadas globalmente</div>
-                            </div>
+                            ${purgesDone > 0 ? `
+                                <button id="btn-clear-purged-registry" 
+                                        onclick="window.AdminNotificationsManagerCtrl.clearPurgedRegistry()" 
+                                        style="background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; padding: 7px 12px; border-radius: 10px; font-weight: 850; font-size: 0.75rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s ease; box-shadow: 0 2px 6px rgba(239,68,68,0.15); white-space: nowrap;"
+                                        title="Eliminar historial acumulado de purgas realizadas para siempre y reiniciar contador a 0">
+                                    <i class="fas fa-broom"></i> Vaciar
+                                </button>
+                            ` : ''}
                         </div>
                     </div>
 
@@ -1069,6 +1153,7 @@
     window.purgeAllNotifications = () => controller.purgeAllNotifications();
     window.testDevicePushNow = () => controller.testDevicePushNow();
     window.enablePushOnDevice = () => controller.enablePushOnDevice();
+    window.clearPurgedRegistry = () => controller.clearPurgedRegistry();
     window.AdminViews.notifications_manager = async function () {
         await controller.init();
     };

@@ -194,64 +194,73 @@ window.NotificationServiceClass = class NotificationService {
 
         try {
             const col = firestore.collection('broadcasts');
+
+            const handleSnapshot = (snapshot) => {
+                const list = [];
+                const isFirstLoad = !this._hasInitialBroadcastsLoaded;
+
+                snapshot.docs.forEach(doc => {
+                    const data = doc.data() || {};
+                    const bId = doc.id;
+                    const item = {
+                        id: bId,
+                        title: data.title || '📢 Comunicado Oficial SomosPadel',
+                        body: data.body || '',
+                        timestamp: data.timestamp || data.createdAt || new Date(),
+                        type: 'broadcast',
+                        category: 'broadcast',
+                        read: false,
+                        data: {
+                            broadcastId: bId,
+                            url: data.url || 'dashboard',
+                            ...data
+                        }
+                    };
+                    if (!this._isItemGloballyPurged(item) && !this._isItemUserDeleted(item)) {
+                        list.push(item);
+                    }
+                });
+
+                // Notificaciones en tiempo real para nuevos comunicados tras la carga inicial
+                if (!isFirstLoad && snapshot.docChanges().length > 0) {
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === 'added') {
+                            const data = change.doc.data() || {};
+                            const bItem = { id: change.doc.id, ...data };
+                            if (!this._isItemGloballyPurged(bItem) && !this._isItemUserDeleted(bItem)) {
+                                const title = data.title || '📢 Comunicado Oficial';
+                                const body = data.body || '';
+                                const targetUrl = data.url || 'dashboard';
+                                this.showInAppToast(title, body, 'broadcast', targetUrl);
+                                if (window.NotificationUi && typeof window.NotificationUi.playNotificationSound === 'function') {
+                                    window.NotificationUi.playNotificationSound();
+                                }
+                                this.showNativeNotification(title, body, { id: change.doc.id, broadcastId: change.doc.id, url: targetUrl });
+                            }
+                        }
+                    });
+                }
+
+                this._hasInitialBroadcastsLoaded = true;
+                this.broadcastNotifications = list;
+                this.unreadCount = this.getMergedNotifications().filter(n => !n.read).length;
+                this.updateAppBadge();
+                this.notifySubscribers();
+            };
+
             const query = (typeof col.orderBy === 'function')
                 ? col.orderBy('timestamp', 'desc').limit(25)
                 : (typeof col.limit === 'function' ? col.limit(25) : col);
 
-            const unsub = query.onSnapshot(snapshot => {
-                    const list = [];
-                    const isFirstLoad = !this._hasInitialBroadcastsLoaded;
-
-                    snapshot.docs.forEach(doc => {
-                        const data = doc.data() || {};
-                        const bId = doc.id;
-                        const item = {
-                            id: bId,
-                            title: data.title || '📢 Comunicado Oficial SomosPadel',
-                            body: data.body || '',
-                            timestamp: data.timestamp || data.createdAt || new Date(),
-                            type: 'broadcast',
-                            category: 'broadcast',
-                            read: false,
-                            data: {
-                                broadcastId: bId,
-                                url: data.url || 'dashboard',
-                                ...data
-                            }
-                        };
-                        if (!this._isItemGloballyPurged(item) && !this._isItemUserDeleted(item)) {
-                            list.push(item);
-                        }
+            const unsub = query.onSnapshot(handleSnapshot, err => {
+                console.warn("⚠️ [NotificationService] Fallback a escucha directa en 'broadcasts':", err?.message);
+                try {
+                    const fallbackUnsub = col.limit(25).onSnapshot(handleSnapshot, fbErr => {
+                        console.error("❌ [NotificationService] Fallback de 'broadcasts' también falló:", fbErr?.message);
                     });
-
-                    // Notificaciones en tiempo real para nuevos comunicados tras la carga inicial
-                    if (!isFirstLoad && snapshot.docChanges().length > 0) {
-                        snapshot.docChanges().forEach(change => {
-                            if (change.type === 'added') {
-                                const data = change.doc.data() || {};
-                                const bItem = { id: change.doc.id, ...data };
-                                if (!this._isItemGloballyPurged(bItem) && !this._isItemUserDeleted(bItem)) {
-                                    const title = data.title || '📢 Comunicado Oficial';
-                                    const body = data.body || '';
-                                    const targetUrl = data.url || 'dashboard';
-                                    this.showInAppToast(title, body, 'broadcast', targetUrl);
-                                    if (window.NotificationUi && typeof window.NotificationUi.playNotificationSound === 'function') {
-                                        window.NotificationUi.playNotificationSound();
-                                    }
-                                    this.showNativeNotification(title, body, { id: change.doc.id, broadcastId: change.doc.id, url: targetUrl });
-                                }
-                            }
-                        });
-                    }
-
-                    this._hasInitialBroadcastsLoaded = true;
-                    this.broadcastNotifications = list;
-                    this.unreadCount = this.getMergedNotifications().filter(n => !n.read).length;
-                    this.updateAppBadge();
-                    this.notifySubscribers();
-                }, err => {
-                    console.warn("⚠️ [NotificationService] Aviso leyendo 'broadcasts' (listener fallback):", err?.message);
-                });
+                    this.eventsUnsubscribes.push(fallbackUnsub);
+                } catch (_) {}
+            });
 
             this.eventsUnsubscribes.push(unsub);
         } catch (e) {
@@ -2675,6 +2684,25 @@ window.NotificationServiceClass = class NotificationService {
             }
         }
 
+        // Marcar en Firestore en las colecciones de eventos para que nunca más se regenere
+        if (evtId) {
+            for (const colName of ['americanas', 'entrenos']) {
+                try {
+                    const evtDocRef = window.db.collection(colName).doc(evtId);
+                    evtDocRef.get().then(snap => {
+                        if (snap && snap.exists) {
+                            evtDocRef.update({
+                                notificationPurged: true,
+                                notificationDismissed: true,
+                                hideFromNotifications: true,
+                                updatedAt: new Date().toISOString()
+                            }).catch(() => {});
+                        }
+                    }).catch(() => {});
+                } catch (_) {}
+            }
+        }
+
         const purgedIdsToAdd = [idToPurge];
         if (evtId) {
             purgedIdsToAdd.push(
@@ -2699,13 +2727,18 @@ window.NotificationServiceClass = class NotificationService {
         try {
             const configRef = window.db.collection('system_config').doc('purged_notifications');
             if (FieldValue && typeof FieldValue.arrayUnion === 'function') {
-                await configRef.set({
-                    purgedIds: FieldValue.arrayUnion(...purgedIdsToAdd),
-                    updatedAt: FieldValue.serverTimestamp ? FieldValue.serverTimestamp() : new Date().toISOString()
-                }, { merge: true });
+                // Trocear en bloques de máximo 200 para respetar el límite de 500 de Firestore
+                const chunkSize = 200;
+                for (let i = 0; i < purgedIdsToAdd.length; i += chunkSize) {
+                    const slice = purgedIdsToAdd.slice(i, i + chunkSize);
+                    await configRef.set({
+                        purgedIds: FieldValue.arrayUnion(...slice),
+                        updatedAt: FieldValue.serverTimestamp ? FieldValue.serverTimestamp() : new Date().toISOString()
+                    }, { merge: true });
+                }
             } else {
                 const docSnap = await configRef.get();
-                const existing = (docSnap.exists && Array.isArray(docSnap.data()?.purgedIds)) ? docSnap.data().purgedIds : [];
+                const existing = (docSnap && docSnap.exists && Array.isArray(docSnap.data()?.purgedIds)) ? docSnap.data().purgedIds : [];
                 const merged = Array.from(new Set([...existing, ...purgedIdsToAdd]));
                 await configRef.set({
                     purgedIds: merged,
@@ -2981,6 +3014,17 @@ window.NotificationServiceClass = class NotificationService {
                     const snap = await window.db.collection(colName).get();
                     snap.forEach(doc => {
                         const data = doc.data() || {};
+                        // 1. Descartar si el evento ya fue purgado o silenciado en Firestore
+                        if (data.notificationPurged || data.purgedNotification || data.hideFromNotifications || data.notificationDismissed) return;
+
+                        // 2. Descartar si es anterior a una purga total previa (purgedAllBefore)
+                        const evtCreatedAt = this._extractEventTimestamp(data);
+                        const evtTs = this._getTimestampValue(evtCreatedAt);
+                        if (this.purgedAllBefore && evtTs > 0 && evtTs <= this.purgedAllBefore) return;
+
+                        // 3. Descartar si el evento cancelado ya expiró por TTL (> 72 horas de antigüedad)
+                        if (this._isEventExpiredByTTL(data, 72 * 60 * 60 * 1000)) return;
+
                         const status = String(data.status || '').toLowerCase().trim();
                         const isCancelled = ['cancelled', 'cancelado', 'suspendido', 'anulado', 'suspended', 'postponed'].includes(status) || Boolean(data.isCancelled);
                         if (isCancelled) {
@@ -2989,6 +3033,7 @@ window.NotificationServiceClass = class NotificationService {
                             const legacyKey = 'notif_cancelled_' + doc.id;
                             if (seenIds.has(notifId) || seenIds.has(doc.id) || seenIds.has(legacyKey)) return;
                             if (this._isItemGloballyPurged({ id: notifId, data: { eventId: doc.id }, title: data.name || data.title })) return;
+                            if (this.globalPurgedIds && (this.globalPurgedIds.has(doc.id) || this.globalPurgedIds.has(notifId) || this.globalPurgedIds.has(legacyKey))) return;
 
                             const actionLabel = ['suspendido', 'suspended'].includes(status) ? 'Suspendido' : (status === 'anulado' ? 'Anulado' : 'Cancelado');
                             const reason = data.cancelReason || data.reason || '';
@@ -3199,6 +3244,15 @@ window.NotificationServiceClass = class NotificationService {
                         }
 
                         if (isPurgeAll || isCancelled || isPast) {
+                            try {
+                                doc.ref.update({
+                                    notificationPurged: true,
+                                    notificationDismissed: true,
+                                    hideFromNotifications: true,
+                                    updatedAt: new Date().toISOString()
+                                }).catch(() => {});
+                            } catch (_) {}
+
                             purgedIdsToAdd.push(
                                 doc.id,
                                 'notif_cancelled_' + doc.id,
@@ -3215,7 +3269,7 @@ window.NotificationServiceClass = class NotificationService {
                 } catch (_) {}
             }
 
-            // 2. Recorrer jugadores y eliminar notificaciones (todas si isPurgeAll, u obsoletas/canceladas si es selectivo)
+            // 2. Recorrer jugadores y eliminar notificaciones (todas si isPurgeAll, u obsoletas/canceladas/realizadas si es selectivo)
             const playersSnap = await window.db.collection('players').get();
             if (!playersSnap.empty) {
                 const allRefsToDelete = [];
@@ -3236,7 +3290,19 @@ window.NotificationServiceClass = class NotificationService {
                             const isCancelled = nType === 'event_cancelled' || nTitle.includes('cancelad') || nTitle.includes('anulad') || (eId && purgedIdsToAdd.includes(eId));
                             const isPurgedBroadcast = bId && purgedIdsToAdd.includes(bId);
 
-                            if (isPurgeAll || isOld || isCancelled || isPurgedBroadcast || this._isItemGloballyPurged({ id: d.id, ...data })) {
+                            let isPastEvent = false;
+                            const eventDateStr = data.data?.eventDate || data.data?.date || data.eventDate || data.date;
+                            if (eventDateStr) {
+                                try {
+                                    const d = new Date(eventDateStr);
+                                    if (!isNaN(d.getTime()) && (now - d.getTime() > 24 * 60 * 60 * 1000)) {
+                                        isPastEvent = true;
+                                    }
+                                } catch (_) {}
+                            }
+                            const isRealizado = isPastEvent || nTitle.includes('realizad') || nTitle.includes('finalizad') || nTitle.includes('resultado');
+
+                            if (isPurgeAll || isOld || isCancelled || isRealizado || isPurgedBroadcast || this._isItemGloballyPurged({ id: d.id, ...data })) {
                                 matched.push(d.ref);
                                 purgedIdsToAdd.push(d.id);
                             }
@@ -3286,26 +3352,42 @@ window.NotificationServiceClass = class NotificationService {
 
             if (isPurgeAll) {
                 payloadUpdate.purgedAllBefore = now;
+                payloadUpdate.purgedIds = [];
+                payloadUpdate.purgedCount = 0;
                 this.purgedAllBefore = now;
+                this.globalPurgedIds = new Set();
                 this.notifications = [];
                 this.broadcastNotifications = [];
                 this.unreadCount = 0;
-            }
-
-            if (uniquePurged.length > 0) {
-                if (FieldValue && typeof FieldValue.arrayUnion === 'function') {
-                    payloadUpdate.purgedIds = FieldValue.arrayUnion(...uniquePurged);
-                } else {
-                    const docSnap = await configRef.get();
-                    const existing = (docSnap.exists && Array.isArray(docSnap.data()?.purgedIds)) ? docSnap.data().purgedIds : [];
-                    payloadUpdate.purgedIds = Array.from(new Set([...existing, ...uniquePurged]));
+                try {
+                    await configRef.set(payloadUpdate, { merge: true });
+                } catch (allCfgErr) {
+                    console.warn("⚠️ [NotificationService] Error actualizando configRef en Purga Total:", allCfgErr);
                 }
-            }
-
-            try {
-                await configRef.set(payloadUpdate, { merge: true });
-            } catch (cfgErr) {
-                console.warn("⚠️ [NotificationService] Error guardando configRef:", cfgErr);
+            } else if (uniquePurged.length > 0) {
+                try {
+                    if (FieldValue && typeof FieldValue.arrayUnion === 'function') {
+                        // Trocear en bloques de 200 para cumplir el límite de 500 de Firestore
+                        const pChunkSize = 200;
+                        for (let i = 0; i < uniquePurged.length; i += pChunkSize) {
+                            const pChunk = uniquePurged.slice(i, i + pChunkSize);
+                            await configRef.set({
+                                purgedIds: FieldValue.arrayUnion(...pChunk),
+                                updatedAt: FieldValue.serverTimestamp ? FieldValue.serverTimestamp() : new Date().toISOString()
+                            }, { merge: true });
+                        }
+                    } else {
+                        const docSnap = await configRef.get();
+                        const existing = (docSnap && docSnap.exists && Array.isArray(docSnap.data()?.purgedIds)) ? docSnap.data().purgedIds : [];
+                        const merged = Array.from(new Set([...existing, ...uniquePurged]));
+                        await configRef.set({
+                            purgedIds: merged,
+                            updatedAt: new Date().toISOString()
+                        }, { merge: true });
+                    }
+                } catch (cfgErr) {
+                    console.warn("⚠️ [NotificationService] Error guardando configRef:", cfgErr);
+                }
             }
 
             if (this.globalPurgedIds) {
@@ -3609,6 +3691,60 @@ window.NotificationServiceClass = class NotificationService {
             inAppPlayersCount,
             timestamp: new Date().toISOString()
         };
+    }
+
+    /**
+     * Vacía permanentemente el registro de purgas realizadas (contador a 0)
+     * y fija la barrera temporal purgedAllBefore en este instante para que
+     * ninguna notificación antigua o evento realizado reaparezca jamás.
+     */
+    async resetPurgedRegistry() {
+        if (!this._isAdminUser()) {
+            throw new Error("Se requieren privilegios de SuperAdmin para vaciar el registro de purgas.");
+        }
+        if (!window.db) {
+            throw new Error("Base de datos no disponible.");
+        }
+
+        const now = Date.now();
+        const configRef = window.db.collection('system_config').doc('purged_notifications');
+        try {
+            await configRef.set({
+                purgedIds: [],
+                purgedCount: 0,
+                purgedAllBefore: now,
+                updatedAt: window.firebase?.firestore?.FieldValue?.serverTimestamp?.() || new Date().toISOString()
+            });
+        } catch (e) {
+            console.warn("⚠️ [NotificationService] Error al resetear documento purged_notifications:", e);
+        }
+
+        this.globalPurgedIds = new Set();
+        this.purgedAllBefore = now;
+
+        try {
+            if (typeof localStorage !== 'undefined') {
+                localStorage.removeItem('sp_cancelled_events_log');
+                ['somospadel_notifications', 'sp_notifications_cache', 'sp_read_notifications'].forEach(k => {
+                    try { localStorage.removeItem(k); } catch (_) {}
+                });
+            }
+        } catch (_) {}
+
+        this.notifySubscribers();
+        console.log("🧹 [NotificationService] Historial de purgas realizadas vaciado con éxito (contador a 0).");
+        return { success: true };
+    }
+
+    /**
+     * Delegación estática para vaciar y resetear a 0 el historial de purgas realizadas (SuperAdmin)
+     */
+    static async resetPurgedRegistry() {
+        if (window.NotificationService && typeof window.NotificationService.resetPurgedRegistry === 'function') {
+            return await window.NotificationService.resetPurgedRegistry();
+        }
+        const instance = new window.NotificationServiceClass();
+        return await instance.resetPurgedRegistry();
     }
 
     /**

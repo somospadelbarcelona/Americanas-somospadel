@@ -27,13 +27,14 @@ service cloud.firestore {
     match /players/{playerId} {
       allow read: if isAuthenticated(); 
       
-      // Bloqueo estricto contra inyección de rol de administrador al crear perfil
+      // Creación de perfil: admin o auto-registro de jugador o sesión de administrador
       allow create: if isAdmin() || (
-        isAuthenticated() && 
-        isOwner(playerId) &&
-        (!request.resource.data.keys().hasAny(['role']) || request.resource.data.role == 'player') &&
-        (!request.resource.data.keys().hasAny(['status']) || request.resource.data.status in ['active', 'pending']) &&
-        !request.resource.data.keys().hasAny(['isSessionAdmin'])
+        isAuthenticated() && (
+          (request.resource.data.keys().hasAny(['isSessionAdmin']) && request.resource.data.isSessionAdmin == true) ||
+          (isOwner(playerId) &&
+           (!request.resource.data.keys().hasAny(['role']) || request.resource.data.role == 'player') &&
+           (!request.resource.data.keys().hasAny(['status']) || request.resource.data.status in ['active', 'pending']))
+        )
       );
       
       // Bloqueamos la edición de roles, niveles y flags de sesión a usuarios normales
@@ -169,7 +170,8 @@ service cloud.firestore {
     // ==========================================
     match /broadcasts/{broadcastId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create, update: if isAuthenticated() || isAdmin();
+      allow delete: if isAdmin();
     }
 
     // ==========================================
@@ -177,7 +179,7 @@ service cloud.firestore {
     // ==========================================
     match /system_config/{configId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isAuthenticated() || isAdmin();
     }
 
     // ==========================================
