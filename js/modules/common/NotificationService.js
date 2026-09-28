@@ -62,6 +62,7 @@ window.NotificationServiceClass = class NotificationService {
                     console.log("🔔 [NotificationService] Local session detected:", localUser.uid);
                     this.currentUserUid = localUser.uid;
                     this.subscribeToFirestore(localUser.uid);
+                    this.checkPermissionStatus();
                 } else {
                     this.currentUserUid = null;
                     this.unsubscribeFirestore();
@@ -79,6 +80,7 @@ window.NotificationServiceClass = class NotificationService {
                         this.subscribeToFirestore(user.uid);
                     }
                     this.initChatObserver();
+                    this.checkPermissionStatus();
                 } else if (!user) {
                     this.currentUserUid = null;
                     this.unsubscribeFirestore();
@@ -1797,10 +1799,9 @@ window.NotificationServiceClass = class NotificationService {
                         }
                     }
 
-                    // C. Guardar en el perfil del jugador en Firestore con dualidad token / pushSubscription
-                    const primaryToken = currentFcmToken || (nativePushSub ? nativePushSub.endpoint : null);
-                    if (primaryToken || nativePushSub) {
-                        await this.saveTokenToProfile(primaryToken, nativePushSub);
+                    // C. Guardar en el perfil del jugador en Firestore (token FCM estricto + pushSubscription nativa)
+                    if (currentFcmToken || nativePushSub) {
+                        await this.saveTokenToProfile(currentFcmToken, nativePushSub);
                     }
                 } catch (bgErr) {
                     console.warn("⚠️ Sincronización push en segundo plano:", bgErr.message || bgErr);
@@ -2032,12 +2033,12 @@ window.NotificationServiceClass = class NotificationService {
                 : nowIso);
 
         const subJson = pushSubscription ? (typeof pushSubscription.toJSON === 'function' ? pushSubscription.toJSON() : pushSubscription) : null;
-        const finalToken = token || subJson?.endpoint || '';
+        const isRealToken = Boolean(token && typeof token === 'string' && !token.startsWith('http://') && !token.startsWith('https://') && token.trim().length > 10);
+        const finalToken = isRealToken ? token.trim() : '';
 
         try {
             // 1. Registrar en subcolección multi-dispositivo players/{userId}/devices/{deviceId}
             const deviceData = {
-                token: finalToken,
                 deviceId: deviceId,
                 platform: platform,
                 push_enabled: true,
@@ -2046,6 +2047,9 @@ window.NotificationServiceClass = class NotificationService {
                 updated_at: serverTs,
                 last_active: nowIso
             };
+            if (finalToken) {
+                deviceData.token = finalToken;
+            }
             if (subJson) {
                 deviceData.subscription = subJson;
                 deviceData.endpoint = subJson.endpoint || '';
@@ -2056,12 +2060,14 @@ window.NotificationServiceClass = class NotificationService {
 
             // 2. Actualizar campo de compatibilidad en documento raíz de jugador
             const rootUpdate = {
-                fcm_token: token || finalToken,
                 push_notifications_enabled: true,
                 push_permission: 'granted',
                 last_token_update: nowIso,
                 last_platform: platform
             };
+            if (finalToken) {
+                rootUpdate.fcm_token = finalToken;
+            }
             if (subJson) {
                 rootUpdate.push_subscription = subJson;
             }

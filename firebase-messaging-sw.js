@@ -24,20 +24,38 @@ try {
     console.error('❌ [firebase-messaging-sw] Error al inicializar firebase.messaging():', err);
 }
 
+const processedPushCache = new Set();
+function markAndCheckPush(id) {
+    if (!id) return false;
+    if (processedPushCache.has(id)) return true;
+    processedPushCache.add(id);
+    if (processedPushCache.size > 100) {
+        const first = processedPushCache.values().next().value;
+        processedPushCache.delete(first);
+    }
+    return false;
+}
+
 // Handler de mensajes en segundo plano (cuando la aplicación está cerrada o en segundo plano)
 if (messaging) {
     messaging.onBackgroundMessage((payload) => {
         console.log('📬 [FCM SW] Mensaje recibido en segundo plano:', payload);
 
+        const notificationData = payload.data || {};
+        const dedupeId = payload.messageId || notificationData.notificationId || notificationData.id || notificationData.tag || (payload.notification?.title + ':' + payload.notification?.body);
+        if (markAndCheckPush(dedupeId)) {
+            console.log('🛡️ [FCM SW] Mensaje ya mostrado, omitiendo duplicado:', dedupeId);
+            return;
+        }
+
         const notificationTitle = (payload.notification && payload.notification.title) ||
-                                  (payload.data && payload.data.title) ||
+                                  notificationData.title ||
                                   'SomosPadel BCN 🎾';
 
         const notificationBody = (payload.notification && payload.notification.body) ||
-                                 (payload.data && payload.data.body) ||
+                                 notificationData.body ||
                                  'Tienes una nueva actualización en SomosPadel.';
 
-        const notificationData = payload.data || {};
         const notificationIcon = (payload.notification && payload.notification.icon) ||
                                  notificationData.icon ||
                                  './img/logo_somospadel.png';
@@ -46,7 +64,7 @@ if (messaging) {
             body: notificationBody,
             icon: notificationIcon,
             badge: './img/logo_somospadel.png',
-            tag: notificationData.id || notificationData.tag || ('somospadel-push-' + Date.now()),
+            tag: notificationData.notificationId || notificationData.id || notificationData.tag || 'somospadel-push',
             data: notificationData,
             vibrate: [200, 100, 200],
             renotify: true
@@ -72,13 +90,25 @@ self.addEventListener('push', (event) => {
         }
     }
 
-    const notification = payload.notification || {};
     const data = payload.data || {};
+    const isFcmPayload = Boolean(payload.from || payload['google.c.sender.id'] || payload.fcmMessageId || payload.fcmOptions);
+    const dedupeId = payload.fcmMessageId || payload.messageId || data.notificationId || data.id || data.tag || (payload.notification?.title + ':' + payload.notification?.body);
 
+    if (markAndCheckPush(dedupeId)) {
+        console.log('🛡️ [FCM SW Native] Mensaje ya procesado por onBackgroundMessage, omitiendo duplicado:', dedupeId);
+        return;
+    }
+
+    if (messaging && isFcmPayload) {
+        console.log('ℹ️ [FCM SW Native] Delegando notificación a FCM onBackgroundMessage.');
+        return;
+    }
+
+    const notification = payload.notification || {};
     const title = notification.title || data.title || 'SomosPadel BCN 🎾';
     const body = notification.body || data.body || 'Tienes una nueva actualización en SomosPadel.';
     const icon = notification.icon || data.icon || './img/logo_somospadel.png';
-    const tag = data.id || data.tag || ('somospadel-push-' + Date.now());
+    const tag = data.notificationId || data.id || data.tag || 'somospadel-push';
 
     const options = {
         body: body,

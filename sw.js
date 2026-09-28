@@ -338,6 +338,19 @@ async function handleStaleWhileRevalidate(request) {
 // PUSH NOTIFICATIONS & INTERACCIÓN (Dual FCM + Web Push Nativo)
 // ============================================================================
 
+let isFcmMessagingInitialized = false;
+const processedPushCache = new Set();
+function markAndCheckPush(id) {
+    if (!id) return false;
+    if (processedPushCache.has(id)) return true;
+    processedPushCache.add(id);
+    if (processedPushCache.size > 100) {
+        const first = processedPushCache.values().next().value;
+        processedPushCache.delete(first);
+    }
+    return false;
+}
+
 // Soporte oficial Firebase Cloud Messaging en segundo plano (app cerrada en Android/iOS PWA)
 try {
     importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js');
@@ -355,17 +368,24 @@ try {
             });
         }
         const swMessaging = firebase.messaging();
+        isFcmMessagingInitialized = true;
         swMessaging.onBackgroundMessage((payload) => {
             console.log('📬 [FCM SW] Push recibido con app en segundo plano/cerrada:', payload);
+            const data = payload.data || {};
+            const dedupeId = payload.messageId || data.notificationId || data.id || data.tag || (payload.notification?.title + ':' + payload.notification?.body);
+            if (markAndCheckPush(dedupeId)) {
+                console.log('🛡️ [FCM SW] Push ya mostrado, omitiendo duplicado:', dedupeId);
+                return;
+            }
+
             const title = (payload.notification && payload.notification.title) ||
                           (payload.data && payload.data.title) ||
                           'SomosPadel BCN 🎾';
             const body = (payload.notification && payload.notification.body) ||
                          (payload.data && payload.data.body) ||
                          'Tienes una nueva actualización en SomosPadel.';
-            const data = payload.data || {};
             const icon = (payload.notification && payload.notification.icon) || data.icon || './img/logo_somospadel.png';
-            const tag = data.id || data.tag || ('somospadel-fcm-' + Date.now());
+            const tag = data.notificationId || data.id || data.tag || 'somospadel-fcm';
 
             return self.registration.showNotification(title, {
                 body,
@@ -399,13 +419,26 @@ self.addEventListener('push', (event) => {
         }
     }
 
-    const notification = payload.notification || {};
     const data = payload.data || {};
+    const isFcmPayload = Boolean(payload.from || payload['google.c.sender.id'] || payload.fcmMessageId || payload.fcmOptions);
+    const dedupeId = payload.fcmMessageId || payload.messageId || data.notificationId || data.id || data.tag || (payload.notification?.title + ':' + payload.notification?.body);
 
+    if (markAndCheckPush(dedupeId)) {
+        console.log('🛡️ [SW Principal] Push ya procesado por FCM/SW, omitiendo duplicado:', dedupeId);
+        return;
+    }
+
+    // Si FCM SDK está activo y procesando el mensaje FCM, evitar doble notificación
+    if (isFcmMessagingInitialized && isFcmPayload) {
+        console.log('ℹ️ [SW Principal] Mensaje gestionado por FCM onBackgroundMessage.');
+        return;
+    }
+
+    const notification = payload.notification || {};
     const title = notification.title || data.title || 'SomosPadel BCN 🎾';
     const body = notification.body || data.body || 'Tienes una nueva notificación.';
     const icon = notification.icon || data.icon || './img/logo_somospadel.png';
-    const tag = data.id || data.tag || ('somospadel-notif-' + Date.now());
+    const tag = data.notificationId || data.id || data.tag || 'somospadel-notif';
 
     const options = {
         body: body,

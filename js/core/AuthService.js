@@ -264,15 +264,31 @@
                         throw new Error("🚫 TU CUENTA HA SIDO BLOQUEADA. Contacta con el administrador.");
                     }
 
-                    // Success - create mock user session
+                    // Success - create base user session
                     const mockUser = {
                         id: playerData.id,
                         uid: playerData.id,
                         email: phone + '@somospadel.com',
                         ...playerData,
                         displayName: playerData.name,
-                        localAuth: true // Flag to indicate local authentication
+                        localAuth: true // Flag inicial
                     };
+
+                    // ELEVACIÓN PROACTIVA: Elevar sesión a Firebase Auth oficial mediante Custom Token
+                    if (window.firebase && typeof window.firebase.functions === 'function' && auth) {
+                        try {
+                            const createTokenFn = window.firebase.functions().httpsCallable('createAuthTokenForPlayer');
+                            const tokenRes = await createTokenFn({ playerId: playerData.id });
+                            if (tokenRes && tokenRes.data && tokenRes.data.customToken) {
+                                const userCred = await auth.signInWithCustomToken(tokenRes.data.customToken);
+                                console.log("🔐 [AuthService] Sesión elevada con éxito a Firebase Auth oficial:", userCred.user.uid);
+                                mockUser.localAuth = false;
+                                mockUser.uid = userCred.user.uid;
+                            }
+                        } catch (tokenErr) {
+                            console.warn("ℹ️ [AuthService] Elevación a Firebase Auth diferida (operando en modo local resiliente):", tokenErr?.message);
+                        }
+                    }
 
                     // Safety: Update store
                     if (window.Store && window.Store.setState) {
