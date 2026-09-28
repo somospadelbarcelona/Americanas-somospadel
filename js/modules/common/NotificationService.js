@@ -23,60 +23,288 @@ window.NotificationServiceClass = class NotificationService {
         this.token = null;
         this.hasLoadedInitialBatch = false;
 
+        // Almacén in-app de notificaciones push recibidas (garantía de que todo push aparezca en la bandeja interna)
+        this.inboundNotifications = [];
+        this._swSyncInitialized = false;
+
         // Lista reactiva de notificaciones purgadas globalmente por SuperAdmin
         this.globalPurgedIds = new Set();
         this.purgedUnsubscribe = null;
         
-        // El arranque ahora lo gestiona AppInit
-        console.log("🔔 NotificationServiceClass defined.");
+        console.log("🔔 [NotificationServiceClass] Instanciando servicio de notificaciones...");
+        // Auto-arranque autónomo garantizado
+        try {
+            this.init();
+        } catch (initErr) {
+            console.warn("⚠️ [NotificationService] Advertencia en auto-init:", initErr);
+        }
     }
 
     init() {
-        console.log("🔔 [NotificationService] Initializing...");
+        if (this._initialized) return;
+        this._initialized = true;
+        console.log("🔔 [NotificationService] Initializing notifications pipeline...");
 
-        // 1. Iniciar observador de feed de eventos globales (funciona tanto para invitados como autenticados)
+        // 1. Cargar historial local de push entrantes (inbox persistente)
+        this.loadInboundPushesFromStorage();
+
+        // 2. Conectar escucha y sincronización con el Service Worker (Background & Push API)
+        this.initServiceWorkerSync();
+
+        // 3. Iniciar observador de feed de eventos globales (funciona tanto para invitados como autenticados)
         this.initEventsFeedObserver();
 
-        // 1.b. Iniciar observador de comunicados del club en tiempo real
+        // 4. Iniciar observador de comunicados del club en tiempo real ('broadcasts')
         this.initBroadcastsObserver();
 
-        // 1.c. Iniciar observador de notificaciones purgadas globalmente por el SuperAdmin
+        // 5. Iniciar observador de notificaciones purgadas globalmente por el SuperAdmin
         this.initGlobalPurgedObserver();
-        
-        // 2. Verificar si window.auth existe
-        if (!window.auth) {
-            console.error("❌ [NotificationService] window.auth missing at init!");
+
+        // 6. Iniciar receptor FCM en primer plano (Push en vivo mientras el usuario navega)
+        this.initFcmForegroundListener();
+
+        // 7. Conexión resiliente a Firebase Auth / Sesión de usuario
+        this.connectAuthResiliently();
+    }
+
+    /**
+     * Carga el historial de notificaciones push recibidas desde localStorage (caché inmediata)
+     */
+    loadInboundPushesFromStorage() {
+        if (typeof localStorage === 'undefined') return;
+        try {
+            const raw = localStorage.getItem('sp_inbound_push_history');
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) {
+                    this.inboundNotifications = parsed;
+                }
+            }
+        } catch (e) {
+            console.warn("⚠️ [NotificationService] Error leyendo sp_inbound_push_history:", e);
+        }
+    }
+
+    /**
+     * Conecta con el Service Worker para recibir notificaciones en segundo plano y clics
+     */
+    initServiceWorkerSync() {
+        if (this._swSyncInitialized) return;
+        this._swSyncInitialized = true;
+
+        if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('message', (event) => {
+                const msg = event.data;
+                if (!msg) return;
+
+                if (msg.type === 'SP_INBOUND_NOTIFICATION' && msg.item) {
+                    console.log("📬 [NotificationService] Notificación push recibida desde Service Worker:", msg.item);
+                    this.recordInboundNotification(msg.item);
+                } else if (msg.type === 'SP_NOTIFICATION_CLICKED' || msg.type === 'NOTIFICATION_CLICKED') {
+                    console.log("🔔 [NotificationService] Clic en notificación push detectado desde Service Worker:", msg);
+                    if (msg.item) {
+                        this.recordInboundNotification(msg.item);
+                    }
+                    if (window.NotificationUi && typeof window.NotificationUi.open === 'function') {
+                        setTimeout(() => window.NotificationUi.open(), 300);
+                    }
+                }
+            });
+
+            // Sincronizar desde IndexedDB
+            this.syncInboundPushesFromIDB();
+            if (typeof window !== 'undefined') {
+                window.addEventListener('focus', () => this.syncInboundPushesFromIDB());
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible') {
+                        this.syncInboundPushesFromIDB();
+                    }
+                });
+            }
+        }
+    }
+
+    /**
+     * Sincroniza las notificaciones guardadas por el Service Worker en IndexedDB
+     */
+    async syncInboundPushesFromIDB() {
+        if (typeof indexedDB === 'undefined') return;
+        try {
+            const items = await new Promise((resolve) => {
+                const req = indexedDB.open('somospadel_inbox_db', 1);
+                req.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains('inbound_pushes')) {
+                        db.createObjectStore('inbound_pushes', { keyPath: 'id' });
+                    }
+                };
+                req.onsuccess = (e) => {
+                    try {
+                        const db = e.target.result;
+                        const tx = db.transaction('inbound_pushes', 'readonly');
+                        const store = tx.objectStore('inbound_pushes');
+                        const getAllReq = store.getAll();
+                        getAllReq.onsuccess = () => {
+                            db.close();
+                            resolve(getAllReq.result || []);
+                        };
+                        getAllReq.onerror = () => {
+                            db.close();
+                            resolve([]);
+                        };
+                    } catch (_) { resolve([]); }
+                };
+                req.onerror = () => resolve([]);
+            });
+
+            if (Array.isArray(items) && items.length > 0) {
+                let updated = false;
+                items.forEach(it => {
+                    if (it && it.id && !this.inboundNotifications.some(x => x.id === it.id)) {
+                        this.inboundNotifications.unshift(it);
+                        updated = true;
+                    }
+                });
+
+                if (updated) {
+                    this._persistInboundNotifications();
+                    this.notifySubscribers();
+                    this.updateAppBadge();
+                }
+            }
+        } catch (e) {
+            console.warn("⚠️ [NotificationService] Error sincronizando con IndexedDB:", e);
+        }
+    }
+
+    /**
+     * Registra una notificación push entrante en la bandeja in-app (garantía 100% de renderizado)
+     * @param {object} raw
+     */
+    recordInboundNotification(raw) {
+        if (!raw) return;
+
+        const notifId = raw.id || raw.data?.notificationId || raw.notificationId || ('push_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5));
+        const broadcastId = raw.data?.broadcastId || raw.broadcastId;
+        const eventId = raw.data?.eventId || raw.eventId;
+
+        // Si ya existe en la lista de inbound, actualizar o evitar duplicado
+        const existingIdx = this.inboundNotifications.findIndex(x => x.id === notifId || (broadcastId && x.data?.broadcastId === broadcastId));
+        if (existingIdx !== -1) {
             return;
         }
 
-        // Escuchar autenticación real de Firebase
-        window.auth.onAuthStateChanged(user => {
-            if (user) {
-                console.log("🔔 [NotificationService] Firebase Auth session detected:", user.uid);
-                this.currentUserUid = user.uid;
-                this.subscribeToFirestore(user.uid);
-                this.checkPermissionStatus();
-            } else {
-                const localUser = window.Store ? window.Store.getState('currentUser') : null;
-                if (localUser && localUser.uid) {
-                    console.log("🔔 [NotificationService] Local session detected:", localUser.uid);
-                    this.currentUserUid = localUser.uid;
-                    this.subscribeToFirestore(localUser.uid);
-                    this.checkPermissionStatus();
-                } else {
-                    this.currentUserUid = null;
-                    this.unsubscribeFirestore();
-                }
+        const normalized = {
+            id: notifId,
+            title: raw.title || 'SomosPadel BCN 🎾',
+            body: raw.body || '',
+            icon: raw.icon || 'img/logo_somospadel.png',
+            timestamp: raw.timestamp || new Date().toISOString(),
+            type: raw.type || (broadcastId ? 'broadcast' : 'push'),
+            category: raw.category || (broadcastId ? 'broadcast' : (raw.type === 'entreno' ? 'entrenos' : 'matches')),
+            read: false,
+            data: {
+                ...(raw.data || {}),
+                id: notifId,
+                broadcastId: broadcastId,
+                eventId: eventId,
+                url: raw.data?.url || raw.url || 'dashboard'
             }
-        });
+        };
 
-        // 3. Escuchar cambios en el Store
-        if (window.Store) {
+        this.inboundNotifications.unshift(normalized);
+        if (this.inboundNotifications.length > 60) {
+            this.inboundNotifications.pop();
+        }
+
+        this._persistInboundNotifications();
+        this.notifySubscribers();
+        this.updateAppBadge();
+    }
+
+    _persistInboundNotifications() {
+        if (typeof localStorage === 'undefined') return;
+        try {
+            localStorage.setItem('sp_inbound_push_history', JSON.stringify(this.inboundNotifications.slice(0, 50)));
+        } catch (_) {}
+    }
+
+    _clearInboundPushesFromIDB() {
+        if (typeof indexedDB === 'undefined') return;
+        try {
+            const req = indexedDB.open('somospadel_inbox_db', 1);
+            req.onsuccess = (e) => {
+                try {
+                    const db = e.target.result;
+                    const tx = db.transaction('inbound_pushes', 'readwrite');
+                    tx.objectStore('inbound_pushes').clear();
+                    tx.oncomplete = () => db.close();
+                } catch (_) {}
+            };
+        } catch (_) {}
+    }
+
+    /**
+     * Conexión resiliente con reintento automático para Firebase Auth y Store
+     */
+    connectAuthResiliently() {
+        let attempts = 0;
+        const maxAttempts = 60; // 15 segundos
+
+        const setupAuth = () => {
+            if (this._authConnected) return true;
+
+            // Si hay sesión local en Store o localStorage, suscribir inmediatamente
+            const localUser = (window.Store && typeof window.Store.getState === 'function') ? window.Store.getState('currentUser') : null;
+            if (localUser && localUser.uid) {
+                console.log("🔔 [NotificationService] Sesión local instantánea detectada:", localUser.uid);
+                this.currentUserUid = localUser.uid;
+                this.subscribeToFirestore(localUser.uid);
+                this.checkPermissionStatus();
+            }
+
+            if (window.auth && typeof window.auth.onAuthStateChanged === 'function') {
+                this._authConnected = true;
+                window.auth.onAuthStateChanged(user => {
+                    if (user) {
+                        console.log("🔔 [NotificationService] Firebase Auth session detected:", user.uid);
+                        this.currentUserUid = user.uid;
+                        this.subscribeToFirestore(user.uid);
+                        this.checkPermissionStatus();
+                    } else {
+                        const storeUser = window.Store ? window.Store.getState('currentUser') : null;
+                        if (storeUser && storeUser.uid) {
+                            console.log("🔔 [NotificationService] Store session detected:", storeUser.uid);
+                            this.currentUserUid = storeUser.uid;
+                            this.subscribeToFirestore(storeUser.uid);
+                            this.checkPermissionStatus();
+                        } else {
+                            this.currentUserUid = null;
+                            this.unsubscribeFirestore();
+                        }
+                    }
+                });
+                return true;
+            }
+            return false;
+        };
+
+        if (!setupAuth()) {
+            const authTimer = setInterval(() => {
+                attempts++;
+                if (setupAuth() || attempts >= maxAttempts) {
+                    clearInterval(authTimer);
+                }
+            }, 250);
+        }
+
+        // Escuchar cambios en el Store de la app
+        if (window.Store && typeof window.Store.subscribe === 'function') {
             window.Store.subscribe('currentUser', (user) => {
                 if (user && user.uid) {
                     this.currentUserUid = user.uid;
                     if (!this.unsubscribe) {
-                        console.log("🔔 [NotificationService] Session started/changed in Store");
+                        console.log("🔔 [NotificationService] Session started/changed in Store:", user.uid);
                         this.subscribeToFirestore(user.uid);
                     }
                     this.initChatObserver();
@@ -88,9 +316,6 @@ window.NotificationServiceClass = class NotificationService {
                 }
             });
         }
-
-        // 4. Iniciar receptor FCM en primer plano (Push en vivo mientras el usuario navega)
-        this.initFcmForegroundListener();
     }
 
     /**
@@ -110,13 +335,31 @@ window.NotificationServiceClass = class NotificationService {
                         const title = payload.notification?.title || payload.data?.title || 'SomosPadel BCN 🎾';
                         const body = payload.notification?.body || payload.data?.body || 'Nueva notificación recibida';
                         const url = payload.data?.url || payload.data?.link || '';
-                        const type = payload.data?.type || 'match';
+                        const type = payload.data?.type || 'broadcast';
 
-                        // 1. Mostrar Toast in-app interactivo y elegante
+                        // 1. Guardar de forma inmediata y garantizada en la bandeja in-app
+                        this.recordInboundNotification({
+                            id: payload.messageId || payload.data?.notificationId || payload.data?.id || ('push_fg_' + Date.now()),
+                            title: title,
+                            body: body,
+                            timestamp: payload.data?.timestamp || new Date().toISOString(),
+                            icon: payload.notification?.icon || payload.data?.icon || 'img/logo_somospadel.png',
+                            type: type,
+                            category: payload.data?.category || (type === 'broadcast' ? 'broadcast' : (type === 'entreno' ? 'entrenos' : 'matches')),
+                            read: false,
+                            data: {
+                                url: url,
+                                ...payload.data
+                            }
+                        });
+
+                        // 2. Mostrar Toast in-app interactivo y elegante
                         this.showInAppToast(title, body, type, url);
 
-                        // 2. Notificar actualización de lista / badge
-                        this.notifySubscribers();
+                        // 3. Reproducir sonido si está activado
+                        if (window.NotificationUi && typeof window.NotificationUi.playNotificationSound === 'function') {
+                            window.NotificationUi.playNotificationSound();
+                        }
                     });
                     console.log("✅ [NotificationService] FCM Foreground Push Listener activo.");
                 } catch (e) {
@@ -134,10 +377,10 @@ window.NotificationServiceClass = class NotificationService {
                 if (window.messaging) {
                     clearInterval(timer);
                     attach(window.messaging);
-                } else if (attempts > 30) {
+                } else if (attempts > 40) {
                     clearInterval(timer);
                 }
-            }, 300);
+            }, 250);
         }
     }
 
@@ -146,7 +389,17 @@ window.NotificationServiceClass = class NotificationService {
      * Observa en tiempo real la lista de notificaciones purgadas globalmente por el SuperAdmin
      */
     initGlobalPurgedObserver() {
-        if (!window.db) {
+        const firestore = window.db || (window.firebase && typeof window.firebase.firestore === 'function' ? window.firebase.firestore() : null);
+        if (!firestore) {
+            let pAttempts = 0;
+            const pTimer = setInterval(() => {
+                pAttempts++;
+                const fs = window.db || (window.firebase && typeof window.firebase.firestore === 'function' ? window.firebase.firestore() : null);
+                if (fs || pAttempts > 60) {
+                    clearInterval(pTimer);
+                    if (fs && !this.purgedUnsubscribe) this.initGlobalPurgedObserver();
+                }
+            }, 250);
             return;
         }
         if (this.purgedUnsubscribe) {
@@ -154,7 +407,7 @@ window.NotificationServiceClass = class NotificationService {
         }
 
         try {
-            this.purgedUnsubscribe = window.db.collection('system_config').doc('purged_notifications')
+            this.purgedUnsubscribe = firestore.collection('system_config').doc('purged_notifications')
                 .onSnapshot(docSnap => {
                     try {
                         if (docSnap && docSnap.exists) {
@@ -187,7 +440,18 @@ window.NotificationServiceClass = class NotificationService {
     initBroadcastsObserver() {
         if (this._broadcastsObserverStarted) return;
         const firestore = window.db || (window.firebase && typeof window.firebase.firestore === 'function' ? window.firebase.firestore() : null);
-        if (!firestore) return;
+        if (!firestore) {
+            let bAttempts = 0;
+            const bTimer = setInterval(() => {
+                bAttempts++;
+                const fs = window.db || (window.firebase && typeof window.firebase.firestore === 'function' ? window.firebase.firestore() : null);
+                if (fs || bAttempts > 60) {
+                    clearInterval(bTimer);
+                    if (fs && !this._broadcastsObserverStarted) this.initBroadcastsObserver();
+                }
+            }, 250);
+            return;
+        }
 
         this._broadcastsObserverStarted = true;
         console.log("📢 [NotificationService] Subscribing to global 'broadcasts' collection...");
@@ -226,11 +490,29 @@ window.NotificationServiceClass = class NotificationService {
                     snapshot.docChanges().forEach(change => {
                         if (change.type === 'added') {
                             const data = change.doc.data() || {};
-                            const bItem = { id: change.doc.id, ...data };
+                            const bItem = {
+                                id: change.doc.id,
+                                title: data.title || '📢 Comunicado Oficial',
+                                body: data.body || '',
+                                timestamp: data.timestamp || data.createdAt || new Date(),
+                                type: 'broadcast',
+                                category: 'broadcast',
+                                read: false,
+                                data: {
+                                    broadcastId: change.doc.id,
+                                    url: data.url || 'dashboard',
+                                    ...data
+                                }
+                            };
                             if (!this._isItemGloballyPurged(bItem) && !this._isItemUserDeleted(bItem)) {
-                                const title = data.title || '📢 Comunicado Oficial';
-                                const body = data.body || '';
-                                const targetUrl = data.url || 'dashboard';
+                                const title = bItem.title;
+                                const body = bItem.body;
+                                const targetUrl = bItem.data.url;
+                                
+                                // 1. Guardar inmediatamente en la bandeja in-app
+                                this.recordInboundNotification(bItem);
+
+                                // 2. Mostrar Toast y reproducir sonido
                                 this.showInAppToast(title, body, 'broadcast', targetUrl);
                                 if (window.NotificationUi && typeof window.NotificationUi.playNotificationSound === 'function') {
                                     window.NotificationUi.playNotificationSound();
@@ -351,6 +633,17 @@ window.NotificationServiceClass = class NotificationService {
         if (!rawItem) return false;
         if (typeof localStorage === 'undefined') return false;
         try {
+            const userPurgedAllTs = Number(localStorage.getItem('sp_user_purged_all_ts') || 0);
+            const itemTs = this._getTimestampValue(rawItem.timestamp || rawItem.createdAt || rawItem.data?.timestamp);
+
+            // Si el usuario vació su bandeja previamente:
+            if (userPurgedAllTs > 0) {
+                // Notificaciones anteriores al vaciado quedan eliminadas
+                if (itemTs > 0 && itemTs <= userPurgedAllTs) {
+                    return true;
+                }
+            }
+
             const id = rawItem.id ? String(rawItem.id).trim() : null;
             if (id) {
                 if (localStorage.getItem('sp_deleted_notif_' + id) === 'true') return true;
@@ -374,7 +667,13 @@ window.NotificationServiceClass = class NotificationService {
             const body = String(rawItem.body || rawItem.text || rawItem.message || '').trim();
             if (title || body) {
                 const textSig = `sp_deleted_sig_${title}|${body}`;
-                if (localStorage.getItem(textSig) === 'true') return true;
+                if (localStorage.getItem(textSig) === 'true') {
+                    // Si la notificación es reciente (< 2 horas o posterior al vaciado), ignorar firma antigua
+                    if (itemTs > 0 && (Date.now() - itemTs < 7200000 || (userPurgedAllTs > 0 && itemTs > userPurgedAllTs))) {
+                        return false;
+                    }
+                    return true;
+                }
             }
         } catch (e) {
             console.warn("⚠️ [NotificationService] Error en _isItemUserDeleted:", e);
@@ -476,6 +775,19 @@ window.NotificationServiceClass = class NotificationService {
                 read: this._isItemUserRead(item)
             }));
 
+            // 2c. Notificaciones push recibidas directamente en el dispositivo (FCM / Service Worker / Inbound)
+            const inboundPushNotifs = (this.inboundNotifications || []).filter(item => {
+                if (!item || !item.id) return false;
+                if (this._isItemGloballyPurged(item)) return false;
+                if (this._isItemUserDeleted(item)) return false;
+                if (firestoreNotifs.some(f => f.id === item.id || (item.data?.broadcastId && f.data?.broadcastId === item.data.broadcastId))) return false;
+                if (broadcastNotifs.some(b => b.id === item.id || (item.data?.broadcastId && b.id === item.data.broadcastId))) return false;
+                return true;
+            }).map(item => ({
+                ...item,
+                read: this._isItemUserRead(item)
+            }));
+
             // 3. Filtrar eventos reales no eliminados por el usuario ni purgados globalmente
             const activeEventNotifs = (this.eventNotifications || []).filter(item => {
                 if (!item || !item.id) return false;
@@ -503,7 +815,7 @@ window.NotificationServiceClass = class NotificationService {
                 });
             });
 
-            const combined = [...firestoreNotifs, ...broadcastNotifs, ...chatNotifs, ...activeEventNotifs, ...cancelledLogs];
+            const combined = [...firestoreNotifs, ...broadcastNotifs, ...inboundPushNotifs, ...chatNotifs, ...activeEventNotifs, ...cancelledLogs];
 
             // Inyectar notificación de sistema del nuevo Radar & Clima (si no ha sido eliminada por el usuario ni purgada globalmente)
             const isRadarDeleted = this._isItemUserDeleted({ id: 'system_radar_clima_relocated' });
@@ -1427,9 +1739,27 @@ window.NotificationServiceClass = class NotificationService {
      */
     subscribeToFirestore(userId) {
         if (this.unsubscribe) return;
+        if (!userId) return;
+
+        const firestore = window.db || (window.firebase && typeof window.firebase.firestore === 'function' ? window.firebase.firestore() : null);
+        if (!firestore) {
+            if (this._subRetryPending) return;
+            this._subRetryPending = true;
+            let subAttempts = 0;
+            const subTimer = setInterval(() => {
+                subAttempts++;
+                const fs = window.db || (window.firebase && typeof window.firebase.firestore === 'function' ? window.firebase.firestore() : null);
+                if (fs || subAttempts > 60) {
+                    clearInterval(subTimer);
+                    this._subRetryPending = false;
+                    if (fs && !this.unsubscribe) this.subscribeToFirestore(userId);
+                }
+            }, 300);
+            return;
+        }
 
         console.log("🔔 [NotificationService] Subscribing to Firestore...");
-        this.unsubscribe = window.db.collection('players').doc(userId).collection('notifications')
+        this.unsubscribe = firestore.collection('players').doc(userId).collection('notifications')
             .orderBy('timestamp', 'desc')
             .limit(50)
             .onSnapshot(snapshot => {
@@ -1932,6 +2262,19 @@ window.NotificationServiceClass = class NotificationService {
                 new Notification(title, options);
                 console.log("🔔 [NotificationService] Notificación de bienvenida enviada vía Window Notification");
             }
+
+            // Registrar inmediatamente en la bandeja interna in-app
+            this.recordInboundNotification({
+                id: 'sys_welcome_' + Date.now(),
+                title: title,
+                body: options.body,
+                timestamp: new Date().toISOString(),
+                icon: 'bell',
+                type: 'welcome',
+                category: 'broadcast',
+                read: false,
+                data: { url: './', type: 'welcome' }
+            });
         } catch (err) {
             console.warn("⚠️ [NotificationService] No se pudo lanzar la notificación de bienvenida:", err);
         }
@@ -2257,7 +2600,17 @@ window.NotificationServiceClass = class NotificationService {
 
         if (!skipConfirm && !confirm("¿Seguro que quieres borrar todas tus notificaciones?")) return;
 
-        // 1. Obtener todas las notificaciones actuales y marcar lápida de borrado local permanente
+        // 1. Registrar marca temporal del vaciado para no ocultar notificaciones futuras
+        const nowTs = Date.now();
+        try {
+            localStorage.setItem('sp_user_purged_all_ts', String(nowTs));
+            localStorage.removeItem('sp_inbound_push_history');
+        } catch (_) {}
+
+        // Limpiar almacén IndexedDB de notificaciones recibidas
+        this._clearInboundPushesFromIDB();
+
+        // 1.b. Obtener todas las notificaciones actuales y marcar lápida de borrado local permanente
         try {
             const allItems = this.getMergedNotifications();
             allItems.forEach(n => {
@@ -2291,6 +2644,8 @@ window.NotificationServiceClass = class NotificationService {
 
         // 3. Limpieza en memoria inmediata
         this.notifications = [];
+        this.inboundNotifications = [];
+        this.broadcastNotifications = [];
         this.eventNotifications = [];
         this.chatNotifications = [];
         this.unreadCount = 0;

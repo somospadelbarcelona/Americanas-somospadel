@@ -70,6 +70,57 @@ if (messaging) {
             renotify: true
         };
 
+        const inboxItem = {
+            id: notificationData.notificationId || notificationData.id || ('push_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6)),
+            title: notificationTitle,
+            body: notificationBody,
+            icon: notificationIcon,
+            timestamp: notificationData.timestamp || new Date().toISOString(),
+            type: notificationData.type || (notificationData.broadcastId ? 'broadcast' : 'push'),
+            category: notificationData.category || (notificationData.broadcastId || notificationData.type === 'broadcast' ? 'broadcast' : (notificationData.type === 'entreno' ? 'entrenos' : 'matches')),
+            read: false,
+            data: notificationData
+        };
+
+        const saveAndNotifyClients = async () => {
+            try {
+                if (typeof indexedDB !== 'undefined') {
+                    await new Promise((resolve) => {
+                        const req = indexedDB.open('somospadel_inbox_db', 1);
+                        req.onupgradeneeded = (e) => {
+                            const db = e.target.result;
+                            if (!db.objectStoreNames.contains('inbound_pushes')) {
+                                db.createObjectStore('inbound_pushes', { keyPath: 'id' });
+                            }
+                        };
+                        req.onsuccess = (e) => {
+                            try {
+                                const db = e.target.result;
+                                const tx = db.transaction('inbound_pushes', 'readwrite');
+                                tx.objectStore('inbound_pushes').put(inboxItem);
+                                tx.oncomplete = () => { db.close(); resolve(); };
+                                tx.onerror = () => { db.close(); resolve(); };
+                            } catch (_) { resolve(); }
+                        };
+                        req.onerror = () => resolve();
+                    });
+                }
+            } catch (_) {}
+
+            try {
+                const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+                clientList.forEach((client) => {
+                    if (client.postMessage) {
+                        client.postMessage({
+                            type: 'SP_INBOUND_NOTIFICATION',
+                            item: inboxItem
+                        });
+                    }
+                });
+            } catch (_) {}
+        };
+
+        saveAndNotifyClients();
         return self.registration.showNotification(notificationTitle, notificationOptions);
     });
 }
@@ -120,7 +171,62 @@ self.addEventListener('push', (event) => {
         renotify: true
     };
 
-    event.waitUntil(self.registration.showNotification(title, options));
+    const inboxItem = {
+        id: data.notificationId || data.id || ('push_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6)),
+        title: title,
+        body: body,
+        icon: icon,
+        timestamp: data.timestamp || new Date().toISOString(),
+        type: data.type || (data.broadcastId ? 'broadcast' : 'push'),
+        category: data.category || (data.broadcastId || data.type === 'broadcast' ? 'broadcast' : (data.type === 'entreno' ? 'entrenos' : 'matches')),
+        read: false,
+        data: data
+    };
+
+    const saveAndNotifyClients = async () => {
+        try {
+            if (typeof indexedDB !== 'undefined') {
+                await new Promise((resolve) => {
+                    const req = indexedDB.open('somospadel_inbox_db', 1);
+                    req.onupgradeneeded = (e) => {
+                        const db = e.target.result;
+                        if (!db.objectStoreNames.contains('inbound_pushes')) {
+                            db.createObjectStore('inbound_pushes', { keyPath: 'id' });
+                        }
+                    };
+                    req.onsuccess = (e) => {
+                        try {
+                            const db = e.target.result;
+                            const tx = db.transaction('inbound_pushes', 'readwrite');
+                            tx.objectStore('inbound_pushes').put(inboxItem);
+                            tx.oncomplete = () => { db.close(); resolve(); };
+                            tx.onerror = () => { db.close(); resolve(); };
+                        } catch (_) { resolve(); }
+                    };
+                    req.onerror = () => resolve();
+                });
+            }
+        } catch (_) {}
+
+        try {
+            const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+            clientList.forEach((client) => {
+                if (client.postMessage) {
+                    client.postMessage({
+                        type: 'SP_INBOUND_NOTIFICATION',
+                        item: inboxItem
+                    });
+                }
+            });
+        } catch (_) {}
+    };
+
+    event.waitUntil(
+        Promise.all([
+            self.registration.showNotification(title, options),
+            saveAndNotifyClients()
+        ])
+    );
 });
 
 // ============================================================================

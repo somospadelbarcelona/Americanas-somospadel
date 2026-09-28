@@ -895,6 +895,9 @@
                     if (!window.NotificationService.broadcastNotifications.some(b => b && b.id === broadcastRef.id)) {
                         window.NotificationService.broadcastNotifications.unshift(localItem);
                     }
+                    if (typeof window.NotificationService.recordInboundNotification === 'function') {
+                        window.NotificationService.recordInboundNotification(localItem);
+                    }
                     window.NotificationService.unreadCount = window.NotificationService.getMergedNotifications().filter(n => !n.read).length;
                     window.NotificationService.updateAppBadge();
                     window.NotificationService.notifySubscribers();

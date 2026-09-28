@@ -742,6 +742,25 @@
                 }, { merge: true });
             } catch (_) {}
 
+            try {
+                if (window.NotificationService && typeof window.NotificationService.recordInboundNotification === 'function') {
+                    window.NotificationService.recordInboundNotification({
+                        id: broadcastId,
+                        title: title,
+                        body: body,
+                        timestamp: new Date().toISOString(),
+                        type: 'daily_news',
+                        category: 'broadcast',
+                        read: false,
+                        data: {
+                            broadcastId: broadcastId,
+                            articleId: article.id,
+                            url: targetUrl
+                        }
+                    });
+                }
+            } catch (_) {}
+
             return {
                 success: true,
                 title: title,
