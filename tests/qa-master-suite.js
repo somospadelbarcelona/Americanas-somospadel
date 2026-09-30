@@ -79,6 +79,9 @@ runSubtest("Mejoras de Frontend & Clonación Lógica Lab", "test-logic-lab-front
 // 16. Eventos Finalizados y Reordenación de Submenús QA
 runSubtest("Eventos Finalizados & Submenús Inmediatos", "test-finished-events-and-submenus-qa.js");
 
+// 17. Pizarra Táctica de Pistas & Club (DashboardView)
+runSubtest("Pizarra Táctica de Pistas & Club (Multi-Eventos y Convocatoria)", "test-dashboard-pizarra-tactica-qa.js");
+
 console.log("\n================================================================");
 console.log(" RESUMEN GLOBAL DE CALIDAD:");
 reports.forEach(r => {
