@@ -2911,8 +2911,8 @@
             <script src="js/modules/ui/PlayerAutocomplete.js"></script>
             <script src="js/modules/common/EventService.js"></script>
             <script src="js/modules/common/ParticipantService.js?v=2001"></script>
-            <script src="js/modules/common/NotificationService.js?v=PRO_CLEAN_WHITE_v11"></script>
-            <script src="js/modules/ui/NotificationUi.js?v=PRO_CLEAN_WHITE_v11"></script>
+            <script src="js/modules/common/NotificationService.js?v=PRO_CLEAN_WHITE_v12"></script>
+            <script src="js/modules/ui/NotificationUi.js?v=PRO_CLEAN_WHITE_v12"></script>
             <script src="js/modules/common/WeatherService.js" defer></script>
             <script src="js/modules/common/EventWeatherModal.js?v=1.0" defer></script>
 
@@ -3018,48 +3018,90 @@
 
             <!-- DIAGNOSTIC CONSOLE -->
             <div id="debug-console"
-                style="position: fixed; bottom: 0; left: 0; width: 100%; background: #000; color: #0f0; border-top: 2px solid #0f0; padding: 10px; font-family: monospace; font-size: 12px; z-index: 99999; max-height: 150px; overflow-y: auto; display: none;">
+                style="position: fixed; bottom: 0; left: 0; width: 100%; background: #000; color: #0f0; border-top: 2px solid #0f0; padding: 10px; font-family: monospace; font-size: 12px; z-index: 99999; max-height: 160px; overflow-y: auto; display: none;">
                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,255,0,0.3); padding-bottom: 4px; margin-bottom: 6px;">
                     <div>🚀 CONSOLA DE DIAGNÓSTICO (v2.0)</div>
-                    <button onclick="document.getElementById('debug-console').style.display='none'" style="background: rgba(255,255,255,0.15); color: #fff; border: 1px solid #555; border-radius: 4px; padding: 2px 8px; font-size: 11px; cursor: pointer;">Cerrar ✕</button>
+                    <div style="display: flex; gap: 6px;">
+                        <button onclick="const m=document.getElementById('debug-console-messages'); if(m) m.innerHTML='';" style="background: rgba(255,255,255,0.15); color: #fff; border: 1px solid #555; border-radius: 4px; padding: 2px 8px; font-size: 11px; cursor: pointer;">Limpiar</button>
+                        <button onclick="document.getElementById('debug-console').style.display='none'" style="background: rgba(255,255,255,0.15); color: #fff; border: 1px solid #555; border-radius: 4px; padding: 2px 8px; font-size: 11px; cursor: pointer;">Cerrar ✕</button>
+                    </div>
                 </div>
+                <div id="debug-console-messages"></div>
             </div>
             <script>
-                window.onerror = function (msg, url, line, col, error) {
-                    const lower = String(msg || '').toLowerCase();
-                    // 1. Suprimir errores opacos de CORS / Script Error
-                    if (lower.includes('script error') || !msg || (!url && !line) || (line === 0)) {
-                        console.warn("⚠️ [admin.onerror] CORS/Script error suprimido:", msg, url, line);
-                        return true;
-                    }
-                    // 2. Suprimir aserciones benignas de Firestore / IndexedDB
-                    if (lower.includes('internal assertion failed') || lower.includes('unexpected state') || lower.includes('assertion failed')) {
-                        console.warn("⚠️ [admin.onerror] Firestore assertion suprimida:", msg);
-                        return true;
-                    }
-                    // 3. Mostrar errores reales con detalle y opción de descarte
-                    const c = document.getElementById('debug-console');
-                    if (c) { 
-                        c.style.display = 'block'; 
-                        const errDesc = error ? (error.message || String(error)) : msg;
-                        c.innerHTML += `<div style="color:red; margin-top:3px;">❌ ${errDesc} (L${line || 0})</div>`; 
-                    }
-                };
-                window.onunhandledrejection = function (e) {
-                    const reason = e ? (e.reason || '') : '';
-                    const reasonStr = (reason && (reason.message || (typeof reason === 'string' ? reason : reason.toString()))) || '';
-                    const lower = String(reasonStr).toLowerCase();
-                    if (lower.includes('internal assertion failed') || lower.includes('unexpected state') || lower.includes('assertion failed') || lower.includes('script error') || !reasonStr) {
-                        console.warn("⚠️ [admin.onunhandledrejection] Firestore/CORS assertion suprimida:", reasonStr);
-                        if (typeof e.preventDefault === 'function') e.preventDefault();
-                        return;
-                    }
-                    const c = document.getElementById('debug-console');
-                    if (c) { 
-                        c.style.display = 'block'; 
-                        c.innerHTML += `<div style="color:yellow; margin-top:3px;">⚠️ PROMISE: ${reasonStr}</div>`; 
-                    }
-                };
+                (function() {
+                    let isHandlingError = false;
+                    window.onerror = function (msg, url, line, col, error) {
+                        if (isHandlingError) return true;
+                        isHandlingError = true;
+                        try {
+                            const lower = String(msg || '').toLowerCase();
+                            // 1. Suprimir errores opacos de CORS / Script Error
+                            if (lower.includes('script error') || !msg || (!url && !line) || (line === 0)) {
+                                console.warn("⚠️ [admin.onerror] CORS/Script error suprimido:", msg, url, line);
+                                return true;
+                            }
+                            // 2. Suprimir aserciones benignas de Firestore / IndexedDB
+                            if (lower.includes('internal assertion failed') || lower.includes('unexpected state') || lower.includes('assertion failed')) {
+                                console.warn("⚠️ [admin.onerror] Firestore assertion suprimida:", msg);
+                                return true;
+                            }
+                            // 3. Auto-recuperación de RangeError / Maximum call stack size exceeded de IndexedDB
+                            if (lower.includes('maximum call stack size exceeded') || lower.includes('rangeerror')) {
+                                console.warn("⚠️ [admin.onerror] Call stack size exceeded capturado y aislado:", msg);
+                                try {
+                                    window.indexedDB?.deleteDatabase?.('firestore/[DEFAULT]/americanas-somospadel/main');
+                                } catch (_) {}
+                                return true;
+                            }
+                            // 4. Mostrar errores reales de forma limpia sin romper el DOM ni provocar re-flows masivos
+                            const c = document.getElementById('debug-console');
+                            const m = document.getElementById('debug-console-messages') || c;
+                            if (c && m) { 
+                                c.style.display = 'block'; 
+                                const file = url ? url.split('/').pop().split('?')[0] : 'admin.html';
+                                const errDesc = error ? (error.message || String(error)) : msg;
+                                const item = document.createElement('div');
+                                item.style.color = '#ef4444';
+                                item.style.marginTop = '3px';
+                                item.textContent = `❌ [${file}:${line || 0}] ${errDesc}`;
+                                m.appendChild(item);
+                                while (m.children.length > 40) {
+                                    m.removeChild(m.firstChild);
+                                }
+                            }
+                        } catch (e) {
+                            // Ignorar errores internos en el manejador
+                        } finally {
+                            isHandlingError = false;
+                        }
+                    };
+
+                    window.onunhandledrejection = function (e) {
+                        const reason = e ? (e.reason || '') : '';
+                        const reasonStr = (reason && (reason.message || (typeof reason === 'string' ? reason : reason.toString()))) || '';
+                        const lower = String(reasonStr).toLowerCase();
+                        if (lower.includes('internal assertion failed') || lower.includes('unexpected state') || lower.includes('assertion failed') || lower.includes('script error') || lower.includes('maximum call stack') || !reasonStr) {
+                            console.warn("⚠️ [admin.onunhandledrejection] Excepción asíncrona suprimida/recuperada:", reasonStr);
+                            if (typeof e?.preventDefault === 'function') e.preventDefault();
+                            return;
+                        }
+                        const c = document.getElementById('debug-console');
+                        const m = document.getElementById('debug-console-messages') || c;
+                        if (c && m) { 
+                            c.style.display = 'block'; 
+                            const item = document.createElement('div');
+                            item.style.color = '#f59e0b';
+                            item.style.marginTop = '3px';
+                            item.textContent = `⚠️ PROMISE: ${reasonStr}`;
+                            m.appendChild(item);
+                            while (m.children.length > 40) {
+                                m.removeChild(m.firstChild);
+                            }
+                        }
+                    };
+                })();
+            </script>
 
                 // Mobile/Tablet Sidebar Drawer Toggle
                 window.toggleAdminSidebar = function (forceState) {
@@ -3407,36 +3449,82 @@
                     }
                 };
 
-                // Interceptar console.log y mostrarlo en nuestra consola
+                // Interceptar console.log y mostrarlo en nuestra consola de forma segura y sin impacto en rendimiento
                 (function () {
                     const originalLog = console.log;
                     const originalError = console.error;
                     const originalWarn = console.warn;
+                    let isLogging = false;
+
+                    function safeFormatArg(arg) {
+                        if (arg === null) return 'null';
+                        if (arg === undefined) return 'undefined';
+                        if (typeof arg === 'string') return arg;
+                        if (typeof arg === 'number' || typeof arg === 'boolean') return String(arg);
+                        try {
+                            if (arg instanceof Error) return arg.message + (arg.stack ? '\n' + arg.stack : '');
+                            return JSON.stringify(arg);
+                        } catch (_) {
+                            try { return String(arg); } catch (__) { return '[Object]'; }
+                        }
+                    }
 
                     function addToConsole(message, type = 'log') {
+                        // Optimización de rendimiento: no hacer nada en el DOM si la consola de emergencia no está visible
+                        const consoleElem = document.getElementById('emergency-console');
+                        if (!consoleElem || consoleElem.style.display !== 'block') return;
+
                         const output = document.getElementById('console-output');
-                        if (output) {
-                            const color = type === 'error' ? '#ff0000' : type === 'warn' ? '#ffff00' : '#00ff00';
-                            const timestamp = new Date().toLocaleTimeString();
-                            output.innerHTML += `<div style="color:${color}; margin-bottom:5px;">[${timestamp}] ${message}</div>`;
-                            output.scrollTop = output.scrollHeight;
+                        if (!output) return;
+
+                        const color = type === 'error' ? '#ff0000' : type === 'warn' ? '#ffff00' : '#00ff00';
+                        const timestamp = new Date().toLocaleTimeString();
+                        
+                        const entry = document.createElement('div');
+                        entry.style.cssText = `color:${color}; margin-bottom:4px; font-family:monospace; font-size:11px; word-break:break-all;`;
+                        entry.textContent = `[${timestamp}] ${message}`;
+                        output.appendChild(entry);
+
+                        // Mantener máximo 100 líneas para no degradar memoria ni FPS
+                        while (output.childNodes.length > 100) {
+                            output.removeChild(output.firstChild);
                         }
+                        output.scrollTop = output.scrollHeight;
                     }
 
                     console.log = function (...args) {
                         originalLog.apply(console, args);
-                        addToConsole(args.join(' '), 'log');
+                        if (isLogging) return;
+                        isLogging = true;
+                        try {
+                            const msg = args.map(safeFormatArg).join(' ');
+                            addToConsole(msg, 'log');
+                        } catch (_) {}
+                        finally { isLogging = false; }
                     };
 
                     console.error = function (...args) {
                         originalError.apply(console, args);
-                        addToConsole('❌ ERROR: ' + args.join(' '), 'error');
+                        if (isLogging) return;
+                        isLogging = true;
+                        try {
+                            const msg = args.map(safeFormatArg).join(' ');
+                            addToConsole('❌ ERROR: ' + msg, 'error');
+                        } catch (_) {}
+                        finally { isLogging = false; }
                     };
 
                     console.warn = function (...args) {
                         originalWarn.apply(console, args);
-                        addToConsole('⚠️ WARNING: ' + args.join(' '), 'warn');
+                        if (isLogging) return;
+                        isLogging = true;
+                        try {
+                            const msg = args.map(safeFormatArg).join(' ');
+                            addToConsole('⚠️ WARNING: ' + msg, 'warn');
+                        } catch (_) {}
+                        finally { isLogging = false; }
                     };
+                })();
 
                     // Ejecutar comandos desde la consola
                     window.executeConsoleCommand = function () {
@@ -3523,7 +3611,6 @@
                             }
                         }
                     };
-                })();
             </script>
             <style>
                 /* --- 🏳️ WHITE THEME: ENTRENO MODAL OVERRIDE (PURE BLACK EDITION) --- */

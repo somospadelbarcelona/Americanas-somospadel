@@ -14,6 +14,7 @@ window.NotificationServiceClass = class NotificationService {
         this.eventsUnsubscribes = [];
         this._eventsObserverStarted = false;
         this._hasInitialEventsLoaded = false;
+        this._isProcessingEventsFeed = false;
         this._eventsMap = new Map();
         this.unreadCount = 0;
         this.callbacks = [];
@@ -1306,19 +1307,27 @@ window.NotificationServiceClass = class NotificationService {
         const spotId = `evt_spot_${normType}_${id}`;
 
         // Limpiar en memoria
+        let hadMemory = false;
         if (Array.isArray(this.eventNotifications)) {
+            const prevLen = this.eventNotifications.length;
             this.eventNotifications = this.eventNotifications.filter(n => n && n.id !== newId && n.id !== spotId);
+            hadMemory = this.eventNotifications.length !== prevLen;
         }
 
-        // Marcar como borradas en localStorage
-        try {
-            localStorage.setItem('sp_evt_deleted_' + newId, 'true');
-            localStorage.setItem('sp_evt_deleted_' + spotId, 'true');
-        } catch (_) {}
+        const wasDeletedNew = localStorage.getItem('sp_evt_deleted_' + newId) === 'true';
+        const wasDeletedSpot = localStorage.getItem('sp_evt_deleted_' + spotId) === 'true';
 
-        // Limpiar de la bandeja de notificaciones nativa del SO
-        this.clearNativeNotification(newId);
-        this.clearNativeNotification(spotId);
+        // Solo persistir y limpiar nativo si no estaban ya marcadas como borradas o si estaban en memoria
+        if (!wasDeletedNew || !wasDeletedSpot || hadMemory) {
+            try {
+                localStorage.setItem('sp_evt_deleted_' + newId, 'true');
+                localStorage.setItem('sp_evt_deleted_' + spotId, 'true');
+            } catch (_) {}
+
+            // Limpiar de la bandeja de notificaciones nativa del SO
+            this.clearNativeNotification(newId);
+            this.clearNativeNotification(spotId);
+        }
     }
 
     /**
@@ -1368,7 +1377,7 @@ window.NotificationServiceClass = class NotificationService {
             this.showNativeNotification(notif.title, notif.body, notif.data);
         }
 
-        if (!this._isInsideSnapshotBatch && this._hasInitialEventsLoaded) {
+        if (!this._isInsideSnapshotBatch && this._hasInitialEventsLoaded && !this._isProcessingEventsFeed) {
             this._processEventsFeed();
         }
     }
@@ -1436,7 +1445,7 @@ window.NotificationServiceClass = class NotificationService {
             this.showNativeNotification(notif.title, notif.body, notif.data);
         }
 
-        if (!this._isInsideSnapshotBatch && this._hasInitialEventsLoaded) {
+        if (!this._isInsideSnapshotBatch && this._hasInitialEventsLoaded && !this._isProcessingEventsFeed) {
             this._processEventsFeed();
         }
     }
@@ -1483,65 +1492,73 @@ window.NotificationServiceClass = class NotificationService {
             try {
                 const unsub = firestore.collection(name).onSnapshot(
                     snapshot => {
-                        let hasChanges = false;
-                        this._isInsideSnapshotBatch = true;
                         try {
-                            snapshot.docChanges().forEach(change => {
-                                const data = change.doc.data() || {};
-                                const evtId = change.doc.id;
-                                const evt = { id: evtId, ...data };
+                            let hasChanges = false;
+                            this._isInsideSnapshotBatch = true;
+                            try {
+                                snapshot.docChanges().forEach(change => {
+                                    const data = change.doc.data() || {};
+                                    const evtId = change.doc.id;
+                                    const evt = { id: evtId, ...data };
+                                    const isEntreno = type === 'entreno' ||
+                                        evt.type === 'entreno' ||
+                                        String(evt.name || evt.title || '').toLowerCase().includes('entreno');
+                                    const normType = isEntreno ? 'entreno' : 'americana';
 
-                                if (change.type === 'removed') {
-                                    // 1. Obtener datos previos del evento desde this._eventsMap
-                                    const prev = this._eventsMap.get(evtId);
-                                    const prevEvent = (prev && prev.event) ? prev.event : evt;
-                                    const prevType = (prev && prev.type) ? prev.type : type;
-                                    this._eventsMap.delete(evtId);
+                                    if (change.type === 'removed') {
+                                        // 1. Obtener datos previos del evento desde this._eventsMap
+                                        const prev = this._eventsMap.get(evtId);
+                                        const prevEvent = (prev && prev.event) ? prev.event : evt;
+                                        const prevType = (prev && prev.type) ? prev.type : normType;
+                                        this._eventsMap.delete(evtId);
 
-                                    // Generar notificación de cancelación/eliminación y disparar push nativo si no ha expirado
-                                    if (!this._isEventExpiredByTTL(prevEvent)) {
-                                        this.handleEventDeleted(prevType, evtId, prevEvent);
+                                        // Generar notificación de cancelación/eliminación y disparar push nativo si no ha expirado
+                                        if (!this._isEventExpiredByTTL(prevEvent)) {
+                                            this.handleEventDeleted(prevType, evtId, prevEvent);
+                                        } else {
+                                            this._removeEventActiveNotifs(prevType, evtId);
+                                        }
+                                        hasChanges = true;
+                                    } else if (change.type === 'modified') {
+                                        const status = String(evt.status || '').toLowerCase().trim();
+                                        const isCancelled = ['cancelled', 'cancelado', 'suspendido', 'anulado', 'suspended', 'postponed'].includes(status);
+                                        this._eventsMap.set(evtId, { event: evt, type: normType });
+
+                                        // Si un evento cambia a estado cancelado o suspendido
+                                        if (isCancelled) {
+                                            if (!this._isEventExpiredByTTL(evt)) {
+                                                this.handleEventCancelled(normType, evtId, evt, status);
+                                            } else {
+                                                this._removeEventActiveNotifs(normType, evtId);
+                                            }
+                                        }
+                                        hasChanges = true;
                                     } else {
-                                        this._removeEventActiveNotifs(prevType, evtId);
-                                    }
-                                    hasChanges = true;
-                                } else if (change.type === 'modified') {
-                                    const status = String(evt.status || '').toLowerCase().trim();
-                                    const isCancelled = ['cancelled', 'cancelado', 'suspendido', 'anulado', 'suspended', 'postponed'].includes(status);
-                                    this._eventsMap.set(evtId, { event: evt, type });
+                                        // 'added'
+                                        const status = String(evt.status || '').toLowerCase().trim();
+                                        const isCancelled = ['cancelled', 'cancelado', 'suspendido', 'anulado', 'suspended', 'postponed'].includes(status);
+                                        this._eventsMap.set(evtId, { event: evt, type: normType });
 
-                                    // Si un evento cambia a estado cancelado o suspendido
-                                    if (isCancelled) {
-                                        if (!this._isEventExpiredByTTL(evt)) {
-                                            this.handleEventCancelled(type, evtId, evt, status);
-                                        } else {
-                                            this._removeEventActiveNotifs(type, evtId);
+                                        if (isCancelled) {
+                                            if (!this._isEventExpiredByTTL(evt)) {
+                                                this.handleEventCancelled(normType, evtId, evt, status, !this._hasInitialEventsLoaded);
+                                            } else {
+                                                this._removeEventActiveNotifs(normType, evtId);
+                                            }
                                         }
+                                        hasChanges = true;
                                     }
-                                    hasChanges = true;
-                                } else {
-                                    // 'added'
-                                    const status = String(evt.status || '').toLowerCase().trim();
-                                    const isCancelled = ['cancelled', 'cancelado', 'suspendido', 'anulado', 'suspended', 'postponed'].includes(status);
-                                    this._eventsMap.set(evtId, { event: evt, type });
+                                });
+                            } finally {
+                                this._isInsideSnapshotBatch = false;
+                            }
 
-                                    if (isCancelled) {
-                                        if (!this._isEventExpiredByTTL(evt)) {
-                                            this.handleEventCancelled(type, evtId, evt, status, !this._hasInitialEventsLoaded);
-                                        } else {
-                                            this._removeEventActiveNotifs(type, evtId);
-                                        }
-                                    }
-                                    hasChanges = true;
-                                }
-                            });
-                        } finally {
-                            this._isInsideSnapshotBatch = false;
-                        }
-
-                        if (hasChanges || !this._hasInitialEventsLoaded) {
-                            this._hasInitialEventsLoaded = true;
-                            this._processEventsFeed();
+                            if (hasChanges || !this._hasInitialEventsLoaded) {
+                                this._hasInitialEventsLoaded = true;
+                                this._processEventsFeed();
+                            }
+                        } catch (feedErr) {
+                            console.error("❌ [NotificationService] Error procesando snapshot de eventos:", feedErr);
                         }
                     },
                     err => {
@@ -1590,109 +1607,134 @@ window.NotificationServiceClass = class NotificationService {
      * e integra el registro persistente de eventos cancelados y eliminados.
      */
     _processEventsFeed() {
-        const generated = [];
+        if (this._isProcessingEventsFeed) {
+            return;
+        }
+        this._isProcessingEventsFeed = true;
 
-        this._eventsMap.forEach(({ event: evt, type }) => {
-            if (!evt || !evt.id) return;
+        try {
+            const generated = [];
 
-            const status = String(evt.status || '').toLowerCase().trim();
-            const isCancelled = ['cancelled', 'cancelado', 'suspendido', 'anulado', 'suspended', 'postponed'].includes(status);
+            this._eventsMap.forEach(({ event: evt, type }) => {
+                if (!evt || !evt.id) return;
 
-            // Si el evento está cancelado o suspendido, no generar aviso de nuevo ni plazas libres
-            if (isCancelled) {
-                this._removeEventActiveNotifs(type, evt.id);
-                // Si el evento está caducado (>48h) o purgado globalmente, no generar aviso
-                if (this._isEventExpiredByTTL(evt) || this._isItemGloballyPurged({ id: `evt_cancelled_${type}_${evt.id}`, eventId: evt.id, title: evt.name })) {
+                const isEntreno = type === 'entreno' ||
+                    evt.type === 'entreno' ||
+                    String(evt.name || evt.title || '').toLowerCase().includes('entreno');
+                const normType = isEntreno ? 'entreno' : 'americana';
+                const notifCancelledId = `evt_cancelled_${normType}_${evt.id}`;
+
+                const status = String(evt.status || '').toLowerCase().trim();
+                const isCancelled = ['cancelled', 'cancelado', 'suspendido', 'anulado', 'suspended', 'postponed'].includes(status);
+
+                // Si el evento está cancelado o suspendido, no generar aviso de nuevo ni plazas libres
+                if (isCancelled) {
+                    this._removeEventActiveNotifs(normType, evt.id);
+                    // Si el evento está caducado (>48h) o purgado globalmente, no generar aviso
+                    if (this._isEventExpiredByTTL(evt) || this._isItemGloballyPurged({ id: notifCancelledId, eventId: evt.id, title: evt.name })) {
+                        return;
+                    }
+                    const cancelledLogs = this._getCancelledEventsLog();
+                    const alreadyLogged = cancelledLogs.some(c => {
+                        if (!c) return false;
+                        return c.id === notifCancelledId ||
+                               c.id === `evt_cancelled_americana_${evt.id}` ||
+                               c.id === `evt_cancelled_entreno_${evt.id}` ||
+                               c.eventId === evt.id ||
+                               (c.data && c.data.eventId === evt.id);
+                    });
+
+                    if (!alreadyLogged) {
+                        this.handleEventCancelled(normType, evt.id, evt, status, !this._hasInitialEventsLoaded);
+                    }
                     return;
                 }
-                const cId = `evt_cancelled_${type}_${evt.id}`;
-                const cancelledLogs = this._getCancelledEventsLog();
-                if (!cancelledLogs.some(c => c && c.id === cId)) {
-                    this.handleEventCancelled(type, evt.id, evt, status, !this._hasInitialEventsLoaded);
+
+                const realTimestamp = this._extractEventTimestamp(evt);
+                const timeMs = this._getTimestampValue(realTimestamp);
+                const now = Date.now();
+                const isRecentCreation = !isNaN(timeMs) && (now - timeMs) >= 0 && (now - timeMs) <= (72 * 60 * 60 * 1000);
+
+                const isFinished = ['finished', 'finalizado', 'completed'].includes(status);
+                const isActive = !isFinished;
+
+                // 1. Si el evento es reciente (creado en las últimas 72 horas o activo actualmente)
+                if (isRecentCreation || isActive) {
+                    const newId = `evt_new_${normType}_${evt.id}`;
+                    const isDeleted = localStorage.getItem('sp_evt_deleted_' + newId) === 'true';
+                    if (!isDeleted) {
+                        const isRead = localStorage.getItem('sp_evt_read_' + newId) === 'true';
+
+                        const newNotif = {
+                            id: newId,
+                            title: `${normType === 'entreno' ? '💪 Nuevo Entreno' : '🏆 Nueva Americana'}: ${evt.name || 'Torneo SomosPadel'}`,
+                            body: `Fecha: ${evt.date || ''} a las ${evt.time || ''} · ${evt.courts || 4} pistas · ${evt.location || 'SomosPadel'}. ¡Inscripciones abiertas!`,
+                            timestamp: realTimestamp,
+                            category: normType === 'entreno' ? 'entrenos' : 'matches',
+                            read: isRead,
+                            data: { url: normType === 'entreno' ? 'entrenos' : 'americanas', eventId: evt.id, id: newId }
+                        };
+
+                        generated.push(newNotif);
+                        this._checkAndTriggerPush(newNotif);
+                    }
                 }
-                return;
-            }
 
-            const realTimestamp = this._extractEventTimestamp(evt);
-            const timeMs = this._getTimestampValue(realTimestamp);
-            const now = Date.now();
-            const isRecentCreation = !isNaN(timeMs) && (now - timeMs) >= 0 && (now - timeMs) <= (72 * 60 * 60 * 1000);
+                // 2. Si el evento tiene plazas libres y está abierto
+                const maxPlayers = Number(evt.max_players || evt.maxPlayers || (evt.courts ? evt.courts * 4 : 16));
+                const registeredCount = Array.isArray(evt.players)
+                    ? evt.players.length
+                    : (Array.isArray(evt.registeredPlayers) ? evt.registeredPlayers.length : 0);
+                const openSpots = maxPlayers - registeredCount;
+                const isOpen = (status === 'open' || !isFinished);
 
-            const isFinished = ['finished', 'finalizado', 'completed'].includes(status);
-            const isActive = !isFinished;
+                if (openSpots > 0 && isOpen) {
+                    const spotId = `evt_spot_${normType}_${evt.id}`;
+                    const isSpotDeleted = localStorage.getItem('sp_evt_deleted_' + spotId) === 'true';
+                    if (!isSpotDeleted) {
+                        const isSpotRead = localStorage.getItem('sp_evt_read_' + spotId) === 'true';
 
-            // 1. Si el evento es reciente (creado en las últimas 72 horas o activo actualmente)
-            if (isRecentCreation || isActive) {
-                const newId = `evt_new_${type}_${evt.id}`;
-                const isDeleted = localStorage.getItem('sp_evt_deleted_' + newId) === 'true';
-                if (!isDeleted) {
-                    const isRead = localStorage.getItem('sp_evt_read_' + newId) === 'true';
+                        const spotNotif = {
+                            id: spotId,
+                            title: `⚡ ¡${openSpots} ${openSpots === 1 ? 'Plaza Libre' : 'Plazas Libres'}! ${evt.name || 'Torneo'}`,
+                            body: `Quedan ${openSpots} plazas vacantes para jugar el ${evt.date || ''} a las ${evt.time || ''}. ¡Reserva antes de que se completen!`,
+                            timestamp: realTimestamp,
+                            category: normType === 'entreno' ? 'entrenos' : 'matches',
+                            read: isSpotRead,
+                            data: { url: normType === 'entreno' ? 'entrenos' : 'americanas', eventId: evt.id, id: spotId }
+                        };
 
-                    const newNotif = {
-                        id: newId,
-                        title: `${type === 'entreno' ? '💪 Nuevo Entreno' : '🏆 Nueva Americana'}: ${evt.name || 'Torneo SomosPadel'}`,
-                        body: `Fecha: ${evt.date || ''} a las ${evt.time || ''} · ${evt.courts || 4} pistas · ${evt.location || 'SomosPadel'}. ¡Inscripciones abiertas!`,
-                        timestamp: realTimestamp,
-                        category: type === 'entreno' ? 'entrenos' : 'matches',
-                        read: isRead,
-                        data: { url: type === 'entreno' ? 'entrenos' : 'americanas', eventId: evt.id, id: newId }
-                    };
-
-                    generated.push(newNotif);
-                    this._checkAndTriggerPush(newNotif);
+                        generated.push(spotNotif);
+                        this._checkAndTriggerPush(spotNotif);
+                    }
                 }
-            }
+            });
 
-            // 2. Si el evento tiene plazas libres y está abierto
-            const maxPlayers = Number(evt.max_players || evt.maxPlayers || (evt.courts ? evt.courts * 4 : 16));
-            const registeredCount = Array.isArray(evt.players)
-                ? evt.players.length
-                : (Array.isArray(evt.registeredPlayers) ? evt.registeredPlayers.length : 0);
-            const openSpots = maxPlayers - registeredCount;
-            const isOpen = (status === 'open' || !isFinished);
+            // 3. Integrar los eventos del registro persistente 'sp_cancelled_events_log'
+            const cancelledLogs = this._getCancelledEventsLog();
+            cancelledLogs.forEach(cNotif => {
+                if (!cNotif || !cNotif.id) return;
 
-            if (openSpots > 0 && isOpen) {
-                const spotId = `evt_spot_${type}_${evt.id}`;
-                const isSpotDeleted = localStorage.getItem('sp_evt_deleted_' + spotId) === 'true';
-                if (!isSpotDeleted) {
-                    const isSpotRead = localStorage.getItem('sp_evt_read_' + spotId) === 'true';
+                // Respetar si el usuario la ha eliminado individualmente
+                if (localStorage.getItem('sp_evt_deleted_' + cNotif.id) === 'true') return;
 
-                    const spotNotif = {
-                        id: spotId,
-                        title: `⚡ ¡${openSpots} ${openSpots === 1 ? 'Plaza Libre' : 'Plazas Libres'}! ${evt.name || 'Torneo'}`,
-                        body: `Quedan ${openSpots} plazas vacantes para jugar el ${evt.date || ''} a las ${evt.time || ''}. ¡Reserva antes de que se completen!`,
-                        timestamp: realTimestamp,
-                        category: type === 'entreno' ? 'entrenos' : 'matches',
-                        read: isSpotRead,
-                        data: { url: type === 'entreno' ? 'entrenos' : 'americanas', eventId: evt.id, id: spotId }
-                    };
+                // Respetar si el usuario la ha leído individualmente
+                cNotif.read = localStorage.getItem('sp_evt_read_' + cNotif.id) === 'true';
 
-                    generated.push(spotNotif);
-                    this._checkAndTriggerPush(spotNotif);
+                // Evitar duplicados en generated
+                if (!generated.some(n => n.id === cNotif.id)) {
+                    generated.push(cNotif);
                 }
-            }
-        });
+            });
 
-        // 3. Integrar los eventos del registro persistente 'sp_cancelled_events_log'
-        const cancelledLogs = this._getCancelledEventsLog();
-        cancelledLogs.forEach(cNotif => {
-            if (!cNotif || !cNotif.id) return;
-
-            // Respetar si el usuario la ha eliminado individualmente
-            if (localStorage.getItem('sp_evt_deleted_' + cNotif.id) === 'true') return;
-
-            // Respetar si el usuario la ha leído individualmente
-            cNotif.read = localStorage.getItem('sp_evt_read_' + cNotif.id) === 'true';
-
-            // Evitar duplicados en generated
-            if (!generated.some(n => n.id === cNotif.id)) {
-                generated.push(cNotif);
-            }
-        });
-
-        this.eventNotifications = generated;
-        this.notifySubscribers();
-        this.updateAppBadge();
+            this.eventNotifications = generated;
+            this.notifySubscribers();
+            this.updateAppBadge();
+        } catch (err) {
+            console.error("❌ [NotificationService] Error en _processEventsFeed:", err);
+        } finally {
+            this._isProcessingEventsFeed = false;
+        }
     }
 
     /**

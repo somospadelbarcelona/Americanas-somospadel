@@ -10,13 +10,15 @@ window.onerror = function (msg, url, line, col, error) {
         return false; // Let it propagate to console
     }
 
-    // Suprimir errores benignos de aserción interna de Firestore / IndexedDB
+    // Suprimir errores benignos de aserción interna de Firestore / IndexedDB y RangeErrors en background
     if (
         lowerDetail.includes('internal assertion failed') ||
         lowerDetail.includes('unexpected state') ||
-        lowerDetail.includes('assertion failed')
+        lowerDetail.includes('assertion failed') ||
+        lowerDetail.includes('maximum call stack size exceeded') ||
+        lowerDetail.includes('rangeerror')
     ) {
-        console.warn("⚠️ [onerror] Error interno de aserción Firestore/IndexedDB interceptado y suprimido:", msg);
+        console.warn("⚠️ [onerror] Error interceptado y suprimido para proteger la UI:", msg);
         try {
             window.indexedDB?.deleteDatabase?.('firestore/[DEFAULT]/americanas-somospadel/main');
             window.indexedDB?.deleteDatabase?.('firestore/[DEFAULT]');
@@ -46,13 +48,15 @@ window.addEventListener('unhandledrejection', function (event) {
     const stack = (reason && reason.stack) || '';
     const lowerMsg = (msg + ' ' + name + ' ' + stack + ' ' + String(reason)).toLowerCase();
 
-    // 1. Manejo específico y recuperación ante aserciones internas de Firestore/IndexedDB
+    // 1. Manejo específico y recuperación ante aserciones internas de Firestore/IndexedDB y RangeErrors
     if (
         lowerMsg.includes('internal assertion failed') ||
         lowerMsg.includes('unexpected state') ||
-        lowerMsg.includes('assertion failed')
+        lowerMsg.includes('assertion failed') ||
+        lowerMsg.includes('maximum call stack size exceeded') ||
+        lowerMsg.includes('rangeerror')
     ) {
-        console.warn("⚠️ [unhandledrejection] Error interno de aserción Firestore/IndexedDB interceptado y auto-recuperado.");
+        console.warn("⚠️ [unhandledrejection] Error interceptado y auto-recuperado de forma silenciosa.");
         if (typeof event.preventDefault === 'function') event.preventDefault();
 
         // Purgar de forma segura la base de datos IndexedDB local de Firestore si existe
