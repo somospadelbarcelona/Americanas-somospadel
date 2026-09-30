@@ -824,6 +824,32 @@ body.notif-drawer-open {
     box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
 }
 
+/* 5.b. JOURNAL & NOTICIAS: Verde Esmeralda Editorial */
+.tag-news, .notif-card-avatar.tag-news {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}
+.notif-card-action-btn.tag-news {
+    background: #059669;
+    color: #ffffff;
+    border: 1px solid #047857;
+    box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);
+}
+
+/* 5.c. NOTICIA DESTACADA / RELEVANTE: Fuego / Naranja Neón */
+.tag-hot, .notif-card-avatar.tag-hot {
+    background: #fff7ed;
+    color: #c2410c;
+    border: 1px solid #fed7aa;
+}
+.notif-card-action-btn.tag-hot {
+    background: #ea580c;
+    color: #ffffff;
+    border: 1px solid #c2410c;
+    box-shadow: 0 2px 8px rgba(234, 88, 12, 0.3);
+}
+
 /* 6. EVENTOS CANCELADOS, SUSPENDIDOS O ELIMINADOS */
 .notif-card-row.theme-cancelled {
     background: rgba(239, 68, 68, 0.04) !important;
@@ -1047,6 +1073,38 @@ body.notif-drawer-open {
     line-height: 1.3;
     color: #0f172a;
     font-family: 'Outfit', sans-serif;
+}
+
+.toast-body {
+    font-size: 0.78rem;
+    color: #475569;
+    line-height: 1.35;
+    margin-top: 3px;
+    font-family: 'Inter', sans-serif;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.toast-close {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 6px;
+    margin-left: 6px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.toast-close:hover {
+    color: #0f172a;
+    background: #f1f5f9;
 }
 
 /* ============================================================================

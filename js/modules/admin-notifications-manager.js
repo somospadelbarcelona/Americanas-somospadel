@@ -125,8 +125,14 @@
             try {
                 if (window.db) {
                     const snap = await window.db.collection('system_config').doc('purged_notifications').get();
-                    if (snap.exists && Array.isArray(snap.data()?.purgedIds)) {
-                        return snap.data().purgedIds.length;
+                    if (snap.exists) {
+                        const data = snap.data() || {};
+                        if (typeof data.purgedCount === 'number') {
+                            return data.purgedCount;
+                        }
+                        if (Array.isArray(data.purgedIds)) {
+                            return data.purgedIds.length;
+                        }
                     }
                 }
                 if (window.NotificationService?.globalPurgedIds) {
@@ -256,6 +262,266 @@
                     btn.style.opacity = '1';
                 }
             }
+        }
+
+        /**
+         * Purgar absolutamente TODAS las notificaciones del club (Purga Total: 0 Notificaciones activas)
+         */
+        async purgeAllNotifications() {
+            const btn = document.getElementById('notif-manager-purge-all-btn');
+            let confirmed = false;
+
+            if (window.PremiumModal && typeof window.PremiumModal.confirm === 'function') {
+                confirmed = await window.PremiumModal.confirm({
+                    title: "💥 ¿VACIAR Y PURGAR TODAS LAS NOTIFICACIONES?",
+                    message: "<strong>¡Atención!</strong> Se eliminarán permanentemente <strong>TODOS</strong> los comunicados oficiales ('broadcasts') y <strong>TODAS</strong> las notificaciones de las cuentas de los jugadores del club. El contador quedará en 0 absoluto.",
+                    confirmText: "SÍ, VACIAR TODO",
+                    cancelText: "CANCELAR",
+                    type: 'danger'
+                });
+            } else {
+                confirmed = window.confirm("💥 ¿VACIAR Y PURGAR TODAS LAS NOTIFICACIONES?\n\n¡Atención! Se eliminarán permanentemente TODOS los comunicados oficiales ('broadcasts') y TODAS las notificaciones de las cuentas de los jugadores del club. El contador quedará en 0 absoluto.");
+            }
+
+            if (!confirmed) return;
+
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Vaciando todo...';
+                btn.style.opacity = '0.7';
+            }
+
+            try {
+                let result = null;
+                if (window.NotificationService && typeof window.NotificationService.purgeExpiredAndOldNotifications === 'function') {
+                    result = await window.NotificationService.purgeExpiredAndOldNotifications({ all: true });
+                } else if (window.AdminNotifications && typeof window.AdminNotifications.purgeAllNotifications === 'function') {
+                    result = await window.AdminNotifications.purgeAllNotifications();
+                } else if (window.NotificationServiceClass && typeof window.NotificationServiceClass.purgeExpiredAndOldNotifications === 'function') {
+                    result = await window.NotificationServiceClass.purgeExpiredAndOldNotifications({ all: true });
+                } else {
+                    throw new Error("El servicio de purga total no está disponible.");
+                }
+
+                const totalPurged = result?.purgedCount || 0;
+                const bcPurged = result?.purgedBroadcastsCount || 0;
+                const plPurged = result?.deletedFromPlayersCount || 0;
+
+                // Limpieza instantánea reactiva
+                this.items = [];
+                this.filteredItems = [];
+                this.purgedCount = 0;
+                this.render();
+
+                if (window.PremiumModal && typeof window.PremiumModal.alert === 'function') {
+                    await window.PremiumModal.alert({
+                        title: "💥 PURGA TOTAL COMPLETADA",
+                        message: `Bandejas 100% limpias: Se han eliminado <strong>${totalPurged}</strong> registros (${bcPurged} comunicados oficiales en broadcasts y ${plPurged} en jugadores). Contadores restablecidos a 0.`,
+                        type: 'success'
+                    });
+                } else {
+                    alert(`✅ Purga total completada: ${totalPurged} registros eliminados.`);
+                }
+
+                await this.loadData();
+                this.render();
+            } catch (err) {
+                console.error("❌ Error en purga total:", err);
+                if (window.PremiumModal && typeof window.PremiumModal.alert === 'function') {
+                    await window.PremiumModal.alert({
+                        title: "❌ ERROR EN LA PURGA TOTAL",
+                        message: "Ocurrió un error al vaciar las notificaciones: " + (err.message || err),
+                        type: 'danger'
+                    });
+                } else {
+                    alert("Error en la purga total: " + (err.message || err));
+                }
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-radiation"></i> 💥 Purga Total (Vaciar Todo)';
+                    btn.style.opacity = '1';
+                }
+            }
+        }
+
+        /**
+         * Vaciar permanentemente el historial acumulado de purgas realizadas (contador a 0)
+         */
+        async clearPurgedRegistry() {
+            let confirmed = false;
+            if (window.PremiumModal && typeof window.PremiumModal.confirm === 'function') {
+                confirmed = await window.PremiumModal.confirm({
+                    title: "🗑️ ¿VACIAR HISTORIAL DE PURGAS REALIZADAS?",
+                    message: "Esta acción <strong>eliminará para siempre</strong> el registro acumulado de purgas realizadas y dejará el contador en <strong>0</strong>. El bloqueo de seguridad seguirá activo para que las alertas antiguas no vuelvan a salir jamás.",
+                    confirmText: "VACIAR Y PONER A 0",
+                    cancelText: "CANCELAR",
+                    type: 'danger'
+                });
+            } else {
+                confirmed = window.confirm("¿Vaciar permanentemente el historial de purgas realizadas y poner el contador a 0?");
+            }
+
+            if (!confirmed) return;
+
+            const btn = document.getElementById('btn-clear-purged-registry');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Vaciando...';
+                btn.style.opacity = '0.7';
+            }
+
+            try {
+                if (window.NotificationService && typeof window.NotificationService.resetPurgedRegistry === 'function') {
+                    await window.NotificationService.resetPurgedRegistry();
+                } else if (window.AdminNotifications && typeof window.AdminNotifications.resetPurgedRegistry === 'function') {
+                    await window.AdminNotifications.resetPurgedRegistry();
+                } else if (window.NotificationServiceClass && typeof window.NotificationServiceClass.resetPurgedRegistry === 'function') {
+                    await window.NotificationServiceClass.resetPurgedRegistry();
+                }
+
+                this.purgedCount = 0;
+                await this.loadData();
+                this.render();
+
+                if (window.PremiumModal && typeof window.PremiumModal.alert === 'function') {
+                    await window.PremiumModal.alert({
+                        title: "🧹 HISTORIAL DE PURGAS VACIADO",
+                        message: "El registro de purgas realizadas se ha vaciado por completo para siempre. El contador ha quedado en 0 y la base de datos optimizada.",
+                        type: 'success'
+                    });
+                } else {
+                    alert("✅ Historial de purgas vaciado con éxito (contador a 0).");
+                }
+            } catch (err) {
+                console.error("❌ Error vaciando historial de purgas:", err);
+                if (window.PremiumModal && typeof window.PremiumModal.alert === 'function') {
+                    await window.PremiumModal.alert({
+                        title: "❌ ERROR AL VACIAR PURGAS",
+                        message: "Ocurrió un error al vaciar el registro: " + (err.message || err),
+                        type: 'danger'
+                    });
+                } else {
+                    alert("Error: " + (err.message || err));
+                }
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-broom"></i> Vaciar';
+                    btn.style.opacity = '1';
+                }
+            }
+        }
+
+        /**
+         * Prueba interactiva en el dispositivo actual del Administrador
+         */
+        async testDevicePushNow() {
+            const btn = document.getElementById('notif-manager-test-device-btn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Probando...';
+            }
+
+            try {
+                if (window.NotificationService && typeof window.NotificationService.testLocalPushNotification === 'function') {
+                    await window.NotificationService.testLocalPushNotification();
+                } else if (window.NotificationUi && typeof window.NotificationUi.testPushAlert === 'function') {
+                    await window.NotificationUi.testPushAlert();
+                } else {
+                    if (window.NotificationUi && typeof window.NotificationUi.playNotificationSound === 'function') {
+                        window.NotificationUi.playNotificationSound();
+                    }
+                    if (window.NotificationService && typeof window.NotificationService.showInAppToast === 'function') {
+                        window.NotificationService.showInAppToast("🎾 ¡Prueba de Notificación!", "Dispositivo verificado correctamente.");
+                    }
+                }
+                this.renderPushStatusBox();
+            } catch (err) {
+                console.error("❌ Error en prueba local de push:", err);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-bolt"></i> 🧪 Probar Aviso en mi Dispositivo (Sonido + Toast + Push)';
+                }
+            }
+        }
+
+        /**
+         * Solicitar activación de push en el dispositivo actual
+         */
+        async enablePushOnDevice() {
+            try {
+                if (window.NotificationService && typeof window.NotificationService.requestPushPermission === 'function') {
+                    const granted = await window.NotificationService.requestPushPermission();
+                    if (granted) {
+                        if (window.NotificationUi && typeof window.NotificationUi.playNotificationSound === 'function') {
+                            window.NotificationUi.playNotificationSound();
+                        }
+                        if (window.NotificationService.showInAppToast) {
+                            window.NotificationService.showInAppToast("🔔 ¡Notificaciones Push Activadas!", "Recibirás todos los avisos y comunicados.", "success");
+                        }
+                    }
+                }
+                this.renderPushStatusBox();
+            } catch (e) {
+                console.warn("⚠️ Aviso al activar push en dispositivo:", e);
+            }
+        }
+
+        renderPushStatusBox() {
+            const box = document.getElementById('notif-device-push-status-card');
+            if (box) {
+                box.outerHTML = this.getPushStatusCardHTML();
+            }
+        }
+
+        getPushStatusCardHTML() {
+            const perm = (typeof Notification !== 'undefined') ? Notification.permission : 'unsupported';
+            const isGranted = perm === 'granted';
+            const isDenied = perm === 'denied';
+            const isDefault = perm === 'default';
+
+            let statusColor = isGranted ? '#65a30d' : (isDenied ? '#dc2626' : '#d97706');
+            let statusBg = isGranted ? 'rgba(204, 255, 0, 0.12)' : (isDenied ? 'rgba(239, 68, 68, 0.12)' : 'rgba(245, 158, 11, 0.12)');
+            let statusBorder = isGranted ? 'rgba(204, 255, 0, 0.35)' : (isDenied ? 'rgba(239, 68, 68, 0.3)' : 'rgba(245, 158, 11, 0.3)');
+            let statusText = isGranted ? 'ACTIVO Y CONCEDIDO 🔔' : (isDenied ? 'BLOQUEADO EN EL NAVEGADOR ❌' : 'PENDIENTE DE ACTIVAR ⚠️');
+            let statusDesc = isGranted 
+                ? 'Tu dispositivo recibe notificaciones push, avisos in-app en pantalla y sonido oficial.'
+                : (isDenied 
+                    ? 'Las notificaciones están bloqueadas en los ajustes de tu navegador. Haz clic en el candado de la barra de direcciones para permitirlas.'
+                    : 'Aún no has concedido permisos para recibir notificaciones en este navegador / teléfono.');
+
+            return `
+                <div id="notif-device-push-status-card" style="background: ${statusBg}; border: 1px solid ${statusBorder}; border-radius: 16px; padding: 1.25rem 1.5rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 14px; max-width: 650px;">
+                        <div style="width: 44px; height: 44px; border-radius: 12px; background: #ffffff; color: ${statusColor}; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06); flex-shrink: 0;">
+                            <i class="fas ${isGranted ? 'fa-bell' : (isDenied ? 'fa-bell-slash' : 'fa-bell')}"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.72rem; font-weight: 900; text-transform: uppercase; color: ${statusColor}; letter-spacing: 0.8px;">
+                                Estado Push en tu Dispositivo: <span style="background: #ffffff; padding: 2px 8px; border-radius: 6px; margin-left: 4px;">${statusText}</span>
+                            </div>
+                            <div style="font-size: 0.82rem; color: #475569; margin-top: 3px; font-weight: 600;">
+                                ${statusDesc}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                        ${!isGranted ? `
+                            <button onclick="window.AdminNotificationsManagerCtrl.enablePushOnDevice()" 
+                                    style="background: #0f172a; color: #CCFF00; border: 1px solid rgba(204, 255, 0, 0.4); padding: 9px 15px; border-radius: 10px; font-weight: 850; font-size: 0.78rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-toggle-on"></i> Activar Notificaciones Push Ahora
+                            </button>
+                        ` : ''}
+                        <button id="notif-manager-test-device-btn"
+                                onclick="window.AdminNotificationsManagerCtrl.testDevicePushNow()" 
+                                style="background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; padding: 9px 16px; border-radius: 10px; font-weight: 850; font-size: 0.78rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
+                            <i class="fas fa-bolt" style="color: #ea580c;"></i> 🧪 Probar Aviso en mi Dispositivo (Sonido + Toast + Push)
+                        </button>
+                    </div>
+                </div>
+            `;
         }
 
         async triggerDailyNewsPush() {
@@ -476,6 +742,25 @@
                 }, { merge: true });
             } catch (_) {}
 
+            try {
+                if (window.NotificationService && typeof window.NotificationService.recordInboundNotification === 'function') {
+                    window.NotificationService.recordInboundNotification({
+                        id: broadcastId,
+                        title: title,
+                        body: body,
+                        timestamp: new Date().toISOString(),
+                        type: 'daily_news',
+                        category: 'broadcast',
+                        read: false,
+                        data: {
+                            broadcastId: broadcastId,
+                            articleId: article.id,
+                            url: targetUrl
+                        }
+                    });
+                }
+            } catch (_) {}
+
             return {
                 success: true,
                 title: title,
@@ -529,6 +814,13 @@
 
                 // Feedback visual de éxito
                 const deletedCount = result?.deletedFromPlayersCount || 0;
+
+                // 1. Limpieza instantánea en caliente en memoria para feedback inmediato
+                this.items = this.items.filter(i => String(i.id) !== String(itemId) && (!meta.broadcastId || String(i.broadcastId || i.id) !== String(meta.broadcastId)));
+                this.purgedCount++;
+                this.applyFilters();
+                this.render();
+
                 if (window.PremiumModal && typeof window.PremiumModal.alert === 'function') {
                     await window.PremiumModal.alert({
                         title: "🗑️ PURGA GLOBAL COMPLETADA",
@@ -539,7 +831,7 @@
                     alert(`✅ Notificación purgada con éxito (${deletedCount} alertas retiradas).`);
                 }
 
-                // Refrescar lista sin recargar la página entera
+                // 2. Refrescar datos reales consolidados de Firestore
                 await this.loadData();
                 this.render();
             } catch (err) {
@@ -609,6 +901,13 @@
                                     title="Purgar masivamente eventos pasados, entrenos cancelados y notificaciones caducadas">
                                 <i class="fas fa-broom"></i> 🧹 Purgar Antiguas y Caducadas
                             </button>
+                            <button id="notif-manager-purge-all-btn" 
+                                    onclick="window.AdminNotificationsManagerCtrl.purgeAllNotifications()" 
+                                    class="btn-danger-pro" 
+                                    style="background: #7f1d1d !important; color: #fecaca !important; border: 1px solid #ef4444 !important; font-weight: 900 !important; font-size: 0.88rem !important; padding: 11px 18px !important; border-radius: 12px !important; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(127, 29, 29, 0.4); cursor: pointer; transition: transform 0.15s ease;"
+                                    title="Vaciar absolutamente todas las notificaciones y comunicados de todos los jugadores (0 notificaciones)">
+                                <i class="fas fa-radiation"></i> 💥 Purga Total (Vaciar Todo)
+                            </button>
                             <button id="notif-manager-test-daily-news-btn" 
                                     onclick="window.AdminNotificationsManagerCtrl.triggerDailyNewsPush ? window.AdminNotificationsManagerCtrl.triggerDailyNewsPush() : window.AdminNotificationsManagerCtrl.testDailyNewsPush()" 
                                     class="btn-secondary-pro" 
@@ -668,17 +967,30 @@
                         </div>
 
                         <!-- Métrica 4: Purgas Realizadas -->
-                        <div style="background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); border: 1px solid #e2e8f0; border-radius: 18px; padding: 1.4rem; display: flex; align-items: center; gap: 1.25rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
-                            <div style="width: 52px; height: 52px; border-radius: 14px; background: rgba(239, 68, 68, 0.15); color: #dc2626; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
-                                <i class="fas fa-trash-can"></i>
+                        <div style="background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); border: 1px solid #e2e8f0; border-radius: 18px; padding: 1.4rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+                            <div style="display: flex; align-items: center; gap: 1.25rem;">
+                                <div style="width: 52px; height: 52px; border-radius: 14px; background: rgba(239, 68, 68, 0.15); color: #dc2626; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+                                    <i class="fas fa-trash-can"></i>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;">Purgas Realizadas</div>
+                                    <div style="font-size: 2rem; font-weight: 950; color: #0f172a; line-height: 1.1; margin-top: 4px;">${purgesDone}</div>
+                                    <div style="font-size: 0.72rem; color: #dc2626; font-weight: 700; margin-top: 2px;">Bloqueadas globalmente</div>
+                                </div>
                             </div>
-                            <div>
-                                <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;">Purgas Realizadas</div>
-                                <div style="font-size: 2rem; font-weight: 950; color: #0f172a; line-height: 1.1; margin-top: 4px;">${purgesDone}</div>
-                                <div style="font-size: 0.72rem; color: #dc2626; font-weight: 700; margin-top: 2px;">Bloqueadas globalmente</div>
-                            </div>
+                            ${purgesDone > 0 ? `
+                                <button id="btn-clear-purged-registry" 
+                                        onclick="window.AdminNotificationsManagerCtrl.clearPurgedRegistry()" 
+                                        style="background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; padding: 7px 12px; border-radius: 10px; font-weight: 850; font-size: 0.75rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s ease; box-shadow: 0 2px 6px rgba(239,68,68,0.15); white-space: nowrap;"
+                                        title="Eliminar historial acumulado de purgas realizadas para siempre y reiniciar contador a 0">
+                                    <i class="fas fa-broom"></i> Vaciar
+                                </button>
+                            ` : ''}
                         </div>
                     </div>
+
+                    <!-- 2.b. ESTADO PUSH DEL DISPOSITIVO DEL ADMINISTRADOR -->
+                    ${this.getPushStatusCardHTML()}
 
                     <!-- 3. BARRA DE HERRAMIENTAS Y FILTROS -->
                     <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 1rem 1.25rem; margin-bottom: 2rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between;">
@@ -857,6 +1169,10 @@
     window.AdminNotificationsManagerCtrl = controller;
     window.testDailyNewsPush = () => controller.testDailyNewsPush();
     window.triggerDailyNewsPush = () => controller.triggerDailyNewsPush();
+    window.purgeAllNotifications = () => controller.purgeAllNotifications();
+    window.testDevicePushNow = () => controller.testDevicePushNow();
+    window.enablePushOnDevice = () => controller.enablePushOnDevice();
+    window.clearPurgedRegistry = () => controller.clearPurgedRegistry();
     window.AdminViews.notifications_manager = async function () {
         await controller.init();
     };

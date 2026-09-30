@@ -121,6 +121,8 @@ function renderResultsFrame(container, activeEvent, allEvents) {
                     if (courtInput && newData.max_courts !== undefined) courtInput.value = newData.max_courts;
                 }
             }
+        }, err => {
+            console.warn("⚠️ [admin-results] Error escuchando evento en tiempo real:", err?.message || err);
         });
 
     container.innerHTML = `
@@ -447,7 +449,20 @@ async function renderMatchesGrid(eventId, type, round) {
         container.innerHTML = '<div class="loader"></div>';
     }
 
-    window.AdminController.matchesBuffer = [];
+    // Synchronous immediate check from local cache / emergency storage
+    let preloaded = null;
+    try {
+        const raw = localStorage.getItem(`emergency_matches_${eventId}`);
+        if (raw) preloaded = JSON.parse(raw);
+    } catch (_) {}
+
+    if (preloaded && Array.isArray(preloaded) && preloaded.length > 0) {
+        console.log("🛡️ [admin-results] Partidos precargados inmediatamente desde almacenamiento local:", preloaded.length);
+        window.AdminController.matchesBuffer = preloaded;
+        window.AdminController.isOfflineEmergency = true;
+    } else {
+        window.AdminController.matchesBuffer = [];
+    }
 
     const updateUI = () => {
         const gridContainer = document.getElementById('matches-grid');
@@ -477,9 +492,21 @@ async function renderMatchesGrid(eventId, type, round) {
         }
 
         // Setup Grid Container
+        if (window.AdminController.isOfflineEmergency) {
+            let banner = container.querySelector('#emergency-offline-notice');
+            if (!banner) {
+                container.insertAdjacentHTML('afterbegin', `
+                    <div id="emergency-offline-notice" style="background: rgba(245, 158, 11, 0.12); border: 1.5px solid #f59e0b; color: #fbbf24; padding: 10px 16px; border-radius: 12px; font-weight: 800; font-size: 0.8rem; margin-bottom: 1.2rem; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                        <span>⚠️ <b>MODO LOCAL OFFLINE ACTIVO:</b> Cuota de Firebase agotada. Los marcadores y resultados se guardan en este dispositivo para que puedas continuar con el evento sin pausas.</span>
+                        <span style="background: #f59e0b; color: #000; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 900;">LOCAL</span>
+                    </div>
+                `);
+            }
+        }
+
         let grid = container.querySelector('.smart-grid');
         if (!grid) {
-            container.innerHTML = `<div class="smart-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; animation: fadeIn 0.3s;"></div>`;
+            container.insertAdjacentHTML('beforeend', `<div class="smart-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; animation: fadeIn 0.3s;"></div>`);
             grid = container.querySelector('.smart-grid');
         }
 
@@ -577,14 +604,131 @@ async function renderMatchesGrid(eventId, type, round) {
         renderStandingsInternal(window.AdminController.matchesBuffer);
     };
 
+    // If matches already preloaded from storage, render UI immediately!
+    if (window.AdminController.matchesBuffer.length > 0) {
+        updateUI();
+    }
+
     const primaryColl = (type === 'entreno') ? 'entrenos_matches' : 'matches';
+
+    // Safety timeout: Never let the loader hang indefinitely if Firestore 429 quota halts connection
+    let snapshotFired = false;
+    const fallbackTimer = setTimeout(async () => {
+        if (snapshotFired) return;
+        console.warn("⚠️ [admin-results] onSnapshot excedió 4s sin respuesta (Google aún propagando el cambio de plan o cuota agotada). Activando contingencia...");
+
+        if (window.AdminController.matchesBuffer && window.AdminController.matchesBuffer.length > 0) {
+            window.AdminController.isOfflineEmergency = true;
+            updateUI();
+            return;
+        }
+
+        if (window.CacheService) {
+            try {
+                const cached = await window.CacheService.get('matches', `event_${eventId}`);
+                if (cached && Array.isArray(cached) && cached.length > 0) {
+                    console.log("🛡️ [admin-results] Partidos recuperados de CacheService por contingencia:", cached.length);
+                    window.AdminController.matchesBuffer = cached;
+                    window.AdminController.isOfflineEmergency = true;
+                    updateUI();
+                    return;
+                }
+            } catch (_) {}
+        }
+
+        // Si no hay datos en absoluto, romper inmediatamente el spinner
+        container.innerHTML = `
+            <div class="glass-card-enterprise text-center" style="padding: 2.5rem 2rem; border: 1.5px solid #f59e0b; max-width: 650px; margin: 2rem auto; border-radius: 18px; background: rgba(15, 23, 42, 0.95); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                <div style="font-size: 3rem; margin-bottom: 0.8rem;">⚡</div>
+                <h3 style="color: #fbbf24; margin: 0 0 10px 0; font-weight: 900; font-size: 1.3rem;">
+                    CUOTA DE FIREBASE AGOTADA / MODO OFFLINE REQUERIDO
+                </h3>
+                <p style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.6; margin: 0 auto 1.8rem auto;">
+                    La base de datos gratuita de Firebase ha alcanzado el límite diario (50.000 lecturas/día).<br>
+                    <b>Puedes continuar el entreno ahora mismo anotando resultados en Modo Local sin interrupciones.</b>
+                </p>
+                <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+                    <button onclick="window.Actions.startLocalEmergencyMode()" class="btn-primary-pro" style="padding: 14px 28px; font-weight:900; font-size: 1rem; background: #CCFF00; color: #000; border-radius: 12px; box-shadow: 0 0 20px rgba(204,255,0,0.4); cursor: pointer;">
+                        ⚡ CONTINUAR EN MODO LOCAL (OFFLINE)
+                    </button>
+                    <button onclick="window.loadResultsView('${type}')" class="btn-outline-pro" style="padding: 12px 20px; font-weight:800; border-radius: 12px; cursor: pointer;">
+                        🔄 REINTENTAR
+                    </button>
+                </div>
+            </div>`;
+    }, 1200);
 
     try {
         const sub = window.db.collection(primaryColl)
             .where('americana_id', '==', eventId)
             .onSnapshot(snap => {
+                snapshotFired = true;
+                clearTimeout(fallbackTimer);
                 window.AdminController.matchesBuffer = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                // Guardar en caché local para resiliencia ante cortes o límites de cuota
+                try {
+                    if (window.CacheService && snap.docs.length > 0) {
+                        window.CacheService.set('matches', `event_${eventId}`, window.AdminController.matchesBuffer);
+                    }
+                    if (snap.docs.length > 0) {
+                        localStorage.setItem(`emergency_matches_${eventId}`, JSON.stringify(window.AdminController.matchesBuffer));
+                    }
+                } catch (_) {}
                 updateUI();
+            }, async err => {
+                snapshotFired = true;
+                clearTimeout(fallbackTimer);
+                console.error("❌ Error en onSnapshot de partidos:", err);
+
+                // 1. Intentar servir de caché local previa (CacheService o emergency localStorage)
+                if (window.CacheService) {
+                    try {
+                        const cached = await window.CacheService.get('matches', `event_${eventId}`);
+                        if (cached && Array.isArray(cached) && cached.length > 0) {
+                            console.log("🛡️ [admin-results] Partidos servidos desde caché local tras error:", cached.length);
+                            window.AdminController.matchesBuffer = cached;
+                            window.AdminController.isOfflineEmergency = true;
+                            updateUI();
+                            return;
+                        }
+                    } catch (_) {}
+                }
+
+                try {
+                    const localRaw = localStorage.getItem(`emergency_matches_${eventId}`);
+                    if (localRaw) {
+                        const parsed = JSON.parse(localRaw);
+                        if (Array.isArray(parsed) && parsed.length > 0) {
+                            console.log("🛡️ [admin-results] Partidos servidos desde emergency localStorage:", parsed.length);
+                            window.AdminController.matchesBuffer = parsed;
+                            window.AdminController.isOfflineEmergency = true;
+                            updateUI();
+                            return;
+                        }
+                    }
+                } catch (_) {}
+
+                // 2. Si no hay caché y falló por cuota de Firebase
+                const msg = err?.message || String(err || '');
+                const isQuota = (err?.code === 'resource-exhausted') || 
+                                (msg.toLowerCase().includes('quota') || msg.toLowerCase().includes('resource_exhausted'));
+
+                container.innerHTML = `
+                    <div class="glass-card-enterprise text-center" style="padding: 3rem 2rem; border: 1px solid rgba(239, 68, 68, 0.4); max-width: 620px; margin: 2rem auto; border-radius: 16px;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 2.8rem; color: #ef4444; margin-bottom: 1rem;"></i>
+                        <h3 style="color: #ef4444; margin: 0 0 10px 0; font-weight: 900; font-size: 1.2rem;">
+                            ${isQuota ? 'CUOTA DIARIA DE FIREBASE AGOTADA (429)' : 'ERROR AL CARGAR PARTIDOS'}
+                        </h3>
+                        <p style="color: #cbd5e1; font-size: 0.9rem; line-height: 1.5; margin: 0 auto 1.5rem auto;">
+                            ${isQuota 
+                                ? 'La base de datos de Firebase ha alcanzado el límite diario gratuito (50.000 lecturas/día). Puedes activar el <b>Modo Offline de Emergencia</b> para continuar anotando resultados y gestionando las rondas sin depender de Firebase.' 
+                                : `No se pudieron recuperar los partidos en tiempo real: ${msg}`}
+                        </p>
+                        <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+                            <button onclick="window.Actions.startLocalEmergencyMode()" class="btn-primary-pro" style="padding: 12px 24px; font-weight:900; background: #CCFF00; color: #000; box-shadow: 0 0 15px rgba(204,255,0,0.4);">⚡ CONTINUAR EN MODO LOCAL (OFFLINE)</button>
+                            <button onclick="window.loadResultsView('${type}')" class="btn-outline-pro" style="padding: 10px 20px; font-weight:800;">🔄 REINTENTAR</button>
+                        </div>
+                    </div>`;
             });
 
         window.AdminController.matchesUnsubscribers = [sub];
@@ -821,6 +965,157 @@ function renderStandingsInternal(matches) {
 
 // --- ACTIONS EXPOSED TO WINDOW ---
 window.Actions = {
+    startLocalEmergencyMode() {
+        const evt = window.AdminController.activeEvent;
+        if (!evt) return;
+
+        let players = (Array.isArray(evt.players) && evt.players.length > 0)
+            ? evt.players
+            : (Array.isArray(evt.registeredPlayers) ? evt.registeredPlayers : []);
+
+        const courts = parseInt(evt.max_courts || 2);
+        const requiredPlayers = courts * 4;
+
+        const getPlayerName = (p, idx) => {
+            if (!p) return `Jugador ${idx}`;
+            if (typeof p === 'string') return p;
+            return p.name || p.displayName || p.alias || p.fullName || `Jugador ${idx}`;
+        };
+        const getPlayerId = (p, idx) => {
+            if (!p) return `p_${idx}`;
+            if (typeof p === 'string') return `p_${idx}`;
+            return p.id || p.uid || `p_${idx}`;
+        };
+
+        const playerList = [];
+        for (let i = 1; i <= requiredPlayers; i++) {
+            const p = players[i - 1];
+            playerList.push({
+                id: getPlayerId(p, i),
+                name: getPlayerName(p, i)
+            });
+        }
+
+        const generatedMatches = [];
+        for (let c = 1; c <= courts; c++) {
+            const p1 = playerList[(c - 1) * 4] || { id: `p_${(c-1)*4+1}`, name: `Jugador ${(c - 1) * 4 + 1}` };
+            const p2 = playerList[(c - 1) * 4 + 1] || { id: `p_${(c-1)*4+2}`, name: `Jugador ${(c - 1) * 4 + 2}` };
+            const p3 = playerList[(c - 1) * 4 + 2] || { id: `p_${(c-1)*4+3}`, name: `Jugador ${(c - 1) * 4 + 3}` };
+            const p4 = playerList[(c - 1) * 4 + 3] || { id: `p_${(c-1)*4+4}`, name: `Jugador ${(c - 1) * 4 + 4}` };
+
+            generatedMatches.push({
+                id: `emergency_${evt.id}_1_${c}`,
+                americana_id: evt.id,
+                round: 1,
+                court: c,
+                teamA: `${p1.name} / ${p2.name}`,
+                teamB: `${p3.name} / ${p4.name}`,
+                team_a_names: [p1.name, p2.name],
+                team_b_names: [p3.name, p4.name],
+                team_a_ids: [p1.id, p2.id],
+                team_b_ids: [p3.id, p4.id],
+                score_a: 0,
+                score_b: 0,
+                status: 'scheduled'
+            });
+        }
+
+        window.AdminController.matchesBuffer = generatedMatches;
+        window.AdminController.isOfflineEmergency = true;
+        localStorage.setItem(`emergency_matches_${evt.id}`, JSON.stringify(generatedMatches));
+        renderMatchesGrid(evt.id, evt.type, 1);
+    },
+
+    generateEmergencyRound(round) {
+        const evt = window.AdminController.activeEvent;
+        if (!evt) return;
+
+        let players = (Array.isArray(evt.players) && evt.players.length > 0)
+            ? evt.players
+            : (Array.isArray(evt.registeredPlayers) ? evt.registeredPlayers : []);
+
+        const courts = parseInt(evt.max_courts || 2);
+        const requiredPlayers = courts * 4;
+
+        const getPlayerName = (p, idx) => {
+            if (!p) return `Jugador ${idx}`;
+            if (typeof p === 'string') return p;
+            return p.name || p.displayName || p.alias || p.fullName || `Jugador ${idx}`;
+        };
+        const getPlayerId = (p, idx) => {
+            if (!p) return `p_${idx}`;
+            if (typeof p === 'string') return `p_${idx}`;
+            return p.id || p.uid || `p_${idx}`;
+        };
+
+        const playerList = [];
+        for (let i = 1; i <= requiredPlayers; i++) {
+            const p = players[i - 1];
+            playerList.push({
+                id: getPlayerId(p, i),
+                name: getPlayerName(p, i)
+            });
+        }
+
+        const schedules = [
+            [[[0, 1], [2, 3]], [[4, 5], [6, 7]]], // R1
+            [[[0, 2], [4, 6]], [[1, 3], [5, 7]]], // R2
+            [[[0, 3], [5, 6]], [[1, 2], [4, 7]]], // R3
+            [[[0, 4], [1, 5]], [[2, 6], [3, 7]]], // R4
+            [[[0, 5], [2, 7]], [[1, 6], [3, 4]]], // R5
+            [[[0, 6], [1, 7]], [[2, 4], [3, 5]]]  // R6
+        ];
+
+        const schedIdx = ((round - 1) % schedules.length);
+        const roundConfig = schedules[schedIdx];
+
+        const newMatches = [];
+        for (let c = 1; c <= courts; c++) {
+            let pA1, pA2, pB1, pB2;
+            if (courts === 2 && roundConfig && roundConfig[c - 1]) {
+                const courtCfg = roundConfig[c - 1];
+                pA1 = playerList[courtCfg[0][0]] || playerList[0];
+                pA2 = playerList[courtCfg[0][1]] || playerList[1];
+                pB1 = playerList[courtCfg[1][0]] || playerList[2];
+                pB2 = playerList[courtCfg[1][1]] || playerList[3];
+            } else {
+                const offset = (round - 1) * 2;
+                const idx1 = ((c - 1) * 4 + offset) % playerList.length;
+                const idx2 = ((c - 1) * 4 + 1 + offset) % playerList.length;
+                const idx3 = ((c - 1) * 4 + 2 + offset) % playerList.length;
+                const idx4 = ((c - 1) * 4 + 3 + offset) % playerList.length;
+                pA1 = playerList[idx1];
+                pA2 = playerList[idx2];
+                pB1 = playerList[idx3];
+                pB2 = playerList[idx4];
+            }
+
+            newMatches.push({
+                id: `emergency_${evt.id}_${round}_${c}`,
+                americana_id: evt.id,
+                round: round,
+                court: c,
+                teamA: `${pA1.name} / ${pA2.name}`,
+                teamB: `${pB1.name} / ${pB2.name}`,
+                team_a_names: [pA1.name, pA2.name],
+                team_b_names: [pB1.name, pB2.name],
+                team_a_ids: [pA1.id, pA2.id],
+                team_b_ids: [pB1.id, pB2.id],
+                score_a: 0,
+                score_b: 0,
+                status: 'scheduled'
+            });
+        }
+
+        const currentBuffer = (window.AdminController.matchesBuffer || []).filter(m => parseInt(m.round) !== round);
+        window.AdminController.matchesBuffer = [...currentBuffer, ...newMatches];
+        window.AdminController.isOfflineEmergency = true;
+        localStorage.setItem(`emergency_matches_${evt.id}`, JSON.stringify(window.AdminController.matchesBuffer));
+        
+        window.Actions.switchRound(round);
+        renderMatchesGrid(evt.id, evt.type, round);
+    },
+
     openManualRoundModal() {
         const evt = window.AdminController.activeEvent;
         const currentR = window.AdminController.currentRound || 1;
@@ -874,17 +1169,26 @@ window.Actions = {
         // Determine the target round to generate
         const round = targetRound ? parseInt(targetRound) : (matches.length > 0 ? maxMatchRound + 1 : currentR);
 
-        // Confirmation?
-        // RESTRICTION: Specific Status Check
+        // Si ya estamos en modo local de emergencia, generar ronda localmente de inmediato
+        if (window.AdminController.isOfflineEmergency) {
+            this.generateEmergencyRound(round);
+            return;
+        }
+
+        // Restriction check for finished / open status
         if (evt.status !== 'live' && evt.status !== 'pairing') {
             if (evt.status === 'open') {
                 alert("⛔ EL EVENTO ESTÁ 'ABIERTO'\n\nPara empezar a generar partidos, cambia el estado a 'EN JUEGO' o 'EMPAREJAMIENTO'.");
+                return;
             } else if (evt.status === 'finished') {
-                alert("⛔ EL EVENTO ESTÁ 'FINALIZADO'\n\nYa no se pueden generar más rondas.");
+                if (confirm("⛔ EL EVENTO ESTÁ MARCADO COMO 'FINALIZADO' EN LA NUBE.\n\n¿Deseas generar la Ronda " + round + " en Modo Local Offline para continuar jugando?")) {
+                    this.generateEmergencyRound(round);
+                }
+                return;
             } else {
                 alert(`⛔ Estado actual: ${evt.status.toUpperCase()}\n\nEl evento debe estar 'EN JUEGO' o 'EMPAREJAMIENTO' para generar rondas.`);
+                return;
             }
-            return;
         }
 
         try {
@@ -894,6 +1198,7 @@ window.Actions = {
                 setTimeout(() => window.Actions.switchRound(round), 200);
             }
         } catch (e) {
+            console.warn("⚠️ MatchMakingService falló (posible límite de cuota o error de red):", e);
             if (e.message.includes('sin finalizar') && confirm(e.message + "\n\n¿Quieres FORZAR la generación de la siguiente ronda?")) {
                 try {
                     await MatchMakingService.generateRound(evt.id, evt.type, round, true);
@@ -901,9 +1206,14 @@ window.Actions = {
                     if (window.Actions?.switchRound) {
                         setTimeout(() => window.Actions.switchRound(round), 200);
                     }
-                } catch (err) { alert("Error al forzar: " + err.message); }
-            } else {
-                alert(e.message);
+                    return;
+                } catch (err) {
+                    console.warn("Fallo al forzar generación en servidor:", err);
+                }
+            }
+
+            if (confirm(`No se pudo conectar con Firebase (${e.message}).\n\n¿Deseas generar la Ronda ${round} en Modo Local Offline?`)) {
+                this.generateEmergencyRound(round);
             }
         }
     },
@@ -1067,7 +1377,20 @@ window.Actions = {
 
         const evt = window.AdminController.activeEvent;
         const collection = (evt && evt.type === 'entreno') ? FirebaseDB.entrenos_matches : FirebaseDB.matches;
-        await collection.update(matchId, { [field]: parseInt(value) });
+        try {
+            await collection.update(matchId, { [field]: parseInt(value) });
+        } catch (e) {
+            console.warn("⚠️ [updateScore] Firestore no disponible, guardando localmente:", e);
+        }
+
+        if (match) {
+            match[field] = parseInt(value);
+            if (evt) localStorage.setItem(`emergency_matches_${evt.id}`, JSON.stringify(window.AdminController.matchesBuffer));
+            const sEl = document.getElementById(`score-${field === 'score_a' ? 'a' : 'b'}-${matchId}`);
+            if (sEl) sEl.innerText = parseInt(value);
+            const pEl = document.getElementById(`score-primary-${field === 'score_a' ? 'a' : 'b'}-${matchId}`);
+            if (pEl) pEl.innerText = parseInt(value);
+        }
     },
 
     async adjustScore(matchId, field, delta) {
@@ -1199,10 +1522,16 @@ window.Actions = {
             await this.checkAndPurge(matchId);
         }
 
+        const newStatus = isFinish ? 'finished' : 'live';
         try {
-            const newStatus = isFinish ? 'finished' : 'live';
             await collection.update(matchId, { status: newStatus });
+        } catch (netErr) {
+            console.warn("⚠️ [finishMatch] Firestore update falló (cuota/red), persistiendo localmente:", netErr);
+        }
+        match.status = newStatus;
+        if (evt) localStorage.setItem(`emergency_matches_${evt.id}`, JSON.stringify(window.AdminController.matchesBuffer));
 
+        try {
             if (isFinish) {
                 // Ajuste de nivel (Pro Smart)
                 if (window.LevelAdjustmentService) {
@@ -1858,6 +2187,9 @@ async function startPresenceRadar(activeEvent) {
 
         } catch (e) {
             console.warn("Presence Radar error:", e.message);
+            if (presenceEl) {
+                presenceEl.innerHTML = `<div style="color:rgba(255,255,255,0.3); font-size:0.75rem; text-align:center; padding:10px;">Radar temporalmente no disponible</div>`;
+            }
         }
     };
 

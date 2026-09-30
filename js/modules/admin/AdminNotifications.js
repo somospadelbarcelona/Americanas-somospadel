@@ -873,6 +873,49 @@
                 console.warn("⚠️ [AdminNotifications] Error en fan-out de jugadores:", err);
             }
 
+            // 3. Feedback local interactivo inmediato (Toast + Sonido + Push nativo para el emisor + Campana)
+            try {
+                if (window.NotificationService) {
+                    const localItem = {
+                        id: broadcastRef.id,
+                        title: title.trim(),
+                        body: body.trim(),
+                        timestamp: new Date().toISOString(),
+                        type: 'broadcast',
+                        category: 'broadcast',
+                        read: false,
+                        data: {
+                            broadcastId: broadcastRef.id,
+                            url: targetUrl
+                        }
+                    };
+                    if (!window.NotificationService.broadcastNotifications) {
+                        window.NotificationService.broadcastNotifications = [];
+                    }
+                    if (!window.NotificationService.broadcastNotifications.some(b => b && b.id === broadcastRef.id)) {
+                        window.NotificationService.broadcastNotifications.unshift(localItem);
+                    }
+                    if (typeof window.NotificationService.recordInboundNotification === 'function') {
+                        window.NotificationService.recordInboundNotification(localItem);
+                    }
+                    window.NotificationService.unreadCount = window.NotificationService.getMergedNotifications().filter(n => !n.read).length;
+                    window.NotificationService.updateAppBadge();
+                    window.NotificationService.notifySubscribers();
+
+                    if (typeof window.NotificationService.showInAppToast === 'function') {
+                        window.NotificationService.showInAppToast(title.trim(), body.trim(), 'broadcast', targetUrl);
+                    }
+                    if (typeof window.NotificationService.showNativeNotification === 'function') {
+                        window.NotificationService.showNativeNotification(title.trim(), body.trim(), { url: targetUrl, id: broadcastRef.id });
+                    }
+                }
+                if (window.NotificationUi && typeof window.NotificationUi.playNotificationSound === 'function') {
+                    window.NotificationUi.playNotificationSound();
+                }
+            } catch (fbErr) {
+                console.warn("⚠️ [AdminNotifications] Aviso en feedback local:", fbErr);
+            }
+
             return broadcastRef.id;
         }
 
@@ -919,6 +962,20 @@
 
         async purgeExpiredAndOld(options = {}) {
             return await this.purgeExpiredAndOldNotifications(options);
+        }
+
+        async purgeAllNotifications() {
+            return await this.purgeExpiredAndOldNotifications({ all: true });
+        }
+
+        async resetPurgedRegistry() {
+            if (window.NotificationService && typeof window.NotificationService.resetPurgedRegistry === 'function') {
+                return await window.NotificationService.resetPurgedRegistry();
+            }
+            if (window.NotificationServiceClass && typeof window.NotificationServiceClass.resetPurgedRegistry === 'function') {
+                return await window.NotificationServiceClass.resetPurgedRegistry();
+            }
+            throw new Error("NotificationService no está disponible para resetear el registro de purgas.");
         }
     }
 

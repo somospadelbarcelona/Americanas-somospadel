@@ -392,7 +392,17 @@
                 if (this.roundPromptDismissedFor === maxRound) return;
 
                 // Check if Max Rounds reached
-                const totalRounds = parseInt(this.currentAmericanaDoc.rounds_count || this.currentAmericanaDoc.rounds) || 6;
+                const totalRounds = Math.max(
+                    parseInt(
+                        this.currentAmericanaDoc?.total_rounds || 
+                        this.currentAmericanaDoc?.max_rounds || 
+                        this.currentAmericanaDoc?.planned_rounds ||
+                        this.currentAmericanaDoc?.rounds_count || 
+                        this.currentAmericanaDoc?.rounds || 
+                        6
+                    ),
+                    6
+                );
                 if (maxRound >= totalRounds) {
                     // LAST ROUND COMPLETE → Show Final Training Results Modal
                     if (!this._trainingFinishedShown) {
@@ -427,6 +437,7 @@
                             this.roundPromptDismissedFor = null;
                         } catch (e) {
                             window.PremiumModal.alert({ title: "❌ ERROR", message: e.message, type: 'error' });
+                            throw e;
                         }
                     }
                 },
@@ -461,6 +472,12 @@
                     window.Router?.navigate ? window.Router.navigate('dashboard') : (window.location.hash = '#dashboard');
                 }
             );
+        }
+
+        openChronicleAI() {
+            if (window.TournamentChronicleModal) {
+                window.TournamentChronicleModal.open(this.currentAmericanaDoc, this.allMatches);
+            }
         }
 
         openEventSummaryFlyer() {
@@ -704,8 +721,16 @@
             const maxMatchRound = this.allMatches.length > 0
                 ? Math.max(...this.allMatches.map(m => parseInt(m.round || 1)))
                 : 1;
-            const configRounds = parseInt(this.currentAmericanaDoc?.rounds_count || this.currentAmericanaDoc?.rounds) || 6;
-            const roundsLimit = Math.max(maxMatchRound, configRounds);
+            const configRounds = parseInt(
+                this.currentAmericanaDoc?.total_rounds || 
+                this.currentAmericanaDoc?.max_rounds || 
+                this.currentAmericanaDoc?.planned_rounds ||
+                this.currentAmericanaDoc?.rounds_count || 
+                this.currentAmericanaDoc?.rounds || 
+                6
+            );
+            const defaultMinRounds = 6; // Estándar oficial SomosPádel BCN
+            const roundsLimit = Math.max(maxMatchRound, configRounds, defaultMinRounds);
 
             const roundsSchedule = Array.from({ length: roundsLimit }, (_, i) => ({ number: i + 1 }));
 
@@ -879,15 +904,16 @@
             if (filterBar) {
                 // Detect Round Change -> If round changed, force full render to prevent stale prompts
                 const activeTab = filterBar.querySelector('.round-tab.active');
-                // Extract the round number from the button's text, e.g., "1º" -> 1
-                const lastRoundInUI = activeTab ? parseInt(activeTab.innerText.replace('º', '')) : -1;
+                // Extract the round number from data attribute or button text
+                const lastRoundInUI = activeTab ? parseInt(activeTab.getAttribute('data-round') || activeTab.innerText.replace(/[^0-9]/g, '')) : -1;
                 if (lastRoundInUI !== roundData.number) {
                     console.log("[SmartUpdate] Round change detected. Forcing full render.");
                     return false;
                 }
 
                 const newTabs = this.renderRoundTabs(allRounds, roundData.number);
-                if (filterBar.innerHTML !== newTabs) filterBar.innerHTML = newTabs;
+                const tabsWrapper = filterBar.querySelector('.tour-filter-tabs-wrapper') || filterBar;
+                if (tabsWrapper.innerHTML !== newTabs) tabsWrapper.innerHTML = newTabs;
             }
 
             const matches = roundData.matches;
@@ -1071,11 +1097,14 @@
                 </div>
             `;
 
+            const isRoundLive = roundData?.matches && roundData.matches.some(m => (m.status === 'live' || m.status === 'en juego') && !m.isFinished);
+
             return `
-                <div class="tour-filter-bar" style="position: sticky; top: 96px; z-index: 1000; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); padding: 8px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid rgba(0,0,0,0.06); box-shadow: 0 2px 12px rgba(0,0,0,0.02);">
-                   <div style="flex: 1; overflow-x: auto; display: flex; align-items: center; scrollbar-width: none; -ms-overflow-style: none;">
+                <div class="tour-filter-bar" style="position: sticky; top: 96px; z-index: 1000; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border-bottom: 1px solid rgba(0,0,0,0.06); box-shadow: 0 2px 12px rgba(0,0,0,0.02);">
+                   <div class="tour-filter-tabs-wrapper" style="flex: 1; min-width: 0; overflow-x: auto; display: flex; align-items: center; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch;">
                        <style>
-                           .tour-filter-bar div::-webkit-scrollbar { display: none; }
+                           .tour-filter-bar div::-webkit-scrollbar,
+                           .tour-filter-tabs-wrapper::-webkit-scrollbar { display: none; }
                            @keyframes scorePing {
                                0% { transform: scale(1); box-shadow: 0 0 0 rgba(204,255,0,0.5); }
                                50% { transform: scale(1.1); box-shadow: 0 0 25px rgba(204,255,0,0.8); }
@@ -1088,21 +1117,17 @@
                                50% { transform: scale(1.4); opacity: 0.5; }
                                100% { transform: scale(1); opacity: 1; }
                            }
-                           .live-pulse-dot { width: 7px; height: 7px; background: #00E36D; border-radius: 50%; display: inline-block; margin-right: 6px; animation: pulseLive 2s infinite; }
+                           .live-pulse-dot { width: 7px; height: 7px; background: #00E36D; border-radius: 50%; display: inline-block; margin-right: 5px; animation: pulseLive 2s infinite; }
                        </style>
                        ${tabs}
                    </div>
-                   <div style="display:flex; align-items:center; gap:6px; flex-shrink: 0;">
-                       <button type="button" onclick="window.ControlTowerView ? window.ControlTowerView.openEventSummaryFlyer() : null"
-                               title="Ver flyer de clasificación para compartir en WhatsApp o Instagram"
-                               style="background: #0f172a; color: #CCFF00; border: 1px solid rgba(204, 255, 0, 0.45); padding: 4px 10px; border-radius: 20px; font-size: 0.64rem; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.18);">
-                           <i class="fas fa-trophy" style="color: #CCFF00; font-size: 0.68rem;"></i>
-                           <span>FLYER</span>
-                       </button>
-                       <span style="font-size: 0.62rem; color: #15803d; font-weight: 900; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 4px 9px; border-radius: 20px; display: flex; align-items: center;">
-                           <span class="live-pulse-dot"></span> EN VIVO
-                       </span>
-                   </div>
+                   ${isRoundLive ? `
+                       <div style="flex-shrink: 0; display: inline-flex; align-items: center;">
+                           <span style="font-size: 0.62rem; color: #15803d; font-weight: 900; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 4px 8px; border-radius: 20px; display: inline-flex; align-items: center; gap: 5px;">
+                               <span class="live-pulse-dot"></span> EN VIVO
+                           </span>
+                       </div>
+                   ` : ''}
                 </div>
                 <div class="tour-grid-container" style="padding: 14px 14px; display: grid; gap: 12px; padding-bottom: calc(140px + env(safe-area-inset-bottom, 24px));">
                     ${hasMatches ? '' : emptyStateMarkup}
@@ -1129,7 +1154,17 @@
             const maxRound = this.allMatches.length > 0 ? Math.max(...this.allMatches.map(m => parseInt(m.round || 1))) : 1;
             const isPastRound = roundNum < maxRound;
 
-            const totalRoundsPlanned = parseInt(this.currentAmericanaDoc?.total_rounds || this.currentAmericanaDoc?.max_rounds || 6);
+            const totalRoundsPlanned = Math.max(
+                parseInt(
+                    this.currentAmericanaDoc?.total_rounds || 
+                    this.currentAmericanaDoc?.max_rounds || 
+                    this.currentAmericanaDoc?.planned_rounds ||
+                    this.currentAmericanaDoc?.rounds_count || 
+                    this.currentAmericanaDoc?.rounds || 
+                    6
+                ), 
+                6
+            );
             const isLastPlannedRound = roundNum >= totalRoundsPlanned;
 
             return `
@@ -1217,6 +1252,13 @@
                             ` : isRoundComplete ? `
                                 <!-- AVANCE DE RONDA / FINALIZACIÓN -->
                                 ${isLastPlannedRound ? `
+                                    <button type="button" onclick="event.stopPropagation(); window.ControlTowerView.openChronicleAI();"
+                                            class="btn-primary-pro"
+                                            style="padding: 14px 20px; font-size: 0.90rem; background: linear-gradient(135deg, #8B5CF6 0%, #4C1D95 100%); color: #ffffff; border: 1px solid rgba(204, 255, 0, 0.5); border-radius: 16px; font-weight: 1000; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 8px 25px rgba(139, 92, 246, 0.35); cursor: pointer; transition: transform 0.15s ease; margin-bottom: 8px;">
+                                        <span style="font-size: 1.1rem;">✨</span>
+                                        <span>📰 CRÓNICA ÉPICA DE LA JORNADA</span>
+                                        <span style="background: #CCFF00; color: #000; font-size: 0.58rem; padding: 2px 6px; border-radius: 6px; font-weight: 950;">NUEVO</span>
+                                    </button>
                                     <button type="button" id="btn-finish-and-standings" 
                                             onclick="event.stopPropagation(); window.ControlTowerView.finishTournament();"
                                             class="btn-primary-pro"

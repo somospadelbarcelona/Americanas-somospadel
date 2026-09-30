@@ -41,9 +41,14 @@ class SocialShareView {
                     </div>
 
                     <!-- Actions -->
-                    <button id="btn-download-social" onclick="window.SocialShareView.download()" class="btn-primary-pro" style="width:100%; height:50px; font-size:1rem; font-weight:800; display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom: 10px;">
-                        <i class="fas fa-download"></i> DESCARGAR IMAGEN
-                    </button>
+                    <div style="display:flex; gap:8px; margin-bottom: 10px;">
+                        <button id="btn-download-social" onclick="window.SocialShareView.download()" class="btn-primary-pro" style="flex:1.2; height:48px; font-size:0.88rem; font-weight:800; display:flex; align-items:center; justify-content:center; gap:8px;">
+                            <i class="fas fa-download"></i> DESCARGAR
+                        </button>
+                        <button type="button" onclick="window.SocialChannelsService ? window.SocialChannelsService.openInstagram() : window.open('https://www.instagram.com/somospadelbarcelona_/?hl=es','_blank')" style="flex:1; height:48px; background:linear-gradient(45deg, #e6683c, #cc2366); color:#fff; border:none; border-radius:12px; font-size:0.82rem; font-weight:800; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; box-shadow: 0 4px 12px rgba(204, 35, 102, 0.35);">
+                            <i class="fab fa-instagram"></i> INSTAGRAM
+                        </button>
+                    </div>
                     
                     <button onclick="window.SocialShareView.close()" style="width:100%; height:45px; background:transparent; border:1px solid #333; color:#aaa; border-radius:12px; font-weight:700; cursor:pointer;">
                         VOLVER

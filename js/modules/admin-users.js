@@ -357,10 +357,9 @@ window.AdminViews.users = async function () {
     // ==========================================
     (async () => {
         try {
-            console.log("🔍 Fetching players from Firebase (Background Sync)...");
-            // Timeout generoso de 25s y capturamos con fallback seguro
+            // Sincronización inteligente con token de caché SWR (0ms si no hay cambios)
             const fresh = await Promise.race([
-                FirebaseDB.players.getAll(true),
+                FirebaseDB.players.getAll(false),
                 new Promise((_, reject) => setTimeout(() => reject(new Error("La base de datos Firebase tardó más de 25s")), 25000))
             ]);
 
@@ -776,14 +775,28 @@ window.AdminViews.users = async function () {
         }
     };
 
-    window.exportToExcel = () => {
+    window.exportToExcel = async () => {
         if (typeof XLSX === 'undefined') {
-            window.PremiumModal.alert({
-                title: "❌ LIBRERÍA AUSENTE",
-                message: "La librería de exportación no se ha cargado. Por favor, recarga la página.",
-                type: 'error'
-            });
-            return;
+            try {
+                await new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js?v=999";
+                    script.onload = resolve;
+                    script.onerror = () => reject(new Error("Error cargando SheetJS"));
+                    document.head.appendChild(script);
+                });
+            } catch (loadErr) {
+                if (window.PremiumModal) {
+                    window.PremiumModal.alert({
+                        title: "❌ ERROR DE CARGA",
+                        message: "No se pudo cargar la librería de exportación a Excel. Comprueba tu conexión.",
+                        type: 'error'
+                    });
+                } else {
+                    alert("No se pudo cargar la librería de exportación.");
+                }
+                return;
+            }
         }
 
         // Prepare data for Excel
@@ -1464,16 +1477,35 @@ window.AdminViews.users = async function () {
                 userData.password = await window.FirebaseDB.security.hashPassword(pwd.trim());
             }
 
-            if (id) {
-                // UPDATE
-                await FirebaseDB.players.update(id, userData);
-                window.PremiumModal.alert({ title: "✅ ACTUALIZADO", message: "Jugador actualizado correctamente." });
-            } else {
-                // CREATE
-                // Validations for new user
-                if (!userData.phone) throw new Error("El teléfono es obligatorio.");
-                await FirebaseDB.players.create(userData); // Assuming create handles ID generation or logic
-                window.PremiumModal.alert({ title: "✅ REGISTRADO", message: "Jugador registrado correctamente." });
+            const saveOperation = async () => {
+                if (id) {
+                    // UPDATE
+                    await FirebaseDB.players.update(id, userData);
+                    window.PremiumModal.alert({ title: "✅ ACTUALIZADO", message: "Jugador actualizado correctamente." });
+                } else {
+                    // CREATE
+                    // Validations for new user
+                    if (!userData.phone) throw new Error("El teléfono es obligatorio.");
+                    await FirebaseDB.players.create(userData);
+                    window.PremiumModal.alert({ title: "✅ REGISTRADO", message: "Jugador registrado correctamente." });
+                }
+            };
+
+            try {
+                await saveOperation();
+            } catch (saveErr) {
+                const sMsg = (saveErr?.message || String(saveErr)).toLowerCase();
+                if (sMsg.includes('client has already been terminated') || sMsg.includes('failed-precondition')) {
+                    console.warn("⚠️ [admin-users] Fallo de cliente terminado al guardar. Re-inicializando Firestore y reintentando...");
+                    if (window.reinitializeFirestore) {
+                        await window.reinitializeFirestore();
+                        await saveOperation();
+                    } else {
+                        throw saveErr;
+                    }
+                } else {
+                    throw saveErr;
+                }
             }
 
             // Refresh & Close

@@ -335,14 +335,21 @@ const sendPushNotificationHandler = async (snapshot, context) => {
     const devices = [];
     devicesSnap.forEach(doc => {
         const d = doc.data();
-        if (d && d.token && typeof d.token === 'string' && d.token.trim()) {
-            devices.push({ id: doc.id, token: d.token.trim(), isLegacy: false });
+        if (d && d.token && typeof d.token === 'string') {
+            const tokenStr = d.token.trim();
+            // Filtrar estrictamente: descartar endpoints W3C (URLs) y tokens corruptos
+            if (tokenStr.length > 10 && !tokenStr.startsWith('http://') && !tokenStr.startsWith('https://')) {
+                devices.push({ id: doc.id, token: tokenStr, isLegacy: false, platform: d.platform || 'web' });
+            }
         }
     });
 
-    // Fallback: Si no tiene subcolección pero sí fcm_token raíz legacy
+    // Fallback: Si no tiene subcolección pero sí fcm_token raíz legacy válido
     if (devices.length === 0 && userData && userData.fcm_token && typeof userData.fcm_token === 'string') {
-        devices.push({ id: 'legacy_device', token: userData.fcm_token.trim(), isLegacy: true });
+        const legacyToken = userData.fcm_token.trim();
+        if (legacyToken.length > 10 && !legacyToken.startsWith('http://') && !legacyToken.startsWith('https://')) {
+            devices.push({ id: 'legacy_device', token: legacyToken, isLegacy: true, platform: userData.last_platform || 'web' });
+        }
     }
 
     // Deduplicar tokens
@@ -391,7 +398,7 @@ const sendPushNotificationHandler = async (snapshot, context) => {
         }
     }
 
-    // Payload optimizado con soporte webpush completo (icono, badge, fcmOptions.link)
+    // Payload de producción con máxima prioridad para Android Doze, iOS APNs y WebPush RFC 8030
     const multicastMessage = {
         tokens: uniqueDevices.map(d => d.token),
         notification: {
@@ -399,7 +406,36 @@ const sendPushNotificationHandler = async (snapshot, context) => {
             body: body
         },
         data: dataPayload,
+        android: {
+            priority: 'high',
+            notification: {
+                sound: 'default',
+                channelId: 'somospadel_high_priority',
+                tag: notification.tag || snapshot.id,
+                clickAction: 'FLUTTER_NOTIFICATION_CLICK'
+            }
+        },
+        apns: {
+            headers: {
+                'apns-priority': '10',
+                'apns-push-type': 'alert'
+            },
+            payload: {
+                aps: {
+                    alert: {
+                        title: title,
+                        body: body
+                    },
+                    sound: 'default',
+                    badge: 1
+                }
+            }
+        },
         webpush: {
+            headers: {
+                Urgency: 'high',
+                TTL: '86400'
+            },
             notification: {
                 title: title,
                 body: body,
@@ -418,7 +454,30 @@ const sendPushNotificationHandler = async (snapshot, context) => {
         const response = await admin.messaging().sendEachForMulticast(multicastMessage);
         console.log(`🚀 [Push] Enviado a ${userId}: ${response.successCount} éxitos, ${response.failureCount} fallos de ${uniqueDevices.length} dispositivo(s).`);
 
-        // Identificar tokens inválidos o expirados para eliminarlos
+        // Registrar auditoría y telemetría de entrega
+        try {
+            await db.collection('push_delivery_logs').add({
+                userId: String(userId),
+                notificationId: String(snapshot.id || ''),
+                title: String(title),
+                body: String(body),
+                targetUrl: String(targetUrl),
+                devicesCount: uniqueDevices.length,
+                successCount: response.successCount,
+                failureCount: response.failureCount,
+                timestamp: admin.firestore.FieldValue.serverTimestamp(),
+                details: response.responses.map((res, idx) => ({
+                    deviceId: uniqueDevices[idx].id,
+                    success: res.success,
+                    messageId: res.messageId || null,
+                    error: res.error ? { code: res.error.code, message: res.error.message } : null
+                }))
+            });
+        } catch (logErr) {
+            console.warn(`⚠️ [Push Log] Telemetría no guardada:`, logErr.message);
+        }
+
+        // Identificar tokens genuinamente inválidos o no registrados para eliminarlos
         const tokensToDelete = [];
         response.responses.forEach((res, index) => {
             if (!res.success && res.error) {
@@ -426,8 +485,7 @@ const sendPushNotificationHandler = async (snapshot, context) => {
                 console.warn(`⚠️ [Push] Error en dispositivo ${uniqueDevices[index].id} (${errorCode}):`, res.error.message);
                 if (
                     errorCode === 'messaging/invalid-registration-token' ||
-                    errorCode === 'messaging/registration-token-not-registered' ||
-                    errorCode === 'messaging/mismatched-credential'
+                    errorCode === 'messaging/registration-token-not-registered'
                 ) {
                     tokensToDelete.push(uniqueDevices[index]);
                 }
@@ -512,7 +570,35 @@ async function sendTopicNotification(topic, title, body, targetUrl, customData =
             body: body
         },
         data: dataPayload,
+        android: {
+            priority: 'high',
+            notification: {
+                sound: 'default',
+                channelId: 'somospadel_high_priority',
+                tag: tag || `topic_${topic}_${Date.now()}`
+            }
+        },
+        apns: {
+            headers: {
+                'apns-priority': '10',
+                'apns-push-type': 'alert'
+            },
+            payload: {
+                aps: {
+                    alert: {
+                        title: title,
+                        body: body
+                    },
+                    sound: 'default',
+                    badge: 1
+                }
+            }
+        },
         webpush: {
+            headers: {
+                Urgency: 'high',
+                TTL: '86400'
+            },
             notification: {
                 title: title,
                 body: body,
@@ -606,12 +692,13 @@ exports.onDeviceRegistered = functions.firestore
         }
 
         const data = change.after.data();
-        const token = data && data.token ? String(data.token).trim() : null;
+        const rawToken = data && data.token ? String(data.token).trim() : null;
 
-        if (!token) {
-            console.log(`ℹ️ [FCM Device] Dispositivo ${userId}/${deviceId} sin token FCM válido.`);
+        if (!rawToken || rawToken.length < 10 || rawToken.startsWith('http://') || rawToken.startsWith('https://')) {
+            console.log(`ℹ️ [FCM Device] Dispositivo ${userId}/${deviceId} sin token FCM válido para topics (endpoint o vacío).`);
             return null;
         }
+        const token = rawToken;
 
         // Si cambió el token respecto al anterior, desuscribir el token previo
         if (change.before.exists) {
@@ -1196,5 +1283,98 @@ exports.sendDailyNewsPushNow = functions.https.onCall(async (data, context) => {
         throw new functions.https.HttpsError('internal', err.message || 'Error al emitir la noticia del día.');
     }
 });
+
+// ==========================================
+// 12. TELEMETRÍA Y CONTROL DE SESIONES PARA NOTIFICACIONES
+// ==========================================
+
+/**
+ * Callable: createAuthTokenForPlayer
+ * Genera un Custom Token de Firebase Auth oficial vinculado al ID del jugador en Firestore.
+ * Esto garantiza que request.auth.uid coincida exactamente con playerId, permitiendo
+ * que todas las reglas de Firestore (notifications, devices) funcionen sin fallos de permiso.
+ */
+exports.createAuthTokenForPlayer = functions.https.onCall(async (data, context) => {
+    const { playerId } = data || {};
+    if (!playerId) {
+        throw new functions.https.HttpsError('invalid-argument', 'playerId es requerido');
+    }
+
+    const playerDoc = await db.collection('players').doc(playerId).get();
+    if (!playerDoc.exists) {
+        throw new functions.https.HttpsError('not-found', 'Jugador no encontrado en Firestore.');
+    }
+
+    const pData = playerDoc.data() || {};
+    if (pData.status === 'blocked') {
+        throw new functions.https.HttpsError('permission-denied', 'Tu cuenta ha sido bloqueada.');
+    }
+
+    try {
+        const customToken = await admin.auth().createCustomToken(playerId, {
+            role: pData.role || 'player',
+            phone: pData.phone || ''
+        });
+        return { success: true, customToken, playerId };
+    } catch (e) {
+        console.error('❌ [createAuthTokenForPlayer] Error generando custom token:', e);
+        throw new functions.https.HttpsError('internal', e.message);
+    }
+});
+
+/**
+ * Callable: diagnosePushSystem
+ * Permite auditar el estado del sistema de notificaciones de un jugador o del sistema en general:
+ * dispositivos registrados, validez de tokens, logs de entrega recientes y Topics activos.
+ */
+exports.diagnosePushSystem = functions.https.onCall(async (data, context) => {
+    const targetUserId = (data && data.userId) || (context.auth ? context.auth.uid : null);
+    if (!targetUserId) {
+        throw new functions.https.HttpsError('invalid-argument', 'Se requiere userId para diagnóstico');
+    }
+
+    try {
+        const devicesSnap = await db.collection('players').doc(targetUserId).collection('devices').get();
+        const userDoc = await db.collection('players').doc(targetUserId).get();
+
+        const devices = [];
+        devicesSnap.forEach(d => devices.push({ id: d.id, ...d.data() }));
+
+        const recentLogsSnap = await db.collection('push_delivery_logs')
+            .where('userId', '==', targetUserId)
+            .orderBy('timestamp', 'desc')
+            .limit(5)
+            .get();
+
+        const recentLogs = recentLogsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        return {
+            success: true,
+            userId: targetUserId,
+            userExists: userDoc.exists,
+            userData: userDoc.exists ? {
+                name: userDoc.data().name,
+                role: userDoc.data().role,
+                status: userDoc.data().status,
+                push_enabled: userDoc.data().push_notifications_enabled,
+                hasLegacyToken: Boolean(userDoc.data().fcm_token)
+            } : null,
+            devicesCount: devices.length,
+            devices: devices.map(d => ({
+                deviceId: d.deviceId || d.id,
+                platform: d.platform || 'unknown',
+                hasValidFcmToken: Boolean(d.token && !d.token.startsWith('http') && d.token.length > 15),
+                isEndpointUrl: Boolean(d.token && d.token.startsWith('http')),
+                push_enabled: d.push_enabled,
+                last_active: d.last_active || null
+            })),
+            recentLogs
+        };
+    } catch (diagErr) {
+        console.error('❌ [diagnosePushSystem] Error ejecutando diagnóstico:', diagErr);
+        throw new functions.https.HttpsError('internal', diagErr.message);
+    }
+});
+
 
 

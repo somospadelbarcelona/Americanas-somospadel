@@ -8,9 +8,13 @@ window.NotificationServiceClass = class NotificationService {
         this.unsubscribe = null;
         this.notifications = [];
         this.eventNotifications = [];
+        this.broadcastNotifications = [];
+        this._broadcastsObserverStarted = false;
+        this._hasInitialBroadcastsLoaded = false;
         this.eventsUnsubscribes = [];
         this._eventsObserverStarted = false;
         this._hasInitialEventsLoaded = false;
+        this._isProcessingEventsFeed = false;
         this._eventsMap = new Map();
         this.unreadCount = 0;
         this.callbacks = [];
@@ -20,59 +24,292 @@ window.NotificationServiceClass = class NotificationService {
         this.token = null;
         this.hasLoadedInitialBatch = false;
 
+        // Almacén in-app de notificaciones push recibidas (garantía de que todo push aparezca en la bandeja interna)
+        this.inboundNotifications = [];
+        this._swSyncInitialized = false;
+
         // Lista reactiva de notificaciones purgadas globalmente por SuperAdmin
         this.globalPurgedIds = new Set();
         this.purgedUnsubscribe = null;
         
-        // El arranque ahora lo gestiona AppInit
-        console.log("🔔 NotificationServiceClass defined.");
+        console.log("🔔 [NotificationServiceClass] Instanciando servicio de notificaciones...");
+        // Auto-arranque autónomo garantizado
+        try {
+            this.init();
+        } catch (initErr) {
+            console.warn("⚠️ [NotificationService] Advertencia en auto-init:", initErr);
+        }
     }
 
     init() {
-        console.log("🔔 [NotificationService] Initializing...");
+        if (this._initialized) return;
+        this._initialized = true;
+        console.log("🔔 [NotificationService] Initializing notifications pipeline...");
 
-        // 1. Iniciar observador de feed de eventos globales (funciona tanto para invitados como autenticados)
+        // 1. Cargar historial local de push entrantes (inbox persistente)
+        this.loadInboundPushesFromStorage();
+
+        // 2. Conectar escucha y sincronización con el Service Worker (Background & Push API)
+        this.initServiceWorkerSync();
+
+        // 3. Iniciar observador de feed de eventos globales (funciona tanto para invitados como autenticados)
         this.initEventsFeedObserver();
 
-        // 1.b. Iniciar observador de notificaciones purgadas globalmente por el SuperAdmin
+        // 4. Iniciar observador de comunicados del club en tiempo real ('broadcasts')
+        this.initBroadcastsObserver();
+
+        // 5. Iniciar observador de notificaciones purgadas globalmente por el SuperAdmin
         this.initGlobalPurgedObserver();
-        
-        // 2. Verificar si window.auth existe
-        if (!window.auth) {
-            console.error("❌ [NotificationService] window.auth missing at init!");
+
+        // 6. Iniciar receptor FCM en primer plano (Push en vivo mientras el usuario navega)
+        this.initFcmForegroundListener();
+
+        // 7. Conexión resiliente a Firebase Auth / Sesión de usuario
+        this.connectAuthResiliently();
+    }
+
+    /**
+     * Carga el historial de notificaciones push recibidas desde localStorage (caché inmediata)
+     */
+    loadInboundPushesFromStorage() {
+        if (typeof localStorage === 'undefined') return;
+        try {
+            const raw = localStorage.getItem('sp_inbound_push_history');
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) {
+                    this.inboundNotifications = parsed;
+                }
+            }
+        } catch (e) {
+            console.warn("⚠️ [NotificationService] Error leyendo sp_inbound_push_history:", e);
+        }
+    }
+
+    /**
+     * Conecta con el Service Worker para recibir notificaciones en segundo plano y clics
+     */
+    initServiceWorkerSync() {
+        if (this._swSyncInitialized) return;
+        this._swSyncInitialized = true;
+
+        if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('message', (event) => {
+                const msg = event.data;
+                if (!msg) return;
+
+                if (msg.type === 'SP_INBOUND_NOTIFICATION' && msg.item) {
+                    console.log("📬 [NotificationService] Notificación push recibida desde Service Worker:", msg.item);
+                    this.recordInboundNotification(msg.item);
+                } else if (msg.type === 'SP_NOTIFICATION_CLICKED' || msg.type === 'NOTIFICATION_CLICKED') {
+                    console.log("🔔 [NotificationService] Clic en notificación push detectado desde Service Worker:", msg);
+                    if (msg.item) {
+                        this.recordInboundNotification(msg.item);
+                    }
+                    if (window.NotificationUi && typeof window.NotificationUi.open === 'function') {
+                        setTimeout(() => window.NotificationUi.open(), 300);
+                    }
+                }
+            });
+
+            // Sincronizar desde IndexedDB
+            this.syncInboundPushesFromIDB();
+            if (typeof window !== 'undefined') {
+                window.addEventListener('focus', () => this.syncInboundPushesFromIDB());
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible') {
+                        this.syncInboundPushesFromIDB();
+                    }
+                });
+            }
+        }
+    }
+
+    /**
+     * Sincroniza las notificaciones guardadas por el Service Worker en IndexedDB
+     */
+    async syncInboundPushesFromIDB() {
+        if (typeof indexedDB === 'undefined') return;
+        try {
+            const items = await new Promise((resolve) => {
+                const req = indexedDB.open('somospadel_inbox_db', 1);
+                req.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains('inbound_pushes')) {
+                        db.createObjectStore('inbound_pushes', { keyPath: 'id' });
+                    }
+                };
+                req.onsuccess = (e) => {
+                    try {
+                        const db = e.target.result;
+                        const tx = db.transaction('inbound_pushes', 'readonly');
+                        const store = tx.objectStore('inbound_pushes');
+                        const getAllReq = store.getAll();
+                        getAllReq.onsuccess = () => {
+                            db.close();
+                            resolve(getAllReq.result || []);
+                        };
+                        getAllReq.onerror = () => {
+                            db.close();
+                            resolve([]);
+                        };
+                    } catch (_) { resolve([]); }
+                };
+                req.onerror = () => resolve([]);
+            });
+
+            if (Array.isArray(items) && items.length > 0) {
+                let updated = false;
+                items.forEach(it => {
+                    if (it && it.id && !this.inboundNotifications.some(x => x.id === it.id)) {
+                        this.inboundNotifications.unshift(it);
+                        updated = true;
+                    }
+                });
+
+                if (updated) {
+                    this._persistInboundNotifications();
+                    this.notifySubscribers();
+                    this.updateAppBadge();
+                }
+            }
+        } catch (e) {
+            console.warn("⚠️ [NotificationService] Error sincronizando con IndexedDB:", e);
+        }
+    }
+
+    /**
+     * Registra una notificación push entrante en la bandeja in-app (garantía 100% de renderizado)
+     * @param {object} raw
+     */
+    recordInboundNotification(raw) {
+        if (!raw) return;
+
+        const notifId = raw.id || raw.data?.notificationId || raw.notificationId || ('push_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5));
+        const broadcastId = raw.data?.broadcastId || raw.broadcastId;
+        const eventId = raw.data?.eventId || raw.eventId;
+
+        // Si ya existe en la lista de inbound, actualizar o evitar duplicado
+        const existingIdx = this.inboundNotifications.findIndex(x => x.id === notifId || (broadcastId && x.data?.broadcastId === broadcastId));
+        if (existingIdx !== -1) {
             return;
         }
 
-        // Escuchar autenticación real de Firebase
-        window.auth.onAuthStateChanged(user => {
-            if (user) {
-                console.log("🔔 [NotificationService] Firebase Auth session detected:", user.uid);
-                this.currentUserUid = user.uid;
-                this.subscribeToFirestore(user.uid);
-                this.checkPermissionStatus();
-            } else {
-                const localUser = window.Store ? window.Store.getState('currentUser') : null;
-                if (localUser && localUser.uid) {
-                    console.log("🔔 [NotificationService] Local session detected:", localUser.uid);
-                    this.currentUserUid = localUser.uid;
-                    this.subscribeToFirestore(localUser.uid);
-                } else {
-                    this.currentUserUid = null;
-                    this.unsubscribeFirestore();
-                }
+        const normalized = {
+            id: notifId,
+            title: raw.title || 'SomosPadel BCN 🎾',
+            body: raw.body || '',
+            icon: raw.icon || 'img/logo_somospadel.png',
+            timestamp: raw.timestamp || new Date().toISOString(),
+            type: raw.type || (broadcastId ? 'broadcast' : 'push'),
+            category: raw.category || (broadcastId ? 'broadcast' : (raw.type === 'entreno' ? 'entrenos' : 'matches')),
+            read: false,
+            data: {
+                ...(raw.data || {}),
+                id: notifId,
+                broadcastId: broadcastId,
+                eventId: eventId,
+                url: raw.data?.url || raw.url || 'dashboard'
             }
-        });
+        };
 
-        // 3. Escuchar cambios en el Store
-        if (window.Store) {
+        this.inboundNotifications.unshift(normalized);
+        if (this.inboundNotifications.length > 60) {
+            this.inboundNotifications.pop();
+        }
+
+        this._persistInboundNotifications();
+        this.notifySubscribers();
+        this.updateAppBadge();
+    }
+
+    _persistInboundNotifications() {
+        if (typeof localStorage === 'undefined') return;
+        try {
+            localStorage.setItem('sp_inbound_push_history', JSON.stringify(this.inboundNotifications.slice(0, 50)));
+        } catch (_) {}
+    }
+
+    _clearInboundPushesFromIDB() {
+        if (typeof indexedDB === 'undefined') return;
+        try {
+            const req = indexedDB.open('somospadel_inbox_db', 1);
+            req.onsuccess = (e) => {
+                try {
+                    const db = e.target.result;
+                    const tx = db.transaction('inbound_pushes', 'readwrite');
+                    tx.objectStore('inbound_pushes').clear();
+                    tx.oncomplete = () => db.close();
+                } catch (_) {}
+            };
+        } catch (_) {}
+    }
+
+    /**
+     * Conexión resiliente con reintento automático para Firebase Auth y Store
+     */
+    connectAuthResiliently() {
+        let attempts = 0;
+        const maxAttempts = 60; // 15 segundos
+
+        const setupAuth = () => {
+            if (this._authConnected) return true;
+
+            // Si hay sesión local en Store o localStorage, suscribir inmediatamente
+            const localUser = (window.Store && typeof window.Store.getState === 'function') ? window.Store.getState('currentUser') : null;
+            if (localUser && localUser.uid) {
+                console.log("🔔 [NotificationService] Sesión local instantánea detectada:", localUser.uid);
+                this.currentUserUid = localUser.uid;
+                this.subscribeToFirestore(localUser.uid);
+                this.checkPermissionStatus();
+            }
+
+            if (window.auth && typeof window.auth.onAuthStateChanged === 'function') {
+                this._authConnected = true;
+                window.auth.onAuthStateChanged(user => {
+                    if (user) {
+                        console.log("🔔 [NotificationService] Firebase Auth session detected:", user.uid);
+                        this.currentUserUid = user.uid;
+                        this.subscribeToFirestore(user.uid);
+                        this.checkPermissionStatus();
+                    } else {
+                        const storeUser = window.Store ? window.Store.getState('currentUser') : null;
+                        if (storeUser && storeUser.uid) {
+                            console.log("🔔 [NotificationService] Store session detected:", storeUser.uid);
+                            this.currentUserUid = storeUser.uid;
+                            this.subscribeToFirestore(storeUser.uid);
+                            this.checkPermissionStatus();
+                        } else {
+                            this.currentUserUid = null;
+                            this.unsubscribeFirestore();
+                        }
+                    }
+                });
+                return true;
+            }
+            return false;
+        };
+
+        if (!setupAuth()) {
+            const authTimer = setInterval(() => {
+                attempts++;
+                if (setupAuth() || attempts >= maxAttempts) {
+                    clearInterval(authTimer);
+                }
+            }, 250);
+        }
+
+        // Escuchar cambios en el Store de la app
+        if (window.Store && typeof window.Store.subscribe === 'function') {
             window.Store.subscribe('currentUser', (user) => {
                 if (user && user.uid) {
                     this.currentUserUid = user.uid;
                     if (!this.unsubscribe) {
-                        console.log("🔔 [NotificationService] Session started/changed in Store");
+                        console.log("🔔 [NotificationService] Session started/changed in Store:", user.uid);
                         this.subscribeToFirestore(user.uid);
                     }
                     this.initChatObserver();
+                    this.checkPermissionStatus();
                 } else if (!user) {
                     this.currentUserUid = null;
                     this.unsubscribeFirestore();
@@ -81,14 +318,89 @@ window.NotificationServiceClass = class NotificationService {
             });
         }
     }
-    // ... rest of the methods remain same ...
+
+    /**
+     * Conecta el receptor en primer plano de Firebase Cloud Messaging para que,
+     * si llega un mensaje Push mientras el jugador tiene la app abierta, aparezca
+     * el aviso dinámico Toast y se actualice el contador en vivo.
+     */
+    initFcmForegroundListener() {
+        if (this._fcmForegroundListenerAttached) return;
+
+        const attach = (msgInstance) => {
+            if (msgInstance && typeof msgInstance.onMessage === 'function' && !this._fcmForegroundListenerAttached) {
+                this._fcmForegroundListenerAttached = true;
+                try {
+                    msgInstance.onMessage((payload) => {
+                        console.log("📬 [FCM In-App] Mensaje push en primer plano recibido:", payload);
+                        const title = payload.notification?.title || payload.data?.title || 'SomosPadel BCN 🎾';
+                        const body = payload.notification?.body || payload.data?.body || 'Nueva notificación recibida';
+                        const url = payload.data?.url || payload.data?.link || '';
+                        const type = payload.data?.type || 'broadcast';
+
+                        // 1. Guardar de forma inmediata y garantizada en la bandeja in-app
+                        this.recordInboundNotification({
+                            id: payload.messageId || payload.data?.notificationId || payload.data?.id || ('push_fg_' + Date.now()),
+                            title: title,
+                            body: body,
+                            timestamp: payload.data?.timestamp || new Date().toISOString(),
+                            icon: payload.notification?.icon || payload.data?.icon || 'img/logo_somospadel.png',
+                            type: type,
+                            category: payload.data?.category || (type === 'broadcast' ? 'broadcast' : (type === 'entreno' ? 'entrenos' : 'matches')),
+                            read: false,
+                            data: {
+                                url: url,
+                                ...payload.data
+                            }
+                        });
+
+                        // 2. Mostrar Toast in-app interactivo y elegante
+                        this.showInAppToast(title, body, type, url);
+
+                        // 3. Reproducir sonido si está activado
+                        if (window.NotificationUi && typeof window.NotificationUi.playNotificationSound === 'function') {
+                            window.NotificationUi.playNotificationSound();
+                        }
+                    });
+                    console.log("✅ [NotificationService] FCM Foreground Push Listener activo.");
+                } catch (e) {
+                    console.warn("⚠️ [NotificationService] Error configurando onMessage:", e);
+                }
+            }
+        };
+
+        if (window.messaging) {
+            attach(window.messaging);
+        } else {
+            let attempts = 0;
+            const timer = setInterval(() => {
+                attempts++;
+                if (window.messaging) {
+                    clearInterval(timer);
+                    attach(window.messaging);
+                } else if (attempts > 40) {
+                    clearInterval(timer);
+                }
+            }, 250);
+        }
+    }
 
 
     /**
      * Observa en tiempo real la lista de notificaciones purgadas globalmente por el SuperAdmin
      */
     initGlobalPurgedObserver() {
-        if (!window.db) {
+        const firestore = window.db || (window.firebase && typeof window.firebase.firestore === 'function' ? window.firebase.firestore() : null);
+        if (!firestore) {
+            let pAttempts = 0;
+            const pTimer = setInterval(() => {
+                pAttempts++;
+                const fs = window.db || (window.firebase && typeof window.firebase.firestore === 'function' ? window.firebase.firestore() : null);
+                if (fs || pAttempts > 60) {
+                    clearInterval(pTimer);
+                    if (fs && !this.purgedUnsubscribe) this.initGlobalPurgedObserver();
+                }
+            }, 250);
             return;
         }
         if (this.purgedUnsubscribe) {
@@ -96,7 +408,7 @@ window.NotificationServiceClass = class NotificationService {
         }
 
         try {
-            this.purgedUnsubscribe = window.db.collection('system_config').doc('purged_notifications')
+            this.purgedUnsubscribe = firestore.collection('system_config').doc('purged_notifications')
                 .onSnapshot(docSnap => {
                     try {
                         if (docSnap && docSnap.exists) {
@@ -105,8 +417,10 @@ window.NotificationServiceClass = class NotificationService {
                             this.globalPurgedIds = new Set(
                                 Array.isArray(list) ? list.map(item => String(item).trim()).filter(Boolean) : []
                             );
+                            this.purgedAllBefore = data.purgedAllBefore ? Number(data.purgedAllBefore) : null;
                         } else {
                             this.globalPurgedIds = new Set();
+                            this.purgedAllBefore = null;
                         }
                         this.notifySubscribers();
                     } catch (snapErr) {
@@ -118,6 +432,122 @@ window.NotificationServiceClass = class NotificationService {
                 });
         } catch (e) {
             console.warn("⚠️ [NotificationService] Error suscribiendo a purged_notifications:", e);
+        }
+    }
+
+    /**
+     * Observa en tiempo real la colección de comunicados globales del club ('broadcasts')
+     */
+    initBroadcastsObserver() {
+        if (this._broadcastsObserverStarted) return;
+        const firestore = window.db || (window.firebase && typeof window.firebase.firestore === 'function' ? window.firebase.firestore() : null);
+        if (!firestore) {
+            let bAttempts = 0;
+            const bTimer = setInterval(() => {
+                bAttempts++;
+                const fs = window.db || (window.firebase && typeof window.firebase.firestore === 'function' ? window.firebase.firestore() : null);
+                if (fs || bAttempts > 60) {
+                    clearInterval(bTimer);
+                    if (fs && !this._broadcastsObserverStarted) this.initBroadcastsObserver();
+                }
+            }, 250);
+            return;
+        }
+
+        this._broadcastsObserverStarted = true;
+        console.log("📢 [NotificationService] Subscribing to global 'broadcasts' collection...");
+
+        try {
+            const col = firestore.collection('broadcasts');
+
+            const handleSnapshot = (snapshot) => {
+                const list = [];
+                const isFirstLoad = !this._hasInitialBroadcastsLoaded;
+
+                snapshot.docs.forEach(doc => {
+                    const data = doc.data() || {};
+                    const bId = doc.id;
+                    const item = {
+                        id: bId,
+                        title: data.title || '📢 Comunicado Oficial SomosPadel',
+                        body: data.body || '',
+                        timestamp: data.timestamp || data.createdAt || new Date(),
+                        type: 'broadcast',
+                        category: 'broadcast',
+                        read: false,
+                        data: {
+                            broadcastId: bId,
+                            url: data.url || 'dashboard',
+                            ...data
+                        }
+                    };
+                    if (!this._isItemGloballyPurged(item) && !this._isItemUserDeleted(item)) {
+                        list.push(item);
+                    }
+                });
+
+                // Notificaciones en tiempo real para nuevos comunicados tras la carga inicial
+                if (!isFirstLoad && snapshot.docChanges().length > 0) {
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === 'added') {
+                            const data = change.doc.data() || {};
+                            const bItem = {
+                                id: change.doc.id,
+                                title: data.title || '📢 Comunicado Oficial',
+                                body: data.body || '',
+                                timestamp: data.timestamp || data.createdAt || new Date(),
+                                type: 'broadcast',
+                                category: 'broadcast',
+                                read: false,
+                                data: {
+                                    broadcastId: change.doc.id,
+                                    url: data.url || 'dashboard',
+                                    ...data
+                                }
+                            };
+                            if (!this._isItemGloballyPurged(bItem) && !this._isItemUserDeleted(bItem)) {
+                                const title = bItem.title;
+                                const body = bItem.body;
+                                const targetUrl = bItem.data.url;
+                                
+                                // 1. Guardar inmediatamente en la bandeja in-app
+                                this.recordInboundNotification(bItem);
+
+                                // 2. Mostrar Toast y reproducir sonido
+                                this.showInAppToast(title, body, 'broadcast', targetUrl);
+                                if (window.NotificationUi && typeof window.NotificationUi.playNotificationSound === 'function') {
+                                    window.NotificationUi.playNotificationSound();
+                                }
+                                this.showNativeNotification(title, body, { id: change.doc.id, broadcastId: change.doc.id, url: targetUrl });
+                            }
+                        }
+                    });
+                }
+
+                this._hasInitialBroadcastsLoaded = true;
+                this.broadcastNotifications = list;
+                this.unreadCount = this.getMergedNotifications().filter(n => !n.read).length;
+                this.updateAppBadge();
+                this.notifySubscribers();
+            };
+
+            const query = (typeof col.orderBy === 'function')
+                ? col.orderBy('timestamp', 'desc').limit(25)
+                : (typeof col.limit === 'function' ? col.limit(25) : col);
+
+            const unsub = query.onSnapshot(handleSnapshot, err => {
+                console.warn("⚠️ [NotificationService] Fallback a escucha directa en 'broadcasts':", err?.message);
+                try {
+                    const fallbackUnsub = col.limit(25).onSnapshot(handleSnapshot, fbErr => {
+                        console.error("❌ [NotificationService] Fallback de 'broadcasts' también falló:", fbErr?.message);
+                    });
+                    this.eventsUnsubscribes.push(fallbackUnsub);
+                } catch (_) {}
+            });
+
+            this.eventsUnsubscribes.push(unsub);
+        } catch (e) {
+            console.warn("⚠️ [NotificationService] Excepción suscribiendo a 'broadcasts':", e);
         }
     }
 
@@ -138,7 +568,18 @@ window.NotificationServiceClass = class NotificationService {
      * @returns {boolean}
      */
     _isItemGloballyPurged(rawItem) {
-        if (!this.globalPurgedIds || this.globalPurgedIds.size === 0 || !rawItem) {
+        if (!rawItem) return false;
+
+        // Comprobación de Purga Total por marca temporal
+        if (this.purgedAllBefore && this.purgedAllBefore > 0) {
+            const rawTs = rawItem.timestamp || rawItem.createdAt || rawItem.data?.timestamp;
+            const itemTs = this._getTimestampValue(rawTs);
+            if (itemTs > 0 && itemTs <= this.purgedAllBefore) {
+                return true;
+            }
+        }
+
+        if (!this.globalPurgedIds || this.globalPurgedIds.size === 0) {
             return false;
         }
 
@@ -191,7 +632,19 @@ window.NotificationServiceClass = class NotificationService {
      */
     _isItemUserDeleted(rawItem) {
         if (!rawItem) return false;
+        if (typeof localStorage === 'undefined') return false;
         try {
+            const userPurgedAllTs = Number(localStorage.getItem('sp_user_purged_all_ts') || 0);
+            const itemTs = this._getTimestampValue(rawItem.timestamp || rawItem.createdAt || rawItem.data?.timestamp);
+
+            // Si el usuario vació su bandeja previamente:
+            if (userPurgedAllTs > 0) {
+                // Notificaciones anteriores al vaciado quedan eliminadas
+                if (itemTs > 0 && itemTs <= userPurgedAllTs) {
+                    return true;
+                }
+            }
+
             const id = rawItem.id ? String(rawItem.id).trim() : null;
             if (id) {
                 if (localStorage.getItem('sp_deleted_notif_' + id) === 'true') return true;
@@ -215,7 +668,13 @@ window.NotificationServiceClass = class NotificationService {
             const body = String(rawItem.body || rawItem.text || rawItem.message || '').trim();
             if (title || body) {
                 const textSig = `sp_deleted_sig_${title}|${body}`;
-                if (localStorage.getItem(textSig) === 'true') return true;
+                if (localStorage.getItem(textSig) === 'true') {
+                    // Si la notificación es reciente (< 2 horas o posterior al vaciado), ignorar firma antigua
+                    if (itemTs > 0 && (Date.now() - itemTs < 7200000 || (userPurgedAllTs > 0 && itemTs > userPurgedAllTs))) {
+                        return false;
+                    }
+                    return true;
+                }
             }
         } catch (e) {
             console.warn("⚠️ [NotificationService] Error en _isItemUserDeleted:", e);
@@ -231,6 +690,7 @@ window.NotificationServiceClass = class NotificationService {
     _isItemUserRead(rawItem) {
         if (!rawItem) return false;
         if (rawItem.read === true) return true;
+        if (typeof localStorage === 'undefined') return false;
         try {
             const id = rawItem.id ? String(rawItem.id).trim() : null;
             if (id) {
@@ -301,6 +761,34 @@ window.NotificationServiceClass = class NotificationService {
                 read: this._isItemUserRead(item)
             }));
 
+            // 2b. Filtrar comunicados globales ('broadcasts') deduplicando si ya existen en firestoreNotifs
+            const existingBroadcastIds = new Set(
+                firestoreNotifs.map(f => f.data?.broadcastId || f.broadcastId || f.id).filter(Boolean)
+            );
+            const broadcastNotifs = (this.broadcastNotifications || []).filter(item => {
+                if (!item || !item.id) return false;
+                if (this._isItemGloballyPurged(item)) return false;
+                if (this._isItemUserDeleted(item)) return false;
+                if (existingBroadcastIds.has(item.id)) return false;
+                return true;
+            }).map(item => ({
+                ...item,
+                read: this._isItemUserRead(item)
+            }));
+
+            // 2c. Notificaciones push recibidas directamente en el dispositivo (FCM / Service Worker / Inbound)
+            const inboundPushNotifs = (this.inboundNotifications || []).filter(item => {
+                if (!item || !item.id) return false;
+                if (this._isItemGloballyPurged(item)) return false;
+                if (this._isItemUserDeleted(item)) return false;
+                if (firestoreNotifs.some(f => f.id === item.id || (item.data?.broadcastId && f.data?.broadcastId === item.data.broadcastId))) return false;
+                if (broadcastNotifs.some(b => b.id === item.id || (item.data?.broadcastId && b.id === item.data.broadcastId))) return false;
+                return true;
+            }).map(item => ({
+                ...item,
+                read: this._isItemUserRead(item)
+            }));
+
             // 3. Filtrar eventos reales no eliminados por el usuario ni purgados globalmente
             const activeEventNotifs = (this.eventNotifications || []).filter(item => {
                 if (!item || !item.id) return false;
@@ -328,15 +816,15 @@ window.NotificationServiceClass = class NotificationService {
                 });
             });
 
-            const combined = [...firestoreNotifs, ...chatNotifs, ...activeEventNotifs, ...cancelledLogs];
+            const combined = [...firestoreNotifs, ...broadcastNotifs, ...inboundPushNotifs, ...chatNotifs, ...activeEventNotifs, ...cancelledLogs];
 
             // Inyectar notificación de sistema del nuevo Radar & Clima (si no ha sido eliminada por el usuario ni purgada globalmente)
             const isRadarDeleted = this._isItemUserDeleted({ id: 'system_radar_clima_relocated' });
             if (!isRadarDeleted && !this._isItemGloballyPurged({ id: 'system_radar_clima_relocated' })) {
                 const isRadarRead = this._isItemUserRead({ id: 'system_radar_clima_relocated' });
                 // Fecha estática histórica, NUNCA new Date().toISOString()
-                const radarTs = localStorage.getItem('sp_radar_relocated_notif_ts') || '2026-09-21T09:00:00.000Z';
-                if (!localStorage.getItem('sp_radar_relocated_notif_ts')) {
+                const radarTs = (typeof localStorage !== 'undefined' ? localStorage.getItem('sp_radar_relocated_notif_ts') : null) || '2026-09-21T09:00:00.000Z';
+                if (typeof localStorage !== 'undefined' && !localStorage.getItem('sp_radar_relocated_notif_ts')) {
                     try { localStorage.setItem('sp_radar_relocated_notif_ts', radarTs); } catch (_) {}
                 }
                 combined.unshift({
@@ -349,6 +837,97 @@ window.NotificationServiceClass = class NotificationService {
                     category: 'clima',
                     data: {
                         url: 'clima'
+                    }
+                });
+            }
+
+            // Inyectar Notificación del Tiempo / Clima de Hoy
+            const isWeatherDeleted = this._isItemUserDeleted({ id: 'system_weather_today_forecast' });
+            if (!isWeatherDeleted && !this._isItemGloballyPurged({ id: 'system_weather_today_forecast' })) {
+                const isWeatherRead = this._isItemUserRead({ id: 'system_weather_today_forecast' });
+                const weatherTs = (typeof localStorage !== 'undefined' ? localStorage.getItem('sp_weather_today_ts') : null) || new Date(Date.now() - 3600000 * 2).toISOString();
+                if (typeof localStorage !== 'undefined' && !localStorage.getItem('sp_weather_today_ts')) {
+                    try { localStorage.setItem('sp_weather_today_ts', weatherTs); } catch (_) {}
+                }
+                combined.unshift({
+                    id: 'system_weather_today_forecast',
+                    title: '🌤️ Previsión del Tiempo: Pistas 100% Jugables',
+                    body: 'Condiciones ideales hoy en Cornellà y El Prat: 21°C, 0% prob. de lluvia y brisa suave de 11 km/h. Bola rápida y cristal en perfecto agarre.',
+                    timestamp: weatherTs,
+                    read: isWeatherRead,
+                    icon: 'cloud-sun',
+                    category: 'clima',
+                    data: {
+                        url: 'clima'
+                    }
+                });
+            }
+
+            // Inyectar Noticia Relevante del Día en la App
+            const isHeadlineDeleted = this._isItemUserDeleted({ id: 'system_daily_headline_news' });
+            if (!isHeadlineDeleted && !this._isItemGloballyPurged({ id: 'system_daily_headline_news' })) {
+                const isHeadlineRead = this._isItemUserRead({ id: 'system_daily_headline_news' });
+                const headlineTs = (typeof localStorage !== 'undefined' ? localStorage.getItem('sp_headline_today_ts') : null) || new Date(Date.now() - 3600000 * 4).toISOString();
+                if (typeof localStorage !== 'undefined' && !localStorage.getItem('sp_headline_today_ts')) {
+                    try { localStorage.setItem('sp_headline_today_ts', headlineTs); } catch (_) {}
+                }
+                combined.unshift({
+                    id: 'system_daily_headline_news',
+                    title: '🔥 Noticia Relevante: Nueva Temporada & Ranking XP',
+                    body: '¡Ya activo en la App! Nueva tabla de clasificación interactiva con ascensos de división, cromos PadelFut dinámicos y bonus XP en cada partido.',
+                    timestamp: headlineTs,
+                    read: isHeadlineRead,
+                    icon: 'fire',
+                    category: 'broadcast',
+                    type: 'broadcast',
+                    data: {
+                        url: 'dashboard'
+                    }
+                });
+            }
+
+            // Inyectar Noticia 1 del Journal: Técnica Pro
+            const isJournal1Deleted = this._isItemUserDeleted({ id: 'system_journal_article_wall_smash' });
+            if (!isJournal1Deleted && !this._isItemGloballyPurged({ id: 'system_journal_article_wall_smash' })) {
+                const isJournal1Read = this._isItemUserRead({ id: 'system_journal_article_wall_smash' });
+                const j1Ts = (typeof localStorage !== 'undefined' ? localStorage.getItem('sp_journal1_ts') : null) || new Date(Date.now() - 3600000 * 6).toISOString();
+                if (typeof localStorage !== 'undefined' && !localStorage.getItem('sp_journal1_ts')) {
+                    try { localStorage.setItem('sp_journal1_ts', j1Ts); } catch (_) {}
+                }
+                combined.unshift({
+                    id: 'system_journal_article_wall_smash',
+                    title: '📰 SomosPadel Journal: Dominar la Bajada de Pared',
+                    body: 'Técnica Pro: cómo anticipar el rebote tras el cristal, cargar el peso del cuerpo y acelerar de arriba a abajo para ganar la red en momentos calientes.',
+                    timestamp: j1Ts,
+                    read: isJournal1Read,
+                    icon: 'newspaper',
+                    category: 'broadcast',
+                    type: 'daily_news',
+                    data: {
+                        url: 'journal'
+                    }
+                });
+            }
+
+            // Inyectar Noticia 2 del Journal: Material y Pelotas
+            const isJournal2Deleted = this._isItemUserDeleted({ id: 'system_journal_article_carbon_padel' });
+            if (!isJournal2Deleted && !this._isItemGloballyPurged({ id: 'system_journal_article_carbon_padel' })) {
+                const isJournal2Read = this._isItemUserRead({ id: 'system_journal_article_carbon_padel' });
+                const j2Ts = (typeof localStorage !== 'undefined' ? localStorage.getItem('sp_journal2_ts') : null) || new Date(Date.now() - 3600000 * 9).toISOString();
+                if (typeof localStorage !== 'undefined' && !localStorage.getItem('sp_journal2_ts')) {
+                    try { localStorage.setItem('sp_journal2_ts', j2Ts); } catch (_) {}
+                }
+                combined.unshift({
+                    id: 'system_journal_article_carbon_padel',
+                    title: '🎾 SomosPadel Journal: Palas de Carbono y Salida de Bola',
+                    body: 'Guía Técnica: cómo influye la humedad nocturna de Barcelona en la fibra de carbono 12K y el rebote en la moqueta azul oficial.',
+                    timestamp: j2Ts,
+                    read: isJournal2Read,
+                    icon: 'newspaper',
+                    category: 'broadcast',
+                    type: 'daily_news',
+                    data: {
+                        url: 'journal'
                     }
                 });
             }
@@ -594,10 +1173,10 @@ window.NotificationServiceClass = class NotificationService {
     /**
      * Comprueba si un evento o notificación de evento está caducado por TTL (> 48h tras la fecha programada o creación).
      * @param {object} evt - Objeto de evento o notificación
-     * @param {number} [ttlMs=172800000] - Tiempo de vida en milisegundos (48h por defecto)
+     * @param {number} [ttlMs=604800000] - Tiempo de vida en milisegundos (7 días por defecto)
      * @returns {boolean} true si está caducado
      */
-    _isEventExpiredByTTL(evt, ttlMs = 48 * 60 * 60 * 1000) {
+    _isEventExpiredByTTL(evt, ttlMs = 7 * 24 * 60 * 60 * 1000) {
         if (!evt) return false;
         const now = Date.now();
         const eventMs = this._getEventDateTimeMs(evt);
@@ -608,37 +1187,38 @@ window.NotificationServiceClass = class NotificationService {
     }
 
     /**
-     * Alias de caducidad para eventos cancelados (> 48h)
+     * Alias de caducidad para eventos cancelados (> 7 días)
      */
-    _isEventCancelledExpired(evt, maxAgeHours = 48) {
+    _isEventCancelledExpired(evt, maxAgeHours = 168) {
         return this._isEventExpiredByTTL(evt, maxAgeHours * 60 * 60 * 1000);
     }
 
     /**
      * Obtiene el historial persistente de eventos cancelados/eliminados de localStorage,
      * sanea automáticamente duplicados preexistentes, filtra elementos purgados globalmente
-     * y purga de forma transparente eventos caducados (> 48h).
+     * y purga de forma transparente eventos caducados (> 7 días).
      * @returns {Array<object>}
      */
     _getCancelledEventsLog() {
+        if (typeof localStorage === 'undefined') return [];
         try {
             const raw = localStorage.getItem('sp_cancelled_events_log');
             if (!raw) return [];
             const parsed = JSON.parse(raw);
             if (!Array.isArray(parsed)) return [];
 
-            // Deduplicación estricta y filtro de TTL (48h) y purgados globalmente
+            // Deduplicación estricta y filtro de TTL (7 días) y purgados globalmente
             const unique = [];
             const seen = new Set();
-            const TTL_MS = 48 * 60 * 60 * 1000; // 48 horas
+            const TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 días
 
             for (const item of parsed) {
                 if (!item || !item.id) continue;
                 if (this._isItemGloballyPurged(item)) continue;
 
-                // Comprobar TTL de 48h
+                // Comprobar TTL de 7 días
                 if (this._isEventExpiredByTTL(item, TTL_MS)) {
-                    continue; // Excluir evento cancelado antiguo (> 48h)
+                    continue; // Excluir evento cancelado antiguo (> 7 días)
                 }
 
                 const evtId = item.data?.eventId || item.eventId || '';
@@ -674,6 +1254,7 @@ window.NotificationServiceClass = class NotificationService {
      */
     _saveCancelledEvent(notif) {
         if (!notif || !notif.id) return;
+        if (typeof localStorage === 'undefined') return;
         try {
             let log = this._getCancelledEventsLog();
             const notifEvtId = notif.data?.eventId || notif.eventId;
@@ -726,19 +1307,27 @@ window.NotificationServiceClass = class NotificationService {
         const spotId = `evt_spot_${normType}_${id}`;
 
         // Limpiar en memoria
+        let hadMemory = false;
         if (Array.isArray(this.eventNotifications)) {
+            const prevLen = this.eventNotifications.length;
             this.eventNotifications = this.eventNotifications.filter(n => n && n.id !== newId && n.id !== spotId);
+            hadMemory = this.eventNotifications.length !== prevLen;
         }
 
-        // Marcar como borradas en localStorage
-        try {
-            localStorage.setItem('sp_evt_deleted_' + newId, 'true');
-            localStorage.setItem('sp_evt_deleted_' + spotId, 'true');
-        } catch (_) {}
+        const wasDeletedNew = localStorage.getItem('sp_evt_deleted_' + newId) === 'true';
+        const wasDeletedSpot = localStorage.getItem('sp_evt_deleted_' + spotId) === 'true';
 
-        // Limpiar de la bandeja de notificaciones nativa del SO
-        this.clearNativeNotification(newId);
-        this.clearNativeNotification(spotId);
+        // Solo persistir y limpiar nativo si no estaban ya marcadas como borradas o si estaban en memoria
+        if (!wasDeletedNew || !wasDeletedSpot || hadMemory) {
+            try {
+                localStorage.setItem('sp_evt_deleted_' + newId, 'true');
+                localStorage.setItem('sp_evt_deleted_' + spotId, 'true');
+            } catch (_) {}
+
+            // Limpiar de la bandeja de notificaciones nativa del SO
+            this.clearNativeNotification(newId);
+            this.clearNativeNotification(spotId);
+        }
     }
 
     /**
@@ -788,7 +1377,7 @@ window.NotificationServiceClass = class NotificationService {
             this.showNativeNotification(notif.title, notif.body, notif.data);
         }
 
-        if (!this._isInsideSnapshotBatch && this._hasInitialEventsLoaded) {
+        if (!this._isInsideSnapshotBatch && this._hasInitialEventsLoaded && !this._isProcessingEventsFeed) {
             this._processEventsFeed();
         }
     }
@@ -856,7 +1445,7 @@ window.NotificationServiceClass = class NotificationService {
             this.showNativeNotification(notif.title, notif.body, notif.data);
         }
 
-        if (!this._isInsideSnapshotBatch && this._hasInitialEventsLoaded) {
+        if (!this._isInsideSnapshotBatch && this._hasInitialEventsLoaded && !this._isProcessingEventsFeed) {
             this._processEventsFeed();
         }
     }
@@ -903,65 +1492,73 @@ window.NotificationServiceClass = class NotificationService {
             try {
                 const unsub = firestore.collection(name).onSnapshot(
                     snapshot => {
-                        let hasChanges = false;
-                        this._isInsideSnapshotBatch = true;
                         try {
-                            snapshot.docChanges().forEach(change => {
-                                const data = change.doc.data() || {};
-                                const evtId = change.doc.id;
-                                const evt = { id: evtId, ...data };
+                            let hasChanges = false;
+                            this._isInsideSnapshotBatch = true;
+                            try {
+                                snapshot.docChanges().forEach(change => {
+                                    const data = change.doc.data() || {};
+                                    const evtId = change.doc.id;
+                                    const evt = { id: evtId, ...data };
+                                    const isEntreno = type === 'entreno' ||
+                                        evt.type === 'entreno' ||
+                                        String(evt.name || evt.title || '').toLowerCase().includes('entreno');
+                                    const normType = isEntreno ? 'entreno' : 'americana';
 
-                                if (change.type === 'removed') {
-                                    // 1. Obtener datos previos del evento desde this._eventsMap
-                                    const prev = this._eventsMap.get(evtId);
-                                    const prevEvent = (prev && prev.event) ? prev.event : evt;
-                                    const prevType = (prev && prev.type) ? prev.type : type;
-                                    this._eventsMap.delete(evtId);
+                                    if (change.type === 'removed') {
+                                        // 1. Obtener datos previos del evento desde this._eventsMap
+                                        const prev = this._eventsMap.get(evtId);
+                                        const prevEvent = (prev && prev.event) ? prev.event : evt;
+                                        const prevType = (prev && prev.type) ? prev.type : normType;
+                                        this._eventsMap.delete(evtId);
 
-                                    // Generar notificación de cancelación/eliminación y disparar push nativo si no ha expirado
-                                    if (!this._isEventExpiredByTTL(prevEvent)) {
-                                        this.handleEventDeleted(prevType, evtId, prevEvent);
+                                        // Generar notificación de cancelación/eliminación y disparar push nativo si no ha expirado
+                                        if (!this._isEventExpiredByTTL(prevEvent)) {
+                                            this.handleEventDeleted(prevType, evtId, prevEvent);
+                                        } else {
+                                            this._removeEventActiveNotifs(prevType, evtId);
+                                        }
+                                        hasChanges = true;
+                                    } else if (change.type === 'modified') {
+                                        const status = String(evt.status || '').toLowerCase().trim();
+                                        const isCancelled = ['cancelled', 'cancelado', 'suspendido', 'anulado', 'suspended', 'postponed'].includes(status);
+                                        this._eventsMap.set(evtId, { event: evt, type: normType });
+
+                                        // Si un evento cambia a estado cancelado o suspendido
+                                        if (isCancelled) {
+                                            if (!this._isEventExpiredByTTL(evt)) {
+                                                this.handleEventCancelled(normType, evtId, evt, status);
+                                            } else {
+                                                this._removeEventActiveNotifs(normType, evtId);
+                                            }
+                                        }
+                                        hasChanges = true;
                                     } else {
-                                        this._removeEventActiveNotifs(prevType, evtId);
-                                    }
-                                    hasChanges = true;
-                                } else if (change.type === 'modified') {
-                                    const status = String(evt.status || '').toLowerCase().trim();
-                                    const isCancelled = ['cancelled', 'cancelado', 'suspendido', 'anulado', 'suspended', 'postponed'].includes(status);
-                                    this._eventsMap.set(evtId, { event: evt, type });
+                                        // 'added'
+                                        const status = String(evt.status || '').toLowerCase().trim();
+                                        const isCancelled = ['cancelled', 'cancelado', 'suspendido', 'anulado', 'suspended', 'postponed'].includes(status);
+                                        this._eventsMap.set(evtId, { event: evt, type: normType });
 
-                                    // Si un evento cambia a estado cancelado o suspendido
-                                    if (isCancelled) {
-                                        if (!this._isEventExpiredByTTL(evt)) {
-                                            this.handleEventCancelled(type, evtId, evt, status);
-                                        } else {
-                                            this._removeEventActiveNotifs(type, evtId);
+                                        if (isCancelled) {
+                                            if (!this._isEventExpiredByTTL(evt)) {
+                                                this.handleEventCancelled(normType, evtId, evt, status, !this._hasInitialEventsLoaded);
+                                            } else {
+                                                this._removeEventActiveNotifs(normType, evtId);
+                                            }
                                         }
+                                        hasChanges = true;
                                     }
-                                    hasChanges = true;
-                                } else {
-                                    // 'added'
-                                    const status = String(evt.status || '').toLowerCase().trim();
-                                    const isCancelled = ['cancelled', 'cancelado', 'suspendido', 'anulado', 'suspended', 'postponed'].includes(status);
-                                    this._eventsMap.set(evtId, { event: evt, type });
+                                });
+                            } finally {
+                                this._isInsideSnapshotBatch = false;
+                            }
 
-                                    if (isCancelled) {
-                                        if (!this._isEventExpiredByTTL(evt)) {
-                                            this.handleEventCancelled(type, evtId, evt, status, !this._hasInitialEventsLoaded);
-                                        } else {
-                                            this._removeEventActiveNotifs(type, evtId);
-                                        }
-                                    }
-                                    hasChanges = true;
-                                }
-                            });
-                        } finally {
-                            this._isInsideSnapshotBatch = false;
-                        }
-
-                        if (hasChanges || !this._hasInitialEventsLoaded) {
-                            this._hasInitialEventsLoaded = true;
-                            this._processEventsFeed();
+                            if (hasChanges || !this._hasInitialEventsLoaded) {
+                                this._hasInitialEventsLoaded = true;
+                                this._processEventsFeed();
+                            }
+                        } catch (feedErr) {
+                            console.error("❌ [NotificationService] Error procesando snapshot de eventos:", feedErr);
                         }
                     },
                     err => {
@@ -1010,109 +1607,134 @@ window.NotificationServiceClass = class NotificationService {
      * e integra el registro persistente de eventos cancelados y eliminados.
      */
     _processEventsFeed() {
-        const generated = [];
+        if (this._isProcessingEventsFeed) {
+            return;
+        }
+        this._isProcessingEventsFeed = true;
 
-        this._eventsMap.forEach(({ event: evt, type }) => {
-            if (!evt || !evt.id) return;
+        try {
+            const generated = [];
 
-            const status = String(evt.status || '').toLowerCase().trim();
-            const isCancelled = ['cancelled', 'cancelado', 'suspendido', 'anulado', 'suspended', 'postponed'].includes(status);
+            this._eventsMap.forEach(({ event: evt, type }) => {
+                if (!evt || !evt.id) return;
 
-            // Si el evento está cancelado o suspendido, no generar aviso de nuevo ni plazas libres
-            if (isCancelled) {
-                this._removeEventActiveNotifs(type, evt.id);
-                // Si el evento está caducado (>48h) o purgado globalmente, no generar aviso
-                if (this._isEventExpiredByTTL(evt) || this._isItemGloballyPurged({ id: `evt_cancelled_${type}_${evt.id}`, eventId: evt.id, title: evt.name })) {
+                const isEntreno = type === 'entreno' ||
+                    evt.type === 'entreno' ||
+                    String(evt.name || evt.title || '').toLowerCase().includes('entreno');
+                const normType = isEntreno ? 'entreno' : 'americana';
+                const notifCancelledId = `evt_cancelled_${normType}_${evt.id}`;
+
+                const status = String(evt.status || '').toLowerCase().trim();
+                const isCancelled = ['cancelled', 'cancelado', 'suspendido', 'anulado', 'suspended', 'postponed'].includes(status);
+
+                // Si el evento está cancelado o suspendido, no generar aviso de nuevo ni plazas libres
+                if (isCancelled) {
+                    this._removeEventActiveNotifs(normType, evt.id);
+                    // Si el evento está caducado (>48h) o purgado globalmente, no generar aviso
+                    if (this._isEventExpiredByTTL(evt) || this._isItemGloballyPurged({ id: notifCancelledId, eventId: evt.id, title: evt.name })) {
+                        return;
+                    }
+                    const cancelledLogs = this._getCancelledEventsLog();
+                    const alreadyLogged = cancelledLogs.some(c => {
+                        if (!c) return false;
+                        return c.id === notifCancelledId ||
+                               c.id === `evt_cancelled_americana_${evt.id}` ||
+                               c.id === `evt_cancelled_entreno_${evt.id}` ||
+                               c.eventId === evt.id ||
+                               (c.data && c.data.eventId === evt.id);
+                    });
+
+                    if (!alreadyLogged) {
+                        this.handleEventCancelled(normType, evt.id, evt, status, !this._hasInitialEventsLoaded);
+                    }
                     return;
                 }
-                const cId = `evt_cancelled_${type}_${evt.id}`;
-                const cancelledLogs = this._getCancelledEventsLog();
-                if (!cancelledLogs.some(c => c && c.id === cId)) {
-                    this.handleEventCancelled(type, evt.id, evt, status, !this._hasInitialEventsLoaded);
+
+                const realTimestamp = this._extractEventTimestamp(evt);
+                const timeMs = this._getTimestampValue(realTimestamp);
+                const now = Date.now();
+                const isRecentCreation = !isNaN(timeMs) && (now - timeMs) >= 0 && (now - timeMs) <= (72 * 60 * 60 * 1000);
+
+                const isFinished = ['finished', 'finalizado', 'completed'].includes(status);
+                const isActive = !isFinished;
+
+                // 1. Si el evento es reciente (creado en las últimas 72 horas o activo actualmente)
+                if (isRecentCreation || isActive) {
+                    const newId = `evt_new_${normType}_${evt.id}`;
+                    const isDeleted = localStorage.getItem('sp_evt_deleted_' + newId) === 'true';
+                    if (!isDeleted) {
+                        const isRead = localStorage.getItem('sp_evt_read_' + newId) === 'true';
+
+                        const newNotif = {
+                            id: newId,
+                            title: `${normType === 'entreno' ? '💪 Nuevo Entreno' : '🏆 Nueva Americana'}: ${evt.name || 'Torneo SomosPadel'}`,
+                            body: `Fecha: ${evt.date || ''} a las ${evt.time || ''} · ${evt.courts || 4} pistas · ${evt.location || 'SomosPadel'}. ¡Inscripciones abiertas!`,
+                            timestamp: realTimestamp,
+                            category: normType === 'entreno' ? 'entrenos' : 'matches',
+                            read: isRead,
+                            data: { url: normType === 'entreno' ? 'entrenos' : 'americanas', eventId: evt.id, id: newId }
+                        };
+
+                        generated.push(newNotif);
+                        this._checkAndTriggerPush(newNotif);
+                    }
                 }
-                return;
-            }
 
-            const realTimestamp = this._extractEventTimestamp(evt);
-            const timeMs = this._getTimestampValue(realTimestamp);
-            const now = Date.now();
-            const isRecentCreation = !isNaN(timeMs) && (now - timeMs) >= 0 && (now - timeMs) <= (72 * 60 * 60 * 1000);
+                // 2. Si el evento tiene plazas libres y está abierto
+                const maxPlayers = Number(evt.max_players || evt.maxPlayers || (evt.courts ? evt.courts * 4 : 16));
+                const registeredCount = Array.isArray(evt.players)
+                    ? evt.players.length
+                    : (Array.isArray(evt.registeredPlayers) ? evt.registeredPlayers.length : 0);
+                const openSpots = maxPlayers - registeredCount;
+                const isOpen = (status === 'open' || !isFinished);
 
-            const isFinished = ['finished', 'finalizado', 'completed'].includes(status);
-            const isActive = !isFinished;
+                if (openSpots > 0 && isOpen) {
+                    const spotId = `evt_spot_${normType}_${evt.id}`;
+                    const isSpotDeleted = localStorage.getItem('sp_evt_deleted_' + spotId) === 'true';
+                    if (!isSpotDeleted) {
+                        const isSpotRead = localStorage.getItem('sp_evt_read_' + spotId) === 'true';
 
-            // 1. Si el evento es reciente (creado en las últimas 72 horas o activo actualmente)
-            if (isRecentCreation || isActive) {
-                const newId = `evt_new_${type}_${evt.id}`;
-                const isDeleted = localStorage.getItem('sp_evt_deleted_' + newId) === 'true';
-                if (!isDeleted) {
-                    const isRead = localStorage.getItem('sp_evt_read_' + newId) === 'true';
+                        const spotNotif = {
+                            id: spotId,
+                            title: `⚡ ¡${openSpots} ${openSpots === 1 ? 'Plaza Libre' : 'Plazas Libres'}! ${evt.name || 'Torneo'}`,
+                            body: `Quedan ${openSpots} plazas vacantes para jugar el ${evt.date || ''} a las ${evt.time || ''}. ¡Reserva antes de que se completen!`,
+                            timestamp: realTimestamp,
+                            category: normType === 'entreno' ? 'entrenos' : 'matches',
+                            read: isSpotRead,
+                            data: { url: normType === 'entreno' ? 'entrenos' : 'americanas', eventId: evt.id, id: spotId }
+                        };
 
-                    const newNotif = {
-                        id: newId,
-                        title: `${type === 'entreno' ? '💪 Nuevo Entreno' : '🏆 Nueva Americana'}: ${evt.name || 'Torneo SomosPadel'}`,
-                        body: `Fecha: ${evt.date || ''} a las ${evt.time || ''} · ${evt.courts || 4} pistas · ${evt.location || 'SomosPadel'}. ¡Inscripciones abiertas!`,
-                        timestamp: realTimestamp,
-                        category: type === 'entreno' ? 'entrenos' : 'matches',
-                        read: isRead,
-                        data: { url: type === 'entreno' ? 'entrenos' : 'americanas', eventId: evt.id, id: newId }
-                    };
-
-                    generated.push(newNotif);
-                    this._checkAndTriggerPush(newNotif);
+                        generated.push(spotNotif);
+                        this._checkAndTriggerPush(spotNotif);
+                    }
                 }
-            }
+            });
 
-            // 2. Si el evento tiene plazas libres y está abierto
-            const maxPlayers = Number(evt.max_players || evt.maxPlayers || (evt.courts ? evt.courts * 4 : 16));
-            const registeredCount = Array.isArray(evt.players)
-                ? evt.players.length
-                : (Array.isArray(evt.registeredPlayers) ? evt.registeredPlayers.length : 0);
-            const openSpots = maxPlayers - registeredCount;
-            const isOpen = (status === 'open' || !isFinished);
+            // 3. Integrar los eventos del registro persistente 'sp_cancelled_events_log'
+            const cancelledLogs = this._getCancelledEventsLog();
+            cancelledLogs.forEach(cNotif => {
+                if (!cNotif || !cNotif.id) return;
 
-            if (openSpots > 0 && isOpen) {
-                const spotId = `evt_spot_${type}_${evt.id}`;
-                const isSpotDeleted = localStorage.getItem('sp_evt_deleted_' + spotId) === 'true';
-                if (!isSpotDeleted) {
-                    const isSpotRead = localStorage.getItem('sp_evt_read_' + spotId) === 'true';
+                // Respetar si el usuario la ha eliminado individualmente
+                if (localStorage.getItem('sp_evt_deleted_' + cNotif.id) === 'true') return;
 
-                    const spotNotif = {
-                        id: spotId,
-                        title: `⚡ ¡${openSpots} ${openSpots === 1 ? 'Plaza Libre' : 'Plazas Libres'}! ${evt.name || 'Torneo'}`,
-                        body: `Quedan ${openSpots} plazas vacantes para jugar el ${evt.date || ''} a las ${evt.time || ''}. ¡Reserva antes de que se completen!`,
-                        timestamp: realTimestamp,
-                        category: type === 'entreno' ? 'entrenos' : 'matches',
-                        read: isSpotRead,
-                        data: { url: type === 'entreno' ? 'entrenos' : 'americanas', eventId: evt.id, id: spotId }
-                    };
+                // Respetar si el usuario la ha leído individualmente
+                cNotif.read = localStorage.getItem('sp_evt_read_' + cNotif.id) === 'true';
 
-                    generated.push(spotNotif);
-                    this._checkAndTriggerPush(spotNotif);
+                // Evitar duplicados en generated
+                if (!generated.some(n => n.id === cNotif.id)) {
+                    generated.push(cNotif);
                 }
-            }
-        });
+            });
 
-        // 3. Integrar los eventos del registro persistente 'sp_cancelled_events_log'
-        const cancelledLogs = this._getCancelledEventsLog();
-        cancelledLogs.forEach(cNotif => {
-            if (!cNotif || !cNotif.id) return;
-
-            // Respetar si el usuario la ha eliminado individualmente
-            if (localStorage.getItem('sp_evt_deleted_' + cNotif.id) === 'true') return;
-
-            // Respetar si el usuario la ha leído individualmente
-            cNotif.read = localStorage.getItem('sp_evt_read_' + cNotif.id) === 'true';
-
-            // Evitar duplicados en generated
-            if (!generated.some(n => n.id === cNotif.id)) {
-                generated.push(cNotif);
-            }
-        });
-
-        this.eventNotifications = generated;
-        this.notifySubscribers();
-        this.updateAppBadge();
+            this.eventNotifications = generated;
+            this.notifySubscribers();
+            this.updateAppBadge();
+        } catch (err) {
+            console.error("❌ [NotificationService] Error en _processEventsFeed:", err);
+        } finally {
+            this._isProcessingEventsFeed = false;
+        }
     }
 
     /**
@@ -1159,9 +1781,27 @@ window.NotificationServiceClass = class NotificationService {
      */
     subscribeToFirestore(userId) {
         if (this.unsubscribe) return;
+        if (!userId) return;
+
+        const firestore = window.db || (window.firebase && typeof window.firebase.firestore === 'function' ? window.firebase.firestore() : null);
+        if (!firestore) {
+            if (this._subRetryPending) return;
+            this._subRetryPending = true;
+            let subAttempts = 0;
+            const subTimer = setInterval(() => {
+                subAttempts++;
+                const fs = window.db || (window.firebase && typeof window.firebase.firestore === 'function' ? window.firebase.firestore() : null);
+                if (fs || subAttempts > 60) {
+                    clearInterval(subTimer);
+                    this._subRetryPending = false;
+                    if (fs && !this.unsubscribe) this.subscribeToFirestore(userId);
+                }
+            }, 300);
+            return;
+        }
 
         console.log("🔔 [NotificationService] Subscribing to Firestore...");
-        this.unsubscribe = window.db.collection('players').doc(userId).collection('notifications')
+        this.unsubscribe = firestore.collection('players').doc(userId).collection('notifications')
             .orderBy('timestamp', 'desc')
             .limit(50)
             .onSnapshot(snapshot => {
@@ -1194,18 +1834,22 @@ window.NotificationServiceClass = class NotificationService {
                             }
                             const isRead = this._isItemUserRead(changeItem);
 
-                            // Only show visual toasts for NEW arrivals after initial load
-                            // to prevent clumping on startup
+                            // Notificación en vivo para llegadas nuevas tras la carga inicial
                             if (!isRead && !isFirstLoad) {
                                 console.log("📣 NEW NOTIFICATION RECEIVED:", data.title, data.body);
-                                // Pasamos el ID del documento para que se pueda borrar nativamente luego
-                                this.showNativeNotification(data.title, data.body, { ...data.data, id: change.doc.id });
+                                const targetUrl = data.data?.url || data.url || 'dashboard';
+                                const notifType = data.type || data.data?.type || 'match';
 
-                                // Feedback visual discreto si no hay permisos push
-                                const notificationSupported = 'Notification' in window;
-                                if (!notificationSupported || Notification.permission !== 'granted') {
-                                    this.showInAppToast(data.title, data.body);
+                                // 1. Mostrar Toast in-app visual garantizado
+                                this.showInAppToast(data.title, data.body, notifType, targetUrl);
+
+                                // 2. Reproducir tono de aviso de pádel si el audio está disponible
+                                if (window.NotificationUi && typeof window.NotificationUi.playNotificationSound === 'function') {
+                                    window.NotificationUi.playNotificationSound();
                                 }
+
+                                // 3. Emisión de notificación nativa / Web Push del navegador
+                                this.showNativeNotification(data.title, data.body, { ...data.data, id: change.doc.id, url: targetUrl });
                             }
                         }
                     });
@@ -1536,10 +2180,9 @@ window.NotificationServiceClass = class NotificationService {
                         }
                     }
 
-                    // C. Guardar en el perfil del jugador en Firestore con dualidad token / pushSubscription
-                    const primaryToken = currentFcmToken || (nativePushSub ? nativePushSub.endpoint : null);
-                    if (primaryToken || nativePushSub) {
-                        await this.saveTokenToProfile(primaryToken, nativePushSub);
+                    // C. Guardar en el perfil del jugador en Firestore (token FCM estricto + pushSubscription nativa)
+                    if (currentFcmToken || nativePushSub) {
+                        await this.saveTokenToProfile(currentFcmToken, nativePushSub);
                     }
                 } catch (bgErr) {
                     console.warn("⚠️ Sincronización push en segundo plano:", bgErr.message || bgErr);
@@ -1661,6 +2304,19 @@ window.NotificationServiceClass = class NotificationService {
                 new Notification(title, options);
                 console.log("🔔 [NotificationService] Notificación de bienvenida enviada vía Window Notification");
             }
+
+            // Registrar inmediatamente en la bandeja interna in-app
+            this.recordInboundNotification({
+                id: 'sys_welcome_' + Date.now(),
+                title: title,
+                body: options.body,
+                timestamp: new Date().toISOString(),
+                icon: 'bell',
+                type: 'welcome',
+                category: 'broadcast',
+                read: false,
+                data: { url: './', type: 'welcome' }
+            });
         } catch (err) {
             console.warn("⚠️ [NotificationService] No se pudo lanzar la notificación de bienvenida:", err);
         }
@@ -1771,12 +2427,12 @@ window.NotificationServiceClass = class NotificationService {
                 : nowIso);
 
         const subJson = pushSubscription ? (typeof pushSubscription.toJSON === 'function' ? pushSubscription.toJSON() : pushSubscription) : null;
-        const finalToken = token || subJson?.endpoint || '';
+        const isRealToken = Boolean(token && typeof token === 'string' && !token.startsWith('http://') && !token.startsWith('https://') && token.trim().length > 10);
+        const finalToken = isRealToken ? token.trim() : '';
 
         try {
             // 1. Registrar en subcolección multi-dispositivo players/{userId}/devices/{deviceId}
             const deviceData = {
-                token: finalToken,
                 deviceId: deviceId,
                 platform: platform,
                 push_enabled: true,
@@ -1785,6 +2441,9 @@ window.NotificationServiceClass = class NotificationService {
                 updated_at: serverTs,
                 last_active: nowIso
             };
+            if (finalToken) {
+                deviceData.token = finalToken;
+            }
             if (subJson) {
                 deviceData.subscription = subJson;
                 deviceData.endpoint = subJson.endpoint || '';
@@ -1795,12 +2454,14 @@ window.NotificationServiceClass = class NotificationService {
 
             // 2. Actualizar campo de compatibilidad en documento raíz de jugador
             const rootUpdate = {
-                fcm_token: token || finalToken,
                 push_notifications_enabled: true,
                 push_permission: 'granted',
                 last_token_update: nowIso,
                 last_platform: platform
             };
+            if (finalToken) {
+                rootUpdate.fcm_token = finalToken;
+            }
             if (subJson) {
                 rootUpdate.push_subscription = subJson;
             }
@@ -1981,7 +2642,17 @@ window.NotificationServiceClass = class NotificationService {
 
         if (!skipConfirm && !confirm("¿Seguro que quieres borrar todas tus notificaciones?")) return;
 
-        // 1. Obtener todas las notificaciones actuales y marcar lápida de borrado local permanente
+        // 1. Registrar marca temporal del vaciado para no ocultar notificaciones futuras
+        const nowTs = Date.now();
+        try {
+            localStorage.setItem('sp_user_purged_all_ts', String(nowTs));
+            localStorage.removeItem('sp_inbound_push_history');
+        } catch (_) {}
+
+        // Limpiar almacén IndexedDB de notificaciones recibidas
+        this._clearInboundPushesFromIDB();
+
+        // 1.b. Obtener todas las notificaciones actuales y marcar lápida de borrado local permanente
         try {
             const allItems = this.getMergedNotifications();
             allItems.forEach(n => {
@@ -2015,6 +2686,8 @@ window.NotificationServiceClass = class NotificationService {
 
         // 3. Limpieza en memoria inmediata
         this.notifications = [];
+        this.inboundNotifications = [];
+        this.broadcastNotifications = [];
         this.eventNotifications = [];
         this.chatNotifications = [];
         this.unreadCount = 0;
@@ -2242,9 +2915,10 @@ window.NotificationServiceClass = class NotificationService {
     }
 
     /**
-     * Muestra un aviso visual dentro de la app con sistema de apilado (Stacking) Premium
+     * Muestra un aviso visual interactivo dentro de la app con sistema de apilado (Stacking) Premium,
+     * sonido opcional, cuerpo de mensaje y navegación directa al pulsar.
      */
-    showInAppToast(title, body) {
+    showInAppToast(title, body, type = 'info', actionUrl = null) {
         // 1. Asegurar contenedor de Toasts
         let container = document.getElementById('toast-stack-container');
         if (!container) {
@@ -2256,27 +2930,96 @@ window.NotificationServiceClass = class NotificationService {
         const toast = document.createElement('div');
         toast.className = 'premium-toast';
 
+        // Icono y etiqueta según tipo
+        let iconHtml = '<i class="fas fa-bell"></i>';
+        let labelText = 'AVISO RECIENTE';
+        if (type === 'match' || type === 'americana') {
+            iconHtml = '<i class="fas fa-trophy"></i>';
+            labelText = '🎾 AMERICANA';
+        } else if (type === 'entreno') {
+            iconHtml = '<i class="fas fa-dumbbell"></i>';
+            labelText = '🎾 ENTRENO';
+        } else if (type === 'broadcast') {
+            iconHtml = '<i class="fas fa-bullhorn"></i>';
+            labelText = '📢 COMUNICADO CLUB';
+        } else if (type === 'news') {
+            iconHtml = '<i class="fas fa-newspaper"></i>';
+            labelText = '📰 DIARIO SOMOSPADEL';
+        } else if (type === 'success') {
+            iconHtml = '<i class="fas fa-check-circle"></i>';
+            labelText = 'SISTEMA';
+        }
+
+        const safeTitle = (title || 'Aviso SomosPadel').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const safeBody = body ? (body.length > 120 ? body.substring(0, 117) + '...' : body).replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+
         toast.innerHTML = `
             <div class="toast-icon">
-                <i class="fas fa-bell"></i>
+                ${iconHtml}
             </div>
             <div class="toast-content">
-                <div class="toast-label">AVISO RECIENTE</div>
-                <div class="toast-title">${title}</div>
+                <div class="toast-label">${labelText}</div>
+                <div class="toast-title">${safeTitle}</div>
+                ${safeBody ? `<div class="toast-body">${safeBody}</div>` : ''}
             </div>
+            <button class="toast-close" type="button" aria-label="Cerrar">
+                <i class="fas fa-times"></i>
+            </button>
         `;
 
-        container.appendChild(toast);
-
-        // Auto-remove
-        setTimeout(() => {
+        let isRemoved = false;
+        const removeToast = () => {
+            if (isRemoved) return;
+            isRemoved = true;
             toast.style.opacity = '0';
-            toast.style.transform = 'translateX(20px) scale(0.95)';
+            toast.style.transform = 'translateY(-20px) scale(0.95)';
             setTimeout(() => {
                 toast.remove();
                 if (container.children.length === 0) container.remove();
             }, 300);
-        }, 5000);
+        };
+
+        // Interacción al hacer clic en el toast
+        const handleToastClick = (e) => {
+            if (e && e.target && e.target.closest && e.target.closest('.toast-close')) {
+                if (e.stopPropagation) e.stopPropagation();
+                removeToast();
+                return;
+            }
+            if (actionUrl) {
+                if (actionUrl.startsWith('#') || actionUrl.startsWith('/#')) {
+                    window.location.hash = actionUrl.replace(/^\/?#/, '');
+                } else if (actionUrl.includes('?')) {
+                    window.location.href = actionUrl;
+                }
+            } else if (window.NotificationUi && typeof window.NotificationUi.openDrawer === 'function') {
+                window.NotificationUi.openDrawer();
+            }
+            removeToast();
+        };
+
+        if (typeof toast.addEventListener === 'function') {
+            toast.addEventListener('click', handleToastClick);
+        } else {
+            toast.onclick = handleToastClick;
+        }
+
+        // Reproducir sonido sutil y vibración
+        try {
+            if (window.NotificationUi && typeof window.NotificationUi.playNotificationSound === 'function') {
+                window.NotificationUi.playNotificationSound();
+            }
+            if (navigator.vibrate) {
+                navigator.vibrate([80, 50, 80]);
+            }
+        } catch (_) {}
+
+        container.appendChild(toast);
+
+        // Auto-remove a los 6 segundos
+        setTimeout(() => {
+            removeToast();
+        }, 6000);
     }
 
     /**
@@ -2338,6 +3081,25 @@ window.NotificationServiceClass = class NotificationService {
             }
         }
 
+        // Marcar en Firestore en las colecciones de eventos para que nunca más se regenere
+        if (evtId) {
+            for (const colName of ['americanas', 'entrenos']) {
+                try {
+                    const evtDocRef = window.db.collection(colName).doc(evtId);
+                    evtDocRef.get().then(snap => {
+                        if (snap && snap.exists) {
+                            evtDocRef.update({
+                                notificationPurged: true,
+                                notificationDismissed: true,
+                                hideFromNotifications: true,
+                                updatedAt: new Date().toISOString()
+                            }).catch(() => {});
+                        }
+                    }).catch(() => {});
+                } catch (_) {}
+            }
+        }
+
         const purgedIdsToAdd = [idToPurge];
         if (evtId) {
             purgedIdsToAdd.push(
@@ -2362,13 +3124,18 @@ window.NotificationServiceClass = class NotificationService {
         try {
             const configRef = window.db.collection('system_config').doc('purged_notifications');
             if (FieldValue && typeof FieldValue.arrayUnion === 'function') {
-                await configRef.set({
-                    purgedIds: FieldValue.arrayUnion(...purgedIdsToAdd),
-                    updatedAt: FieldValue.serverTimestamp ? FieldValue.serverTimestamp() : new Date().toISOString()
-                }, { merge: true });
+                // Trocear en bloques de máximo 200 para respetar el límite de 500 de Firestore
+                const chunkSize = 200;
+                for (let i = 0; i < purgedIdsToAdd.length; i += chunkSize) {
+                    const slice = purgedIdsToAdd.slice(i, i + chunkSize);
+                    await configRef.set({
+                        purgedIds: FieldValue.arrayUnion(...slice),
+                        updatedAt: FieldValue.serverTimestamp ? FieldValue.serverTimestamp() : new Date().toISOString()
+                    }, { merge: true });
+                }
             } else {
                 const docSnap = await configRef.get();
-                const existing = (docSnap.exists && Array.isArray(docSnap.data()?.purgedIds)) ? docSnap.data().purgedIds : [];
+                const existing = (docSnap && docSnap.exists && Array.isArray(docSnap.data()?.purgedIds)) ? docSnap.data().purgedIds : [];
                 const merged = Array.from(new Set([...existing, ...purgedIdsToAdd]));
                 await configRef.set({
                     purgedIds: merged,
@@ -2528,13 +3295,27 @@ window.NotificationServiceClass = class NotificationService {
         try {
             let broadcastQuery;
             try {
-                broadcastQuery = await window.db.collection('broadcasts').orderBy('timestamp', 'desc').limit(50).get();
+                const bCol = window.db.collection('broadcasts');
+                if (typeof bCol.orderBy === 'function') {
+                    broadcastQuery = await bCol.orderBy('timestamp', 'desc').limit(50).get();
+                } else if (typeof bCol.limit === 'function') {
+                    broadcastQuery = await bCol.limit(50).get();
+                } else {
+                    broadcastQuery = await bCol.get();
+                }
             } catch (_) {
-                broadcastQuery = await window.db.collection('broadcasts').limit(50).get();
+                try {
+                    broadcastQuery = await window.db.collection('broadcasts').get();
+                } catch (e2) {
+                    broadcastQuery = [];
+                }
             }
 
             broadcastQuery.forEach(doc => {
                 const data = doc.data() || {};
+                const bItem = { id: doc.id, ...data };
+                if (this._isItemGloballyPurged(bItem)) return;
+
                 let createdAtStr = new Date().toISOString();
                 if (data.createdAt) {
                     createdAtStr = data.createdAt;
@@ -2574,7 +3355,7 @@ window.NotificationServiceClass = class NotificationService {
         ];
 
         for (const sysItem of systemNotifs) {
-            if (!seenIds.has(sysItem.id) && (!this.globalPurgedIds || !this.globalPurgedIds.has(sysItem.id))) {
+            if (!seenIds.has(sysItem.id) && !this._isItemGloballyPurged(sysItem) && (!this.globalPurgedIds || !this.globalPurgedIds.has(sysItem.id))) {
                 seenIds.add(sysItem.id);
                 items.push(sysItem);
             }
@@ -2582,11 +3363,14 @@ window.NotificationServiceClass = class NotificationService {
 
         // 3. Muestreo consolidado de notificaciones de jugadores
         try {
-            const samplePlayers = await window.db.collection('players').limit(5).get();
-            for (const pDoc of samplePlayers.docs) {
+            const pCol = window.db.collection('players');
+            const samplePlayers = typeof pCol.limit === 'function' ? await pCol.limit(5).get() : await pCol.get();
+            for (const pDoc of (samplePlayers.docs || [])) {
                 try {
-                    const notifsSnap = await window.db.collection('players').doc(pDoc.id).collection('notifications')
-                        .orderBy('timestamp', 'desc').limit(20).get();
+                    const nCol = window.db.collection('players').doc(pDoc.id).collection('notifications');
+                    const notifsSnap = typeof nCol.orderBy === 'function'
+                        ? await nCol.orderBy('timestamp', 'desc').limit(20).get()
+                        : (typeof nCol.limit === 'function' ? await nCol.limit(20).get() : await nCol.get());
 
                     notifsSnap.forEach(nDoc => {
                         const nData = nDoc.data() || {};
@@ -2627,6 +3411,17 @@ window.NotificationServiceClass = class NotificationService {
                     const snap = await window.db.collection(colName).get();
                     snap.forEach(doc => {
                         const data = doc.data() || {};
+                        // 1. Descartar si el evento ya fue purgado o silenciado en Firestore
+                        if (data.notificationPurged || data.purgedNotification || data.hideFromNotifications || data.notificationDismissed) return;
+
+                        // 2. Descartar si es anterior a una purga total previa (purgedAllBefore)
+                        const evtCreatedAt = this._extractEventTimestamp(data);
+                        const evtTs = this._getTimestampValue(evtCreatedAt);
+                        if (this.purgedAllBefore && evtTs > 0 && evtTs <= this.purgedAllBefore) return;
+
+                        // 3. Descartar si el evento cancelado ya expiró por TTL (> 72 horas de antigüedad)
+                        if (this._isEventExpiredByTTL(data, 72 * 60 * 60 * 1000)) return;
+
                         const status = String(data.status || '').toLowerCase().trim();
                         const isCancelled = ['cancelled', 'cancelado', 'suspendido', 'anulado', 'suspended', 'postponed'].includes(status) || Boolean(data.isCancelled);
                         if (isCancelled) {
@@ -2635,6 +3430,7 @@ window.NotificationServiceClass = class NotificationService {
                             const legacyKey = 'notif_cancelled_' + doc.id;
                             if (seenIds.has(notifId) || seenIds.has(doc.id) || seenIds.has(legacyKey)) return;
                             if (this._isItemGloballyPurged({ id: notifId, data: { eventId: doc.id }, title: data.name || data.title })) return;
+                            if (this.globalPurgedIds && (this.globalPurgedIds.has(doc.id) || this.globalPurgedIds.has(notifId) || this.globalPurgedIds.has(legacyKey))) return;
 
                             const actionLabel = ['suspendido', 'suspended'].includes(status) ? 'Suspendido' : (status === 'anulado' ? 'Anulado' : 'Cancelado');
                             const reason = data.cancelReason || data.reason || '';
@@ -2729,15 +3525,17 @@ window.NotificationServiceClass = class NotificationService {
             throw new Error("Base de datos Firestore no disponible.");
         }
 
+        const isPurgeAll = Boolean(options?.all);
         const now = Date.now();
-        const olderThanMs = Number(options?.olderThanMs) || (48 * 60 * 60 * 1000); // 48 horas por defecto
+        const olderThanMs = Number(options?.olderThanMs) || (24 * 60 * 60 * 1000); // 24h por defecto
         const purgeThreshold = now - olderThanMs;
         const purgedIdsToAdd = [];
         let deletedFromPlayersCount = 0;
         let purgedCancelledEventsCount = 0;
+        let purgedBroadcastsCount = 0;
 
         try {
-            // 0. Limpiar sp_cancelled_events_log en localStorage de cancelaciones antiguas (>48h) o purgadas
+            // 0. Limpiar sp_cancelled_events_log en localStorage
             try {
                 if (typeof localStorage !== 'undefined') {
                     const rawLogs = localStorage.getItem('sp_cancelled_events_log');
@@ -2748,7 +3546,7 @@ window.NotificationServiceClass = class NotificationService {
                             for (const cItem of parsedLogs) {
                                 if (!cItem) continue;
                                 const tsVal = this._getTimestampValue(cItem.timestamp || cItem.createdAt);
-                                const isExpired = !isNaN(tsVal) && (now - tsVal) > olderThanMs;
+                                const isExpired = isPurgeAll || (!isNaN(tsVal) && (now - tsVal) > olderThanMs);
                                 const isPurged = this._isItemGloballyPurged(cItem);
                                 if (isExpired || isPurged) {
                                     purgedCancelledEventsCount++;
@@ -2774,13 +3572,54 @@ window.NotificationServiceClass = class NotificationService {
                                     remainingLogs.push(cItem);
                                 }
                             }
-                            localStorage.setItem('sp_cancelled_events_log', JSON.stringify(remainingLogs));
+                            if (isPurgeAll) {
+                                localStorage.removeItem('sp_cancelled_events_log');
+                            } else {
+                                localStorage.setItem('sp_cancelled_events_log', JSON.stringify(remainingLogs));
+                            }
                         }
                     }
                 }
             } catch (cErr) {
                 console.warn("⚠️ [NotificationService] Error purgando sp_cancelled_events_log:", cErr);
             }
+
+            // 0.b. PURGAR LA COLECCIÓN 'broadcasts' DE FIRESTORE (¡Vital para que los comunicados no queden fijados!)
+            try {
+                const bSnap = await window.db.collection('broadcasts').get();
+                if (!bSnap.empty) {
+                    const bBatches = [];
+                    let currentBBatch = window.db.batch();
+                    let bOpCount = 0;
+
+                    bSnap.forEach(bDoc => {
+                        const bData = bDoc.data() || {};
+                        const tsVal = this._getTimestampValue(bData.timestamp || bData.createdAt);
+                        const isExpired = isPurgeAll || (tsVal > 0 && tsVal < purgeThreshold) || this._isItemGloballyPurged({ id: bDoc.id, ...bData });
+
+                        if (isExpired) {
+                            purgedBroadcastsCount++;
+                            purgedIdsToAdd.push(bDoc.id);
+                            currentBBatch.delete(bDoc.ref);
+                            bOpCount++;
+                            if (bOpCount >= 450) {
+                                bBatches.push(currentBBatch.commit());
+                                currentBBatch = window.db.batch();
+                                bOpCount = 0;
+                            }
+                        }
+                    });
+
+                    if (bOpCount > 0) {
+                        bBatches.push(currentBBatch.commit());
+                    }
+                    await Promise.all(bBatches);
+                    console.log(`📢 [NotificationService] Purgados ${purgedBroadcastsCount} comunicados oficiales de la colección 'broadcasts'.`);
+                }
+            } catch (bErr) {
+                console.warn("⚠️ [NotificationService] Error purgando colección 'broadcasts':", bErr);
+            }
+
             // 1. Identificar eventos pasados o cancelados en base de datos para registrar sus IDs
             const cancelledCollections = ['americanas', 'entrenos'];
             for (const colName of cancelledCollections) {
@@ -2801,7 +3640,16 @@ window.NotificationServiceClass = class NotificationService {
                             } catch (_) {}
                         }
 
-                        if (isCancelled || isPast) {
+                        if (isPurgeAll || isCancelled || isPast) {
+                            try {
+                                doc.ref.update({
+                                    notificationPurged: true,
+                                    notificationDismissed: true,
+                                    hideFromNotifications: true,
+                                    updatedAt: new Date().toISOString()
+                                }).catch(() => {});
+                            } catch (_) {}
+
                             purgedIdsToAdd.push(
                                 doc.id,
                                 'notif_cancelled_' + doc.id,
@@ -2818,7 +3666,7 @@ window.NotificationServiceClass = class NotificationService {
                 } catch (_) {}
             }
 
-            // 2. Recorrer jugadores y eliminar notificaciones obsoletas, pasadas o canceladas
+            // 2. Recorrer jugadores y eliminar notificaciones (todas si isPurgeAll, u obsoletas/canceladas/realizadas si es selectivo)
             const playersSnap = await window.db.collection('players').get();
             if (!playersSnap.empty) {
                 const allRefsToDelete = [];
@@ -2833,11 +3681,25 @@ window.NotificationServiceClass = class NotificationService {
                             const nType = String(data.type || '').toLowerCase();
                             const nTitle = String(data.title || '').toLowerCase();
                             const eId = data.data?.eventId || data.eventId;
+                            const bId = data.data?.broadcastId || data.broadcastId;
 
                             const isOld = tsVal > 0 && tsVal < purgeThreshold;
                             const isCancelled = nType === 'event_cancelled' || nTitle.includes('cancelad') || nTitle.includes('anulad') || (eId && purgedIdsToAdd.includes(eId));
+                            const isPurgedBroadcast = bId && purgedIdsToAdd.includes(bId);
 
-                            if (isOld || isCancelled) {
+                            let isPastEvent = false;
+                            const eventDateStr = data.data?.eventDate || data.data?.date || data.eventDate || data.date;
+                            if (eventDateStr) {
+                                try {
+                                    const d = new Date(eventDateStr);
+                                    if (!isNaN(d.getTime()) && (now - d.getTime() > 24 * 60 * 60 * 1000)) {
+                                        isPastEvent = true;
+                                    }
+                                } catch (_) {}
+                            }
+                            const isRealizado = isPastEvent || nTitle.includes('realizad') || nTitle.includes('finalizad') || nTitle.includes('resultado');
+
+                            if (isPurgeAll || isOld || isCancelled || isRealizado || isPurgedBroadcast || this._isItemGloballyPurged({ id: d.id, ...data })) {
                                 matched.push(d.ref);
                                 purgedIdsToAdd.push(d.id);
                             }
@@ -2878,57 +3740,96 @@ window.NotificationServiceClass = class NotificationService {
 
             // 3. Persistir en system_config/purged_notifications
             const uniquePurged = Array.from(new Set(purgedIdsToAdd.filter(Boolean)));
-            if (uniquePurged.length > 0) {
-                const FieldValue = window.firebase?.firestore?.FieldValue;
-                const configRef = window.db.collection('system_config').doc('purged_notifications');
-                if (FieldValue && typeof FieldValue.arrayUnion === 'function') {
-                    await configRef.set({
-                        purgedIds: FieldValue.arrayUnion(...uniquePurged),
-                        updatedAt: FieldValue.serverTimestamp ? FieldValue.serverTimestamp() : new Date().toISOString()
-                    }, { merge: true });
-                } else {
-                    const docSnap = await configRef.get();
-                    const existing = (docSnap.exists && Array.isArray(docSnap.data()?.purgedIds)) ? docSnap.data().purgedIds : [];
-                    await configRef.set({
-                        purgedIds: Array.from(new Set([...existing, ...uniquePurged])),
-                        updatedAt: new Date().toISOString()
-                    }, { merge: true });
-                }
+            const FieldValue = window.firebase?.firestore?.FieldValue;
+            const configRef = window.db.collection('system_config').doc('purged_notifications');
 
-                if (this.globalPurgedIds) {
-                    uniquePurged.forEach(id => this.globalPurgedIds.add(id));
+            const payloadUpdate = {
+                updatedAt: FieldValue && FieldValue.serverTimestamp ? FieldValue.serverTimestamp() : new Date().toISOString()
+            };
+
+            if (isPurgeAll) {
+                payloadUpdate.purgedAllBefore = now;
+                payloadUpdate.purgedIds = [];
+                payloadUpdate.purgedCount = 0;
+                this.purgedAllBefore = now;
+                this.globalPurgedIds = new Set();
+                this.notifications = [];
+                this.broadcastNotifications = [];
+                this.unreadCount = 0;
+                try {
+                    await configRef.set(payloadUpdate, { merge: true });
+                } catch (allCfgErr) {
+                    console.warn("⚠️ [NotificationService] Error actualizando configRef en Purga Total:", allCfgErr);
                 }
+            } else if (uniquePurged.length > 0) {
+                try {
+                    if (FieldValue && typeof FieldValue.arrayUnion === 'function') {
+                        // Trocear en bloques de 200 para cumplir el límite de 500 de Firestore
+                        const pChunkSize = 200;
+                        for (let i = 0; i < uniquePurged.length; i += pChunkSize) {
+                            const pChunk = uniquePurged.slice(i, i + pChunkSize);
+                            await configRef.set({
+                                purgedIds: FieldValue.arrayUnion(...pChunk),
+                                updatedAt: FieldValue.serverTimestamp ? FieldValue.serverTimestamp() : new Date().toISOString()
+                            }, { merge: true });
+                        }
+                    } else {
+                        const docSnap = await configRef.get();
+                        const existing = (docSnap && docSnap.exists && Array.isArray(docSnap.data()?.purgedIds)) ? docSnap.data().purgedIds : [];
+                        const merged = Array.from(new Set([...existing, ...uniquePurged]));
+                        await configRef.set({
+                            purgedIds: merged,
+                            updatedAt: new Date().toISOString()
+                        }, { merge: true });
+                    }
+                } catch (cfgErr) {
+                    console.warn("⚠️ [NotificationService] Error guardando configRef:", cfgErr);
+                }
+            }
+
+            if (this.globalPurgedIds) {
+                uniquePurged.forEach(id => this.globalPurgedIds.add(id));
             }
 
             // 4. Limpiar LocalStorage local
             try {
                 if (typeof localStorage !== 'undefined') {
-                    ['somospadel_notifications', 'sp_notifications_cache', 'sp_read_notifications'].forEach(k => {
-                        try {
-                            const raw = localStorage.getItem(k);
-                            if (raw) {
-                                const parsed = JSON.parse(raw);
-                                if (Array.isArray(parsed)) {
-                                    const cleaned = parsed.filter(item => {
-                                        const id = item.id || item;
-                                        return !this._isItemGloballyPurged({ id, title: item.title, data: item.data });
-                                    });
-                                    localStorage.setItem(k, JSON.stringify(cleaned));
+                    if (isPurgeAll) {
+                        ['somospadel_notifications', 'sp_notifications_cache', 'sp_read_notifications', 'sp_cancelled_events_log'].forEach(k => {
+                            try { localStorage.removeItem(k); } catch (_) {}
+                        });
+                        localStorage.setItem('sp_radar_relocated_notif_deleted', 'true');
+                    } else {
+                        ['somospadel_notifications', 'sp_notifications_cache', 'sp_read_notifications'].forEach(k => {
+                            try {
+                                const raw = localStorage.getItem(k);
+                                if (raw) {
+                                    const parsed = JSON.parse(raw);
+                                    if (Array.isArray(parsed)) {
+                                        const cleaned = parsed.filter(item => {
+                                            const id = item.id || item;
+                                            return !this._isItemGloballyPurged({ id, title: item.title, data: item.data });
+                                        });
+                                        localStorage.setItem(k, JSON.stringify(cleaned));
+                                    }
                                 }
-                            }
-                        } catch (_) {}
-                    });
+                            } catch (_) {}
+                        });
+                    }
                 }
             } catch (_) {}
 
+            this.updateAppBadge();
             this.notifySubscribers();
 
-            const totalPurgedCount = deletedFromPlayersCount + purgedCancelledEventsCount + uniquePurged.length;
-            console.log(`🧹 [NotificationService] Purga masiva completada: ${totalPurgedCount} registros procesados (${deletedFromPlayersCount} en bandejas de jugadores, ${purgedCancelledEventsCount} cancelaciones).`);
+            const totalPurgedCount = deletedFromPlayersCount + purgedBroadcastsCount + purgedCancelledEventsCount + uniquePurged.length;
+            console.log(`🧹 [NotificationService] Purga completada (total=${isPurgeAll}): ${totalPurgedCount} registros (${deletedFromPlayersCount} en jugadores, ${purgedBroadcastsCount} en broadcasts, ${purgedCancelledEventsCount} cancelaciones).`);
 
             return {
                 success: true,
+                isPurgeAll,
                 purgedCount: totalPurgedCount,
+                purgedBroadcastsCount,
                 purgedCancelledEventsCount,
                 deletedFromPlayersCount
             };
@@ -2936,6 +3837,49 @@ window.NotificationServiceClass = class NotificationService {
             console.error("❌ [NotificationService] Error en purgeExpiredAndOldNotifications:", err);
             throw err;
         }
+    }
+
+    /**
+     * Prueba interactiva inmediata de notificaciones en el dispositivo local.
+     * Dispara sonido, vibración, toast in-app y notificación nativa Web Push si hay permisos.
+     */
+    async testLocalPushNotification() {
+        console.log("🧪 [NotificationService] Ejecutando prueba de notificación local...");
+        const title = "🎾 ¡Prueba de Notificación SomosPadel!";
+        const body = "¡Tu dispositivo está correctamente configurado para recibir alertas y comunicados push!";
+        
+        // 1. Sonido oficial
+        if (window.NotificationUi && typeof window.NotificationUi.playNotificationSound === 'function') {
+            window.NotificationUi.playNotificationSound();
+        }
+        
+        // 2. Toast in-app visual
+        this.showInAppToast(title, body, 'broadcast', 'dashboard');
+        
+        // 3. Vibración táctil
+        if (navigator.vibrate) {
+            try { navigator.vibrate([200, 100, 200]); } catch (_) {}
+        }
+
+        // 4. Solicitar permiso si no está concedido
+        let perm = (typeof Notification !== 'undefined') ? Notification.permission : 'unsupported';
+        if (perm === 'default') {
+            try {
+                await this.requestPushPermission();
+                perm = (typeof Notification !== 'undefined') ? Notification.permission : 'unsupported';
+            } catch (_) {}
+        }
+
+        // 5. Notificación nativa si hay permiso concedido
+        if (perm === 'granted' || (typeof Notification !== 'undefined' && Notification.permission === 'granted')) {
+            this.showNativeNotification(title, body, { url: 'dashboard', id: 'test_push_' + Date.now() });
+        }
+
+        return {
+            success: true,
+            permission: (typeof Notification !== 'undefined') ? Notification.permission : 'unsupported',
+            hasServiceWorker: 'serviceWorker' in navigator && !!navigator.serviceWorker.controller
+        };
     }
 
     /**
@@ -3147,6 +4091,60 @@ window.NotificationServiceClass = class NotificationService {
     }
 
     /**
+     * Vacía permanentemente el registro de purgas realizadas (contador a 0)
+     * y fija la barrera temporal purgedAllBefore en este instante para que
+     * ninguna notificación antigua o evento realizado reaparezca jamás.
+     */
+    async resetPurgedRegistry() {
+        if (!this._isAdminUser()) {
+            throw new Error("Se requieren privilegios de SuperAdmin para vaciar el registro de purgas.");
+        }
+        if (!window.db) {
+            throw new Error("Base de datos no disponible.");
+        }
+
+        const now = Date.now();
+        const configRef = window.db.collection('system_config').doc('purged_notifications');
+        try {
+            await configRef.set({
+                purgedIds: [],
+                purgedCount: 0,
+                purgedAllBefore: now,
+                updatedAt: window.firebase?.firestore?.FieldValue?.serverTimestamp?.() || new Date().toISOString()
+            });
+        } catch (e) {
+            console.warn("⚠️ [NotificationService] Error al resetear documento purged_notifications:", e);
+        }
+
+        this.globalPurgedIds = new Set();
+        this.purgedAllBefore = now;
+
+        try {
+            if (typeof localStorage !== 'undefined') {
+                localStorage.removeItem('sp_cancelled_events_log');
+                ['somospadel_notifications', 'sp_notifications_cache', 'sp_read_notifications'].forEach(k => {
+                    try { localStorage.removeItem(k); } catch (_) {}
+                });
+            }
+        } catch (_) {}
+
+        this.notifySubscribers();
+        console.log("🧹 [NotificationService] Historial de purgas realizadas vaciado con éxito (contador a 0).");
+        return { success: true };
+    }
+
+    /**
+     * Delegación estática para vaciar y resetear a 0 el historial de purgas realizadas (SuperAdmin)
+     */
+    static async resetPurgedRegistry() {
+        if (window.NotificationService && typeof window.NotificationService.resetPurgedRegistry === 'function') {
+            return await window.NotificationService.resetPurgedRegistry();
+        }
+        const instance = new window.NotificationServiceClass();
+        return await instance.resetPurgedRegistry();
+    }
+
+    /**
      * Delegación estática para eliminar notificaciones globalmente (SuperAdmin)
      */
     static async deleteNotificationGlobally(targetId, meta = {}) {
@@ -3188,6 +4186,17 @@ window.NotificationServiceClass = class NotificationService {
         }
         const instance = new window.NotificationServiceClass();
         return await instance.fetchAllGlobalNotifications();
+    }
+
+    /**
+     * Delegación estática para prueba interactiva de notificaciones en el dispositivo local
+     */
+    static async testLocalPushNotification() {
+        if (window.NotificationService && typeof window.NotificationService.testLocalPushNotification === 'function') {
+            return await window.NotificationService.testLocalPushNotification();
+        }
+        const instance = new window.NotificationServiceClass();
+        return await instance.testLocalPushNotification();
     }
 
     /**

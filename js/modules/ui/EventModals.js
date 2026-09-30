@@ -245,10 +245,18 @@
 
             document.getElementById('btn-next-round').onclick = async () => {
                 const btn = document.getElementById('btn-next-round');
+                const originalHtml = btn.innerHTML;
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO SIGUIENTE RONDA...';
                 btn.style.opacity = '0.85';
                 btn.style.pointerEvents = 'none';
-                if (onNextRound) await onNextRound();
+                try {
+                    if (onNextRound) await onNextRound();
+                } catch (err) {
+                    console.error("❌ [EventModals] Error al avanzar ronda:", err);
+                    btn.innerHTML = '<span>🚀 REINTENTAR SIGUIENTE RONDA</span>';
+                    btn.style.opacity = '1';
+                    btn.style.pointerEvents = 'auto';
+                }
             };
 
             document.getElementById('btn-edit-round').onclick = () => {
@@ -994,6 +1002,20 @@
                         background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, #080d19 100%);
                         border-top: 1px solid rgba(255, 255, 255, 0.08); flex-shrink: 0; z-index: 10;
                     ">
+                        <!-- Row 0: Crónica Épica IA Post-Torneo -->
+                        <button id="btn-tf-chronicle-ai" class="sp-tf-btn-social" style="
+                            background: linear-gradient(135deg, #8B5CF6 0%, #4C1D95 100%);
+                            color: #ffffff; border: 1px solid rgba(204, 255, 0, 0.6); padding: 11px 14px; border-radius: 14px;
+                            font-weight: 950; font-size: 0.82rem; cursor: pointer;
+                            display: flex; align-items: center; justify-content: center; gap: 8px;
+                            box-shadow: 0 4px 18px rgba(139, 92, 246, 0.4); transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+                            letter-spacing: 0.5px;
+                        ">
+                            <span style="font-size: 1.05rem;">✨</span>
+                            <span>CRÓNICA ÉPICA & STORY 9:16</span>
+                            <span style="background: #CCFF00; color: #000; font-size: 0.58rem; padding: 2px 6px; border-radius: 6px; font-weight: 950;">NUEVO</span>
+                        </button>
+
                         <!-- Row 1: WhatsApp & Instagram (50% / 50%) -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                             <button id="btn-tf-whatsapp" class="sp-tf-btn-social" style="
@@ -1112,6 +1134,16 @@
 
                 return { canvas, blob, file, fileName };
             };
+
+            // AI CHRONICLE MODAL
+            const chronicleAiBtn = document.getElementById('btn-tf-chronicle-ai');
+            if (chronicleAiBtn) {
+                chronicleAiBtn.onclick = () => {
+                    if (window.TournamentChronicleModal) {
+                        window.TournamentChronicleModal.open(americanaDoc, safeMatches);
+                    }
+                };
+            }
 
             // WHATSAPP SHARE
             document.getElementById('btn-tf-whatsapp').onclick = async () => {

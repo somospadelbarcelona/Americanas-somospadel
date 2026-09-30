@@ -13,6 +13,16 @@
             this.isInitializing = true;
             console.log("📂 [OcrService] Initializing Tesseract worker...");
             try {
+                if (typeof Tesseract === 'undefined') {
+                    console.log("📥 [OcrService] Loading Tesseract.js on demand...");
+                    await new Promise((resolve, reject) => {
+                        const script = document.createElement('script');
+                        script.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+                        script.onload = resolve;
+                        script.onerror = () => reject(new Error("No se pudo cargar la librería Tesseract.js"));
+                        document.head.appendChild(script);
+                    });
+                }
                 this.worker = await Tesseract.createWorker('eng', 1, {
                     logger: m => console.log(m)
                 });

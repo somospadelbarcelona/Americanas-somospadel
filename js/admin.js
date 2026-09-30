@@ -55,6 +55,18 @@ window.AdminAuth = {
             
             const sidebar = document.getElementById('admin-sidebar');
             if (sidebar) {
+                // Ocultar bloques completos de sección no autorizados
+                sidebar.querySelectorAll('.sidebar-section').forEach(sec => {
+                    if (sec.classList.contains('section-motor') ||
+                        sec.classList.contains('section-players') ||
+                        sec.classList.contains('section-marketing') ||
+                        sec.classList.contains('section-system')) {
+                        sec.style.setProperty('display', 'none', 'important');
+                    } else {
+                        sec.style.removeProperty('display');
+                    }
+                });
+
                 // Ocultar todos los submenús excepto el de Americanas
                 const wrappers = sidebar.querySelectorAll('.submenu-wrapper');
                 wrappers.forEach(w => {
@@ -74,11 +86,13 @@ window.AdminAuth = {
                     }
                 });
 
-                // Ocultar botones individuales de navegación que no sean Americanas
-                const topButtons = sidebar.querySelectorAll('.nav-menu > button.nav-item-pro');
-                topButtons.forEach(btn => {
+                // Ocultar botones individuales de navegación que no sean Americanas ni opciones de salida
+                const allNavButtons = sidebar.querySelectorAll('.nav-item-pro');
+                allNavButtons.forEach(btn => {
                     const view = btn.getAttribute('data-view') || '';
-                    if (!view.includes('americana') && !view.includes('matches')) {
+                    const isLogout = btn.classList.contains('nav-item-logout') || btn.classList.contains('nav-item-back');
+                    const isAmericana = view.includes('americana') || view.includes('matches') || btn.classList.contains('nav-group-americana');
+                    if (!isAmericana && !isLogout) {
                         btn.style.setProperty('display', 'none', 'important');
                     }
                 });
@@ -152,28 +166,36 @@ window.AdminAuth = {
                 // Continuamos igualmente - puede que las reglas de Firestore permitan el acceso
             }
 
-            // Cargar la vista inicial: respetar hash de URL, última vista guardada o 'users' por defecto
+            // Cargar la vista inicial: respetar hash de URL, última vista guardada o 'dashboard_home' por defecto
+            const role = (this.user.role || '').toString().toLowerCase().trim();
+            const isOrganizer = ['organizer', 'organizador', 'organizadores', 'organizers'].includes(role);
             const hashView = window.location.hash ? window.location.hash.replace('#', '').split('?')[0].trim() : null;
             const savedView = sessionStorage.getItem('admin_last_view');
-            const targetInitialView = hashView || savedView || 'users';
+            const targetInitialView = hashView || savedView || (isOrganizer ? 'americanas_mgmt' : 'dashboard_home');
 
-            setTimeout(() => {
-                if (!window._currentAdminView && window.loadAdminView) {
-                    window.loadAdminView(targetInitialView);
-                }
+            // Cargar la vista inicial de inmediato sin retrasos innecesarios
+            if (!window._currentAdminView && window.loadAdminView) {
+                window.loadAdminView(targetInitialView);
+            }
 
+            // Escalonar agentes de fondo para no saturar CPU ni red durante el renderizado inicial
+            const scheduleBackgroundAgents = () => {
                 // --- BATSEÑAL 2.0 (Proactive Agent) ---
                 if (window.BatSignalAgent) {
                     window.BatSignalAgent.init();
                 }
 
                 // --- AUTOBLOG CRON PASIVO ---
-                setTimeout(() => {
-                    if (window.AutoBlogEngine && typeof window.AutoBlogEngine.checkAndGeneratePassive === 'function') {
-                        window.AutoBlogEngine.checkAndGeneratePassive();
-                    }
-                }, 1500);
-            }, 300);
+                if (window.AutoBlogEngine && typeof window.AutoBlogEngine.checkAndGeneratePassive === 'function') {
+                    window.AutoBlogEngine.checkAndGeneratePassive();
+                }
+            };
+
+            if ('requestIdleCallback' in window) {
+                window.requestIdleCallback(scheduleBackgroundAgents, { timeout: 8000 });
+            } else {
+                setTimeout(scheduleBackgroundAgents, 5000);
+            }
         } else {
             console.log("🔒 No active session. Waiting for PIN...");
             if (localStorage.getItem('admin_remember_pin')) {
@@ -261,7 +283,7 @@ window.AdminAuth = {
         const role = (user.role || '').toString().toLowerCase().trim();
         const isOrganizer = ['organizer', 'organizador', 'organizadores', 'organizers'].includes(role);
         const hashView = window.location.hash ? window.location.hash.replace('#', '').split('?')[0].trim() : null;
-        const targetView = hashView || sessionStorage.getItem('admin_last_view') || (isOrganizer ? 'americanas_mgmt' : 'users');
+        const targetView = hashView || sessionStorage.getItem('admin_last_view') || (isOrganizer ? 'americanas_mgmt' : 'dashboard_home');
         window.loadAdminView(targetView);
     },
 
@@ -277,12 +299,12 @@ window.AdminAuth = {
         if (nameEl) nameEl.textContent = this.user.name;
         if (avEl) avEl.textContent = this.user.name.charAt(0);
 
-        // Add Force Refresh button to top bar if not exists
+        // Add Force Refresh button to top bar if not exists (Oculto en móvil por CSS)
         const topActions = document.querySelector('.top-actions');
         if (topActions && !document.getElementById('force-refresh-btn')) {
             const btn = document.createElement('button');
             btn.id = 'force-refresh-btn';
-            btn.className = 'btn-micro';
+            btn.className = 'btn-micro force-refresh-btn';
             btn.style.cssText = 'background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #888; padding: 5px 10px; border-radius: 6px; font-size: 0.65rem;';
             btn.innerHTML = '<i class="fas fa-sync-alt"></i> FORCE REFRESH';
             btn.onclick = () => {
@@ -309,7 +331,8 @@ window.loadAdminView = async function (rawViewName) {
     const role = (window.AdminAuth?.user?.role || '').toString().toLowerCase().trim();
     const isOrganizer = ['organizer', 'organizador', 'organizadores', 'organizers'].includes(role);
 
-    let viewName = String(rawViewName || (isOrganizer ? 'americanas_mgmt' : 'users')).split('?')[0].trim();
+    let viewName = String(rawViewName || (isOrganizer ? 'americanas_mgmt' : 'dashboard_home')).split('?')[0].trim();
+    if (viewName === 'home') viewName = 'dashboard_home';
 
     // 🔒 RESTRICCIÓN ESTRICTA DE ACCESO PARA ORGANIZADORES:
     // Solo pueden ver y gestionar Americanas y Resultados de americanas
@@ -335,10 +358,23 @@ window.loadAdminView = async function (rawViewName) {
     // Sidebar Active State
     document.querySelectorAll('.nav-item-pro, .submenu-item').forEach(el => el.classList.remove('active'));
     document.querySelector(`.nav-item-pro[data-view="${viewName}"], .submenu-item[data-view="${viewName}"]`)?.classList.add('active');
+    if (viewName === 'dashboard_home') {
+        document.querySelector('.btn-inicio-motor')?.classList.add('active');
+    }
 
-    // Close Mobile Menu
-    document.getElementById('admin-sidebar')?.classList.remove('open');
-    document.getElementById('sidebar-overlay')?.classList.remove('active');
+    // Close Mobile Drawer
+    if (typeof window.toggleAdminSidebar === 'function') {
+        window.toggleAdminSidebar(false);
+    } else {
+        document.getElementById('admin-sidebar')?.classList.remove('open');
+        document.getElementById('admin-sidebar')?.classList.remove('active');
+        document.getElementById('sidebar-overlay')?.classList.remove('active');
+    }
+
+    // Sincronizar barra superior de navegación rápida móvil (Quick Nav / Subsecciones)
+    if (typeof window.updateMobileSubnav === 'function') {
+        window.updateMobileSubnav(viewName);
+    }
 
     // Re-apply role restrictions to keep sidebar locked
     if (window.AdminAuth && typeof window.AdminAuth.applyRoleRestrictions === 'function') {
@@ -355,7 +391,10 @@ window.loadAdminView = async function (rawViewName) {
 
     // ROUTING TABLE
     try {
-        if (viewName === 'users' && window.AdminViews.users) {
+        if ((viewName === 'dashboard_home' || viewName === 'home') && window.AdminViews && window.AdminViews.dashboard_home) {
+            await window.AdminViews.dashboard_home();
+        }
+        else if (viewName === 'users' && window.AdminViews.users) {
             await window.AdminViews.users();
         }
         else if (viewName === 'season_campaign') {
@@ -364,6 +403,17 @@ window.loadAdminView = async function (rawViewName) {
             } else {
                 throw new Error("Season Campaign Admin Module not loaded");
             }
+        }
+        else if (viewName === 'sos_substitutes') {
+            if (window.AdminSosSubstitutes) await window.AdminSosSubstitutes.render();
+            else throw new Error("AdminSosSubstitutes Module not loaded");
+        }
+        else if (viewName === 'logic_lab') {
+            const titleEl = document.getElementById('page-title');
+            if (titleEl) titleEl.textContent = 'AUDITORÍA DE LÓGICA (LAB)';
+            if (window.AdminTournamentLogicLab) await window.AdminTournamentLogicLab.render();
+            else if (window.AdminViews && typeof window.AdminViews.logic_lab === 'function') await window.AdminViews.logic_lab();
+            else throw new Error("AdminTournamentLogicLab Module not loaded");
         }
         else if ((viewName === 'americanas_mgmt' || viewName === 'events') && window.AdminViews.americanas_mgmt) {
             await window.AdminViews.americanas_mgmt();

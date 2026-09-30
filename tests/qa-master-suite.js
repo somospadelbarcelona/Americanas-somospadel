@@ -49,6 +49,36 @@ runSubtest("Smart Ticker & Campaña Equipos", "test-smart-ticker-season-campaign
 // 6. Battle Ready Modal QA
 runSubtest("Battle Ready Modal QA", "test-battle-ready-qa.js");
 
+// 7. Community Home Hub QA
+runSubtest("Inicio de Comunidad (CommunityHome QA)", "test-community-home-qa.js");
+
+// 8. Gamification & Achievements System QA
+runSubtest("Gamificación y Logros (Achievements QA)", "test-gamification-qa.js");
+
+// 9. Round Advancement & Matchmaking Modes QA (Fixed Pairs, Twister, Suizo)
+runSubtest("Avance de Rondas y Modalidades (Fixed, Twister, Suizo)", "test-round-advancement-qa.js");
+
+// 10. Bolsa de Suplentes SOS & Matchmaking Inteligente QA
+runSubtest("Bolsa de Suplentes SOS & Matchmaking Inteligente", "test-sos-substitutes-complete-qa.js");
+
+// 11. Resumen Crónica Post-Torneo con IA & Instagram Stories QA
+runSubtest("Crónica Post-Torneo con IA & Instagram Stories", "test-tournament-chronicle-complete-qa.js");
+
+// 12. Radar de Climatología Avanzado & Alertas de Lluvia QA
+runSubtest("Radar de Climatología Avanzado & Alertas de Lluvia", "test-weather-radar-complete-qa.js");
+
+// 13. Visualización Completa de 6 Rondas & Tabs Compactos QA
+runSubtest("Visualización Completa de 6 Rondas & Tabs Compactos", "test-round-tabs-qa.js");
+
+// 14. Centro de Control & Auditoría de Lógica de Torneos y Entrenos QA
+runSubtest("Centro de Control & Auditoría de Lógica de Torneos y Entrenos", "test-tournament-logic-lab-complete-qa.js");
+
+// 15. Frontend Enhancements & Clonación Ficticia Lógica Lab QA
+runSubtest("Mejoras de Frontend & Clonación Lógica Lab", "test-logic-lab-frontend-enhancements.js");
+
+// 16. Eventos Finalizados y Reordenación de Submenús QA
+runSubtest("Eventos Finalizados & Submenús Inmediatos", "test-finished-events-and-submenus-qa.js");
+
 console.log("\n================================================================");
 console.log(" RESUMEN GLOBAL DE CALIDAD:");
 reports.forEach(r => {

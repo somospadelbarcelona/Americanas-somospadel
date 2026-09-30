@@ -1,13 +1,13 @@
 // ============================================================================
 // 🎾 SOMOSPADEL PWA SERVICE WORKER
-// Versión: somospadel-pwa-v2.0.4
+// Versión: somospadel-pwa-v2.0.9
 // Estrategias:
 //  - Documentos de navegación: Network First con fallback a caché offline
 //  - Recursos estáticos pesados (fuentes, imágenes, CSS, JS): Stale-While-Revalidate / Cache First
 //  - Firestore y APIs externas: Excluidas de caché (conexión directa)
 // ============================================================================
 
-const CACHE_NAME = 'somospadel-pwa-v2.0.4';
+const CACHE_NAME = 'somospadel-pwa-v2.0.9';
 
 // Recursos críticos para el funcionamiento offline básico (App Shell)
 const PRECACHE_ASSETS = [
@@ -15,6 +15,8 @@ const PRECACHE_ASSETS = [
     './index.html',
     './admin.html',
     './manifest.json',
+    './js/fixed-pairs-logic.js',
+    './js/rotating-pozo-logic.js',
     './css/theme-playtomic.css',
     './css/notifications.css',
     './css/nav-mobile.css',
@@ -333,11 +335,76 @@ async function handleStaleWhileRevalidate(request) {
 }
 
 // ============================================================================
-// PUSH NOTIFICATIONS & INTERACCIÓN (Fallback si el navegador usa sw.js principal)
+// PUSH NOTIFICATIONS & INTERACCIÓN (Dual FCM + Web Push Nativo)
 // ============================================================================
 
+let isFcmMessagingInitialized = false;
+const processedPushCache = new Set();
+function markAndCheckPush(id) {
+    if (!id) return false;
+    if (processedPushCache.has(id)) return true;
+    processedPushCache.add(id);
+    if (processedPushCache.size > 100) {
+        const first = processedPushCache.values().next().value;
+        processedPushCache.delete(first);
+    }
+    return false;
+}
+
+// Soporte oficial Firebase Cloud Messaging en segundo plano (app cerrada en Android/iOS PWA)
+try {
+    importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js');
+    importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js');
+
+    if (typeof firebase !== 'undefined' && firebase.initializeApp) {
+        if (!firebase.apps || !firebase.apps.length) {
+            firebase.initializeApp({
+                apiKey: "AIzaSyBCy8nN4wKL2Cqvxp_mkmYpsA923N1g5iE",
+                authDomain: "americanas-somospadel.firebaseapp.com",
+                projectId: "americanas-somospadel",
+                storageBucket: "americanas-somospadel.firebasestorage.app",
+                messagingSenderId: "486590022834",
+                appId: "1:486590022834:web:069bc96e1e11c0edb75ab"
+            });
+        }
+        const swMessaging = firebase.messaging();
+        isFcmMessagingInitialized = true;
+        swMessaging.onBackgroundMessage((payload) => {
+            console.log('📬 [FCM SW] Push recibido con app en segundo plano/cerrada:', payload);
+            const data = payload.data || {};
+            const dedupeId = payload.messageId || data.notificationId || data.id || data.tag || (payload.notification?.title + ':' + payload.notification?.body);
+            if (markAndCheckPush(dedupeId)) {
+                console.log('🛡️ [FCM SW] Push ya mostrado, omitiendo duplicado:', dedupeId);
+                return;
+            }
+
+            const title = (payload.notification && payload.notification.title) ||
+                          (payload.data && payload.data.title) ||
+                          'SomosPadel BCN 🎾';
+            const body = (payload.notification && payload.notification.body) ||
+                         (payload.data && payload.data.body) ||
+                         'Tienes una nueva actualización en SomosPadel.';
+            const icon = (payload.notification && payload.notification.icon) || data.icon || './img/logo_somospadel.png';
+            const tag = data.notificationId || data.id || data.tag || 'somospadel-fcm';
+
+            return self.registration.showNotification(title, {
+                body,
+                icon,
+                badge: './img/logo_somospadel.png',
+                tag,
+                data,
+                vibrate: [200, 100, 200],
+                renotify: true
+            });
+        });
+        console.log('🎾 [SW] Firebase Messaging integrado con éxito en Service Worker principal.');
+    }
+} catch (swFcmErr) {
+    console.warn('ℹ️ [SW] Firebase Messaging SDK no cargado en SW, operando mediante Push API estándar:', swFcmErr);
+}
+
 self.addEventListener('push', (event) => {
-    console.log('📬 [SW Principal] Evento PUSH recibido.');
+    console.log('📬 [SW Principal] Evento PUSH nativo recibido.');
 
     let payload = {};
     if (event.data) {
@@ -352,26 +419,85 @@ self.addEventListener('push', (event) => {
         }
     }
 
-    const notification = payload.notification || {};
     const data = payload.data || {};
+    const isFcmPayload = Boolean(payload.from || payload['google.c.sender.id'] || payload.fcmMessageId || payload.fcmOptions);
+    const dedupeId = payload.fcmMessageId || payload.messageId || data.notificationId || data.id || data.tag || (payload.notification?.title + ':' + payload.notification?.body);
 
+    if (markAndCheckPush(dedupeId)) {
+        console.log('🛡️ [SW Principal] Push ya procesado por FCM/SW, omitiendo duplicado:', dedupeId);
+        return;
+    }
+
+    // Si FCM SDK está activo y procesando el mensaje FCM, evitar doble notificación
+    if (isFcmMessagingInitialized && isFcmPayload) {
+        console.log('ℹ️ [SW Principal] Mensaje gestionado por FCM onBackgroundMessage.');
+        return;
+    }
+
+    const notification = payload.notification || {};
     const title = notification.title || data.title || 'SomosPadel BCN 🎾';
     const body = notification.body || data.body || 'Tienes una nueva notificación.';
     const icon = notification.icon || data.icon || './img/logo_somospadel.png';
-    const tag = data.id || data.tag || ('somospadel-notif-' + Date.now());
+    const tag = data.notificationId || data.id || data.tag || 'somospadel-notif';
 
-    const options = {
+    // ============================================================================
+    // PERSISTENCIA IN-APP DE PUSH ENTRANTES EN INDEXEDDB Y POSTMESSAGE A CLIENTES
+    // ============================================================================
+    const inboxItem = {
+        id: data.notificationId || data.id || ('push_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6)),
+        title: title,
         body: body,
         icon: icon,
-        badge: './img/logo_somospadel.png',
-        data: data,
-        tag: tag,
-        vibrate: [200, 100, 200],
-        renotify: true
+        timestamp: data.timestamp || new Date().toISOString(),
+        type: data.type || (data.broadcastId ? 'broadcast' : 'push'),
+        category: data.category || (data.broadcastId || data.type === 'broadcast' ? 'broadcast' : (data.type === 'entreno' ? 'entrenos' : 'matches')),
+        read: false,
+        data: data
+    };
+
+    const saveAndNotify = async () => {
+        try {
+            if (typeof indexedDB !== 'undefined') {
+                await new Promise((resolve) => {
+                    const req = indexedDB.open('somospadel_inbox_db', 1);
+                    req.onupgradeneeded = (e) => {
+                        const db = e.target.result;
+                        if (!db.objectStoreNames.contains('inbound_pushes')) {
+                            db.createObjectStore('inbound_pushes', { keyPath: 'id' });
+                        }
+                    };
+                    req.onsuccess = (e) => {
+                        try {
+                            const db = e.target.result;
+                            const tx = db.transaction('inbound_pushes', 'readwrite');
+                            tx.objectStore('inbound_pushes').put(inboxItem);
+                            tx.oncomplete = () => { db.close(); resolve(); };
+                            tx.onerror = () => { db.close(); resolve(); };
+                        } catch (_) { resolve(); }
+                    };
+                    req.onerror = () => resolve();
+                });
+            }
+        } catch (_) {}
+
+        try {
+            const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+            clientList.forEach((client) => {
+                if (client.postMessage) {
+                    client.postMessage({
+                        type: 'SP_INBOUND_NOTIFICATION',
+                        item: inboxItem
+                    });
+                }
+            });
+        } catch (_) {}
     };
 
     event.waitUntil(
-        self.registration.showNotification(title, options)
+        Promise.all([
+            self.registration.showNotification(title, options),
+            saveAndNotify()
+        ])
     );
 });
 

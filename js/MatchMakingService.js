@@ -106,11 +106,13 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
                         console.log(`✅ Previous round R${roundNum - 1} is fully finished. Proceeding...`);
                     }
 
+                try {
                     // UPDATE LOGIC
                     if (isFixedPairs) {
                         // Update Rankings then Generate
                         const pairs = event.fixed_pairs || [];
-                        if (!window.FixedPairsLogic) throw new Error("FixedPairsLogic not loaded");
+                        await this._ensureFixedPairsLogic();
+                        if (!window.FixedPairsLogic) throw new Error("FixedPairsLogic no disponible. Por favor recarga la página.");
 
                         const updatedPairs = FixedPairsLogic.updatePozoRankings(pairs, prevRoundMatches, effectiveCourts);
                         await collection.update(eventId, { fixed_pairs: updatedPairs });
@@ -118,10 +120,14 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
                         return this._createMatches(eventId, FixedPairsLogic.generatePozoRound(updatedPairs, roundNum, effectiveCourts), eventType);
                     } else {
                         // Rotating / Swiss Logic
-                        const players = event.players || [];
+                        const rawP = (Array.isArray(event.players) && event.players.length > 0)
+                            ? event.players
+                            : (Array.isArray(event.registeredPlayers) ? event.registeredPlayers : []);
+                        const players = rawP.map((p, idx) => typeof p === 'string' ? { id: p, uid: p, name: `Jugador ${idx + 1}`, level: 3.0, current_court: Math.floor(idx / 4) + 1 } : p);
                         let movedPlayers;
 
-                        if (!window.RotatingPozoLogic) throw new Error("RotatingPozoLogic not loaded");
+                        await this._ensureRotatingPozoLogic();
+                        if (!window.RotatingPozoLogic) throw new Error("RotatingPozoLogic no disponible. Por favor recarga la página.");
 
                         if (isSwiss) {
                             console.log(`🇨🇭 Generating Swiss Round ${roundNum} for ${eventType}...`);
@@ -130,7 +136,7 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
                         } else if (eventType === 'entreno') {
                             // Entreno R2+: Use Standard Pozo Movement
                             console.log("🏃‍♂️ Using Entreno Pozo Movement...");
-                            movedPlayers = RotatingPozoLogic.updatePlayerCourts(players, prevRoundMatches, effectiveCourts, 'open');
+                            movedPlayers = RotatingPozoLogic.updatePlayerCourts(players, prevRoundMatches, effectiveCourts, event.category === 'mixed' ? 'mixed' : 'open');
                         } else {
                             // Americana/Pozo
                             console.log("🎾 Using Americana Pozo Movement...");
@@ -139,95 +145,209 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
                         await collection.update(eventId, { players: movedPlayers });
                         console.log("✅ Player courts updated.");
 
-                        const genCategory = isSwiss ? 'open' : (eventType === 'entreno' ? 'entreno' : event.category);
+                        const genCategory = isSwiss ? 'open' : (eventType === 'entreno' ? (event.category === 'mixed' ? 'mixed' : 'entreno') : (event.category || 'open'));
                         const newMatches = RotatingPozoLogic.generateRound(movedPlayers, roundNum, effectiveCourts, genCategory);
 
                         console.log(`✨ Generated ${newMatches.length} new matches.`);
                         return this._createMatches(eventId, newMatches, eventType);
                     }
 
+                } catch (genError) {
+                    console.error("🚨 [MatchMakingService Root] Error en motor principal de ronda:", genError);
+                    console.warn("🛡️ [Failsafe NASA] Activando Generador de Contingencia...");
+                    return await this._generateEmergencyFallbackRound(eventId, eventType, roundNum, effectiveCourts, isFixedPairs, isSwiss, event, event.players || event.registeredPlayers || []);
+                }
+
                 } else {
                     // Round 1 Generation
-                    if (isFixedPairs) {
-                        if (!window.FixedPairsLogic) throw new Error("FixedPairsLogic not loaded");
+                    try {
+                        if (isFixedPairs) {
+                            await this._ensureFixedPairsLogic();
+                            if (!window.FixedPairsLogic) throw new Error("FixedPairsLogic no disponible. Por favor recarga la página.");
 
-                        let pairs = event.fixed_pairs || [];
+                            let pairs = event.fixed_pairs || [];
 
-                        if (randomize && pairs.length > 0) {
-                            console.log("🎲 Randomize requested: Clearing existing fixed pairs to force new random couples!");
-                            pairs = [];
-                        }
+                            if (randomize && pairs.length > 0) {
+                                console.log("🎲 Randomize requested: Clearing existing fixed pairs to force new random couples!");
+                                pairs = [];
+                            }
 
-                        if (pairs.length === 0) {
-                            console.log("🔒 No manual pairs found. Generating automatic fixed pairs...");
-                            let players = event.players || [];
+                            if (pairs.length === 0) {
+                                console.log("🔒 No manual pairs found. Generating automatic fixed pairs...");
+                                let players = event.players || [];
+
+                                if (eventType === 'entreno') {
+                                    players = this._sortPlayersForEntreno(players, randomize);
+                                } else if (randomize) {
+                                    console.log("🎲 Randomizing pairs (forcing shuffle)...");
+                                    for (let i = players.length - 1; i > 0; i--) {
+                                        const j = Math.floor(Math.random() * (i + 1));
+                                        [players[i], players[j]] = [players[j], players[i]];
+                                    }
+                                }
+
+                                const playersWithCourts = players.map((p, i) => ({
+                                    ...p,
+                                    current_court: Math.floor(i / 4) + 1,
+                                    last_partner: null
+                                }));
+
+                                pairs = FixedPairsLogic.createFixedPairs(playersWithCourts, event.category, eventType === 'entreno');
+                                await collection.update(eventId, { fixed_pairs: pairs });
+                            } else {
+                                console.log(`🔒 Using ${pairs.length} existing fixed pairs.`);
+                            }
+
+                            pairs = pairs.map((p, i) => ({
+                                ...p,
+                                current_court: p.initial_court || (Math.floor(i / 2) + 1),
+                                wins: 0,
+                                losses: 0,
+                                games_won: 0,
+                                games_lost: 0,
+                                won_last_match: false
+                            }));
+                            await collection.update(eventId, { fixed_pairs: pairs });
+
+                            return this._createMatches(eventId, FixedPairsLogic.generatePozoRound(pairs, 1, effectiveCourts), eventType);
+                        } else {
+                            // Initial Rotating Round
+                            await this._ensureRotatingPozoLogic();
+                            if (!window.RotatingPozoLogic) throw new Error("RotatingPozoLogic no disponible. Por favor recarga la página.");
+
+                            let rawPlayers = event.players || event.registeredPlayers || [];
+                            let players = rawPlayers.map((p, idx) => typeof p === 'string' ? { id: p, uid: p, name: `Jugador ${idx + 1}`, level: 3.0, current_court: Math.floor(idx / 4) + 1 } : p);
 
                             if (eventType === 'entreno') {
                                 players = this._sortPlayersForEntreno(players, randomize);
                             } else if (randomize) {
-                                console.log("🎲 Randomizing pairs (forcing shuffle)...");
+                                console.log("🎲 Randomizing players (forcing shuffle)...");
                                 for (let i = players.length - 1; i > 0; i--) {
-                                    const j = Math.floor(Math.random() * (i + 1));
-                                    [players[i], players[j]] = [players[j], players[i]];
+                                        const j = Math.floor(Math.random() * (i + 1));
+                                        [players[i], players[j]] = [players[j], players[i]];
                                 }
                             }
 
-                            // Ensure they have initial courts — ALWAYS recalculate from position
-                            // (never reuse stale current_court from previous rounds)
-                            const playersWithCourts = players.map((p, i) => ({
-                                ...p,
-                                current_court: Math.floor(i / 4) + 1,
-                                last_partner: null  // Clear last_partner so SmartPairs doesn't repeat
-                            }));
+                            players.forEach((p, i) => {
+                                p.current_court = Math.floor(i / 4) + 1;
+                                if (randomize) p.last_partner = null;
+                            });
+                            await collection.update(eventId, { players });
 
-                            pairs = FixedPairsLogic.createFixedPairs(playersWithCourts, event.category, eventType === 'entreno');
-                            await collection.update(eventId, { fixed_pairs: pairs });
-                        } else {
-                            console.log(`🔒 Using ${pairs.length} existing fixed pairs.`);
+                            const genCat = isSwiss ? 'open' : (eventType === 'entreno' ? (event.category === 'mixed' ? 'mixed' : 'entreno') : (event.category || 'open'));
+                            return this._createMatches(eventId, RotatingPozoLogic.generateRound(players, 1, effectiveCourts, genCat), eventType);
                         }
-
-                        // ✅ RESET: Restore initial courts before Round 1
-                        // Without this, pairs retain courts from previous rounds
-                        pairs = pairs.map((p, i) => ({
-                            ...p,
-                            current_court: p.initial_court || (Math.floor(i / 2) + 1),
-                            wins: 0,
-                            losses: 0,
-                            games_won: 0,
-                            games_lost: 0,
-                            won_last_match: false
-                        }));
-                        await collection.update(eventId, { fixed_pairs: pairs });
-
-                        return this._createMatches(eventId, FixedPairsLogic.generatePozoRound(pairs, 1, effectiveCourts), eventType);
-                    } else {
-                        // Initial Rotating Round
-                        if (!window.RotatingPozoLogic) throw new Error("RotatingPozoLogic not loaded");
-
-                        let players = event.players || [];
-
-                        if (eventType === 'entreno') {
-                            players = this._sortPlayersForEntreno(players, randomize);
-                        } else if (randomize) {
-                            console.log("🎲 Randomizing players (forcing shuffle)...");
-                            for (let i = players.length - 1; i > 0; i--) {
-                                const j = Math.floor(Math.random() * (i + 1));
-                                [players[i], players[j]] = [players[j], players[i]];
-                            }
-                        }
-
-                        // ALWAYS recalculate courts from scratch (never reuse stale values)
-                        players.forEach((p, i) => {
-                            p.current_court = Math.floor(i / 4) + 1;
-                            if (randomize) p.last_partner = null; // Clear last_partner so SmartPairs generates fresh
-                        });
-                        await collection.update(eventId, { players });
-
-                        // FIX: For entrenos, always use 'entreno' category so _createEntrenoPairs is used (unless Swiss mode)
-                        const genCat = isSwiss ? 'open' : (eventType === 'entreno' ? 'entreno' : event.category);
-                        return this._createMatches(eventId, RotatingPozoLogic.generateRound(players, 1, effectiveCourts, genCat), eventType);
+                    } catch (genError) {
+                        console.error("🚨 [MatchMakingService Root] Error en R1 principal:", genError);
+                        return await this._generateEmergencyFallbackRound(eventId, eventType, 1, effectiveCourts, isFixedPairs, isSwiss, event, event.players || event.registeredPlayers || []);
                     }
                 }
+            },
+
+            /**
+             * 🛡️ Generador de Contingencia de Emergencia
+             */
+            async _generateEmergencyFallbackRound(eventId, eventType, roundNum, effectiveCourts, isFixedPairs, isSwiss, event, playersList = []) {
+                console.warn(`🛡️ [Failsafe] Creando cruces de contingencia para R${roundNum}...`);
+                const fallbackMatches = [];
+
+                if (isFixedPairs) {
+                    const pairs = (Array.isArray(event.fixed_pairs) && event.fixed_pairs.length > 0) ? [...event.fixed_pairs] : [];
+                    const offset = (roundNum - 1) % Math.max(1, pairs.length - 1);
+                    const rotated = [...pairs.slice(offset), ...pairs.slice(0, offset)];
+
+                    for (let c = 1; c <= effectiveCourts; c++) {
+                        const pA = rotated[(c - 1) * 2];
+                        const pB = rotated[(c - 1) * 2 + 1];
+                        if (pA && pB) {
+                            fallbackMatches.push({
+                                round: roundNum,
+                                court: c,
+                                teamA: pA.name || 'Pareja A',
+                                teamB: pB.name || 'Pareja B',
+                                team_a_id: pA.id,
+                                team_b_id: pB.id,
+                                team_a_ids: [pA.player1_id, pA.player2_id].filter(Boolean),
+                                team_b_ids: [pB.player1_id, pB.player2_id].filter(Boolean),
+                                status: 'scheduled',
+                                score_a: 0,
+                                score_b: 0
+                            });
+                        }
+                    }
+                } else {
+                    const pPool = [...playersList].map((p, idx) => typeof p === 'string' ? { id: p, name: `Jugador ${idx + 1}` } : p);
+                    const shift = (roundNum - 1) % Math.max(1, pPool.length);
+                    const rotated = [...pPool.slice(shift), ...pPool.slice(0, shift)];
+
+                    for (let c = 1; c <= effectiveCourts; c++) {
+                        const cPlayers = rotated.slice((c - 1) * 4, c * 4);
+                        if (cPlayers.length >= 4) {
+                            fallbackMatches.push({
+                                round: roundNum,
+                                court: c,
+                                teamA: `${cPlayers[0].name} / ${cPlayers[1].name}`,
+                                teamB: `${cPlayers[2].name} / ${cPlayers[3].name}`,
+                                team_a_ids: [cPlayers[0].id || cPlayers[0].uid, cPlayers[1].id || cPlayers[1].uid],
+                                team_b_ids: [cPlayers[2].id || cPlayers[2].uid, cPlayers[3].id || cPlayers[3].uid],
+                                team_a_names: [cPlayers[0].name, cPlayers[1].name],
+                                team_b_names: [cPlayers[2].name, cPlayers[3].name],
+                                status: 'scheduled',
+                                score_a: 0,
+                                score_b: 0
+                            });
+                        }
+                    }
+                }
+
+                if (fallbackMatches.length === 0) {
+                    throw new Error("No hay suficientes jugadores/parejas para contingencia");
+                }
+                return this._createMatches(eventId, fallbackMatches, eventType);
+            },
+
+            /**
+             * Auto-recuperación dinámica de dependencias de emparejamiento
+             */
+            async _ensureRotatingPozoLogic() {
+                if (typeof window !== 'undefined' && window.RotatingPozoLogic) return true;
+                if (typeof document !== 'undefined') {
+                    console.warn("⚠️ [MatchMakingService] RotatingPozoLogic no detectado. Intentando carga dinámica resiliente...");
+                    await this._loadScriptDynamically('js/rotating-pozo-logic.js?v=5014');
+                }
+                return typeof window !== 'undefined' && !!window.RotatingPozoLogic;
+            },
+
+            async _ensureFixedPairsLogic() {
+                if (typeof window !== 'undefined' && window.FixedPairsLogic) return true;
+                if (typeof document !== 'undefined') {
+                    console.warn("⚠️ [MatchMakingService] FixedPairsLogic no detectado. Intentando carga dinámica resiliente...");
+                    await this._loadScriptDynamically('js/fixed-pairs-logic.js?v=5014');
+                }
+                return typeof window !== 'undefined' && !!window.FixedPairsLogic;
+            },
+
+            _loadScriptDynamically(src) {
+                return new Promise((resolve) => {
+                    if (typeof document === 'undefined') return resolve(false);
+                    const cleanPath = src.split('?')[0];
+                    const existing = document.querySelector(`script[src*="${cleanPath}"]`);
+                    if (existing) {
+                        setTimeout(() => resolve(true), 250);
+                        return;
+                    }
+                    const script = document.createElement('script');
+                    script.src = src;
+                    script.onload = () => {
+                        console.log(`✅ [MatchMakingService] Script cargado dinámicamente: ${src}`);
+                        resolve(true);
+                    };
+                    script.onerror = (err) => {
+                        console.error(`❌ [MatchMakingService] Falló carga dinámica de ${src}:`, err);
+                        resolve(false);
+                    };
+                    document.head.appendChild(script);
+                });
             },
 
             /**

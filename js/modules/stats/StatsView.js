@@ -46,6 +46,19 @@
                 // 4. Init Charts
                 this.initCharts(stats, history);
 
+                // 5. Evaluate and Render Gamification & Achievements
+                if (window.AchievementsService) {
+                    try {
+                        const evalResult = await window.AchievementsService.evaluatePlayerAchievements(user, stats, matches);
+                        const gamificationContainer = document.getElementById('stats-gamification-root');
+                        if (gamificationContainer) {
+                            gamificationContainer.innerHTML = window.AchievementsService.renderGamificationHTML(evalResult);
+                        }
+                    } catch (gamificationErr) {
+                        console.warn("[StatsView] Error renderizando logros/misiones:", gamificationErr);
+                    }
+                }
+
             } catch (error) {
                 console.error("Stats Render Error:", error);
                 container.innerHTML = `<div style="padding:20px; text-align:center; color:#ef4444;">Error cargando estadísticas: ${error.message}</div>`;
@@ -241,6 +254,9 @@
                             <canvas id="skillRadar"></canvas>
                         </div>
                     </div>
+
+                    <!-- Gamification, Badges & Weekly Missions Section -->
+                    <div id="stats-gamification-root"></div>
 
                     <!-- Recent Matches List -->
                     <div style="padding: 0 20px;">

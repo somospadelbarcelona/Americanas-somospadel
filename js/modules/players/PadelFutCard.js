@@ -253,32 +253,45 @@
                     </div>
 
                     <!-- ACTION BUTTONS: STORY SHARING & DOWNLOAD -->
-                    <div style="display: flex; flex-direction: column; width: 100%; max-width: 330px; gap: 10px; margin-top: 20px;">
+                    <div style="display: flex; flex-direction: column; width: 100%; max-width: 330px; gap: 10px; margin-top: 18px;">
                         <button id="fut-share-story-btn" onclick="window.PadelFutCard.generateAndShareStory()" style="
-                            background: #CCFF00; border: none; color: #000;
+                            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+                            border: none; color: #ffffff;
                             padding: 14px; border-radius: 16px; font-weight: 950; font-size: 0.85rem;
-                            text-transform: uppercase; letter-spacing: 1px; cursor: pointer;
+                            text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer;
                             display: flex; align-items: center; justify-content: center; gap: 10px;
-                            box-shadow: 0 4px 20px rgba(204,255,0,0.3); transition: transform 0.2s;
+                            box-shadow: 0 6px 22px rgba(220,39,67,0.45); transition: transform 0.2s;
                         ">
-                            <span>📲</span> COMPARTIR EN STORY (9:16)
+                            <i class="fab fa-instagram" style="font-size: 1.15rem;"></i>
+                            <span>SUBIR A INSTAGRAM STORY (9:16)</span>
                         </button>
 
                         <div style="display: flex; gap: 10px;">
                             <button onclick="window.PadelFutCard.downloadStoryPNG()" style="
-                                flex: 1; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18);
-                                color: #fff; padding: 12px; border-radius: 14px; font-weight: 900; font-size: 0.75rem;
+                                flex: 1.1; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18);
+                                color: #fff; padding: 12px; border-radius: 14px; font-weight: 900; font-size: 0.74rem;
                                 text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer;
                                 display: flex; align-items: center; justify-content: center; gap: 6px;
                             ">
-                                <span>⬇️</span> Guardar Story
+                                <i class="fas fa-download"></i> Guardar PNG HD
                             </button>
                             <button onclick="document.getElementById('padel-fut-card-modal').remove()" style="
-                                flex: 1; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
-                                color: #94a3b8; padding: 12px; border-radius: 14px; font-weight: 800; font-size: 0.75rem;
+                                flex: 0.9; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+                                color: #94a3b8; padding: 12px; border-radius: 14px; font-weight: 800; font-size: 0.74rem;
                                 text-transform: uppercase; cursor: pointer;
                             ">
                                 Cerrar
+                            </button>
+                        </div>
+
+                        <!-- Micro-banner Mención Instagram Oficial -->
+                        <div style="background: rgba(225, 48, 108, 0.12); border: 1px dashed rgba(225, 48, 108, 0.4); border-radius: 14px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                            <div style="min-width: 0;">
+                                <div style="font-size: 0.62rem; color: #ff9ebb; font-weight: 800;">ETIQUETA EN TU STORY:</div>
+                                <div style="font-size: 0.8rem; font-weight: 950; color: #ffffff;">@somospadelbarcelona_</div>
+                            </div>
+                            <button type="button" onclick="window.SocialChannelsService ? window.SocialChannelsService.copyTag(this) : null" style="background: rgba(255,255,255,0.15); border: none; color: #fff; padding: 6px 10px; border-radius: 8px; font-size: 0.68rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                <i class="fas fa-copy"></i> Copiar
                             </button>
                         </div>
                     </div>
@@ -530,15 +543,24 @@
         },
 
         /**
-         * Comparte la Story vertical 9:16 con Web Share API (móvil) o descarga
+         * Comparte la Story vertical 9:16 con Web Share API (móvil) o descarga y abre Instagram
          */
         async generateAndShareStory() {
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(25);
             const btn = document.getElementById('fut-share-story-btn');
             const originalText = btn ? btn.innerHTML : '';
             if (btn) {
-                btn.innerHTML = '⏳ Generando Story HD...';
+                btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Generando Story HD...';
                 btn.disabled = true;
             }
+
+            // Copiar mención oficial al portapapeles con anticipación para facilitar el pegado en Stories
+            const shareMention = 'Mi Carta Oficial en @somospadelbarcelona_ 🎾 #SomosPadelBCN';
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(shareMention);
+                }
+            } catch (e) {}
 
             try {
                 const canvas = await this.renderStoryCanvas();
@@ -548,17 +570,29 @@
                         this.downloadStoryPNG();
                         return;
                     }
-                    const file = new File([blob], `story_somospadel_${Date.now()}.png`, { type: 'image/png' });
+                    const playerName = (this.currentData?.name || 'jugador').replace(/\s+/g, '_');
+                    const file = new File([blob], `carta_fut_${playerName}_${Date.now()}.png`, { type: 'image/png' });
 
                     if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                        await navigator.share({
-                            title: '¡Mi Carta FUT en SomosPadel BCN! 🎾',
-                            text: '¡Mira mi carta de jugador y estadísticas en SomosPadel BCN! #SomosPadel #PadelFUT',
-                            files: [file]
-                        });
+                        try {
+                            await navigator.share({
+                                title: '¡Mi Carta Oficial en SomosPadel BCN! 🎾',
+                                text: 'Mi Carta Oficial en @somospadelbarcelona_ 🎾 #SomosPadelBCN',
+                                files: [file]
+                            });
+                        } catch (shareErr) {
+                            console.log('Share cancelado o fallback:', shareErr);
+                        }
                     } else {
-                        // Fallback: descarga directa
+                        // Fallback: descarga directa y abrir Instagram
                         this._triggerDownload(blob);
+                        if (confirm('✅ ¡Tu Carta FUT HD se ha descargado a tu galería!\n\n¿Quieres abrir Instagram ahora para subirla a tu Historia? (La mención @somospadelbarcelona_ ya está copiada al portapapeles)')) {
+                            if (window.SocialChannelsService) {
+                                window.SocialChannelsService.openInstagram();
+                            } else {
+                                window.open('https://www.instagram.com/somospadelbarcelona_/?hl=es', '_blank');
+                            }
+                        }
                     }
 
                     if (btn) {
@@ -569,7 +603,6 @@
 
             } catch (err) {
                 console.error('Error sharing story:', err);
-                alert('No se pudo compartir directamente. Descargando imagen...');
                 this.downloadStoryPNG();
                 if (btn) {
                     btn.innerHTML = originalText;
