@@ -89,6 +89,23 @@ test('admin.html contiene el botón de hamburguesa accesible en top-bar', () => 
 test('admin.html contiene función toggleAdminSidebar y backdrop overlay', () => {
     if (!adminHtml.includes('toggleAdminSidebar')) throw new Error('Falta toggleAdminSidebar en admin.html');
     if (!adminHtml.includes('id="sidebar-overlay"')) throw new Error('Falta #sidebar-overlay en admin.html');
+    // Asegurar que no esté fuera de etiquetas <script>
+    const scriptRegex = /<script\b[^>]*>([\s\S]*?)<\/script>/gi;
+    let foundInScript = false;
+    let match;
+    while ((match = scriptRegex.exec(adminHtml)) !== null) {
+        if (match[1].includes('toggleAdminSidebar')) {
+            foundInScript = true;
+            break;
+        }
+    }
+    if (!foundInScript) throw new Error('toggleAdminSidebar está fuera de una etiqueta <script> en admin.html');
+});
+
+test('admin.html define addToConsole accesible globalmente (evita ReferenceError en diagnostic console)', () => {
+    if (!adminHtml.includes('window.addToConsole = addToConsole')) {
+        throw new Error('Falta window.addToConsole = addToConsole en admin.html');
+    }
 });
 
 // 4. Auditoría de js/admin.js (Rutas y vistas por defecto)

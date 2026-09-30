@@ -95,20 +95,32 @@
                 return;
             }
 
-            // Pattern: Stale-While-Revalidate
-            const render = (players) => {
+            // Pattern: Stale-While-Revalidate with async dependency retry
+            const render = async (players) => {
+                let attempts = 0;
+                while (!window.RankingView && attempts < 40) {
+                    await new Promise(r => setTimeout(r, 50));
+                    attempts++;
+                }
+
                 try {
-                    if (window.RankingView) {
+                    if (window.RankingView && typeof window.RankingView.render === 'function') {
                         window.RankingView.render(players || []);
                     } else {
-                        throw new Error("RankingView not found");
+                        throw new Error("El módulo visual del Ranking (RankingView) no está listo.");
                     }
                 } catch (e) {
                     console.error("❌ [RankingController] Render failed:", e);
-                    content.innerHTML = `<div style="padding:40px; text-align:center; color:white;">
-                        <h3>⚠️ Error de Visualización</h3>
-                        <p>${e.message}</p>
-                    </div>`;
+                    content.innerHTML = `
+                        <div style="padding: 40px 20px; text-align: center; max-width: 520px; margin: 50px auto; background: #0f172a; border: 1.5px solid rgba(204, 255, 0, 0.35); border-radius: 24px; color: #f8fafc; font-family: 'Outfit', -apple-system, sans-serif; box-shadow: 0 20px 45px rgba(0,0,0,0.18);">
+                            <div style="font-size: 2.8rem; margin-bottom: 12px; line-height: 1;">⚠️</div>
+                            <h3 style="font-size: 1.25rem; font-weight: 950; color: #ffffff; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 0.5px;">Error al visualizar Ranking</h3>
+                            <p style="font-size: 0.88rem; color: #94a3b8; margin: 0 0 22px 0; line-height: 1.4;">${e.message || 'Se produjo un problema al renderizar los datos del ranking.'}</p>
+                            <button onclick="window.RankingController && window.RankingController.init()" style="background: #CCFF00; color: #000; border: none; font-weight: 950; padding: 12px 24px; border-radius: 14px; font-size: 0.8rem; letter-spacing: 1px; cursor: pointer; text-transform: uppercase; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+                                <i class="fas fa-sync-alt" style="margin-right: 6px;"></i> Reintentar Carga
+                            </button>
+                        </div>
+                    `;
                 }
             };
 
@@ -118,9 +130,9 @@
                     try { window.CacheService.delete('general', 'global_ranking'); } catch (e) {}
                 }
                 const cachedRanking = await window.CacheService.get('general', 'global_ranking_v4');
-                if (cachedRanking && Array.isArray(cachedRanking)) {
+                if (cachedRanking && Array.isArray(cachedRanking) && cachedRanking.length > 0) {
                     console.log("⚡ [Ranking] Instant load from IndexedDB (v4 Official Ranking).");
-                    render(cachedRanking);
+                    await render(cachedRanking);
                 } else {
                     content.innerHTML = '<div class="loader-container" style="display:flex; justify-content:center; align-items:center; height:60vh;"><div class="loader"></div></div>';
                 }
@@ -141,19 +153,27 @@
 
                 // Always render fresh data to ensure we are not stuck with old/empty cache
                 console.log("🔄 [Ranking] Updating UI with fresh official recalculated data.");
-                render(freshRanking);
+                await render(freshRanking);
 
                 if (freshRanking && freshRanking.length > 0) {
                     await window.CacheService.set('general', 'global_ranking_v4', freshRanking);
                 }
             } catch (error) {
                 console.error("❌ [RankingController] Critical error in init:", error);
-                content.innerHTML = `<div style="padding:40px; text-align:center; color:white;">
-                    <i class="fas fa-exclamation-triangle" style="font-size:3rem; color:#CCFF00; margin-bottom:20px;"></i>
-                    <h2 style="font-weight:900;">ERROR AL CARGAR RANKING</h2>
-                    <p style="color:#888;">${error.message}</p>
-                    <button onclick="window.Router.navigate('dashboard')" style="background:#CCFF00; color:black; border:none; padding:12px 24px; border-radius:12px; font-weight:900; margin-top:20px; cursor:pointer;">VOLVER AL INICIO</button>
-                </div>`;
+                content.innerHTML = `
+                    <div style="padding: 40px 20px; text-align: center; max-width: 520px; margin: 50px auto; background: #0f172a; border: 1.5px solid rgba(204, 255, 0, 0.35); border-radius: 24px; color: #f8fafc; font-family: 'Outfit', -apple-system, sans-serif; box-shadow: 0 20px 45px rgba(0,0,0,0.18);">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 2.8rem; color: #CCFF00; margin-bottom: 16px; display: inline-block;"></i>
+                        <h2 style="font-weight: 950; font-size: 1.3rem; margin: 0 0 10px 0; color: #ffffff;">ERROR AL CARGAR RANKING</h2>
+                        <p style="color: #94a3b8; font-size: 0.88rem; margin: 0 0 22px 0;">${error.message}</p>
+                        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                            <button onclick="window.RankingController && window.RankingController.init()" style="background: #CCFF00; color: #000; border: none; padding: 12px 22px; border-radius: 12px; font-weight: 950; font-size: 0.8rem; cursor: pointer; text-transform: uppercase;">
+                                <i class="fas fa-sync-alt" style="margin-right: 5px;"></i> REINTENTAR
+                            </button>
+                            <button onclick="window.Router && window.Router.navigate('dashboard')" style="background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); padding: 12px 22px; border-radius: 12px; font-weight: 950; font-size: 0.8rem; cursor: pointer; text-transform: uppercase;">
+                                VOLVER AL INICIO
+                            </button>
+                        </div>
+                    </div>`;
             }
         }
 
@@ -485,15 +505,19 @@
                 // 4. Merge Stats into Player Profile
                 this.rankedPlayers = players.map(p => {
                     const ps = playerStatsMap[p.id] || { stats: { americanas: { points: 0, played: 0, won: 0, lost: 0, gamesWon: 0, gamesLost: 0, court1Count: 0, categories: {} }, entrenos: { points: 0, played: 0, won: 0, lost: 0, gamesWon: 0, gamesLost: 0, court1Count: 0, categories: {} } } };
+                    const safeName = (p.name && typeof p.name === 'string' && p.name.trim()) 
+                        ? p.name.trim() 
+                        : (p.displayName || p.nombre || (p.phone ? `Jugador ${p.phone.slice(-4)}` : 'Jugador SomosPadel'));
+                    const safeLevel = parseFloat(p.level || p.self_rate_level || 3.5) || 3.5;
 
                     return {
-                        id: p.id,
-                        name: p.name,
-                        level: parseFloat(p.level || p.self_rate_level || 3.5),
+                        id: p.id || '',
+                        name: safeName,
+                        level: safeLevel,
                         gender: p.gender || 'chico',
-                        photo_url: p.photo_url || null,
+                        photo_url: p.photo_url || p.photoURL || null,
                         stats: ps.stats,
-                        badge: this.getLevelBadge(p.level || p.self_rate_level || 3.5)
+                        badge: this.getLevelBadge(safeLevel)
                     };
                 })
                     .sort((a, b) => {

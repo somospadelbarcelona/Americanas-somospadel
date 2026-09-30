@@ -76,14 +76,25 @@
             // 0. Process data for current view/category
             const rankedData = this.getProcessedData();
 
+            // Safe sub-renders so no individual widget can break the entire ranking screen
+            const top10Html = (() => {
+                try { return this.renderTop10Elite(rankedData); } catch (e) { console.error("⚠️ [RankingView] renderTop10Elite error:", e); return ''; }
+            })();
+            const faceoffHtml = (() => {
+                try { return this.renderFaceoffWidget(rankedData); } catch (e) { console.error("⚠️ [RankingView] renderFaceoffWidget error:", e); return ''; }
+            })();
+            const listHtml = (() => {
+                try { return this.renderRankingList(''); } catch (e) { console.error("⚠️ [RankingView] renderRankingList error:", e); return '<div style="padding:30px; text-align:center; color:#64748b;">No se pudo cargar la lista completa.</div>'; }
+            })();
+
             // Activity counts for each modality
             const countAmericanas = (this.playersData || []).filter(p => {
-                const s = p.stats?.americanas;
+                const s = p?.stats?.americanas;
                 return s && ((s.played || 0) + (s.points || 0) > 0);
             }).length;
 
             const countEntrenos = (this.playersData || []).filter(p => {
-                const s = p.stats?.entrenos;
+                const s = p?.stats?.entrenos;
                 return s && ((s.played || 0) + (s.points || 0) > 0);
             }).length;
 
@@ -278,12 +289,12 @@
 
                     <!-- 2. TOP 10 ELITE (MVP Spotlight + Dupla de Honor + Carrusel Aspirantes) -->
                     <div id="ranking-podium-root" style="position: relative; z-index: 4;">
-                        ${this.renderTop10Elite(rankedData)}
+                        ${top10Html}
                     </div>
 
                     <!-- 2.2 ESPN FACEOFF: SIMULADOR 1VS1 -->
                     <div id="ranking-faceoff-widget-root" style="padding: 0 clamp(12px, 3.5vw, 25px) 20px; position: relative; z-index: 4;">
-                        ${this.renderFaceoffWidget(rankedData)}
+                        ${faceoffHtml}
                     </div>
 
                     <!-- 2.5 COMPARACIÓN DE RENDIMIENTO (Powerful Radar Chart) -->
@@ -338,8 +349,8 @@
                     const userStats = rankedData.find(p => p.id === currentUser.uid || p.id === currentUser.id);
                     if (!userStats) return '<div style="grid-column:1/-1; text-align:center; font-size:0.8rem; color:#64748b; font-weight:700;">Participa para aparecer en el ranking de esta categoría</div>';
 
-                    const s = userStats.stats[this.currentView] || { played: 0, won: 0, points: 0 };
-                    const displayStats = this.currentCategory === 'todas' ? s : (s.categories[this.currentCategory] || { points: 0, played: 0, won: 0 });
+                    const s = (userStats && userStats.stats) ? (userStats.stats[this.currentView] || { played: 0, won: 0, points: 0 }) : { played: 0, won: 0, points: 0 };
+                    const displayStats = this.currentCategory === 'todas' ? s : (s?.categories?.[this.currentCategory] || { points: 0, played: 0, won: 0 });
 
                     const winRate = displayStats.played > 0 ? Math.round((displayStats.won / displayStats.played) * 100) : 0;
                     const pos = userStats.rank;
@@ -483,16 +494,24 @@
 
                     <!-- Player List Container -->
                     <div id="ranking-list-body" style="padding: 0 clamp(10px, 3vw, 16px) calc(140px + env(safe-area-inset-bottom, 20px));">
-                        ${this.renderRankingList('')}
+                        ${listHtml}
                     </div>
                 </div>
             `;
 
             // Initialize the powerful radar chart comparing user vs MVP vs average
-            this.initPerformanceChart(rankedData);
+            try {
+                this.initPerformanceChart(rankedData);
+            } catch (errChart) {
+                console.warn("⚠️ [RankingView] Error initializing performance chart:", errChart);
+            }
 
             // Initialize ESPN Faceoff 1vs1 Simulator
-            this.initFaceoffWidget(rankedData);
+            try {
+                this.initFaceoffWidget(rankedData);
+            } catch (errFaceoff) {
+                console.warn("⚠️ [RankingView] Error initializing faceoff widget:", errFaceoff);
+            }
         }
 
         initPerformanceChart(rankedData) {
@@ -522,10 +541,10 @@
             let totalWinRate = 0;
             
             rankedData.forEach(p => {
-                const s = p.stats[this.currentView] || { played: 0, won: 0, points: 0 };
-                const displayStats = this.currentCategory === 'todas' ? s : (s.categories[this.currentCategory] || { points: 0, played: 0, won: 0 });
+                const s = (p && p.stats && p.stats[this.currentView]) ? p.stats[this.currentView] : { played: 0, won: 0, points: 0 };
+                const displayStats = this.currentCategory === 'todas' ? s : (s?.categories?.[this.currentCategory] || { points: 0, played: 0, won: 0 });
                 
-                totalLevel += parseFloat(p.level || 3.5);
+                totalLevel += parseFloat(p?.level || 3.5) || 3.5;
                 totalPoints += (displayStats.points || 0);
                 totalPlayed += (displayStats.played || 0);
                 totalWins += (displayStats.won || 0);
@@ -540,18 +559,18 @@
             const avgWinRate = totalWinRate / count;
 
             // Get current user stats
-            const sMy = myData.stats[this.currentView] || { played: 0, won: 0, points: 0 };
-            const myDisplay = this.currentCategory === 'todas' ? sMy : (sMy.categories[this.currentCategory] || { points: 0, played: 0, won: 0 });
-            const myLevel = parseFloat(myData.level || 3.5);
+            const sMy = (myData.stats && myData.stats[this.currentView]) ? myData.stats[this.currentView] : { played: 0, won: 0, points: 0 };
+            const myDisplay = this.currentCategory === 'todas' ? sMy : (sMy?.categories?.[this.currentCategory] || { points: 0, played: 0, won: 0 });
+            const myLevel = parseFloat(myData.level || 3.5) || 3.5;
             const myPoints = myDisplay.points || 0;
             const myPlayed = myDisplay.played || 0;
             const myWins = myDisplay.won || 0;
             const myWinRate = myDisplay.played > 0 ? (myDisplay.won / myDisplay.played) * 100 : 0;
 
             // Get MVP stats
-            const sMvp = mvpData.stats[this.currentView] || { played: 0, won: 0, points: 0 };
-            const mvpDisplay = this.currentCategory === 'todas' ? sMvp : (sMvp.categories[this.currentCategory] || { points: 0, played: 0, won: 0 });
-            const mvpLevel = parseFloat(mvpData.level || 3.5);
+            const sMvp = (mvpData.stats && mvpData.stats[this.currentView]) ? mvpData.stats[this.currentView] : { played: 0, won: 0, points: 0 };
+            const mvpDisplay = this.currentCategory === 'todas' ? sMvp : (sMvp?.categories?.[this.currentCategory] || { points: 0, played: 0, won: 0 });
+            const mvpLevel = parseFloat(mvpData.level || 3.5) || 3.5;
             const mvpPoints = mvpDisplay.points || 0;
             const mvpPlayed = mvpDisplay.played || 0;
             const mvpWins = mvpDisplay.won || 0;
@@ -563,22 +582,22 @@
             
             // Normalize points: 0 to max points in category maps to 0-100
             const maxPoints = Math.max(1, mvpPoints, ...rankedData.map(p => {
-                const s = p.stats[this.currentView] || { points: 0 };
-                return this.currentCategory === 'todas' ? s.points : (s.categories[this.currentCategory]?.points || 0);
+                const s = p?.stats?.[this.currentView] || { points: 0 };
+                return this.currentCategory === 'todas' ? (s.points || 0) : (s.categories?.[this.currentCategory]?.points || 0);
             }));
             const normalizePts = (pts) => (pts / maxPoints) * 100;
             
             // Normalize played: 0 to max played maps to 0-100
             const maxPlayed = Math.max(1, mvpPlayed, ...rankedData.map(p => {
-                const s = p.stats[this.currentView] || { played: 0 };
-                return this.currentCategory === 'todas' ? s.played : (s.categories[this.currentCategory]?.played || 0);
+                const s = p?.stats?.[this.currentView] || { played: 0 };
+                return this.currentCategory === 'todas' ? (s.played || 0) : (s.categories?.[this.currentCategory]?.played || 0);
             }));
             const normalizePlayed = (pld) => (pld / maxPlayed) * 100;
             
             // Normalize wins: 0 to max wins maps to 0-100
             const maxWins = Math.max(1, mvpWins, ...rankedData.map(p => {
-                const s = p.stats[this.currentView] || { won: 0 };
-                return this.currentCategory === 'todas' ? s.won : (s.categories[this.currentCategory]?.won || 0);
+                const s = p?.stats?.[this.currentView] || { won: 0 };
+                return this.currentCategory === 'todas' ? (s.won || 0) : (s.categories?.[this.currentCategory]?.won || 0);
             }));
             const normalizeWins = (wns) => (wns / maxWins) * 100;
 
@@ -768,13 +787,14 @@
                 const gamesLost = s?.gamesLost || 0;
                 const streak = won > 0 ? (1 + ((p.id ? String(p.id).charCodeAt(0) : 0) % Math.min(won, 4))) : 0;
                 const winRate = played > 0 ? Math.round((won / played) * 100) : 0;
-                const levelVal = parseFloat(p.level || 3.5).toFixed(2);
+                const levelVal = (parseFloat(p?.level) || 3.5).toFixed(2);
                 return { pts, won, played, lost, gamesWon, gamesLost, streak, winRate, levelVal };
             };
 
             const mvp = rankedData[0];
+            const mvpName = (mvp && mvp.name && typeof mvp.name === 'string' && mvp.name.trim()) ? mvp.name.trim() : 'Jugador #1';
             const mvpStats = getPlayerStats(mvp);
-            const rankBadge = this.getLevelBadge(parseFloat(mvp.level || 3.5));
+            const rankBadge = this.getLevelBadge(parseFloat(mvp?.level) || 3.5);
 
             const silverPlayer = rankedData.length > 1 ? rankedData[1] : null;
             const bronzePlayer = rankedData.length > 2 ? rankedData[2] : null;
@@ -1063,7 +1083,7 @@
                                         </div>
 
                                         <!-- Center: Player Avatar Frame -->
-                                        <div style="position: relative; cursor: pointer;" onclick="event.stopPropagation(); window.RankingView?.openPlayerCard('${mvp.id}');" title="Toca para ver la Carta FUT Oficial de ${mvp.name.replace(/"/g, '&quot;')}">
+                                        <div style="position: relative; cursor: pointer;" onclick="event.stopPropagation(); window.RankingView?.openPlayerCard('${mvp.id}');" title="Toca para ver la Carta FUT Oficial de ${mvpName.replace(/"/g, '&quot;')}">
                                             <div style="
                                                 width: 76px; height: 76px; border-radius: 18px;
                                                 border: 2px solid #fbbf24;
@@ -1072,7 +1092,7 @@
                                                 overflow: hidden;
                                                 display: flex; align-items: center; justify-content: center;
                                                 transition: transform 0.2s ease;">
-                                                ${!mvp.photo_url ? `<span style="font-size: 2.2rem; font-weight: 1000; color: #fbbf24; font-family: 'Outfit';">${mvp.name.charAt(0).toUpperCase()}</span>` : ''}
+                                                ${!mvp.photo_url ? `<span style="font-size: 2.2rem; font-weight: 1000; color: #fbbf24; font-family: 'Outfit';">${mvpName.charAt(0).toUpperCase()}</span>` : ''}
                                             </div>
                                             <div style="position: absolute; bottom: -6px; right: -6px; width: 22px; height: 22px; border-radius: 50%; background: #fbbf24; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 8px #fbbf24;" title="Ver Carta FUT">
                                                 <i class="fas fa-id-card" style="font-size: 0.6rem; color: #000;"></i>
@@ -1082,7 +1102,7 @@
                                         <!-- Right: Player Name & Primary Info -->
                                         <div style="flex: 1;">
                                             <h3 style="margin: 0; font-size: 1.25rem; font-weight: 1000; color: #fff; letter-spacing: -0.5px; line-height: 1.1; font-family: 'Outfit'; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
-                                                ${mvp.name.toUpperCase()}
+                                                ${mvpName.toUpperCase()}
                                             </h3>
                                             <div style="color: #a3e635; font-size: 0.6rem; font-weight: 800; display: flex; align-items: center; gap: 5px; margin-top: 6px;">
                                                 <i class="fas fa-fire"></i> Racha: <span style="font-weight:950;">${mvpStats.streak} victorias</span>
@@ -1301,10 +1321,11 @@
          * Unified Helper to filter, sort and rank players for the current context
          */
         getProcessedData() {
-            if (!this.playersData) return [];
+            if (!this.playersData || !Array.isArray(this.playersData)) return [];
 
             // 1. Initial Filter (Played at least 1 match or has points in this view)
             let filtered = this.playersData.filter(p => {
+                if (!p) return false;
                 const s = p.stats ? p.stats[this.currentView] : null;
                 if (!s) return false;
                 const totalActivity = (s.played || 0) + (s.points || 0);
@@ -1321,14 +1342,14 @@
 
             // 2. Sort by current context points
             filtered.sort((a, b) => {
-                const sA = a.stats[this.currentView];
-                const sB = b.stats[this.currentView];
+                const sA = a.stats ? a.stats[this.currentView] : null;
+                const sB = b.stats ? b.stats[this.currentView] : null;
 
-                const pA = this.currentCategory === 'todas' ? sA.points : (sA.categories[this.currentCategory]?.points || 0);
-                const pB = this.currentCategory === 'todas' ? sB.points : (sB.categories[this.currentCategory]?.points || 0);
+                const pA = this.currentCategory === 'todas' ? (sA?.points || 0) : (sA?.categories?.[this.currentCategory]?.points || 0);
+                const pB = this.currentCategory === 'todas' ? (sB?.points || 0) : (sB?.categories?.[this.currentCategory]?.points || 0);
 
                 if (pB !== pA) return pB - pA;
-                return (b.level || 0) - (a.level || 0); // Level as tie-breaker
+                return (parseFloat(b.level || 0) || 0) - (parseFloat(a.level || 0) || 0); // Level as tie-breaker
             });
 
             // 3. Map with Rank
@@ -1341,7 +1362,7 @@
 
             let finalDisplayList = rankedData;
             if (isSearching) {
-                finalDisplayList = rankedData.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+                finalDisplayList = rankedData.filter(p => (p.name || '').toLowerCase().includes(searchQuery.toLowerCase()));
             }
 
             if (finalDisplayList.length === 0) {
@@ -1362,8 +1383,9 @@
         }
 
         renderPlayerRow(p, rank, prevPlayer) {
-            const s = p.stats[this.currentView];
-            const pStats = this.currentCategory === 'todas' ? s : (s.categories[this.currentCategory] || { points: 0, played: 0, won: 0 });
+            const s = p.stats ? p.stats[this.currentView] : null;
+            const pStats = this.currentCategory === 'todas' ? (s || { points: 0, played: 0, won: 0 }) : (s?.categories?.[this.currentCategory] || { points: 0, played: 0, won: 0 });
+            const safeName = (p.name && typeof p.name === 'string' && p.name.trim()) ? p.name.trim() : 'Jugador';
 
             const isTop3 = rank <= 3;
             const rankColor = rank === 1 ? '#FFD700' : (rank === 2 ? '#C0C0C0' : (rank === 3 ? '#CD7F32' : '#64748b'));
@@ -1381,7 +1403,7 @@
             ).join('');
 
             // Note: pointsToNext logic will be slightly inaccurate when filtered but UX is better this way
-            const pointsToNext = prevPlayer ? (prevPlayer.stats[this.currentView].points - pStats.points) : 0;
+            const pointsToNext = prevPlayer ? ((prevPlayer.stats?.[this.currentView]?.points || 0) - (pStats?.points || 0)) : 0;
 
             const trend = (index < 5 && Math.random() > 0.6) ? 'up' : (index > 10 && Math.random() > 0.8 ? 'down' : 'stable');
             const trendIcon = trend === 'up' ? '<i class="fas fa-caret-up" style="color:#16a34a; font-size:0.75rem;"></i>' : (trend === 'down' ? '<i class="fas fa-caret-down" style="color:#dc2626; font-size:0.75rem;"></i>' : '');
@@ -1389,7 +1411,7 @@
             return `
                 <div 
                     onclick="window.RankingView?.openPlayerCard('${p.id}');"
-                    title="Toca para ver la Carta FUT oficial de ${p.name.replace(/"/g, '&quot;')}"
+                    title="Toca para ver la Carta FUT oficial de ${safeName.replace(/"/g, '&quot;')}"
                     style="
                         background: #ffffff;
                         border-radius: 18px;
@@ -1427,7 +1449,7 @@
                             display: flex; align-items: center; justify-content: center;
                             overflow: hidden;
                         ">
-                            ${!p.photo_url ? `<span style="font-weight:950; color:#334155; font-size:1rem;">${p.name.substring(0, 2).toUpperCase()}</span>` : ''}
+                            ${!p.photo_url ? `<span style="font-weight:950; color:#334155; font-size:1rem;">${safeName.substring(0, 2).toUpperCase()}</span>` : ''}
                         </div>
                         <div style="position: absolute; bottom: -3px; right: -3px; background: #0f172a; color: #CCFF00; font-size: 0.5rem; width: 17px; height: 17px; border-radius: 6px; display: flex; align-items: center; justify-content: center; border: 1.2px solid #CCFF00; box-shadow: 0 2px 6px rgba(0,0,0,0.35);" title="Carta FUT Oficial">
                             <i class="fas fa-id-card"></i>
@@ -1438,8 +1460,8 @@
                     <!-- Info Area -->
                     <div style="flex: 1; min-width: 0; z-index: 2;">
                         <!-- Player Name: Full width with up to 2-line wrap so names are completely readable on mobile -->
-                        <div style="font-weight: 950; font-size: 0.98rem; color: #0a192f; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word;" title="${p.name}">
-                            ${p.name}
+                        <div style="font-weight: 950; font-size: 0.98rem; color: #0a192f; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word;" title="${safeName}">
+                            ${safeName}
                         </div>
                         
                         <!-- Level, Tier Badge, FUT Tag & Role Subtitle -->
@@ -1448,7 +1470,7 @@
                                 ${badge.label}
                             </div>
                             <span style="font-size: 0.68rem; color: #475569; font-weight: 900; text-transform: uppercase;">
-                                LVL ${p.level.toFixed(2)}
+                                LVL ${(parseFloat(p.level || 3.5) || 3.5).toFixed(2)}
                             </span>
                             <div style="font-size: 0.52rem; font-weight: 950; padding: 2px 6px; border-radius: 5px; background: #0f172a; color: #CCFF00; border: 1px solid rgba(204,255,0,0.35); text-transform: uppercase; letter-spacing: 0.4px; flex-shrink: 0; display: inline-flex; align-items: center; gap: 3px;">
                                 <i class="fas fa-id-card" style="font-size: 0.52rem;"></i> CARTA
@@ -1561,7 +1583,8 @@
 
             // 1. Filter and Sort
             let filtered = this.playersData.filter(p => {
-                const s = p.stats[this.currentView];
+                if (!p) return false;
+                const s = p.stats ? p.stats[this.currentView] : null;
                 if (!s || s.played === 0) return false;
                 if (this.currentCategory !== 'todas') {
                     const hasCat = s.categories && s.categories[this.currentCategory] && s.categories[this.currentCategory].played > 0;
@@ -1571,20 +1594,22 @@
             });
 
             filtered.sort((a, b) => {
-                const sA = a.stats[this.currentView];
-                const sB = b.stats[this.currentView];
-                const pA = this.currentCategory === 'todas' ? sA.points : (sA.categories[this.currentCategory]?.points || 0);
-                const pB = this.currentCategory === 'todas' ? sB.points : (sB.categories[this.currentCategory]?.points || 0);
+                const sA = a?.stats ? a.stats[this.currentView] : null;
+                const sB = b?.stats ? b.stats[this.currentView] : null;
+                const pA = this.currentCategory === 'todas' ? (sA?.points || 0) : (sA?.categories?.[this.currentCategory]?.points || 0);
+                const pB = this.currentCategory === 'todas' ? (sB?.points || 0) : (sB?.categories?.[this.currentCategory]?.points || 0);
                 if (pB !== pA) return pB - pA;
-                return (b.level || 0) - (a.level || 0);
+                return (parseFloat(b?.level || 0) || 0) - (parseFloat(a?.level || 0) || 0);
             });
 
             // 2. Map to share format
             const shareTitle = this.currentCategory === 'todas' ? 'GLOBAL' : (this.currentCategory === 'male' ? 'MASC.' : (this.currentCategory === 'female' ? 'FEM.' : 'MIXTA'));
             const sharePlayers = filtered.map(p => ({
-                name: p.name,
-                points: this.currentCategory === 'todas' ? p.stats[this.currentView].points : p.stats[this.currentView].categories[this.currentCategory].points,
-                level: p.level
+                name: p.name || 'Jugador',
+                points: this.currentCategory === 'todas' 
+                    ? (p.stats?.[this.currentView]?.points || 0) 
+                    : (p.stats?.[this.currentView]?.categories?.[this.currentCategory]?.points || 0),
+                level: parseFloat(p.level || 3.5) || 3.5
             }));
 
             // 3. Trigger WhatsApp
@@ -1864,7 +1889,7 @@
                                     ${!playerA?.photo_url ? `<span style="font-size:1.4rem; font-weight:1000; color:#38bdf8;">${(playerA?.name || 'A').charAt(0).toUpperCase()}</span>` : ''}
                                 </div>
                                 <select id="ranking-faceoff-select-a" class="ranking-faceoff-select">
-                                    ${sortedPlayers.map(p => `<option value="${p.id}" ${p.id === playerA?.id ? 'selected' : ''}>${p.name}</option>`).join('')}
+                                    ${sortedPlayers.map(p => `<option value="${p.id}" ${p.id === playerA?.id ? 'selected' : ''}>${p.name || 'Jugador'}</option>`).join('')}
                                 </select>
                             </div>
 
@@ -1877,7 +1902,7 @@
                                     ${!playerB?.photo_url ? `<span style="font-size:1.4rem; font-weight:1000; color:#CCFF00;">${(playerB?.name || 'B').charAt(0).toUpperCase()}</span>` : ''}
                                 </div>
                                 <select id="ranking-faceoff-select-b" class="ranking-faceoff-select">
-                                    ${sortedPlayers.map(p => `<option value="${p.id}" ${p.id === playerB?.id ? 'selected' : ''}>${p.name}</option>`).join('')}
+                                    ${sortedPlayers.map(p => `<option value="${p.id}" ${p.id === playerB?.id ? 'selected' : ''}>${p.name || 'Jugador'}</option>`).join('')}
                                 </select>
                             </div>
                         </div>
@@ -2166,7 +2191,7 @@
                     const analysisText = document.getElementById('ranking-faceoff-analysis-text');
 
                     if (pctWinner) pctWinner.innerText = `${winPct}%`;
-                    if (winnerBanner) winnerBanner.innerText = `PROBABILIDAD A FAVOR DE: ${winner.name.toUpperCase()}`;
+                    if (winnerBanner) winnerBanner.innerText = `PROBABILIDAD A FAVOR DE: ${(winner?.name || 'JUGADOR').toUpperCase()}`;
                     if (analysisText) analysisText.innerText = clave;
                     resBox.style.display = 'block';
 
