@@ -78,12 +78,14 @@ const RotatingPozoLogic = {
                             const myTeam = teamA.includes(String(id)) ? teamA : teamB;
                             const partnerId = myTeam.find(pid => String(pid) !== String(id));
                             if (partnerId) {
-                                // Get history before overwriting last_partner
-                                const currentHistory = pObj.partner_history || (pObj.last_partner ? [pObj.last_partner] : []);
-                                pObj.last_partner = partnerId;
+                                const cleanPartnerId = String(partnerId);
+                                const currentHistory = Array.isArray(pObj.partner_history) 
+                                    ? pObj.partner_history 
+                                    : (pObj.last_partner ? [String(pObj.last_partner)] : []);
+                                pObj.last_partner = cleanPartnerId;
                                 
                                 // Guardar historial de compañeros de todo el torneo (sin duplicados inmediatos)
-                                const newHistory = [partnerId, ...currentHistory.filter(hid => String(hid) !== String(partnerId))];
+                                const newHistory = [cleanPartnerId, ...currentHistory.filter(hid => String(hid) !== cleanPartnerId)];
                                 pObj.partner_history = newHistory;
                             }
                         }
@@ -458,23 +460,28 @@ const RotatingPozoLogic = {
 
             // 🛡️ CRITICAL: Penalizar severamente repetir pareja en base al historial del torneo
             const getPartnerPenalty = (player, partner) => {
-                const history = player.partner_history || (player.last_partner ? [player.last_partner] : []);
-                const partnerIdStr = String(partner.id || partner.uid || "");
+                const history = Array.isArray(player.partner_history) 
+                    ? player.partner_history 
+                    : (player.last_partner ? [String(player.last_partner)] : []);
+                const partnerKeys = [String(partner.id || ''), String(partner.uid || '')].filter(Boolean);
                 
-                // Repitió en el partido inmediatamente anterior (depth 1) -> PROHIBICIÓN ABSOLUTA (-10000)
-                if (history[0] && String(history[0]) === partnerIdStr) {
-                    return -10000;
+                // Repitió en el partido inmediatamente anterior (depth 1 / last_partner) -> PROHIBICIÓN ABSOLUTA (-1000000)
+                if (player.last_partner && partnerKeys.includes(String(player.last_partner))) {
+                    return -1000000;
                 }
-                // Repitió hace 2 partidos (depth 2) -> Penalización muy alta (-1000)
-                if (history[1] && String(history[1]) === partnerIdStr) {
+                if (history[0] && partnerKeys.includes(String(history[0]))) {
+                    return -1000000;
+                }
+                // Repitió hace 2 partidos (depth 2) -> Penalización muy alta (-5000)
+                if (history[1] && partnerKeys.includes(String(history[1]))) {
+                    return -5000;
+                }
+                // Repitió hace 3 partidos (depth 3) -> Penalización moderada (-1000)
+                if (history[2] && partnerKeys.includes(String(history[2]))) {
                     return -1000;
                 }
-                // Repitió hace 3 partidos (depth 3) -> Penalización moderada (-500)
-                if (history[2] && String(history[2]) === partnerIdStr) {
-                    return -500;
-                }
                 // Repitió hace 4 o más partidos en el torneo -> Penalización menor (-200)
-                if (history.slice(3).some(hid => String(hid) === partnerIdStr)) {
+                if (history.slice(3).some(hid => partnerKeys.includes(String(hid)))) {
                     return -200;
                 }
                 return 0;
@@ -520,18 +527,24 @@ const RotatingPozoLogic = {
 
         // Función auxiliar para verificar si dos jugadores han sido compañeros en el rango dado de historial
         const areRecentPartners = (p1, p2, depth) => {
-            const h1 = p1.partner_history || (p1.last_partner ? [p1.last_partner] : []);
-            const h2 = p2.partner_history || (p2.last_partner ? [p2.last_partner] : []);
+            const h1 = Array.isArray(p1.partner_history) ? p1.partner_history : (p1.last_partner ? [String(p1.last_partner)] : []);
+            const h2 = Array.isArray(p2.partner_history) ? p2.partner_history : (p2.last_partner ? [String(p2.last_partner)] : []);
             
-            // Comprobar hasta depth elementos
-            const slice1 = h1.slice(0, depth);
-            const slice2 = h2.slice(0, depth);
+            const p1Keys = [String(p1.id || ''), String(p1.uid || '')].filter(Boolean);
+            const p2Keys = [String(p2.id || ''), String(p2.uid || '')].filter(Boolean);
 
-            const p1Key = String(p1.id || p1.uid || "");
-            const p2Key = String(p2.id || p2.uid || "");
+            // Verificación directa de last_partner (R-1)
+            if (depth >= 1) {
+                if (p1.last_partner && p2Keys.includes(String(p1.last_partner))) return true;
+                if (p2.last_partner && p1Keys.includes(String(p2.last_partner))) return true;
+            }
 
-            if (slice1.some(id => String(id) === p2Key)) return true;
-            if (slice2.some(id => String(id) === p1Key)) return true;
+            // Comprobar hasta depth elementos en el historial
+            const slice1 = h1.slice(0, depth).map(String);
+            const slice2 = h2.slice(0, depth).map(String);
+
+            if (slice1.some(id => p2Keys.includes(id))) return true;
+            if (slice2.some(id => p1Keys.includes(id))) return true;
             return false;
         };
 
@@ -547,7 +560,7 @@ const RotatingPozoLogic = {
             return validOptions[Math.floor(Math.random() * validOptions.length)];
         }
 
-        // Nivel 1: Comprobar historial de la última ronda (depth = 1)
+        // Nivel 1: Comprobar historial de la última ronda (depth = 1) -> INQUEBRANTABLE EN TWISTER
         console.warn("⚠️ Blocked for 2 rounds history. Falling back to 1 round history check...");
         validOptions = options.filter(opt => {
             if (areRecentPartners(opt.teamA[0], opt.teamA[1], 1)) return false;
@@ -556,29 +569,25 @@ const RotatingPozoLogic = {
         });
 
         if (validOptions.length > 0) {
-            console.log(`🤖 Smart Matchmaking Fallback (1 round): Found ${validOptions.length} options.`);
+            console.log(`🤖 Smart Matchmaking Fallback (1 round): Found ${validOptions.length} options with 0 R-1 repetitions.`);
             return validOptions[Math.floor(Math.random() * validOptions.length)];
         }
 
-        // Nivel 0: Permitir cualquier emparejamiento (elegir el que menos repeticiones tenga sumadas)
+        // Nivel 0: Si matemáticamente no hay opción perfecta, calcular penalizaciones estrictas
         console.warn("⚠️ No perfect separation possible. Forcing best available option.");
         
-        // Calculamos una penalización para cada opción
         const scoredOptions = options.map(opt => {
             let penalty = 0;
-            // Si son compañeros del partido anterior, penaliza 10
-            if (areRecentPartners(opt.teamA[0], opt.teamA[1], 1)) penalty += 10;
-            if (areRecentPartners(opt.teamB[0], opt.teamB[1], 1)) penalty += 10;
-            // Si son compañeros de hace 2 partidos, penaliza 2
-            if (areRecentPartners(opt.teamA[0], opt.teamA[1], 2) && !areRecentPartners(opt.teamA[0], opt.teamA[1], 1)) penalty += 2;
-            if (areRecentPartners(opt.teamB[0], opt.teamB[1], 2) && !areRecentPartners(opt.teamB[0], opt.teamB[1], 1)) penalty += 2;
+            // Si son compañeros del partido anterior (R-1), penaliza 100000
+            if (areRecentPartners(opt.teamA[0], opt.teamA[1], 1)) penalty += 100000;
+            if (areRecentPartners(opt.teamB[0], opt.teamB[1], 1)) penalty += 100000;
+            // Si son compañeros de hace 2 partidos (R-2), penaliza 500
+            if (areRecentPartners(opt.teamA[0], opt.teamA[1], 2) && !areRecentPartners(opt.teamA[0], opt.teamA[1], 1)) penalty += 500;
+            if (areRecentPartners(opt.teamB[0], opt.teamB[1], 2) && !areRecentPartners(opt.teamB[0], opt.teamB[1], 1)) penalty += 500;
             return { option: opt, penalty };
         });
 
-        // Ordenar por menor penalización
         scoredOptions.sort((a, b) => a.penalty - b.penalty);
-        
-        // Filtrar las que tienen la misma mínima penalización y elegir una al azar
         const minPenalty = scoredOptions[0].penalty;
         const bestScored = scoredOptions.filter(o => o.penalty === minPenalty);
         

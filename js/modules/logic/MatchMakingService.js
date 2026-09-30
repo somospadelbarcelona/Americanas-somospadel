@@ -1,11 +1,12 @@
 /**
- * MatchMakingService.js
- * Coordinador de lógica de emparejamientos.
+ * MatchMakingService.js (Module)
+ * Coordinador de lógica de emparejamientos de nivel élite (NASA Grade).
  * Abstrae la complejidad de llamar a FixedPairsLogic o RotatingPozoLogic.
- * v5003 - Robust Rewrite + Mutex Locks
+ * Integra Sistema de Verificación Pre-Flight y Auto-Fix de Parejas Twister.
+ * v5004 - Universal Mode Normalizer & Pre-Flight Integration
  */
 
-console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
+console.log("🎲 LOADING MATCHMAKING SERVICE v5004 (MODULE)...");
 
 (function () {
     try {
@@ -15,9 +16,11 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
 
             /**
              * Generar partidos para una ronda específica.
-             * Maneja automáticamente la lógica de "Smart Courts" (ampliar pistas si hay más gente).
+             * Maneja automáticamente la lógica de "Smart Courts" y Pre-Flight Verification.
              */
             async generateRound(eventId, eventType, roundNum, force = false, randomize = false) {
+                console.log(`🎲 MatchMakingService: Generando Ronda ${roundNum} para ${eventType} ${eventId} (force=${force}, randomize=${randomize})`);
+
                 // --- 🛡️ BÚNKER CLOUD DELEGATION (NIVEL NASA) ---
                 if (window.firebase && typeof firebase.functions === 'function') {
                     try {
@@ -33,53 +36,62 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
                     }
                 }
 
-                // Ensure dependencies exist
-                if (typeof window.FirebaseDB === 'undefined') throw new Error("FirebaseDB not loaded");
+                // Asegurar dependencias de datos
+                if (typeof window.FirebaseDB === 'undefined' && typeof window.db === 'undefined') {
+                    console.error("❌ FirebaseDB / db ausente en MatchMakingService!");
+                    throw new Error("Base de datos Firebase no cargada.");
+                }
 
-                // Get AppConstants safely
-                const APP_CONSTANTS = window.AppConstants || { EVENT_TYPES: { AMERICANA: 'americana' }, PAIR_MODES: { FIXED: 'fixed' } };
+                const APP_CONSTANTS = window.AppConstants || {
+                    EVENT_TYPES: { AMERICANA: 'americana', ENTRENO: 'entreno' },
+                    PAIR_MODES: { FIXED: 'fixed', FIXED_AUTO: 'fixed_auto', TWISTER: 'twister', SWISS: 'swiss' }
+                };
 
-                const collection = eventType === APP_CONSTANTS.EVENT_TYPES.AMERICANA ? FirebaseDB.americanas : FirebaseDB.entrenos;
+                const collection = (eventType === 'entreno' || eventType === APP_CONSTANTS.EVENT_TYPES.ENTRENO)
+                    ? window.FirebaseDB.entrenos
+                    : window.FirebaseDB.americanas;
+
                 const event = await collection.getById(eventId);
-
-                if (!event) throw new Error("Event not found");
+                if (!event) throw new Error("Evento no encontrado");
 
                 const maxRounds = parseInt(event.rounds_count) || 6;
                 if (roundNum > maxRounds && !force) {
                     throw new Error(`Límite de ${maxRounds} rondas alcanzado. No se pueden generar más.`);
                 }
 
-                // --- MUTEX LOCK (Prevent Double-Click Race Conditions) ---
+                // --- MUTEX LOCK (Prevenir doble-click / Race conditions) ---
                 const lockKey = `${eventId}_R${roundNum}`;
-
                 if (this._locks.has(lockKey)) {
-                    console.warn(`🔒 [MatchMaking] Race condition prevented. Generation for ${lockKey} already in progress.`);
+                    console.warn(`🔒 [MatchMaking] Race condition prevenida. Generación en curso para ${lockKey}.`);
                     throw new Error("⏳ La ronda se está generando, por favor espera un momento...");
                 }
-
                 this._locks.add(lockKey);
 
                 try {
-                    // --- UNIVERSAL ROBUST MODE DETECTION ---
-                    const isSwiss = !!(
-                        (event.pair_mode === 'swiss') ||
-                        (event.pair_mode === 'suizo') ||
-                        (event.format && event.format.toLowerCase().includes('suiz')) ||
-                        (event.tournament_type && event.tournament_type.toLowerCase().includes('suiz')) ||
-                        (event.name && event.name.toUpperCase().includes('SUIZ')) ||
-                        event.isSwiss
-                    );
+                    // --- 1. ASEGURAR CARGA DE DEPENDENCIAS ---
+                    await this._ensurePreFlightRoundVerifier();
 
-                    const isFixedPairs = !isSwiss && !!(
-                        event.is_fija ||
-                        (event.pair_mode && ['fixed', 'fixed_admin', 'fixed_auto', 'fija', 'pareja_fija', 'fixed_pairs'].includes(String(event.pair_mode).toLowerCase())) ||
-                        (event.format && event.format.toLowerCase().includes('fij')) ||
-                        (event.tournament_type && event.tournament_type.toLowerCase().includes('fij')) ||
-                        (event.name && (event.name.toUpperCase().includes('FIJA') || event.name.toUpperCase().includes('FIJO'))) ||
-                        (Array.isArray(event.fixed_pairs) && event.fixed_pairs.length > 0)
-                    );
+                    // --- 2. NORMALIZACIÓN ESTRICTA Y UNIVERSAL DE MODALIDAD ---
+                    const verifier = (typeof window !== 'undefined' && window.PreFlightRoundVerifier)
+                        ? window.PreFlightRoundVerifier
+                        : (typeof PreFlightRoundVerifier !== 'undefined' ? PreFlightRoundVerifier : null);
 
-                    // --- ROBUST PLAYER NORMALIZATION ---
+                    const mode = verifier
+                        ? verifier.normalizePairMode(event.pair_mode, event)
+                        : this._fallbackNormalizePairMode(event.pair_mode, event);
+
+                    const isSwiss = mode === 'swiss';
+                    const isFixedPairs = mode === 'fixed';
+                    const isTwister = mode === 'twister';
+
+                    console.log(`🎯 [MatchMaking] Modalidad Normalizada: ${mode.toUpperCase()} (raw pair_mode: "${event.pair_mode}", name: "${event.name}")`);
+
+                    // Descontaminar fixed_pairs si NO es modo Fixed Pairs
+                    if (!isFixedPairs && Array.isArray(event.fixed_pairs) && event.fixed_pairs.length > 0) {
+                        console.log(`🧹 [MatchMaking] Ignorando residuos de fixed_pairs (${event.fixed_pairs.length} parejas) porque la modalidad activa es ${mode.toUpperCase()}`);
+                    }
+
+                    // --- 3. NORMALIZACIÓN ROBUSTA DE JUGADORES ---
                     const rawPlayers = (Array.isArray(event.players) && event.players.length > 0)
                         ? event.players
                         : (Array.isArray(event.registeredPlayers) ? event.registeredPlayers : []);
@@ -97,41 +109,42 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
                         };
                     });
 
-                    // --- CRITICAL IDEMPOTENCY CHECK (DB Level) ---
+                    // --- 4. VERIFICACIÓN DE IDEMPOTENCIA EN BASE DE DATOS ---
                     const checkColl = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
                     const existingSnap = await window.db.collection(checkColl)
                         .where('americana_id', '==', eventId)
-                        .where('round', '==', roundNum)
+                        .where('round', '==', parseInt(roundNum))
                         .get();
 
                     if (!existingSnap.empty && !force) {
                         const existingRoundMatches = existingSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                        console.warn(`🛑 BLOQUEO DE DUPLICADOS: Ya existen ${existingRoundMatches.length} partidos en Ronda ${roundNum}. Se devuelven los existentes.`);
+                        console.warn(`🛑 BLOQUEO DE DUPLICADOS: Ya existen ${existingRoundMatches.length} partidos en Ronda ${roundNum}.`);
                         return existingRoundMatches;
                     }
 
-                    // --- SMART SCALING LOGIC ---
+                    // --- 5. SMART SCALING (PISTAS NECESARIAS) ---
                     let effectiveCourts = parseInt(event.max_courts || 4);
                     const playersCount = isFixedPairs
                         ? ((event.fixed_pairs && event.fixed_pairs.length > 0 ? event.fixed_pairs.length * 2 : 0) || normalizedPlayers.length)
                         : normalizedPlayers.length;
-                    const maxPossibleCourts = Math.max(1, Math.floor(playersCount / 4));
 
+                    const maxPossibleCourts = Math.max(1, Math.floor(playersCount / 4));
                     if (effectiveCourts > maxPossibleCourts) {
-                        console.log(`⚠️ AI Scaling CAP: Reducing from ${effectiveCourts} to ${maxPossibleCourts} (Player Limit)`);
+                        console.log(`⚠️ AI Scaling CAP: Reduciendo de ${effectiveCourts} a ${maxPossibleCourts} pistas por límite de jugadores.`);
                         effectiveCourts = maxPossibleCourts;
                         await collection.update(eventId, { max_courts: effectiveCourts });
                         event.max_courts = effectiveCourts;
                     }
 
-                    // --- GENERATION LOGIC ---
+                    // --- 6. GENERACIÓN DE PARTIDOS ---
                     try {
                         if (roundNum > 1) {
+                            // --- RONDAS 2+ ---
                             const matchesCollection = (eventType === 'entreno') ? FirebaseDB.entrenos_matches : FirebaseDB.matches;
                             const matches = await matchesCollection.getByAmericana(eventId);
                             const prevRoundMatches = matches.filter(m => parseInt(m.round) === (roundNum - 1));
 
-                            // 🛡️ Ghost duplicates cleanup
+                            // Limpieza de partidos fantasma no terminados
                             const finishedMatches = prevRoundMatches.filter(m => m.status === 'finished');
                             let unfinished = prevRoundMatches.filter(m => m.status !== 'finished');
 
@@ -139,8 +152,8 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
                                 const ghostIds = [];
                                 const realUnfinished = [];
                                 unfinished.forEach(unf => {
-                                    const isGhost = finishedMatches.some(f => 
-                                        parseInt(f.court) === parseInt(unf.court) && 
+                                    const isGhost = finishedMatches.some(f =>
+                                        parseInt(f.court) === parseInt(unf.court) &&
                                         parseInt(f.round) === parseInt(unf.round)
                                     );
                                     if (isGhost) ghostIds.push(unf.id);
@@ -148,28 +161,42 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
                                 });
 
                                 if (ghostIds.length > 0) {
-                                    console.log(`🧹 [MatchMaking] Detectados ${ghostIds.length} partidos fantasma en R${roundNum-1}. Limpiando...`);
+                                    console.log(`🧹 [MatchMaking] Detectados ${ghostIds.length} partidos fantasma en R${roundNum - 1}. Limpiando...`);
                                     const collName = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
                                     for (const id of ghostIds) {
-                                        try { await window.db.collection(collName).doc(id).delete(); } catch(e) {}
+                                        try { await window.db.collection(collName).doc(id).delete(); } catch (e) { }
                                     }
                                     unfinished = realUnfinished;
                                 }
                             }
 
                             if (unfinished.length > 0 && !force) {
-                                const pendingCourts = [...new Set(unfinished.map(m => m.court))].sort((a,b) => a-b);
-                                throw new Error(`⚠️ La Ronda ${roundNum - 1} tiene partidos sin finalizar en: Pista ${pendingCourts.join(', Pista ')}. Por favor, introduce los resultados.`);
+                                const pendingCourts = [...new Set(unfinished.map(m => m.court))].sort((a, b) => a - b);
+                                throw new Error(`⚠️ La Ronda ${roundNum - 1} tiene partidos sin finalizar en: Pista ${pendingCourts.join(', Pista ')}. Por favor, introduce los resultados antes.`);
                             }
 
                             if (isFixedPairs) {
                                 const pairs = event.fixed_pairs || [];
                                 await this._ensureFixedPairsLogic();
                                 if (!window.FixedPairsLogic) throw new Error("FixedPairsLogic no disponible");
+
                                 const updatedPairs = FixedPairsLogic.updatePozoRankings(pairs, prevRoundMatches, effectiveCourts);
                                 await collection.update(eventId, { fixed_pairs: updatedPairs });
-                                return await this._createMatches(eventId, FixedPairsLogic.generatePozoRound(updatedPairs, roundNum, effectiveCourts), eventType);
+
+                                const rawMatches = FixedPairsLogic.generatePozoRound(updatedPairs, roundNum, effectiveCourts);
+                                const preFlightResult = this._runPreFlight(rawMatches, {
+                                    roundNum,
+                                    pairMode: 'fixed',
+                                    expectedCourts: effectiveCourts,
+                                    prevRoundMatches,
+                                    allMatches: matches,
+                                    players: normalizedPlayers
+                                });
+
+                                return await this._createMatches(eventId, preFlightResult.matches, eventType);
+
                             } else {
+                                // MODO TWISTER O SUIZO
                                 let movedPlayers;
                                 await this._ensureRotatingPozoLogic();
                                 if (!window.RotatingPozoLogic) throw new Error("RotatingPozoLogic no disponible");
@@ -178,21 +205,41 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
                                     console.log(`🇨🇭 [MatchMaking] Generando Ronda Suiza ${roundNum} para ${eventType}...`);
                                     const allFinishedMatches = (matches || []).filter(m => m.status === 'finished');
                                     movedPlayers = RotatingPozoLogic.updatePlayerCourtsSwiss(normalizedPlayers, allFinishedMatches, effectiveCourts);
-                                } else if (eventType === 'entreno') {
-                                    movedPlayers = RotatingPozoLogic.updatePlayerCourts(normalizedPlayers, prevRoundMatches, effectiveCourts, event.category === 'mixed' ? 'mixed' : 'open');
                                 } else {
-                                    movedPlayers = RotatingPozoLogic.updatePlayerCourts(normalizedPlayers, prevRoundMatches, effectiveCourts, event.category || 'open');
+                                    // Twister / Pozo: Ascensos y descensos
+                                    console.log(`🎾 [MatchMaking] Aplicando ascensos/descensos Twister (${eventType})...`);
+                                    const categoryForCourts = event.category === 'mixed' ? 'mixed' : (event.category || 'open');
+                                    movedPlayers = RotatingPozoLogic.updatePlayerCourts(normalizedPlayers, prevRoundMatches, effectiveCourts, categoryForCourts);
                                 }
+
                                 await collection.update(eventId, { players: movedPlayers });
-                                const genCategory = isSwiss ? 'open' : (eventType === 'entreno' ? (event.category === 'mixed' ? 'mixed' : 'entreno') : (event.category || 'open'));
-                                return await this._createMatches(eventId, RotatingPozoLogic.generateRound(movedPlayers, roundNum, effectiveCourts, genCategory), eventType);
+                                console.log("✅ Pistas de jugadores actualizadas para R" + roundNum);
+
+                                // Para la formación de parejas en pista:
+                                // En Twister, pasamos 'open' (o 'mixed' si aplica) para asegurar que use
+                                // _createSmartPairs y NO rompa la rotación de parejas
+                                const genCategory = isSwiss ? 'open' : (event.category === 'mixed' ? 'mixed' : 'open');
+                                const rawMatches = RotatingPozoLogic.generateRound(movedPlayers, roundNum, effectiveCourts, genCategory);
+
+                                // --- PRE-FLIGHT VERIFIER & AUTO-FIX ---
+                                const preFlightResult = this._runPreFlight(rawMatches, {
+                                    roundNum,
+                                    pairMode: mode,
+                                    expectedCourts: effectiveCourts,
+                                    prevRoundMatches,
+                                    allMatches: matches,
+                                    players: movedPlayers
+                                });
+
+                                return await this._createMatches(eventId, preFlightResult.matches, eventType);
                             }
 
                         } else {
-                            // Round 1 Generation
+                            // --- RONDA 1 ---
                             if (isFixedPairs) {
                                 await this._ensureFixedPairsLogic();
                                 if (!window.FixedPairsLogic) throw new Error("FixedPairsLogic no disponible");
+
                                 let pairs = event.fixed_pairs || [];
 
                                 if (pairs.length === 0 || randomize) {
@@ -213,81 +260,149 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
 
                                     await collection.update(eventId, { fixed_pairs: pairs });
                                 }
-                                return await this._createMatches(eventId, FixedPairsLogic.generatePozoRound(pairs, 1, effectiveCourts), eventType);
+
+                                pairs = pairs.map((p, i) => ({
+                                    ...p,
+                                    current_court: p.initial_court || (Math.floor(i / 2) + 1),
+                                    wins: 0,
+                                    losses: 0,
+                                    games_won: 0,
+                                    games_lost: 0,
+                                    won_last_match: false
+                                }));
+                                await collection.update(eventId, { fixed_pairs: pairs });
+
+                                const rawMatches = FixedPairsLogic.generatePozoRound(pairs, 1, effectiveCourts);
+                                const preFlightResult = this._runPreFlight(rawMatches, {
+                                    roundNum: 1,
+                                    pairMode: 'fixed',
+                                    expectedCourts: effectiveCourts,
+                                    players: normalizedPlayers
+                                });
+
+                                return await this._createMatches(eventId, preFlightResult.matches, eventType);
+
                             } else {
+                                // MODO TWISTER / SUIZO R1
                                 await this._ensureRotatingPozoLogic();
                                 if (!window.RotatingPozoLogic) throw new Error("RotatingPozoLogic no disponible");
-                                let pool = [...normalizedPlayers];
-                                if (eventType === 'entreno') pool = this._sortPlayersForEntreno(pool, randomize);
 
-                                pool.forEach((p, i) => p.current_court = Math.floor(i / 4) + 1);
+                                let pool = [...normalizedPlayers];
+
+                                if (eventType === 'entreno') {
+                                    pool = this._sortPlayersForEntreno(pool, randomize);
+                                } else if (randomize) {
+                                    console.log("🎲 Randomizing players (forcing shuffle)...");
+                                    for (let i = pool.length - 1; i > 0; i--) {
+                                        const j = Math.floor(Math.random() * (i + 1));
+                                        [pool[i], pool[j]] = [pool[j], pool[i]];
+                                    }
+                                }
+
+                                pool.forEach((p, i) => {
+                                    p.current_court = Math.floor(i / 4) + 1;
+                                    if (randomize) {
+                                        p.last_partner = null;
+                                        p.partner_history = [];
+                                    }
+                                });
                                 await collection.update(eventId, { players: pool });
 
-                                const genCat = isSwiss ? 'open' : (eventType === 'entreno' ? (event.category === 'mixed' ? 'mixed' : 'entreno') : (event.category || 'open'));
-                                return await this._createMatches(eventId, RotatingPozoLogic.generateRound(pool, 1, effectiveCourts, genCat), eventType);
+                                const genCat = isSwiss ? 'open' : (event.category === 'mixed' ? 'mixed' : 'open');
+                                const rawMatches = RotatingPozoLogic.generateRound(pool, 1, effectiveCourts, genCat);
+
+                                // Pre-Flight Verifier
+                                const preFlightResult = this._runPreFlight(rawMatches, {
+                                    roundNum: 1,
+                                    pairMode: mode,
+                                    expectedCourts: effectiveCourts,
+                                    players: pool
+                                });
+
+                                return await this._createMatches(eventId, preFlightResult.matches, eventType);
                             }
                         }
+
                     } catch (genError) {
                         console.error("🚨 [MatchMakingService] Error en motor principal de ronda:", genError);
-                        console.warn("🛡️ [Failsafe NASA] Activando Generador de Contingencia de Emergencia para garantizar continuidad del evento...");
-                        return await this._generateEmergencyFallbackRound(eventId, eventType, roundNum, effectiveCourts, isFixedPairs, isSwiss, event, normalizedPlayers);
+                        console.warn("🛡️ [Failsafe NASA] Activando Generador de Contingencia de Emergencia...");
+                        return await this._generateEmergencyFallbackRound(
+                            eventId,
+                            eventType,
+                            roundNum,
+                            effectiveCourts,
+                            isFixedPairs,
+                            isSwiss,
+                            event,
+                            normalizedPlayers
+                        );
                     }
+
                 } finally {
                     this._locks.delete(lockKey);
                 }
             },
 
             /**
-             * 🛡️ GENERADOR DE CONTINGENCIA DE EMERGENCIA (FAILSAFE NASA LEVEL)
-             * Garantiza que NUNCA se bloquee un entreno o americana en la pista.
-             * Si cualquier lógica externa falla, genera cruces equilibrados válidos.
+             * Ejecuta el verificador Pre-Flight con Auto-Fix de parejas repetidas
+             */
+            _runPreFlight(matches, options) {
+                try {
+                    const verifier = (typeof window !== 'undefined' && window.PreFlightRoundVerifier)
+                        ? window.PreFlightRoundVerifier
+                        : (typeof PreFlightRoundVerifier !== 'undefined' ? PreFlightRoundVerifier : null);
+
+                    if (verifier && typeof verifier.verifyAndFixRoundMatches === 'function') {
+                        const verified = verifier.verifyAndFixRoundMatches(matches, options);
+                        if (verified && verified.matches) {
+                            return verified;
+                        }
+                    }
+                } catch (vErr) {
+                    console.warn("⚠️ [PreFlight Warning] Fallo no crítico en verificación:", vErr);
+                }
+                return { success: true, matches };
+            },
+
+            /**
+             * Normalizador de modalidad fallback
+             */
+            _fallbackNormalizePairMode(rawMode, eventData = {}) {
+                const raw = String(rawMode || eventData.pair_mode || '').toLowerCase();
+                const name = String(eventData.name || '').toUpperCase();
+                if (raw.includes('suiz') || raw === 'swiss' || name.includes('SUIZ')) return 'swiss';
+                if (raw.includes('twister') || raw.includes('rotat') || raw.includes('indiv') || name.includes('TWISTER')) return 'twister';
+                if (raw.includes('fij') || raw.includes('fixed') || name.includes('FIJA') || name.includes('FIJO')) return 'fixed';
+                return 'twister';
+            },
+
+            /**
+             * Generador de Contingencia de Emergencia (Failsafe NASA)
              */
             async _generateEmergencyFallbackRound(eventId, eventType, roundNum, effectiveCourts, isFixedPairs, isSwiss, event, playersList = []) {
-                console.warn(`🛡️ [Failsafe] Generando Ronda ${roundNum} en modo de contingencia para ${eventType}...`);
+                console.warn(`🛡️ [Failsafe] Creando cruces de contingencia para R${roundNum}...`);
                 const fallbackMatches = [];
 
                 if (isFixedPairs) {
-                    let pairs = (Array.isArray(event.fixed_pairs) && event.fixed_pairs.length > 0)
-                        ? [...event.fixed_pairs]
-                        : [];
-
-                    if (pairs.length === 0) {
-                        const pPool = [...playersList];
-                        let pairIdx = 1;
-                        while (pPool.length >= 2) {
-                            const p1 = pPool.shift();
-                            const p2 = pPool.shift();
-                            pairs.push({
-                                id: `pair_${pairIdx}`,
-                                name: `${p1.name} / ${p2.name}`,
-                                player1_id: p1.id,
-                                player2_id: p2.id,
-                                player1_name: p1.name,
-                                player2_name: p2.name,
-                                current_court: Math.ceil(pairIdx / 2)
-                            });
-                            pairIdx++;
-                        }
-                    }
-
+                    const pairs = (Array.isArray(event.fixed_pairs) && event.fixed_pairs.length > 0) ? [...event.fixed_pairs] : [];
                     const offset = (roundNum - 1) % Math.max(1, pairs.length - 1);
-                    const rotatedPairs = [...pairs.slice(offset), ...pairs.slice(0, offset)];
+                    const rotated = [...pairs.slice(offset), ...pairs.slice(0, offset)];
 
                     for (let c = 1; c <= effectiveCourts; c++) {
-                        const pairA = rotatedPairs[(c - 1) * 2];
-                        const pairB = rotatedPairs[(c - 1) * 2 + 1];
-                        if (pairA && pairB) {
+                        const pA = rotated[(c - 1) * 2];
+                        const pB = rotated[(c - 1) * 2 + 1];
+                        if (pA && pB) {
                             fallbackMatches.push({
                                 round: roundNum,
                                 court: c,
-                                teamA: pairA.name || `${pairA.player1_name || 'J1'} / ${pairA.player2_name || 'J2'}`,
-                                teamB: pairB.name || `${pairB.player1_name || 'J3'} / ${pairB.player2_name || 'J4'}`,
-                                team_a_id: pairA.id,
-                                team_b_id: pairB.id,
-                                team_a_ids: [pairA.player1_id, pairA.player2_id].filter(Boolean),
-                                team_b_ids: [pairB.player1_id, pairB.player2_id].filter(Boolean),
-                                team_a_names: [pairA.player1_name, pairA.player2_name].filter(Boolean),
-                                team_b_names: [pairB.player1_name, pairB.player2_name].filter(Boolean),
+                                teamA: pA.name || 'Pareja A',
+                                teamB: pB.name || 'Pareja B',
+                                team_a_id: pA.id,
+                                team_b_id: pB.id,
+                                team_a_ids: [pA.player1_id, pA.player2_id].filter(Boolean),
+                                team_b_ids: [pB.player1_id, pB.player2_id].filter(Boolean),
+                                team_a_names: [pA.player1_name, pA.player2_name].filter(Boolean),
+                                team_b_names: [pB.player1_name, pB.player2_name].filter(Boolean),
                                 status: 'scheduled',
                                 score_a: 0,
                                 score_b: 0
@@ -295,23 +410,22 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
                         }
                     }
                 } else {
-                    const pPool = [...playersList];
+                    const pPool = [...playersList].map((p, idx) => typeof p === 'string' ? { id: p, name: `Jugador ${idx + 1}` } : p);
                     const shift = (roundNum - 1) % Math.max(1, pPool.length);
                     const rotated = [...pPool.slice(shift), ...pPool.slice(0, shift)];
 
                     for (let c = 1; c <= effectiveCourts; c++) {
-                        const courtPlayers = rotated.slice((c - 1) * 4, c * 4);
-                        if (courtPlayers.length >= 4) {
-                            const [p0, p1, p2, p3] = courtPlayers;
+                        const cPlayers = rotated.slice((c - 1) * 4, c * 4);
+                        if (cPlayers.length >= 4) {
                             fallbackMatches.push({
                                 round: roundNum,
                                 court: c,
-                                teamA: `${p0.name} / ${p1.name}`,
-                                teamB: `${p2.name} / ${p3.name}`,
-                                team_a_ids: [p0.id, p1.id],
-                                team_b_ids: [p2.id, p3.id],
-                                team_a_names: [p0.name, p1.name],
-                                team_b_names: [p2.name, p3.name],
+                                teamA: `${cPlayers[0].name} / ${cPlayers[1].name}`,
+                                teamB: `${cPlayers[2].name} / ${cPlayers[3].name}`,
+                                team_a_ids: [cPlayers[0].id || cPlayers[0].uid, cPlayers[1].id || cPlayers[1].uid],
+                                team_b_ids: [cPlayers[2].id || cPlayers[2].uid, cPlayers[3].id || cPlayers[3].uid],
+                                team_a_names: [cPlayers[0].name, cPlayers[1].name],
+                                team_b_names: [cPlayers[2].name, cPlayers[3].name],
                                 status: 'scheduled',
                                 score_a: 0,
                                 score_b: 0
@@ -321,19 +435,27 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
                 }
 
                 if (fallbackMatches.length === 0) {
-                    throw new Error("No hay suficientes jugadores o parejas para generar partidos de contingencia.");
+                    throw new Error("No hay suficientes jugadores/parejas para contingencia");
                 }
-
                 return await this._createMatches(eventId, fallbackMatches, eventType);
             },
 
             /**
-             * Auto-recuperación dinámica de dependencias de emparejamiento
+             * Auto-recuperación dinámica de dependencias
              */
+            async _ensurePreFlightRoundVerifier() {
+                if (typeof window !== 'undefined' && window.PreFlightRoundVerifier) return true;
+                if (typeof document !== 'undefined') {
+                    console.log("🛡️ [MatchMakingService] PreFlightRoundVerifier no detectado. Cargando...");
+                    await this._loadScriptDynamically('js/PreFlightRoundVerifier.js?v=2026.1');
+                }
+                return typeof window !== 'undefined' && !!window.PreFlightRoundVerifier;
+            },
+
             async _ensureRotatingPozoLogic() {
                 if (typeof window !== 'undefined' && window.RotatingPozoLogic) return true;
                 if (typeof document !== 'undefined') {
-                    console.warn("⚠️ [MatchMakingService] RotatingPozoLogic no detectado. Intentando carga dinámica resiliente...");
+                    console.warn("⚠️ [MatchMakingService] RotatingPozoLogic no detectado. Cargando dinámicamente...");
                     await this._loadScriptDynamically('js/rotating-pozo-logic.js?v=5014');
                 }
                 return typeof window !== 'undefined' && !!window.RotatingPozoLogic;
@@ -342,7 +464,7 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
             async _ensureFixedPairsLogic() {
                 if (typeof window !== 'undefined' && window.FixedPairsLogic) return true;
                 if (typeof document !== 'undefined') {
-                    console.warn("⚠️ [MatchMakingService] FixedPairsLogic no detectado. Intentando carga dinámica resiliente...");
+                    console.warn("⚠️ [MatchMakingService] FixedPairsLogic no detectado. Cargando dinámicamente...");
                     await this._loadScriptDynamically('js/fixed-pairs-logic.js?v=5014');
                 }
                 return typeof window !== 'undefined' && !!window.FixedPairsLogic;
@@ -372,21 +494,15 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
             },
 
             /**
-             * Helper: Calculate Effective Level based on Reliability (Semáforo)
-             * Penalties: Red (Oxidado) -> -0.25 | Yellow (Dudoso) -> -0.1
+             * Helper: Semáforo y nivel efectivo para ordenar entrenos
              */
             _getEffectiveLevel(player) {
                 let baseLevel = parseFloat(player.level || player.self_rate_level || 0);
-
-                // Si existe el servicio de fiabilidad, aplicamos penalización
                 if (window.LevelReliabilityService) {
                     const rel = window.LevelReliabilityService.getReliability(player);
-                    // Check by color or label since thresholds are internal there
-                    if (rel.color === '#FF5555') { // Red / Oxidado
-                        console.log(`📉 [MatchMaking] Penalizando a ${player.name} (Oxidado) -0.25`);
+                    if (rel.color === '#FF5555') {
                         baseLevel -= 0.25;
-                    } else if (rel.color === '#FFD700') { // Yellow / Dudoso
-                        console.log(`📉 [MatchMaking] Penalizando a ${player.name} (Dudoso) -0.10`);
+                    } else if (rel.color === '#FFD700') {
                         baseLevel -= 0.10;
                     }
                 }
@@ -394,16 +510,25 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
             },
 
             /**
-             * Helper: Sort players by Level (Desc) AND Pre-Pair by Team
-             * for "Entreno" seeding.
+             * Ordenación inteligente para Entreno (Nivel + Club)
              */
-            _sortPlayersForEntreno(players) {
-                console.log("📊 Sorting players with Smart Pairing (Effective Level + Team) for Entreno...");
+            _sortPlayersForEntreno(players, randomize = false) {
+                console.log("📊 Sorting players for Entreno... Randomize:", randomize);
 
-                // 1. Initial Sort by EFFECTIVE Level Descending
-                let pool = [...players].sort((a, b) => {
-                    const lA = this._getEffectiveLevel(a);
-                    const lB = this._getEffectiveLevel(b);
+                let pool = [...players];
+
+                if (randomize) {
+                    for (let i = pool.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [pool[i], pool[j]] = [pool[j], pool[i]];
+                    }
+                }
+
+                pool.sort((a, b) => {
+                    const jitterA = randomize ? (Math.random() * 0.15 - 0.075) : 0;
+                    const jitterB = randomize ? (Math.random() * 0.15 - 0.075) : 0;
+                    const lA = this._getEffectiveLevel(a) + jitterA;
+                    const lB = this._getEffectiveLevel(b) + jitterB;
                     return lB - lA;
                 });
 
@@ -416,10 +541,7 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
                         break;
                     }
 
-                    // Find best partner
                     let bestPartnerIndex = -1;
-                    let bestScore = -Infinity;
-
                     const getTeam = (p) => {
                         const t = p.team_somospadel || p.team || '';
                         return Array.isArray(t) ? t[0] : t;
@@ -428,25 +550,43 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
                     const p1Team = getTeam(p1);
                     const p1Level = this._getEffectiveLevel(p1);
 
-                    for (let i = 0; i < pool.length; i++) {
-                        const p2 = pool[i];
-                        const p2Team = getTeam(p2);
-                        const p2Level = this._getEffectiveLevel(p2);
-
-                        let score = 0;
-                        const diff = Math.abs(p1Level - p2Level);
-                        score -= (diff * 10);
-
-                        if (p1Team && p2Team && p1Team === p2Team) {
-                            // PRIORIDAD EQUIPO: Ampliamos margen a 1.5 para asegurar que compañeros jueguen juntos
-                            if (diff <= 1.5) score += 150; // Bonus masivo
-                            else score += 20; // Bonus pequeño si hay mucha diferencia
+                    // 1. Mismo equipo de club (margen razonable)
+                    let teamCandidates = [];
+                    if (p1Team) {
+                        for (let i = 0; i < pool.length; i++) {
+                            if (getTeam(pool[i]) === p1Team) {
+                                const p2Level = this._getEffectiveLevel(pool[i]);
+                                if (Math.abs(p1Level - p2Level) <= 0.65) {
+                                    teamCandidates.push(i);
+                                }
+                            }
                         }
+                    }
 
-                        if (score > bestScore) {
-                            bestScore = score;
-                            bestPartnerIndex = i;
+                    if (teamCandidates.length > 0) {
+                        const forceTeam = !randomize || Math.random() > 0.35;
+                        if (forceTeam) {
+                            bestPartnerIndex = randomize ? teamCandidates[Math.floor(Math.random() * teamCandidates.length)] : teamCandidates[0];
                         }
+                    }
+
+                    // 2. Nivel más cercano
+                    if (bestPartnerIndex === -1) {
+                        let levelCandidates = [];
+                        for (let i = 0; i < pool.length; i++) {
+                            const p2Level = this._getEffectiveLevel(pool[i]);
+                            if (Math.abs(p1Level - p2Level) <= 0.4) {
+                                levelCandidates.push(i);
+                            }
+                        }
+                        if (levelCandidates.length > 0) {
+                            bestPartnerIndex = randomize ? levelCandidates[Math.floor(Math.random() * levelCandidates.length)] : levelCandidates[0];
+                        }
+                    }
+
+                    // 3. Fallback
+                    if (bestPartnerIndex === -1 && pool.length > 0) {
+                        bestPartnerIndex = 0;
                     }
 
                     if (bestPartnerIndex !== -1) {
@@ -456,91 +596,238 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
                         sortedList.push(pool.shift());
                     }
                 }
-                return sortedList;
+
+                // Balancear por parejas hacia Pista 1
+                const pairs = [];
+                for (let i = 0; i < sortedList.length; i += 2) {
+                    if (i + 1 < sortedList.length) pairs.push([sortedList[i], sortedList[i + 1]]);
+                    else pairs.push([sortedList[i]]);
+                }
+
+                pairs.sort((pairA, pairB) => {
+                    const levA = (this._getEffectiveLevel(pairA[0]) + this._getEffectiveLevel(pairA[1] || pairA[0])) / pairA.length;
+                    const levB = (this._getEffectiveLevel(pairB[0]) + this._getEffectiveLevel(pairB[1] || pairB[0])) / pairB.length;
+                    return levB - levA;
+                });
+
+                return pairs.flat();
             },
 
             /**
-             * Helper to batch create matches
+             * Creación segura de partidos con Batch y protección de duplicados
              */
             async _createMatches(eventId, matchesData, eventType = 'americana') {
                 const created = [];
-                // Check if FirebaseDB.entrenos_matches exists
-                let collection = (eventType === 'entreno') ? window.FirebaseDB?.entrenos_matches : window.FirebaseDB?.matches;
+                const colName = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
+                const dbCol = window.db.collection(colName);
 
-                if (!collection) {
-                    const colName = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
-                    console.log(`⚠️ MatchMakingService: Wrapper for ${colName} missing. Using raw DB.`);
-                    collection = {
-                        create: async (data) => {
-                            const ref = await window.db.collection(colName).add(data);
-                            return { id: ref.id, ...data };
-                        }
-                    };
-                }
+                const roundNum = matchesData.length > 0 ? parseInt(matchesData[0].round) : 0;
+                const existingSnap = await dbCol.where('americana_id', '==', eventId).where('round', '==', roundNum).get();
+                const existingCourts = new Set(existingSnap.docs.map(doc => parseInt(doc.data().court)));
 
-                // Helper to remove undefined fields
-                const cleanPayload = (obj) => {
-                    const cleaned = {};
-                    for (const [key, value] of Object.entries(obj)) {
-                        if (value !== undefined && value !== null) {
-                            if (Array.isArray(value)) {
-                                cleaned[key] = value.filter(v => v !== undefined && v !== null);
-                            } else {
-                                cleaned[key] = value;
-                            }
-                        }
-                    }
-                    return cleaned;
-                };
+                const batch = window.db.batch();
+                let batchCount = 0;
 
                 for (const m of matchesData) {
-                    // Build base payload with explicit fields
-                    const basePayload = {
+                    const court = parseInt(m.court);
+                    if (existingCourts.has(court)) {
+                        console.warn(`⚠️ Omitiendo creación duplicada para Ronda ${roundNum} Pista ${court}`);
+                        continue;
+                    }
+
+                    const payload = {
+                        ...m,
                         americana_id: eventId,
-                        round: parseInt(m.round) || 1,
-                        court: parseInt(m.court) || 1,
+                        round: roundNum,
                         status: 'scheduled',
                         score_a: 0,
                         score_b: 0,
-                        createdAt: new Date().toISOString(),
-                        team_a_ids: m.team_a_ids || [],
-                        team_a_names: m.team_a_names || [],
-                        teamA: m.teamA || '',
-                        team_b_ids: m.team_b_ids || [],
-                        team_b_names: m.team_b_names || [],
-                        teamB: m.teamB || ''
+                        createdAt: new Date().toISOString()
                     };
 
-                    // Clean undefined values
-                    const payload = cleanPayload(basePayload);
-
-                    try {
-                        const result = await collection.create(payload);
-                        created.push(result);
-                    } catch (err) {
-                        console.error(`❌ Error creating match:`, err);
-                        console.error('Payload:', payload);
-                        throw err;
-                    }
+                    const newDocRef = dbCol.doc();
+                    batch.set(newDocRef, payload);
+                    created.push({ id: newDocRef.id, ...payload });
+                    batchCount++;
                 }
+
+                if (batchCount > 0) {
+                    await batch.commit();
+                    console.log(`✅ [BATCH] Creados ${batchCount} partidos con verificación Pre-Flight para R${roundNum}.`);
+                }
+
                 return created;
             },
 
             /**
-             * Simulate a round (Random scores)
+             * Saneamiento de partidos duplicados en una ronda
+             */
+            async sanitizeRound(eventId, eventType, roundNum) {
+                console.log(`🧹 [MatchMaking] Saneando Ronda ${roundNum} para ${eventId}...`);
+                const colName = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
+                const snap = await window.db.collection(colName)
+                    .where('americana_id', '==', eventId)
+                    .where('round', '==', parseInt(roundNum))
+                    .get();
+
+                if (snap.empty) return { deleted: 0 };
+
+                const matches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                const finished = matches.filter(m => m.status === 'finished');
+                const unfinished = matches.filter(m => m.status !== 'finished');
+
+                const toDelete = [];
+
+                unfinished.forEach(unf => {
+                    if (finished.some(f => parseInt(f.court) === parseInt(unf.court))) {
+                        toDelete.push(unf.id);
+                    }
+                });
+
+                const seen = new Set();
+                matches.forEach(m => {
+                    const teamA = Array.isArray(m.team_a_names) ? m.team_a_names.sort().join('|') : (m.teamA || '');
+                    const teamB = Array.isArray(m.team_b_names) ? m.team_b_names.sort().join('|') : (m.teamB || '');
+                    const sig = `${m.court}-${teamA}-${teamB}`;
+                    if (seen.has(sig)) {
+                        if (!toDelete.includes(m.id)) toDelete.push(m.id);
+                    } else {
+                        seen.add(sig);
+                    }
+                });
+
+                for (const id of toDelete) {
+                    await window.db.collection(colName).doc(id).delete();
+                }
+
+                console.log(`✅ [MatchMaking] Saneamiento completado. Eliminados: ${toDelete.length}`);
+                return { deleted: toDelete.length };
+            },
+
+            /**
+             * Reparación de pistas faltantes en una ronda
+             */
+            async repairRound(eventId, eventType, roundNum) {
+                console.log(`🔧 [MatchMaking] Reparación Robusta Ronda ${roundNum} para ${eventId}...`);
+                const colName = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
+                const eventColl = (eventType === 'entreno') ? 'entrenos' : 'americanas';
+
+                const eventDoc = await window.db.collection(eventColl).doc(eventId).get();
+                if (!eventDoc.exists) throw new Error("Evento no encontrado");
+
+                const eventData = eventDoc.data();
+                const players = eventData.players || [];
+                const maxCourts = parseInt(eventData.max_courts || 4);
+
+                const snap = await window.db.collection(colName)
+                    .where('americana_id', '==', eventId)
+                    .get();
+
+                const roundMatches = snap.docs
+                    .map(d => ({ id: d.id, ...d.data() }))
+                    .filter(m => parseInt(m.round) === parseInt(roundNum));
+
+                const assignedPlayerIds = new Set();
+                const existingCourts = new Set();
+
+                roundMatches.forEach(m => {
+                    (m.team_a_ids || []).forEach(id => assignedPlayerIds.add(String(id)));
+                    (m.team_b_ids || []).forEach(id => assignedPlayerIds.add(String(id)));
+                    existingCourts.add(parseInt(m.court));
+                });
+
+                const missingCourts = [];
+                for (let i = 1; i <= maxCourts; i++) {
+                    if (!existingCourts.has(i)) missingCourts.push(i);
+                }
+
+                if (missingCourts.length === 0) {
+                    return { repaired: 0, message: "✅ No faltan pistas en esta ronda." };
+                }
+
+                const unassignedPlayers = players.filter(p => !assignedPlayerIds.has(String(p.id || p.uid)));
+                if (unassignedPlayers.length === 0) {
+                    return { repaired: 0, message: "❌ No hay jugadores libres para reparar." };
+                }
+
+                let repairedCount = 0;
+                let pool = [...unassignedPlayers];
+
+                for (const courtNum of missingCourts) {
+                    let courtPlayers = pool.filter(p => parseInt(p.current_court) === courtNum);
+                    if (courtPlayers.length !== 4 && missingCourts.length === 1 && pool.length === 4) {
+                        courtPlayers = [...pool];
+                    }
+
+                    if (courtPlayers.length === 4) {
+                        const teamA = courtPlayers.slice(0, 2);
+                        const teamB = courtPlayers.slice(2, 4);
+
+                        const payload = {
+                            americana_id: eventId,
+                            round: parseInt(roundNum),
+                            court: courtNum,
+                            status: 'scheduled',
+                            score_a: 0,
+                            score_b: 0,
+                            createdAt: new Date().toISOString(),
+                            team_a_ids: teamA.map(p => p.id || p.uid),
+                            team_a_names: teamA.map(p => p.name),
+                            teamA: teamA.map(p => p.name).join(' / '),
+                            team_b_ids: teamB.map(p => p.id || p.uid),
+                            team_b_names: teamB.map(p => p.name),
+                            teamB: teamB.map(p => p.name).join(' / ')
+                        };
+
+                        await window.db.collection(colName).add(payload);
+                        repairedCount++;
+
+                        const usedIds = new Set(courtPlayers.map(p => String(p.id || p.uid)));
+                        pool = pool.filter(p => !usedIds.has(String(p.id || p.uid)));
+                    }
+                }
+
+                return { repaired: repairedCount };
+            },
+
+            /**
+             * Purgar rondas posteriores (Herramienta de re-generación)
+             */
+            async purgeSubsequentRounds(eventId, roundNum, eventType) {
+                console.log(`🧹 Purgando rondas posteriores a R${roundNum} para ${eventType} ${eventId}...`);
+                const colName = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
+                const dbCol = window.db.collection(colName);
+                const snap = await dbCol.where('americana_id', '==', eventId).get();
+
+                const batch = window.db.batch();
+                let count = 0;
+                snap.docs.forEach(doc => {
+                    const data = doc.data();
+                    if (parseInt(data.round) > parseInt(roundNum)) {
+                        batch.delete(doc.ref);
+                        count++;
+                    }
+                });
+
+                if (count > 0) await batch.commit();
+                console.log(`🧹 Purgados ${count} partidos de rondas > ${roundNum}`);
+                return count;
+            },
+
+            /**
+             * Simulación de ronda
              */
             async simulateRound(eventId, roundNum, eventType = 'americana') {
-                console.warn("⚠️ [MatchMakingService] SIMULATION DISABLED BY ADMIN POLICY. No results generated.");
+                console.warn("⚠️ [MatchMakingService] Simulación deshabilitada por política administrativa.");
                 return;
             },
 
             /**
-            * Robust Player Substitution
-            */
+             * Sustitución robusta de jugador
+             */
             async substitutePlayerInMatchesRobust(eventId, oldUid, oldName, newUid, newName, eventType = null) {
                 if (!eventId || !oldUid) return 0;
-
-                console.log(`🔍 DEBUG SUBSTITUTE: Event=${eventId}, Type=${eventType}, OldID=${oldUid}, OldName="${oldName}"`);
+                console.log(`🔍 [Substitute] Event=${eventId}, OldID=${oldUid}, NewID=${newUid}`);
 
                 let matches = [];
                 let winningCollection = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
@@ -549,7 +836,7 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
                     const coll = window.db.collection(winningCollection);
                     const snap = await coll
                         .where('americana_id', '==', eventId)
-                        .where('status', '==', 'scheduled') // 🛡️ CRITICAL OPTIMIZATION: Only fetch pending matches
+                        .where('status', '==', 'scheduled')
                         .get();
                     matches = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 } catch (err) {
@@ -559,8 +846,6 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
 
                 const pending = matches.filter(m => !m.isFinished && m.status !== 'finished');
                 let updatesCount = 0;
-
-                // 🛡️ [OPTIMIZATION] Use WriteBatch to prevent 429 errors
                 const batch = window.db.batch();
                 let batchHasData = false;
 
@@ -606,231 +891,102 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
                 }
 
                 if (batchHasData) {
-                    try {
-                        await batch.commit();
-                        console.log(`✅ Batch commit success: Updated ${updatesCount} matches.`);
-                    } catch (e) {
-                        console.error(`❌ Batch commit failed:`, e);
-                        return 0;
-                    }
+                    await batch.commit();
                 }
 
-                console.log(`✅ Substitution complete. Updated ${updatesCount} matches in ${winningCollection}.`);
+                console.log(`✅ Sustitución completada. Actualizados ${updatesCount} partidos.`);
                 return updatesCount;
             },
 
-            async purgeSubsequentRounds(eventId, roundNum, eventType) {
-                console.log(`🧹 Purging rounds after ${roundNum} for ${eventType} ${eventId}`);
-                const collectionName = eventType === 'entreno' ? 'entrenos_matches' : 'matches';
-
-                try {
-                    // Fetch ALL matches for this event (only uses americana_id index)
-                    const snap = await window.db.collection(collectionName)
-                        .where('americana_id', '==', eventId)
-                        .get();
-
-                    if (snap.empty) {
-                        console.log("No matches found for event");
-                        return 0;
-                    }
-
-                    // Filter in memory for rounds > roundNum
-                    const toDelete = [];
-                    snap.docs.forEach(doc => {
-                        const data = doc.data();
-                        const matchRound = parseInt(data.round) || 1;
-                        if (matchRound > roundNum) {
-                            toDelete.push(doc.ref);
-                        }
-                    });
-
-                    if (toDelete.length === 0) {
-                        console.log(`No rounds found after R${roundNum}`);
-                        return 0;
-                    }
-
-                    console.log(`Deleting ${toDelete.length} matches from rounds > ${roundNum}`);
-
-                    // Delete in batches (Firestore limit is 500 per batch)
-                    const batchSize = 500;
-                    for (let i = 0; i < toDelete.length; i += batchSize) {
-                        const batch = window.db.batch();
-                        const chunk = toDelete.slice(i, i + batchSize);
-                        chunk.forEach(ref => batch.delete(ref));
-                        await batch.commit();
-                    }
-
-                    console.log(`✅ Purged ${toDelete.length} matches successfully`);
-                    return toDelete.length;
-                } catch (error) {
-                    console.error("Error in purgeSubsequentRounds:", error);
-                    throw error;
-                }
-            },
             /**
-             * [NEW] Sanitize Round: Removes duplicate or unfinished matches for a specific round 
-             * if finished counterparts exist.
+             * Guardar una ronda manual definida por el admin
              */
-            async sanitizeRound(eventId, eventType, roundNum) {
-                console.log(`🧹 [MatchMaking] Saneando Ronda ${roundNum} para ${eventId}...`);
-                const collName = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
-                const snap = await window.db.collection(collName)
-                    .where('americana_id', '==', eventId)
-                    .where('round', '==', parseInt(roundNum))
-                    .get();
+            async saveManualRound(eventId, eventType, roundNum, matchesData, restingPlayers = []) {
+                console.log(`✍️ MatchMakingService: Guardando ronda manual ${roundNum} para ${eventType} ${eventId}...`);
 
-                if (snap.empty) return { deleted: 0 };
+                const user = window.AdminAuth?.user ||
+                    (window.AuthService?.getCurrentUser && window.AuthService.getCurrentUser()) ||
+                    JSON.parse(localStorage.getItem('adminUser') || localStorage.getItem('currentUser') || 'null');
+                const role = (user?.role || '').toLowerCase().trim();
+                const isAuthorized = ['super_admin', 'superadmin', 'admin', 'admin_player'].includes(role);
 
-                const matches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                const finished = matches.filter(m => m.status === 'finished');
-                const unfinished = matches.filter(m => m.status !== 'finished');
-                
-                const toDelete = [];
+                if (!isAuthorized) {
+                    throw new Error("Acceso denegado: Solo administradores pueden guardar rondas manuales.");
+                }
 
-                // 1. Unfinished matches that have a finished counterpart on the same court
-                unfinished.forEach(unf => {
-                    if (finished.some(f => parseInt(f.court) === parseInt(unf.court))) {
-                        toDelete.push(unf.id);
-                    }
+                const colName = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
+                const dbCol = window.db.collection(colName);
+                const rNum = parseInt(roundNum);
+
+                const snap = await dbCol.where('americana_id', '==', eventId).where('round', '==', rNum).get();
+                const batch = window.db.batch();
+
+                snap.docs.forEach(doc => {
+                    batch.delete(doc.ref);
                 });
 
-                // 2. Exact duplicates (same court, same teams - even if both finished)
-                // (Keep the first one found)
-                const seen = new Set();
-                matches.forEach(m => {
-                    const teamA = Array.isArray(m.team_a_names) ? m.team_a_names.sort().join('|') : m.team_a_names;
-                    const teamB = Array.isArray(m.team_b_names) ? m.team_b_names.sort().join('|') : m.team_b_names;
-                    const sig = `${m.court}-${teamA}-${teamB}`;
-                    if (seen.has(sig)) {
-                        if (!toDelete.includes(m.id)) toDelete.push(m.id);
-                    } else {
-                        seen.add(sig);
-                    }
+                matchesData.forEach(m => {
+                    const newDocRef = dbCol.doc();
+                    const payload = {
+                        ...m,
+                        americana_id: eventId,
+                        round: rNum,
+                        court: parseInt(m.court),
+                        status: 'scheduled',
+                        score_a: 0,
+                        score_b: 0,
+                        is_manual: true,
+                        createdAt: new Date().toISOString()
+                    };
+                    batch.set(newDocRef, payload);
                 });
 
-                for (const id of toDelete) {
-                    await window.db.collection(collName).doc(id).delete();
-                }
+                const eventCol = (eventType === 'entreno') ? window.FirebaseDB?.entrenos : window.FirebaseDB?.americanas;
+                if (eventCol) {
+                    const eventDoc = await eventCol.getById(eventId);
+                    const updates = {};
 
-                console.log(`✅ [MatchMaking] Saneamiento completado. Borrados: ${toDelete.length}`);
-                return { deleted: toDelete.length };
-            },
-
-            /**
-             * [NEW] Repair Round: Detects missing courts in a round and re-creates them using 
-             * the unassigned players.
-             */
-            async repairRound(eventId, eventType, roundNum) {
-                console.log(`🔧 [MatchMaking] Reparación Robusta Ronda ${roundNum} para ${eventId}...`);
-                const collName = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
-                const eventColl = (eventType === 'entreno') ? 'entrenos' : 'americanas';
-                
-                const eventDoc = await window.db.collection(eventColl).doc(eventId).get();
-                if (!eventDoc.exists) throw new Error("Evento no encontrado");
-                
-                const eventData = eventDoc.data();
-                const players = eventData.players || [];
-                const maxCourts = parseInt(eventData.max_courts || 4);
-
-                // --- ROBUST FETCH: Get ALL matches and filter in JS to avoid Number/String mismatch ---
-                const snap = await window.db.collection(collName)
-                    .where('americana_id', '==', eventId)
-                    .get();
-
-                const roundMatches = snap.docs
-                    .map(d => ({ id: d.id, ...d.data() }))
-                    .filter(m => parseInt(m.round) === parseInt(roundNum));
-
-                console.log(`🔍 Encontrados ${roundMatches.length} partidos existentes en Ronda ${roundNum}`);
-
-                const assignedPlayerIds = new Set();
-                const existingCourts = new Set();
-
-                roundMatches.forEach(m => {
-                    (m.team_a_ids || []).forEach(id => assignedPlayerIds.add(String(id)));
-                    (m.team_b_ids || []).forEach(id => assignedPlayerIds.add(String(id)));
-                    existingCourts.add(parseInt(m.court));
-                });
-
-                const missingCourts = [];
-                for (let i = 1; i <= maxCourts; i++) {
-                    if (!existingCourts.has(i)) missingCourts.push(i);
-                }
-
-                if (missingCourts.length === 0) {
-                    return { repaired: 0, message: "✅ No faltan pistas en esta ronda (todas están presentes)." };
-                }
-
-                // Identify unassigned players
-                const unassignedPlayers = players.filter(p => !assignedPlayerIds.has(String(p.id || p.uid)));
-
-                if (unassignedPlayers.length === 0) {
-                     return { repaired: 0, message: "❌ No hay jugadores libres. ¿Quizás están asignados a pistas duplicadas? Usa 'SANEAR' primero." };
-                }
-
-                console.log(`⚠️ Faltan pistas: ${missingCourts.join(', ')}. Jugadores sin asignar: ${unassignedPlayers.length}`);
-
-                let repairedCount = 0;
-                let pool = [...unassignedPlayers];
-
-                for (const courtNum of missingCourts) {
-                    // Try to find players for THIS court first
-                    let courtPlayers = pool.filter(p => parseInt(p.current_court) === courtNum);
-                    
-                    // FALLBACK: If not exactly 4, but we only have one court missing and 4 players left, just take them
-                    if (courtPlayers.length !== 4 && missingCourts.length === 1 && pool.length === 4) {
-                        console.log("💡 Fallback: Usando todos los jugadores restantes para la única pista que falta.");
-                        courtPlayers = [...pool];
+                    if (eventDoc && (eventDoc.status === 'open' || eventDoc.status === 'pairing')) {
+                        updates.status = 'live';
                     }
 
-                    if (courtPlayers.length === 4) {
-                        const teamA = courtPlayers.slice(0, 2);
-                        const teamB = courtPlayers.slice(2, 4);
+                    if (eventDoc && eventDoc.players) {
+                        const updatedPlayers = eventDoc.players.map(p => {
+                            const match = matchesData.find(m =>
+                                (m.team_a_ids || []).includes(p.id) || (m.team_b_ids || []).includes(p.id)
+                            );
+                            return match ? { ...p, current_court: parseInt(match.court) } : { ...p, current_court: null };
+                        });
+                        updates.players = updatedPlayers;
+                    }
 
-                        const payload = {
-                            americana_id: eventId,
-                            round: parseInt(roundNum),
-                            court: courtNum,
-                            status: 'scheduled',
-                            score_a: 0,
-                            score_b: 0,
-                            createdAt: new Date().toISOString(),
-                            team_a_ids: teamA.map(p => p.id || p.uid),
-                            team_a_names: teamA.map(p => p.name),
-                            teamA: teamA.map(p => p.name).join(' / '),
-                            team_b_ids: teamB.map(p => p.id || p.uid),
-                            team_b_names: teamB.map(p => p.name),
-                            teamB: teamB.map(p => p.name).join(' / ')
-                        };
-
-                        await window.db.collection(collName).add(payload);
-                        repairedCount++;
-                        
-                        // Remove from pool
-                        const usedIds = new Set(courtPlayers.map(p => String(p.id || p.uid)));
-                        pool = pool.filter(p => !usedIds.has(String(p.id || p.uid)));
-                    } else {
-                        console.warn(`Could not repair court ${courtNum}: Found ${courtPlayers.length} candidates.`);
+                    if (Object.keys(updates).length > 0) {
+                        await eventCol.update(eventId, updates);
                     }
                 }
 
-                if (repairedCount === 0) {
-                    return { repaired: 0, message: `❌ No se pudo reparar automáticamente. Se encontraron ${unassignedPlayers.length} jugadores libres pero no cuadran con las pistas faltantes.` };
-                }
-
-                return { repaired: repairedCount };
+                await batch.commit();
+                console.log(`✅ Ronda manual ${rNum} guardada exitosamente.`);
+                return true;
             }
         };
 
         // EXPORT GLOBALLY
         window.MatchMakingService = MatchMakingService;
-        window.MatchmakingService = MatchMakingService; // Alias
+        window.MatchmakingService = MatchMakingService;
 
-        console.log("✅ MatchMakingService EXPORTED SUCCESSFULLY!");
+        if (typeof globalThis !== 'undefined') {
+            globalThis.MatchMakingService = MatchMakingService;
+            globalThis.MatchmakingService = MatchMakingService;
+        }
+        if (typeof module !== 'undefined' && module.exports) {
+            module.exports = { MatchMakingService };
+        }
+
+        console.log("✅ MatchMakingService EXPORTADO SATISFACTORIAMENTE (MODULE v5004)!");
 
     } catch (err) {
-        console.error("❌ CRITICAL ERROR LOADING MATCHMAKING SERVICE:", err);
-        // Fallback or Alert?
+        console.error("❌ ERROR CRÍTICO CARGANDO MATCHMAKING SERVICE:", err);
         window.MatchMakingServiceError = err;
     }
 })();

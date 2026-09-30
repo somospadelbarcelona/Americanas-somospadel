@@ -527,6 +527,11 @@ const FixedPairsLogic = {
     }
 };
 
-// Exportar globalmente
-window.FixedPairsLogic = FixedPairsLogic;
+// Exportar globalmente (Browser y Node.js)
+if (typeof window !== 'undefined') {
+    window.FixedPairsLogic = FixedPairsLogic;
+}
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { FixedPairsLogic };
+}
 console.log("🔒 FixedPairsLogic cargado");

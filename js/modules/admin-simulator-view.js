@@ -32,8 +32,9 @@ window.AdminViews.simulator_empty = function () {
                     <div style="flex: 1;">
                         <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 5px;">MODO DE JUEGO</label>
                         <select id="sim-pair-mode-empty" class="pro-input" style="width: 100%; text-align: center;">
-                            <option value="rotating" selected>🔄 TWISTER (Individual)</option>
-                            <option value="fixed">🔒 PAREJAS FIJAS (Pozo)</option>
+                            <option value="twister" selected>🌪️ TWISTER (Individual rotativo)</option>
+                            <option value="fixed">🔒 PAREJAS FIJAS (Pozo parejas)</option>
+                            <option value="swiss">🇨🇭 SUIZA (Individual por puntos)</option>
                         </select>
                     </div>
                      <div style="flex: 1;">
@@ -97,8 +98,9 @@ window.AdminViews.entrenos_simulator = function () {
                     <div style="flex: 1;">
                         <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 5px;">MODO DE JUEGO</label>
                         <select id="sim-training-pair-mode" class="pro-input" style="width: 100%; text-align: center;">
-                            <option value="rotating" selected>🔄 TWISTER (Individual)</option>
-                            <option value="fixed">🔒 PAREJAS FIJAS (Pozo)</option>
+                            <option value="twister" selected>🌪️ TWISTER (Individual rotativo)</option>
+                            <option value="fixed">🔒 PAREJAS FIJAS (Pozo parejas)</option>
+                            <option value="swiss">🇨🇭 SUIZA (Individual por puntos)</option>
                         </select>
                     </div>
                      <div style="flex: 1;">

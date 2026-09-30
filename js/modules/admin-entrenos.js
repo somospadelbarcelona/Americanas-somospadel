@@ -226,9 +226,9 @@ window.AdminViews.entrenos_create = async function () {
                         <div class="form-group">
                             <label>MODO DE JUEGO</label>
                             <select name="pair_mode" id="create-entreno-pair-mode" class="pro-input" onchange="window.updatePairModeHelper(this, 'create-entreno-pair-mode-desc')">
-                                <option value="fixed">🔒 PAREJA FIJA</option>
-                                <option value="rotating" selected>🌪️ TWISTER INDIVIDUAL</option>
-                                <option value="swiss">🇨🇭 SUIZO (Americana / Entreno Suizo)</option>
+                                <option value="twister" selected>🌪️ TWISTER INDIVIDUAL (Pozo rotativo)</option>
+                                <option value="fixed">🔒 PAREJA FIJA (Dupla todo el torneo)</option>
+                                <option value="swiss">🇨🇭 SUIZO (Puntos acumulados)</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -516,7 +516,7 @@ window.applyEntrenoPreset = (type) => {
         const nameInput = form.querySelector('[name=name]');
         if (nameInput) nameInput.value = '🌪️ ENTRENO TWISTER DINÁMICO';
         const pairMode = form.querySelector('[name=pair_mode]');
-        if (pairMode) pairMode.value = 'rotating';
+        if (pairMode) pairMode.value = 'twister';
         const courts = form.querySelector('[name=max_courts]');
         if (courts) courts.value = '4';
         const rounds = form.querySelector('[name=rounds_count]');
@@ -805,10 +805,12 @@ window.openEditEntrenoModal = async (entreno) => {
     const pairsArea = document.getElementById('entreno-fixed-pairs-area');
 
     if (pairModeSelect) {
-        if (entreno.pair_mode === 'swiss' || entreno.pair_mode === 'rotating') {
-            pairModeSelect.value = entreno.pair_mode;
+        let pMode = entreno.pair_mode || 'twister';
+        if (pMode === 'rotating') pMode = 'twister';
+        if (pMode === 'swiss' || pMode === 'twister' || pMode === 'fixed') {
+            pairModeSelect.value = pMode;
         } else {
-            pairModeSelect.value = 'fixed';
+            pairModeSelect.value = (pMode.includes('fixed')) ? 'fixed' : 'twister';
         }
     }
 
@@ -995,53 +997,54 @@ if (!window.updatePairModeHelper) {
     window.updatePairModeHelper = function(selectEl, descContainerId) {
         const container = document.getElementById(descContainerId);
         if (!container) return;
-        const mode = selectEl ? selectEl.value : 'fixed';
+        const raw = selectEl ? selectEl.value : 'twister';
+        const mode = (raw === 'rotating') ? 'twister' : raw;
 
         if (mode === 'swiss') {
             container.innerHTML = `
                 <div style="display:flex; align-items:flex-start; gap:8px;">
                     <span style="font-size: 1.15rem; line-height: 1;">🇨🇭</span>
                     <div>
-                        <strong style="color: #ef4444; font-size: 0.76rem; text-transform: uppercase;">Modalidad Sistema Suizo (Express 2h):</strong>
+                        <strong style="color: #ef4444; font-size: 0.76rem; text-transform: uppercase;">Modalidad Sistema Suizo (Puntos acumulados):</strong>
                         <div style="color: #cbd5e1; font-size: 0.72rem; margin-top: 2px;">
-                            Inscripción individual. 6 rondas express de juego efectivo (2 horas). Los juegos ganados son tus puntos acumulados. Tras cada ronda los 4 mejores van a Pista 1, siguientes a Pista 2, restantes a Pista 3, cruzando parejas sin repetir compañero.
+                            Cada jugador suma sus propios juegos conseguidos; la clasificación acumulada define en qué pista se juega cada ronda.
                         </div>
                     </div>
                 </div>
             `;
             container.style.borderLeftColor = '#ef4444';
             container.style.background = 'rgba(239, 68, 68, 0.08)';
-        } else if (mode === 'rotating') {
-            container.innerHTML = `
-                <div style="display:flex; align-items:flex-start; gap:8px;">
-                    <span style="font-size: 1.15rem; line-height: 1;">🌪️</span>
-                    <div>
-                        <strong style="color: #60a5fa; font-size: 0.76rem; text-transform: uppercase;">Modalidad Twister Individual:</strong>
-                        <div style="color: #cbd5e1; font-size: 0.72rem; margin-top: 2px;">
-                            Inscripción individual. Los jugadores rotan y cambian de pareja y de rivales en cada ronda según su puntuación. ¡El sistema calcula los cruces y pistas automáticamente!
-                        </div>
-                    </div>
-                </div>
-            `;
-            container.style.borderLeftColor = '#3b82f6';
-            container.style.background = 'rgba(59, 130, 246, 0.08)';
-        } else {
+        } else if (mode === 'fixed') {
             container.innerHTML = `
                 <div style="display:flex; align-items:flex-start; gap:8px;">
                     <span style="font-size: 1.15rem; line-height: 1;">🔒</span>
                     <div>
-                        <strong style="color: #CCFF00; font-size: 0.76rem; text-transform: uppercase;">Modalidad Pareja Fija:</strong>
+                        <strong style="color: #CCFF00; font-size: 0.76rem; text-transform: uppercase;">Modalidad Pareja Fija (Dupla todo el torneo):</strong>
                         <div style="color: #cbd5e1; font-size: 0.72rem; margin-top: 2px;">
-                            Los jugadores compiten en dupla cerrada de principio a fin con el mismo compañero. En la columna derecha podrás vincular parejas manualmente y asignarles pistas.
+                            Las duplas compiten juntas todo el evento; suben o bajan juntas de pista según ganen o pierdan.
                         </div>
                     </div>
                 </div>
             `;
             container.style.borderLeftColor = '#CCFF00';
             container.style.background = 'rgba(204, 255, 0, 0.06)';
+        } else {
+            container.innerHTML = `
+                <div style="display:flex; align-items:flex-start; gap:8px;">
+                    <span style="font-size: 1.15rem; line-height: 1;">🌪️</span>
+                    <div>
+                        <strong style="color: #38bdf8; font-size: 0.76rem; text-transform: uppercase;">Modalidad Twister Individual (Pozo rotativo):</strong>
+                        <div style="color: #cbd5e1; font-size: 0.72rem; margin-top: 2px;">
+                            Los jugadores juegan individualmente; ganadores suben de pista, perdedores bajan, y en cada pista los compañeros rotan obligatoriamente sin repetir pareja de la ronda anterior.
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.style.borderLeftColor = '#38bdf8';
+            container.style.background = 'rgba(56, 189, 248, 0.08)';
         }
     };
-}
+};
 
 window.openAddPlayerToEntrenoSelector = async (eventId) => {
     if (!window.PremiumModal) return alert("PremiumModal no disponible");
@@ -1258,10 +1261,15 @@ window.loadEntrenoParticipantsUI = async (id) => {
                 return parse(a.joinedAt) - parse(b.joinedAt);
             });
 
-        // 🧠 Smart Mode Detection (Consistent with MatchMakingService)
-        let isFixedMode = (event.pair_mode && event.pair_mode.includes('fixed')) ||
-            (event.fixed_pairs && event.fixed_pairs.length > 0) ||
-            (event.name && (event.name.toUpperCase().includes('FIJA') || event.name.toUpperCase().includes('FIJO')));
+        // 🧠 Smart Mode Detection (Consistent with MatchMakingService & PreFlightRoundVerifier)
+        let isFixedMode = false;
+        if (window.PreFlightRoundVerifier) {
+            isFixedMode = window.PreFlightRoundVerifier.normalizePairMode(event.pair_mode, event) === 'fixed';
+        } else {
+            isFixedMode = (event.pair_mode && event.pair_mode.includes('fixed')) ||
+                (event.fixed_pairs && event.fixed_pairs.length > 0) ||
+                (event.name && (event.name.toUpperCase().includes('FIJA') || event.name.toUpperCase().includes('FIJO')));
+        }
 
         // Render List with Header
         list.innerHTML = `

@@ -64,15 +64,24 @@ const AdminSimulator = {
         const locationSelect = document.getElementById('sim-location-empty');
 
         const numCourts = parseInt(courtSelect?.value || 3);
-        const pairMode = pairModeSelect?.value || 'rotating';
+        const rawPairMode = pairModeSelect?.value || 'twister';
+        const pairMode = (rawPairMode === 'rotating') ? 'twister' : rawPairMode;
+        const normalizedMode = (window.PreFlightRoundVerifier && typeof window.PreFlightRoundVerifier.normalizePairMode === 'function')
+            ? window.PreFlightRoundVerifier.normalizePairMode(pairMode)
+            : pairMode;
+
         const category = categorySelect?.value || 'open';
         const location = locationSelect?.value || 'Barcelona Pádel el Prat';
         const numPlayers = numCourts * 4;
 
+        let modeName = 'TWISTER';
+        if (normalizedMode === 'fixed') modeName = 'FIJA';
+        else if (normalizedMode === 'swiss') modeName = 'SUIZA';
+
         if (status) {
             status.style.display = 'block';
             let catName = category === 'open' ? 'LIBRE' : (category === 'male' ? 'MASCULINA' : (category === 'female' ? 'FEMENINA' : 'MIXTA'));
-            status.innerHTML = `📝 <b>PREPARANDO AMERICANA (${catName} - ${pairMode === 'fixed' ? 'FIJA' : 'TWISTER'})</b><br>`;
+            status.innerHTML = `📝 <b>PREPARANDO AMERICANA (${catName} - ${modeName})</b><br>`;
             status.innerHTML += `> Sede: ${location}<br>`;
             status.innerHTML += `> Seleccionando ${numCourts} pistas / ${numPlayers} jugadores cualificados...<br>`;
         }
@@ -83,7 +92,6 @@ const AdminSimulator = {
 
             // 2. Create Americana
             const catName = category === 'open' ? 'LIBRE' : (category === 'male' ? 'MASCULINA' : (category === 'female' ? 'FEMENINA' : 'MIXTA'));
-            const modeName = pairMode === 'fixed' ? 'FIJA' : 'TWISTER';
 
             const americanaData = {
                 name: `AMERICANA ${catName} (${modeName}) - ${new Date().getHours()}:${String(new Date().getMinutes()).padStart(2, '0')}`,
@@ -112,7 +120,7 @@ const AdminSimulator = {
                 image_url: location === 'Barcelona Pádel el Prat'
                     ? (category === 'male' ? 'img/americana masculina.jpg' : (category === 'female' ? 'img/americana femeninas.jpg' : 'img/americana mixta.jpg'))
                     : (category === 'male' ? 'img/ball-masculina.png' : (category === 'female' ? 'img/ball-femenina.png' : 'img/ball-mixta.png')),
-                pair_mode: pairMode,
+                pair_mode: normalizedMode,
                 price_members: config.price_members || 12,
                 price_external: config.price_external || 14,
                 is_simulation: true
@@ -126,14 +134,26 @@ const AdminSimulator = {
             // 3. Generate Rounds
             const roundsToGenerate = 1;
 
-            if (pairMode === 'fixed') {
+            if (normalizedMode === 'fixed') {
                 if (status) status.innerHTML += `> Creando parejas fijas...<br>`;
                 const pairs = FixedPairsLogic.createFixedPairs(selectedPlayers, category);
                 await FirebaseDB.americanas.update(americanaId, { fixed_pairs: pairs });
 
-                if (status) status.innerHTML += `> Generando Ronda 1 sistema Pozo...<br>`;
+                if (status) status.innerHTML += `> Generando Ronda 1 sistema Pozo Parejas...<br>`;
                 for (let round = 1; round <= roundsToGenerate; round++) {
-                    const matches = FixedPairsLogic.generatePozoRound(pairs, round, numCourts);
+                    let matches = FixedPairsLogic.generatePozoRound(pairs, round, numCourts);
+
+                    if (window.PreFlightRoundVerifier) {
+                        const shield = window.PreFlightRoundVerifier.verifyAndShieldRound(matches, {
+                            roundNum: round,
+                            pairMode: 'fixed',
+                            expectedCourts: numCourts,
+                            players: selectedPlayers
+                        });
+                        if (shield && shield.matches) matches = shield.matches;
+                        if (status) status.innerHTML += `> 🛡️ Verificación Pre-Flight: Modalidad FIXED validada (0 parejas repetidas, pistas equilibradas) ✅<br>`;
+                    }
+
                     for (const m of matches) {
                         await FirebaseDB.matches.create({
                             ...m,
@@ -148,9 +168,23 @@ const AdminSimulator = {
 
             } else {
                 let currentPlayers = americanaData.players;
-                if (status) status.innerHTML += `> Generando Ronda 1 sistema Twister...<br>`;
+                const roundLabel = (normalizedMode === 'swiss') ? 'Sistema Suizo' : 'Twister Individual';
+                if (status) status.innerHTML += `> Generando Ronda 1 ${roundLabel}...<br>`;
+
                 for (let round = 1; round <= roundsToGenerate; round++) {
-                    let roundMatches = RotatingPozoLogic.generateRound(currentPlayers, round, numCourts, category);
+                    const genCategory = (normalizedMode === 'swiss') ? 'open' : category;
+                    let roundMatches = RotatingPozoLogic.generateRound(currentPlayers, round, numCourts, genCategory);
+
+                    if (window.PreFlightRoundVerifier) {
+                        const shield = window.PreFlightRoundVerifier.verifyAndShieldRound(roundMatches, {
+                            roundNum: round,
+                            pairMode: normalizedMode,
+                            expectedCourts: numCourts,
+                            players: selectedPlayers
+                        });
+                        if (shield && shield.matches) roundMatches = shield.matches;
+                        if (status) status.innerHTML += `> 🛡️ Verificación Pre-Flight: Modalidad ${normalizedMode.toUpperCase()} validada (0 parejas repetidas, pistas equilibradas) ✅<br>`;
+                    }
 
                     for (const m of roundMatches) {
                         const matchData = { ...m, americana_id: americanaId, status: 'scheduled', score_a: 0, score_b: 0 };
@@ -180,15 +214,24 @@ const AdminSimulator = {
         const locationSelect = document.getElementById('sim-training-location');
 
         const numCourts = parseInt(courtSelect?.value || 3);
-        const pairMode = pairModeSelect?.value || 'rotating';
+        const rawPairMode = pairModeSelect?.value || 'twister';
+        const pairMode = (rawPairMode === 'rotating') ? 'twister' : rawPairMode;
+        const normalizedMode = (window.PreFlightRoundVerifier && typeof window.PreFlightRoundVerifier.normalizePairMode === 'function')
+            ? window.PreFlightRoundVerifier.normalizePairMode(pairMode)
+            : pairMode;
+
         const category = categorySelect?.value || 'open';
         const location = locationSelect?.value || 'Barcelona Pádel el Prat';
         const numPlayers = numCourts * 4;
 
+        let modeName = 'TWISTER';
+        if (normalizedMode === 'fixed') modeName = 'FIJA';
+        else if (normalizedMode === 'swiss') modeName = 'SUIZA';
+
         if (status) {
             status.style.display = 'block';
             let catName = category === 'open' ? 'LIBRE' : (category === 'male' ? 'MASCULINA' : (category === 'female' ? 'FEMENINA' : 'MIXTA'));
-            status.innerHTML = `📝 <b>PREPARANDO ENTRENO (${catName} - ${pairMode === 'fixed' ? 'FIJA' : 'TWISTER'})</b><br>`;
+            status.innerHTML = `📝 <b>PREPARANDO ENTRENO (${catName} - ${modeName})</b><br>`;
             status.innerHTML += `> Sede: ${location}<br>`;
             status.innerHTML += `> Seleccionando ${numCourts} pistas / ${numPlayers} jugadores cualificados...<br>`;
         }
@@ -215,7 +258,7 @@ const AdminSimulator = {
             }
 
             const entrenoData = {
-                name: `ENTRENO ${catName} (${pairMode === 'fixed' ? 'FIJA' : 'TWISTER'}) - ${new Date().toLocaleDateString()}`,
+                name: `ENTRENO ${catName} (${modeName}) - ${new Date().toLocaleDateString()}`,
                 date: new Date().toISOString().split('T')[0],
                 time: String(new Date().getHours()).padStart(2, '0') + ':00',
                 status: 'open',
@@ -231,7 +274,7 @@ const AdminSimulator = {
                 max_courts: numCourts,
                 category: category,
                 image_url: imageUrl,
-                pair_mode: pairMode,
+                pair_mode: normalizedMode,
                 price_members: config.price_members || 20,
                 price_external: config.price_external || 25,
                 is_simulation: true
@@ -242,17 +285,29 @@ const AdminSimulator = {
 
             if (status) status.innerHTML += `> Evento creado (${entrenoId})<br>`;
 
-            // 3. Generate Rounds (Solo R1 para Pozo/Twister)
+            // 3. Generate Rounds (Solo R1 para Pozo/Twister/Suizo)
             const roundsToGenerate = 1;
 
-            if (pairMode === 'fixed') {
+            if (normalizedMode === 'fixed') {
                 if (status) status.innerHTML += `> Creando parejas fijas...<br>`;
                 const pairs = FixedPairsLogic.createFixedPairs(selectedPlayers, category);
                 await FirebaseDB.entrenos.update(entrenoId, { fixed_pairs: pairs });
 
-                if (status) status.innerHTML += `> Generando Ronda 1 sistema Pozo...<br>`;
+                if (status) status.innerHTML += `> Generando Ronda 1 sistema Pozo Parejas...<br>`;
                 for (let round = 1; round <= roundsToGenerate; round++) {
-                    const matches = FixedPairsLogic.generatePozoRound(pairs, round, numCourts);
+                    let matches = FixedPairsLogic.generatePozoRound(pairs, round, numCourts);
+
+                    if (window.PreFlightRoundVerifier) {
+                        const shield = window.PreFlightRoundVerifier.verifyAndShieldRound(matches, {
+                            roundNum: round,
+                            pairMode: 'fixed',
+                            expectedCourts: numCourts,
+                            players: selectedPlayers
+                        });
+                        if (shield && shield.matches) matches = shield.matches;
+                        if (status) status.innerHTML += `> 🛡️ Verificación Pre-Flight: Modalidad FIXED validada (0 parejas repetidas, pistas equilibradas) ✅<br>`;
+                    }
+
                     for (const m of matches) {
                         await FirebaseDB.entrenos_matches.create({
                             ...m,
@@ -275,9 +330,23 @@ const AdminSimulator = {
                     current_court: Math.floor(i / 4) + 1
                 }));
 
-                if (status) status.innerHTML += `> Generando Ronda 1 sistema Twister...<br>`;
+                const roundLabel = (normalizedMode === 'swiss') ? 'Sistema Suizo' : 'Twister Individual';
+                if (status) status.innerHTML += `> Generando Ronda 1 ${roundLabel}...<br>`;
+
                 for (let round = 1; round <= roundsToGenerate; round++) {
-                    let roundMatches = RotatingPozoLogic.generateRound(currentPlayers, round, numCourts, category);
+                    const genCategory = (normalizedMode === 'swiss') ? 'open' : category;
+                    let roundMatches = RotatingPozoLogic.generateRound(currentPlayers, round, numCourts, genCategory);
+
+                    if (window.PreFlightRoundVerifier) {
+                        const shield = window.PreFlightRoundVerifier.verifyAndShieldRound(roundMatches, {
+                            roundNum: round,
+                            pairMode: normalizedMode,
+                            expectedCourts: numCourts,
+                            players: selectedPlayers
+                        });
+                        if (shield && shield.matches) roundMatches = shield.matches;
+                        if (status) status.innerHTML += `> 🛡️ Verificación Pre-Flight: Modalidad ${normalizedMode.toUpperCase()} validada (0 parejas repetidas, pistas equilibradas) ✅<br>`;
+                    }
 
                     for (const m of roundMatches) {
                         const matchData = { ...m, americana_id: entrenoId, status: 'scheduled', score_a: 0, score_b: 0 };

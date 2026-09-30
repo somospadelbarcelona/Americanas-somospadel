@@ -1192,7 +1192,18 @@ window.Actions = {
         }
 
         try {
+            if (window.PreFlightRoundVerifier) {
+                window.PreFlightRoundVerifier.lastFixApplied = false;
+            }
+
             await MatchMakingService.generateRound(evt.id, evt.type, round);
+
+            if (window.PreFlightRoundVerifier && window.PreFlightRoundVerifier.lastFixApplied) {
+                if (window.NotificationService && typeof window.NotificationService.showToast === 'function') {
+                    window.NotificationService.showToast("🛡️ Ronda verificada y blindada: Cruces optimizados sin repetición de compañeros", "success");
+                }
+            }
+
             window.loadResultsView(evt.type); // Refresh
             if (window.Actions?.switchRound) {
                 setTimeout(() => window.Actions.switchRound(round), 200);
@@ -1201,7 +1212,18 @@ window.Actions = {
             console.warn("⚠️ MatchMakingService falló (posible límite de cuota o error de red):", e);
             if (e.message.includes('sin finalizar') && confirm(e.message + "\n\n¿Quieres FORZAR la generación de la siguiente ronda?")) {
                 try {
+                    if (window.PreFlightRoundVerifier) {
+                        window.PreFlightRoundVerifier.lastFixApplied = false;
+                    }
+
                     await MatchMakingService.generateRound(evt.id, evt.type, round, true);
+
+                    if (window.PreFlightRoundVerifier && window.PreFlightRoundVerifier.lastFixApplied) {
+                        if (window.NotificationService && typeof window.NotificationService.showToast === 'function') {
+                            window.NotificationService.showToast("🛡️ Ronda verificada y blindada: Cruces optimizados sin repetición de compañeros", "success");
+                        }
+                    }
+
                     window.loadResultsView(evt.type);
                     if (window.Actions?.switchRound) {
                         setTimeout(() => window.Actions.switchRound(round), 200);
