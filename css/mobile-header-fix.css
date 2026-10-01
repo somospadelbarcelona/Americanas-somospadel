@@ -60,17 +60,19 @@
         gap: 8px !important;
     }
 
-    /* Show slogan with ultra-compact font */
-    .cmd-brand span[style*="font-size: 0.6rem"] {
+    /* Show slogan with compact but perfectly legible font */
+    .cmd-brand span[style*="font-size: 0.6rem"],
+    .cmd-brand span[style*="font-size: 0.68rem"] {
         display: block !important;
-        font-size: 0.45rem !important; /* Smaller but visible */
-        letter-spacing: 1px !important;
+        font-size: 0.65rem !important;
+        letter-spacing: 1.1px !important;
         white-space: nowrap !important;
     }
 
     /* Reduce brand text size */
-    .cmd-brand span[style*="font-size: 1.1rem"] {
-        font-size: 0.9rem !important;
+    .cmd-brand span[style*="font-size: 1.1rem"],
+    .cmd-brand span[style*="font-size: 1.12rem"] {
+        font-size: 0.95rem !important;
     }
 
     /* User Widget compaction */
@@ -96,7 +98,7 @@
     .cmd-avatar {
         width: 32px !important;
         height: 32px !important;
-        font-size: 0.7rem !important;
+        font-size: 0.75rem !important;
     }
 
     /* Logout Button Compact */
@@ -134,17 +136,18 @@
         padding: 1.5px !important;
     }
     .header-rotator-sphere-core i {
-        font-size: 0.68rem !important;
+        font-size: 0.72rem !important;
     }
     .header-rotator-badge {
-        font-size: 0.38rem !important;
-        padding: 0.5px 2.5px !important;
+        font-size: 0.62rem !important;
+        font-weight: 800 !important;
+        padding: 1px 3.5px !important;
         bottom: -2px !important;
         border-radius: 4px !important;
     }
     .header-rotator-label {
-        font-size: 0.58rem !important;
-        max-width: 48px !important;
+        font-size: 0.68rem !important;
+        max-width: 54px !important;
         font-weight: 750 !important;
     }
     .header-rotator-dots {
@@ -195,8 +198,9 @@
         display: none !important; /* Ocultar micro-badge en <= 414px para máxima pureza */
     }
     .header-rotator-label {
-        font-size: 0.52rem !important;
-        max-width: 38px !important;
+        font-size: 0.65rem !important;
+        max-width: 44px !important;
+        font-weight: 750 !important;
     }
     .header-rotator-dots {
         display: none !important;
@@ -375,8 +379,8 @@ body {
     -webkit-overflow-scrolling: touch;
     background: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
-    border-radius: 22px !important;
-    box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.2), 0 0 0 1px rgba(15, 23, 42, 0.05) !important;
+    border-radius: 24px !important;
+    box-shadow: 0 24px 50px -12px rgba(15, 23, 42, 0.22), 0 8px 20px -4px rgba(15, 23, 42, 0.08) !important;
     padding: 18px !important;
     display: flex;
     flex-direction: column;
@@ -591,12 +595,12 @@ body {
 .user-dropdown-role-badge {
     display: inline-flex;
     align-items: center;
-    font-size: 0.62rem;
+    font-size: 0.68rem;
     color: #334155;
     background: #f1f5f9;
     border: 1px solid #e2e8f0;
-    padding: 2px 7px;
-    border-radius: 6px;
+    padding: 2.5px 8px;
+    border-radius: 7px;
     font-weight: 800;
     letter-spacing: 0.6px;
     text-transform: uppercase;
@@ -606,11 +610,11 @@ body {
 .user-dropdown-level-badge {
     display: inline-flex;
     align-items: center;
-    font-size: 0.65rem;
+    font-size: 0.70rem;
     background: #0f172a;
     color: #CCFF00 !important;
-    padding: 2px 7px;
-    border-radius: 6px;
+    padding: 2.5px 8px;
+    border-radius: 7px;
     font-weight: 900;
     letter-spacing: 0.5px;
     box-shadow: 0 2px 5px rgba(15, 23, 42, 0.2);
@@ -627,13 +631,13 @@ body {
 .user-dropdown-stat-card {
     background: #f8fafc;
     border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    padding: 10px 12px;
+    border-radius: 16px;
+    padding: 11px 13px;
     display: flex;
     flex-direction: column;
     gap: 3px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.02);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .user-dropdown-stat-card:hover {
@@ -644,7 +648,7 @@ body {
 }
 
 .user-dropdown-stat-label {
-    font-size: 0.68rem !important;
+    font-size: 0.70rem !important;
     color: #64748b !important;
     font-weight: 700 !important;
     text-transform: uppercase !important;
@@ -938,8 +942,9 @@ body {
 
 /* TÍTULOS DE FILAS: 100% VISIBLES EN BLANCO PURO CON TEXT-SHADOW Y SIN CORTES */
 .drawer-row-title {
-    font-size: 0.85rem !important;
-    font-weight: 800 !important;
+    font-family: 'Outfit', sans-serif !important;
+    font-size: 0.88rem !important;
+    font-weight: 850 !important;
     color: #ffffff !important;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
     flex: 1 1 auto !important;
@@ -956,7 +961,7 @@ body {
 
 @media (max-width: 380px) {
     .drawer-row-title {
-        font-size: 0.79rem !important;
+        font-size: 0.82rem !important;
         letter-spacing: -0.25px !important;
     }
 }
@@ -964,10 +969,10 @@ body {
 .drawer-row-badge {
     flex-shrink: 0 !important;
     margin-left: auto !important;
-    padding: 2px 7px !important;
-    font-size: 0.65rem !important;
+    padding: 2.5px 8px !important;
+    font-size: 0.68rem !important;
     font-weight: 900 !important;
-    border-radius: 6px !important;
+    border-radius: 7px !important;
     line-height: 1.15 !important;
     display: inline-flex !important;
     align-items: center !important;
@@ -982,11 +987,11 @@ body {
 
 /* CAJA DE GESTIÓN & CAPITANES: SIN CORTES NI OVERFLOW HIDDEN TRUNCADO */
 .drawer-admin-box {
-    background: linear-gradient(135deg, rgba(234, 179, 8, 0.12) 0%, rgba(15, 23, 42, 0.85) 100%) !important;
-    border: 1px solid rgba(234, 179, 8, 0.45) !important;
-    border-radius: 16px !important;
-    padding: 14px !important;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4) !important;
+    background: linear-gradient(135deg, rgba(234, 179, 8, 0.14) 0%, rgba(15, 23, 42, 0.88) 100%) !important;
+    border: 1.5px solid rgba(234, 179, 8, 0.45) !important;
+    border-radius: 18px !important;
+    padding: 15px !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.45) !important;
     position: relative !important;
     overflow: visible !important;
     margin-bottom: 12px !important;
@@ -1004,7 +1009,7 @@ body {
 
 .drawer-admin-header > div {
     font-weight: 900 !important;
-    font-size: 0.82rem !important;
+    font-size: 0.85rem !important;
     color: #fbbf24 !important;
     display: flex !important;
     align-items: center !important;
@@ -1014,13 +1019,13 @@ body {
 }
 
 .drawer-admin-badge {
-    font-size: 0.6rem !important;
+    font-size: 0.66rem !important;
     font-weight: 900 !important;
     background: rgba(234, 179, 8, 0.25) !important;
     color: #fbbf24 !important;
     border: 1px solid rgba(234, 179, 8, 0.45) !important;
-    padding: 3px 8px !important;
-    border-radius: 6px !important;
+    padding: 3px 9px !important;
+    border-radius: 7px !important;
     letter-spacing: 0.6px !important;
     text-transform: uppercase !important;
     line-height: normal !important;

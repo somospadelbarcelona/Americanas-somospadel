@@ -82,6 +82,9 @@ runSubtest("Eventos Finalizados & Submenús Inmediatos", "test-finished-events-a
 // 17. Pizarra Táctica de Pistas & Club (DashboardView)
 runSubtest("Pizarra Táctica de Pistas & Club (Multi-Eventos y Convocatoria)", "test-dashboard-pizarra-tactica-qa.js");
 
+// 18. Integridad de UI/UX, Selectores e IDs Interactivos
+runSubtest("Integridad UI/UX, Selectores e IDs Interactivos", "test-ui-elements-qa.js");
+
 console.log("\n================================================================");
 console.log(" RESUMEN GLOBAL DE CALIDAD:");
 reports.forEach(r => {

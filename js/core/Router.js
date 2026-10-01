@@ -472,8 +472,18 @@
                 btn.classList.toggle('active', isActive);
 
                 if (isActive) {
-                    if (window.navigator.vibrate) {
-                        window.navigator.vibrate(10);
+                    if (window.PlayerView && typeof window.PlayerView.haptic === 'function') {
+                        window.PlayerView.haptic(20);
+                    } else if (window.navigator?.vibrate) {
+                        window.navigator.vibrate(18);
+                    }
+
+                    const icon = btn.querySelector('i');
+                    if (icon) {
+                        icon.classList.remove('spring-pop');
+                        void icon.offsetWidth;
+                        icon.classList.add('spring-pop');
+                        setTimeout(() => icon.classList.remove('spring-pop'), 580);
                     }
                     
                     // Obtener el color propio del elemento activo para el glow general de la barra
