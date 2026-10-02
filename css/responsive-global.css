@@ -366,3 +366,11 @@ img {
     max-width: 100% !important;
     height: auto !important;
 }
+
+/* Excepción específica para el logo compacto interactivo de login */
+#login-ball-img {
+    width: 82px !important;
+    max-width: 82px !important;
+    height: 82px !important;
+    object-fit: contain !important;
+}

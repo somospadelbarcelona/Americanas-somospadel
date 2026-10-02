@@ -85,6 +85,12 @@ runSubtest("Pizarra Táctica de Pistas & Club (Multi-Eventos y Convocatoria)", "
 // 18. Integridad de UI/UX, Selectores e IDs Interactivos
 runSubtest("Integridad UI/UX, Selectores e IDs Interactivos", "test-ui-elements-qa.js");
 
+// 19. Logo de Inicio, Dimensionamiento & Centrado Responsive
+runSubtest("Logo de Inicio, Dimensionamiento & Centrado Responsive", "test-login-logo-qa.js");
+
+// 20. Suplentes, Reservas y Cotillear Perfil en Modal Roster
+runSubtest("Suplentes, Reservas y Cotillear Perfil (EventsController QA)", "test-suplentes-cotillear-battle-qa.js");
+
 console.log("\n================================================================");
 console.log(" RESUMEN GLOBAL DE CALIDAD:");
 reports.forEach(r => {
