@@ -684,7 +684,19 @@ class NotificationUi {
         }
 
         // -------------------------------------------------------------
-        // 2. CLASIFICACIÓN ESTRICTA: CANCELADOS, ENTRENOS vs AMERICANAS
+        // 2. DETECCIÓN INTEGRAL DE CHAT Y MODALIDADES
+        // -------------------------------------------------------------
+        const rawChatId = String(item.data?.chatId || item.chatId || (String(item.id || '').startsWith('chat_') ? String(item.id).replace(/^chat_/, '') : '') || '');
+        const rawChatType = String(item.data?.chatType || item.chatType || '').toLowerCase();
+        const isChatItem = item.category === 'chat' ||
+            Boolean(item.isChat) ||
+            rawType === 'chat' ||
+            String(item.id || '').startsWith('chat_') ||
+            Boolean(item.data?.chatType) ||
+            Boolean(item.data?.chatId);
+
+        // -------------------------------------------------------------
+        // 3. CLASIFICACIÓN ESTRICTA: CANCELADOS, CHAT, ENTRENOS vs AMERICANAS
         // -------------------------------------------------------------
         const isEnt = fullText.includes('entreno') || fullText.includes('entrenamiento') || fullText.includes('coach') || rawType === 'entreno' || rawUrl === 'entrenos';
         const isCancelled = item.isCancelled || item.data?.isCancelled || rawType === 'event_cancelled' || item.type === 'event_cancelled' || fullText.includes('cancelad') || fullText.includes('suspendid') || fullText.includes('eliminad') || fullText.includes('anulad');
@@ -704,6 +716,53 @@ class NotificationUi {
             defaultTitle = isEnt ? '❌ Convocatoria de Entreno Anulada' : '❌ Torneo Americana Cancelado';
             defaultBody = 'Esta convocatoria ha sido cancelada o eliminada del calendario del club.';
             metaPills.push({ icon: 'fa-circle-exclamation', text: 'Convocatoria Anulada' });
+        }
+        // PRIORIDAD CHAT: MENSAJES Y COMUNICACIONES EN TIEMPO REAL
+        else if (isChatItem) {
+            category = 'chat';
+
+            // a) Chat Privado (1 a 1)
+            if (rawChatType === 'direct' || rawChatId.startsWith('direct_') || fullText.includes('privado')) {
+                tag = { label: 'MENSAJE PRIVADO', icon: 'fa-user-lock', isSvg: false, cssClass: 'tag-chat-direct', cardThemeClass: 'theme-chat' };
+                actionLabel = '💬 RESPONDER PRIVADO';
+                actionUrl = 'chat';
+                defaultTitle = '💬 Mensaje Privado';
+                defaultBody = 'Has recibido un mensaje directo de un compañero.';
+                metaPills.push({ icon: 'fa-user', text: 'Chat 1 a 1' });
+                if (!fullText.includes('prat') && !fullText.includes('cornell')) {
+                    sede = 'Mensaje Privado';
+                }
+            }
+            // c) Chat General de la Comunidad
+            else if (rawChatId === 'general_somospadel' || rawChatId === 'event_general_somospadel' || fullText.includes('chat general') || (!eventId && (fullText.includes('comunidad') || fullText.includes('general')))) {
+                tag = { label: 'CHAT COMUNIDAD', icon: 'fa-comments', isSvg: false, cssClass: 'tag-chat-general', cardThemeClass: 'theme-chat' };
+                actionLabel = '💬 ENTRAR AL CHAT';
+                actionUrl = 'chat';
+                defaultTitle = '💬 Chat General SomosPadel';
+                defaultBody = 'Conversación abierta de la comunidad de SomosPadel.';
+                metaPills.push({ icon: 'fa-users', text: 'Comunidad' });
+                if (!fullText.includes('prat') && !fullText.includes('cornell')) {
+                    sede = 'Comunidad SomosPadel';
+                }
+            }
+            // b) Chat de Evento / Partido
+            else if (rawChatType === 'event' || rawChatId.startsWith('event_') || eventId || fullText.includes('partido') || fullText.includes('torneo') || fullText.includes('entreno') || fullText.includes('convocatoria')) {
+                tag = { label: 'CHAT PARTIDO', icon: 'fa-comment-dots', isSvg: false, cssClass: 'tag-chat-event', cardThemeClass: 'theme-chat' };
+                actionLabel = '💬 CHAT DEL PARTIDO';
+                actionUrl = 'chat';
+                defaultTitle = '🎾 Chat de Convocatoria';
+                defaultBody = 'Nuevos mensajes en el chat de tu evento.';
+                metaPills.push({ icon: 'fa-trophy', text: 'En Pista' });
+            }
+            // Fallback General de Chat
+            else {
+                tag = { label: 'CHAT COMUNIDAD', icon: 'fa-comments', isSvg: false, cssClass: 'tag-chat-general', cardThemeClass: 'theme-chat' };
+                actionLabel = '💬 ENTRAR AL CHAT';
+                actionUrl = 'chat';
+                defaultTitle = '💬 Chat General SomosPadel';
+                defaultBody = 'Conversación abierta de la comunidad de SomosPadel.';
+                metaPills.push({ icon: 'fa-users', text: 'Comunidad' });
+            }
         }
         // A. PRIORIDAD 1: ENTRENOS (Usa Pala Oficial de Pádel)
         else if (isEnt) {
@@ -735,14 +794,15 @@ class NotificationUi {
             defaultBody = 'Telemetría de viento, lluvia y estado de pistas en Cornellà y El Prat.';
             metaPills.push({ icon: 'fa-wind', text: 'Viento Óptimo' });
         }
-        // D. PRIORIDAD 4: CHAT EN VIVO
-        else if (item.isChat || fullText.includes('chat') || String(item.id || '').startsWith('chat_')) {
+        // D. PRIORIDAD 4: CHAT EN VIVO LEGACY FALLBACK
+        else if (fullText.includes('chat') || String(item.id || '').startsWith('chat_')) {
             category = 'chat';
-            tag = { label: 'CHAT DEL CLUB', icon: 'fa-comment-dots', isSvg: false, cssClass: 'tag-chat', cardThemeClass: 'theme-chat' };
-            actionLabel = '💬 IR AL CHAT';
+            tag = { label: 'CHAT COMUNIDAD', icon: 'fa-comments', isSvg: false, cssClass: 'tag-chat-general', cardThemeClass: 'theme-chat' };
+            actionLabel = '💬 ENTRAR AL CHAT';
             actionUrl = 'chat';
             defaultTitle = '💬 Mensaje de la Comunidad';
             defaultBody = 'Nuevos mensajes en el canal del torneo.';
+            metaPills.push({ icon: 'fa-users', text: 'Comunidad' });
         }
         // E. PRIORIDAD 5: NOTICIAS DEL JOURNAL SOMOSPADEL
         else if (fullText.includes('journal') || rawType === 'daily_news' || rawUrl === 'journal' || rawUrl === 'noticias') {
@@ -790,9 +850,14 @@ class NotificationUi {
             sede,
             actionLabel,
             actionUrl: actionUrl || rawUrl,
-            eventId,
+            eventId: eventId || item.data?.eventId || (rawChatId.startsWith('event_') ? rawChatId.replace(/^event_/, '') : ''),
             action,
-            metaPills: metaPills.length > 0 ? metaPills : null
+            metaPills: metaPills.length > 0 ? metaPills : null,
+            data: item.data || {},
+            chatId: rawChatId || item.data?.chatId,
+            chatType: rawChatType || item.data?.chatType,
+            senderId: item.senderId || item.data?.senderId || '',
+            senderName: item.senderName || item.data?.senderName || ''
         };
     }
 
@@ -805,11 +870,111 @@ class NotificationUi {
 
         // 1. Obtener objeto completo de la notificación
         const allNotifs = window.NotificationService ? (window.NotificationService.getMergedNotifications() || []) : [];
-        const rawItem = allNotifs.find(n => n && (n.id === id || n.data?.broadcastId === id || n.data?.eventId === id));
+        const rawItem = allNotifs.find(n => n && (n.id === id || n.data?.broadcastId === id || n.data?.eventId === id || n.data?.chatId === id || n.chatId === id));
         const item = this._normalizeNotificationItem(rawItem || { id, actionUrl, eventId, action });
 
         const fullText = `${item.title} ${item.body} ${item.actionUrl || ''}`.toLowerCase();
         const itemId = String(id || '');
+
+        // 2. DETECCIÓN Y MANEJO INTEGRAL DE CHAT (GENERAL, EVENTOS Y PRIVADOS)
+        const isChat = item.category === 'chat' || 
+            Boolean(item.data?.chatId) || 
+            Boolean(item.chatId) || 
+            itemId.startsWith('chat_') || 
+            Boolean(item.tag?.label?.includes('CHAT')) || 
+            Boolean(item.tag?.label?.includes('MENSAJE PRIVADO'));
+
+        if (isChat) {
+            const chatId = item.data?.chatId || item.chatId || (itemId.startsWith('chat_') ? itemId.replace(/^chat_/, '') : null);
+            const chatType = String(item.data?.chatType || item.chatType || '').toLowerCase();
+            const isPrivate = chatType === 'direct' || 
+                (chatId && String(chatId).startsWith('direct_')) || 
+                item.tag?.cssClass === 'tag-chat-direct' || 
+                item.tag?.label?.includes('MENSAJE PRIVADO') || 
+                fullText.includes('privado');
+            const isGeneral = chatId === 'general_somospadel' || 
+                chatId === 'event_general_somospadel' || 
+                item.tag?.cssClass === 'tag-chat-general' || 
+                item.tag?.label?.includes('COMUNIDAD');
+
+            if (window.ChatView) {
+                // a) Si es privado (1 a 1)
+                if (isPrivate) {
+                    const senderId = item.data?.senderId || item.senderId;
+                    const senderName = item.data?.senderName || item.senderName || (item.title ? item.title.replace(/^[^\w\s]+/, '').trim() : 'Compañero');
+
+                    let otherUid = senderId;
+                    if (!otherUid && chatId && String(chatId).startsWith('direct_')) {
+                        const myUid = window.ChatView?.getCurrentUser ? (window.ChatView.getCurrentUser()?.id || window.ChatView.getCurrentUser()?.uid) : null;
+                        const parts = String(chatId).replace(/^direct_/, '').split('_');
+                        if (parts.length >= 2 && myUid) {
+                            otherUid = parts.find(p => p !== myUid) || parts[0];
+                        } else if (parts.length > 0) {
+                            otherUid = parts[0];
+                        }
+                    }
+
+                    if (typeof window.ChatView.openDirectChat === 'function' && otherUid) {
+                        window.ChatView.openDirectChat({
+                            id: otherUid,
+                            uid: otherUid,
+                            name: senderName
+                        });
+                        return;
+                    } else if (chatId && typeof window.ChatView.openFromCard === 'function') {
+                        window.ChatView.openFromCard(chatId);
+                        return;
+                    } else if (typeof window.ChatView.openInbox === 'function') {
+                        window.ChatView.openInbox('direct');
+                        return;
+                    }
+                }
+                // c) Si es general ('general_somospadel' o chat general)
+                else if (isGeneral) {
+                    if (typeof window.ChatView.openGeneralCommunityChat === 'function') {
+                        window.ChatView.openGeneralCommunityChat();
+                        return;
+                    } else if (typeof window.ChatView.openInbox === 'function') {
+                        window.ChatView.openInbox('events');
+                        return;
+                    }
+                }
+                // b) Si es evento / partido
+                else {
+                    const resolvedChatEventId = eventId || item.data?.eventId || item.eventId || (chatId && String(chatId).startsWith('event_') ? String(chatId).replace(/^event_/, '') : chatId);
+                    const eventTitle = item.title || 'Chat del Partido';
+
+                    if (typeof window.ChatView.openEventChat === 'function' && resolvedChatEventId) {
+                        window.ChatView.openEventChat({
+                            id: resolvedChatEventId,
+                            eventId: resolvedChatEventId,
+                            name: eventTitle
+                        });
+                        return;
+                    } else if (chatId && typeof window.ChatView.openFromCard === 'function') {
+                        window.ChatView.openFromCard(chatId);
+                        return;
+                    } else if (typeof window.ChatView.openInbox === 'function') {
+                        window.ChatView.openInbox('events');
+                        return;
+                    }
+                }
+
+                // Fallback general si está disponible window.ChatView
+                if (typeof window.ChatView.openInbox === 'function') {
+                    window.ChatView.openInbox(isPrivate ? 'direct' : 'events');
+                    return;
+                }
+            } else if (window.Router) {
+                window.Router.navigate('chat');
+                return;
+            } else {
+                window.location.hash = '#chat';
+                return;
+            }
+
+            return;
+        }
 
         // 2. CASO A: NOTIFICACIÓN DE CLIMA / RADAR METEOROLÓGICO
         if (item.category === 'clima' || itemId.includes('weather') || itemId.includes('clima') || itemId.includes('radar') || actionUrl === 'clima' || fullText.includes('meteorol')) {

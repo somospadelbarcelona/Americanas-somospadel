@@ -798,11 +798,97 @@ body.notif-drawer-open {
     box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3);
 }
 
-/* 4. CHAT: Violeta */
+/* 4. CHAT - ESTILOS PREMIUM PARA MODALIDADES (DIRECTO, EVENTOS Y COMUNIDAD) */
+
+/* Tarjeta con Borde Temático Chat */
+.notif-card-row.theme-chat {
+    border-left: 4px solid #8b5cf6 !important;
+}
+
+.notif-card-row.theme-chat:hover {
+    border-color: #c4b5fd !important;
+    box-shadow: 0 6px 18px rgba(139, 92, 246, 0.12) !important;
+}
+
+.notif-card-row.theme-chat.unread {
+    border-color: #c4b5fd !important;
+    background: #faf5ff !important;
+    border-left: 4px solid #7c3aed !important;
+}
+
+/* 4.a CHAT PRIVADO (1 A 1): Violeta Intenso */
+.tag-chat-direct, .notif-card-avatar.tag-chat-direct {
+    background: #f5f3ff;
+    color: #6d28d9;
+    border: 1px solid #ddd6fe;
+}
+.notif-card-badge-pill.tag-chat-direct {
+    background: #ede9fe;
+    color: #5b21b6;
+    border: 1px solid #c4b5fd;
+}
+.notif-card-action-btn.tag-chat-direct {
+    background: #7c3aed;
+    color: #ffffff;
+    border: 1px solid #6d28d9;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.35);
+}
+.notif-card-action-btn.tag-chat-direct:hover {
+    background: #6d28d9;
+}
+
+/* 4.b CHAT DE EVENTO / PARTIDO: Azul Pista Vibrante */
+.tag-chat-event, .notif-card-avatar.tag-chat-event {
+    background: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+}
+.notif-card-badge-pill.tag-chat-event {
+    background: #e0f2fe;
+    color: #0284c7;
+    border: 1px solid #7dd3fc;
+}
+.notif-card-action-btn.tag-chat-event {
+    background: #0284c7;
+    color: #ffffff;
+    border: 1px solid #0369a1;
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35);
+}
+.notif-card-action-btn.tag-chat-event:hover {
+    background: #0369a1;
+}
+
+/* 4.c CHAT GENERAL COMUNIDAD: Verde Esmeralda & Neón Lima */
+.tag-chat-general, .notif-card-avatar.tag-chat-general {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}
+.notif-card-badge-pill.tag-chat-general {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+}
+.notif-card-action-btn.tag-chat-general {
+    background: #059669;
+    color: #ffffff;
+    border: 1px solid #047857;
+    box-shadow: 0 2px 8px rgba(5, 150, 105, 0.35);
+}
+.notif-card-action-btn.tag-chat-general:hover {
+    background: #047857;
+}
+
+/* 4.d CHAT GENÉRICO FALLBACK */
 .tag-chat, .notif-card-avatar.tag-chat {
     background: #f3e8ff;
     color: #6b21a8;
     border: 1px solid #e9d5ff;
+}
+.notif-card-badge-pill.tag-chat {
+    background: #f3e8ff;
+    color: #7c3aed;
+    border: 1px solid #d8b4fe;
 }
 .notif-card-action-btn.tag-chat {
     background: #7c3aed;

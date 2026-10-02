@@ -25,23 +25,104 @@
         }
 
         /**
-         * Helper to get current authenticated user safely from Store or Firebase Auth
+         * Helper to get current authenticated user safely from Store, AdminAuth, localStorage or Firebase Auth.
+         * Robust extraction of uid, name, role and administrative flags.
          */
         getCurrentUser() {
+            let user = null;
+
+            // 1. From Store if available
             if (window.Store && typeof window.Store.getState === 'function') {
-                const user = window.Store.getState('currentUser');
-                if (user) return user;
+                const storeUser = window.Store.getState('currentUser');
+                if (storeUser && (storeUser.id || storeUser.uid)) {
+                    user = { ...storeUser };
+                }
             }
+
+            // 2. From AdminAuth if available
+            if (window.AdminAuth && window.AdminAuth.user) {
+                user = user ? { ...user, ...window.AdminAuth.user } : { ...window.AdminAuth.user };
+            }
+
+            // 3. From localStorage ('adminUser' or 'currentUser')
+            try {
+                const rawAdmin = localStorage.getItem('adminUser');
+                const rawCurrent = localStorage.getItem('currentUser');
+                const localAdmin = rawAdmin ? JSON.parse(rawAdmin) : null;
+                const localCurrent = rawCurrent ? JSON.parse(rawCurrent) : null;
+                const localUser = localAdmin || localCurrent;
+
+                if (localUser) {
+                    user = user ? { ...localUser, ...user } : { ...localUser };
+                    if (localAdmin && localAdmin.role) {
+                        user.role = localAdmin.role;
+                    } else if (localCurrent && localCurrent.role && !user.role) {
+                        user.role = localCurrent.role;
+                    }
+                }
+            } catch (e) { }
+
+            // 4. From Firebase Auth
             if (window.auth && window.auth.currentUser) {
                 const fbUser = window.auth.currentUser;
-                return {
-                    id: fbUser.uid,
-                    uid: fbUser.uid,
-                    name: fbUser.displayName || 'Jugador',
-                    photo_url: fbUser.photoURL || null
-                };
+                if (!user) {
+                    user = {
+                        id: fbUser.uid,
+                        uid: fbUser.uid,
+                        name: fbUser.displayName || 'Jugador',
+                        photo_url: fbUser.photoURL || null
+                    };
+                } else {
+                    user.id = user.id || fbUser.uid;
+                    user.uid = user.uid || fbUser.uid;
+                    user.name = user.name || fbUser.displayName || 'Jugador';
+                    user.photo_url = user.photo_url || fbUser.photoURL || null;
+                }
             }
-            return null;
+
+            if (!user) return null;
+
+            const uid = user.id || user.uid;
+            if (!uid) return null;
+            user.id = uid;
+            user.uid = uid;
+
+            // Ensure role is extracted if still missing
+            if (!user.role) {
+                try {
+                    const localAdmin = JSON.parse(localStorage.getItem('adminUser') || 'null');
+                    const localCurrent = JSON.parse(localStorage.getItem('currentUser') || 'null');
+                    user.role = (localAdmin && localAdmin.role) || (localCurrent && localCurrent.role) || null;
+                } catch (e) { }
+            }
+
+            return user;
+        }
+
+        /**
+         * Checks if the user has chat moderation privileges (superadmin, admin, etc.)
+         * @param {Object} [user] - User object to inspect; defaults to getCurrentUser()
+         * @returns {boolean}
+         */
+        hasModerationPrivileges(user = null) {
+            const targetUser = user || this.getCurrentUser();
+            if (!targetUser) return false;
+
+            const role = (targetUser.role || '').toString().toLowerCase().trim();
+            const adminRoles = ['superadmin', 'super_admin', 'admin', 'admin_player'];
+
+            if (adminRoles.includes(role)) return true;
+
+            if (targetUser.isSessionAdmin === true || targetUser.isAdmin === true || targetUser.isSuperAdmin === true) {
+                return true;
+            }
+
+            if (window.AdminAuth && typeof window.AdminAuth.hasAdminRole === 'function') {
+                if (window.AdminAuth.hasAdminRole(role)) return true;
+                if (window.AdminAuth.user && window.AdminAuth.hasAdminRole(window.AdminAuth.user.role)) return true;
+            }
+
+            return false;
         }
 
         /**
@@ -365,7 +446,7 @@
             if (!uid) return { success: false, error: 'Unauthorized' };
 
             try {
-                const isAdmin = (user.role === 'admin' || user.role === 'admin_player');
+                const isAdmin = this.hasModerationPrivileges(user);
                 let messageType = isAdmin ? 'admin' : 'standard';
 
                 // Broadcast Detection (Admin Only via !! prefix)
@@ -419,10 +500,153 @@
 
                 await batch.commit();
 
+                // Despacho asíncrono y seguro de notificaciones a participantes sin bloquear la respuesta de envío
+                this.dispatchChatNotifications({
+                    chatId,
+                    previewText,
+                    senderName,
+                    uid
+                }).catch(err => console.warn("⚠️ [ChatService] Non-blocking notification dispatch notice:", err));
+
                 return { success: true, messageId: newMsgRef.id };
             } catch (e) {
                 console.error("❌ Send Failed:", e);
                 return { success: false, error: e.message };
+            }
+        }
+
+        /**
+         * Despacha notificaciones a los participantes del chat según el tipo de canal
+         * (General, Evento o Directo 1 a 1), integrado con broadcasts y players/{uid}/notifications.
+         * @param {Object} params - { chatId, previewText, senderName, uid }
+         */
+        async dispatchChatNotifications({ chatId, previewText, senderName, uid }) {
+            if (!window.db || !chatId || !uid) return;
+
+            try {
+                // Obtener metadatos del canal para determinar tipo y participantes
+                let chatData = null;
+                try {
+                    const chatDocSnap = await window.db.collection('chats').doc(chatId).get();
+                    if (chatDocSnap && chatDocSnap.exists) {
+                        chatData = chatDocSnap.data() || {};
+                    }
+                } catch (readErr) {
+                    console.warn("[ChatService] Warning fetching chat doc for notifications:", readErr);
+                }
+                chatData = chatData || {};
+
+                const chatType = chatData.type || (
+                    (chatId === 'general_somospadel' || chatId === 'general') ? 'general' :
+                    (chatId.startsWith('event_') ? 'event' :
+                    (chatId.startsWith('direct_') ? 'direct' : 'standard'))
+                );
+
+                const serverTs = getFieldValue().serverTimestamp();
+
+                // 1. Chat General SomosPadel -> Guardar en 'broadcasts' para todos los usuarios
+                if (chatId === 'general_somospadel' || chatType === 'general') {
+                    const broadcastRef = window.db.collection('broadcasts').doc();
+                    await broadcastRef.set({
+                        title: `💬 Chat General SomosPadel`,
+                        body: `${senderName}: ${previewText}`,
+                        timestamp: serverTs,
+                        type: 'chat',
+                        category: 'chat',
+                        chatId: 'general_somospadel',
+                        senderId: uid,
+                        url: 'chat'
+                    });
+                    return;
+                }
+
+                // 2. Chat de Evento -> Notificar a todos los participantes excepto al emisor
+                if (chatType === 'event' || chatId.startsWith('event_')) {
+                    const cleanEventId = chatData.eventId || chatId.replace(/^event_/, '');
+                    let participants = Array.isArray(chatData.participants) ? [...chatData.participants] : [];
+
+                    // Fallback a AmericanaService si el chat no tenía la lista completa en memoria
+                    if (participants.length === 0 && window.AmericanaService && typeof window.AmericanaService.getEventById === 'function') {
+                        try {
+                            const evt = await window.AmericanaService.getEventById(cleanEventId);
+                            if (evt) {
+                                const rawParts = evt.participants || evt.players || evt.registeredPlayers || [];
+                                participants = rawParts.map(p => typeof p === 'string' ? p : (p?.id || p?.uid || p?.playerId)).filter(Boolean);
+                            }
+                        } catch (_) {}
+                    }
+
+                    const otherParticipants = Array.from(new Set(participants)).filter(pUid => pUid && pUid !== uid);
+                    if (otherParticipants.length === 0) return;
+
+                    const eventTitle = chatData.title || chatData.name || null;
+                    const notifPayload = {
+                        title: `🎾 ${eventTitle || 'Chat de Partido'}`,
+                        body: `${senderName}: ${previewText}`,
+                        read: false,
+                        timestamp: serverTs,
+                        type: 'chat',
+                        category: 'chat',
+                        icon: 'comment-dots',
+                        data: {
+                            chatId: chatId,
+                            eventId: chatData.eventId || cleanEventId || null,
+                            chatType: 'event',
+                            senderId: uid,
+                            senderName: senderName,
+                            url: 'chat'
+                        }
+                    };
+
+                    // Guardado eficiente por lotes (batches de hasta 450 para respetar límite de Firestore)
+                    const batchSize = 450;
+                    for (let i = 0; i < otherParticipants.length; i += batchSize) {
+                        const chunk = otherParticipants.slice(i, i + batchSize);
+                        const batch = (typeof window.db.batch === 'function') ? window.db.batch() : null;
+                        for (const pUid of chunk) {
+                            const notifRef = window.db.collection('players').doc(pUid).collection('notifications').doc();
+                            if (batch) {
+                                batch.set(notifRef, notifPayload);
+                            } else {
+                                await notifRef.set(notifPayload);
+                            }
+                        }
+                        if (batch && typeof batch.commit === 'function') {
+                            await batch.commit();
+                        }
+                    }
+                    return;
+                }
+
+                // 3. Chat Privado 1 a 1 -> Guardar en players/{otherUid}/notifications
+                if (chatType === 'direct' || chatId.startsWith('direct_')) {
+                    let participants = Array.isArray(chatData.participants) ? [...chatData.participants] : [];
+                    if (participants.length === 0 && chatId.startsWith('direct_')) {
+                        participants = chatId.replace(/^direct_/, '').split('_');
+                    }
+                    const otherUid = participants.find(p => p && p !== uid);
+                    if (!otherUid) return;
+
+                    const notifRef = window.db.collection('players').doc(otherUid).collection('notifications').doc();
+                    await notifRef.set({
+                        title: `💬 Mensaje de ${senderName}`,
+                        body: previewText,
+                        read: false,
+                        timestamp: serverTs,
+                        type: 'chat',
+                        category: 'chat',
+                        icon: 'comment-dots',
+                        data: {
+                            chatId: chatId,
+                            chatType: 'direct',
+                            senderId: uid,
+                            senderName: senderName,
+                            url: 'chat'
+                        }
+                    });
+                }
+            } catch (err) {
+                console.warn("⚠️ [ChatService] Error en dispatchChatNotifications:", err);
             }
         }
 
@@ -467,14 +691,176 @@
         }
 
         /**
-         * Delete a message (Admin only)
+         * Delete a single message (Owner or Moderator/Admin/SuperAdmin)
+         * @param {string} chatId - Target chat document ID
+         * @param {string} messageId - Target message ID
+         * @returns {Promise<{ success: boolean, error?: string }>}
          */
         async deleteMessage(chatId, messageId) {
+            const user = this.getCurrentUser();
+            if (!user) return { success: false, error: 'Unauthorized' };
+            const uid = user.id || user.uid;
+            if (!uid) return { success: false, error: 'Unauthorized' };
+
             try {
-                await window.db.collection('chats').doc(chatId).collection('messages').doc(messageId).delete();
+                const chatRef = window.db.collection('chats').doc(chatId);
+                const msgRef = chatRef.collection('messages').doc(messageId);
+                const msgSnap = await msgRef.get();
+
+                if (!msgSnap.exists) return { success: true };
+                const msgData = msgSnap.data();
+
+                const isModerator = this.hasModerationPrivileges(user);
+                const isOwner = msgData.senderId === uid;
+
+                if (!isModerator && !isOwner) {
+                    return { success: false, error: 'Solo puedes eliminar tus propios mensajes.' };
+                }
+
+                // Borrar por completo de Firestore
+                await msgRef.delete();
+
+                // Recalcular el último mensaje si el eliminado era el último o actualizar metadatos
+                try {
+                    const remainingSnap = await chatRef.collection('messages')
+                        .orderBy('timestamp', 'desc')
+                        .limit(1)
+                        .get();
+
+                    if (!remainingSnap.empty) {
+                        const latest = remainingSnap.docs[0].data();
+                        let preview = latest.text || '';
+                        if (!preview && latest.attachment) {
+                            preview = latest.attachmentType === 'audio' ? '🎤 Audio' : '📷 Imagen';
+                        }
+                        await chatRef.set({
+                            lastMessage: preview,
+                            lastMessageTime: latest.timestamp || getFieldValue().serverTimestamp(),
+                            lastSenderName: latest.senderName || '',
+                            lastSenderId: latest.senderId || '',
+                            updatedAt: getFieldValue().serverTimestamp()
+                        }, { merge: true });
+                    } else {
+                        // Limpiar campos si no quedan mensajes
+                        await chatRef.set({
+                            lastMessage: '',
+                            lastMessageTime: null,
+                            lastSenderName: '',
+                            lastSenderId: '',
+                            updatedAt: getFieldValue().serverTimestamp()
+                        }, { merge: true });
+                    }
+                } catch (metaErr) {
+                    console.warn("[ChatService] Error recalculando metadatos tras borrar mensaje:", metaErr);
+                }
+
                 return { success: true };
             } catch (e) {
                 console.error("❌ Delete Failed:", e);
+                return { success: false, error: e.message };
+            }
+        }
+
+        /**
+         * Busca jugadores por nombre en la colección 'players' de Firestore.
+         * Excluye al propio usuario autenticado de los resultados.
+         * @param {string} query - Término de búsqueda (mínimo 2 caracteres)
+         * @returns {Promise<Array>} Array de objetos jugador { id, name, photo_url, level, role }
+         */
+        async searchPlayers(query) {
+            const user = this.getCurrentUser();
+            const myUid = user ? (user.id || user.uid) : null;
+            const q = (query || '').trim().toLowerCase();
+            if (q.length < 2) return [];
+
+            try {
+                if (!window.db) return [];
+                // Firestore no soporta búsqueda full-text, usamos rangos de nombre (case-insensitive workaround)
+                const snap = await window.db.collection('players')
+                    .where('status', '==', 'active')
+                    .orderBy('name')
+                    .startAt(q)
+                    .endAt(q + '\uf8ff')
+                    .limit(15)
+                    .get();
+
+                // También buscamos por name en minúsculas si hay campo name_lower
+                let results = [];
+                snap.docs.forEach(doc => {
+                    const d = { id: doc.id, ...doc.data() };
+                    if (d.id !== myUid) results.push(d);
+                });
+
+                // Fallback: si no devuelve resultados, buscar en un campo 'name_lower' si existe
+                if (results.length === 0) {
+                    const snapLower = await window.db.collection('players')
+                        .where('status', '==', 'active')
+                        .orderBy('name_lower')
+                        .startAt(q)
+                        .endAt(q + '\uf8ff')
+                        .limit(15)
+                        .get();
+                    snapLower.docs.forEach(doc => {
+                        const d = { id: doc.id, ...doc.data() };
+                        if (d.id !== myUid && !results.find(r => r.id === d.id)) results.push(d);
+                    });
+                }
+
+                // Normalización del resultado
+                return results.map(p => ({
+                    id: p.id,
+                    uid: p.id,
+                    name: p.name || p.displayName || 'Jugador',
+                    photo_url: p.photo_url || p.photoURL || p.avatar || null,
+                    level: p.level ?? p.self_rate_level ?? null,
+                    role: p.role || 'player'
+                }));
+
+            } catch (err) {
+                console.warn('[ChatService] searchPlayers error:', err.message);
+                // Fallback: búsqueda cliente en caché si Firestore falla
+                return [];
+            }
+        }
+
+        /**
+         * Delete an entire chat conversation and all its messages
+         * @param {string} chatId - Target chat document ID
+         * @returns {Promise<{ success: boolean, error?: string }>}
+         */
+        async deleteChat(chatId) {
+            const user = this.getCurrentUser();
+            if (!user) return { success: false, error: 'Unauthorized' };
+            const uid = user.id || user.uid;
+            if (!uid) return { success: false, error: 'Unauthorized' };
+
+            try {
+                const chatRef = window.db.collection('chats').doc(chatId);
+                const chatSnap = await chatRef.get();
+                if (!chatSnap.exists) return { success: true };
+
+                const chatData = chatSnap.data();
+                const isAdmin = this.hasModerationPrivileges(user);
+                const isParticipant = Array.isArray(chatData.participants) && chatData.participants.includes(uid);
+
+                if (!isAdmin && !isParticipant) {
+                    return { success: false, error: 'No tienes permiso para eliminar esta conversación.' };
+                }
+
+                // Borrar mensajes de la subcolección
+                const msgsSnap = await chatRef.collection('messages').get();
+                const batch = window.db.batch();
+                msgsSnap.docs.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+
+                // Borrar documento de chat
+                batch.delete(chatRef);
+                await batch.commit();
+
+                return { success: true };
+            } catch (e) {
+                console.error("❌ deleteChat Failed:", e);
                 return { success: false, error: e.message };
             }
         }

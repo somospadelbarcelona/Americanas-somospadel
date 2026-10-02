@@ -219,7 +219,7 @@
                 <!-- CUERPO DE LA BANDEJA -->
                 <div class="sp-chat-inbox-body">
                     <!-- BUSCADOR -->
-                    <div class="sp-chat-search-wrap">
+                    <div class="sp-chat-search-wrap" style="position: relative;">
                         <div class="sp-chat-search-box">
                             <i class="fas fa-search"></i>
                             <input type="text" 
@@ -228,6 +228,7 @@
                                 placeholder="Buscar chats o jugadores..." 
                                 oninput="window.ChatView.handleSearch(this.value)">
                         </div>
+                        <div id="sp-chat-player-results" class="sp-chat-player-results-dropdown"></div>
                     </div>
 
                     <!-- PESTAÑAS (PILLS) -->
@@ -267,7 +268,70 @@
 
         handleSearch(query) {
             this.currentFilter = (query || '').toLowerCase().trim();
-            this.renderInboxList();
+            this.renderInboxList(); // sigue filtrando chats existentes
+
+            // Si hay 2+ caracteres, buscar jugadores también
+            const resultsEl = document.getElementById('sp-chat-player-results');
+            if (!resultsEl) return;
+
+            if (this.currentFilter.length >= 2) {
+                // Búsqueda debounced (300ms)
+                clearTimeout(this._playerSearchTimeout);
+                this._playerSearchTimeout = setTimeout(async () => {
+                    try {
+                        const players = await window.ChatService.searchPlayers(this.currentFilter);
+                        this.renderPlayerSearchResults(players, this.currentFilter);
+                    } catch (e) {
+                        console.warn('[ChatView] Player search failed:', e);
+                    }
+                }, 300);
+            } else {
+                resultsEl.innerHTML = '';
+            }
+        }
+
+        /* ── Renderiza resultados de búsqueda de jugadores ── */
+        renderPlayerSearchResults(players, query) {
+            const resultsEl = document.getElementById('sp-chat-player-results');
+            if (!resultsEl) return;
+
+            if (!players || players.length === 0) {
+                resultsEl.innerHTML = `<div class="sp-chat-no-players-found">Sin resultados para "${query}"</div>`;
+                return;
+            }
+
+            resultsEl.innerHTML = players.map(p => {
+                const playerJson = JSON.stringify({ id: p.id || p.uid, name: p.name || p.displayName || '', photo_url: p.photo_url || p.photoURL || '', level: p.level || p.nivel || '' })
+                    .replace(/'/g, "\\'");
+                const avatarHtml = (p.photo_url || p.photoURL)
+                    ? `<img src="${p.photo_url || p.photoURL}" alt="${p.name || ''}" loading="lazy">`
+                    : `${(p.name || p.displayName || '?')[0].toUpperCase()}`;
+                const levelLabel = p.level || p.nivel ? `⭐ ${p.level || p.nivel}` : '';
+                return `
+                <div class="sp-chat-player-result" onclick="window.ChatView.startDirectChatWithPlayer(${playerJson.replace(/"/g, '&quot;')})">
+                    <div class="sp-chat-player-result-avatar">${avatarHtml}</div>
+                    <div class="sp-chat-player-result-info">
+                        <span class="sp-chat-player-result-name">${p.name || p.displayName || 'Jugador'}</span>
+                        ${levelLabel ? `<span class="sp-chat-player-result-level">${levelLabel}</span>` : ''}
+                    </div>
+                    <button class="sp-chat-player-result-btn" title="Enviar mensaje privado">
+                        <i class="fas fa-comment-dots"></i>
+                    </button>
+                </div>`;
+            }).join('');
+        }
+
+        /* ── Inicia chat directo desde resultado de búsqueda ── */
+        startDirectChatWithPlayer(player) {
+            // Oculta el dropdown de resultados
+            const resultsEl = document.getElementById('sp-chat-player-results');
+            if (resultsEl) resultsEl.innerHTML = '';
+            // Limpia el input
+            const inputEl = document.getElementById('sp-chat-search-input');
+            if (inputEl) inputEl.value = '';
+            this.currentFilter = '';
+            // Abre el chat directo
+            this.openDirectChat(player);
         }
 
         renderInboxList() {
@@ -389,6 +453,10 @@
             const lastMsg = chat.lastMessage || 'Conversación iniciada';
             const lastSender = chat.lastSenderName ? (chat.lastSenderId === myUid ? 'Tú' : chat.lastSenderName.split(' ')[0]) : '';
 
+            const user = this.getCurrentUser();
+            const isAdmin = user && (user.role === 'admin' || user.role === 'admin_player');
+            const canDeleteChat = !isEvent || isAdmin;
+
             // Contador de no leídos
             let unreadCount = 0;
             if (chat.unreadCount && typeof chat.unreadCount[myUid] === 'number') {
@@ -424,7 +492,16 @@
                     <div class="sp-chat-card-main">
                         <div class="sp-chat-card-top">
                             <span class="sp-chat-card-title">${this.escapeHtml(title)}</span>
-                            <span class="sp-chat-card-time">${timeStr}</span>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span class="sp-chat-card-time">${timeStr}</span>
+                                ${canDeleteChat ? `
+                                <button class="sp-chat-card-delete-btn" 
+                                        onclick="event.stopPropagation(); window.ChatView.confirmDeleteChat('${safeChatId}', '${this.escapeHtml(title)}')" 
+                                        title="Eliminar conversación">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                                ` : ''}
+                            </div>
                         </div>
                         <div class="sp-chat-card-bottom">
                             <span class="sp-chat-card-preview">
@@ -658,6 +735,14 @@
                     </div>
                     <div class="sp-chat-header-actions">
                         ${detailsBtnHtml}
+                        ${(!isEvent && !isGeneral) ? `
+                        <button class="sp-chat-icon-btn" 
+                                onclick="window.ChatView.confirmDeleteChat('${chatData.id}', '${this.escapeHtml(title)}')" 
+                                title="Eliminar conversación"
+                                style="color: #ef4444;">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                        ` : ''}
                         <button class="sp-chat-icon-btn" onclick="window.ChatView.close()" title="Cerrar">
                             <i class="fas fa-times"></i>
                         </button>
@@ -759,6 +844,9 @@
 
             const user = this.getCurrentUser();
             const myUid = user ? (user.id || user.uid) : null;
+            const isViewerModerator = window.ChatService && typeof window.ChatService.hasModerationPrivileges === 'function'
+                ? window.ChatService.hasModerationPrivileges(user)
+                : ['superadmin', 'super_admin', 'admin', 'admin_player'].includes(String(user?.role || '').toLowerCase().trim());
             const isGeneral = this.activeChatId === 'event_general_somospadel' || this.activeChatId === 'general_somospadel' || this.activeChatData?.type === 'general';
 
             let welcomeBannerHtml = '';
@@ -827,6 +915,7 @@
                 }
 
                 const isMe = msg.senderId === myUid;
+                const canDelete = isMe || isViewerModerator;
                 const senderName = msg.senderName || 'Jugador';
                 const timeStr = this.formatTime(msg.timestamp);
                 const isAdmin = !!msg.isAdmin;
@@ -876,8 +965,15 @@
                             ${senderNameHtml}
                             ${msg.text ? `<div class="sp-chat-msg-text">${this.escapeHtml(msg.text)}</div>` : ''}
                             ${mediaHtml}
-                            <div class="sp-chat-msg-time">
+                            <div class="sp-chat-msg-time" style="display: flex; align-items: center; justify-content: flex-end; gap: 4px;">
                                 <span>${timeStr}</span>
+                                ${canDelete ? `
+                                <button class="sp-chat-msg-delete-btn ${isViewerModerator && !isMe ? 'sp-chat-msg-delete-btn--mod' : ''}" 
+                                        onclick="event.stopPropagation(); window.ChatView.confirmDeleteMessage('${this.activeChatId}', '${msg.id}')" 
+                                        title="${isViewerModerator && !isMe ? 'Eliminar mensaje (Moderación)' : 'Eliminar mensaje'}">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                                ` : ''}
                                 ${isMe ? '<i class="fas fa-check" style="font-size:0.62rem; color:#16a34a;"></i>' : ''}
                             </div>
                         </div>
@@ -1087,6 +1183,67 @@
             } finally {
                 if (sendBtn) sendBtn.disabled = false;
                 if (input) input.focus();
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           7.5 ELIMINACIÓN DE CHATS Y MENSAJES
+           ═══════════════════════════════════════════════════════════════ */
+        /**
+         * Confirmación y eliminación de una conversación completa
+         * @param {string} chatId - ID del documento del chat
+         * @param {string} title - Nombre del interlocutor o evento
+         */
+        async confirmDeleteChat(chatId, title = 'este chat') {
+            if (!chatId) return;
+
+            const safeTitle = title || 'esta conversación';
+            const ok = window.confirm(`¿Seguro que deseas eliminar la conversación con "${safeTitle}"?\n\nSe borrarán todos los mensajes de este chat.`);
+            if (!ok) return;
+
+            try {
+                if (typeof window.PlayerView?.haptic === 'function') window.PlayerView.haptic(30);
+
+                const res = await window.ChatService.deleteChat(chatId);
+                if (res && res.success) {
+                    // Si estábamos dentro de este chat, volvemos a la bandeja
+                    if (this.activeView === 'room' && this.activeChatId === chatId) {
+                        this.backToInbox(this.activeTab || 'direct');
+                    } else {
+                        // Forzar refresco inmediato de la lista excluyendo el chat borrado
+                        this.currentChats = (this.currentChats || []).filter(c => c.id !== chatId);
+                        this.renderInboxList();
+                    }
+                } else {
+                    alert("No se pudo eliminar la conversación: " + (res?.error || "Error desconocido"));
+                }
+            } catch (err) {
+                console.error("[ChatView] Error al eliminar chat:", err);
+                alert("Error al eliminar la conversación: " + err.message);
+            }
+        }
+
+        /**
+         * Confirmación y eliminación de un mensaje individual
+         * @param {string} chatId - ID del chat
+         * @param {string} messageId - ID del mensaje
+         */
+        async confirmDeleteMessage(chatId, messageId) {
+            if (!chatId || !messageId) return;
+
+            const ok = window.confirm("¿Deseas eliminar este mensaje?");
+            if (!ok) return;
+
+            try {
+                if (typeof window.PlayerView?.haptic === 'function') window.PlayerView.haptic(20);
+
+                const res = await window.ChatService.deleteMessage(chatId, messageId);
+                if (!res || !res.success) {
+                    alert("No se pudo eliminar el mensaje: " + (res?.error || "Error desconocido"));
+                }
+            } catch (err) {
+                console.error("[ChatView] Error al eliminar mensaje:", err);
+                alert("Error al eliminar el mensaje: " + err.message);
             }
         }
 

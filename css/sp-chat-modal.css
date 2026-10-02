@@ -871,3 +871,157 @@
 .sp-chat-btn i {
     font-size: 0.9rem;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   11. BOTONES DE ELIMINACIÓN DE MENSAJES Y CHATS
+   ═══════════════════════════════════════════════════════════════ */
+.sp-chat-card-delete-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 0.72rem;
+    padding: 3px 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.18s ease;
+    opacity: 0.65;
+    outline: none;
+}
+
+.sp-chat-card-delete-btn:hover {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.12);
+    opacity: 1;
+    transform: scale(1.08);
+}
+
+.sp-chat-msg-delete-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 0.65rem;
+    padding: 2px 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 5px;
+    transition: all 0.15s ease;
+    opacity: 0.55;
+    outline: none;
+}
+
+.sp-chat-msg-delete-btn:hover {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.15);
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+
+/* Botón de borrado de moderación (solo visible para SuperAdmin/Admin en mensajes ajenos) */
+.sp-chat-msg-delete-btn--mod {
+    color: #ef4444;
+    opacity: 0.7;
+}
+.sp-chat-msg-delete-btn--mod:hover {
+    color: #b91c1c;
+    opacity: 1;
+    background: rgba(239, 68, 68, 0.15);
+}
+
+/* ─── BUSCADOR DE JUGADORES ─────────────────────────────── */
+.sp-chat-player-results-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: #0f172a;
+    border: 1px solid rgba(204, 255, 0, 0.3);
+    border-radius: 14px;
+    max-height: 280px;
+    overflow-y: auto;
+    z-index: 9999;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    padding: 4px 0;
+}
+.sp-chat-player-results-dropdown:empty { display: none; }
+
+.sp-chat-player-result {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.sp-chat-player-result:last-child { border-bottom: none; }
+.sp-chat-player-result:hover { background: rgba(204, 255, 0, 0.07); }
+
+.sp-chat-player-result-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    font-weight: 900;
+    border: 1.5px solid rgba(204,255,0,0.35);
+    background: #1e293b;
+    color: #CCFF00;
+}
+.sp-chat-player-result-avatar img {
+    width: 100%; height: 100%; object-fit: cover;
+}
+
+.sp-chat-player-result-info {
+    flex: 1;
+    min-width: 0;
+}
+.sp-chat-player-result-name {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.sp-chat-player-result-level {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #CCFF00;
+    margin-top: 1px;
+}
+
+.sp-chat-player-result-btn {
+    background: rgba(56, 189, 248, 0.15);
+    border: 1px solid rgba(56,189,248,0.3);
+    color: #38bdf8;
+    border-radius: 10px;
+    padding: 7px 10px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s;
+}
+.sp-chat-player-result-btn:hover {
+    background: rgba(56,189,248,0.28);
+}
+
+.sp-chat-no-players-found {
+    text-align: center;
+    padding: 16px;
+    font-size: 0.78rem;
+    color: #64748b;
+    font-weight: 700;
+}
