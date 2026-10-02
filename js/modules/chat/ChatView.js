@@ -1,862 +1,1244 @@
 /**
  * ChatView.js
- * "Ops Room" UI - The Tactical Communication Interface.
- * Professional Messaging Experience (v7.0 Ultra)
+ * SomosPadel Barcelona - Playtomic-Inspired Dark Premium Chat View
+ * Mobile-first native messaging UI with neon-lime (#CCFF00) accents.
+ * Version: 2.0.0 Pro
  */
+
 (function () {
+    window._spEventChatRegistry = window._spEventChatRegistry || {};
+
     class ChatView {
         constructor() {
-            this.eventId = null;
-            this.isVisible = false;
-            this.sosUnsubscribe = null;
-            this.presenceUnsubscribe = null;
-            this.onlineUsers = [];
-            this.allPlayers = [];
-            this.allEntrenos = [];
+            this.activeView = null; // 'inbox' | 'room' | null
+            this.activeTab = 'events'; // 'events' | 'direct'
+            this.activeChatId = null;
+            this.activeChatData = null;
+            this.activeRoomUnsub = null;
+            this.userChatsUnsub = null;
+            this.currentChats = [];
+            this.currentFilter = '';
             this.pendingAttachment = null;
-            this.isRecording = false;
-            this.mediaRecorder = null;
-            this.audioChunks = [];
+            this.currentUid = null;
+
+            // Escuchar cambios de autenticación para vincular badge global
+            this.bindGlobalAuthListener();
         }
 
-        async init(eventId, eventName, category = 'open', participantIds = []) {
-            // Permission Check: Member-based & Gender-based Access Control
-            const user = window.Store.getState('currentUser');
-            const isAdmin = user && (user.role === 'admin' || user.role === 'admin_player');
+        /* ═══════════════════════════════════════════════════════════════
+           1. USER & SESSION MANAGEMENT
+           ═══════════════════════════════════════════════════════════════ */
+        getCurrentUser() {
+            if (window.ChatService && typeof window.ChatService.getCurrentUser === 'function') {
+                return window.ChatService.getCurrentUser();
+            }
+            if (window.Store && typeof window.Store.getState === 'function') {
+                const u = window.Store.getState('currentUser');
+                if (u) return u;
+            }
+            try {
+                const cached = localStorage.getItem('currentUser');
+                if (cached) return JSON.parse(cached);
+            } catch (e) { }
+            return null;
+        }
 
-            if (!isAdmin) {
-                const uid = user?.id || user?.uid;
-                const isJoined = participantIds.includes(uid);
-                const isCommunity = user?.membership === 'somospadel_bcn' || user?.role === 'player_somospadel';
-
-                // 1. Access Check: Must be Joined OR part of the Community
-                if (!isJoined && !isCommunity) {
-                    this.showAccessDenied("Este chat es exclusivo para jugadores inscritos o miembros activos de la comunidad SOMOSPADEL.");
-                    return;
+        bindGlobalAuthListener() {
+            const checkAndListen = () => {
+                const user = this.getCurrentUser();
+                const uid = user ? (user.id || user.uid) : null;
+                if (uid && uid !== this.currentUid) {
+                    this.currentUid = uid;
+                    this.startGlobalUnreadWatcher(uid);
+                } else if (!uid && this.currentUid) {
+                    this.currentUid = null;
+                    if (this.userChatsUnsub) {
+                        this.userChatsUnsub();
+                        this.userChatsUnsub = null;
+                    }
+                    this.updateAllUnreadBadges(0);
                 }
+            };
 
-                // 2. Gender Category Enforcement (Global rule)
-                const rawGender = (user?.gender || '').toLowerCase();
-                const isChico = ['m', 'chico', 'male', 'masculino', 'hombre'].includes(rawGender);
-                const isChica = ['f', 'chica', 'female', 'femenina', 'femenino', 'mujer'].includes(rawGender);
+            // Primer chequeo diferido
+            setTimeout(checkAndListen, 800);
 
-                const eventCat = category.toLowerCase();
-                const isEventMale = ['male', 'masculina', 'masculino', 'chicos', 'hombres'].includes(eventCat);
-                const isEventFemale = ['female', 'femenina', 'femenino', 'chicas', 'mujeres'].includes(eventCat);
+            // Re-chequear al recibir eventos de auth o visibilidad
+            window.addEventListener('sp_auth_state_changed', checkAndListen);
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') checkAndListen();
+            });
+        }
 
-                let allowed = false;
-                if (isEventMale && isChico) allowed = true;
-                else if (isEventFemale && isChica) allowed = true;
-                else if (!isEventMale && !isEventFemale) allowed = true; // mixto, open, etc.
-
-                if (!allowed) {
-                    const catName = isEventMale ? 'MASCULINA' : 'FEMENINA';
-                    this.showAccessDenied(`Tu perfil no coincide con la categoría ${catName} de este entreno.`);
-                    return;
-                }
+        startGlobalUnreadWatcher(uid) {
+            if (this.userChatsUnsub) {
+                this.userChatsUnsub();
+                this.userChatsUnsub = null;
             }
 
-            this.eventId = eventId;
-            this.eventName = eventName;
-            this.participantIds = participantIds || [];
+            if (!window.ChatService || typeof window.ChatService.getUserChats !== 'function') {
+                console.warn("[ChatView] ChatService.getUserChats no disponible todavía.");
+                return;
+            }
 
-            await this.loadTagData();
-            this.render();
-            this.startListeners();
-            this.show();
-        }
+            this.userChatsUnsub = window.ChatService.getUserChats(uid, (chats) => {
+                this.currentChats = chats || [];
+                const totalUnread = this.calculateTotalUnread(this.currentChats, uid);
+                this.updateAllUnreadBadges(totalUnread);
 
-        async loadTagData() {
-            try {
-                // Aumentamos límite temporalmente para asegurar que cargamos a todos los posibles participantes
-                // TODO: Optimizar cargando solo los Ids necesarios o con paginación
-                const pSnap = await window.db.collection('players').limit(800).get();
-                this.allPlayers = pSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-                console.log("ChatView: Loaded players count:", this.allPlayers.length);
-                // DIAGNOSTICO: Ver si el campo EQUIPOS llega en el primer jugador
-                if (this.allPlayers.length > 0) {
-                    const sample = this.allPlayers[0];
-                    console.log("ChatView: Sample Player Data:", sample);
-                    console.log("ChatView: Has EQUIPOS?", sample.EQUIPOS || sample.equipos);
+                // Si la bandeja está abierta, repintamos la lista
+                if (this.activeView === 'inbox') {
+                    this.renderInboxList();
                 }
-
-                const eSnap = await window.db.collection('entrenos').orderBy('date', 'desc').limit(20).get();
-                this.allEntrenos = eSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-            } catch (e) { console.error("Tag load fail", e); }
+            });
         }
 
-        render() {
-            const existing = document.getElementById('ops-room-drawer');
-            if (existing) existing.remove();
+        calculateTotalUnread(chats, uid) {
+            if (!Array.isArray(chats) || !uid) return 0;
+            let sum = 0;
+            chats.forEach(chat => {
+                if (chat.unreadCount && typeof chat.unreadCount[uid] === 'number') {
+                    sum += chat.unreadCount[uid];
+                } else if (chat.lastSenderId && chat.lastSenderId !== uid) {
+                    // Fallback basado en timestamp de lectura
+                    const lastRead = chat.readTimestamps && chat.readTimestamps[uid];
+                    const readTime = lastRead?.toMillis ? lastRead.toMillis() : (lastRead instanceof Date ? lastRead.getTime() : 0);
+                    const msgTime = chat.lastMessageTime?.toMillis ? chat.lastMessageTime.toMillis() : (chat.lastMessageTime instanceof Date ? chat.lastMessageTime.getTime() : 0);
+                    if (msgTime > readTime) sum += 1;
+                }
+            });
+            return sum;
+        }
 
-            const html = `
-                <div id="ops-room-drawer" class="ops-drawer">
-                    <!-- HEADER: PRESENCE & EXIT -->
-                    <div class="ops-header">
-                        <div style="display:flex; align-items:center; gap:12px; flex:1;" onclick="window.ChatView.toggle()">
-                            <div style="color: white; font-size: 1.1rem; cursor: pointer; padding: 5px;">
-                                <i class="fas fa-arrow-left"></i>
-                            </div>
-                            <div class="ops-presence-badge">
-                                <div class="ops-led"></div>
-                                <span id="online-count">1</span> ONLINE
-                            </div>
-                            <div style="overflow:hidden;">
-                                <h3 style="margin:0; font-size:0.85rem; font-weight:900; color:white; letter-spacing:0.5px; white-space:nowrap; text-overflow:ellipsis;">${this.eventName?.toUpperCase() || 'CHAT EVENTO'}</h3>
-                                <div id="presence-list-names" style="font-size:0.55rem; color:#64748b; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Conectando...</div>
-                            </div>
+        updateAllUnreadBadges(count) {
+            const badges = document.querySelectorAll('.sp-unread-chat-badge');
+            badges.forEach(b => {
+                if (count > 0) {
+                    b.textContent = count > 99 ? '99+' : count;
+                    b.style.display = 'inline-flex';
+                } else {
+                    b.textContent = '0';
+                    b.style.display = 'none';
+                }
+            });
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           2. MODAL SCAFFOLDING & LIFECYCLE
+           ═══════════════════════════════════════════════════════════════ */
+        ensureBackdrop() {
+            let backdrop = document.getElementById('sp-chat-backdrop');
+            if (!backdrop) {
+                backdrop = document.createElement('div');
+                backdrop.id = 'sp-chat-backdrop';
+                backdrop.className = 'sp-chat-backdrop';
+                backdrop.innerHTML = `<div class="sp-chat-window" id="sp-chat-window"></div>`;
+                document.body.appendChild(backdrop);
+
+                // Cerrar al hacer clic en el backdrop fuera del modal (desktop)
+                backdrop.addEventListener('click', (e) => {
+                    if (e.target === backdrop) {
+                        this.close();
+                    }
+                });
+
+                // Soporte tecla Escape
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && backdrop.classList.contains('active')) {
+                        this.close();
+                    }
+                });
+            }
+            return backdrop;
+        }
+
+        close() {
+            const backdrop = document.getElementById('sp-chat-backdrop');
+            if (backdrop) {
+                backdrop.classList.remove('active');
+            }
+            if (this.activeRoomUnsub) {
+                this.activeRoomUnsub();
+                this.activeRoomUnsub = null;
+            }
+            this.activeView = null;
+            this.activeChatId = null;
+            this.activeChatData = null;
+            this.pendingAttachment = null;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           3. BANDEJA DE MENSAJES ("Mis Mensajes" Inbox)
+           ═══════════════════════════════════════════════════════════════ */
+        openInbox(tab = 'events') {
+            const user = this.getCurrentUser();
+            if (!user) {
+                if (window.Router && typeof window.Router.navigate === 'function') {
+                    window.Router.navigate('profile');
+                } else {
+                    alert("Debes iniciar sesión para ver tus mensajes y chats.");
+                }
+                return;
+            }
+
+            const uid = user.id || user.uid;
+            if (this.currentUid !== uid) {
+                this.currentUid = uid;
+                this.startGlobalUnreadWatcher(uid);
+            }
+
+            this.activeView = 'inbox';
+            this.activeTab = tab;
+            this.currentFilter = '';
+
+            const backdrop = this.ensureBackdrop();
+            const container = document.getElementById('sp-chat-window');
+
+            container.innerHTML = `
+                <!-- HEADER BANDEJA -->
+                <div class="sp-chat-header">
+                    <div class="sp-chat-header-left">
+                        <div class="sp-chat-avatar" style="background: #0f172a; color: var(--sp-chat-neon);">
+                            <i class="fas fa-comment-dots"></i>
                         </div>
-                        <div style="display:flex; gap:10px; align-items:center;">
-                            <div id="sos-toggle-btn" class="sos-btn" onclick="window.ChatView.handleSOS()">
-                                <i class="fas fa-life-ring"></i> SOS
-                            </div>
-                            <div class="ops-close-btn" onclick="window.ChatView.destroy()" style="color: #ef4444; font-size: 1.3rem; padding: 5px; cursor: pointer;">
-                                <i class="fas fa-times-circle"></i>
+                        <div class="sp-chat-header-title-wrap">
+                            <h2 class="sp-chat-header-title">Mis Mensajes</h2>
+                            <div class="sp-chat-header-sub">
+                                <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>
+                                SomosPadel Barcelona
                             </div>
                         </div>
                     </div>
-
-                    <!-- SOS ACTIVE ALERT -->
-                    <div id="sos-active-bar" class="sos-bar hidden">
-                        <i class="fas fa-bolt"></i> <span id="sos-count">0</span> JUGADORES BUSCAN PAREJA <i class="fas fa-bolt"></i>
-                    </div>
-
-                    <!-- MESSAGES AREA -->
-                    <div id="ops-messages-area" class="ops-messages">
-                        <div class="chat-loading-shimmer">
-                            <i class="fas fa-satellite-dish fa-spin"></i>
-                            <span>Sincronizando canal táctico...</span>
-                        </div>
-                    </div>
-
-                    <!-- EMOJI PICKER (Hidden) -->
-                    <div id="ops-emoji-picker" class="emoji-picker hidden">
-                        ${['🎾', '🔥', '🏆', '👏', '💪', '🙌', '😅', '😮', '😤', '🤝'].map(e => `
-                            <span onclick="window.ChatView.addEmoji('${e}')">${e}</span>
-                        `).join('')}
-                    </div>
-
-                    <!-- MEDIA PREVIEW -->
-                    <div id="ops-media-preview" class="media-preview-bar hidden">
-                        <div id="preview-content"></div>
-                        <div onclick="window.ChatView.clearPreview()" class="clear-preview"><i class="fas fa-times"></i></div>
-                    </div>
-
-                    <!-- INPUT AREA -->
-                    <div class="ops-input-wrapper">
-                        <div class="ops-actions-left">
-                            <label for="ops-file-input" class="ops-action-icon">
-                                <i class="fas fa-camera"></i>
-                                <input type="file" id="ops-file-input" accept="image/*" style="display:none" onchange="window.ChatView.handleFile(this)">
-                            </label>
-                            <div class="ops-action-icon" onclick="window.ChatView.toggleEmojis()">
-                                <i class="fas fa-smile"></i>
-                            </div>
-                        </div>
-                        <div class="ops-input-container">
-                            <input type="text" id="ops-input" placeholder="Escribe..." autocomplete="off">
-                        </div>
-                        <div id="ops-audio-btn" class="ops-audio-btn" onclick="window.ChatView.handleAudioRecord()">
-                            <i class="fas fa-microphone"></i>
-                        </div>
-                        <button onclick="window.ChatView.sendMessage()" id="ops-send-btn">
-                            <i class="fas fa-paper-plane"></i>
+                    <div class="sp-chat-header-actions">
+                        <button class="sp-chat-icon-btn" onclick="window.ChatView.close()" title="Cerrar">
+                            <i class="fas fa-times"></i>
                         </button>
                     </div>
                 </div>
 
-                <style>
-                    .ops-drawer {
-                        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                        background: #05070a; z-index: 30000; border-top: 1px solid #1e293b;
-                        display: flex; flex-direction: column; transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
-                        transform: translateY(calc(100% - 70px)); box-shadow: 0 -20px 60px rgba(0,0,0,0.8);
-                    }
-                    .ops-drawer.expanded { transform: translateY(0); }
-                    .ops-header {
-                        padding: 0 15px; height: 70px; background: #0f172a; border-bottom: 1px solid #1e293b;
-                        display: flex; justify-content: space-between; align-items: center;
-                    }
-                    .ops-presence-badge {
-                        background: rgba(16,185,129,0.1); padding: 4px 8px; border-radius: 8px; color: #10b981;
-                        font-size: 0.55rem; font-weight: 950; display: flex; align-items: center; gap: 5px;
-                    }
-                    .ops-led { width: 6px; height: 6px; background: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981; animation: blink-led 2s infinite; }
-                    @keyframes blink-led { 0%, 100% {opacity:1;} 50% {opacity:0.4;} }
+                <!-- CUERPO DE LA BANDEJA -->
+                <div class="sp-chat-inbox-body">
+                    <!-- BUSCADOR -->
+                    <div class="sp-chat-search-wrap">
+                        <div class="sp-chat-search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" 
+                                id="sp-chat-search-input" 
+                                class="sp-chat-search-input" 
+                                placeholder="Buscar chats o jugadores..." 
+                                oninput="window.ChatView.handleSearch(this.value)">
+                        </div>
+                    </div>
 
-                    .sos-btn {
-                        background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; color: #ef4444; 
-                        padding: 5px 10px; border-radius: 10px; font-size: 0.65rem; font-weight: 900;
-                    }
-                    .sos-btn.active { background: #ef4444; color: white; box-shadow: 0 0 15px rgba(239,68,68,0.4); }
+                    <!-- PESTAÑAS (PILLS) -->
+                    <div class="sp-chat-tabs">
+                        <button class="sp-chat-tab-pill ${this.activeTab === 'events' ? 'active' : ''}" 
+                            id="sp-chat-tab-events" 
+                            onclick="window.ChatView.switchTab('events')">
+                            <i class="fas fa-trophy"></i> Eventos & Partidos
+                        </button>
+                        <button class="sp-chat-tab-pill ${this.activeTab === 'direct' ? 'active' : ''}" 
+                            id="sp-chat-tab-direct" 
+                            onclick="window.ChatView.switchTab('direct')">
+                            <i class="fas fa-user-friends"></i> Privados
+                        </button>
+                    </div>
 
-                    .ops-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; background: #05070a; }
-                    
-                    .msg-wrap { display: flex; flex-direction: column; max-width: 85%; }
-                    .msg-wrap.self { align-self: flex-end; align-items: flex-end; }
-                    .msg-wrap.other { align-self: flex-start; align-items: flex-start; }
-
-                    .msg-bubble { padding: 12px 16px; border-radius: 20px; font-size: 0.9rem; line-height: 1.4; position: relative; }
-                    .msg-self { background: #3b82f6; color: white; border-bottom-right-radius: 4px; }
-                    .msg-other { background: #1e293b; color: #e2e8f0; border-bottom-left-radius: 4px; border: 1px solid #334155; }
-                    .msg-admin { background: rgba(204,255,0,0.05); border: 1px solid #CCFF00; color: #CCFF00; width: 100%; text-align: center; border-radius: 10px; font-size: 0.7rem; font-weight: 800; }
-
-                    .ops-input-wrapper { padding: 15px 10px 35px; background: #0f172a; display: flex; align-items: center; gap: 8px; border-top: 1px solid #1e293b; box-sizing: border-box; }
-                    .ops-input-container { flex: 1; min-width: 0; }
-                    #ops-input { width: 100%; background: #1e293b; border: 1px solid #334155; padding: 12px 15px; border-radius: 25px; color: white; outline: none; font-size: 0.9rem; box-sizing: border-box; }
-                    
-                    .ops-action-icon { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 1.1rem; cursor: pointer; }
-                    .ops-audio-btn { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 1.1rem; cursor: pointer; transition: 0.3s; }
-                    .ops-audio-btn.recording { background: #ef4444; color: white; animation: pulse-red 1s infinite; }
-                    @keyframes pulse-red { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-
-                    #ops-send-btn { width: 45px; height: 45px; min-width: 45px; background: #CCFF00; border: none; border-radius: 50%; color: black; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-
-                    .emoji-picker { background: #1e293b; padding: 10px; display: flex; flex-wrap: wrap; gap: 15px; border-top: 1px solid #334155; justify-content: center; font-size: 1.5rem; }
-                    .emoji-picker span { cursor: pointer; transition: transform 0.2s; }
-                    .emoji-picker span:hover { transform: scale(1.3); }
-
-                    .media-preview-bar { background: #1e293b; padding: 10px; display: flex; align-items: center; gap: 15px; border-top: 1px solid #334155; }
-                    .clear-preview { color: #ef4444; font-size: 1.2rem; cursor: pointer; margin-left: auto; }
-                    .hidden { display: none !important; }
-                    .sos-bar { background: #ef4444; color: white; padding: 6px; text-align: center; font-size: 0.6rem; font-weight: 900; }
-                </style>
+                    <!-- LISTA DE CHATS -->
+                    <div class="sp-chat-list" id="sp-chat-inbox-list">
+                        <div style="text-align:center; padding: 40px 20px; color:#64748b;">
+                            <i class="fas fa-circle-notch fa-spin fa-2x" style="color:#0f172a;"></i>
+                            <div style="margin-top:12px; font-size:0.82rem; font-weight:700;">Cargando tus conversaciones...</div>
+                        </div>
+                    </div>
+                </div>
             `;
 
-            document.body.insertAdjacentHTML('beforeend', html);
-            this.setupInput();
+            backdrop.classList.add('active');
+            this.renderInboxList();
         }
 
-        setupInput() {
-            const input = document.getElementById('ops-input');
-            input.addEventListener('keypress', (e) => { if (e.key === 'Enter') this.sendMessage(); });
+        switchTab(tab) {
+            this.activeTab = tab;
+            document.getElementById('sp-chat-tab-events')?.classList.toggle('active', tab === 'events');
+            document.getElementById('sp-chat-tab-direct')?.classList.toggle('active', tab === 'direct');
+            this.renderInboxList();
         }
 
-        toggleEmojis() { document.getElementById('ops-emoji-picker').classList.toggle('hidden'); }
-        addEmoji(e) { document.getElementById('ops-input').value += e; this.toggleEmojis(); }
-
-        handleFile(input) {
-            const file = input.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                this.pendingAttachment = { data: e.target.result, type: 'image' };
-                document.getElementById('preview-content').innerHTML = `<img src="${e.target.result}" style="height:50px; border-radius:8px; border:1px solid #CCFF00;">`;
-                document.getElementById('ops-media-preview').classList.remove('hidden');
-            };
-            reader.readAsDataURL(file);
+        handleSearch(query) {
+            this.currentFilter = (query || '').toLowerCase().trim();
+            this.renderInboxList();
         }
 
-        async handleAudioRecord() {
-            if (this.isRecording) {
-                this.stopRecording();
-            } else {
-                this.startRecording();
-            }
-        }
+        renderInboxList() {
+            const listEl = document.getElementById('sp-chat-inbox-list');
+            if (!listEl) return;
 
-        async startRecording() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                this.mediaRecorder = new MediaRecorder(stream);
-                this.audioChunks = [];
-                this.mediaRecorder.ondataavailable = (e) => this.audioChunks.push(e.data);
-                this.mediaRecorder.onstop = async () => {
-                    const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        this.pendingAttachment = { data: e.target.result, type: 'audio' };
-                        document.getElementById('preview-content').innerHTML = `<div style="color:#CCFF00; font-weight:900; font-size:0.8rem;"><i class="fas fa-play"></i> AUDIO LISTO</div>`;
-                        document.getElementById('ops-media-preview').classList.remove('hidden');
-                    };
-                    reader.readAsDataURL(audioBlob);
-                };
-                this.mediaRecorder.start();
-                this.isRecording = true;
-                document.getElementById('ops-audio-btn').classList.add('recording');
-            } catch (err) { alert("Micrófono no disponible"); }
-        }
+            const user = this.getCurrentUser();
+            const myUid = user ? (user.id || user.uid) : null;
 
-        stopRecording() {
-            if (this.mediaRecorder) this.mediaRecorder.stop();
-            this.isRecording = false;
-            document.getElementById('ops-audio-btn').classList.remove('recording');
-        }
-
-        clearPreview() {
-            this.pendingAttachment = null;
-            document.getElementById('ops-media-preview').classList.add('hidden');
-        }
-
-        show() {
-            setTimeout(() => {
-                document.getElementById('ops-room-drawer').classList.add('expanded');
-                document.body.style.overflow = 'hidden';
-            }, 50);
-            this.isVisible = true;
-        }
-
-        toggle() {
-            const drawer = document.getElementById('ops-room-drawer');
-            const isExpanded = drawer.classList.toggle('expanded');
-            document.body.style.overflow = isExpanded ? 'hidden' : '';
-        }
-
-        async destroy() {
-            const confirmed = await this.showCustomConfirm("¿DESCONECTAR DEL CANAL TÁCTICO?", "Cerrarás la sesión de comunicaciones en tiempo real para este evento.");
-            if (confirmed) {
-                if (this.eventId) await window.ChatService.closeRoom(this.eventId);
-                const el = document.getElementById('ops-room-drawer');
-                if (el) {
-                    el.classList.remove('expanded');
-                    setTimeout(() => {
-                        el.remove();
-                        document.body.style.overflow = '';
-                        this.isVisible = false;
-                    }, 400);
+            // Filtrar chats según la pestaña activa
+            let filtered = (this.currentChats || []).filter(c => {
+                if (this.activeTab === 'events') {
+                    return c.type === 'event' || String(c.id).startsWith('event_');
                 } else {
-                    document.body.style.overflow = '';
-                    this.isVisible = false;
+                    return c.type === 'direct' || String(c.id).startsWith('direct_');
+                }
+            });
+
+            // Filtrar por término de búsqueda
+            if (this.currentFilter) {
+                filtered = filtered.filter(c => {
+                    const title = (c.title || this.getDirectChatTitle(c, myUid) || '').toLowerCase();
+                    const lastMsg = (c.lastMessage || '').toLowerCase();
+                    return title.includes(this.currentFilter) || lastMsg.includes(this.currentFilter);
+                });
+            }
+
+            let pinnedHtml = '';
+            if (this.activeTab === 'events') {
+                const showPinned = !this.currentFilter || 'chat general somospadel comunidad pista social oficial'.includes(this.currentFilter);
+                if (showPinned) {
+                    pinnedHtml = `
+                        <!-- TARJETA FIJADA: CHAT GENERAL SOMOSPADEL -->
+                        <div class="sp-chat-card sp-chat-card-pinned" 
+                             onclick="window.PlayerView?.haptic?.(20); window.ChatView.openGeneralCommunityChat();"
+                             title="Abrir Chat General SomosPadel"
+                             style="
+                                 background: linear-gradient(135deg, rgba(204, 255, 0, 0.12) 0%, rgba(15, 23, 42, 0.95) 100%);
+                                 border: 1.5px solid #CCFF00;
+                                 margin-bottom: 12px;
+                                 box-shadow: 0 4px 18px rgba(204, 255, 0, 0.15), 0 4px 12px rgba(0,0,0,0.3);
+                                 cursor: pointer;
+                                 position: relative;
+                                 overflow: hidden;
+                             ">
+                            <div class="sp-chat-avatar" style="background: rgba(204, 255, 0, 0.2); color: #CCFF00; border: 1.5px solid #CCFF00;">
+                                <i class="fas fa-bullhorn"></i>
+                            </div>
+                            <div class="sp-chat-card-main">
+                                <div class="sp-chat-card-top">
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        <span style="font-size: 0.82rem;">📌</span>
+                                        <span class="sp-chat-card-title" style="color: #CCFF00; font-weight: 900; letter-spacing: 0.3px;">🎾 CHAT GENERAL SOMOSPADEL</span>
+                                    </div>
+                                    <span class="sp-chat-card-time" style="background: #CCFF00; color: #000; font-weight: 950; font-size: 0.58rem; padding: 2px 6px; border-radius: 6px; letter-spacing: 0.4px;">OFICIAL</span>
+                                </div>
+                                <div class="sp-chat-card-bottom">
+                                    <span class="sp-chat-card-preview" style="color: #cbd5e1; font-weight: 600;">
+                                        La pista social de toda la comunidad • Habla con todos los jugadores
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                // Excluir el chat general de filtered para evitar duplicado
+                filtered = filtered.filter(c => c.id !== 'general_somospadel' && c.id !== 'event_general_somospadel');
+            }
+
+            if (filtered.length === 0) {
+                const isEvents = this.activeTab === 'events';
+                listEl.innerHTML = pinnedHtml + `
+                    <div class="sp-chat-empty" style="${pinnedHtml ? 'padding: 24px 20px;' : ''}">
+                        <div class="sp-chat-empty-icon">
+                            <i class="${isEvents ? 'fas fa-trophy' : 'fas fa-comments'}"></i>
+                        </div>
+                        <div class="sp-chat-empty-title">
+                            ${this.currentFilter ? 'Sin resultados para la búsqueda' : (isEvents ? 'No tienes otros chats de partidos activos' : 'No tienes chats privados')}
+                        </div>
+                        <div class="sp-chat-empty-desc">
+                            ${isEvents 
+                                ? 'Únete a un entreno o americana para interactuar con tus compañeros y capitanes.' 
+                                : 'Puedes iniciar una conversación directa con otros jugadores desde su perfil o convocatorias.'}
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            listEl.innerHTML = pinnedHtml + filtered.map(c => this.renderChatCardHtml(c, myUid)).join('');
+        }
+
+        getDirectChatTitle(chat, myUid) {
+            if (chat.title) return chat.title;
+            if (chat.participantDetails) {
+                const otherUid = (chat.participants || []).find(id => id !== myUid);
+                if (otherUid && chat.participantDetails[otherUid]) {
+                    return chat.participantDetails[otherUid].name || 'Jugador SomosPadel';
                 }
             }
+            return 'Jugador SomosPadel';
         }
 
-        showAccessDenied(reason) {
-            const existing = document.getElementById('ops-access-denied');
+        getDirectChatAvatar(chat, myUid) {
+            if (chat.participantDetails) {
+                const otherUid = (chat.participants || []).find(id => id !== myUid);
+                if (otherUid && chat.participantDetails[otherUid]) {
+                    return chat.participantDetails[otherUid].avatar || null;
+                }
+            }
+            return null;
+        }
+
+        renderChatCardHtml(chat, myUid) {
+            const isEvent = chat.type === 'event' || String(chat.id).startsWith('event_');
+            const title = isEvent ? (chat.title || 'Evento SomosPadel') : this.getDirectChatTitle(chat, myUid);
+            const avatarUrl = isEvent ? null : this.getDirectChatAvatar(chat, myUid);
+            const timeStr = this.formatTime(chat.lastMessageTime || chat.updatedAt);
+            const lastMsg = chat.lastMessage || 'Conversación iniciada';
+            const lastSender = chat.lastSenderName ? (chat.lastSenderId === myUid ? 'Tú' : chat.lastSenderName.split(' ')[0]) : '';
+
+            // Contador de no leídos
+            let unreadCount = 0;
+            if (chat.unreadCount && typeof chat.unreadCount[myUid] === 'number') {
+                unreadCount = chat.unreadCount[myUid];
+            } else if (chat.lastSenderId && chat.lastSenderId !== myUid) {
+                const lastRead = chat.readTimestamps && chat.readTimestamps[myUid];
+                const readTime = lastRead?.toMillis ? lastRead.toMillis() : (lastRead instanceof Date ? lastRead.getTime() : 0);
+                const msgTime = chat.lastMessageTime?.toMillis ? chat.lastMessageTime.toMillis() : (chat.lastMessageTime instanceof Date ? chat.lastMessageTime.getTime() : 0);
+                if (msgTime > readTime) unreadCount = 1;
+            }
+
+            const otherParticipantId = (chat.participants || []).find(id => id !== myUid) || chat.id;
+            const directColor = this.getPlayerColor(otherParticipantId, title);
+
+            const avatarHtml = isEvent
+                ? `<div class="sp-chat-avatar event-avatar"><i class="fas fa-trophy"></i></div>`
+                : (avatarUrl
+                    ? `<div class="sp-chat-avatar"><img src="${avatarUrl}" alt="${title}"></div>`
+                    : `<div class="sp-chat-avatar" style="background:${directColor}15; color:${directColor}; border-color:${directColor}35;">${this.getInitials(title)}</div>`);
+
+            // Escapamos seguro para invocación
+            const safeChatId = String(chat.id).replace(/['"\\]/g, '');
+            window._spEventChatRegistry[chat.id] = chat;
+            if (safeChatId !== chat.id) {
+                window._spEventChatRegistry[safeChatId] = chat;
+            }
+
+            const lastSenderColor = chat.lastSenderId === myUid ? 'inherit' : this.getPlayerColor(chat.lastSenderId, lastSender);
+
+            return `
+                <div class="sp-chat-card" onclick="window.ChatView.openFromCard('${safeChatId}')">
+                    ${avatarHtml}
+                    <div class="sp-chat-card-main">
+                        <div class="sp-chat-card-top">
+                            <span class="sp-chat-card-title">${this.escapeHtml(title)}</span>
+                            <span class="sp-chat-card-time">${timeStr}</span>
+                        </div>
+                        <div class="sp-chat-card-bottom">
+                            <span class="sp-chat-card-preview">
+                                ${lastSender ? `<strong style="color:${lastSenderColor};">${this.escapeHtml(lastSender)}:</strong> ` : ''}
+                                ${this.escapeHtml(lastMsg)}
+                            </span>
+                            ${unreadCount > 0 ? `<span class="sp-unread-badge">${unreadCount > 9 ? '9+' : unreadCount}</span>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        openFromCard(chatId) {
+            const chat = window._spEventChatRegistry[chatId] || (this.currentChats || []).find(c => c.id === chatId);
+            if (!chat) return;
+
+            const isEvent = chat.type === 'event' || String(chat.id).startsWith('event_');
+            if (isEvent) {
+                this.openEventChat(chat);
+            } else {
+                const user = this.getCurrentUser();
+                const myUid = user ? (user.id || user.uid) : null;
+                const otherUid = (chat.participants || []).find(id => id !== myUid);
+                const otherDetails = (chat.participantDetails && otherUid) ? chat.participantDetails[otherUid] : {};
+                this.openDirectChat({
+                    id: otherUid,
+                    uid: otherUid,
+                    name: otherDetails.name || 'Jugador',
+                    photo_url: otherDetails.avatar || null
+                });
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           4. CONVERSACIÓN EN EVENTO (Entrenos / Americanas)
+           ═══════════════════════════════════════════════════════════════ */
+        openGeneralCommunityChat() {
+            const generalEventData = {
+                id: 'general_somospadel',
+                name: 'Chat General SomosPadel',
+                category: 'Comunidad Oficial',
+                date: 'Siempre Activo',
+                club: 'SomosPadel Barcelona',
+                type: 'general'
+            };
+            return this.openEventChat(generalEventData);
+        }
+
+        async openEventChat(eventData) {
+            const user = this.getCurrentUser();
+            if (!user) {
+                if (window.Router) window.Router.navigate('profile');
+                else alert("Debes iniciar sesión para acceder al chat.");
+                return;
+            }
+
+            if (!eventData) {
+                console.error("[ChatView] openEventChat: eventData es requerido");
+                return;
+            }
+
+            const rawId = eventData.eventId || eventData.id;
+            if (!rawId) {
+                console.error("[ChatView] openEventChat: eventData debe contener 'id' o 'eventId'");
+                return;
+            }
+
+            try {
+                const backdrop = this.ensureBackdrop();
+                const container = document.getElementById('sp-chat-window');
+                
+                // Feedback de carga inmediato
+                container.innerHTML = `
+                    <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; color:#64748b;">
+                        <i class="fas fa-circle-notch fa-spin fa-2x" style="color:#0f172a;"></i>
+                        <span style="font-size:0.85rem; font-weight:800;">Conectando con el canal del partido...</span>
+                    </div>
+                `;
+                backdrop.classList.add('active');
+
+                // Asegurar/crear el chat en backend
+                const chatDoc = await window.ChatService.getOrCreateEventChat(eventData);
+                const chatId = chatDoc.id || (String(rawId).startsWith('event_') ? String(rawId) : `event_${rawId}`);
+
+                // Guardar referencia
+                this.activeChatId = chatId;
+                this.activeChatData = {
+                    ...chatDoc,
+                    ...eventData,
+                    type: 'event',
+                    title: eventData.title || eventData.name || chatDoc.title || 'Chat del Partido',
+                    date: eventData.date || chatDoc.date || null,
+                    category: eventData.category || chatDoc.category || 'open',
+                    eventId: eventData.eventId || eventData.id || chatDoc.eventId
+                };
+
+                // Marcar como leído
+                const uid = user.id || user.uid;
+                window.ChatService.markChatAsRead(chatId, uid);
+
+                // Renderizar pantalla de conversación
+                this.renderChatRoom(this.activeChatData, 'event');
+
+            } catch (err) {
+                console.error("[ChatView] Error abriendo chat de evento:", err);
+                alert("No se pudo conectar al chat del evento: " + err.message);
+                this.openInbox('events');
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           5. CONVERSACIÓN DIRECTA 1 A 1 (Direct Chat Room)
+           ═══════════════════════════════════════════════════════════════ */
+        async openDirectChat(targetUser) {
+            const currentUser = this.getCurrentUser();
+            if (!currentUser) {
+                if (window.Router) window.Router.navigate('profile');
+                else alert("Debes iniciar sesión para enviar mensajes privados.");
+                return;
+            }
+
+            if (!targetUser) {
+                console.error("[ChatView] openDirectChat: targetUser es requerido");
+                return;
+            }
+
+            const targetUid = targetUser.id || targetUser.uid;
+            const myUid = currentUser.id || currentUser.uid;
+
+            if (targetUid === myUid) {
+                alert("No puedes abrir un chat privado contigo mismo.");
+                return;
+            }
+
+            try {
+                const backdrop = this.ensureBackdrop();
+                const container = document.getElementById('sp-chat-window');
+
+                container.innerHTML = `
+                    <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; color:#64748b;">
+                        <i class="fas fa-circle-notch fa-spin fa-2x" style="color:#0f172a;"></i>
+                        <span style="font-size:0.85rem; font-weight:800;">Conectando con ${targetUser.name || 'el jugador'}...</span>
+                    </div>
+                `;
+                backdrop.classList.add('active');
+
+                // Backend getOrCreateDirectChat
+                const chatDoc = await window.ChatService.getOrCreateDirectChat(targetUser);
+                const chatId = chatDoc.id;
+
+                this.activeChatId = chatId;
+                this.activeChatData = {
+                    ...chatDoc,
+                    type: 'direct',
+                    targetUser: targetUser,
+                    title: targetUser.name || targetUser.displayName || 'Jugador'
+                };
+
+                // Marcar como leído
+                window.ChatService.markChatAsRead(chatId, myUid);
+
+                // Renderizar pantalla de conversación
+                this.renderChatRoom(this.activeChatData, 'direct');
+
+            } catch (err) {
+                console.error("[ChatView] Error abriendo chat directo:", err);
+                alert("No se pudo iniciar el chat privado: " + err.message);
+                this.openInbox('direct');
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           6. RENDERIZADO CHAT ROOM (Header, Mensajes & Dock de Entrada)
+           ═══════════════════════════════════════════════════════════════ */
+        renderChatRoom(chatData, chatType) {
+            this.activeView = 'room';
+            const container = document.getElementById('sp-chat-window');
+            if (!container) return;
+
+            const isEvent = chatType === 'event';
+            const isGeneral = chatData.id === 'general_somospadel' || chatData.eventId === 'general_somospadel' || chatData.type === 'general';
+            const title = isGeneral ? 'Chat General SomosPadel' : (chatData.title || (isEvent ? 'Chat del Partido' : 'Jugador'));
+            
+            // Subtítulo tipo Playtomic (ej: "Viernes, 13 Jun • Masculino" o "Jugador SomosPadel")
+            let subTitle = '';
+            if (isGeneral) {
+                subTitle = 'Comunidad Oficial SomosPadel';
+            } else if (isEvent) {
+                const parts = [];
+                if (chatData.date) parts.push(this.formatEventDate(chatData.date));
+                if (chatData.category && chatData.category !== 'open') parts.push(chatData.category.toUpperCase());
+                subTitle = parts.join(' • ') || 'SomosPadel Barcelona';
+            } else {
+                subTitle = 'Chat Privado';
+            }
+
+            const targetUid = chatData.targetUser?.id || chatData.targetUser?.uid || title;
+            const targetColor = this.getPlayerColor(targetUid, title);
+
+            const avatarHtml = isGeneral
+                ? `<div class="sp-chat-avatar" style="background: rgba(204, 255, 0, 0.18); color: #CCFF00; border: 1.5px solid #CCFF00;"><i class="fas fa-comments"></i></div>`
+                : (isEvent
+                    ? `<div class="sp-chat-avatar event-avatar"><i class="fas fa-trophy"></i></div>`
+                    : (chatData.targetUser?.photo_url || chatData.targetUser?.photoURL
+                        ? `<div class="sp-chat-avatar"><img src="${chatData.targetUser.photo_url || chatData.targetUser.photoURL}" alt="${title}"><span class="sp-chat-online-dot"></span></div>`
+                        : `<div class="sp-chat-avatar" style="background:${targetColor}15; color:${targetColor}; border-color:${targetColor}35;">${this.getInitials(title)}<span class="sp-chat-online-dot"></span></div>`));
+
+            // Botón Detalles para eventos
+            const detailsBtnHtml = (isEvent && !isGeneral && chatData.eventId)
+                ? `<button class="sp-chat-details-btn" onclick="window.ChatView.navigateToEventDetails('${chatData.eventId}')">
+                     <i class="fas fa-info-circle"></i> DETALLES
+                   </button>`
+                : '';
+
+            container.innerHTML = `
+                <!-- HEADER CHAT ROOM (ESTILO PLAYTOMIC) -->
+                <div class="sp-chat-header">
+                    <div class="sp-chat-header-left">
+                        <button class="sp-chat-icon-btn" onclick="window.ChatView.backToInbox('${isEvent ? 'events' : 'direct'}')" title="Volver">
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+                        ${avatarHtml}
+                        <div class="sp-chat-header-title-wrap">
+                            <h2 class="sp-chat-header-title">${this.escapeHtml(title)}</h2>
+                            <div class="sp-chat-header-sub">
+                                <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>
+                                ${this.escapeHtml(subTitle)}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sp-chat-header-actions">
+                        ${detailsBtnHtml}
+                        <button class="sp-chat-icon-btn" onclick="window.ChatView.close()" title="Cerrar">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CUERPO DE MENSAJES -->
+                <div class="sp-chat-room-body">
+                    <div class="sp-chat-messages-area" id="sp-chat-messages-container">
+                        <div style="text-align:center; padding: 40px 20px; color:#64748b;">
+                            <i class="fas fa-circle-notch fa-spin fa-2x" style="color:#0f172a;"></i>
+                            <div style="margin-top:12px; font-size:0.82rem; font-weight:700;">Cargando mensajes...</div>
+                        </div>
+                    </div>
+
+                    <!-- BARRA DE ESCRITURA INFERIOR FIJA (DOCKED) -->
+                    <div class="sp-chat-dock">
+                        <!-- Strip de archivo adjunto si lo hubiera -->
+                        <div id="sp-chat-preview-strip" class="sp-chat-preview-strip" style="display: none;">
+                            <img id="sp-chat-preview-thumb" class="sp-chat-preview-thumb" src="" alt="Preview">
+                            <div class="sp-chat-preview-info">
+                                <div style="font-weight: 800;">Foto adjunta</div>
+                                <div style="font-size:0.65rem; color:#94a3b8;">Lista para enviar</div>
+                            </div>
+                            <button class="sp-chat-preview-remove" onclick="window.ChatView.clearAttachment()" title="Quitar">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+
+                        <!-- FILA DE ENTRADA -->
+                        <div class="sp-chat-input-row">
+                            <div class="sp-chat-input-container">
+                                <input type="text" 
+                                    id="sp-chat-text-input" 
+                                    class="sp-chat-input" 
+                                    placeholder="Escribir un mensaje..." 
+                                    autocomplete="off" 
+                                    onkeydown="if(event.key === 'Enter') window.ChatView.sendCurrentMessage()">
+                                
+                                <label class="sp-chat-attach-btn" title="Adjuntar foto">
+                                    <i class="fas fa-camera"></i>
+                                    <input type="file" 
+                                        id="sp-chat-file-input" 
+                                        accept="image/*" 
+                                        style="display: none;" 
+                                        onchange="window.ChatView.handleFileInput(this)">
+                                </label>
+                            </div>
+
+                            <button class="sp-chat-send-btn" 
+                                id="sp-chat-send-button" 
+                                onclick="window.ChatView.sendCurrentMessage()" 
+                                title="Enviar mensaje">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Suscribir a mensajes en tiempo real
+            this.subscribeToRoomMessages(this.activeChatId);
+        }
+
+        backToInbox(tab) {
+            if (this.activeRoomUnsub) {
+                this.activeRoomUnsub();
+                this.activeRoomUnsub = null;
+            }
+            this.openInbox(tab || 'events');
+        }
+
+        navigateToEventDetails(eventId) {
+            this.close();
+            if (window.Router && typeof window.Router.navigate === 'function') {
+                window.Router.navigate('entrenos');
+            } else if (window.EventsController && typeof window.EventsController.openEventModal === 'function') {
+                window.EventsController.openEventModal(eventId);
+            }
+        }
+
+        subscribeToRoomMessages(chatId) {
+            if (this.activeRoomUnsub) {
+                this.activeRoomUnsub();
+                this.activeRoomUnsub = null;
+            }
+
+            const container = document.getElementById('sp-chat-messages-container');
+            if (!container) return;
+
+            this.activeRoomUnsub = window.ChatService.subscribeToMessages(chatId, (messages) => {
+                this.renderMessagesList(messages);
+            });
+        }
+
+        renderMessagesList(messages) {
+            const container = document.getElementById('sp-chat-messages-container');
+            if (!container) return;
+
+            const user = this.getCurrentUser();
+            const myUid = user ? (user.id || user.uid) : null;
+            const isGeneral = this.activeChatId === 'event_general_somospadel' || this.activeChatId === 'general_somospadel' || this.activeChatData?.type === 'general';
+
+            let welcomeBannerHtml = '';
+            if (isGeneral) {
+                welcomeBannerHtml = `
+                    <div style="
+                        background: linear-gradient(135deg, rgba(9, 14, 26, 0.95) 0%, rgba(23, 36, 60, 0.95) 100%);
+                        border: 1.5px solid rgba(204, 255, 0, 0.4);
+                        border-radius: 16px;
+                        padding: 12px 14px;
+                        margin: 6px auto 16px;
+                        max-width: 95%;
+                        color: #ffffff;
+                        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35), 0 0 10px rgba(204, 255, 0, 0.1);
+                        text-align: center;
+                    ">
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 4px;">
+                            <span style="background: #CCFF00; color: #000; font-size: 0.58rem; font-weight: 950; padding: 2px 6px; border-radius: 5px; letter-spacing: 0.4px;">COMUNIDAD OFICIAL</span>
+                            <span style="font-size: 0.82rem; font-weight: 950; color: #ffffff;">SOMOSPADEL BCN</span>
+                        </div>
+                        <div style="font-size: 0.73rem; color: #cbd5e1; line-height: 1.4;">
+                            ¡Bienvenido a la pista social! 🎾 Habla con todos los jugadores, organiza partidos o busca suplentes.<br>
+                            <span style="color: #CCFF00; font-weight: 700;">💡 Tip:</span> Toca la foto o nombre de cualquier jugador para ver su nivel o escribirle un privado.
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (!messages || messages.length === 0) {
+                container.innerHTML = welcomeBannerHtml + `
+                    <div class="sp-chat-empty" style="margin-top: 30px;">
+                        <div class="sp-chat-empty-icon" style="color:#64748b; border-color:#cbd5e1; background:#f1f5f9;">
+                            <i class="fas fa-comment-dots"></i>
+                        </div>
+                        <div class="sp-chat-empty-title">¡Sé el primero en escribir!</div>
+                        <div class="sp-chat-empty-desc">Coordina con tus compañeros de partido o aclara cualquier detalle de la convocatoria.</div>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = welcomeBannerHtml;
+            let lastDateLabel = '';
+
+            messages.forEach(msg => {
+                const dateLabel = this.formatDateLabel(msg.timestamp);
+                if (dateLabel && dateLabel !== lastDateLabel) {
+                    html += `
+                        <div class="sp-chat-date-separator">
+                            <span>${dateLabel}</span>
+                        </div>
+                    `;
+                    lastDateLabel = dateLabel;
+                }
+
+                // Si es un aviso de sistema o broadcast
+                if (msg.type === 'broadcast') {
+                    html += `
+                        <div class="sp-chat-system-notice">
+                            <span class="sp-chat-system-notice-badge"><i class="fas fa-bullhorn"></i> AVISO DE ORGANIZACIÓN</span>
+                            <div class="sp-chat-system-notice-text">${this.escapeHtml(msg.text)}</div>
+                            <div class="sp-chat-msg-time" style="justify-content:center; margin-top:4px;">${this.formatTime(msg.timestamp)}</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const isMe = msg.senderId === myUid;
+                const senderName = msg.senderName || 'Jugador';
+                const timeStr = this.formatTime(msg.timestamp);
+                const isAdmin = !!msg.isAdmin;
+                const playerColor = isMe ? '#059669' : this.getPlayerColor(msg.senderId, senderName);
+                const safeSenderName = this.escapeHtml(senderName);
+                const safeSenderId = this.escapeHtml(String(msg.senderId || ''));
+                const safeSenderAvatar = msg.senderAvatar ? this.escapeHtml(msg.senderAvatar) : '';
+                const senderLevel = (msg.senderLevel !== undefined && msg.senderLevel !== null) 
+                    ? parseFloat(msg.senderLevel).toFixed(1) 
+                    : null;
+
+                const levelBadgeHtml = senderLevel
+                    ? `<span style="background: rgba(204,255,0,0.2); border: 1px solid rgba(204,255,0,0.5); color: #65a30d; font-size: 0.62rem; font-weight: 900; padding: 1px 5px; border-radius: 5px; letter-spacing: 0.2px;">⭐ ${senderLevel}</span>`
+                    : '';
+
+                const adminBadgeHtml = isAdmin
+                    ? `<span style="background: #fef3c7; color: #b45309; border: 1px solid #fcd34d; font-size: 0.58rem; font-weight: 900; padding: 1px 5px; border-radius: 5px; letter-spacing: 0.2px;"><i class="fas fa-shield-alt"></i> ADMIN</span>`
+                    : '';
+
+                const avatarHtml = !isMe
+                    ? (msg.senderAvatar
+                        ? `<div class="sp-chat-msg-avatar" onclick="window.ChatView.showPlayerQuickActions('${safeSenderId}', '${safeSenderName}', '${safeSenderAvatar}', '${senderLevel || ''}')" title="Ver jugador ${safeSenderName}" style="cursor: pointer;"><img src="${msg.senderAvatar}" alt="${safeSenderName}"></div>`
+                        : `<div class="sp-chat-msg-avatar" onclick="window.ChatView.showPlayerQuickActions('${safeSenderId}', '${safeSenderName}', '', '${senderLevel || ''}')" title="Ver jugador ${safeSenderName}" style="color:${playerColor}; background:${playerColor}15; border-color:${playerColor}35; cursor: pointer;">${this.getInitials(senderName)}</div>`)
+                    : '';
+
+                const senderNameHtml = !isMe
+                    ? `<div class="sp-chat-sender-name ${isAdmin ? 'admin' : ''}" 
+                            onclick="window.ChatView.showPlayerQuickActions('${safeSenderId}', '${safeSenderName}', '${safeSenderAvatar}', '${senderLevel || ''}')"
+                            title="Toca para ver perfil o enviar mensaje privado"
+                            style="cursor: pointer; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin-bottom: 3px; ${isAdmin ? 'color:#d97706;' : `color:${playerColor};`}">
+                         <span style="font-weight: 850;">${safeSenderName}</span>
+                         ${levelBadgeHtml}
+                         ${adminBadgeHtml}
+                       </div>`
+                    : `<div class="sp-chat-sender-name self" style="color: #15803d; font-size: 0.66rem; font-weight: 800; margin-bottom: 2px; text-align: right;">
+                         Tú
+                       </div>`;
+
+                const mediaHtml = msg.attachment
+                    ? `<img class="sp-chat-msg-img" src="${msg.attachment}" alt="Adjunto" onclick="window.open('${msg.attachment}')">`
+                    : '';
+
+                html += `
+                    <div class="sp-chat-msg-row ${isMe ? 'self' : 'other'}">
+                        ${avatarHtml}
+                        <div class="sp-chat-bubble">
+                            ${senderNameHtml}
+                            ${msg.text ? `<div class="sp-chat-msg-text">${this.escapeHtml(msg.text)}</div>` : ''}
+                            ${mediaHtml}
+                            <div class="sp-chat-msg-time">
+                                <span>${timeStr}</span>
+                                ${isMe ? '<i class="fas fa-check" style="font-size:0.62rem; color:#16a34a;"></i>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+
+            // Scroll automático al fondo
+            requestAnimationFrame(() => {
+                container.scrollTop = container.scrollHeight;
+            });
+        }
+
+        /**
+         * Muestra una ventana modal flotante con opciones rápidas del jugador (Ver Perfil / Chat Privado)
+         */
+        showPlayerQuickActions(senderId, senderName, senderAvatar, senderLevel) {
+            if (!senderId) return;
+            const existing = document.getElementById('sp-player-action-modal');
             if (existing) existing.remove();
 
             const overlay = document.createElement('div');
-            overlay.id = 'ops-access-denied';
+            overlay.id = 'sp-player-action-modal';
             overlay.style.cssText = `
-                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                background: radial-gradient(circle at center, #1e0505 0%, #050000 100%);
-                z-index: 40000; display: flex; align-items: center; justify-content: center;
-                backdrop-filter: blur(10px); color: white; font-family: 'Inter', sans-serif;
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.68);
+                backdrop-filter: blur(4px);
+                z-index: 999999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+                animation: fadeIn 0.18s ease-out;
             `;
 
-            let timeLeft = 10;
+            const levelStr = senderLevel ? `Nivel ⭐ ${senderLevel}` : 'Jugador SomosPadel';
+            const avatarImg = senderAvatar 
+                ? `<img src="${senderAvatar}" style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 2px solid #CCFF00; box-shadow: 0 4px 15px rgba(204,255,0,0.3);">`
+                : `<div style="width: 64px; height: 64px; border-radius: 50%; background: #1e293b; border: 2px solid #CCFF00; color: #CCFF00; font-size: 1.4rem; font-weight: 900; display: flex; align-items: center; justify-content: center;">${this.getInitials(senderName)}</div>`;
 
             overlay.innerHTML = `
-                <div style="text-align: center; max-width: 320px; padding: 30px; border-radius: 30px; background: rgba(255,255,255,0.03); border: 1px solid rgba(239,68,68,0.2); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); animation: access-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
-                    <div style="width: 80px; height: 80px; background: rgba(239,68,68,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; border: 2px solid #ef4444; animation: pulse-error 2s infinite;">
-                        <i class="fas fa-shield-alt" style="font-size: 2.5rem; color: #ef4444;"></i>
+                <div style="
+                    background: #0f172a;
+                    border: 1.5px solid rgba(204, 255, 0, 0.45);
+                    border-radius: 22px;
+                    width: 100%;
+                    max-width: 310px;
+                    padding: 22px 18px 18px;
+                    text-align: center;
+                    box-shadow: 0 20px 40px rgba(0,0,0,0.7), 0 0 25px rgba(204,255,0,0.18);
+                    font-family: 'Outfit', 'Inter', -apple-system, sans-serif;
+                    color: #fff;
+                ">
+                    <div style="display: flex; justify-content: center; margin-bottom: 12px;">
+                        ${avatarImg}
                     </div>
-                    
-                    <h2 style="font-weight: 900; letter-spacing: -1px; margin-bottom: 10px; color: #ef4444;">ACCESO DENEGADO</h2>
-                    <p style="font-size: 0.9rem; color: #94a3b8; line-height: 1.5; margin-bottom: 25px;">${reason}</p>
-                    
-                    <div id="access-timer" style="font-size: 0.7rem; font-weight: 800; color: #64748b; margin-bottom: 20px; letter-spacing: 1px; text-transform: uppercase;">
-                        Redirección automática en <span style="color:white; font-size:1rem;" id="countdown-num">10</span>s
+                    <div style="font-size: 1.05rem; font-weight: 950; color: #fff; margin-bottom: 3px;">
+                        ${this.escapeHtml(senderName)}
+                    </div>
+                    <div style="display: inline-block; background: rgba(204, 255, 0, 0.12); color: #CCFF00; font-size: 0.72rem; font-weight: 900; padding: 3px 10px; border-radius: 8px; border: 1px solid rgba(204,255,0,0.35); margin-bottom: 18px;">
+                        ${levelStr}
                     </div>
 
-                    <button onclick="window.ChatView.abortAndReturn()" style="width: 100%; background: #ef4444; color: white; border: none; padding: 15px; border-radius: 15px; font-weight: 900; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 20px rgba(239,68,68,0.2);">
-                        <i class="fas fa-arrow-left"></i> VOLVER ATRÁS
-                    </button>
-                    
-                    <style>
-                        @keyframes access-pop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-                        @keyframes pulse-error { 0% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); } 70% { box-shadow: 0 0 0 15px rgba(239,68,68,0); } 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); } }
-                    </style>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button id="btn-player-action-profile" style="
+                            background: linear-gradient(135deg, #CCFF00 0%, #a3e635 100%);
+                            color: #000;
+                            border: none;
+                            border-radius: 14px;
+                            padding: 12px 16px;
+                            font-size: 0.82rem;
+                            font-weight: 950;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 8px;
+                            cursor: pointer;
+                            box-shadow: 0 4px 14px rgba(204,255,0,0.3);
+                        ">
+                            <i class="fas fa-id-card"></i> VER CARTA / PERFIL
+                        </button>
+
+                        <button id="btn-player-action-chat" style="
+                            background: #1e293b;
+                            color: #fff;
+                            border: 1px solid rgba(255,255,255,0.15);
+                            border-radius: 14px;
+                            padding: 12px 16px;
+                            font-size: 0.82rem;
+                            font-weight: 800;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 8px;
+                            cursor: pointer;
+                        ">
+                            <i class="fas fa-comment-dots" style="color: #38bdf8;"></i> ENVIAR MENSAJE PRIVADO
+                        </button>
+
+                        <button id="btn-player-action-cancel" style="
+                            background: transparent;
+                            color: #94a3b8;
+                            border: none;
+                            padding: 8px;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            cursor: pointer;
+                            margin-top: 4px;
+                        ">
+                            Cerrar
+                        </button>
+                    </div>
                 </div>
             `;
 
             document.body.appendChild(overlay);
-            document.body.style.overflow = 'hidden';
 
-            const timerIdx = setInterval(() => {
-                timeLeft--;
-                const numEl = document.getElementById('countdown-num');
-                if (numEl) numEl.innerText = timeLeft;
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) overlay.remove();
+            });
+            document.getElementById('btn-player-action-cancel')?.addEventListener('click', () => overlay.remove());
 
-                if (timeLeft <= 0) {
-                    clearInterval(timerIdx);
-                    this.abortAndReturn();
+            document.getElementById('btn-player-action-profile')?.addEventListener('click', () => {
+                overlay.remove();
+                if (window.PadelFutCard && typeof window.PadelFutCard.open === 'function') {
+                    window.PadelFutCard.open({
+                        id: senderId,
+                        uid: senderId,
+                        name: senderName,
+                        photo_url: senderAvatar,
+                        level: senderLevel ? parseFloat(senderLevel) : 3.5
+                    });
                 }
-            }, 1000);
+            });
 
-            // Store interval to clear if manual button pressed
-            this.accessTimer = timerIdx;
-        }
-
-        abortAndReturn() {
-            if (this.accessTimer) clearInterval(this.accessTimer);
-            const overlay = document.getElementById('ops-access-denied');
-            if (overlay) overlay.remove();
-
-            document.body.style.overflow = '';
-
-            // Retroceder al inicio (dashboard)
-            if (window.Router) {
-                window.Router.navigate('dashboard');
-            } else {
-                window.location.reload();
-            }
-        }
-
-        showCustomConfirm(title, message) {
-            return new Promise((resolve) => {
-                const overlay = document.createElement('div');
-                overlay.style.cssText = `
-                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                    background: rgba(0,0,0,0.85); z-index: 41000;
-                    display: flex; align-items: center; justify-content: center;
-                    backdrop-filter: blur(5px); animation: fadeIn 0.3s;
-                `;
-
-                overlay.innerHTML = `
-                    <div style="background: #0f172a; width: 90%; max-width: 320px; border-radius: 25px; border: 1px solid #1e293b; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.5);">
-                        <div style="padding: 25px; text-align: center;">
-                            <div style="width: 50px; height: 50px; background: rgba(204,255,0,0.1); border-radius: 15px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; color: #CCFF00; font-size: 1.5rem;">
-                                <i class="fas fa-sign-out-alt"></i>
-                            </div>
-                            <h3 style="margin: 0 0 10px; color: white; font-weight: 900; font-size: 1.1rem; letter-spacing: -0.5px;">${title}</h3>
-                            <p style="margin: 0; color: #64748b; font-size: 0.85rem; line-height: 1.4;">${message}</p>
-                        </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid #1e293b;">
-                            <button id="confirm-cancel" style="padding: 15px; background: transparent; border: none; color: #94a3b8; font-weight: 700; cursor: pointer; border-right: 1px solid #1e293b;">CANCELAR</button>
-                            <button id="confirm-ok" style="padding: 15px; background: #CCFF00; border: none; color: black; font-weight: 900; cursor: pointer;">CONFIRMAR</button>
-                        </div>
-                    </div>
-                `;
-
-                document.body.appendChild(overlay);
-
-                overlay.querySelector('#confirm-cancel').onclick = () => { overlay.remove(); resolve(false); };
-                overlay.querySelector('#confirm-ok').onclick = () => { overlay.remove(); resolve(true); };
+            document.getElementById('btn-player-action-chat')?.addEventListener('click', () => {
+                overlay.remove();
+                this.openDirectChat({
+                    id: senderId,
+                    uid: senderId,
+                    name: senderName,
+                    photo_url: senderAvatar
+                });
             });
         }
 
-        startListeners() {
-            window.ChatService.subscribe(this.eventId, (msgs) => this.renderMessages(msgs));
-            window.ChatService.subscribeSOS(this.eventId, (sigs) => this.updateSOSView(sigs));
-            window.ChatService.subscribePresence(this.eventId, (users) => this.updatePresenceView(users));
-        }
+        /* ═══════════════════════════════════════════════════════════════
+           7. ENVÍO DE MENSAJES & ADJUNTOS
+           ═══════════════════════════════════════════════════════════════ */
+        handleFileInput(input) {
+            const file = input?.files?.[0];
+            if (!file) return;
 
-        updatePresenceView(users) {
-            const count = document.getElementById('online-count');
-            const list = document.getElementById('presence-list-names');
-            if (count) count.innerText = users.length;
-            if (list) list.innerText = users.length > 0 ? users.map(u => u.name.split(' ')[0]).join(', ') : 'Ready';
-        }
-
-        updateSOSView(signals) {
-            const bar = document.getElementById('sos-active-bar');
-            const btn = document.getElementById('sos-toggle-btn');
-            const count = document.getElementById('sos-count');
-            const user = window.Store.getState('currentUser');
-            if (signals.length > 0) { bar.classList.remove('hidden'); count.innerText = signals.length; } else { bar.classList.add('hidden'); }
-            const active = signals.some(s => s.uid === (user?.id || user?.uid));
-            if (btn) btn.className = active ? 'sos-btn active' : 'sos-btn';
-        }
-
-        getUserColor(uid) {
-            if (!this.userColors) this.userColors = {};
-            if (this.userColors[uid]) return this.userColors[uid];
-
-            const colors = [
-                '#e0f2fe', '#ffe4e6', '#ede9fe', '#d1fae5', '#fef3c7',
-                '#fce7f3', '#e0e7ff', '#cffafe', '#ecfccb'
-            ];
-            const hash = uid.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-            const color = colors[hash % colors.length];
-            this.userColors[uid] = color;
-            return color;
-        }
-
-        getTeamBadgesHtml(teamsRaw) {
-            if (!teamsRaw) return '';
-
-            // Normalizar a array
-            let teams = [];
-            if (Array.isArray(teamsRaw)) teams = teamsRaw;
-            else if (typeof teamsRaw === 'string') teams = [teamsRaw];
-
-            if (teams.length === 0) return '';
-
-            return teams.map(t => {
-                let teamColor = '#38bdf8'; // Default
-                let textColor = '#000';
-
-                const tUpper = t.toUpperCase();
-
-                // MASCULINO
-                if (tUpper.includes('3º MASCULINO A')) {
-                    teamColor = '#3b82f6'; // Azul Fuerte
-                    textColor = '#fff';
-                }
-                else if (tUpper.includes('3º MASCULINO B')) {
-                    teamColor = '#60a5fa'; // Azul Celeste
-                }
-                else if (tUpper.includes('4º MASCULINO')) {
-                    teamColor = '#22c55e'; // Verde
-                    textColor = '#fff';
-                }
-
-                // FEMENINO
-                else if (tUpper.includes('4º FEMENINO')) {
-                    teamColor = '#ec4899'; // Rosa
-                    textColor = '#fff';
-                }
-                else if (tUpper.includes('2º FEMENINO')) {
-                    teamColor = '#f97316'; // Naranja
-                    textColor = '#fff';
-                }
-
-                // MIXTO
-                else if (tUpper.includes('3º MIXTO')) {
-                    teamColor = '#ef4444'; // Rojo
-                    textColor = '#fff';
-                }
-                else if (tUpper.includes('4º MIXTO')) { // A y B
-                    teamColor = '#eab308'; // Amarillo
-                }
-
-                // Fallback para membership simple 
-                else if (tUpper === 'SOMOSPADEL_BCN' || tUpper === 'SOMOSPADEL') {
-                    teamColor = '#CCFF00'; // Neon Brand
-                    textColor = '#000';
-                    t = 'SOMOSPADEL';
-                }
-
-                return `<span style="background: ${teamColor}; color: ${textColor}; font-size: 0.55rem; font-weight: 950; padding: 2px 6px; border-radius: 4px; margin-left: 4px; display: inline-block; letter-spacing: 0.5px; vertical-align: middle;">${t.toUpperCase()}</span>`;
-            }).join('');
-        }
-
-        async showPlayerDetails(playerId) {
-            let player = this.allPlayers.find(p => p.id === playerId || p.uid === playerId);
-
-            // Si no está en caché, intentamos obtenerlo al vuelo (raro con limite 800, pero posible)
-            if (!player) {
-                try {
-                    const doc = await window.db.collection('players').doc(playerId).get();
-                    if (doc.exists) {
-                        player = { id: doc.id, ...doc.data() };
-                        this.allPlayers.push(player); // Cachearlo
-                    }
-                } catch (e) { console.error("Error fetching player details", e); }
-            }
-
-            if (!player) return; // Fallback silencioso o toast error
-
-            // --- DATA PREP ---
-            const name = player.name || 'JUGADOR';
-            const photoUrl = player.photo_url || null;
-            const level = player.level || 3.0;
-            const gender = player.gender === 'male' ? 'MASCULINO' : (player.gender === 'female' ? 'FEMENINO' : 'MIXTO');
-            const hand = player.hand ? (player.hand === 'right' ? 'Diestro' : 'Zurdo') : 'N/A';
-            const position = player.position ? (player.position === 'drive' ? 'Drive' : (player.position === 'reves' ? 'Revés' : 'Indiferente')) : 'N/A';
-            const joinedAt = player.joinedAt ? new Date(player.joinedAt).toLocaleDateString('es-ES', { month: 'short', year: 'numeric' }) : 'N/A';
-
-            // --- EQUIPOS CALC ---
-            let teamsList = [];
-
-            // 0. BD Priority
-            const dbEquipos = player.EQUIPOS || player.equipos || player.Equipos;
-            if (dbEquipos) {
-                if (Array.isArray(dbEquipos)) teamsList.push(...dbEquipos);
-                else {
-                    const val = String(dbEquipos);
-                    if (val.includes(',')) val.split(',').forEach(t => teamsList.push(t.trim()));
-                    else teamsList.push(val);
-                }
-            }
-
-            // 1. Legacy
-            if (Array.isArray(player.team_somospadel)) player.team_somospadel.forEach(t => teamsList.push(t));
-            else if (player.team) teamsList.push(player.team);
-
-            // 2. Community
-            if (player.membership === 'somospadel_bcn' || player.role === 'player_somospadel') {
-                if (!teamsList.some(t => String(t).toUpperCase().includes('SOMOSPADEL'))) teamsList.push('SOMOSPADEL');
-            }
-
-            teamsList = [...new Set(teamsList)].filter(t => t && String(t).trim() !== '').map(t => String(t).replace(/['"]+/g, '').trim());
-            if (teamsList.length === 0) teamsList = ['JUGADOR'];
-            const badgesHtml = this.getTeamBadgesHtml(teamsList);
-
-            // --- STATS CALC ---
-            const s = player.stats || {};
-            const stats = {
-                played: (s.americanas?.played || 0) + (s.entrenos?.played || 0),
-                won: (s.americanas?.won || 0) + (s.entrenos?.won || 0),
-                points: (s.americanas?.points || 0) + (s.entrenos?.points || 0)
-            };
-            const winRate = stats.played > 0 ? Math.round((stats.won / stats.played) * 100) : 0;
-
-            const div = document.createElement('div');
-            div.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:30005; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(5px); animation: fadeIn 0.2s;';
-            div.innerHTML = `
-                <style>
-                    @keyframes slideUp { from {transform:translateY(20px); opacity:0;} to {transform:translateY(0); opacity:1;} }
-                </style>
-                <div style="background: #0f172a; width: 90%; max-width: 380px; border-radius: 24px; border: 1px solid #1e293b; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
-                    
-                    <!-- HEADER HEADER -->
-                    <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 25px 20px; text-align: center; border-bottom: 1px solid #1e293b; position: relative;">
-                        <div onclick="this.closest('#modal-overlay').remove()" style="position: absolute; top: 15px; right: 15px; color: #94a3b8; cursor: pointer; padding: 5px;"><i class="fas fa-times"></i></div>
-                        
-                        <!-- AVATAR -->
-                        <div style="width: 90px; height: 90px; margin: 0 auto 15px; border-radius: 24px; border: 2px solid ${winRate >= 50 ? '#84cc16' : '#94a3b8'}; padding: 3px; position: relative;">
-                             ${photoUrl ?
-                    `<div style="width:100%; height:100%; background:url('${photoUrl}') center/cover; border-radius: 20px;"></div>` :
-                    `<div style="width:100%; height:100%; background:#1e293b; color:#94a3b8; display:flex; align-items:center; justify-content:center; border-radius: 20px; font-size:2rem; font-weight:900;">${name.charAt(0).toUpperCase()}</div>`
-                }
-                             <div style="position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); background: #CCFF00; color: black; font-size: 0.7rem; font-weight: 950; padding: 2px 10px; border-radius: 10px; border: 2px solid #0f172a; white-space: nowrap;">LVL ${level}</div>
-                        </div>
-
-                        <h2 style="margin: 0; color: white; font-size: 1.3rem; font-weight: 900; letter-spacing: -0.5px;">${name.toUpperCase()}</h2>
-                        <div style="color: #64748b; font-size: 0.8rem; font-weight: 600; margin-top: 5px; text-transform: uppercase;">${gender} • ${joinedAt !== 'N/A' ? 'DESDE ' + joinedAt : 'JUGADOR'}</div>
-                        
-                        <div style="margin-top: 15px; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px;">
-                            ${badgesHtml}
-                        </div>
-                    </div>
-
-                    <!-- STATS GRID -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; background: #1e293b; border-bottom: 1px solid #1e293b;">
-                        <div style="background: #0f172a; padding: 15px 10px; text-align: center;">
-                            <div style="color: #64748b; font-size: 0.65rem; font-weight: 800; letter-spacing: 1px;">PARTIDOS</div>
-                            <div style="color: white; font-size: 1.2rem; font-weight: 950;">${stats.played}</div>
-                        </div>
-                        <div style="background: #0f172a; padding: 15px 10px; text-align: center;">
-                            <div style="color: #64748b; font-size: 0.65rem; font-weight: 800; letter-spacing: 1px;">VICTORIAS</div>
-                            <div style="color: #84cc16; font-size: 1.2rem; font-weight: 950;">${stats.won}</div>
-                        </div>
-                        <div style="background: #0f172a; padding: 15px 10px; text-align: center;">
-                             <div style="color: #64748b; font-size: 0.65rem; font-weight: 800; letter-spacing: 1px;">WIN RATE</div>
-                             <div style="color: ${winRate >= 50 ? '#84cc16' : (winRate >= 40 ? '#f59e0b' : '#ef4444')}; font-size: 1.2rem; font-weight: 950;">${winRate}%</div>
-                        </div>
-                    </div>
-
-                    <!-- EXTRA INFO -->
-                    <div style="padding: 20px; background: #0f172a;">
-                         <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #1e293b; padding-bottom: 10px; margin-bottom: 10px;">
-                            <span style="color: #64748b; font-size: 0.8rem; font-weight: 700;">Posición</span>
-                            <span style="color: white; font-weight: 600; font-size: 0.9rem;">${position}</span>
-                         </div>
-                         <div style="display: flex; justify-content: space-between; padding-bottom: 5px;">
-                            <span style="color: #64748b; font-size: 0.8rem; font-weight: 700;">Mano Dominante</span>
-                            <span style="color: white; font-weight: 600; font-size: 0.9rem;">${hand}</span>
-                         </div>
-                    </div>
-                    
-                    <button onclick="this.closest('#modal-overlay').remove()" style="width: 100%; border: none; background: #1e293b; color: white; padding: 15px; font-weight: 800; font-size: 0.8rem; cursor: pointer; transition: all 0.2s; letter-spacing: 1px; text-transform: uppercase;">CERRAR FICHA</button>
-                </div>
-            `;
-            div.id = 'modal-overlay';
-            div.onclick = (e) => { if (e.target.id === 'modal-overlay') div.remove(); };
-            document.body.appendChild(div);
-        }
-
-        renderMessages(messages) {
-            const container = document.getElementById('ops-messages-area');
-            const myId = window.Store.getState('currentUser')?.uid;
-            const currentUser = window.Store.getState('currentUser');
-            const isSuperAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'admin_player');
-
-            if (messages.length === 0) {
-                container.innerHTML = '<div style="text-align:center; padding:50px; opacity:0.2;"><i class="fas fa-ghost fa-3x"></i></div>';
+            if (file.size > 5 * 1024 * 1024) {
+                alert("La imagen no debe superar los 5 MB.");
                 return;
             }
 
-            container.innerHTML = messages.map(msg => {
-                try {
-                    const isMe = msg.senderId === myId;
-                    const isAdminMsg = msg.type === 'admin';
-
-                    let bgColor = '#ffffff';
-                    let textColor = '#000000';
-                    let borderColor = 'transparent';
-
-                    // PRIORITY: Admin style (even if it's me)
-                    if (isAdminMsg) {
-                        bgColor = '#ffffff';
-                        textColor = '#065f46'; // Admin Dark Green
-                        borderColor = '#065f46';
-                    } else if (isMe) {
-                        bgColor = '#ffffff';
-                        textColor = '#000000';
-                    } else {
-                        bgColor = this.getUserColor(msg.senderId);
-                        textColor = '#000000';
-                    }
-
-                    // --- LOGICA DE EQUIPOS MEJORADA ---
-                    const player = this.allPlayers.find(p => p.id === msg.senderId || p.uid === msg.senderId);
-                    let teamsList = [];
-
-                    if (player) {
-                        // 0. COLUMNA 'EQUIPOS' DE LA BD (Prioridad solicitada)
-                        const dbEquipos = player.EQUIPOS || player.equipos || player.Equipos;
-
-                        if (dbEquipos) {
-                            if (Array.isArray(dbEquipos)) {
-                                teamsList.push(...dbEquipos);
-                            } else if (typeof dbEquipos === 'string') {
-                                if (dbEquipos.includes(',')) {
-                                    dbEquipos.split(',').map(t => t.trim()).forEach(t => teamsList.push(t));
-                                } else {
-                                    teamsList.push(dbEquipos);
-                                }
-                            }
-                        }
-
-                        // 1. Equipos de Competición Legacy
-                        if (Array.isArray(player.team_somospadel) && player.team_somospadel.length > 0) {
-                            player.team_somospadel.forEach(t => {
-                                if (!teamsList.includes(t)) teamsList.push(t);
-                            });
-                        }
-                        else if (teamsList.length === 0) {
-                            if (player.team) teamsList.push(player.team);
-                            else if (player.team_name) teamsList.push(player.team_name);
-                        }
-
-                        // 2. Membresía de Comunidad
-                        if (player.membership === 'somospadel_bcn' || player.role === 'player_somospadel') {
-                            const hasSomosPadel = teamsList.some((t) => typeof t === 'string' && (t.toUpperCase() === 'SOMOSPADEL' || t.toUpperCase() === 'SOMOSPADEL_BCN'));
-                            if (!hasSomosPadel) {
-                                teamsList.push('SOMOSPADEL');
-                            }
-                        }
-
-                        teamsList = [...new Set(teamsList)].filter(t => t && String(t).trim() !== '');
-
-                    } else {
-                        let rawTeam = msg.senderTeam;
-                        if (rawTeam) {
-                            if (rawTeam.includes('SOMOSPADEL_BCN')) teamsList.push('SOMOSPADEL');
-                            else teamsList.push(rawTeam);
-                        }
-                    }
-
-                    let bubbleHtml = `<div class="msg-bubble" style="background: ${bgColor}; color: ${textColor}; border: 1.5px solid ${borderColor}; ${isMe ? 'border-bottom-right-radius: 4px;' : 'border-bottom-left-radius: 4px;'}">`;
-
-                    const teamBadges = this.getTeamBadgesHtml(teamsList);
-                    const deleteAction = isSuperAdmin ? `<i class="fas fa-trash-alt" style="margin-left:auto; color:#ef4444; opacity:0.6; cursor:pointer;" onclick="event.stopPropagation(); window.ChatView.deleteMessage('${msg.id}')"></i>` : '';
-
-                    bubbleHtml += `
-                        <div style="font-size: 0.72rem; font-weight: 950; margin-bottom: 6px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid rgba(0,0,0,0.06); padding-bottom: 4px;">
-                            <span onclick="event.stopPropagation(); window.ChatView.showPlayerDetails('${msg.senderId}')" style="cursor: pointer; border-bottom: 1px dotted rgba(0,0,0,0.3); padding-bottom:1px;" title="Ver perfil completo">
-                                ${(msg.senderName || 'JUGADOR').toUpperCase()}
-                            </span>
-                            ${teamBadges}
-                            ${deleteAction}
-                        </div>
-                    `;
-
-                    if (msg.attachment) {
-                        if (msg.attachmentType === 'audio') {
-                            bubbleHtml += `<audio controls src="${msg.attachment}" style="max-width:200px; height:30px; margin:5px 0; filter: contrast(1.1) brightness(0.9);"></audio>`;
-                        } else {
-                            bubbleHtml += `<img src="${msg.attachment}" style="max-width:100%; border-radius:8px; margin:5px 0;">`;
-                        }
-                    }
-
-                    // BROADCAST STYLE ENHANCEMENT
-                    if (msg.type === 'broadcast') {
-                        bubbleHtml = `
-                            <div class="msg-bubble broadcast-alert" style="background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%); color: white; border: 2px solid #fee2e2; border-radius: 15px; width: 100%; box-shadow: 0 0 20px rgba(239,68,68,0.4); animation: broadcast-pulse 2s infinite; box-sizing: border-box;">
-                                <div style="font-size: 0.6rem; font-weight: 950; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; opacity: 0.9; display: flex; align-items: center; gap: 8px;">
-                                    <i class="fas fa-broadcast-tower"></i> COMUNICADO OFICIAL ORGANIZACIÓN
-                                </div>
-                                <div style="font-weight: 800; font-size: 1rem; line-height: 1.4;">${this.formatMentions(msg.text)}</div>
-                                <style>
-                                    @keyframes broadcast-pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
-                                </style>
-                            </div>
-                        `;
-                    } else {
-                        bubbleHtml += `<div style="font-weight: 600; font-size: 0.95rem; line-height: 1.4;">${this.formatMentions(msg.text)}</div></div>`;
-                    }
-
-                    return `
-                        <div class="msg-wrap ${isMe ? 'self' : 'other'}" style="width: ${msg.type === 'broadcast' ? '100%' : 'auto'}; max-width: ${msg.type === 'broadcast' ? '100%' : '85%'}">
-                            ${bubbleHtml}
-                        </div>`;
-                } catch (e) {
-                    console.error("Error rendering message:", msg, e);
-                    return '';
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                this.pendingAttachment = {
+                    type: 'image',
+                    data: e.target.result
+                };
+                const strip = document.getElementById('sp-chat-preview-strip');
+                const thumb = document.getElementById('sp-chat-preview-thumb');
+                if (strip && thumb) {
+                    thumb.src = e.target.result;
+                    strip.style.display = 'flex';
                 }
-            }).join('');
-            container.scrollTop = container.scrollHeight;
+            };
+            reader.readAsDataURL(file);
         }
 
-        formatMentions(text) {
-            if (!text || typeof text !== 'string' || !text.includes('@')) return text || '';
-            let formatted = text;
-            try {
-                // Solo iteramos sobre los jugadores que tengan nombre definido para evitar crashes
-                this.allPlayers.forEach(p => {
-                    const name = p.name || p.displayName;
-                    if (!name) return;
-
-                    const firstName = name.split(' ')[0];
-                    if (!firstName) return;
-
-                    const tag = `@${firstName}`;
-                    // Búsqueda insensible a mayúsculas para las menciones
-                    if (formatted.toUpperCase().includes(tag.toUpperCase())) {
-                        const regex = new RegExp(tag, 'gi');
-                        formatted = formatted.replace(regex, `<b style="color:#CCFF00">${tag.toUpperCase()}</b>`);
-                    }
-                });
-            } catch (e) {
-                console.warn("Error processing mentions:", e);
-            }
-            return formatted;
+        clearAttachment() {
+            this.pendingAttachment = null;
+            const strip = document.getElementById('sp-chat-preview-strip');
+            if (strip) strip.style.display = 'none';
+            const fileInput = document.getElementById('sp-chat-file-input');
+            if (fileInput) fileInput.value = '';
         }
 
-        async sendMessage() {
-            const input = document.getElementById('ops-input');
-            const text = input.value.trim();
+        async sendCurrentMessage() {
+            const input = document.getElementById('sp-chat-text-input');
+            const text = input ? input.value.trim() : '';
             const media = this.pendingAttachment;
+
             if (!text && !media) return;
-            input.value = '';
-            this.clearPreview();
-            await window.ChatService.sendMessage(this.eventId, text, media);
+            if (!this.activeChatId) return;
 
-            // NOTIFICATIONS TRIGGER (Peer-to-Peer)
+            const sendBtn = document.getElementById('sp-chat-send-button');
+            if (sendBtn) sendBtn.disabled = true;
+
             try {
-                if (window.NotificationService && this.participantIds && this.participantIds.length > 0) {
-                    const currentUser = window.Store.getState('currentUser');
-                    const myId = currentUser?.uid || currentUser?.id;
-                    const senderName = currentUser?.name || 'Compañero';
+                if (input) input.value = '';
+                this.clearAttachment();
 
-                    // Filter: Not self, and max limit to avoid spamming 800 people if logic fails
-                    const targets = this.participantIds.filter(id => id !== myId);
-
-                    // Limit to reasonable number to prevent browser hang on huge lists (though usually < 40)
-                    if (targets.length < 50) {
-                        const notifBody = text || (media ? '📷 Foto enviada' : 'Nuevo mensaje');
-                        const truncatedBody = notifBody.length > 30 ? notifBody.substring(0, 30) + '...' : notifBody;
-
-                        // Send to others
-                        targets.forEach(targetId => {
-                            window.NotificationService.sendNotificationToUser(
-                                targetId,
-                                `Nuevo mensaje en ${this.eventName}`,
-                                `${senderName}: ${truncatedBody}`,
-                                { url: 'live', eventId: this.eventId }
-                            ).catch(e => console.warn("Failed to notify peer", targetId));
-                        });
-                    }
+                const res = await window.ChatService.sendMessage(this.activeChatId, text, media);
+                if (!res.success) {
+                    console.error("Error al enviar mensaje:", res.error);
                 }
-            } catch (e) { console.error("Notification trigger error", e); }
-        }
-
-        async deleteMessage(messageId) {
-            if (confirm("¿Eliminar este mensaje permanentemente?")) {
-                const res = await window.ChatService.deleteMessage(this.eventId, messageId);
-                if (!res.success) alert("Error al eliminar: " + res.error);
+            } catch (err) {
+                console.error("Error al enviar mensaje:", err);
+            } finally {
+                if (sendBtn) sendBtn.disabled = false;
+                if (input) input.focus();
             }
         }
 
-        async handleSOS() {
-            const active = document.getElementById('sos-toggle-btn')?.classList.contains('active');
-            await window.ChatService.toggleSOS(this.eventId, !active);
+        /* ═══════════════════════════════════════════════════════════════
+           8. HELPERS & EMBEDDED BUTTONS
+           ═══════════════════════════════════════════════════════════════ */
+        /**
+         * Retorna un botón elegante de chat para insertar en tarjetas de partidos/entrenos/americanas
+         * @param {Object} eventData - Datos del evento ({ id, title, date, category, ... })
+         * @returns {string} HTML string del botón
+         */
+        renderChatButton(eventData) {
+            if (!eventData) return '';
+            const rawId = eventData.eventId || eventData.id;
+            if (!rawId) return '';
+            const eventId = String(rawId);
+            const safeKey = eventId.replace(/['"\\]/g, '');
+
+            // Registramos en memoria para acceso seguro sin fallos de comillas HTML
+            window._spEventChatRegistry[eventId] = eventData;
+            if (safeKey !== eventId) {
+                window._spEventChatRegistry[safeKey] = eventData;
+            }
+
+            return `
+                <button type="button" 
+                    class="sp-chat-btn" 
+                    data-chat-event-id="${this.escapeHtml(eventId)}"
+                    onclick="event.stopPropagation(); window.ChatView.openEventChat(window._spEventChatRegistry['${safeKey}'])" 
+                    title="Abrir chat del partido">
+                    <i class="fas fa-comment-dots"></i>
+                    <span>Chat del partido</span>
+                </button>
+            `;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           9. COMPATIBILIDAD CON VISTAS LEGACY
+           ═══════════════════════════════════════════════════════════════ */
+        async init(eventId, eventName, category = 'open', participantIds = []) {
+            return this.openEventChat({
+                id: eventId,
+                title: eventName,
+                category: category,
+                participants: participantIds
+            });
+        }
+
+        toggle() {
+            const backdrop = document.getElementById('sp-chat-backdrop');
+            if (backdrop && backdrop.classList.contains('active')) {
+                this.close();
+            } else {
+                this.openInbox();
+            }
+        }
+
+        destroy() {
+            this.close();
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           10. UTILIDADES FORMATO, COLORES & SANITIZACIÓN
+           ═══════════════════════════════════════════════════════════════ */
+        getPlayerColor(id, name) {
+            const palette = [
+                '#2563eb', // Royal Blue
+                '#7c3aed', // Púrpura / Violeta
+                '#059669', // Verde Esmeralda
+                '#d97706', // Ámbar / Naranja oscuro
+                '#db2777', // Fucsia / Deep Pink
+                '#0891b2', // Cian oscuro
+                '#ea580c', // Naranja fuego
+                '#4f46e5', // Índigo moderno
+                '#0d9488', // Teal
+                '#c026d3', // Violeta brillante
+                '#b91c1c', // Rojo carmesí
+                '#0284c7'  // Azul cielo oscuro
+            ];
+            const key = String(id || name || 'player').trim();
+            let hash = 0;
+            for (let i = 0; i < key.length; i++) {
+                hash = (hash << 5) - hash + key.charCodeAt(i);
+                hash |= 0;
+            }
+            const index = Math.abs(hash) % palette.length;
+            return palette[index];
+        }
+
+        formatTime(timestamp) {
+            if (!timestamp) return '';
+            let date;
+            if (typeof timestamp.toMillis === 'function') date = new Date(timestamp.toMillis());
+            else if (timestamp instanceof Date) date = timestamp;
+            else if (typeof timestamp === 'number') date = new Date(timestamp);
+            else return '';
+
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${hours}:${minutes}`;
+        }
+
+        formatDateLabel(timestamp) {
+            if (!timestamp) return '';
+            let date;
+            if (typeof timestamp.toMillis === 'function') date = new Date(timestamp.toMillis());
+            else if (timestamp instanceof Date) date = timestamp;
+            else if (typeof timestamp === 'number') date = new Date(timestamp);
+            else return '';
+
+            const today = new Date();
+            const isToday = today.toDateString() === date.toDateString();
+            if (isToday) return 'Hoy';
+
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            if (yesterday.toDateString() === date.toDateString()) return 'Ayer';
+
+            return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+        }
+
+        formatEventDate(dateStr) {
+            if (!dateStr) return '';
+            try {
+                const d = new Date(dateStr);
+                if (!isNaN(d.getTime())) {
+                    return d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
+                }
+            } catch (e) { }
+            return String(dateStr);
+        }
+
+        getInitials(name) {
+            if (!name) return 'SP';
+            const parts = name.trim().split(/\s+/);
+            if (parts.length >= 2) {
+                return (parts[0][0] + parts[1][0]).toUpperCase();
+            }
+            return name.substring(0, 2).toUpperCase();
+        }
+
+        escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
         }
     }
+
+    // Instancia Global
     window.ChatView = new ChatView();
 })();

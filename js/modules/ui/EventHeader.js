@@ -64,6 +64,13 @@
                                 <i class="fas fa-trophy" style="color: #CCFF00; font-size: 0.75rem;"></i>
                                 <span>FLYER / PODIO</span>
                             </button>
+                            <button type="button" 
+                                    onclick="window.ChatView?.openEventChat({ id: '${americanaDoc?.id}', name: '${(americanaDoc?.name || '').replace(/'/g, "\\'")}', date: '${americanaDoc?.date || ''}', category: '${americanaDoc?.category || ''}', club: '${(americanaDoc?.sede || americanaDoc?.location || americanaDoc?.club || '').replace(/'/g, "\\'")}', type: '${isEntreno ? 'entreno' : 'americana'}' })"
+                                    title="Chat en vivo de los participantes"
+                                    style="background: linear-gradient(135deg, rgba(204, 255, 0, 0.2) 0%, rgba(15, 23, 42, 0.8) 100%); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #CCFF00; padding: 7px 12px; border-radius: 12px; font-weight: 950; font-size: 0.68rem; cursor: pointer; border: 1.5px solid #CCFF00; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(204,255,0,0.15); flex-shrink: 0; white-space: nowrap;">
+                                <i class="fas fa-comment-dots" style="color: #CCFF00; font-size: 0.75rem;"></i>
+                                <span>CHAT DEL EVENTO</span>
+                            </button>
                             <button type="button" onclick="window.ControlTowerView ? window.ControlTowerView.openChronicleAI() : (window.TournamentChronicleModal?.open())" 
                                     title="Crónica Épica de la Jornada"
                                     style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.28) 0%, rgba(204, 255, 0, 0.12) 100%); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #CCFF00; padding: 7px 12px; border-radius: 12px; font-weight: 900; font-size: 0.68rem; cursor: pointer; border: 1px solid rgba(139, 92, 246, 0.5); display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(139,92,246,0.2); flex-shrink: 0; white-space: nowrap;">

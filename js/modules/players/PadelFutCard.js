@@ -1,15 +1,18 @@
 /**
- * 🎴 PadelFutCard.js — Cartas FIFA Ultimate Team de Pádel & Stories de Victoria
- * Renderiza tarjetas coleccionables estilo Ultimate Team adaptadas al pádel
- * y genera Stories 9:16 (1080x1920) en HTML5 Canvas para Instagram y WhatsApp.
+ * 🎴 PadelFutCard.js — Cartas FIFA Ultimate Team de Pádel, Historial de Partidos & Estadísticas
+ * Módulo interactivo para "COTILLEAR" jugadores en SomosPadel BCN.
+ * Diseño Clean White (Fondo blanco y letra negra) en las 3 pestañas.
  * SomosPadel BCN — 2026
  */
 (function () {
     'use strict';
 
     const PadelFutCard = {
+        currentTab: 'card',
+        currentData: null,
+
         /**
-         * Calcula o completa los datos del jugador para su carta FUT
+         * Calcula o completa los datos del jugador para su carta FUT y perfil
          * @param {Object} rawData 
          * @returns {Object} FutData completada
          */
@@ -21,61 +24,66 @@
             const name = (user.name || user.displayName || 'Jugador SomosPadel').trim();
             const level = parseFloat(user.level || user.nivel || 3.5) || 3.5;
             const photoUrl = user.photo_url || user.photoURL || user.avatar || 'img/logo_somospadel.png';
+            const userId = user.id || user.uid || rawData.id || rawData.uid || '';
+            const team = (Array.isArray(user.team_somospadel) && user.team_somospadel.length > 0) 
+                ? user.team_somospadel[0] 
+                : (user.team || 'SomosPadel BCN');
             
             // Posición: Drive (DRV), Revés (REV) o Polivalente (POL)
             let posRaw = String(user.position || user.preferred_side || user.posicion || 'drive').toLowerCase();
             let position = 'DRV';
+            let positionFull = 'Drive (Derecha)';
             if (posRaw.includes('rev') || posRaw.includes('izq') || posRaw.includes('left')) {
                 position = 'REV';
+                positionFull = 'Revés (Izquierda)';
             } else if (posRaw.includes('poli') || posRaw.includes('ambos')) {
                 position = 'POL';
+                positionFull = 'Polivalente (Ambos lados)';
             }
 
-            // Win rate
+            // Win rate y partidos
             const matchesCount = stats.matches || (stats.won || 0) + (stats.lost || 0) || user.matches_played || user.total_matches || 10;
             const winsCount = stats.won !== undefined ? stats.won : (user.wins || Math.round(matchesCount * 0.55));
             const winRate = stats.winRate !== undefined ? stats.winRate : (user.win_rate !== undefined ? user.win_rate : Math.round((winsCount / Math.max(1, matchesCount)) * 100));
 
             // Cálculo del OVR (Overall Rating entre 60 y 99)
-            // Nivel 2.0 = 62, 3.0 = 74, 4.0 = 85, 5.0 = 93, 6.0 = 98
             const baseOvrFromLevel = Math.round(42 + (level * 10.2));
             const wrBonus = Math.round((winRate - 50) * 0.12);
             let ovr = Math.min(99, Math.max(60, baseOvrFromLevel + wrBonus));
 
             // Rareza de carta según OVR
             let cardTier = 'GOLD';
-            let tierColor = '#FFD700';
+            let tierColor = '#d97706';
             let tierBorder = 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #CCFF00 100%)';
-            let glowColor = 'rgba(255, 215, 0, 0.4)';
+            let glowColor = 'rgba(217, 119, 6, 0.25)';
 
             if (ovr >= 91) {
                 cardTier = 'ICON';
-                tierColor = '#00E5FF';
+                tierColor = '#0284c7';
                 tierBorder = 'linear-gradient(135deg, #00E5FF 0%, #CCFF00 50%, #FF0055 100%)';
-                glowColor = 'rgba(0, 229, 255, 0.5)';
+                glowColor = 'rgba(2, 132, 199, 0.25)';
             } else if (ovr >= 83) {
                 cardTier = 'GOLD PRO';
-                tierColor = '#CCFF00';
+                tierColor = '#65a30d';
                 tierBorder = 'linear-gradient(135deg, #CCFF00 0%, #00E36D 100%)';
-                glowColor = 'rgba(204, 255, 0, 0.4)';
+                glowColor = 'rgba(101, 163, 13, 0.25)';
             } else if (ovr < 75) {
                 cardTier = 'SILVER';
-                tierColor = '#C0C0C0';
+                tierColor = '#64748b';
                 tierBorder = 'linear-gradient(135deg, #E2E8F0 0%, #94A3B8 100%)';
-                glowColor = 'rgba(226, 232, 240, 0.3)';
+                glowColor = 'rgba(100, 116, 139, 0.2)';
             }
 
             // 6 Atributos Clave: REM, VOL, DEF, FIS, TAC, CLU
-            // Ajuste orgánico según posición
             const seed = (name.length * 7 + Math.round(level * 10)) % 10;
             const variance = (offset) => Math.min(99, Math.max(50, Math.round(ovr + ((seed + offset) % 9) - 4)));
 
-            let rem = variance(1); // Remate / Smash
-            let vol = variance(3); // Volea / Red
-            let def = variance(5); // Defensa / Pared
-            let fis = variance(7); // Físico / Resistencia
-            let tac = variance(2); // Táctica / Colocación
-            let clu = variance(4); // Clutch / Puntos de Oro
+            let rem = variance(1);
+            let vol = variance(3);
+            let def = variance(5);
+            let fis = variance(7);
+            let tac = variance(2);
+            let clu = variance(4);
 
             if (position === 'REV') {
                 rem = Math.min(99, rem + 4);
@@ -91,10 +99,13 @@
             }
 
             return {
+                userId,
                 name: name.toUpperCase(),
                 level: level.toFixed(2),
                 ovr,
                 position,
+                positionFull,
+                team,
                 photoUrl,
                 winRate,
                 matchesCount,
@@ -109,22 +120,38 @@
                     FIS: fis,
                     TAC: tac,
                     CLU: clu
-                },
-                bestResult: rawData.bestResult || 'Pista 1 SomosPadel',
-                matchScore: rawData.matchScore || (rawData.matches && rawData.matches[0]?.score) || null
+                }
             };
         },
 
         /**
-         * Abre el modal interactivo con la carta FUT y opciones para compartir Story
-         * @param {Object} playerData 
+         * Abre el modal interactivo de Cotillear con fondo blanco y letra negra en las 3 pestañas:
+         * 1. CARTA FUT
+         * 2. ÚLTIMOS PARTIDOS (con indicador de si ha ganado o perdido)
+         * 3. ESTADÍSTICAS
+         * @param {Object|string} playerData 
          */
-        open(playerData = {}) {
+        async open(playerData = {}) {
+            if (typeof playerData === 'string') {
+                const pId = playerData;
+                const cachedUser = (window._currentInscritosPlayersMap && window._currentInscritosPlayersMap[pId]) ||
+                    (window.EventsController?.state?.users?.find?.(u => (u.id === pId || u.uid === pId))) ||
+                    { id: pId, uid: pId, name: 'Jugador' };
+                playerData = cachedUser;
+            }
+
             playerData = playerData || {};
             const data = this.calculateCardData(playerData);
             this.currentData = data;
+            this.currentTab = 'card';
 
-            // Eliminar modal previo si existe
+            const currentUser = (window.Store && typeof window.Store.getState === 'function' && window.Store.getState('currentUser')) || 
+                                window.currentUser || 
+                                (window.ChatView && typeof window.ChatView.getCurrentUser === 'function' && window.ChatView.getCurrentUser()) ||
+                                null;
+            const myUid = currentUser ? (currentUser.id || currentUser.uid) : null;
+            const isNotMe = Boolean(data.userId && (!myUid || data.userId !== myUid));
+
             const existing = document.getElementById('padel-fut-card-modal');
             if (existing) existing.remove();
 
@@ -132,167 +159,221 @@
             modal.id = 'padel-fut-card-modal';
             modal.style.cssText = `
                 position: fixed; inset: 0; z-index: 99999;
-                background: rgba(5, 7, 12, 0.94); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-                display: flex; flex-direction: column; align-items: center; justify-content: center;
-                font-family: 'Outfit', sans-serif; padding: 20px; overflow-y: auto;
+                background: rgba(15, 23, 42, 0.72); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+                display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+                font-family: 'Outfit', sans-serif; padding: 16px 12px; overflow-y: auto; box-sizing: border-box;
             `;
 
             modal.innerHTML = `
-                <div style="width: 100%; max-width: 420px; position: relative; display: flex; flex-direction: column; align-items: center;">
+                <!-- CAJA PRINCIPAL BLANCA -->
+                <div style="
+                    width: 100%; max-width: 440px; position: relative; display: flex; flex-direction: column; align-items: center;
+                    margin: auto 0; padding: 20px 18px 25px; background: #ffffff; border-radius: 28px;
+                    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35), 0 0 1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;
+                    color: #0f172a; box-sizing: border-box;
+                ">
                     
-                    <!-- Close button -->
+                    <!-- BOTÓN CERRAR -->
                     <button onclick="document.getElementById('padel-fut-card-modal').remove()" 
-                        style="position: absolute; top: -45px; right: 0; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); 
-                               color: white; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; 
-                               font-size: 1.1rem; display: flex; align-items: center; justify-content: center;">
+                        style="position: absolute; top: 14px; right: 14px; z-index: 10; background: #f1f5f9; border: 1px solid #cbd5e1; 
+                               color: #0f172a; width: 34px; height: 34px; border-radius: 50%; cursor: pointer; 
+                               font-size: 0.95rem; font-weight: 900; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
                         ✕
                     </button>
 
-                    <div style="text-align: center; margin-bottom: 12px;">
-                        <span style="color: #CCFF00; font-size: 0.65rem; font-weight: 950; letter-spacing: 3px; text-transform: uppercase;">
-                            CARTA OFICIAL SOMOSPADEL BCN
-                        </span>
-                        <h2 style="color: #fff; margin: 2px 0 0 0; font-size: 1.2rem; font-weight: 900;">ULTIMATE TEAM PÁDEL</h2>
-                    </div>
-
-                    <!-- THE 3D FUT CARD -->
-                    <div id="padel-fut-card-element" style="
-                        width: min(330px, calc(100vw - 32px)); max-width: 100%; height: auto; aspect-ratio: 330/490; max-height: 80vh;
-                        background: linear-gradient(160deg, #111422 0%, #07090e 60%, #151a0b 100%);
-                        border-radius: 28px;
-                        position: relative;
-                        padding: 3px;
-                        box-shadow: 0 20px 60px ${data.glowColor}, 0 0 30px rgba(0,0,0,0.9);
-                        transition: transform 0.3s ease;
-                        overflow: hidden;
-                    ">
-                        <!-- Holographic border shine -->
-                        <div style="position: absolute; inset: 0; border-radius: 28px; padding: 2.5px; background: ${data.tierBorder}; -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none;"></div>
-
-                        <!-- Card Inner Body -->
-                        <div style="width: 100%; height: 100%; background: radial-gradient(circle at 50% 20%, rgba(204,255,0,0.06) 0%, #090c14 80%); border-radius: 25px; position: relative; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden;">
-                            
-                            <!-- Hexagon / Carbon Pattern overlay -->
-                            <div style="position: absolute; inset: 0; opacity: 0.05; background-image: radial-gradient(#CCFF00 1px, transparent 1px); background-size: 16px 16px; pointer-events: none;"></div>
-                            
-                            <!-- Top Left: OVR, Position, Club Badge & Flag -->
-                            <div style="position: absolute; top: 22px; left: 24px; display: flex; flex-direction: column; align-items: center; z-index: 5;">
-                                <div style="font-size: 2.5rem; font-weight: 950; color: ${data.tierColor}; line-height: 0.9; text-shadow: 0 0 15px ${data.glowColor}; font-variant-numeric: tabular-nums;">
-                                    ${data.ovr}
-                                </div>
-                                <div style="font-size: 0.95rem; font-weight: 900; color: #fff; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px;">
-                                    ${data.position}
-                                </div>
-                                <div style="width: 24px; height: 2px; background: ${data.tierColor}; margin: 6px 0; border-radius: 2px;"></div>
-                                <!-- Escudo SomosPadel -->
-                                <div style="width: 28px; height: 28px; border-radius: 50%; overflow: hidden; box-shadow: 0 2px 8px rgba(204,255,0,0.3); margin-bottom: 4px;" title="SomosPadel BCN">
-                                    <img src="img/logo-oficial-somospadel.jpg" alt="SomosPadel BCN" style="width: 100%; height: 100%; object-fit: cover; display: block;">
-                                </div>
-                                <span style="font-size: 0.75rem;">🇪🇸</span>
+                    <!-- CABECERA DEL JUGADOR (FONDO BLANCO Y LETRA NEGRA) -->
+                    <div style="width: 100%; display: flex; align-items: center; gap: 12px; margin-bottom: 14px; padding-right: 32px;">
+                        <div style="width: 48px; height: 48px; border-radius: 50%; border: 2.5px solid #0f172a; overflow: hidden; flex-shrink: 0; background: #f8fafc; box-shadow: 0 4px 10px rgba(0,0,0,0.08);">
+                            <img src="${data.photoUrl}" alt="${data.name}" onerror="this.src='img/logo_somospadel.png'" style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-size: 0.62rem; color: #0284c7; font-weight: 950; letter-spacing: 1.5px; text-transform: uppercase;">
+                                👁️ COTILLEANDO PERFIL
                             </div>
-
-                            <!-- Top Center / Right: Player Photo -->
-                            <div style="width: 100%; height: 220px; display: flex; justify-content: flex-end; align-items: center; position: relative; z-index: 2; margin-top: 5px;">
-                                <div style="width: 195px; height: 210px; border-radius: 24px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 80%);">
-                                    <img src="${data.photoUrl}" alt="${data.name}" 
-                                         onerror="this.src='img/logo_somospadel.png'"
-                                         style="width: 100%; height: 100%; object-fit: cover; border-radius: 20px; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.8));">
-                                </div>
+                            <div style="font-size: 1.15rem; font-weight: 950; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
+                                ${data.name}
                             </div>
-
-                            <!-- Center: Player Name & Badge -->
-                            <div style="text-align: center; position: relative; z-index: 5; margin-top: 5px; border-bottom: 1.5px solid rgba(255,255,255,0.12); padding-bottom: 8px;">
-                                <div style="font-size: 1.4rem; font-weight: 950; color: #ffffff; text-transform: uppercase; letter-spacing: 1px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 2px 10px rgba(0,0,0,0.8);">
-                                    ${data.name}
-                                </div>
-                                <div style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 4px;">
-                                    <span style="background: rgba(255,255,255,0.06); color: ${data.tierColor}; border: 1px solid ${data.tierColor}44; padding: 2px 8px; border-radius: 10px; font-size: 0.55rem; font-weight: 900; letter-spacing: 1px;">
-                                        ${data.cardTier}
-                                    </span>
-                                    <span style="color: #94a3b8; font-size: 0.6rem; font-weight: 800;">
-                                        LVL ${data.level} • WR ${data.winRate}%
-                                    </span>
-                                </div>
+                            <div style="font-size: 0.68rem; color: #64748b; font-weight: 800; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 2px;">
+                                <span style="color: #0f172a; font-weight: 950; background: #f1f5f9; padding: 1px 6px; border-radius: 6px;">LVL ${data.level}</span>
+                                <span>•</span>
+                                <span>${data.positionFull}</span>
+                                <span>•</span>
+                                <span style="color: #059669; font-weight: 900;">${data.team}</span>
                             </div>
-
-                            <!-- Bottom: 6 FUT Attributes (2 columns) -->
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; padding: 10px 12px; background: rgba(0,0,0,0.3); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); position: relative; z-index: 5;">
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="font-size: 1rem; font-weight: 950; color: #fff;">${data.attributes.REM}</span>
-                                    <span style="font-size: 0.72rem; font-weight: 800; color: #94a3b8; letter-spacing: 0.5px;">REM</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="font-size: 1rem; font-weight: 950; color: #fff;">${data.attributes.FIS}</span>
-                                    <span style="font-size: 0.72rem; font-weight: 800; color: #94a3b8; letter-spacing: 0.5px;">FIS</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="font-size: 1rem; font-weight: 950; color: #fff;">${data.attributes.VOL}</span>
-                                    <span style="font-size: 0.72rem; font-weight: 800; color: #94a3b8; letter-spacing: 0.5px;">VOL</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="font-size: 1rem; font-weight: 950; color: #fff;">${data.attributes.TAC}</span>
-                                    <span style="font-size: 0.72rem; font-weight: 800; color: #94a3b8; letter-spacing: 0.5px;">TAC</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="font-size: 1rem; font-weight: 950; color: #fff;">${data.attributes.DEF}</span>
-                                    <span style="font-size: 0.72rem; font-weight: 800; color: #94a3b8; letter-spacing: 0.5px;">DEF</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="font-size: 1rem; font-weight: 950; color: ${data.tierColor};">${data.attributes.CLU}</span>
-                                    <span style="font-size: 0.72rem; font-weight: 800; color: #94a3b8; letter-spacing: 0.5px;">CLU</span>
-                                </div>
-                            </div>
-
-                            <!-- Official Footer mark -->
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; padding: 0 4px; font-size: 0.45rem; font-weight: 900; color: rgba(255,255,255,0.25); text-transform: uppercase; letter-spacing: 1px;">
-                                <span style="display:inline-flex;align-items:center;gap:2px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="9" height="9" style="vertical-align:middle;flex-shrink:0;"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>somospadelbarcelona_</span>
-                                <span>★ OFFICIAL CARD</span>
-                            </div>
-
                         </div>
                     </div>
 
-                    <!-- ACTION BUTTONS: STORY SHARING & DOWNLOAD -->
-                    <div style="display: flex; flex-direction: column; width: 100%; max-width: 330px; gap: 10px; margin-top: 18px;">
-                        <button id="fut-share-story-btn" onclick="window.PadelFutCard.generateAndShareStory()" style="
-                            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
-                            border: none; color: #ffffff;
-                            padding: 14px; border-radius: 16px; font-weight: 950; font-size: 0.85rem;
-                            text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer;
-                            display: flex; align-items: center; justify-content: center; gap: 10px;
-                            box-shadow: 0 6px 22px rgba(220,39,67,0.45); transition: transform 0.2s;
+                    <!-- BARRA DE PESTAÑAS (TABS) EN BLANCO/GRIS -->
+                    <div style="width: 100%; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 4px; border-radius: 16px; margin-bottom: 16px;">
+                        <button id="cotillear-tab-btn-card" onclick="window.PadelFutCard.switchTab('card')" style="
+                            background: #0f172a; color: #ffffff; border: none; padding: 9px 4px; border-radius: 12px; font-weight: 950; font-size: 0.72rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
                         ">
-                            <i class="fab fa-instagram" style="font-size: 1.15rem;"></i>
-                            <span>SUBIR A INSTAGRAM STORY (9:16)</span>
+                            <span>🎴 CARTA FUT</span>
                         </button>
+                        <button id="cotillear-tab-btn-matches" onclick="window.PadelFutCard.switchTab('matches')" style="
+                            background: transparent; color: #64748b; border: none; padding: 9px 4px; border-radius: 12px; font-weight: 850; font-size: 0.72rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 4px;
+                        ">
+                            <span>🎾 PARTIDOS</span>
+                        </button>
+                        <button id="cotillear-tab-btn-stats" onclick="window.PadelFutCard.switchTab('stats')" style="
+                            background: transparent; color: #64748b; border: none; padding: 9px 4px; border-radius: 12px; font-weight: 850; font-size: 0.72rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 4px;
+                        ">
+                            <span>📊 STATS</span>
+                        </button>
+                    </div>
 
-                        <div style="display: flex; gap: 10px;">
-                            <button onclick="window.PadelFutCard.downloadStoryPNG()" style="
-                                flex: 1.1; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18);
-                                color: #fff; padding: 12px; border-radius: 14px; font-weight: 900; font-size: 0.74rem;
-                                text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer;
-                                display: flex; align-items: center; justify-content: center; gap: 6px;
-                            ">
-                                <i class="fas fa-download"></i> Guardar PNG HD
-                            </button>
-                            <button onclick="document.getElementById('padel-fut-card-modal').remove()" style="
-                                flex: 0.9; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
-                                color: #94a3b8; padding: 12px; border-radius: 14px; font-weight: 800; font-size: 0.74rem;
-                                text-transform: uppercase; cursor: pointer;
-                            ">
-                                Cerrar
-                            </button>
+                    <!-- CONTENEDOR 1: CARTA FUT (FONDO BLANCO Y BOTONES LIMPIOS) -->
+                    <div id="cotillear-tab-content-card" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+                        
+                        <!-- THE 3D FUT CARD -->
+                        <div id="padel-fut-card-element" style="
+                            width: min(315px, 100%); height: auto; aspect-ratio: 330/490;
+                            background: linear-gradient(160deg, #111422 0%, #07090e 60%, #151a0b 100%);
+                            border-radius: 26px;
+                            position: relative;
+                            padding: 3px;
+                            box-shadow: 0 16px 40px rgba(0,0,0,0.18);
+                            transition: transform 0.3s ease;
+                            overflow: hidden;
+                        ">
+                            <!-- Holographic border shine -->
+                            <div style="position: absolute; inset: 0; border-radius: 26px; padding: 2.5px; background: ${data.tierBorder}; -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none;"></div>
+
+                            <!-- Card Inner Body -->
+                            <div style="width: 100%; height: 100%; background: radial-gradient(circle at 50% 20%, rgba(204,255,0,0.06) 0%, #090c14 80%); border-radius: 23px; position: relative; padding: 18px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden;">
+                                
+                                <!-- Carbon Pattern overlay -->
+                                <div style="position: absolute; inset: 0; opacity: 0.05; background-image: radial-gradient(#CCFF00 1px, transparent 1px); background-size: 16px 16px; pointer-events: none;"></div>
+                                
+                                <!-- Top Left: OVR, Position, Club Badge & Flag -->
+                                <div style="position: absolute; top: 18px; left: 18px; display: flex; flex-direction: column; align-items: center; z-index: 5;">
+                                    <div style="font-size: 2.3rem; font-weight: 950; color: #CCFF00; line-height: 0.9; text-shadow: 0 0 15px rgba(204,255,0,0.4); font-variant-numeric: tabular-nums;">
+                                        ${data.ovr}
+                                    </div>
+                                    <div style="font-size: 0.9rem; font-weight: 900; color: #fff; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px;">
+                                        ${data.position}
+                                    </div>
+                                    <div style="width: 22px; height: 2px; background: #CCFF00; margin: 5px 0; border-radius: 2px;"></div>
+                                    <!-- Escudo SomosPadel -->
+                                    <div style="width: 26px; height: 26px; border-radius: 50%; overflow: hidden; box-shadow: 0 2px 8px rgba(204,255,0,0.3); margin-bottom: 3px;" title="SomosPadel BCN">
+                                        <img src="img/logo-oficial-somospadel.jpg" alt="SomosPadel BCN" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+                                    </div>
+                                    <span style="font-size: 0.75rem;">🇪🇸</span>
+                                </div>
+
+                                <!-- Top Center / Right: Player Photo -->
+                                <div style="width: 100%; height: 200px; display: flex; justify-content: flex-end; align-items: center; position: relative; z-index: 2; margin-top: 4px;">
+                                    <div style="width: 180px; height: 190px; border-radius: 22px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 80%);">
+                                        <img src="${data.photoUrl}" alt="${data.name}" 
+                                             onerror="this.src='img/logo_somospadel.png'"
+                                             style="width: 100%; height: 100%; object-fit: cover; border-radius: 18px; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.8));">
+                                    </div>
+                                </div>
+
+                                <!-- Center: Player Name & Badge -->
+                                <div style="text-align: center; position: relative; z-index: 5; margin-top: 4px; border-bottom: 1.5px solid rgba(255,255,255,0.12); padding-bottom: 6px;">
+                                    <div style="font-size: 1.3rem; font-weight: 950; color: #ffffff; text-transform: uppercase; letter-spacing: 1px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 2px 10px rgba(0,0,0,0.8);">
+                                        ${data.name}
+                                    </div>
+                                    <div style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 4px;">
+                                        <span style="background: rgba(255,255,255,0.06); color: #CCFF00; border: 1px solid rgba(204,255,0,0.3); padding: 2px 8px; border-radius: 10px; font-size: 0.52rem; font-weight: 900; letter-spacing: 1px;">
+                                            ${data.cardTier}
+                                        </span>
+                                        <span style="color: #94a3b8; font-size: 0.58rem; font-weight: 800;">
+                                            LVL ${data.level} • WR ${data.winRate}%
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Bottom: 6 FUT Attributes (2 columns) -->
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px 14px; padding: 9px 12px; background: rgba(0,0,0,0.35); border-radius: 14px; border: 1px solid rgba(255,255,255,0.06); position: relative; z-index: 5;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <span style="font-size: 0.95rem; font-weight: 950; color: #fff;">${data.attributes.REM}</span>
+                                        <span style="font-size: 0.68rem; font-weight: 800; color: #94a3b8; letter-spacing: 0.5px;">REM</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <span style="font-size: 0.95rem; font-weight: 950; color: #fff;">${data.attributes.FIS}</span>
+                                        <span style="font-size: 0.68rem; font-weight: 800; color: #94a3b8; letter-spacing: 0.5px;">FIS</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <span style="font-size: 0.95rem; font-weight: 950; color: #fff;">${data.attributes.VOL}</span>
+                                        <span style="font-size: 0.68rem; font-weight: 800; color: #94a3b8; letter-spacing: 0.5px;">VOL</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <span style="font-size: 0.95rem; font-weight: 950; color: #fff;">${data.attributes.TAC}</span>
+                                        <span style="font-size: 0.68rem; font-weight: 800; color: #94a3b8; letter-spacing: 0.5px;">TAC</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <span style="font-size: 0.95rem; font-weight: 950; color: #fff;">${data.attributes.DEF}</span>
+                                        <span style="font-size: 0.68rem; font-weight: 800; color: #94a3b8; letter-spacing: 0.5px;">DEF</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <span style="font-size: 0.95rem; font-weight: 950; color: #CCFF00;">${data.attributes.CLU}</span>
+                                        <span style="font-size: 0.68rem; font-weight: 800; color: #94a3b8; letter-spacing: 0.5px;">CLU</span>
+                                    </div>
+                                </div>
+
+                                <!-- Official Footer mark -->
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 3px; padding: 0 4px; font-size: 0.45rem; font-weight: 900; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 1px;">
+                                    <span>somospadelbarcelona_</span>
+                                    <span>★ OFFICIAL CARD</span>
+                                </div>
+
+                            </div>
                         </div>
 
-                        <!-- Micro-banner Mención Instagram Oficial -->
-                        <div style="background: rgba(225, 48, 108, 0.12); border: 1px dashed rgba(225, 48, 108, 0.4); border-radius: 14px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                            <div style="min-width: 0;">
-                                <div style="font-size: 0.62rem; color: #ff9ebb; font-weight: 800;">ETIQUETA EN TU STORY:</div>
-                                <div style="font-size: 0.8rem; font-weight: 950; color: #ffffff;">@somospadelbarcelona_</div>
-                            </div>
-                            <button type="button" onclick="window.SocialChannelsService ? window.SocialChannelsService.copyTag(this) : null" style="background: rgba(255,255,255,0.15); border: none; color: #fff; padding: 6px 10px; border-radius: 8px; font-size: 0.68rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 4px;">
-                                <i class="fas fa-copy"></i> Copiar
+                        <!-- BOTONES INSTAGRAM STORY & DESCARGA (ESTILO CLEAN WHITE) -->
+                        <div style="display: flex; flex-direction: column; width: 100%; max-width: 320px; gap: 8px; margin-top: 14px;">
+                            ${isNotMe ? `
+                            <button onclick="window.openDirectChatWithPlayer('${data.userId}')" style="
+                                background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+                                border: none; color: #ffffff;
+                                padding: 12px; border-radius: 14px; font-weight: 950; font-size: 0.8rem;
+                                text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer;
+                                display: flex; align-items: center; justify-content: center; gap: 8px;
+                                box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35); transition: all 0.2s;
+                            " onmouseover="this.style.background='#0369a1';" onmouseout="this.style.background='linear-gradient(135deg, #0284c7 0%, #0369a1 100%)';">
+                                <i class="fas fa-comment-dots" style="font-size: 1rem; color: #7dd3fc;"></i>
+                                <span>💬 ENVIAR MENSAJE PRIVADO</span>
                             </button>
+                            ` : ''}
+
+                            <button id="fut-share-story-btn" onclick="window.PadelFutCard.generateAndShareStory()" style="
+                                background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+                                border: none; color: #ffffff;
+                                padding: 13px; border-radius: 14px; font-weight: 950; font-size: 0.8rem;
+                                text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer;
+                                display: flex; align-items: center; justify-content: center; gap: 8px;
+                                box-shadow: 0 4px 15px rgba(220,39,67,0.3);
+                            ">
+                                <i class="fab fa-instagram" style="font-size: 1.1rem;"></i>
+                                <span>SUBIR A INSTAGRAM STORY (9:16)</span>
+                            </button>
+
+                            <button onclick="window.PadelFutCard.downloadStoryPNG()" style="
+                                background: #f8fafc; border: 1.5px solid #cbd5e1;
+                                color: #0f172a; padding: 11px; border-radius: 14px; font-weight: 900; font-size: 0.74rem;
+                                text-transform: uppercase; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+                            ">
+                                <i class="fas fa-download"></i> Guardar Imagen PNG HD
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- CONTENEDOR 2: ÚLTIMOS PARTIDOS (FONDO BLANCO Y LETRA NEGRA) -->
+                    <div id="cotillear-tab-content-matches" style="width: 100%; display: none; flex-direction: column; gap: 10px;">
+                        <div id="cotillear-matches-list" style="width: 100%; display: flex; flex-direction: column; gap: 10px;">
+                            <div style="text-align: center; padding: 35px 10px; color: #64748b;">
+                                <i class="fas fa-circle-notch fa-spin" style="font-size: 1.5rem; color: #0284c7; margin-bottom: 8px;"></i>
+                                <div style="font-size: 0.82rem; font-weight: 800; color: #0f172a;">Cargando historial de partidos...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CONTENEDOR 3: ESTADÍSTICAS (FONDO BLANCO Y LETRA NEGRA) -->
+                    <div id="cotillear-tab-content-stats" style="width: 100%; display: none; flex-direction: column; gap: 12px;">
+                        <div id="cotillear-stats-container" style="width: 100%;">
+                            <!-- Se renderiza dinámicamente con fondo blanco -->
                         </div>
                     </div>
 
@@ -303,6 +384,249 @@
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) modal.remove();
             });
+
+            // Cargar datos en segundo plano
+            this._loadPlayerHistory(data.userId);
+        },
+
+        /**
+         * Cambia de pestaña activa adaptando el estilo fondo blanco / botón negro
+         * @param {'card'|'matches'|'stats'} tabName 
+         */
+        switchTab(tabName) {
+            this.currentTab = tabName;
+            const tabs = ['card', 'matches', 'stats'];
+
+            tabs.forEach(t => {
+                const btn = document.getElementById(`cotillear-tab-btn-${t}`);
+                const content = document.getElementById(`cotillear-tab-content-${t}`);
+                if (!btn || !content) return;
+
+                if (t === tabName) {
+                    btn.style.background = '#0f172a';
+                    btn.style.color = '#ffffff';
+                    btn.style.fontWeight = '950';
+                    btn.style.boxShadow = '0 2px 6px rgba(0,0,0,0.1)';
+                    content.style.display = 'flex';
+                } else {
+                    btn.style.background = 'transparent';
+                    btn.style.color = '#64748b';
+                    btn.style.fontWeight = '850';
+                    btn.style.boxShadow = 'none';
+                    content.style.display = 'none';
+                }
+            });
+        },
+
+        /**
+         * Carga los partidos y estadísticas del jugador con fondo blanco y letra negra
+         */
+        async _loadPlayerHistory(userId) {
+            const matchesContainer = document.getElementById('cotillear-matches-list');
+            const statsContainer = document.getElementById('cotillear-stats-container');
+
+            try {
+                let historyData = null;
+
+                if (window.PlayerHistoryService && typeof window.PlayerHistoryService.getPlayerRecentMatches === 'function') {
+                    historyData = await window.PlayerHistoryService.getPlayerRecentMatches(userId, 15);
+                }
+
+                const matches = historyData?.matches || [];
+                const stats = historyData?.stats || {
+                    totalMatches: matches.length,
+                    wins: matches.filter(m => m.isWin).length,
+                    losses: matches.filter(m => m.result === 'lost').length,
+                    winRate: this.currentData.winRate
+                };
+
+                // 1. Renderizar Partidos (Fondo blanco, tarjetas limpias, letra negra)
+                if (matchesContainer) {
+                    if (matches.length === 0) {
+                        matchesContainer.innerHTML = `
+                            <div style="background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 18px; padding: 30px 15px; text-align: center;">
+                                <div style="font-size: 2rem; margin-bottom: 6px;">🎾</div>
+                                <div style="font-size: 0.9rem; font-weight: 950; color: #0f172a;">Sin partidos registrados todavía</div>
+                                <div style="font-size: 0.72rem; color: #64748b; margin-top: 4px; line-height: 1.4;">Los resultados y marcadores oficiales de entrenos y americanas aparecerán aquí.</div>
+                            </div>
+                        `;
+                    } else {
+                        matchesContainer.innerHTML = matches.map(m => {
+                            const isVictory = m.isWin;
+                            const isLoss = m.result === 'lost';
+                            const isTie = m.result === 'tied';
+
+                            // Configuración de colores con fuerte diferenciación Verde / Rojo
+                            let cardBg = '#f8fafc';
+                            let cardBorder = '#e2e8f0';
+                            let cardBorderLeft = '6px solid #64748b';
+                            let badgeBg = '#475569';
+                            let badgeColor = '#ffffff';
+                            let badgeText = m.resultLabel || 'EN JUEGO';
+                            let icon = '⏱️';
+                            let headerColor = '#64748b';
+                            let contentBg = '#ffffff';
+                            let contentBorder = '#e2e8f0';
+                            let scoreBg = '#0f172a';
+                            let scoreColor = '#ffffff';
+                            let labelPartnerColor = '#64748b';
+                            let subtextColor = '#64748b';
+
+                            if (isVictory) {
+                                cardBg = '#f0fdf4'; // Verde menta limpio
+                                cardBorder = '#86efac'; // Verde pastel
+                                cardBorderLeft = '6px solid #16a34a'; // Verde intenso
+                                badgeBg = '#16a34a';
+                                badgeColor = '#ffffff';
+                                badgeText = 'VICTORIA';
+                                icon = '🏆';
+                                headerColor = '#15803d';
+                                contentBg = '#ffffff';
+                                contentBorder = '#bbf7d0';
+                                scoreBg = '#16a34a';
+                                scoreColor = '#ffffff';
+                                labelPartnerColor = '#166534';
+                                subtextColor = '#166534';
+                            } else if (isLoss) {
+                                cardBg = '#fef2f2'; // Rojo suave limpio
+                                cardBorder = '#fca5a5'; // Rojo pastel
+                                cardBorderLeft = '6px solid #dc2626'; // Rojo intenso
+                                badgeBg = '#dc2626';
+                                badgeColor = '#ffffff';
+                                badgeText = 'DERROTA';
+                                icon = '📉';
+                                headerColor = '#b91c1c';
+                                contentBg = '#ffffff';
+                                contentBorder = '#fecaca';
+                                scoreBg = '#dc2626';
+                                scoreColor = '#ffffff';
+                                labelPartnerColor = '#991b1b';
+                                subtextColor = '#991b1b';
+                            } else if (isTie) {
+                                cardBg = '#fffbeb';
+                                cardBorder = '#fde68a';
+                                cardBorderLeft = '6px solid #d97706';
+                                badgeBg = '#d97706';
+                                badgeColor = '#ffffff';
+                                badgeText = 'EMPATE';
+                                icon = '🤝';
+                                headerColor = '#b45309';
+                                contentBg = '#ffffff';
+                                contentBorder = '#fef3c7';
+                                scoreBg = '#d97706';
+                                scoreColor = '#ffffff';
+                                labelPartnerColor = '#92400e';
+                                subtextColor = '#92400e';
+                            }
+
+                            return `
+                                <div style="background: ${cardBg}; border: 1.5px solid ${cardBorder}; border-left: ${cardBorderLeft}; border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 9px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); transition: transform 0.15s ease;">
+                                    
+                                    <!-- Fila Superior: Badge resultado + Evento y Pista -->
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <div style="background: ${badgeBg}; color: ${badgeColor}; padding: 4px 11px; border-radius: 8px; font-size: 0.68rem; font-weight: 950; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.12);">
+                                            <span>${icon}</span>
+                                            <span>${badgeText}</span>
+                                        </div>
+                                        <div style="font-size: 0.70rem; color: ${headerColor}; font-weight: 900;">
+                                            🎾 PISTA ${m.court} • R${m.round} • ${m.dateStr}
+                                        </div>
+                                    </div>
+
+                                    <!-- Fila Central: Marcador y Parejas -->
+                                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; background: ${contentBg}; border: 1.5px solid ${contentBorder}; padding: 10px 12px; border-radius: 12px;">
+                                        <div style="flex: 1; min-width: 0;">
+                                            <div style="font-size: 0.58rem; color: ${labelPartnerColor}; font-weight: 950; text-transform: uppercase;">SU COMPAÑERO:</div>
+                                            <div style="font-size: 0.84rem; font-weight: 950; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                ${m.partnerName}
+                                            </div>
+                                        </div>
+
+                                        <!-- Marcador Destacado con Color del Resultado -->
+                                        <div style="background: ${scoreBg}; color: ${scoreColor}; padding: 5px 12px; border-radius: 10px; font-size: 1.15rem; font-weight: 950; letter-spacing: 1px; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
+                                            ${m.scoreDisplay}
+                                        </div>
+
+                                        <div style="flex: 1; min-width: 0; text-align: right;">
+                                            <div style="font-size: 0.58rem; color: #64748b; font-weight: 900; text-transform: uppercase;">RIVALES:</div>
+                                            <div style="font-size: 0.80rem; font-weight: 850; color: #334155; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                ${m.rivalNamesStr}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Subtexto Evento -->
+                                    <div style="font-size: 0.64rem; color: ${subtextColor}; font-weight: 850; text-transform: uppercase; letter-spacing: 0.5px;">
+                                        ${m.eventName} • ${m.eventType}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                    }
+                }
+
+                // 2. Renderizar Estadísticas (Fondo blanco, verde victorias y rojo derrotas)
+                if (statsContainer) {
+                    const winRate = stats.winRate !== undefined ? stats.winRate : this.currentData.winRate;
+                    const totalMatches = stats.totalMatches || (stats.wins + stats.losses) || this.currentData.matchesCount;
+                    const wins = stats.wins !== undefined ? stats.wins : Math.round(totalMatches * (winRate / 100));
+                    const losses = stats.losses !== undefined ? stats.losses : (totalMatches - wins);
+                    const streakText = stats.streakText || '🔥 2V';
+
+                    statsContainer.innerHTML = `
+                        <!-- Grid KPIs con diferenciación Verde / Rojo -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+                            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 14px; text-align: center;">
+                                <div style="font-size: 0.65rem; color: #64748b; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">PARTIDOS JUGADOS</div>
+                                <div style="font-size: 2.1rem; font-weight: 950; color: #0f172a; margin-top: 2px;">${totalMatches}</div>
+                            </div>
+                            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 6px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                                <div style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 12px; padding: 8px 4px; text-align: center; display: flex; flex-direction: column; justify-content: center;">
+                                    <div style="font-size: 0.60rem; color: #166534; font-weight: 950;">VICTORIAS</div>
+                                    <div style="font-size: 1.6rem; font-weight: 950; color: #16a34a; line-height: 1.1; margin-top: 2px;">${wins}</div>
+                                </div>
+                                <div style="background: #fef2f2; border: 1.5px solid #fca5a5; border-radius: 12px; padding: 8px 4px; text-align: center; display: flex; flex-direction: column; justify-content: center;">
+                                    <div style="font-size: 0.60rem; color: #991b1b; font-weight: 950;">DERROTAS</div>
+                                    <div style="font-size: 1.6rem; font-weight: 950; color: #dc2626; line-height: 1.1; margin-top: 2px;">${losses}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Win Rate Progress Bar -->
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 14px; margin-bottom: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-size: 0.72rem; color: #475569; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">EFECTIVIDAD (WIN RATE)</span>
+                                <span style="font-size: 1.15rem; color: #0f172a; font-weight: 950;">${winRate}%</span>
+                            </div>
+                            <div style="width: 100%; height: 9px; background: #e2e8f0; border-radius: 99px; overflow: hidden; display: flex;">
+                                <div style="width: ${winRate}%; height: 100%; background: linear-gradient(90deg, #059669, #10b981); border-radius: 99px;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Fila Información Adicional -->
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+                                <span style="font-size: 0.75rem; color: #64748b; font-weight: 800;">Racha Competitiva:</span>
+                                <span style="font-size: 0.88rem; font-weight: 950; color: #059669; background: #ecfdf5; padding: 2px 8px; border-radius: 6px; border: 1px solid #a7f3d0;">${streakText}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+                                <span style="font-size: 0.75rem; color: #64748b; font-weight: 800;">Lado Habitual:</span>
+                                <span style="font-size: 0.82rem; font-weight: 950; color: #0f172a;">${this.currentData.positionFull}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 0.75rem; color: #64748b; font-weight: 800;">Club / Liga:</span>
+                                <span style="font-size: 0.82rem; font-weight: 950; color: #0284c7;">${this.currentData.team}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+
+            } catch (err) {
+                console.error("❌ Error cargando historial en PadelFutCard:", err);
+                if (matchesContainer) {
+                    matchesContainer.innerHTML = '<div style="color: #dc2626; font-size: 0.75rem; text-align: center; padding: 15px;">Error al cargar partidos recientes.</div>';
+                }
+            }
         },
 
         /**
@@ -328,9 +652,7 @@
             ctx.save();
             ctx.strokeStyle = 'rgba(204, 255, 0, 0.05)';
             ctx.lineWidth = 4;
-            // Pista perimetral
             ctx.strokeRect(100, 180, 880, 1560);
-            // Línea de saque y red
             ctx.beginPath();
             ctx.moveTo(100, 960);
             ctx.lineTo(980, 960);
@@ -350,29 +672,24 @@
             // 4. Header de la Story
             ctx.save();
             ctx.textAlign = 'center';
-
-            // Tag SomosPadel
             ctx.fillStyle = '#CCFF00';
             ctx.font = '900 36px "Outfit", sans-serif';
             ctx.letterSpacing = '8px';
             ctx.fillText('SOMOSPADEL BCN', 540, 190);
 
-            // Título Impacto
             ctx.fillStyle = '#FFFFFF';
             ctx.font = '950 64px "Outfit", sans-serif';
-            ctx.fillText('¡VICTORIA EN PISTA!', 540, 270);
+            ctx.fillText('¡CARTA OFICIAL EN PISTA!', 540, 270);
 
-            // Fecha
             const dateStr = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase();
             ctx.fillStyle = '#94A3B8';
             ctx.font = '800 28px "Outfit", sans-serif';
             ctx.fillText(dateStr, 540, 325);
             ctx.restore();
 
-            // 5. CARTA FUT DIBUJADA EN CANVAS (Centrada: X=190, Y=390, W=700, H=1050)
+            // 5. CARTA FUT DIBUJADA EN CANVAS
             const cx = 190, cy = 390, cw = 700, ch = 1060, radius = 54;
             
-            // Función auxiliar para esquinas redondeadas
             function roundRect(ctx, x, y, width, height, r) {
                 ctx.beginPath();
                 ctx.moveTo(x + r, y);
@@ -387,7 +704,6 @@
                 ctx.closePath();
             }
 
-            // Borde degradado carta
             ctx.save();
             const borderGrad = ctx.createLinearGradient(cx, cy, cx + cw, cy + ch);
             borderGrad.addColorStop(0, '#CCFF00');
@@ -400,7 +716,6 @@
             roundRect(ctx, cx, cy, cw, ch, radius);
             ctx.stroke();
 
-            // Fondo interior carta
             const cardInnerGrad = ctx.createLinearGradient(cx, cy, cx, cy + ch);
             cardInnerGrad.addColorStop(0, '#161c2d');
             cardInnerGrad.addColorStop(0.6, '#0d111d');
@@ -409,12 +724,12 @@
             ctx.fill();
             ctx.restore();
 
-            // 6. OVR y Posición dentro de la carta
+            // OVR y Posición
             ctx.save();
             ctx.textAlign = 'left';
-            ctx.fillStyle = data.tierColor || '#CCFF00';
+            ctx.fillStyle = '#CCFF00';
             ctx.font = '950 110px "Outfit", sans-serif';
-            ctx.shadowColor = data.glowColor || 'rgba(204,255,0,0.5)';
+            ctx.shadowColor = 'rgba(204,255,0,0.5)';
             ctx.shadowBlur = 25;
             ctx.fillText(String(data.ovr), cx + 55, cy + 155);
 
@@ -423,21 +738,19 @@
             ctx.font = '900 40px "Outfit", sans-serif';
             ctx.fillText(data.position, cx + 60, cy + 215);
 
-            // Línea separadora
-            ctx.strokeStyle = data.tierColor || '#CCFF00';
+            ctx.strokeStyle = '#CCFF00';
             ctx.lineWidth = 4;
             ctx.beginPath();
             ctx.moveTo(cx + 60, cy + 240);
             ctx.lineTo(cx + 120, cy + 240);
             ctx.stroke();
 
-            // Logo pelota & bandera
             ctx.font = '34px sans-serif';
             ctx.fillText('🎾', cx + 60, cy + 295);
             ctx.fillText('🇪🇸', cx + 60, cy + 345);
             ctx.restore();
 
-            // 7. Cargar y dibujar foto del jugador en la carta
+            // Foto
             try {
                 const img = await this._loadImage(data.photoUrl);
                 ctx.save();
@@ -447,7 +760,6 @@
                 ctx.drawImage(img, imgX, imgY, imgW, imgH);
                 ctx.restore();
             } catch (e) {
-                // Fallback si la imagen falla por CORS o ruta
                 ctx.save();
                 ctx.fillStyle = '#1e293b';
                 roundRect(ctx, cx + 240, cy + 50, 410, 460, 40);
@@ -459,7 +771,7 @@
                 ctx.restore();
             }
 
-            // 8. Nombre del Jugador
+            // Nombre
             ctx.save();
             ctx.textAlign = 'center';
             ctx.fillStyle = '#FFFFFF';
@@ -468,12 +780,10 @@
             ctx.shadowBlur = 15;
             ctx.fillText(data.name, cx + (cw / 2), cy + 570);
 
-            // Subtítulo rango / nivel
-            ctx.fillStyle = data.tierColor;
+            ctx.fillStyle = '#CCFF00';
             ctx.font = '900 28px "Outfit", sans-serif';
             ctx.fillText(`${data.cardTier} • NIVEL ${data.level} • WIN RATE ${data.winRate}%`, cx + (cw / 2), cy + 620);
 
-            // Línea divisoria
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
             ctx.lineWidth = 2;
             ctx.beginPath();
@@ -482,7 +792,7 @@
             ctx.stroke();
             ctx.restore();
 
-            // 9. Atributos en 2 columnas de 3
+            // Atributos
             ctx.save();
             const col1X = cx + 90, col2X = cx + 390;
             const startY = cy + 735, gapY = 85;
@@ -507,7 +817,7 @@
             drawAttr(col2X, startY + gapY * 2, data.attributes.CLU, 'CLU', true);
             ctx.restore();
 
-            // 10. Sello de Verificación Oficial SomosPadel
+            // Sello inferior
             ctx.save();
             ctx.textAlign = 'center';
             ctx.fillStyle = '#CCFF00';
@@ -518,7 +828,6 @@
             ctx.font = '800 28px "Outfit", sans-serif';
             ctx.fillText('Comparte tu progreso con #SomosPadelBCN', 540, 1595);
 
-            // Badge inferior decorativo
             ctx.strokeStyle = 'rgba(204, 255, 0, 0.4)';
             ctx.lineWidth = 3;
             roundRect(ctx, 340, 1640, 400, 75, 25);
@@ -543,7 +852,7 @@
         },
 
         /**
-         * Comparte la Story vertical 9:16 con Web Share API (móvil) o descarga y abre Instagram
+         * Comparte la Story en Instagram
          */
         async generateAndShareStory() {
             if (window.PlayerView?.haptic) window.PlayerView.haptic(25);
@@ -554,7 +863,6 @@
                 btn.disabled = true;
             }
 
-            // Copiar mención oficial al portapapeles con anticipación para facilitar el pegado en Stories
             const shareMention = 'Mi Carta Oficial en @somospadelbarcelona_ 🎾 #SomosPadelBCN';
             try {
                 if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -564,7 +872,6 @@
 
             try {
                 const canvas = await this.renderStoryCanvas();
-                
                 canvas.toBlob(async (blob) => {
                     if (!blob) {
                         this.downloadStoryPNG();
@@ -581,10 +888,9 @@
                                 files: [file]
                             });
                         } catch (shareErr) {
-                            console.log('Share cancelado o fallback:', shareErr);
+                            console.log('Share cancelado:', shareErr);
                         }
                     } else {
-                        // Fallback: descarga directa y abrir Instagram
                         this._triggerDownload(blob);
                         if (confirm('✅ ¡Tu Carta FUT HD se ha descargado a tu galería!\n\n¿Quieres abrir Instagram ahora para subirla a tu Historia? (La mención @somospadelbarcelona_ ya está copiada al portapapeles)')) {
                             if (window.SocialChannelsService) {
@@ -636,5 +942,5 @@
     };
 
     window.PadelFutCard = PadelFutCard;
-    console.log('🎴 [PadelFutCard] Módulo de Cartas FUT & Stories de Victoria cargado correctamente.');
+    console.log('🎴 [PadelFutCard] Clean White v2026 cargado.');
 })();

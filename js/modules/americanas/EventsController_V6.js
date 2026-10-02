@@ -100,6 +100,55 @@
         }
     };
 
+    // Global handler for opening direct 1-to-1 chat with a player
+    window.openDirectChatWithPlayer = async (playerOrId, e) => {
+        if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+
+        if (!playerOrId) return;
+
+        try {
+            let player = playerOrId;
+            if (typeof playerOrId === 'string') {
+                player = (window._currentInscritosPlayersMap && window._currentInscritosPlayersMap[playerOrId]) || 
+                         (window.EventsController?.state?.users?.find?.(u => (u.id === playerOrId || u.uid === playerOrId))) ||
+                         { id: playerOrId, uid: playerOrId, name: 'Jugador' };
+            }
+
+            const targetUid = player.id || player.uid;
+            const currentUser = (window.Store && typeof window.Store.getState === 'function' && window.Store.getState('currentUser')) || 
+                                window.currentUser || 
+                                (window.ChatView && typeof window.ChatView.getCurrentUser === 'function' && window.ChatView.getCurrentUser()) ||
+                                null;
+            const myUid = currentUser ? (currentUser.id || currentUser.uid) : null;
+
+            if (targetUid && myUid && targetUid === myUid) {
+                if (typeof window.alert === 'function') window.alert("¡Ese eres tú! No puedes abrir un chat privado contigo mismo.");
+                else if (typeof alert === 'function') alert("¡Ese eres tú! No puedes abrir un chat privado contigo mismo.");
+                return;
+            }
+
+            if (typeof window.PlayerView?.haptic === 'function') window.PlayerView.haptic(20);
+
+            const targetUserPayload = {
+                id: targetUid,
+                uid: targetUid,
+                name: player.name || player.displayName || 'Jugador',
+                photo_url: player.photo_url || player.photoURL || player.avatar || 'img/logo_somospadel.png',
+                level: player.level || player.nivel || 3.5
+            };
+
+            if (window.ChatView && typeof window.ChatView.openDirectChat === 'function') {
+                await window.ChatView.openDirectChat(targetUserPayload);
+            } else {
+                console.warn("[openDirectChatWithPlayer] ChatView no inicializado");
+                alert("El chat de SomosPadel se está cargando. Inténtalo de nuevo en unos segundos.");
+            }
+        } catch (err) {
+            console.error("❌ Error en openDirectChatWithPlayer:", err);
+        }
+    };
+
     // Global handler for Event Weather & Radar Modal
     window.openEventWeather = (eventId) => {
         if (window.EventsController && typeof window.EventsController.openEventWeather === 'function') {
@@ -3772,6 +3821,17 @@
                                     </div>
                                 </div>
 
+                                <!-- 💬 CHAT DIRECTO DEL EVENTO -->
+                                <button type="button" 
+                                        onclick="event.stopPropagation(); window.ChatView?.openEventChat({ id: '${evt.id}', name: '${(evt.name || '').replace(/'/g, "\\'")}', date: '${evt.date || ''}', category: '${evt.category || ''}', club: '${(evt.sede || evt.location || evt.club || '').replace(/'/g, "\\'")}', type: '${isEntreno ? 'entreno' : 'americana'}' });"
+                                        title="Abrir Chat de este evento"
+                                        style="background: rgba(204, 255, 0, 0.12); border: 1.5px solid #CCFF00; color: #CCFF00; border-radius: 12px; padding: 9px 13px; font-weight: 950; font-size: 0.75rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap; flex-shrink: 0;"
+                                        onmouseover="this.style.background='rgba(204, 255, 0, 0.25)';"
+                                        onmouseout="this.style.background='rgba(204, 255, 0, 0.12)';">
+                                    <i class="fas fa-comment-dots" style="color: #CCFF00; font-size: 0.82rem;"></i>
+                                    <span>CHAT</span>
+                                </button>
+
                                 <!-- ⚡ PRIMARY PRO ACTION BUTTON (Unifies FAB & Status Badge) -->
                                 <div style="position: relative; flex-shrink: 0;">
                                     ${isLive ? `<div style="position: absolute; inset: -3px; border-radius: 14px; background: #FF2D55; opacity: 0.5; animation: status-breathe 1.2s ease-in-out infinite; filter: blur(4px);"></div>` : ''}
@@ -6903,12 +6963,23 @@
                         <!-- Actions & Badge -->
                         <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0;">
                             <div style="background: ${badgeColor}; color: #ffffff; font-size: 0.48rem; font-weight: 1000; padding: 1px 6px; border-radius: 4px; letter-spacing: 0.4px;">${badgeText}</div>
-                            <button onclick="event.stopPropagation(); window.cotillearJugador('${pid}')" 
-                                    style="background: #f8fafc; border: 1px solid #cbd5e1; color: #0284c7; font-size: 0.55rem; font-weight: 950; padding: 2px 6px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 3px; transition: all 0.2s;"
-                                    onmouseover="this.style.background='#0284c7'; this.style.color='#ffffff'; this.style.borderColor='#0284c7';"
-                                    onmouseout="this.style.background='#f8fafc'; this.style.color='#0284c7'; this.style.borderColor='#cbd5e1';">
-                                <i class="fas fa-eye" style="font-size: 0.54rem;"></i> COTILLEAR
-                            </button>
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                ${!isMe ? `
+                                <button onclick="event.stopPropagation(); window.openDirectChatWithPlayer('${pid}')" 
+                                        style="background: #0284c7; border: 1px solid #0284c7; color: #ffffff; font-size: 0.55rem; font-weight: 950; padding: 2px 6px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 3px; transition: all 0.2s; box-shadow: 0 1px 3px rgba(2,132,199,0.2);"
+                                        onmouseover="this.style.background='#0369a1';"
+                                        onmouseout="this.style.background='#0284c7';"
+                                        title="Abrir chat privado con ${displayName}">
+                                    <i class="fas fa-comment-dots" style="font-size: 0.54rem;"></i> CHAT
+                                </button>
+                                ` : ''}
+                                <button onclick="event.stopPropagation(); window.cotillearJugador('${pid}')" 
+                                        style="background: #f8fafc; border: 1px solid #cbd5e1; color: #0284c7; font-size: 0.55rem; font-weight: 950; padding: 2px 6px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 3px; transition: all 0.2s;"
+                                        onmouseover="this.style.background='#0284c7'; this.style.color='#ffffff'; this.style.borderColor='#0284c7';"
+                                        onmouseout="this.style.background='#f8fafc'; this.style.color='#0284c7'; this.style.borderColor='#cbd5e1';">
+                                    <i class="fas fa-eye" style="font-size: 0.54rem;"></i> COTILLEAR
+                                </button>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -6983,6 +7054,8 @@
                     const rawP1Name = (group.p1 && group.p1.name) || 'Jugador';
                     const safeP1NameAttr = rawP1Name.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
                     const p1Lvl = (group.p1 && group.p1.level) || '3.5';
+                    const p1Pid = (group.p1 && (group.p1.id || group.p1.uid)) || '';
+                    const isSingleMe = currentUid && (p1Pid === currentUid);
 
                     return `
                     <div class="battle-ready-item neon-single-card" data-filter-type="solo" data-player-names="${pNames}" data-player-levels="${pLevels}" style="
@@ -7005,14 +7078,24 @@
                         
                         <!-- PARTNER PROPOSAL STRIP (COMPACT) -->
                         <div style="padding: 4px 8px; font-size: 0.62rem; color: #854d0e; font-weight: 800; display: flex; align-items: center; justify-content: space-between; border-top: 1px dashed #fde68a; background: #fffbeb; border-radius: 8px; margin: 2px 4px 3px; gap: 6px; flex-wrap: wrap;">
-                            <span style="display: flex; align-items: center; gap: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 170px;">
+                            <span style="display: flex; align-items: center; gap: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px;">
                                 <i class="fas fa-search" style="color: #ca8a04; font-size: 0.6rem;"></i> ${partnerSearchName ? `Busca: <b style="color: #0f172a;">${partnerSearchName}</b>` : 'Busca compañero'}
                             </span>
-                            <button onclick="event.stopPropagation(); window.proposePairChallenge('${safeP1NameAttr}', '${p1Lvl}')" 
-                                    style="background: #16a34a; color:#ffffff; border: none; padding: 3px 8px; border-radius: 6px; cursor: pointer; font-size: 0.55rem; font-weight: 950; box-shadow: 0 1px 4px rgba(22,163,74,0.2); display: inline-flex; align-items: center; gap: 3px; transition: all 0.2s;"
-                                    onmouseover="this.style.background='#15803d';" onmouseout="this.style.background='#16a34a';">
-                                <i class="fab fa-whatsapp"></i> PROPONER PAREJA
-                            </button>
+                            <div style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+                                ${!isSingleMe ? `
+                                <button onclick="event.stopPropagation(); window.openDirectChatWithPlayer('${p1Pid}')" 
+                                        style="background: #0284c7; color:#ffffff; border: none; padding: 3px 8px; border-radius: 6px; cursor: pointer; font-size: 0.55rem; font-weight: 950; box-shadow: 0 1px 4px rgba(2,132,199,0.25); display: inline-flex; align-items: center; gap: 3px; transition: all 0.2s;"
+                                        onmouseover="this.style.background='#0369a1';" onmouseout="this.style.background='#0284c7';"
+                                        title="Abrir chat privado 1 a 1 con ${safeP1NameAttr}">
+                                    <i class="fas fa-comment-dots"></i> CHAT PRIVADO
+                                </button>
+                                ` : ''}
+                                <button onclick="event.stopPropagation(); window.proposePairChallenge('${safeP1NameAttr}', '${p1Lvl}')" 
+                                        style="background: #16a34a; color:#ffffff; border: none; padding: 3px 8px; border-radius: 6px; cursor: pointer; font-size: 0.55rem; font-weight: 950; box-shadow: 0 1px 4px rgba(22,163,74,0.2); display: inline-flex; align-items: center; gap: 3px; transition: all 0.2s;"
+                                        onmouseover="this.style.background='#15803d';" onmouseout="this.style.background='#16a34a';">
+                                    <i class="fab fa-whatsapp"></i> PROPONER PAREJA
+                                </button>
+                            </div>
                         </div>
                     </div>
                     `;
@@ -7086,12 +7169,23 @@
                         <!-- Cotillear Button -->
                         <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0;">
                             <div style="background: #ea580c; color: #ffffff; font-size: 0.48rem; font-weight: 1000; padding: 1px 6px; border-radius: 4px; letter-spacing: 0.4px;">SUPLENTE</div>
-                            <button onclick="event.stopPropagation(); window.cotillearJugador('${pid}')" 
-                                    style="background: #fff7ed; border: 1px solid #fdba74; color: #c2410c; font-size: 0.55rem; font-weight: 950; padding: 2px 6px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 3px; transition: all 0.2s;"
-                                    onmouseover="this.style.background='#ea580c'; this.style.color='#ffffff'; this.style.borderColor='#ea580c';"
-                                    onmouseout="this.style.background='#fff7ed'; this.style.color='#c2410c'; this.style.borderColor='#fdba74';">
-                                <i class="fas fa-eye" style="font-size: 0.54rem;"></i> COTILLEAR
-                            </button>
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                ${!isMe ? `
+                                <button onclick="event.stopPropagation(); window.openDirectChatWithPlayer('${pid}')" 
+                                        style="background: #0284c7; border: 1px solid #0284c7; color: #ffffff; font-size: 0.55rem; font-weight: 950; padding: 2px 6px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 3px; transition: all 0.2s; box-shadow: 0 1px 3px rgba(2,132,199,0.2);"
+                                        onmouseover="this.style.background='#0369a1';"
+                                        onmouseout="this.style.background='#0284c7';"
+                                        title="Abrir chat privado con ${displayName}">
+                                    <i class="fas fa-comment-dots" style="font-size: 0.54rem;"></i> CHAT
+                                </button>
+                                ` : ''}
+                                <button onclick="event.stopPropagation(); window.cotillearJugador('${pid}')" 
+                                        style="background: #fff7ed; border: 1px solid #fdba74; color: #c2410c; font-size: 0.55rem; font-weight: 950; padding: 2px 6px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 3px; transition: all 0.2s;"
+                                        onmouseover="this.style.background='#ea580c'; this.style.color='#ffffff'; this.style.borderColor='#ea580c';"
+                                        onmouseout="this.style.background='#fff7ed'; this.style.color='#c2410c'; this.style.borderColor='#fdba74';">
+                                    <i class="fas fa-eye" style="font-size: 0.54rem;"></i> COTILLEAR
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -7447,6 +7541,13 @@
                                 <span class="eq-bar"></span>
                                 <span class="eq-bar"></span>
                             </div>
+                        </button>
+
+                        <button onclick="window.ChatView?.openEventChat({ id: '${evt.id}', name: '${(evt.name || '').replace(/'/g, "\\'")}', date: '${evt.date || ''}', category: '${evt.category || ''}', club: '${(eventLocation || '').replace(/'/g, "\\'")}', type: '${isEntrenoModal ? 'entreno' : 'americana'}' });" 
+                                title="Chat oficial de los participantes" 
+                                style="background: #0f172a; border: 1.5px solid #CCFF00; color: #CCFF00; padding: 6px 12px; border-radius: 12px; font-size: 0.7rem; font-weight: 950; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s; box-shadow: 0 0 10px rgba(204,255,0,0.25);">
+                            <i class="fas fa-comment-dots" style="color: #CCFF00; font-size: 0.75rem;"></i>
+                            <span>CHAT DEL EVENTO</span>
                         </button>
 
                         <button onclick="window.toggleBattleReadyFullscreen()" title="Pantalla Completa TV" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">
@@ -8361,6 +8462,71 @@
             }
         } catch(err) {
             console.error('[cotillearJugador] Error:', err);
+        }
+    };
+
+    /**
+     * Abre inmediatamente un chat privado 1 a 1 con el jugador especificado.
+     * @param {Object|string} playerOrId ID o payload del jugador
+     * @param {Event} [e] Evento DOM opcional para stopPropagation
+     */
+    window.openDirectChatWithPlayer = async (playerOrId, e) => {
+        let event = e;
+        let targetId = playerOrId;
+
+        if (playerOrId && (typeof playerOrId.stopPropagation === 'function' || playerOrId.target)) {
+            event = playerOrId;
+            targetId = playerOrId.currentTarget?.dataset?.playerId || playerOrId.target?.dataset?.playerId || null;
+        }
+
+        if (event && typeof event.stopPropagation === 'function') {
+            event.stopPropagation();
+        }
+        if (event && typeof event.preventDefault === 'function') {
+            event.preventDefault();
+        }
+
+        if (!targetId) return;
+
+        try {
+            let player = targetId;
+            if (typeof targetId === 'string') {
+                player = (window._currentInscritosPlayersMap && window._currentInscritosPlayersMap[targetId]) || 
+                         (window.EventsController?.state?.users?.find?.(u => (u.id === targetId || u.uid === targetId))) ||
+                         { id: targetId, uid: targetId, name: 'Jugador' };
+            }
+
+            const targetUid = player.id || player.uid;
+            const currentUser = (window.Store && typeof window.Store.getState === 'function' && window.Store.getState('currentUser')) || 
+                                window.currentUser || 
+                                (window.ChatView && typeof window.ChatView.getCurrentUser === 'function' && window.ChatView.getCurrentUser()) ||
+                                null;
+            const myUid = currentUser ? (currentUser.id || currentUser.uid) : null;
+
+            if (targetUid && myUid && targetUid === myUid) {
+                if (typeof window.alert === 'function') window.alert("¡Ese eres tú! No puedes abrir un chat privado contigo mismo.");
+                else if (typeof alert === 'function') alert("¡Ese eres tú! No puedes abrir un chat privado contigo mismo.");
+                return;
+            }
+
+            if (typeof window.PlayerView?.haptic === 'function') window.PlayerView.haptic(20);
+
+            const targetUserPayload = {
+                id: targetUid,
+                uid: targetUid,
+                name: player.name || player.displayName || 'Jugador',
+                photo_url: player.photo_url || player.photoURL || player.avatar || 'img/logo_somospadel.png',
+                level: player.level || player.nivel || 3.5
+            };
+
+            if (window.ChatView && typeof window.ChatView.openDirectChat === 'function') {
+                await window.ChatView.openDirectChat(targetUserPayload);
+            } else {
+                console.warn("[openDirectChatWithPlayer] ChatView no inicializado");
+                alert("El chat de SomosPadel se está cargando. Inténtalo de nuevo en unos segundos.");
+            }
+        } catch (err) {
+            console.error("❌ Error en openDirectChatWithPlayer:", err);
         }
     };
 })();

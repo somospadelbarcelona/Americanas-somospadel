@@ -291,6 +291,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/mobile-header-fix.css?v=RESPONSIVE_ULTRA_v2">
     <link rel="stylesheet" href="css/responsive-global.css?v=WOW_DOCK_v2">
+    <link rel="stylesheet" href="css/sp-chat-modal.css?v=1.1_WHITE_THEME">
 
     <script>
         // registry initialization
@@ -725,6 +726,17 @@
 
                 <!-- DESTACADOS & EN VIVO (2 ESFERAS DINÁMICAS AUTO-ROTATIVAS EN EL HEADER) -->
                 <div id="header-story-rotator" class="header-story-rotator"></div>
+
+                <!-- ACCESO A MIS MENSAJES / CHAT (PLAYTOMIC STYLE) -->
+                <button type="button"
+                    class="header-notif-btn haptic-feedback sp-chat-header-btn"
+                    id="btn-header-chat"
+                    title="Mis Mensajes"
+                    aria-label="Abrir mis mensajes"
+                    onclick="if(window.ChatView) window.ChatView.openInbox();">
+                    <i class="fas fa-comment-dots" id="chat-header-icon" style="color: #0f172a;"></i>
+                    <span id="chat-unread-badge" class="notif-header-badge sp-unread-chat-badge" style="display: none; background: #CCFF00; color: #0a0f1d; border: 1.5px solid #0f172a;">0</span>
+                </button>
 
                 <!-- CENTRO DE NOTIFICACIONES (OFICIAL SOMOSPADEL CYBER-PADEL) -->
                 <button type="button"
@@ -3057,6 +3069,21 @@
             </div>
 
             <div class="community-popup-options">
+                <!-- 0. CHAT GENERAL DE LA COMUNIDAD -->
+                <button class="community-opt-btn" onclick="window.ChatView?.openGeneralCommunityChat(); window.closeCommunityMenu && window.closeCommunityMenu(); window.toggleCommunityMenu && window.toggleCommunityMenu(event);">
+                    <div class="opt-icon-box" style="background: rgba(204, 255, 0, 0.15); border: 1px solid rgba(204, 255, 0, 0.45); color: #CCFF00;">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <div class="opt-text-box">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <div class="opt-title" style="color: #ffffff; font-weight: 950;">CHAT GENERAL COMUNIDAD</div>
+                            <span class="opt-badge-pill" style="background: #CCFF00; color: #000; font-weight: 900;">ONLINE</span>
+                        </div>
+                        <div class="opt-desc">Habla con todos los integrantes de SomosPadel</div>
+                    </div>
+                    <i class="fas fa-chevron-right opt-arrow" style="color: #CCFF00;"></i>
+                </button>
+
                 <!-- 1. INICIO COMUNIDAD -->
                 <button class="community-opt-btn" onclick="window.selectCommunityOption('comunidad')">
                     <div class="opt-icon-box" style="background: rgba(204, 255, 0, 0.15); border: 1px solid rgba(204, 255, 0, 0.35); color: #CCFF00;">
@@ -4786,7 +4813,7 @@
     <script src="js/modules/dashboard/StoryFeedWidget.js?v=FAST_SWIPE_v3" defer></script>
     <script src="js/modules/dashboard/PadelPulse.js?v=6.2" defer></script>
     <script src="js/modules/dashboard/NewsCatalog.js?v=1.2" defer></script>
-    <script src="js/modules/dashboard/DashboardView_hotfix.js?v=SOMOSPADEL_SOCIAL_v9" defer></script>
+    <script src="js/modules/dashboard/DashboardView_hotfix.js?v=SOMOSPADEL_SOCIAL_v10_CHAT_GENERAL" defer></script>
     <script src="js/modules/dashboard/DashboardController.js" defer></script>
     <script src="js/utils/RoleService.js?v=PLAYER_AMERICANAS_v1" defer></script>
     <script src="js/modules/stats/AchievementsService.js?v=1.0" defer></script>
@@ -4800,8 +4827,8 @@
     <script src="js/modules/americanas/ControlTowerSummary.js?v=5.5_SUMMARY" defer></script>
     <script src="js/modules/americanas/ControlTowerView.js?v=4045_PRIVATE_LOCK" defer></script>
     <script src="js/modules/americanas/TVView.js?v=2.0" defer></script>
-    <script src="js/modules/chat/ChatService.js?v=1.1" defer></script>
-    <script src="js/modules/chat/ChatView.js?v=1.2" defer></script>
+    <script src="js/modules/chat/ChatService.js?v=2.0_PLAYTOMIC_CHAT" defer></script>
+    <script src="js/modules/chat/ChatView.js?v=2.0_PLAYTOMIC_CHAT" defer></script>
     <script src="js/modules/americanas/EntrenoLiveView.js" defer></script>
     <script src="js/modules/americanas/EventsController_V6.js?v=SUBNAV_FINALIZADAS_COMPACT_ALL_V6" defer></script>
     <script src="js/modules/common/SocialShareService.js" defer></script>
@@ -4856,7 +4883,8 @@
 
     <!-- Match Story Card (Post-Match Shareable) -->
     <script src="js/modules/players/MatchStoryCard.js?v=1.4" defer></script>
-    <script src="js/modules/players/PadelFutCard.js?v=RESPONSIVE_ULTRA_v2" defer></script>
+    <script src="js/modules/players/PlayerHistoryService.js?v=2026.1" defer></script>
+    <script src="js/modules/players/PadelFutCard.js?v=COTILLEAR_WHITE_v2026_2" defer></script>
     <script src="js/modules/court/CourtScoreboard.js?v=RESPONSIVE_MOBILE_v2" defer></script>
 
     <!-- Entry Point -->

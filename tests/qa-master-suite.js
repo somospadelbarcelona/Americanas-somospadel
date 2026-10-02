@@ -91,6 +91,9 @@ runSubtest("Logo de Inicio, Dimensionamiento & Centrado Responsive", "test-login
 // 20. Suplentes, Reservas y Cotillear Perfil en Modal Roster
 runSubtest("Suplentes, Reservas y Cotillear Perfil (EventsController QA)", "test-suplentes-cotillear-battle-qa.js");
 
+// 21. Chat Estilo Playtomic (ChatService & ChatView QA)
+runSubtest("Chat Estilo Playtomic (ChatService & ChatView QA)", "test-chat-playtomic-qa.js");
+
 console.log("\n================================================================");
 console.log(" RESUMEN GLOBAL DE CALIDAD:");
 reports.forEach(r => {
