@@ -315,6 +315,11 @@
                         }
                     }
 
+                    // Auto-reconcile desincronizaciones entre jugadores inscritos y partidos programados (si no han empezado)
+                    if (this.allMatches.length > 0 && window.RoundAutoRegenerationService && !this.isGeneratingRound) {
+                        window.RoundAutoRegenerationService.reconcileEventRounds(eventId, isEntreno ? 'entreno' : 'americana').catch(() => {});
+                    }
+
                     // --- DETECT NEW DRAW FOR ANIMATION (Improved for Sync) ---
                     if (this.allMatches.length > 0 && window.ShuffleAnimator && !this.isGeneratingRound) {
                         const maxRound = Math.max(...this.allMatches.map(m => parseInt(m.round)));

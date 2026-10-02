@@ -439,7 +439,14 @@
                 this.invalidateActiveEventsCache();
                 console.log(`✅ ${logId} Inscripción completada con éxito.`);
 
-                // 5. TAREAS DE FONDO (Sin esperar a que terminen)
+                // 5. AUTO-REGENERACIÓN DE RONDAS SI LA RONDA YA FUE GENERADA Y NO HA EMPEZADO
+                if (window.RoundAutoRegenerationService && typeof window.RoundAutoRegenerationService.checkAndHandlePlayerAdded === 'function') {
+                    window.RoundAutoRegenerationService.checkAndHandlePlayerAdded(americanaId, type, newPlayerData, { responsible: 'automatic' }).catch(e => {
+                        console.warn("⚠️ [AmericanaService] Error en auto-regeneración de ronda:", e);
+                    });
+                }
+
+                // 6. TAREAS DE FONDO (Sin esperar a que terminen)
                 if (window.NotificationService) {
                     window.NotificationService.sendNotificationToUser(userUid, "Inscripción OK", `Te has apuntado a ${event.name || type}.`, { url: 'live', eventId: americanaId }).catch(() => {});
                 }
