@@ -14,11 +14,33 @@
     box-sizing: border-box !important;
 }
 
-.cmd-brand {
+.header-left-cluster {
     display: flex !important;
     align-items: center !important;
-    min-width: 0 !important; /* Allow shrinking */
-    flex: 0 1 auto !important;
+    gap: 8px !important;
+    flex-shrink: 0 !important;
+    min-width: fit-content !important;
+    z-index: 10;
+}
+
+.cmd-brand,
+.header-ball-brand {
+    display: flex !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    min-width: fit-content !important;
+}
+
+.cmd-brand img,
+#header-somospadel-ball-logo {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    flex-shrink: 0 !important;
+    object-fit: contain !important;
+    filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.15)) !important;
 }
 
 .header-story-rotator {
@@ -58,6 +80,40 @@
         padding: 0 12px !important;
         height: 64px !important;
         gap: 8px !important;
+    }
+
+    /* Header Left Cluster (Burger + Ball Logo) compact & persistent */
+    .header-left-cluster {
+        gap: 6px !important;
+        flex-shrink: 0 !important;
+    }
+    .header-burger-btn {
+        width: 38px !important;
+        height: 38px !important;
+        border-radius: 12px !important;
+        font-size: 1.15rem !important;
+        flex-shrink: 0 !important;
+    }
+    .cmd-brand,
+    .header-ball-brand {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        flex-shrink: 0 !important;
+    }
+    .cmd-brand img,
+    #header-somospadel-ball-logo {
+        height: 35px !important;
+        width: 35px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        flex-shrink: 0 !important;
+    }
+    .header-brand-title-text {
+        font-size: 0.52rem !important;
+        letter-spacing: 0.5px !important;
+        display: block !important;
     }
 
     /* Show slogan with compact but perfectly legible font */
@@ -231,6 +287,29 @@
 
 /* VERY NARROW PHONES (<= 380px) */
 @media (max-width: 380px) {
+    .header-left-cluster {
+        gap: 5px !important;
+        flex-shrink: 0 !important;
+    }
+    .header-burger-btn {
+        width: 36px !important;
+        height: 36px !important;
+        border-radius: 10px !important;
+        font-size: 1.05rem !important;
+    }
+    .cmd-brand img,
+    #header-somospadel-ball-logo {
+        height: 32px !important;
+        width: 32px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        flex-shrink: 0 !important;
+    }
+    .header-brand-title-text {
+        font-size: 0.48rem !important;
+        letter-spacing: 0.3px !important;
+    }
     .header-rotator-label {
         display: none !important; /* Ocultar texto y dejar solo las 2 esferas limpias */
     }
@@ -249,6 +328,29 @@
 
 /* ULTRA TINY SCREENS (iPhone SE, etc. <= 340px) */
 @media (max-width: 340px) {
+    .header-left-cluster {
+        gap: 4px !important;
+        flex-shrink: 0 !important;
+    }
+    .header-burger-btn {
+        width: 34px !important;
+        height: 34px !important;
+        border-radius: 9px !important;
+        font-size: 0.95rem !important;
+    }
+    .cmd-brand img,
+    #header-somospadel-ball-logo {
+        height: 30px !important;
+        width: 30px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        flex-shrink: 0 !important;
+    }
+    .header-brand-title-text {
+        font-size: 0.44rem !important;
+        letter-spacing: 0.2px !important;
+    }
     .cmd-brand span[style*="font-size: 1.1rem"] {
         display: none !important; /* Hide "SOMOSPADEL BCN" on tiny screens to fit slogan */
     }

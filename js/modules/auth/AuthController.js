@@ -44,37 +44,6 @@
                     }
                 }
             };
-
-            // Global Helper for Guest Mode bypass
-            if (!window.loginAsGuest) {
-                window.loginAsGuest = () => {
-                    const guestUser = {
-                        id: 'guest_user',
-                        uid: 'guest_user',
-                        name: 'Jugador Invitado',
-                        displayName: 'Jugador Invitado',
-                        email: 'invitado@somospadel.com',
-                        role: 'guest',
-                        level: 3.5,
-                        isGuest: true
-                    };
-                    if (window.Store && typeof window.Store.setState === 'function') {
-                        window.Store.setState('currentUser', guestUser);
-                    }
-                    const authModal = document.getElementById('auth-modal');
-                    const appShell = document.getElementById('app-shell');
-                    if (authModal) {
-                        authModal.classList.add('dematerialize');
-                        setTimeout(() => {
-                            authModal.style.setProperty('display', 'none', 'important');
-                        }, 250);
-                    }
-                    if (appShell) appShell.classList.remove('hidden');
-                    if (window.Router && typeof window.Router.navigate === 'function') {
-                        window.Router.navigate('dashboard', false, true);
-                    }
-                };
-            }
         }
 
         init() {
@@ -86,16 +55,6 @@
                 // Brute force replacement to kill old listeners
                 const newLoginForm = loginForm.cloneNode(true);
                 loginForm.parentNode.replaceChild(newLoginForm, loginForm);
-
-                // Bind guest button inside cloned form
-                const guestBtn = newLoginForm.querySelector('.sport-btn-guest');
-                if (guestBtn) {
-                    guestBtn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        window.loginAsGuest();
-                    });
-                }
 
                 // 🧠 [PRO] MEMORIA DE USUARIO: Recuperar teléfono guardado
                 const savedPhone = localStorage.getItem('remembered_phone');

@@ -699,22 +699,26 @@
             <div class="cmd-bar"
                 style="display: flex; justify-content: space-between; align-items: center; padding: 0 20px; height: 72px; background: #ffffff !important; border-bottom: 1px solid #f1f5f9; box-shadow: 0 2px 10px rgba(15, 23, 42, 0.02);">
 
-                <div class="header-burger-btn haptic-feedback"
-                    id="btn-open-side-drawer"
-                    title="Menú lateral de opciones"
-                    aria-label="Abrir Menú SomosPadel"
-                    style="color: #0a192f; font-size: 1.25rem; cursor: pointer; background: #f8fafc; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 14px; border: 1.5px solid #e2e8f0; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);"
-                    onclick="window.PlayerView?.haptic?.(20); window.openDrawer ? window.openDrawer() : (document.getElementById('side-drawer-container')?.classList.add('open'), document.getElementById('side-drawer-menu')?.classList.add('open'));">
-                    <i class="fas fa-bars"></i>
-                </div>
+                <!-- LEFT CLUSTER: 3-BAR HAMBURGER + SOMOSPADEL OFFICIAL BALL LOGO (ALWAYS VISIBLE & TIGHTLY PLACED) -->
+                <div class="header-left-cluster" style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; min-width: fit-content; z-index: 10;">
+                    <div class="header-burger-btn haptic-feedback"
+                        id="btn-open-side-drawer"
+                        title="Menú lateral de opciones"
+                        aria-label="Abrir Menú SomosPadel"
+                        style="color: #0a192f; font-size: 1.25rem; cursor: pointer; background: #f8fafc; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 14px; border: 1.5px solid #e2e8f0; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04); flex-shrink: 0;"
+                        onclick="window.PlayerView?.haptic?.(20); window.openDrawer ? window.openDrawer() : (document.getElementById('side-drawer-container')?.classList.add('open'), document.getElementById('side-drawer-menu')?.classList.add('open'));">
+                        <i class="fas fa-bars"></i>
+                    </div>
 
-                <div class="cmd-brand" style="display: flex; align-items: center; gap: 10px;">
-                    <div style="display: flex; flex-direction: column; align-items: center; gap: 1px;">
-                        <img src="img/logo_somospadel.png?v=60.1"
-                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-                             style="height: 40px; display: block; object-fit: contain; filter: drop-shadow(0px 1px 2px rgba(0,0,0,0.15));">
-                        <div style="display:none; color:var(--brand-neon); font-size:1.5rem; font-weight:900; align-items:center; justify-content:center;">🎾</div>
-                        <span style="font-size: 0.58rem; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.8px; white-space: nowrap;">SOMOSPADEL BCN</span>
+                    <div class="cmd-brand header-ball-brand" style="display: flex; align-items: center; cursor: pointer; flex-shrink: 0; min-width: fit-content;" onclick="window.scrollTo({top: 0, behavior: 'smooth'});">
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 1px; flex-shrink: 0;">
+                            <img src="img/logo_somospadel.png?v=61.0"
+                                 id="header-somospadel-ball-logo"
+                                 alt="Somos Padel Barcelona"
+                                 onerror="this.onerror=null; this.src='img/official_ball_logo.png';"
+                                 style="height: 38px; width: 38px; display: block !important; visibility: visible !important; opacity: 1 !important; object-fit: contain; filter: drop-shadow(0px 1px 2px rgba(0,0,0,0.15)) !important; flex-shrink: 0;">
+                            <span class="header-brand-title-text" style="font-size: 0.56rem; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.7px; white-space: nowrap; display: block !important; line-height: 1;">SOMOSPADEL BCN</span>
+                        </div>
                     </div>
                 </div>
 
@@ -4513,36 +4517,6 @@
                     }, 1800);
                 };
 
-                // === ACCESO COMO INVITADO (BYPASS INMEDIATO) ===
-                window.loginAsGuest = function() {
-                    if (navigator.vibrate) navigator.vibrate([30, 20, 30]);
-                    const guestUser = {
-                        id: 'guest_user',
-                        uid: 'guest_user',
-                        name: 'Jugador Invitado',
-                        displayName: 'Jugador Invitado',
-                        email: 'invitado@somospadel.com',
-                        role: 'guest',
-                        level: 3.5,
-                        isGuest: true
-                    };
-                    if (window.Store && typeof window.Store.setState === 'function') {
-                        window.Store.setState('currentUser', guestUser);
-                    }
-                    const authModal = document.getElementById('auth-modal');
-                    const appShell = document.getElementById('app-shell');
-                    if (authModal) {
-                        authModal.classList.add('dematerialize');
-                        setTimeout(() => {
-                            authModal.style.setProperty('display', 'none', 'important');
-                        }, 250);
-                    }
-                    if (appShell) appShell.classList.remove('hidden');
-                    if (window.Router && typeof window.Router.navigate === 'function') {
-                        window.Router.navigate('dashboard', false, true);
-                    }
-                };
-
                 // === GLOBAL AUTH MODE TOGGLER ===
                 window.toggleAuthMode = function(mode) {
                     if (navigator.vibrate) navigator.vibrate(15);
@@ -4618,14 +4592,6 @@
                     <span class="bio-security-badge">
                         <i class="fas fa-shield-halved"></i> SEGURO
                     </span>
-                </button>
-
-                <!-- Botón de Acceso Inmediato como Invitado / Explorar -->
-                <button type="button" onclick="window.loginAsGuest()" class="sport-btn-guest" style="
-                    width: 100%; margin-top: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.16); color: #e2e8f0; padding: 12px 18px; border-radius: 14px; font-size: 0.82rem; font-weight: 850; font-family: 'Outfit', sans-serif; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease;
-                " onmouseover="this.style.background='rgba(56, 189, 248, 0.12)'; this.style.borderColor='#38bdf8'; this.style.color='#ffffff';" onmouseout="this.style.background='rgba(255, 255, 255, 0.05)'; this.style.borderColor='rgba(255, 255, 255, 0.16)'; this.style.color='#e2e8f0';">
-                    <i class="fas fa-compass" style="color: #38bdf8;"></i>
-                    <span>CONTINUAR COMO INVITADO / EXPLORAR</span>
                 </button>
 
                 <!-- Acciones Footer: Tarjeta Espectacular de Nuevo Jugador (Reemplaza a Invitado) -->

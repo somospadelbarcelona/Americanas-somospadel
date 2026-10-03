@@ -478,7 +478,7 @@ const sendPushNotificationHandler = async (snapshot, context) => {
                 body: body,
                 icon: '/img/logo_somospadel.png',
                 badge: '/img/badge_somospadel.png',
-                color: '#dde125',
+                color: '#CCFF00',
                 tag: notification.tag || snapshot.id,
                 renotify: true
             },
@@ -642,7 +642,7 @@ async function sendTopicNotification(topic, title, body, targetUrl, customData =
                 body: body,
                 icon: '/img/logo_somospadel.png',
                 badge: '/img/badge_somospadel.png',
-                color: '#dde125',
+                color: '#CCFF00',
                 tag: tag || `topic_${topic}_${Date.now()}`,
                 renotify: true
             },
