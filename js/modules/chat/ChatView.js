@@ -187,6 +187,11 @@
                 this.startGlobalUnreadWatcher(uid);
             }
 
+            // Precarga en segundo plano de jugadores para búsqueda instantánea (0ms)
+            if (window.ChatService && typeof window.ChatService.getPlayersPool === 'function') {
+                window.ChatService.getPlayersPool().catch(() => {});
+            }
+
             this.activeView = 'inbox';
             this.activeTab = tab;
             this.currentFilter = '';
@@ -198,19 +203,19 @@
                 <!-- HEADER BANDEJA -->
                 <div class="sp-chat-header">
                     <div class="sp-chat-header-left">
-                        <div class="sp-chat-avatar" style="background: #0f172a; color: var(--sp-chat-neon);">
+                        <div class="sp-chat-avatar" style="background: #0f172a; color: var(--sp-chat-neon); box-shadow: 0 0 12px rgba(204,255,0,0.25);">
                             <i class="fas fa-comment-dots"></i>
                         </div>
                         <div class="sp-chat-header-title-wrap">
                             <h2 class="sp-chat-header-title">Mis Mensajes</h2>
                             <div class="sp-chat-header-sub">
-                                <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>
-                                SomosPadel Barcelona
+                                <span class="sp-chat-live-pulse-dot" style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#10b981; box-shadow:0 0 6px #10b981;"></span>
+                                <span>En directo • SomosPadel BCN</span>
                             </div>
                         </div>
                     </div>
                     <div class="sp-chat-header-actions">
-                        <button class="sp-chat-icon-btn" onclick="window.ChatView.close()" title="Cerrar">
+                        <button class="sp-chat-icon-btn" onclick="window.PlayerView?.haptic?.(10); window.ChatView.close()" title="Cerrar">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
@@ -221,27 +226,45 @@
                     <!-- BUSCADOR -->
                     <div class="sp-chat-search-wrap" style="position: relative;">
                         <div class="sp-chat-search-box">
-                            <i class="fas fa-search"></i>
+                            <i class="fas fa-search" style="color: #CCFF00;"></i>
                             <input type="text" 
                                 id="sp-chat-search-input" 
                                 class="sp-chat-search-input" 
                                 placeholder="Buscar chats o jugadores..." 
                                 oninput="window.ChatView.handleSearch(this.value)">
+                            <button id="sp-chat-search-clear" 
+                                    class="sp-chat-search-clear" 
+                                    onclick="window.ChatView.clearSearch()" 
+                                    style="display: none;" 
+                                    title="Limpiar búsqueda">
+                                <i class="fas fa-times-circle"></i>
+                            </button>
                         </div>
                         <div id="sp-chat-player-results" class="sp-chat-player-results-dropdown"></div>
                     </div>
 
-                    <!-- PESTAÑAS (PILLS) -->
+                    <!-- CARRUSEL DE CONEXIÓN RÁPIDA (JUGADORES EN PISTA) -->
+                    <div id="sp-chat-quick-players-bar" class="sp-chat-quick-players-bar"></div>
+
+                    <!-- PESTAÑAS (SEGMENTED CONTROL) -->
                     <div class="sp-chat-tabs">
                         <button class="sp-chat-tab-pill ${this.activeTab === 'events' ? 'active' : ''}" 
                             id="sp-chat-tab-events" 
                             onclick="window.ChatView.switchTab('events')">
-                            <i class="fas fa-trophy"></i> Eventos & Partidos
+                            <i class="fas fa-trophy"></i> Partidos
+                            <span class="sp-chat-tab-badge" id="sp-chat-tab-badge-events" style="display:none;"></span>
                         </button>
                         <button class="sp-chat-tab-pill ${this.activeTab === 'direct' ? 'active' : ''}" 
                             id="sp-chat-tab-direct" 
                             onclick="window.ChatView.switchTab('direct')">
                             <i class="fas fa-user-friends"></i> Privados
+                            <span class="sp-chat-tab-badge" id="sp-chat-tab-badge-direct" style="display:none;"></span>
+                        </button>
+                        <button class="sp-chat-tab-pill ${this.activeTab === 'unread' ? 'active' : ''}" 
+                            id="sp-chat-tab-unread" 
+                            onclick="window.ChatView.switchTab('unread')">
+                            <i class="fas fa-bell"></i> No leídos
+                            <span class="sp-chat-tab-badge sp-chat-tab-badge-highlight" id="sp-chat-tab-badge-unread" style="display:none;"></span>
                         </button>
                     </div>
 
@@ -256,18 +279,110 @@
             `;
 
             backdrop.classList.add('active');
+            this.loadQuickPlayersBar();
             this.renderInboxList();
         }
 
         switchTab(tab) {
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(15);
             this.activeTab = tab;
             document.getElementById('sp-chat-tab-events')?.classList.toggle('active', tab === 'events');
             document.getElementById('sp-chat-tab-direct')?.classList.toggle('active', tab === 'direct');
+            document.getElementById('sp-chat-tab-unread')?.classList.toggle('active', tab === 'unread');
             this.renderInboxList();
+        }
+
+        clearSearch() {
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(10);
+            const inputEl = document.getElementById('sp-chat-search-input');
+            const clearBtn = document.getElementById('sp-chat-search-clear');
+            const resultsEl = document.getElementById('sp-chat-player-results');
+            if (inputEl) inputEl.value = '';
+            if (clearBtn) clearBtn.style.display = 'none';
+            if (resultsEl) resultsEl.innerHTML = '';
+            this.currentFilter = '';
+            this.renderInboxList();
+        }
+
+        focusSearchInput() {
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(15);
+            const inputEl = document.getElementById('sp-chat-search-input');
+            if (inputEl) {
+                inputEl.focus();
+                inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        async loadQuickPlayersBar() {
+            const barEl = document.getElementById('sp-chat-quick-players-bar');
+            if (!barEl) return;
+
+            try {
+                let players = [];
+                if (window.ChatService && typeof window.ChatService.getPlayersPool === 'function') {
+                    players = await window.ChatService.getPlayersPool();
+                } else if (Array.isArray(window.allUsersCache)) {
+                    players = window.allUsersCache;
+                }
+
+                const user = this.getCurrentUser();
+                const myUid = user ? (user.id || user.uid) : null;
+                const filteredPlayers = (players || []).filter(p => (p.id || p.uid) !== myUid).slice(0, 10);
+
+                if (filteredPlayers.length === 0) {
+                    barEl.style.display = 'none';
+                    return;
+                }
+
+                barEl.style.display = 'flex';
+                let html = `
+                    <div class="sp-chat-quick-player-item sp-chat-quick-explore" onclick="window.ChatView.focusSearchInput()" title="Buscar jugador">
+                        <div class="sp-chat-quick-player-avatar sp-chat-quick-avatar-explore">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <span class="sp-chat-quick-player-name">Explorar</span>
+                    </div>
+                `;
+
+                filteredPlayers.forEach(p => {
+                    const pid = this.escapeHtml(String(p.id || p.uid || ''));
+                    const pName = this.escapeHtml(p.name || p.displayName || 'Jugador');
+                    const firstName = pName.split(' ')[0];
+                    const photo = p.photo_url || p.photoURL || p.avatar;
+                    const level = p.level || p.nivel;
+                    const levelBadge = level ? `<span class="sp-chat-quick-player-badge">${level}</span>` : '';
+                    const avatarContent = photo 
+                        ? `<img src="${photo}" alt="${pName}" loading="lazy">` 
+                        : `<span>${this.getInitials(pName)}</span>`;
+
+                    html += `
+                        <div class="sp-chat-quick-player-item" 
+                             onclick="window.PlayerView?.haptic?.(20); window.ChatView.startDirectChatWithPlayerById('${pid}')" 
+                             title="Chatear con ${pName}">
+                            <div class="sp-chat-quick-player-avatar">
+                                ${avatarContent}
+                                ${levelBadge}
+                                <span class="sp-chat-online-dot"></span>
+                            </div>
+                            <span class="sp-chat-quick-player-name">${firstName}</span>
+                        </div>
+                    `;
+                });
+
+                barEl.innerHTML = html;
+            } catch (e) {
+                console.warn("[ChatView] Error cargando quick players bar:", e);
+                if (barEl) barEl.style.display = 'none';
+            }
         }
 
         handleSearch(query) {
             this.currentFilter = (query || '').toLowerCase().trim();
+            const clearBtn = document.getElementById('sp-chat-search-clear');
+            if (clearBtn) {
+                clearBtn.style.display = this.currentFilter ? 'flex' : 'none';
+            }
+
             this.renderInboxList(); // sigue filtrando chats existentes
 
             // Si hay 2+ caracteres, buscar jugadores también
@@ -295,33 +410,45 @@
             const resultsEl = document.getElementById('sp-chat-player-results');
             if (!resultsEl) return;
 
+            this._lastSearchResults = Array.isArray(players) ? players : [];
+
             if (!players || players.length === 0) {
-                resultsEl.innerHTML = `<div class="sp-chat-no-players-found">Sin resultados para "${query}"</div>`;
+                resultsEl.innerHTML = `<div class="sp-chat-no-players-found">Sin resultados para "${this.escapeHtml(query)}"</div>`;
                 return;
             }
 
             resultsEl.innerHTML = players.map(p => {
-                const playerJson = JSON.stringify({ id: p.id || p.uid, name: p.name || p.displayName || '', photo_url: p.photo_url || p.photoURL || '', level: p.level || p.nivel || '' })
-                    .replace(/'/g, "\\'");
+                const playerId = this.escapeHtml(String(p.id || p.uid || ''));
+                const safeName = this.escapeHtml(p.name || p.displayName || 'Jugador');
                 const avatarHtml = (p.photo_url || p.photoURL)
-                    ? `<img src="${p.photo_url || p.photoURL}" alt="${p.name || ''}" loading="lazy">`
+                    ? `<img src="${p.photo_url || p.photoURL}" alt="${safeName}" loading="lazy">`
                     : `${(p.name || p.displayName || '?')[0].toUpperCase()}`;
                 const levelLabel = p.level || p.nivel ? `⭐ ${p.level || p.nivel}` : '';
                 return `
-                <div class="sp-chat-player-result" onclick="window.ChatView.startDirectChatWithPlayer(${playerJson.replace(/"/g, '&quot;')})">
+                <div class="sp-chat-player-result" 
+                     data-player-id="${playerId}"
+                     onclick="window.ChatView.startDirectChatWithPlayerById('${playerId}')">
                     <div class="sp-chat-player-result-avatar">${avatarHtml}</div>
                     <div class="sp-chat-player-result-info">
-                        <span class="sp-chat-player-result-name">${p.name || p.displayName || 'Jugador'}</span>
+                        <span class="sp-chat-player-result-name">${safeName}</span>
                         ${levelLabel ? `<span class="sp-chat-player-result-level">${levelLabel}</span>` : ''}
                     </div>
-                    <button class="sp-chat-player-result-btn" title="Enviar mensaje privado">
+                    <button class="sp-chat-player-result-btn" 
+                            onclick="event.stopPropagation(); window.ChatView.startDirectChatWithPlayerById('${playerId}')"
+                            title="Enviar mensaje privado">
                         <i class="fas fa-comment-dots"></i>
                     </button>
                 </div>`;
             }).join('');
         }
 
-        /* ── Inicia chat directo desde resultado de búsqueda ── */
+        /* ── Inicia chat directo desde resultado de búsqueda por ID o por Objeto ── */
+        startDirectChatWithPlayerById(playerId) {
+            if (!playerId) return;
+            const player = (this._lastSearchResults || []).find(p => (p.id || p.uid) === playerId) || { id: playerId, uid: playerId };
+            this.startDirectChatWithPlayer(player);
+        }
+
         startDirectChatWithPlayer(player) {
             // Oculta el dropdown de resultados
             const resultsEl = document.getElementById('sp-chat-player-results');
@@ -329,9 +456,64 @@
             // Limpia el input
             const inputEl = document.getElementById('sp-chat-search-input');
             if (inputEl) inputEl.value = '';
+            const clearBtn = document.getElementById('sp-chat-search-clear');
+            if (clearBtn) clearBtn.style.display = 'none';
             this.currentFilter = '';
             // Abre el chat directo
             this.openDirectChat(player);
+        }
+
+        calculateTabUnreadCounts(myUid) {
+            let eventsUnread = 0;
+            let directUnread = 0;
+
+            (this.currentChats || []).forEach(chat => {
+                let unread = 0;
+                if (chat.unreadCount && typeof chat.unreadCount[myUid] === 'number') {
+                    unread = chat.unreadCount[myUid];
+                } else if (chat.lastSenderId && chat.lastSenderId !== myUid) {
+                    const lastRead = chat.readTimestamps && chat.readTimestamps[myUid];
+                    const readTime = lastRead?.toMillis ? lastRead.toMillis() : (lastRead instanceof Date ? lastRead.getTime() : 0);
+                    const msgTime = chat.lastMessageTime?.toMillis ? chat.lastMessageTime.toMillis() : (chat.lastMessageTime instanceof Date ? chat.lastMessageTime.getTime() : 0);
+                    if (msgTime > readTime) unread = 1;
+                }
+
+                if (unread > 0) {
+                    const isEvent = chat.type === 'event' || String(chat.id).startsWith('event_');
+                    if (isEvent) eventsUnread += unread;
+                    else directUnread += unread;
+                }
+            });
+
+            return {
+                eventsUnread,
+                directUnread,
+                totalUnread: eventsUnread + directUnread
+            };
+        }
+
+        updateTabBadges(counts) {
+            const user = this.getCurrentUser();
+            const myUid = user ? (user.id || user.uid) : null;
+            const c = counts || this.calculateTabUnreadCounts(myUid);
+
+            const bEvents = document.getElementById('sp-chat-tab-badge-events');
+            if (bEvents) {
+                bEvents.textContent = c.eventsUnread > 99 ? '99+' : c.eventsUnread;
+                bEvents.style.display = c.eventsUnread > 0 ? 'inline-flex' : 'none';
+            }
+
+            const bDirect = document.getElementById('sp-chat-tab-badge-direct');
+            if (bDirect) {
+                bDirect.textContent = c.directUnread > 99 ? '99+' : c.directUnread;
+                bDirect.style.display = c.directUnread > 0 ? 'inline-flex' : 'none';
+            }
+
+            const bUnread = document.getElementById('sp-chat-tab-badge-unread');
+            if (bUnread) {
+                bUnread.textContent = c.totalUnread > 99 ? '99+' : c.totalUnread;
+                bUnread.style.display = c.totalUnread > 0 ? 'inline-flex' : 'none';
+            }
         }
 
         renderInboxList() {
@@ -341,13 +523,28 @@
             const user = this.getCurrentUser();
             const myUid = user ? (user.id || user.uid) : null;
 
+            // Actualizar contadores de las pestañas
+            this.updateTabBadges();
+
             // Filtrar chats según la pestaña activa
             let filtered = (this.currentChats || []).filter(c => {
                 if (this.activeTab === 'events') {
                     return c.type === 'event' || String(c.id).startsWith('event_');
-                } else {
+                } else if (this.activeTab === 'direct') {
                     return c.type === 'direct' || String(c.id).startsWith('direct_');
+                } else if (this.activeTab === 'unread') {
+                    let unread = 0;
+                    if (c.unreadCount && typeof c.unreadCount[myUid] === 'number') {
+                        unread = c.unreadCount[myUid];
+                    } else if (c.lastSenderId && c.lastSenderId !== myUid) {
+                        const lastRead = c.readTimestamps && c.readTimestamps[myUid];
+                        const readTime = lastRead?.toMillis ? lastRead.toMillis() : (lastRead instanceof Date ? lastRead.getTime() : 0);
+                        const msgTime = c.lastMessageTime?.toMillis ? c.lastMessageTime.toMillis() : (c.lastMessageTime instanceof Date ? c.lastMessageTime.getTime() : 0);
+                        if (msgTime > readTime) unread = 1;
+                    }
+                    return unread > 0;
                 }
+                return true;
             });
 
             // Filtrar por término de búsqueda
@@ -367,30 +564,21 @@
                         <!-- TARJETA FIJADA: CHAT GENERAL SOMOSPADEL -->
                         <div class="sp-chat-card sp-chat-card-pinned" 
                              onclick="window.PlayerView?.haptic?.(20); window.ChatView.openGeneralCommunityChat();"
-                             title="Abrir Chat General SomosPadel"
-                             style="
-                                 background: linear-gradient(135deg, rgba(204, 255, 0, 0.12) 0%, rgba(15, 23, 42, 0.95) 100%);
-                                 border: 1.5px solid #CCFF00;
-                                 margin-bottom: 12px;
-                                 box-shadow: 0 4px 18px rgba(204, 255, 0, 0.15), 0 4px 12px rgba(0,0,0,0.3);
-                                 cursor: pointer;
-                                 position: relative;
-                                 overflow: hidden;
-                             ">
-                            <div class="sp-chat-avatar" style="background: rgba(204, 255, 0, 0.2); color: #CCFF00; border: 1.5px solid #CCFF00;">
+                             title="Abrir Chat General SomosPadel">
+                            <div class="sp-chat-avatar" style="background: rgba(204, 255, 0, 0.18); color: #CCFF00; border: 1.5px solid #CCFF00; box-shadow: 0 0 10px rgba(204,255,0,0.3);">
                                 <i class="fas fa-bullhorn"></i>
                             </div>
                             <div class="sp-chat-card-main">
                                 <div class="sp-chat-card-top">
                                     <div style="display: flex; align-items: center; gap: 6px;">
-                                        <span style="font-size: 0.82rem;">📌</span>
+                                        <span style="font-size: 0.85rem;">📌</span>
                                         <span class="sp-chat-card-title" style="color: #CCFF00; font-weight: 900; letter-spacing: 0.3px;">🎾 CHAT GENERAL SOMOSPADEL</span>
                                     </div>
-                                    <span class="sp-chat-card-time" style="background: #CCFF00; color: #000; font-weight: 950; font-size: 0.58rem; padding: 2px 6px; border-radius: 6px; letter-spacing: 0.4px;">OFICIAL</span>
+                                    <span class="sp-chat-card-time" style="background: #CCFF00; color: #000; font-weight: 950; font-size: 0.60rem; padding: 2px 7px; border-radius: 8px; letter-spacing: 0.4px;">⚡ OFICIAL • EN VIVO</span>
                                 </div>
                                 <div class="sp-chat-card-bottom">
-                                    <span class="sp-chat-card-preview" style="color: #cbd5e1; font-weight: 600;">
-                                        La pista social de toda la comunidad • Habla con todos los jugadores
+                                    <span class="sp-chat-card-preview" style="color: #cbd5e1; font-weight: 600; line-height: 1.3;">
+                                        La pista social de la comunidad • Habla con todos los jugadores
                                     </span>
                                 </div>
                             </div>
@@ -402,20 +590,44 @@
             }
 
             if (filtered.length === 0) {
+                if (this.activeTab === 'unread') {
+                    listEl.innerHTML = `
+                        <div class="sp-chat-empty" style="padding: 36px 20px;">
+                            <div class="sp-chat-empty-icon" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="sp-chat-empty-title" style="color: #0f172a;">
+                                ¡Estás al día! 🎾
+                            </div>
+                            <div class="sp-chat-empty-desc">
+                                No tienes mensajes pendientes de lectura en tus partidos ni conversaciones privadas.
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
                 const isEvents = this.activeTab === 'events';
                 listEl.innerHTML = pinnedHtml + `
-                    <div class="sp-chat-empty" style="${pinnedHtml ? 'padding: 24px 20px;' : ''}">
+                    <div class="sp-chat-empty" style="${pinnedHtml ? 'padding: 24px 20px;' : 'padding: 36px 20px;'}">
                         <div class="sp-chat-empty-icon">
                             <i class="${isEvents ? 'fas fa-trophy' : 'fas fa-comments'}"></i>
                         </div>
                         <div class="sp-chat-empty-title">
-                            ${this.currentFilter ? 'Sin resultados para la búsqueda' : (isEvents ? 'No tienes otros chats de partidos activos' : 'No tienes chats privados')}
+                            ${this.currentFilter ? 'Sin resultados para la búsqueda' : (isEvents ? 'No tienes otros chats de partidos activos' : 'No tienes chats privados todavía')}
                         </div>
                         <div class="sp-chat-empty-desc">
                             ${isEvents 
                                 ? 'Únete a un entreno o americana para interactuar con tus compañeros y capitanes.' 
-                                : 'Puedes iniciar una conversación directa con otros jugadores desde su perfil o convocatorias.'}
+                                : 'Busca a cualquier compañero por su nombre arriba o envía mensajes directamente desde las convocatorias y partidos.'}
                         </div>
+                        ${!isEvents && !this.currentFilter ? `
+                        <div style="margin-top: 16px;">
+                            <button class="sp-chat-quick-start-btn" onclick="window.ChatView.focusSearchInput()">
+                                <i class="fas fa-bolt"></i> Buscar Jugadores Ahora
+                            </button>
+                        </div>
+                        ` : ''}
                     </div>
                 `;
                 return;
@@ -505,10 +717,11 @@
                         </div>
                         <div class="sp-chat-card-bottom">
                             <span class="sp-chat-card-preview">
+                                ${chat.lastSenderId === myUid ? '<span style="color:#38bdf8; font-size:0.75rem; margin-right:3px; font-weight:900;">✓✓</span>' : ''}
                                 ${lastSender ? `<strong style="color:${lastSenderColor};">${this.escapeHtml(lastSender)}:</strong> ` : ''}
                                 ${this.escapeHtml(lastMsg)}
                             </span>
-                            ${unreadCount > 0 ? `<span class="sp-unread-badge">${unreadCount > 9 ? '9+' : unreadCount}</span>` : ''}
+                            ${unreadCount > 0 ? `<span class="sp-unread-badge sp-chat-unread-pulse">${unreadCount > 9 ? '9+' : unreadCount}</span>` : ''}
                         </div>
                     </div>
                 </div>
@@ -629,12 +842,25 @@
                 return;
             }
 
+            if (typeof targetUser === 'string') {
+                targetUser = { id: targetUser, uid: targetUser, name: 'Jugador' };
+            }
+
             const targetUid = targetUser.id || targetUser.uid;
             const myUid = currentUser.id || currentUser.uid;
 
             if (targetUid === myUid) {
                 alert("No puedes abrir un chat privado contigo mismo.");
                 return;
+            }
+
+            // Resolver nombre si viene vacío
+            if (!targetUser.name || targetUser.name === 'Jugador') {
+                const cached = (this._lastSearchResults || []).find(p => (p.id || p.uid) === targetUid)
+                    || (window.allUsersCache || []).find(u => u.id === targetUid);
+                if (cached) {
+                    targetUser = { ...cached, ...targetUser, name: cached.name || cached.displayName || 'Jugador' };
+                }
             }
 
             try {
@@ -772,6 +998,28 @@
                             </button>
                         </div>
 
+                        <!-- RESPUESTAS RÁPIDAS DE PÁDEL (PADEL QUICK CHIPS) -->
+                        <div class="sp-chat-quick-replies">
+                            <button type="button" class="sp-chat-quick-reply-chip" onclick="window.ChatView.insertQuickReply('🎾 ¡Nos vemos en la pista!')">
+                                🎾 ¡Nos vemos en la pista!
+                            </button>
+                            <button type="button" class="sp-chat-quick-reply-chip" onclick="window.ChatView.insertQuickReply('💪 ¡Gran partido!')">
+                                💪 ¡Gran partido!
+                            </button>
+                            <button type="button" class="sp-chat-quick-reply-chip" onclick="window.ChatView.insertQuickReply('⏱️ Llego en 5 min')">
+                                ⏱️ Llego en 5 min
+                            </button>
+                            <button type="button" class="sp-chat-quick-reply-chip" onclick="window.ChatView.insertQuickReply('📍 ¿Qué pista tenemos?')">
+                                📍 ¿Qué pista tenemos?
+                            </button>
+                            <button type="button" class="sp-chat-quick-reply-chip" onclick="window.ChatView.insertQuickReply('🔥 ¡Vamos con todo!')">
+                                🔥 ¡Vamos con todo!
+                            </button>
+                            <button type="button" class="sp-chat-quick-reply-chip" onclick="window.ChatView.insertQuickReply('🤝 ¿Falta pareja?')">
+                                🤝 ¿Falta pareja?
+                            </button>
+                        </div>
+
                         <!-- FILA DE ENTRADA -->
                         <div class="sp-chat-input-row">
                             <div class="sp-chat-input-container">
@@ -805,6 +1053,17 @@
 
             // Suscribir a mensajes en tiempo real
             this.subscribeToRoomMessages(this.activeChatId);
+        }
+
+        insertQuickReply(text) {
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(15);
+            const inputEl = document.getElementById('sp-chat-text-input');
+            if (!inputEl) return;
+            inputEl.value = (inputEl.value ? inputEl.value + ' ' : '') + text;
+            inputEl.focus();
+            try {
+                inputEl.setSelectionRange(inputEl.value.length, inputEl.value.length);
+            } catch(e) {}
         }
 
         backToInbox(tab) {
@@ -1177,9 +1436,11 @@
                 const res = await window.ChatService.sendMessage(this.activeChatId, text, media);
                 if (!res.success) {
                     console.error("Error al enviar mensaje:", res.error);
+                    alert("No se pudo enviar el mensaje: " + (res.error || "Error desconocido"));
                 }
             } catch (err) {
                 console.error("Error al enviar mensaje:", err);
+                alert("Error al enviar el mensaje: " + (err.message || "Comprueba tu conexión"));
             } finally {
                 if (sendBtn) sendBtn.disabled = false;
                 if (input) input.focus();
@@ -1398,4 +1659,81 @@
 
     // Instancia Global
     window.ChatView = new ChatView();
+
+    // Handler global universal para abrir chat privado 1 a 1 desde cualquier punto de la app
+    window.openDirectChatWithPlayer = async function (playerOrId, e) {
+        if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+
+        // 1. Cerrar cualquier modal que pudiera estar activo (carta FUT, quick actions, etc.)
+        const futModal = document.getElementById('padel-fut-card-modal');
+        if (futModal) futModal.remove();
+        const actionModal = document.getElementById('sp-player-action-modal');
+        if (actionModal) actionModal.remove();
+
+        let targetId = playerOrId;
+        if (playerOrId && (typeof playerOrId.stopPropagation === 'function' || playerOrId.target)) {
+            targetId = playerOrId.currentTarget?.dataset?.playerId || playerOrId.target?.dataset?.playerId || null;
+        }
+
+        if (!targetId) return;
+
+        try {
+            let targetUid = null;
+            let targetName = null;
+            let targetPhoto = null;
+            let targetLevel = null;
+
+            if (typeof targetId === 'string') {
+                targetUid = targetId.trim();
+            } else if (targetId && typeof targetId === 'object') {
+                targetUid = targetId.id || targetId.uid || targetId.userId;
+                targetName = targetId.name || targetId.displayName;
+                targetPhoto = targetId.photo_url || targetId.photoURL || targetId.avatar || targetId.photoUrl;
+                targetLevel = targetId.level || targetId.nivel;
+            }
+
+            if (!targetUid) return;
+
+            // Si PadelFutCard tiene datos en memoria del jugador actual
+            if (window.PadelFutCard?.currentData && (window.PadelFutCard.currentData.userId === targetUid || !targetName)) {
+                const cd = window.PadelFutCard.currentData;
+                targetName = targetName || cd.name;
+                targetPhoto = targetPhoto || cd.photoUrl;
+                targetLevel = targetLevel || cd.level;
+            }
+
+            // Si faltan datos, buscar en los cachés globales de la app
+            if (!targetName || !targetPhoto) {
+                const cached = (window.allUsersCache || []).find(u => (u.id === targetUid || u.uid === targetUid)) ||
+                               (window.ChatService?._playersCache || []).find(p => (p.id === targetUid || p.uid === targetUid)) ||
+                               (window._currentInscritosPlayersMap && window._currentInscritosPlayersMap[targetUid]) ||
+                               (window.EventsController?.state?.users?.find?.(u => (u.id === targetUid || u.uid === targetUid)));
+                if (cached) {
+                    targetName = targetName || cached.name || cached.displayName || 'Jugador';
+                    targetPhoto = targetPhoto || cached.photo_url || cached.photoURL || cached.avatar;
+                    targetLevel = targetLevel || cached.level || cached.nivel;
+                }
+            }
+
+            const targetPayload = {
+                id: targetUid,
+                uid: targetUid,
+                name: targetName || 'Jugador',
+                photo_url: targetPhoto || null,
+                level: targetLevel || 3.5
+            };
+
+            if (typeof window.PlayerView?.haptic === 'function') window.PlayerView.haptic(20);
+
+            if (window.ChatView && typeof window.ChatView.openDirectChat === 'function') {
+                await window.ChatView.openDirectChat(targetPayload);
+            } else {
+                console.warn("[openDirectChatWithPlayer] ChatView no inicializado");
+                alert("El chat de SomosPadel se está cargando. Inténtalo de nuevo en unos segundos.");
+            }
+        } catch (err) {
+            console.error("❌ Error en openDirectChatWithPlayer:", err);
+        }
+    };
 })();

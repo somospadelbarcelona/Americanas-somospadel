@@ -24,7 +24,7 @@
             const name = (user.name || user.displayName || 'Jugador SomosPadel').trim();
             const level = parseFloat(user.level || user.nivel || 3.5) || 3.5;
             const photoUrl = user.photo_url || user.photoURL || user.avatar || 'img/logo_somospadel.png';
-            const userId = user.id || user.uid || rawData.id || rawData.uid || '';
+            const userId = user.id || user.uid || user.userId || rawData.id || rawData.uid || rawData.userId || '';
             const team = (Array.isArray(user.team_somospadel) && user.team_somospadel.length > 0) 
                 ? user.team_somospadel[0] 
                 : (user.team || 'SomosPadel BCN');
@@ -122,6 +122,30 @@
                     CLU: clu
                 }
             };
+        },
+
+        /**
+         * Abre un chat directo 1 a 1 con el jugador de la carta actual y cierra el modal
+         */
+        openChatWithThisPlayer() {
+            const data = this.currentData;
+            const targetId = data?.userId;
+            const modal = document.getElementById('padel-fut-card-modal');
+            if (modal) modal.remove();
+
+            if (typeof window.openDirectChatWithPlayer === 'function') {
+                window.openDirectChatWithPlayer(data || targetId);
+            } else if (window.ChatView && typeof window.ChatView.openDirectChat === 'function') {
+                window.ChatView.openDirectChat({
+                    id: targetId,
+                    uid: targetId,
+                    name: data?.name || 'Jugador',
+                    photo_url: data?.photoUrl || null,
+                    level: data?.level || 3.5
+                });
+            } else {
+                alert("El chat de SomosPadel se está cargando. Inténtalo de nuevo en unos segundos.");
+            }
         },
 
         /**
@@ -325,7 +349,7 @@
                         <!-- BOTONES INSTAGRAM STORY & DESCARGA (ESTILO CLEAN WHITE) -->
                         <div style="display: flex; flex-direction: column; width: 100%; max-width: 320px; gap: 8px; margin-top: 14px;">
                             ${isNotMe ? `
-                            <button onclick="window.openDirectChatWithPlayer('${data.userId}')" style="
+                            <button onclick="if (window.PadelFutCard && typeof window.PadelFutCard.openChatWithThisPlayer === 'function') { window.PadelFutCard.openChatWithThisPlayer(); } else if (typeof window.openDirectChatWithPlayer === 'function') { window.openDirectChatWithPlayer('${data.userId}'); }" style="
                                 background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
                                 border: none; color: #ffffff;
                                 padding: 12px; border-radius: 14px; font-weight: 950; font-size: 0.8rem;

@@ -127,7 +127,7 @@
 
         /**
          * 1-on-1 Direct Chat: Get or initialize private room between logged-in user and another player
-         * @param {Object} otherUser - { id/uid, name, photo_url/avatar }
+         * @param {Object|string} otherUser - { id/uid, name, photo_url/avatar } or userId string
          * @returns {Promise<Object>} The direct chat room document data
          */
         async getOrCreateDirectChat(otherUser) {
@@ -135,11 +135,33 @@
             if (!currentUser) throw new Error("No hay usuario autenticado en la sesión.");
 
             const myUid = currentUser.id || currentUser.uid;
-            const otherUid = otherUser ? (otherUser.id || otherUser.uid) : null;
+            let otherUid = null;
+            let otherName = 'Jugador';
+            let otherAvatar = null;
+
+            if (typeof otherUser === 'string') {
+                otherUid = otherUser.trim();
+            } else if (otherUser && typeof otherUser === 'object') {
+                otherUid = otherUser.id || otherUser.uid;
+                otherName = otherUser.name || otherUser.displayName || 'Jugador';
+                otherAvatar = otherUser.photo_url || otherUser.photoURL || otherUser.avatar || null;
+            }
 
             if (!myUid) throw new Error("No se pudo identificar el UID del usuario actual.");
             if (!otherUid) throw new Error("No se proporcionó el UID del usuario destinatario.");
             if (myUid === otherUid) throw new Error("No se puede iniciar un chat directo consigo mismo.");
+
+            // Si falta nombre o avatar, intentamos resolverlo de las fuentes disponibles
+            if (otherName === 'Jugador' || !otherAvatar) {
+                try {
+                    const pool = await this.getPlayersPool();
+                    const found = pool.find(p => (p.id || p.uid) === otherUid);
+                    if (found) {
+                        if (otherName === 'Jugador') otherName = found.name || found.displayName || otherName;
+                        if (!otherAvatar) otherAvatar = found.photo_url || found.photoURL || found.avatar || null;
+                    }
+                } catch (_) {}
+            }
 
             const participants = [myUid, otherUid].sort();
             const roomId = `direct_${participants.join('_')}`;
@@ -150,8 +172,8 @@
                 avatar: currentUser.photo_url || currentUser.photoURL || currentUser.avatar || null
             };
             const otherDetails = {
-                name: otherUser.name || otherUser.displayName || 'Jugador',
-                avatar: otherUser.photo_url || otherUser.photoURL || otherUser.avatar || null
+                name: otherName,
+                avatar: otherAvatar
             };
 
             const docSnap = await chatRef.get();
@@ -762,7 +784,69 @@
         }
 
         /**
-         * Busca jugadores por nombre en la colección 'players' de Firestore.
+         * Obtiene la lista completa de jugadores desde las mejores fuentes disponibles
+         * (caché en memoria de 2 minutos -> window.allUsersCache -> FirebaseDB.players.getAll -> Firestore)
+         * @returns {Promise<Array>}
+         */
+        async getPlayersPool() {
+            const now = Date.now();
+            if (this._playersCache && Array.isArray(this._playersCache) && this._playersCache.length > 0) {
+                if (this._playersCacheTime && (now - this._playersCacheTime < 120000)) {
+                    return this._playersCache;
+                }
+            }
+
+            // 1. Revisar si la aplicación ya tiene el catálogo en memoria
+            if (Array.isArray(window.allUsersCache) && window.allUsersCache.length > 0) {
+                this._playersCache = window.allUsersCache;
+                this._playersCacheTime = now;
+                return this._playersCache;
+            }
+
+            if (Array.isArray(window._allPlayersCache) && window._allPlayersCache.length > 0) {
+                this._playersCache = window._allPlayersCache;
+                this._playersCacheTime = now;
+                return this._playersCache;
+            }
+
+            // 2. Usar servicio central de base de datos si existe
+            if (window.FirebaseDB && window.FirebaseDB.players && typeof window.FirebaseDB.players.getAll === 'function') {
+                try {
+                    const list = await window.FirebaseDB.players.getAll();
+                    if (Array.isArray(list) && list.length > 0) {
+                        this._playersCache = list;
+                        this._playersCacheTime = now;
+                        return list;
+                    }
+                } catch (dbErr) {
+                    console.warn("[ChatService] FirebaseDB.players.getAll notice:", dbErr.message);
+                }
+            }
+
+            // 3. Consulta directa y limpia a Firestore (sin filtros restrictivos que rompan en case-sensitive ni índices faltantes)
+            if (window.db) {
+                try {
+                    const snap = await window.db.collection('players').get();
+                    const list = snap.docs.map(doc => {
+                        const d = doc.data() || {};
+                        return { id: doc.id, uid: d.uid || doc.id, ...d };
+                    });
+                    if (list.length > 0) {
+                        this._playersCache = list;
+                        this._playersCacheTime = now;
+                        return list;
+                    }
+                } catch (fsErr) {
+                    console.warn("[ChatService] db.collection('players').get() notice:", fsErr.message);
+                }
+            }
+
+            return this._playersCache || [];
+        }
+
+        /**
+         * Busca jugadores por nombre, apellido, teléfono o email en la base de datos de la app.
+         * Insensible a mayúsculas/minúsculas y tildes, con búsqueda por palabras compuestas.
          * Excluye al propio usuario autenticado de los resultados.
          * @param {string} query - Término de búsqueda (mínimo 2 caracteres)
          * @returns {Promise<Array>} Array de objetos jugador { id, name, photo_url, level, role }
@@ -770,55 +854,61 @@
         async searchPlayers(query) {
             const user = this.getCurrentUser();
             const myUid = user ? (user.id || user.uid) : null;
-            const q = (query || '').trim().toLowerCase();
-            if (q.length < 2) return [];
+            const rawQ = (query || '').trim();
+            if (rawQ.length < 2) return [];
+
+            const cleanStr = (str) => {
+                if (!str) return '';
+                return String(str)
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .toLowerCase()
+                    .trim();
+            };
+
+            const searchTokens = cleanStr(rawQ).split(/\s+/).filter(Boolean);
+            if (searchTokens.length === 0) return [];
 
             try {
-                if (!window.db) return [];
-                // Firestore no soporta búsqueda full-text, usamos rangos de nombre (case-insensitive workaround)
-                const snap = await window.db.collection('players')
-                    .where('status', '==', 'active')
-                    .orderBy('name')
-                    .startAt(q)
-                    .endAt(q + '\uf8ff')
-                    .limit(15)
-                    .get();
+                const pool = await this.getPlayersPool();
+                if (!Array.isArray(pool) || pool.length === 0) return [];
 
-                // También buscamos por name en minúsculas si hay campo name_lower
-                let results = [];
-                snap.docs.forEach(doc => {
-                    const d = { id: doc.id, ...doc.data() };
-                    if (d.id !== myUid) results.push(d);
+                const matches = pool.filter(p => {
+                    const pUid = p.id || p.uid;
+                    if (pUid && myUid && pUid === myUid) return false;
+
+                    const name = cleanStr(p.name || p.displayName || p.full_name || '');
+                    const email = cleanStr(p.email || '');
+                    const phone = (p.phone || '').toString().replace(/\D/g, '');
+
+                    // Cada token buscado debe estar presente en el nombre, email o teléfono
+                    return searchTokens.every(tok => 
+                        name.includes(tok) || email.includes(tok) || phone.includes(tok)
+                    );
                 });
 
-                // Fallback: si no devuelve resultados, buscar en un campo 'name_lower' si existe
-                if (results.length === 0) {
-                    const snapLower = await window.db.collection('players')
-                        .where('status', '==', 'active')
-                        .orderBy('name_lower')
-                        .startAt(q)
-                        .endAt(q + '\uf8ff')
-                        .limit(15)
-                        .get();
-                    snapLower.docs.forEach(doc => {
-                        const d = { id: doc.id, ...doc.data() };
-                        if (d.id !== myUid && !results.find(r => r.id === d.id)) results.push(d);
-                    });
-                }
+                // Ordenar dando prioridad a los que empiezan por el término buscado
+                const primaryToken = searchTokens[0];
+                matches.sort((a, b) => {
+                    const nameA = cleanStr(a.name || a.displayName || '');
+                    const nameB = cleanStr(b.name || b.displayName || '');
+                    const startsA = nameA.startsWith(primaryToken) ? 1 : 0;
+                    const startsB = nameB.startsWith(primaryToken) ? 1 : 0;
+                    return startsB - startsA;
+                });
 
-                // Normalización del resultado
-                return results.map(p => ({
-                    id: p.id,
-                    uid: p.id,
-                    name: p.name || p.displayName || 'Jugador',
+                // Normalización de los resultados
+                return matches.slice(0, 20).map(p => ({
+                    id: p.id || p.uid,
+                    uid: p.id || p.uid,
+                    name: p.name || p.displayName || p.full_name || 'Jugador',
                     photo_url: p.photo_url || p.photoURL || p.avatar || null,
-                    level: p.level ?? p.self_rate_level ?? null,
+                    level: p.level ?? p.self_rate_level ?? p.playtomic_level ?? null,
                     role: p.role || 'player'
                 }));
 
             } catch (err) {
                 console.warn('[ChatService] searchPlayers error:', err.message);
-                // Fallback: búsqueda cliente en caché si Firestore falla
                 return [];
             }
         }

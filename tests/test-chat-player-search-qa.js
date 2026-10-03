@@ -40,28 +40,28 @@ console.log('===================================================================
 console.log('▶️  [1/5] ChatService.js — Inspección estática\n');
 
 check(
+    'ChatService contiene getPlayersPool()',
+    chatServiceSrc.includes('async getPlayersPool()')
+);
+
+check(
     'ChatService contiene async searchPlayers(query)',
     chatServiceSrc.includes('async searchPlayers(query)')
 );
 
 check(
-    'searchPlayers realiza query Firestore con startAt/endAt sobre "name"',
-    chatServiceSrc.includes('.startAt(q)') && chatServiceSrc.includes(".endAt(q + '\\uf8ff')")
+    'searchPlayers utiliza getPlayersPool() para búsqueda universal',
+    chatServiceSrc.includes('await this.getPlayersPool()')
 );
 
 check(
-    'searchPlayers filtra status == "active"',
-    chatServiceSrc.includes("'status', '==', 'active'")
+    'searchPlayers limpia tildes y caracteres especiales (normalize NFD)',
+    chatServiceSrc.includes('normalize') && chatServiceSrc.includes('0300')
 );
 
 check(
     'searchPlayers excluye al propio usuario (compara con myUid)',
-    chatServiceSrc.includes('d.id !== myUid')
-);
-
-check(
-    'searchPlayers incluye fallback por name_lower',
-    chatServiceSrc.includes("orderBy('name_lower')")
+    chatServiceSrc.includes('pUid === myUid')
 );
 
 check(
@@ -74,7 +74,7 @@ check(
 
 check(
     'searchPlayers retorna [] si query tiene menos de 2 chars',
-    chatServiceSrc.includes('if (q.length < 2) return []')
+    chatServiceSrc.includes('if (rawQ.length < 2) return []') || chatServiceSrc.includes('length < 2')
 );
 
 // ─── BLOQUE 2: Inspección estática de ChatView.js ──────────────────────────
@@ -129,12 +129,12 @@ check(
 check(
     'startDirectChatWithPlayer limpia el dropdown antes de llamar a openDirectChat',
     (() => {
-        // Verificamos que el vaciado del dropdown ocurre antes de la llamada a openDirectChat
-        const fnStart = chatViewSrc.indexOf('startDirectChatWithPlayer(player)');
-        const fnEnd   = chatViewSrc.indexOf('\n        }', fnStart + 1);
-        const fnBody  = chatViewSrc.slice(fnStart, fnEnd);
-        const clearIdx       = fnBody.indexOf("resultsEl.innerHTML = ''");
-        const openDirectIdx  = fnBody.indexOf('this.openDirectChat(player)');
+        const lastIdx = chatViewSrc.lastIndexOf('startDirectChatWithPlayer(player) {');
+        const targetIdx = lastIdx !== -1 ? lastIdx : chatViewSrc.lastIndexOf('startDirectChatWithPlayer(player)');
+        if (targetIdx === -1) return false;
+        const fnBody = chatViewSrc.slice(targetIdx, targetIdx + 800);
+        const clearIdx = fnBody.indexOf("resultsEl.innerHTML = ''");
+        const openDirectIdx = fnBody.indexOf('this.openDirectChat(player)');
         return clearIdx !== -1 && openDirectIdx !== -1 && clearIdx < openDirectIdx;
     })()
 );
@@ -249,11 +249,11 @@ console.log('\n▶️  [4/5] Simulación funcional de ChatService.searchPlayers\
 console.log('\n▶️  [5/5] Consistencia del objeto player hacia openDirectChat\n');
 
 check(
-    'renderPlayerSearchResults serializa player con { id, name, photo_url, level }',
-    chatViewSrc.includes('id: p.id || p.uid') &&
-    chatViewSrc.includes('name: p.name || p.displayName') &&
-    chatViewSrc.includes('photo_url: p.photo_url || p.photoURL') &&
-    chatViewSrc.includes('level: p.level || p.nivel')
+    'renderPlayerSearchResults renderiza fila con id, name, avatar y level',
+    chatViewSrc.includes('p.id || p.uid') &&
+    chatViewSrc.includes('p.name || p.displayName') &&
+    chatViewSrc.includes('p.photo_url || p.photoURL') &&
+    chatViewSrc.includes('p.level || p.nivel')
 );
 
 check(

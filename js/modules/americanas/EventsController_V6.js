@@ -105,17 +105,28 @@
         if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
         if (e && typeof e.preventDefault === 'function') e.preventDefault();
 
+        // Cerrar cualquier modal que pudiera estar activo (carta FUT, quick actions, etc.)
+        const futModal = document.getElementById('padel-fut-card-modal');
+        if (futModal) futModal.remove();
+        const actionModal = document.getElementById('sp-player-action-modal');
+        if (actionModal) actionModal.remove();
+
         if (!playerOrId) return;
 
         try {
             let player = playerOrId;
             if (typeof playerOrId === 'string') {
-                player = (window._currentInscritosPlayersMap && window._currentInscritosPlayersMap[playerOrId]) || 
-                         (window.EventsController?.state?.users?.find?.(u => (u.id === playerOrId || u.uid === playerOrId))) ||
-                         { id: playerOrId, uid: playerOrId, name: 'Jugador' };
+                const pId = playerOrId.trim();
+                const futData = (window.PadelFutCard?.currentData?.userId === pId) ? window.PadelFutCard.currentData : null;
+                player = futData ||
+                         (window._currentInscritosPlayersMap && window._currentInscritosPlayersMap[pId]) || 
+                         (window.allUsersCache && window.allUsersCache.find(u => (u.id === pId || u.uid === pId))) ||
+                         (window.ChatService?._playersCache && window.ChatService._playersCache.find(p => (p.id === pId || p.uid === pId))) ||
+                         (window.EventsController?.state?.users?.find?.(u => (u.id === pId || u.uid === pId))) ||
+                         { id: pId, uid: pId, name: 'Jugador' };
             }
 
-            const targetUid = player.id || player.uid;
+            const targetUid = player.id || player.uid || player.userId;
             const currentUser = (window.Store && typeof window.Store.getState === 'function' && window.Store.getState('currentUser')) || 
                                 window.currentUser || 
                                 (window.ChatView && typeof window.ChatView.getCurrentUser === 'function' && window.ChatView.getCurrentUser()) ||
@@ -134,7 +145,7 @@
                 id: targetUid,
                 uid: targetUid,
                 name: player.name || player.displayName || 'Jugador',
-                photo_url: player.photo_url || player.photoURL || player.avatar || 'img/logo_somospadel.png',
+                photo_url: player.photo_url || player.photoURL || player.avatar || player.photoUrl || 'img/logo_somospadel.png',
                 level: player.level || player.nivel || 3.5
             };
 
@@ -8474,6 +8485,12 @@
         let event = e;
         let targetId = playerOrId;
 
+        // Cerrar cualquier modal que pudiera estar activo (carta FUT, quick actions, etc.)
+        const futModal = document.getElementById('padel-fut-card-modal');
+        if (futModal) futModal.remove();
+        const actionModal = document.getElementById('sp-player-action-modal');
+        if (actionModal) actionModal.remove();
+
         if (playerOrId && (typeof playerOrId.stopPropagation === 'function' || playerOrId.target)) {
             event = playerOrId;
             targetId = playerOrId.currentTarget?.dataset?.playerId || playerOrId.target?.dataset?.playerId || null;
@@ -8491,12 +8508,17 @@
         try {
             let player = targetId;
             if (typeof targetId === 'string') {
-                player = (window._currentInscritosPlayersMap && window._currentInscritosPlayersMap[targetId]) || 
-                         (window.EventsController?.state?.users?.find?.(u => (u.id === targetId || u.uid === targetId))) ||
-                         { id: targetId, uid: targetId, name: 'Jugador' };
+                const pId = targetId.trim();
+                const futData = (window.PadelFutCard?.currentData?.userId === pId) ? window.PadelFutCard.currentData : null;
+                player = futData ||
+                         (window._currentInscritosPlayersMap && window._currentInscritosPlayersMap[pId]) || 
+                         (window.allUsersCache && window.allUsersCache.find(u => (u.id === pId || u.uid === pId))) ||
+                         (window.ChatService?._playersCache && window.ChatService._playersCache.find(p => (p.id === pId || p.uid === pId))) ||
+                         (window.EventsController?.state?.users?.find?.(u => (u.id === pId || u.uid === pId))) ||
+                         { id: pId, uid: pId, name: 'Jugador' };
             }
 
-            const targetUid = player.id || player.uid;
+            const targetUid = player.id || player.uid || player.userId;
             const currentUser = (window.Store && typeof window.Store.getState === 'function' && window.Store.getState('currentUser')) || 
                                 window.currentUser || 
                                 (window.ChatView && typeof window.ChatView.getCurrentUser === 'function' && window.ChatView.getCurrentUser()) ||
@@ -8515,7 +8537,7 @@
                 id: targetUid,
                 uid: targetUid,
                 name: player.name || player.displayName || 'Jugador',
-                photo_url: player.photo_url || player.photoURL || player.avatar || 'img/logo_somospadel.png',
+                photo_url: player.photo_url || player.photoURL || player.avatar || player.photoUrl || 'img/logo_somospadel.png',
                 level: player.level || player.nivel || 3.5
             };
 
