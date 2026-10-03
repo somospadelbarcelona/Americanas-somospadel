@@ -44,6 +44,7 @@ const PRECACHE_ASSETS = [
     './css/dashboard-premium.css',
     './css/mobile-header-fix.css',
     './img/logo_somospadel.png',
+    './img/badge_somospadel.png',
     './img/ball.png',
     './img/ball-masculina.png',
     './img/ball-femenina.png',
@@ -453,10 +454,17 @@ try {
             const icon = (payload.notification && payload.notification.icon) || data.icon || './img/logo_somospadel.png';
             const tag = data.notificationId || data.id || data.tag || 'somospadel-fcm';
 
+            if (typeof self.navigator !== 'undefined' && 'setAppBadge' in self.navigator) {
+                try {
+                    const badgeCount = parseInt(data.unreadCount || data.count || 1, 10);
+                    self.navigator.setAppBadge(badgeCount).catch(() => {});
+                } catch (_) {}
+            }
+
             return self.registration.showNotification(title, {
                 body,
                 icon,
-                badge: './img/logo_somospadel.png',
+                badge: './img/badge_somospadel.png',
                 tag,
                 data,
                 vibrate: [200, 100, 200],
@@ -505,6 +513,23 @@ self.addEventListener('push', (event) => {
     const body = notification.body || data.body || 'Tienes una nueva notificación.';
     const icon = notification.icon || data.icon || './img/logo_somospadel.png';
     const tag = data.notificationId || data.id || data.tag || 'somospadel-notif';
+
+    const options = {
+        body: body,
+        icon: icon,
+        badge: './img/badge_somospadel.png',
+        data: data,
+        tag: tag,
+        vibrate: [200, 100, 200],
+        renotify: true
+    };
+
+    if (typeof self.navigator !== 'undefined' && 'setAppBadge' in self.navigator) {
+        try {
+            const badgeCount = parseInt(data.unreadCount || data.count || 1, 10);
+            self.navigator.setAppBadge(badgeCount).catch(() => {});
+        } catch (_) {}
+    }
 
     // ============================================================================
     // PERSISTENCIA IN-APP DE PUSH ENTRANTES EN INDEXEDDB Y POSTMESSAGE A CLIENTES
@@ -570,6 +595,10 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
     console.log('🔔 [SW Principal] Clic en notificación push:', event.notification);
     event.notification.close();
+
+    if (typeof self.navigator !== 'undefined' && 'clearAppBadge' in self.navigator) {
+        try { self.navigator.clearAppBadge().catch(() => {}); } catch (_) {}
+    }
 
     const data = event.notification.data || {};
     let targetPath = data.url || data.link || './';

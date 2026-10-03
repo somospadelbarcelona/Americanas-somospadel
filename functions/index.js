@@ -477,7 +477,7 @@ const sendPushNotificationHandler = async (snapshot, context) => {
                 title: title,
                 body: body,
                 icon: '/img/logo_somospadel.png',
-                badge: '/img/logo_somospadel.png',
+                badge: '/img/badge_somospadel.png',
                 tag: notification.tag || snapshot.id,
                 renotify: true
             },
@@ -640,7 +640,7 @@ async function sendTopicNotification(topic, title, body, targetUrl, customData =
                 title: title,
                 body: body,
                 icon: '/img/logo_somospadel.png',
-                badge: '/img/logo_somospadel.png',
+                badge: '/img/badge_somospadel.png',
                 tag: tag || `topic_${topic}_${Date.now()}`,
                 renotify: true
             },

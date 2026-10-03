@@ -2523,7 +2523,7 @@ window.NotificationServiceClass = class NotificationService {
             const options = {
                 body: 'Ya tienes activados los avisos en tiempo real para partidos, plazas libres y chat.',
                 icon: 'img/logo_somospadel.png',
-                badge: 'img/logo_somospadel.png',
+                badge: 'img/badge_somospadel.png',
                 data: { url: './', type: 'welcome' },
                 vibrate: [200, 100, 200],
                 tag: 'somospadel-welcome',
@@ -3121,7 +3121,7 @@ window.NotificationServiceClass = class NotificationService {
             const options = {
                 body: body,
                 icon: 'img/logo_somospadel.png',
-                badge: 'img/logo_somospadel.png',
+                badge: 'img/badge_somospadel.png',
                 data: data,
                 vibrate: [200, 100, 200],
                 tag: data.id || 'somospadel-notification', // TAG único por ID para poder borrarla específicamente

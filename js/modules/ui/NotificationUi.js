@@ -206,23 +206,25 @@ class NotificationUi {
             <!-- PUSH PERMISSION BANNER -->
             <div id="push-permission-box"></div>
 
-            <!-- FILTROS POR CATEGORÍA -->
-            <div class="notif-filter-tabs-bar" id="notif-filter-bar">
-                <button type="button" class="notif-tab-chip active" data-filter="all" onclick="window.NotificationUi.setFilter('all')">
-                    <i class="fas fa-bolt"></i> Todas
-                </button>
-                <button type="button" class="notif-tab-chip" data-filter="matches" onclick="window.NotificationUi.setFilter('matches')">
-                    <i class="fas fa-trophy"></i> Americanas
-                </button>
-                <button type="button" class="notif-tab-chip" data-filter="entrenos" onclick="window.NotificationUi.setFilter('entrenos')">
-                    ${PALA_ICON_SVG} Entrenos
-                </button>
-                <button type="button" class="notif-tab-chip" data-filter="broadcast" onclick="window.NotificationUi.setFilter('broadcast')">
-                    <i class="fas fa-bullhorn"></i> Avisos Club
-                </button>
-                <button type="button" class="notif-tab-chip" data-filter="chat" onclick="window.NotificationUi.setFilter('chat')">
-                    <i class="fas fa-comment-dots"></i> Chat
-                </button>
+            <!-- FILTROS POR CATEGORÍA CON SCROLL Y ORDEN SOLICITADO -->
+            <div class="notif-filter-wrapper">
+                <div class="notif-filter-tabs-bar" id="notif-filter-bar" role="tablist" aria-label="Filtros de notificaciones">
+                    <button type="button" class="notif-tab-chip active" data-filter="all" onclick="window.NotificationUi.setFilter('all')">
+                        <i class="fas fa-bolt"></i> Todas <span class="notif-tab-badge" id="tab-count-all" style="display:none;"></span>
+                    </button>
+                    <button type="button" class="notif-tab-chip" data-filter="chat" onclick="window.NotificationUi.setFilter('chat')">
+                        <i class="fas fa-comment-dots"></i> Chat <span class="notif-tab-badge" id="tab-count-chat" style="display:none;"></span>
+                    </button>
+                    <button type="button" class="notif-tab-chip" data-filter="broadcast" onclick="window.NotificationUi.setFilter('broadcast')">
+                        <i class="fas fa-bullhorn"></i> Avisos Club <span class="notif-tab-badge" id="tab-count-broadcast" style="display:none;"></span>
+                    </button>
+                    <button type="button" class="notif-tab-chip" data-filter="entrenos" onclick="window.NotificationUi.setFilter('entrenos')">
+                        ${PALA_ICON_SVG} Entrenos <span class="notif-tab-badge" id="tab-count-entrenos" style="display:none;"></span>
+                    </button>
+                    <button type="button" class="notif-tab-chip" data-filter="matches" onclick="window.NotificationUi.setFilter('matches')">
+                        <i class="fas fa-trophy"></i> Americanas <span class="notif-tab-badge" id="tab-count-matches" style="display:none;"></span>
+                    </button>
+                </div>
             </div>
 
             <!-- LISTA DE NOTIFICACIONES (FONDO BLANCO) -->
@@ -257,6 +259,7 @@ class NotificationUi {
         document.addEventListener('keydown', this._escapeHandler);
 
         this.renderPushPermissionBox();
+        this._initFilterBarScroll();
         this.renderList();
     }
 
@@ -287,9 +290,103 @@ class NotificationUi {
     setFilter(filterName) {
         this.activeFilter = filterName;
         document.querySelectorAll('.notif-tab-chip').forEach(tab => {
-            tab.classList.toggle('active', tab.dataset.filter === filterName);
+            const isActive = tab.dataset.filter === filterName;
+            tab.classList.toggle('active', isActive);
+            if (isActive) {
+                try {
+                    tab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                } catch (_) {}
+            }
         });
         this.renderList();
+    }
+
+    _initFilterBarScroll() {
+        const bar = document.getElementById('notif-filter-bar');
+        if (!bar || bar._hasScrollInited) return;
+        bar._hasScrollInited = true;
+
+        // Desplazamiento horizontal fluido con la rueda del ratón
+        bar.addEventListener('wheel', (e) => {
+            if (e.deltaY !== 0 && bar.scrollWidth > bar.clientWidth) {
+                e.preventDefault();
+                bar.scrollLeft += e.deltaY;
+            }
+        }, { passive: false });
+
+        // Arrastre con ratón (drag to scroll) en desktop
+        let isDown = false;
+        let startX = 0;
+        let scrollLeft = 0;
+        let dragged = false;
+
+        bar.addEventListener('mousedown', (e) => {
+            isDown = true;
+            dragged = false;
+            bar.classList.add('is-dragging');
+            startX = e.pageX - bar.offsetLeft;
+            scrollLeft = bar.scrollLeft;
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (isDown) {
+                isDown = false;
+                bar.classList.remove('is-dragging');
+            }
+        });
+
+        bar.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            const x = e.pageX - bar.offsetLeft;
+            const walk = (x - startX) * 1.5;
+            if (Math.abs(walk) > 5) {
+                dragged = true;
+            }
+            bar.scrollLeft = scrollLeft - walk;
+        });
+
+        // Prevenir activación de click si el usuario estaba arrastrando
+        bar.addEventListener('click', (e) => {
+            if (dragged) {
+                e.stopPropagation();
+                dragged = false;
+            }
+        }, true);
+    }
+
+    _updateFilterCounts(items) {
+        if (!items || !Array.isArray(items)) return;
+        const counts = {
+            all: items.length,
+            chat: items.filter(n => n.category === 'chat').length,
+            broadcast: items.filter(n => n.category === 'broadcast' || n.category === 'clima').length,
+            entrenos: items.filter(n => n.category === 'entrenos').length,
+            matches: items.filter(n => n.category === 'matches').length
+        };
+        const unreadCounts = {
+            all: items.filter(n => !n.read).length,
+            chat: items.filter(n => n.category === 'chat' && !n.read).length,
+            broadcast: items.filter(n => (n.category === 'broadcast' || n.category === 'clima') && !n.read).length,
+            entrenos: items.filter(n => n.category === 'entrenos' && !n.read).length,
+            matches: items.filter(n => n.category === 'matches' && !n.read).length
+        };
+
+        ['all', 'chat', 'broadcast', 'entrenos', 'matches'].forEach(cat => {
+            const badgeEl = document.getElementById(`tab-count-${cat}`);
+            if (badgeEl) {
+                const total = counts[cat] || 0;
+                const unread = unreadCounts[cat] || 0;
+                if (total > 0) {
+                    badgeEl.textContent = total;
+                    badgeEl.style.display = 'inline-flex';
+                    badgeEl.classList.toggle('has-unread', unread > 0);
+                    badgeEl.title = unread > 0 ? `${unread} sin leer (${total} total)` : `${total} avisos`;
+                } else {
+                    badgeEl.style.display = 'none';
+                    badgeEl.textContent = '';
+                }
+            }
+        });
     }
 
     toggleSound() {
@@ -538,6 +635,9 @@ class NotificationUi {
 
         let rawItems = window.NotificationService ? window.NotificationService.getMergedNotifications() : [];
         const items = rawItems.map(item => this._normalizeNotificationItem(item));
+
+        // Actualizar contadores y badges en la barra de filtros
+        this._updateFilterCounts(items);
 
         // Aplicar filtro seleccionado
         let filteredItems = items;

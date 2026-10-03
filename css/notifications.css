@@ -472,49 +472,140 @@ body.notif-drawer-open {
 }
 
 /* ============================================================================
-   🏷️ 5. FILTROS POR CATEGORÍA (CHIPS TABS)
+   🏷️ 5. FILTROS POR CATEGORÍA (CHIPS TABS CON SCROLL SUAVE)
    ============================================================================ */
-.notif-filter-tabs-bar {
-    display: flex;
-    gap: 7px;
-    padding: 12px 16px 8px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    flex-shrink: 0;
+.notif-filter-wrapper {
+    position: relative;
+    width: 100%;
     background: #ffffff;
+    border-bottom: 1px solid #f1f5f9;
+    flex-shrink: 0;
+    box-sizing: border-box;
 }
 
+.notif-filter-tabs-bar {
+    display: flex;
+    gap: 8px;
+    padding: 10px 16px 10px 16px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f8fafc;
+    flex-shrink: 0;
+    background: #ffffff;
+    user-select: none;
+    box-sizing: border-box;
+    cursor: grab;
+}
+
+.notif-filter-tabs-bar.is-dragging {
+    cursor: grabbing;
+    scroll-behavior: auto;
+}
+
+/* Scrollbar fina, moderna y visible */
 .notif-filter-tabs-bar::-webkit-scrollbar {
-    display: none;
+    height: 5px;
+    display: block !important;
+}
+
+.notif-filter-tabs-bar::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 999px;
+    margin: 0 16px;
+}
+
+.notif-filter-tabs-bar::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+    transition: background 0.2s ease;
+}
+
+.notif-filter-tabs-bar::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 
 .notif-tab-chip {
-    background: #f1f5f9;
+    background: #f8fafc;
     border: 1px solid #e2e8f0;
     color: #475569;
-    padding: 6px 13px;
+    padding: 7px 14px;
     border-radius: 999px;
-    font-size: 0.75rem;
-    font-weight: 850;
-    font-family: 'Outfit', sans-serif;
+    font-size: 0.76rem;
+    font-weight: 800;
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
     white-space: nowrap;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    transition: all 0.2s ease;
+    gap: 7px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+    outline: none;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.notif-tab-chip:last-child {
+    margin-right: 14px;
 }
 
 .notif-tab-chip:hover {
-    background: #e2e8f0;
+    background: #f1f5f9;
     color: #0f172a;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+}
+
+.notif-tab-chip:active {
+    transform: scale(0.97);
 }
 
 .notif-tab-chip.active {
     background: #0f172a;
     border-color: #0f172a;
     color: #ffffff;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
+    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.22);
+}
+
+.notif-tab-chip.active i,
+.notif-tab-chip.active svg {
+    color: #38bdf8;
+    fill: #38bdf8;
+}
+
+.notif-tab-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 850;
+    background: #e2e8f0;
+    color: #334155;
+    line-height: 1;
+    transition: all 0.2s ease;
+}
+
+.notif-tab-chip.active .notif-tab-badge {
+    background: rgba(255, 255, 255, 0.22);
+    color: #ffffff;
+}
+
+.notif-tab-badge.has-unread {
+    background: #ef4444;
+    color: #ffffff;
+    box-shadow: 0 1px 4px rgba(239, 68, 68, 0.35);
+}
+
+.notif-tab-chip.active .notif-tab-badge.has-unread {
+    background: #ef4444;
+    color: #ffffff;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.7);
 }
 
 /* ============================================================================
@@ -1289,8 +1380,13 @@ body.notif-drawer-open {
     }
 
     .notif-filter-tabs-bar {
-        padding: 10px 12px 6px;
+        padding: 8px 12px 10px;
         gap: 6px;
+    }
+
+    .notif-tab-chip {
+        padding: 6px 12px;
+        font-size: 0.72rem;
     }
 
     .notif-scrollable-list {
