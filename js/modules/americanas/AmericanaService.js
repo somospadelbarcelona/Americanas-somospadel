@@ -689,19 +689,30 @@
          * Automatically generates matches for the NEXT round (R > 1)
          * Supports both ENTRENOS and AMERICANAS
          */
-        async generateNextRound(eventId, currentRound, type = 'entreno') {
+        async generateNextRound(eventId, currentRound, type = null) {
             try {
                 if (!window.MatchMakingService) throw new Error("MatchMakingService not loaded");
+
+                let eventType = type;
+                if (!eventType) {
+                    if (window.selectedAmericanaDoc?.isEntreno !== undefined) {
+                        eventType = window.selectedAmericanaDoc.isEntreno ? 'entreno' : 'americana';
+                    } else if (window.selectedAmericanaId === eventId && window.currentTournamentType) {
+                        eventType = window.currentTournamentType;
+                    } else {
+                        eventType = 'americana';
+                    }
+                }
 
                 // CHECK AND CLEANUP NEXT ROUND (Fix for Ghost Results)
                 const nextRound = currentRound + 1;
 
                 // Aggressively delete any partial/ghost matches for this round before regenerating
                 console.log(`🧹 [AmericanaService] Pruning R${nextRound} before generation to prevent ghost scores...`);
-                await this.deleteRound(eventId, nextRound, type);
+                await this.deleteRound(eventId, nextRound, eventType);
 
-                console.log(`🤖 [AmericanaService] Delegating Next Round generation to MatchMakingService for ${type} ${eventId}`);
-                return await window.MatchMakingService.generateRound(eventId, type, nextRound);
+                console.log(`🤖 [AmericanaService] Delegating Next Round generation to MatchMakingService for ${eventType} ${eventId}`);
+                return await window.MatchMakingService.generateRound(eventId, eventType, nextRound);
             } catch (err) {
                 console.error("❌ Error generating next round:", err);
                 throw err; // RETHROW to let Controller handle it

@@ -4513,6 +4513,36 @@
                     }, 1800);
                 };
 
+                // === ACCESO COMO INVITADO (BYPASS INMEDIATO) ===
+                window.loginAsGuest = function() {
+                    if (navigator.vibrate) navigator.vibrate([30, 20, 30]);
+                    const guestUser = {
+                        id: 'guest_user',
+                        uid: 'guest_user',
+                        name: 'Jugador Invitado',
+                        displayName: 'Jugador Invitado',
+                        email: 'invitado@somospadel.com',
+                        role: 'guest',
+                        level: 3.5,
+                        isGuest: true
+                    };
+                    if (window.Store && typeof window.Store.setState === 'function') {
+                        window.Store.setState('currentUser', guestUser);
+                    }
+                    const authModal = document.getElementById('auth-modal');
+                    const appShell = document.getElementById('app-shell');
+                    if (authModal) {
+                        authModal.classList.add('dematerialize');
+                        setTimeout(() => {
+                            authModal.style.setProperty('display', 'none', 'important');
+                        }, 250);
+                    }
+                    if (appShell) appShell.classList.remove('hidden');
+                    if (window.Router && typeof window.Router.navigate === 'function') {
+                        window.Router.navigate('dashboard', false, true);
+                    }
+                };
+
                 // === GLOBAL AUTH MODE TOGGLER ===
                 window.toggleAuthMode = function(mode) {
                     if (navigator.vibrate) navigator.vibrate(15);
@@ -4588,6 +4618,14 @@
                     <span class="bio-security-badge">
                         <i class="fas fa-shield-halved"></i> SEGURO
                     </span>
+                </button>
+
+                <!-- Botón de Acceso Inmediato como Invitado / Explorar -->
+                <button type="button" onclick="window.loginAsGuest()" class="sport-btn-guest" style="
+                    width: 100%; margin-top: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.16); color: #e2e8f0; padding: 12px 18px; border-radius: 14px; font-size: 0.82rem; font-weight: 850; font-family: 'Outfit', sans-serif; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease;
+                " onmouseover="this.style.background='rgba(56, 189, 248, 0.12)'; this.style.borderColor='#38bdf8'; this.style.color='#ffffff';" onmouseout="this.style.background='rgba(255, 255, 255, 0.05)'; this.style.borderColor='rgba(255, 255, 255, 0.16)'; this.style.color='#e2e8f0';">
+                    <i class="fas fa-compass" style="color: #38bdf8;"></i>
+                    <span>CONTINUAR COMO INVITADO / EXPLORAR</span>
                 </button>
 
                 <!-- Acciones Footer: Tarjeta Espectacular de Nuevo Jugador (Reemplaza a Invitado) -->
@@ -4789,12 +4827,12 @@
     <script src="js/tournament-engine/TwisterInvariantGuard.js?v=2026.5.2" defer></script>
     <script src="js/tournament-engine/TournamentEngine.js?v=2026.5.2" defer></script>
 
-    <script src="js/fixed-pairs-logic.js?v=2026.5.2" defer></script>
-    <script src="js/rotating-pozo-logic.js?v=2026.5.2" defer></script>
-    <script src="js/modules/logic/PreFlightRoundVerifier.js?v=2026.5.2" defer></script>
-    <script src="js/modules/logic/MatchMakingService.js?v=2026.5.2" defer></script>
-    <script src="js/modules/logic/RoundAutoRegenerationService.js?v=2026.5.2" defer></script>
-    <script src="js/modules/ui/RoundAutoRegenNotice.js?v=2026.5.2" defer></script>
+    <script src="js/fixed-pairs-logic.js?v=2026.5.3" defer></script>
+    <script src="js/rotating-pozo-logic.js?v=2026.5.3" defer></script>
+    <script src="js/modules/logic/PreFlightRoundVerifier.js?v=2026.5.3" defer></script>
+    <script src="js/modules/logic/MatchMakingService.js?v=2026.5.3" defer></script>
+    <script src="js/modules/logic/RoundAutoRegenerationService.js?v=2026.5.3" defer></script>
+    <script src="js/modules/ui/RoundAutoRegenNotice.js?v=2026.5.3" defer></script>
     <script src="js/modules/americanas/AmericanaLogic.js" defer></script>
     <script src="js/modules/americanas/AmericanaService.js?v=1015" defer></script>
     <script src="js/modules/ai/TournamentChronicleService.js?v=1.0" defer></script>

@@ -68,7 +68,7 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5004...");
                     const isSwiss = mode === 'swiss';
                     const isFixedPairs = mode === 'fixed';
                     const isTwister = mode === 'twister';
-                    const isPozoOrLadder = isTwister || mode === 'twister' || mode === 'pozo' || mode === 'rey_pista' || mode === 'rotating';
+                    const isPozoOrLadder = isTwister || mode === 'twister' || mode === 'pozo' || mode === 'rey_pista' || mode === 'rotating' || isFixedPairs;
 
                     console.log(`🎯 [MatchMaking] Modalidad Normalizada: ${mode.toUpperCase()} (raw pair_mode: "${event.pair_mode}", name: "${event.name}")`);
 
