@@ -246,7 +246,7 @@
                 entrenos: [],
                 users: [],
                 personalMatches: [],
-                loading: true,
+                loading: false,
                 viewInitialized: false,
                 bgInitialized: false,
                 loadingResults: false,
@@ -328,20 +328,17 @@
         }
 
         onDataUpdate() {
-            // Check if we have received at least one update for each main collection
-            if (this.state.americanas && this.state.entrenos) {
-                this.state.loading = false;
-                if (this.state.pendingDeepLinkTarget) {
-                    this._resolveDeepLinkTarget();
-                }
-                if (this.state.viewInitialized && this.isCurrentRouteActive()) {
-                    if (this._onDataUpdateDebounce) clearTimeout(this._onDataUpdateDebounce);
-                    this._onDataUpdateDebounce = setTimeout(() => {
-                        if (this.isCurrentRouteActive()) {
-                            this.render();
-                        }
-                    }, 50); // 50ms batch window
-                }
+            this.state.loading = false;
+            if (this.state.pendingDeepLinkTarget) {
+                this._resolveDeepLinkTarget();
+            }
+            if (this.state.viewInitialized && this.isCurrentRouteActive()) {
+                if (this._onDataUpdateDebounce) clearTimeout(this._onDataUpdateDebounce);
+                this._onDataUpdateDebounce = setTimeout(() => {
+                    if (this.isCurrentRouteActive()) {
+                        this.render();
+                    }
+                }, 50); // 50ms batch window
             }
         }
 
@@ -355,6 +352,21 @@
             console.log("🤖 [EventsController] Starting Background Automation Service (Real-time Firestore Listeners)...");
             this.state.bgInitialized = true;
 
+            // Timeout de seguridad: NUNCA dejar la UI bloqueada en "CARGANDO AMERICANAS..." más de 2.5s
+            if (!this._loadingSafetyTimeout) {
+                this._loadingSafetyTimeout = setTimeout(() => {
+                    if (this.state.loading) {
+                        console.warn("⏱️ [EventsController] Timeout de seguridad de carga (2.5s). Desbloqueando UI...");
+                        if (!this.state.americanas) this.state.americanas = [];
+                        if (!this.state.entrenos) this.state.entrenos = [];
+                        this.state.loading = false;
+                        if (this.isCurrentRouteActive()) {
+                            this.render();
+                        }
+                    }
+                }, 2500);
+            }
+
             // 1. Data Listeners - Use robust query with logging
             try {
                 this.unsubscribeEvents = window.db.collection('americanas')
@@ -362,17 +374,39 @@
                         this.state.americanas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                         console.log(`📡 [EventsController] Real-time Americanas update: ${this.state.americanas.length} events`);
                         this.onDataUpdate();
-                    }, err => console.error("Error loading americanas:", err));
+                    }, err => {
+                        console.error("Error loading americanas snapshot, attempting direct get:", err);
+                        window.db.collection('americanas').get().then(snap => {
+                            this.state.americanas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                            this.onDataUpdate();
+                        }).catch(e => {
+                            this.state.americanas = this.state.americanas || [];
+                            this.onDataUpdate();
+                        });
+                    });
 
                 this.unsubscribeEntrenos = window.db.collection('entrenos')
                     .onSnapshot(snap => {
                         this.state.entrenos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                         console.log(`📡 [EventsController] Real-time Entrenos update: ${this.state.entrenos.length} events`);
                         this.onDataUpdate();
-                    }, err => console.error("Error loading entrenos:", err));
+                    }, err => {
+                        console.error("Error loading entrenos snapshot, attempting direct get:", err);
+                        window.db.collection('entrenos').get().then(snap => {
+                            this.state.entrenos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                            this.onDataUpdate();
+                        }).catch(e => {
+                            this.state.entrenos = this.state.entrenos || [];
+                            this.onDataUpdate();
+                        });
+                    });
             } catch (listenErr) {
                 console.error("❌ [EventsController] Error iniciando listeners Firestore:", listenErr);
                 this.state.bgInitialized = false;
+                this.state.americanas = this.state.americanas || [];
+                this.state.entrenos = this.state.entrenos || [];
+                this.state.loading = false;
+                this.render();
             }
 
             // 2. Automation Loop (Check every 120s to save quota)

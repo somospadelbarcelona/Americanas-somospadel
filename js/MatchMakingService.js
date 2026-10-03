@@ -21,21 +21,6 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5004...");
             async generateRound(eventId, eventType, roundNum, force = false, randomize = false) {
                 console.log(`🎲 MatchMakingService: Generando Ronda ${roundNum} para ${eventType} ${eventId} (force=${force}, randomize=${randomize})`);
 
-                // --- 🛡️ BÚNKER CLOUD DELEGATION (NIVEL NASA) ---
-                if (window.firebase && typeof firebase.functions === 'function') {
-                    try {
-                        const secureGen = firebase.app().functions('us-central1').httpsCallable('secureGenerateRound');
-                        console.log("🔒 [Security Búnker] Solicitando cálculo seguro de ronda al servidor...");
-                        const response = await secureGen({ eventId, eventType, roundNum, force, randomize });
-                        if (response && response.data && response.data.success) {
-                            console.log("✅ [Security Búnker] Ronda calculada en servidor:", response.data);
-                            return response.data.matches;
-                        }
-                    } catch (cloudErr) {
-                        console.warn("ℹ️ [Security Búnker Fallback] Delegando a cálculo local:", cloudErr.message);
-                    }
-                }
-
                 // Asegurar dependencias de datos
                 if (typeof window.FirebaseDB === 'undefined' && typeof window.db === 'undefined') {
                     console.error("❌ FirebaseDB / db ausente en MatchMakingService!");
@@ -83,8 +68,26 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5004...");
                     const isSwiss = mode === 'swiss';
                     const isFixedPairs = mode === 'fixed';
                     const isTwister = mode === 'twister';
+                    const isPozoOrLadder = isTwister || mode === 'twister' || mode === 'pozo' || mode === 'rey_pista' || mode === 'rotating';
 
                     console.log(`🎯 [MatchMaking] Modalidad Normalizada: ${mode.toUpperCase()} (raw pair_mode: "${event.pair_mode}", name: "${event.name}")`);
+
+                    // --- 🛡️ BÚNKER CLOUD DELEGATION (NIVEL NASA) ---
+                    // En modos de ascensos/descensos individuales (Twister, Pozo, Rey), omitimos Cloud Function
+                    // para garantizar ejecución local con TournamentEngine y TwisterInvariantGuard deterministas
+                    if (!isPozoOrLadder && window.firebase && typeof firebase.functions === 'function') {
+                        try {
+                            const secureGen = firebase.app().functions('us-central1').httpsCallable('secureGenerateRound');
+                            console.log("🔒 [Security Búnker] Solicitando cálculo seguro de ronda al servidor...");
+                            const response = await secureGen({ eventId, eventType, roundNum, force, randomize });
+                            if (response && response.data && response.data.success) {
+                                console.log("✅ [Security Búnker] Ronda calculada en servidor:", response.data);
+                                return response.data.matches;
+                            }
+                        } catch (cloudErr) {
+                            console.warn("ℹ️ [Security Búnker Fallback] Delegando a cálculo local:", cloudErr.message);
+                        }
+                    }
 
                     // Descontaminar fixed_pairs si NO es modo Fixed Pairs
                     if (!isFixedPairs && Array.isArray(event.fixed_pairs) && event.fixed_pairs.length > 0) {
@@ -140,8 +143,26 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5004...");
                     try {
                         if (roundNum > 1) {
                             // --- RONDAS 2+ ---
-                            const matchesCollection = (eventType === 'entreno') ? FirebaseDB.entrenos_matches : FirebaseDB.matches;
-                            const matches = await matchesCollection.getByAmericana(eventId);
+                            const fDb = (typeof window !== 'undefined' && window.FirebaseDB) ? window.FirebaseDB : (typeof FirebaseDB !== 'undefined' ? FirebaseDB : null);
+                            const collName = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
+                            let matches = [];
+                            try {
+                                if (window.db) {
+                                    // 🛡️ LECTURA FRESCA FORZADA DESDE EL SERVIDOR (bypassing local cache)
+                                    const snap = await window.db.collection(collName)
+                                        .where('americana_id', '==', eventId)
+                                        .get({ source: 'server' });
+                                    matches = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                                    console.log(`🌐 [MatchMaking] ${matches.length} partidos leídos directamente del servidor (fresh read).`);
+                                } else {
+                                    const matchesCollection = (eventType === 'entreno') ? fDb?.entrenos_matches : fDb?.matches;
+                                    matches = await matchesCollection.getByAmericana(eventId);
+                                }
+                            } catch (freshReadErr) {
+                                console.warn("ℹ️ [MatchMaking] Fallback a lectura estándar de partidos:", freshReadErr.message);
+                                const matchesCollection = (eventType === 'entreno') ? fDb?.entrenos_matches : fDb?.matches;
+                                matches = await matchesCollection.getByAmericana(eventId);
+                            }
                             const prevRoundMatches = matches.filter(m => parseInt(m.round) === (roundNum - 1));
 
                             // Limpieza de partidos fantasma no terminados
@@ -173,6 +194,100 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5004...");
                             if (unfinished.length > 0 && !force) {
                                 const pendingCourts = [...new Set(unfinished.map(m => m.court))].sort((a, b) => a - b);
                                 throw new Error(`⚠️ La Ronda ${roundNum - 1} tiene partidos sin finalizar en: Pista ${pendingCourts.join(', Pista ')}. Por favor, introduce los resultados antes.`);
+                            }
+
+                            // --- 🚀 DELEGACIÓN AL NUEVO TOURNAMENT ENGINE UNIVERSAL (R2+) ---
+                            if (!isFixedPairs) {
+                                await this._ensureTournamentEngine();
+                                const engine = (typeof window !== 'undefined' && window.TournamentEngine)
+                                    ? window.TournamentEngine
+                                    : (typeof TournamentEngine !== 'undefined' ? TournamentEngine : null);
+
+                                if (engine) {
+                                    try {
+                                        let engineMode = 'clasica';
+                                        const isMixedCat = event.category === 'mixed' || event.category === 'mixto' || event.category === 'mixta' ||
+                                            String(event.category || '').toLowerCase().includes('mixt') ||
+                                            String(event.title || event.name || '').toLowerCase().includes('mixt');
+
+                                        // Prioridad 1: Modalidades universales de dinámica específica (Twister, Pozo, Rey, Suiza)
+                                        if (isTwister || mode === 'twister' || mode === 'rotating') {
+                                            engineMode = 'twister';
+                                        } else if (mode === 'pozo') {
+                                            engineMode = 'pozo';
+                                        } else if (mode === 'rey_pista' || mode === 'rey_de_la_pista') {
+                                            engineMode = 'rey_pista';
+                                        } else if (isSwiss || mode === 'swiss') {
+                                            engineMode = 'mexicana';
+                                        } else if (eventType === 'entreno') {
+                                            // Entreno táctico genérico cuando no tiene una dinámica de escalera/twister
+                                            engineMode = 'entreno_rotaciones';
+                                            if (event.format === 'niveles' || event.entreno_type === 'niveles') engineMode = 'entreno_niveles';
+                                            if (event.format === 'libre' || event.entreno_type === 'libre') engineMode = 'entreno_libre';
+                                        } else if (isMixedCat) {
+                                            engineMode = 'mixta';
+                                        }
+
+                                        // 🛡️ REGLA SAGRADA TWISTER: En Twister NUNCA se fuerza mixto ni se segrega por género
+                                        const isTwisterMode = engineMode === 'twister' || isTwister;
+                                        const effectiveIsMixed = isTwisterMode ? false : isMixedCat;
+
+                                        console.log(`🚀 [MatchMakingService] Generando R${roundNum} con TournamentEngine (${engineMode}, mixed=${effectiveIsMixed})...`);
+                                        const engineRes = engine.generateRound({
+                                            players: normalizedPlayers,
+                                            courts: effectiveCourts,
+                                            roundNum: parseInt(roundNum),
+                                            mode: engineMode,
+                                            matchesHistory: matches,
+                                            options: {
+                                                rounds: parseInt(event.rounds_count) || 6,
+                                                hardNoRepeatPartner: false,
+                                                isMixed: effectiveIsMixed,
+                                                category: isTwisterMode ? 'open' : event.category
+                                            }
+                                        });
+
+                                        if (engineRes && engineRes.matches && engineRes.matches.length > 0) {
+                                            if (engineRes.updatedPlayers) {
+                                                await collection.update(eventId, { players: engineRes.updatedPlayers });
+                                            }
+
+                                            const preFlightResult = this._runPreFlight(engineRes.matches, {
+                                                roundNum,
+                                                pairMode: mode,
+                                                expectedCourts: effectiveCourts,
+                                                prevRoundMatches,
+                                                allMatches: matches,
+                                                players: engineRes.updatedPlayers || normalizedPlayers
+                                            });
+
+                                            // --- 🛡️ VALIDACIÓN DE INVARIANTES SAGRADAS TWISTER (MATEMÁTICA PURA) ---
+                                            if (isTwisterMode || isTwister || mode === 'twister') {
+                                                await this._ensureTwisterInvariantGuard();
+                                                const guard = (typeof window !== 'undefined' && window.TwisterInvariantGuard)
+                                                    ? window.TwisterInvariantGuard
+                                                    : (typeof TwisterInvariantGuard !== 'undefined' ? TwisterInvariantGuard : null);
+
+                                                if (guard && typeof guard.validate === 'function') {
+                                                    const guardRes = guard.validate(prevRoundMatches, preFlightResult.matches, effectiveCourts);
+                                                    if (!guardRes.valid) {
+                                                        console.error("🚨 [TwisterInvariantGuard] Violación de invariantes matemáticas detectada:", guardRes.errors);
+                                                        throw new Error(`Error de coherencia en Modo Twister: ${guardRes.errors.join(' | ')}`);
+                                                    }
+                                                    console.log("✅ [TwisterInvariantGuard] Todos los invariantes matemáticos verificados al 100%.");
+                                                }
+                                            }
+
+                                            return await this._createMatches(eventId, preFlightResult.matches, eventType);
+                                        } else {
+                                            throw new Error(`TournamentEngine no produjo partidos válidos para la Ronda ${roundNum}`);
+                                        }
+                                    } catch (engineErr) {
+                                        console.error("🚨 [MatchMakingService] Error fatal en TournamentEngine (R2+):", engineErr);
+                                        // TournamentEngine es la autoridad absoluta, NO hacer fallback silencioso a lógica rota
+                                        throw engineErr;
+                                    }
+                                }
                             }
 
                             if (isFixedPairs) {
@@ -208,7 +323,7 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5004...");
                                 } else {
                                     // Twister / Pozo: Ascensos y descensos
                                     console.log(`🎾 [MatchMaking] Aplicando ascensos/descensos Twister (${eventType})...`);
-                                    const categoryForCourts = event.category === 'mixed' ? 'mixed' : (event.category || 'open');
+                                    const categoryForCourts = isTwister ? 'open' : (event.category === 'mixed' ? 'mixed' : (event.category || 'open'));
                                     movedPlayers = RotatingPozoLogic.updatePlayerCourts(normalizedPlayers, prevRoundMatches, effectiveCourts, categoryForCourts);
                                 }
 
@@ -216,9 +331,9 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5004...");
                                 console.log("✅ Pistas de jugadores actualizadas para R" + roundNum);
 
                                 // Para la formación de parejas en pista:
-                                // En Twister, pasamos 'open' (o 'mixed' si aplica) para asegurar que use
-                                // _createSmartPairs y NO rompa la rotación de parejas
-                                const genCategory = isSwiss ? 'open' : (event.category === 'mixed' ? 'mixed' : 'open');
+                                // En Twister, pasamos 'open' para asegurar que use
+                                // _createSmartPairs y NO segregue por género
+                                const genCategory = isTwister ? 'open' : (isSwiss ? 'open' : (event.category === 'mixed' ? 'mixed' : 'open'));
                                 const rawMatches = RotatingPozoLogic.generateRound(movedPlayers, roundNum, effectiveCourts, genCategory);
 
                                 // --- PRE-FLIGHT VERIFIER & AUTO-FIX ---
@@ -230,6 +345,23 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5004...");
                                     allMatches: matches,
                                     players: movedPlayers
                                 });
+
+                                // --- 🛡️ VALIDACIÓN DE INVARIANTES SAGRADAS TWISTER (MATEMÁTICA PURA) ---
+                                if (isTwister || mode === 'twister') {
+                                    await this._ensureTwisterInvariantGuard();
+                                    const guard = (typeof window !== 'undefined' && window.TwisterInvariantGuard)
+                                        ? window.TwisterInvariantGuard
+                                        : (typeof TwisterInvariantGuard !== 'undefined' ? TwisterInvariantGuard : null);
+
+                                    if (guard && typeof guard.validate === 'function') {
+                                        const guardRes = guard.validate(prevRoundMatches, preFlightResult.matches, effectiveCourts);
+                                        if (!guardRes.valid) {
+                                            console.error("🚨 [TwisterInvariantGuard] Violación de invariantes matemáticas detectada:", guardRes.errors);
+                                            throw new Error(`Error de coherencia en Modo Twister: ${guardRes.errors.join(' | ')}`);
+                                        }
+                                        console.log("✅ [TwisterInvariantGuard] Todos los invariantes matemáticos verificados al 100%.");
+                                    }
+                                }
 
                                 return await this._createMatches(eventId, preFlightResult.matches, eventType);
                             }
@@ -283,13 +415,94 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5004...");
                                 return await this._createMatches(eventId, preFlightResult.matches, eventType);
 
                             } else {
-                                // MODO TWISTER / SUIZO R1
+                                // --- 🚀 TOURNAMENT ENGINE R1 ---
+                                await this._ensureTournamentEngine();
+                                const engine = (typeof window !== 'undefined' && window.TournamentEngine)
+                                    ? window.TournamentEngine
+                                    : (typeof TournamentEngine !== 'undefined' ? TournamentEngine : null);
+
+                                if (engine) {
+                                    try {
+                                        let engineMode = 'clasica';
+                                        const isMixedCat = event.category === 'mixed' || event.category === 'mixto' || event.category === 'mixta' ||
+                                            String(event.category || '').toLowerCase().includes('mixt') ||
+                                            String(event.title || event.name || '').toLowerCase().includes('mixt');
+
+                                        // Prioridad 1: Modalidades universales de dinámica específica (Twister, Pozo, Rey, Suiza)
+                                        if (isTwister || mode === 'twister' || mode === 'rotating') {
+                                            engineMode = 'twister';
+                                        } else if (mode === 'pozo') {
+                                            engineMode = 'pozo';
+                                        } else if (mode === 'rey_pista' || mode === 'rey_de_la_pista') {
+                                            engineMode = 'rey_pista';
+                                        } else if (isSwiss || mode === 'swiss') {
+                                            engineMode = 'mexicana';
+                                        } else if (eventType === 'entreno') {
+                                            // Entreno táctico genérico cuando no tiene una dinámica de escalera/twister
+                                            engineMode = 'entreno_rotaciones';
+                                            if (event.format === 'niveles' || event.entreno_type === 'niveles') engineMode = 'entreno_niveles';
+                                            if (event.format === 'libre' || event.entreno_type === 'libre') engineMode = 'entreno_libre';
+                                        } else if (isMixedCat) {
+                                            engineMode = 'mixta';
+                                        }
+
+                                        // 🛡️ REGLA SAGRADA TWISTER: En Twister NUNCA se fuerza mixto ni se segrega por género
+                                        const isTwisterMode = engineMode === 'twister' || isTwister;
+                                        const effectiveIsMixed = isTwisterMode ? false : isMixedCat;
+
+                                        console.log(`🚀 [MatchMakingService] Generando R1 con TournamentEngine (${engineMode}, mixed=${effectiveIsMixed})...`);
+                                        const engineRes = engine.generateRound({
+                                            players: normalizedPlayers,
+                                            courts: effectiveCourts,
+                                            roundNum: 1,
+                                            mode: engineMode,
+                                            matchesHistory: [],
+                                            options: {
+                                                rounds: parseInt(event.rounds_count) || 6,
+                                                randomize: !!randomize,
+                                                isMixed: effectiveIsMixed,
+                                                category: isTwisterMode ? 'open' : event.category
+                                            }
+                                        });
+
+                                        if (engineRes && engineRes.matches && engineRes.matches.length > 0) {
+                                            if (engineRes.updatedPlayers) {
+                                                await collection.update(eventId, { players: engineRes.updatedPlayers });
+                                            }
+
+                                            const preFlightResult = this._runPreFlight(engineRes.matches, {
+                                                roundNum: 1,
+                                                pairMode: mode,
+                                                expectedCourts: effectiveCourts,
+                                                players: engineRes.updatedPlayers || normalizedPlayers
+                                            });
+
+                                            return await this._createMatches(eventId, preFlightResult.matches, eventType);
+                                        } else {
+                                            throw new Error(`TournamentEngine no produjo partidos válidos para la Ronda 1`);
+                                        }
+                                    } catch (engineErr) {
+                                        console.error("🚨 [MatchMakingService] Error fatal en TournamentEngine (R1):", engineErr);
+                                        // TournamentEngine es la autoridad absoluta, NO hacer fallback silencioso a lógica rota
+                                        throw engineErr;
+                                    }
+                                }
+
+                                // MODO TWISTER / SUIZO R1 (Fallback)
                                 await this._ensureRotatingPozoLogic();
                                 if (!window.RotatingPozoLogic) throw new Error("RotatingPozoLogic no disponible");
 
                                 let pool = [...normalizedPlayers];
 
-                                if (eventType === 'entreno') {
+                                if (isTwister) {
+                                    if (randomize) {
+                                        console.log("🎲 Randomizing players (forcing shuffle)...");
+                                        for (let i = pool.length - 1; i > 0; i--) {
+                                            const j = Math.floor(Math.random() * (i + 1));
+                                            [pool[i], pool[j]] = [pool[j], pool[i]];
+                                        }
+                                    }
+                                } else if (eventType === 'entreno') {
                                     pool = this._sortPlayersForEntreno(pool, randomize);
                                 } else if (randomize) {
                                     console.log("🎲 Randomizing players (forcing shuffle)...");
@@ -308,7 +521,7 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5004...");
                                 });
                                 await collection.update(eventId, { players: pool });
 
-                                const genCat = isSwiss ? 'open' : (event.category === 'mixed' ? 'mixed' : 'open');
+                                const genCat = isTwister ? 'open' : (isSwiss ? 'open' : (event.category === 'mixed' ? 'mixed' : 'open'));
                                 const rawMatches = RotatingPozoLogic.generateRound(pool, 1, effectiveCourts, genCat);
 
                                 // Pre-Flight Verifier
@@ -443,6 +656,77 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5004...");
             /**
              * Auto-recuperación dinámica de dependencias
              */
+            async _ensureTournamentEngine() {
+                if (typeof window !== 'undefined' && window.TournamentEngine) return true;
+                if (typeof require !== 'undefined') {
+                    try {
+                        const eng = require('./tournament-engine/TournamentEngine');
+                        if (typeof window !== 'undefined') window.TournamentEngine = eng;
+                        if (typeof globalThis !== 'undefined') globalThis.TournamentEngine = eng;
+                        return true;
+                    } catch (e) {
+                        try {
+                            const eng = require('../../tournament-engine/TournamentEngine');
+                            if (typeof window !== 'undefined') window.TournamentEngine = eng;
+                            if (typeof globalThis !== 'undefined') globalThis.TournamentEngine = eng;
+                            return true;
+                        } catch (e2) { }
+                    }
+                }
+                if (typeof document !== 'undefined') {
+                    console.log("🚀 [MatchMakingService] Cargando TournamentEngine modular...");
+                    const scripts = [
+                        'js/tournament-engine/DecisionLogger.js',
+                        'js/tournament-engine/TournamentConstraints.js',
+                        'js/tournament-engine/FeasibilityValidator.js',
+                        'js/tournament-engine/TournamentSolver.js',
+                        'js/tournament-engine/modes/BaseTournamentMode.js',
+                        'js/tournament-engine/modes/AmericanaClasicaMode.js',
+                        'js/tournament-engine/modes/AmericanaMexicanaMode.js',
+                        'js/tournament-engine/modes/AmericanaMixtaMode.js',
+                        'js/tournament-engine/modes/AmericanaTwisterMode.js',
+                        'js/tournament-engine/modes/ReyDeLaPistaMode.js',
+                        'js/tournament-engine/modes/PozoAmericanoMode.js',
+                        'js/tournament-engine/modes/EntrenoRotacionesMode.js',
+                        'js/tournament-engine/modes/EntrenoNivelesMode.js',
+                        'js/tournament-engine/modes/EntrenoLibreMode.js',
+                        'js/tournament-engine/TwisterInvariantGuard.js',
+                        'js/tournament-engine/TournamentEngine.js'
+                    ];
+                    for (const s of scripts) {
+                        try {
+                            await this._loadScriptDynamically(`${s}?v=2026.4`);
+                        } catch (loadErr) {
+                            console.warn(`⚠️ Error cargando ${s}:`, loadErr);
+                        }
+                    }
+                }
+                return typeof window !== 'undefined' && !!window.TournamentEngine;
+            },
+
+            async _ensureTwisterInvariantGuard() {
+                if (typeof window !== 'undefined' && window.TwisterInvariantGuard) return true;
+                if (typeof require !== 'undefined') {
+                    try {
+                        const g = require('./tournament-engine/TwisterInvariantGuard');
+                        if (typeof window !== 'undefined') window.TwisterInvariantGuard = g;
+                        if (typeof globalThis !== 'undefined') globalThis.TwisterInvariantGuard = g;
+                        return true;
+                    } catch (e) {
+                        try {
+                            const g = require('../../tournament-engine/TwisterInvariantGuard');
+                            if (typeof window !== 'undefined') window.TwisterInvariantGuard = g;
+                            if (typeof globalThis !== 'undefined') globalThis.TwisterInvariantGuard = g;
+                            return true;
+                        } catch (e2) { }
+                    }
+                }
+                if (typeof document !== 'undefined') {
+                    await this._loadScriptDynamically('js/tournament-engine/TwisterInvariantGuard.js?v=2026.4');
+                }
+                return typeof window !== 'undefined' && !!window.TwisterInvariantGuard;
+            },
+
             async _ensurePreFlightRoundVerifier() {
                 if (typeof window !== 'undefined' && window.PreFlightRoundVerifier) return true;
                 if (typeof document !== 'undefined') {
@@ -623,18 +907,22 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5004...");
 
                 const roundNum = matchesData.length > 0 ? parseInt(matchesData[0].round) : 0;
                 const existingSnap = await dbCol.where('americana_id', '==', eventId).where('round', '==', roundNum).get();
-                const existingCourts = new Set(existingSnap.docs.map(doc => parseInt(doc.data().court)));
 
                 const batch = window.db.batch();
                 let batchCount = 0;
 
+                // 🛡️ REEMPLAZO ATÓMICO: Si ya existen partidos de esta ronda en Firestore (ej. regeneración forzada),
+                // eliminarlos en el mismo batch para evitar residuos obsoletos o inconsistencias.
+                if (!existingSnap.empty) {
+                    console.log(`🧹 [_createMatches] Reemplazando atómicamente ${existingSnap.size} partidos existentes de Ronda ${roundNum}...`);
+                    existingSnap.docs.forEach(doc => {
+                        batch.delete(doc.ref);
+                        batchCount++;
+                    });
+                }
+
                 for (const m of matchesData) {
                     const court = parseInt(m.court);
-                    if (existingCourts.has(court)) {
-                        console.warn(`⚠️ Omitiendo creación duplicada para Ronda ${roundNum} Pista ${court}`);
-                        continue;
-                    }
-
                     const payload = {
                         ...m,
                         americana_id: eventId,
@@ -653,7 +941,7 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5004...");
 
                 if (batchCount > 0) {
                     await batch.commit();
-                    console.log(`✅ [BATCH] Creados ${batchCount} partidos con verificación Pre-Flight para R${roundNum}.`);
+                    console.log(`✅ [BATCH] Guardados ${created.length} partidos verificados para R${roundNum}.`);
                 }
 
                 return created;
@@ -972,21 +1260,27 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5004...");
         };
 
         // EXPORT GLOBALLY
-        window.MatchMakingService = MatchMakingService;
-        window.MatchmakingService = MatchMakingService;
+        if (typeof window !== 'undefined') {
+            window.MatchMakingService = MatchMakingService;
+            window.MatchmakingService = MatchMakingService;
+        }
 
         if (typeof globalThis !== 'undefined') {
             globalThis.MatchMakingService = MatchMakingService;
             globalThis.MatchmakingService = MatchMakingService;
         }
         if (typeof module !== 'undefined' && module.exports) {
-            module.exports = { MatchMakingService };
+            module.exports = MatchMakingService;
+            module.exports.MatchMakingService = MatchMakingService;
+            module.exports.default = MatchMakingService;
         }
 
         console.log("✅ MatchMakingService EXPORTADO SATISFACTORIAMENTE (v5004)!");
 
     } catch (err) {
         console.error("❌ ERROR CRÍTICO CARGANDO MATCHMAKING SERVICE:", err);
-        window.MatchMakingServiceError = err;
+        if (typeof window !== 'undefined') {
+            window.MatchMakingServiceError = err;
+        }
     }
 })();

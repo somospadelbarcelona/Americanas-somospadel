@@ -270,6 +270,102 @@
             } catch (err) {
                 console.warn("⚠️ [RoundAutoRegen] Error en reconciliación:", err);
             }
+        },
+
+        /**
+         * Maneja la corrección de un resultado en la Ronda N:
+         * Si la Ronda N+1 existe y no ha comenzado (sin partidos terminados ni tanteo),
+         * la elimina y regenera automáticamente con los nuevos resultados corregidos.
+         * Si la Ronda N+1 ya tiene resultados, alerta al usuario en vez de sobreescribir.
+         */
+        async handleScoreCorrection(eventId, eventType = 'americana', correctedRoundNum) {
+            if (!eventId || !correctedRoundNum) return { status: 'skipped' };
+            const rNum = parseInt(correctedRoundNum);
+            const nextRoundNum = rNum + 1;
+
+            try {
+                const db = window.db;
+                if (!db) return { status: 'no_db' };
+
+                const isEntreno = eventType === 'entreno' || eventType === 'entrenos';
+                const matchCollection = isEntreno ? 'entrenos_matches' : 'matches';
+
+                // Buscar partidos de la siguiente ronda
+                const nextSnap = await db.collection(matchCollection)
+                    .where('americana_id', '==', eventId)
+                    .where('round', '==', nextRoundNum)
+                    .get();
+
+                if (nextSnap.empty) {
+                    return { status: 'no_next_round' };
+                }
+
+                const nextMatches = nextSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+                // Comprobar si algún partido de la siguiente ronda ya ha iniciado o terminado
+                const nextStarted = nextMatches.some(m => {
+                    const sA = parseInt(m.score_a) || 0;
+                    const sB = parseInt(m.score_b) || 0;
+                    const st = (m.status || '').toLowerCase();
+                    return sA > 0 || sB > 0 || st === 'in_progress' || st === 'finished' || st === 'completed';
+                });
+
+                if (nextStarted) {
+                    const msg = `⚠️ La Ronda ${nextRoundNum} ya tiene partidos en juego o finalizados. Para propagar la corrección de la Ronda ${rNum}, debes utilizar "Reiniciar Torneo" desde la Ronda ${rNum}.`;
+                    console.warn(`🛑 [RoundAutoRegen] ${msg}`);
+                    if (window.PremiumModal?.alert) {
+                        window.PremiumModal.alert({
+                            title: '⚠️ RONDA POSTERIOR EN JUEGO',
+                            message: msg,
+                            type: 'warning'
+                        });
+                    } else if (window.NotificationService?.showToast) {
+                        window.NotificationService.showToast(msg, 'warning');
+                    }
+                    return { status: 'cannot_regenerate_next_round_started', round: nextRoundNum };
+                }
+
+                // Si la Ronda N+1 NO ha empezado, borrarla y regenerarla con el resultado corregido
+                console.log(`🔄 [RoundAutoRegen] Regenerando Ronda ${nextRoundNum} tras corrección en Ronda ${rNum}...`);
+
+                const batch = db.batch();
+                nextMatches.forEach(m => {
+                    batch.delete(db.collection(matchCollection).doc(m.id));
+                });
+                await batch.commit();
+
+                if (window.MatchMakingService) {
+                    const newMatches = await window.MatchMakingService.generateRound(
+                        eventId,
+                        isEntreno ? 'entreno' : 'americana',
+                        nextRoundNum,
+                        true,
+                        false
+                    );
+
+                    const toastMsg = `🔄 La Ronda ${nextRoundNum} se ha recalculado automáticamente con la corrección de la Ronda ${rNum}.`;
+                    if (window.NotificationService?.showToast) {
+                        window.NotificationService.showToast(toastMsg, 'info');
+                    }
+
+                    window.dispatchEvent(new CustomEvent('roundAutoRegenerated', {
+                        detail: {
+                            eventId,
+                            eventType: isEntreno ? 'entreno' : 'americana',
+                            round: nextRoundNum,
+                            message: toastMsg
+                        }
+                    }));
+
+                    return { status: 'regenerated', round: nextRoundNum, count: newMatches?.length || 0 };
+                }
+
+                return { status: 'deleted_waiting_generation', round: nextRoundNum };
+
+            } catch (err) {
+                console.error("❌ [RoundAutoRegen] Error al procesar corrección de resultado:", err);
+                return { status: 'error', error: err.message };
+            }
         }
     };
 

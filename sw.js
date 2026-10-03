@@ -7,7 +7,7 @@
 //  - Firestore y APIs externas: Excluidas de caché (conexión directa)
 // ============================================================================
 
-const CACHE_NAME = 'somospadel-pwa-v2.1.0';
+const CACHE_NAME = 'somospadel-pwa-v2026.5.2';
 
 // Recursos críticos para el funcionamiento offline básico (App Shell)
 const PRECACHE_ASSETS = [
@@ -15,6 +15,26 @@ const PRECACHE_ASSETS = [
     './index.html',
     './admin.html',
     './manifest.json',
+    './js/tournament-engine/DecisionLogger.js',
+    './js/tournament-engine/TournamentConstraints.js',
+    './js/tournament-engine/FeasibilityValidator.js',
+    './js/tournament-engine/TournamentSolver.js',
+    './js/tournament-engine/modes/BaseTournamentMode.js',
+    './js/tournament-engine/modes/AmericanaClasicaMode.js',
+    './js/tournament-engine/modes/AmericanaMexicanaMode.js',
+    './js/tournament-engine/modes/AmericanaMixtaMode.js',
+    './js/tournament-engine/modes/AmericanaTwisterMode.js',
+    './js/tournament-engine/modes/ReyDeLaPistaMode.js',
+    './js/tournament-engine/modes/PozoAmericanoMode.js',
+    './js/tournament-engine/modes/EntrenoRotacionesMode.js',
+    './js/tournament-engine/modes/EntrenoNivelesMode.js',
+    './js/tournament-engine/modes/EntrenoLibreMode.js',
+    './js/tournament-engine/TwisterInvariantGuard.js',
+    './js/tournament-engine/TournamentEngine.js',
+    './js/PreFlightRoundVerifier.js',
+    './js/MatchMakingService.js',
+    './js/modules/logic/PreFlightRoundVerifier.js',
+    './js/modules/logic/MatchMakingService.js',
     './js/fixed-pairs-logic.js',
     './js/rotating-pozo-logic.js',
     './css/theme-playtomic.css',
@@ -163,7 +183,21 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // 6. Estrategia STALE-WHILE-REVALIDATE: Imágenes, CSS, JS locales
+    // 5.5 Estrategia NETWORK FIRST: Scripts del Motor de Torneos y Lógica Crítica
+    // Garantiza que cualquier actualización en los algoritmos matemáticos se aplique inmediatamente
+    const isCriticalLogicScript = url.pathname.includes('/tournament-engine/') ||
+        url.pathname.includes('MatchMakingService.js') ||
+        url.pathname.includes('PreFlightRoundVerifier.js') ||
+        url.pathname.includes('rotating-pozo-logic.js') ||
+        url.pathname.includes('fixed-pairs-logic.js') ||
+        url.pathname.includes('RoundAutoRegenerationService.js');
+
+    if (isCriticalLogicScript) {
+        event.respondWith(handleNetworkFirstLogic(request));
+        return;
+    }
+
+    // 6. Estrategia STALE-WHILE-REVALIDATE: Imágenes, CSS, JS locales estándar
     const isStaticAsset = request.destination === 'image' ||
         request.destination === 'style' ||
         request.destination === 'script' ||
@@ -283,6 +317,30 @@ async function handleNetworkFirstNavigation(request, event) {
 /**
  * Estrategia Cache First (ideal para fuentes y recursos inmutables)
  */
+/**
+ * Estrategia Network First para scripts de lógica de torneos
+ * Prioriza descargar el código más reciente de la red; si no hay conexión, usa caché.
+ */
+async function handleNetworkFirstLogic(request) {
+    try {
+        const networkResponse = await fetch(request);
+        if (networkResponse && networkResponse.ok) {
+            const cache = await caches.open(CACHE_NAME);
+            cache.put(request, networkResponse.clone()).catch(() => {});
+            return networkResponse;
+        }
+    } catch (e) {
+        console.warn(`[SW] Red no disponible para script crítico ${request.url}, usando copia en caché:`, e.message);
+    }
+
+    const cachedResponse = await caches.match(request);
+    if (cachedResponse) {
+        return cachedResponse;
+    }
+
+    return fetch(request);
+}
+
 async function handleCacheFirst(request) {
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
@@ -308,30 +366,38 @@ async function handleCacheFirst(request) {
  * en segundo plano para la próxima visita.
  */
 async function handleStaleWhileRevalidate(request) {
-    const cache = await caches.open(CACHE_NAME);
-    const cachedResponse = await cache.match(request);
+    try {
+        const cache = await caches.open(CACHE_NAME);
+        const cachedResponse = await cache.match(request);
 
-    const networkFetchPromise = fetch(request)
-        .then((networkResponse) => {
-            if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
-                cache.put(request, networkResponse.clone());
-            }
-            return networkResponse;
-        })
-        .catch((err) => {
-            // Error de red silencioso en segundo plano
-            return null;
-        });
+        const networkFetchPromise = fetch(request)
+            .then((networkResponse) => {
+                if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
+                    cache.put(request, networkResponse.clone()).catch(() => {});
+                }
+                return networkResponse;
+            })
+            .catch(() => null);
 
-    if (cachedResponse) {
-        return cachedResponse;
+        if (cachedResponse) {
+            return cachedResponse;
+        }
+
+        const freshResponse = await networkFetchPromise;
+        if (freshResponse) {
+            return freshResponse;
+        }
+
+        // Fallback final a fetch directo de red
+        return await fetch(request);
+    } catch (err) {
+        console.warn('🎾 [SW] Fallback en handleStaleWhileRevalidate:', err);
+        try {
+            return await fetch(request);
+        } catch (fetchErr) {
+            return new Response('', { status: 408, statusText: 'Offline' });
+        }
     }
-
-    const freshResponse = await networkFetchPromise;
-    if (freshResponse) {
-        return freshResponse;
-    }
-
 }
 
 // ============================================================================

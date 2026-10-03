@@ -47,12 +47,35 @@ const RotatingPozoLogic = {
                     }
                     _env._processedCourtsInRanking.add(dedupKey);
 
-                    const sA = parseInt(m.score_a || 0);
-                    const sB = parseInt(m.score_b || 0);
-                    const teamA = (m.team_a_ids || []).map(String);
-                    const teamB = (m.team_b_ids || []).map(String);
+                    const sA = parseInt(m.score_a ?? m.games_a ?? m.scoreA ?? m.gamesA ?? 0);
+                    const sB = parseInt(m.score_b ?? m.games_b ?? m.scoreB ?? m.gamesB ?? 0);
+                    
+                    const getTeamList = (rawIds, rawPlayers, p1, p2) => {
+                        if (Array.isArray(rawIds) && rawIds.length > 0) return rawIds.map(id => String(id && typeof id === 'object' ? (id.id || id.uid) : id));
+                        if (Array.isArray(rawPlayers) && rawPlayers.length > 0) return rawPlayers.map(p => String(p.id || p.uid));
+                        if (p1 || p2) return [p1, p2].filter(Boolean).map(String);
+                        return [];
+                    };
 
-                    const winners = (sA > sB) ? teamA : ((sB > sA) ? teamB : teamA); // Draw favors A
+                    const teamA = getTeamList(m.team_a_ids || m.teamA_ids, m.team_a_players || m.teamAPlayers, m.player_a1_id || m.player1_id, m.player_a2_id || m.player2_id);
+                    const teamB = getTeamList(m.team_b_ids || m.teamB_ids, m.team_b_players || m.teamBPlayers, m.player_b1_id || m.player3_id, m.player_b2_id || m.player4_id);
+
+                    let teamAWon = null;
+                    const w = String(m.winner || '').toLowerCase().trim();
+                    if (w === 'team_a' || w === 'a' || w === 'teama' || w === '1') {
+                        teamAWon = true;
+                    } else if (w === 'team_b' || w === 'b' || w === 'teamb' || w === '2') {
+                        teamAWon = false;
+                    } else if (sA > sB) {
+                        teamAWon = true;
+                    } else if (sB > sA) {
+                        teamAWon = false;
+                    }
+
+                    if (teamAWon === null) {
+                        throw new Error(`La Pista ${courtNum || m.court || ''} de la Ronda ${m.round || ''} no tiene un ganador válido (marcador ${sA}-${sB}). Corrige el resultado antes de generar la siguiente ronda.`);
+                    }
+                    const winners = teamAWon ? teamA : teamB;
 
                     [...teamA, ...teamB].forEach(id => {
                         // Find key that matches loosely
@@ -95,6 +118,10 @@ const RotatingPozoLogic = {
         }
 
         // 3. Aplicar Movimiento Teórico (+1 / -1)
+        // Regla 1: Si ganan, suben de pista (current_court--)
+        // Regla 2: Si pierden, bajan de pista (current_court++)
+        // Regla 3: Si están en P1 y ganan, se quedan en P1
+        // Regla 4: Si están en PK y pierden, se quedan en PK
         Object.values(playerMap).forEach(p => {
             if (p.played) {
                 if (p.won) {
@@ -105,7 +132,8 @@ const RotatingPozoLogic = {
             }
         });
 
-        // 4. ESTABILIZACIÓN: Re-empaquetado inteligente para evitar huecos sin saltar pistas
+        // 4. ESTABILIZACIÓN: Re-empaquetado universal sin segregación por género
+        // NO IMPORTA EL GÉNERO EN TWISTER: chicos, chicas o mixto juegan juntos según pista
         let allPlayers = Object.values(playerMap);
 
         // Helper comparison logic for Pozo stability with BYE rotation
@@ -127,29 +155,19 @@ const RotatingPozoLogic = {
             return String(a.name || "").localeCompare(String(b.name || ""));
         };
 
-        if (category === 'mixed') {
-            const males = allPlayers.filter(p => p.gender === 'chico').sort(comparePlayers);
-            const females = allPlayers.filter(p => p.gender === 'chica').sort(comparePlayers);
+        allPlayers.sort(comparePlayers);
 
-            males.forEach((p, i) => { p.current_court = Math.floor(i / 2) + 1; });
-            females.forEach((p, i) => { p.current_court = Math.floor(i / 2) + 1; });
-
-            return [...males, ...females];
-        } else {
-            allPlayers.sort(comparePlayers);
-
-            console.log("🏃 [Movement Audit] Re-calculating final court assignments:");
-            allPlayers.forEach((p, i) => { 
-                const oldCourt = p.current_court;
-                p.current_court = Math.floor(i / 4) + 1; 
-                if (oldCourt !== p.current_court) {
-                    console.log(`   - ${p.name}: Pista ${oldCourt} -> Pista ${p.current_court} (${p.played ? (p.won ? 'Gano' : 'Perdio') : 'Resto'})`);
-                } else {
-                    console.log(`   - ${p.name}: Se mantiene en Pista ${p.current_court}`);
-                }
-            });
-            return allPlayers;
-        }
+        console.log("🏃 [Movement Audit] Re-calculating final court assignments:");
+        allPlayers.forEach((p, i) => { 
+            const oldCourt = p.current_court;
+            p.current_court = Math.floor(i / 4) + 1; 
+            if (oldCourt !== p.current_court) {
+                console.log(`   - ${p.name}: Pista ${oldCourt} -> Pista ${p.current_court} (${p.played ? (p.won ? 'Gano' : 'Perdio') : 'Resto'})`);
+            } else {
+                console.log(`   - ${p.name}: Se mantiene en Pista ${p.current_court}`);
+            }
+        });
+        return allPlayers;
     },
 
     /**
@@ -333,35 +351,15 @@ const RotatingPozoLogic = {
 
             let teamA, teamB;
 
-            if (category === 'mixed') {
-                // MODO MIXTO: 2 hombres + 2 mujeres por pista
-                // Rotación garantizada: los hombres y mujeres se emparejan de forma diferente cada ronda
-                const males = pInCourt.filter(p => p.gender === 'chico');
-                const females = pInCourt.filter(p => p.gender === 'chica');
-
-                if (males.length >= 2 && females.length >= 2) {
-                    const rotationPattern = roundNumber % 2;
-                    if (rotationPattern === 1) {
-                        teamA = [males[0], females[0]];
-                        teamB = [males[1], females[1]];
-                    } else {
-                        teamA = [males[0], females[1]];
-                        teamB = [males[1], females[0]];
-                    }
-                } else {
-                    console.warn(`⚠️ Pista ${c} no tiene balance de género correcto para MIXTO`);
-                    teamA = this._createRotatingPairs(pInCourt, roundNumber, 0);
-                    teamB = this._createRotatingPairs(pInCourt, roundNumber, 1);
-                }
-            } else if (category === 'entreno') {
+            if (category === 'entreno') {
                 // LOGICA ESPECIFICA ENTRENO: Priorizar rivalidad de compañeros de equipo
                 const entrenoPairs = this._createEntrenoPairs(pInCourt);
                 teamA = entrenoPairs.teamA;
                 teamB = entrenoPairs.teamB;
             } else {
-                // MODO TWISTER / NORMAL / AMERICANAS
-                // El usuario pide explícitamente "cambiar de pareja al cambiar de pista".
-                // Usamos _createSmartPairs para garantizar que NO se repitan parejas inmediatas.
+                // MODO TWISTER / NORMAL / AMERICANAS (Sin segregación de género)
+                // Regla Sagrada Twister: El género NO importa (pueden ser 2 chicos, 2 chicas o mixto libre).
+                // Lo inquebrantable es cambiar de pareja obligatoriamente y no repetir compañeros inmediatos.
                 const smartPairs = this._createSmartPairs(pInCourt);
                 teamA = smartPairs.teamA;
                 teamB = smartPairs.teamB;

@@ -144,10 +144,29 @@ function calculateFixedPairsRound(event, existingMatches, roundNum, maxCourts) {
             const sA = parseInt(m.score_a || 0);
             const sB = parseInt(m.score_b || 0);
             const curCourt = parseInt(m.court || 1);
-            const winnerIds = sA >= sB ? m.team_a_ids : m.team_b_ids;
-            const loserIds = sA >= sB ? m.team_b_ids : m.team_a_ids;
-            const winnerName = sA >= sB ? m.team_a : m.team_b;
-            const loserName = sA >= sB ? m.team_b : m.team_a;
+            let teamAWon = null;
+            const w = String(m.winner || '').toLowerCase().trim();
+            if (w === 'team_a' || w === 'a' || w === 'teama' || w === '1') {
+                teamAWon = true;
+            } else if (w === 'team_b' || w === 'b' || w === 'teamb' || w === '2') {
+                teamAWon = false;
+            } else if (sA > sB) {
+                teamAWon = true;
+            } else if (sB > sA) {
+                teamAWon = false;
+            }
+
+            if (teamAWon === null) {
+                throw new functions.https.HttpsError(
+                    'failed-precondition',
+                    `La Pista ${curCourt} de la Ronda ${roundNum - 1} no tiene un ganador válido (marcador ${sA}-${sB}). Corrige el resultado antes de generar la siguiente ronda.`
+                );
+            }
+
+            const winnerIds = teamAWon ? m.team_a_ids : m.team_b_ids;
+            const loserIds = teamAWon ? m.team_b_ids : m.team_a_ids;
+            const winnerName = teamAWon ? m.team_a : m.team_b;
+            const loserName = teamAWon ? m.team_b : m.team_a;
 
             const nextWinnerCourt = Math.max(1, curCourt - 1);
             const nextLoserCourt = Math.min(maxCourts, curCourt + 1);
@@ -210,9 +229,27 @@ function calculateRotatingPozoRound(event, existingMatches, roundNum, maxCourts,
             const curCourt = parseInt(m.court || 1);
             const sA = parseInt(m.score_a || 0);
             const sB = parseInt(m.score_b || 0);
+            let teamAWon = null;
+            const w = String(m.winner || '').toLowerCase().trim();
+            if (w === 'team_a' || w === 'a' || w === 'teama' || w === '1') {
+                teamAWon = true;
+            } else if (w === 'team_b' || w === 'b' || w === 'teamb' || w === '2') {
+                teamAWon = false;
+            } else if (sA > sB) {
+                teamAWon = true;
+            } else if (sB > sA) {
+                teamAWon = false;
+            }
+
+            if (teamAWon === null) {
+                throw new functions.https.HttpsError(
+                    'failed-precondition',
+                    `La Pista ${curCourt} de la Ronda ${roundNum - 1} no tiene un ganador válido (marcador ${sA}-${sB}). Corrige el resultado antes de generar la siguiente ronda.`
+                );
+            }
             
-            const winIds = sA >= sB ? m.team_a_ids : m.team_b_ids;
-            const loseIds = sA >= sB ? m.team_b_ids : m.team_a_ids;
+            const winIds = teamAWon ? m.team_a_ids : m.team_b_ids;
+            const loseIds = teamAWon ? m.team_b_ids : m.team_a_ids;
 
             // Extraer nombres de jugadores
             courtWinners[curCourt] = winIds || [];
