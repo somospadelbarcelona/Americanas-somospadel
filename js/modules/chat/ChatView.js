@@ -1214,7 +1214,7 @@
                        </div>`;
 
                 const mediaHtml = msg.attachment
-                    ? `<img class="sp-chat-msg-img" src="${msg.attachment}" alt="Adjunto" onclick="window.open('${msg.attachment}')">`
+                    ? `<img class="sp-chat-msg-img" src="${msg.attachment}" alt="Adjunto" onclick="window.ChatView.openImageModal(this.src)">`
                     : '';
 
                 html += `
@@ -1385,35 +1385,188 @@
         /* ═══════════════════════════════════════════════════════════════
            7. ENVÍO DE MENSAJES & ADJUNTOS
            ═══════════════════════════════════════════════════════════════ */
-        handleFileInput(input) {
+        /**
+         * Abre un lightbox flotante a pantalla completa para ver la foto adjunta.
+         */
+        openImageModal(src) {
+            if (!src) return;
+            const existing = document.getElementById('sp-chat-image-lightbox');
+            if (existing) existing.remove();
+
+            const lightbox = document.createElement('div');
+            lightbox.id = 'sp-chat-image-lightbox';
+            lightbox.style.cssText = `
+                position: fixed;
+                top: 0; left: 0; width: 100vw; height: 100vh;
+                background: rgba(15, 23, 42, 0.92);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 999999;
+                padding: 20px;
+                box-sizing: border-box;
+                backdrop-filter: blur(8px);
+                cursor: zoom-out;
+            `;
+            lightbox.innerHTML = `
+                <div style="position: relative; max-width: 95vw; max-height: 90vh; display: flex; align-items: center; justify-content: center;" onclick="event.stopPropagation()">
+                    <button style="position: absolute; top: -16px; right: -16px; background: #0f172a; color: #fff; border: 2px solid rgba(255,255,255,0.8); border-radius: 50%; width: 36px; height: 36px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(0,0,0,0.5); z-index: 10;" onclick="document.getElementById('sp-chat-image-lightbox')?.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <img src="${src}" style="max-width: 92vw; max-height: 85vh; object-fit: contain; border-radius: 12px; box-shadow: 0 12px 35px rgba(0,0,0,0.7);" alt="Foto ampliada">
+                </div>
+            `;
+            lightbox.onclick = () => lightbox.remove();
+            document.body.appendChild(lightbox);
+        }
+
+        /**
+         * Comprime y optimiza imágenes cliente mediante canvas para garantizar
+         * que queden estrictamente por debajo del límite de Firestore (1 MB).
+         */
+        async compressImage(file, maxDimension = 1080, quality = 0.72) {
+            return new Promise((resolve, reject) => {
+                if (!file) return reject(new Error("No se ha proporcionado archivo"));
+
+                // Fallback para entornos no-browser (Node.js tests)
+                if (typeof document === 'undefined' || !document.createElement) {
+                    return resolve("data:image/jpeg;base64,mockCompressedImage");
+                }
+
+                const reader = new FileReader();
+                reader.onerror = () => reject(new Error("No se pudo leer el archivo de imagen."));
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onerror = () => reject(new Error("El archivo no es una imagen compatible o válida."));
+                    img.onload = () => {
+                        try {
+                            let width = img.width;
+                            let height = img.height;
+
+                            // Escalar proporcionalmente si excede el tamaño máximo
+                            if (width > height) {
+                                if (width > maxDimension) {
+                                    height = Math.round(height * (maxDimension / width));
+                                    width = maxDimension;
+                                }
+                            } else {
+                                if (height > maxDimension) {
+                                    width = Math.round(width * (maxDimension / height));
+                                    height = maxDimension;
+                                }
+                            }
+
+                            const canvas = document.createElement('canvas');
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            if (!ctx) {
+                                return resolve(e.target.result);
+                            }
+
+                            ctx.drawImage(img, 0, 0, width, height);
+
+                            let currentQuality = quality;
+                            let dataUrl = canvas.toDataURL('image/jpeg', currentQuality);
+
+                            // Límite seguro para Firestore: máximo ~650 KB (aprox 650000 caracteres base64)
+                            const MAX_SAFE_LENGTH = 650000;
+                            let attempts = 0;
+
+                            while (dataUrl.length > MAX_SAFE_LENGTH && attempts < 3) {
+                                attempts++;
+                                currentQuality -= 0.15;
+                                if (currentQuality < 0.3) {
+                                    canvas.width = Math.round(canvas.width * 0.75);
+                                    canvas.height = Math.round(canvas.height * 0.75);
+                                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                                    currentQuality = 0.6;
+                                }
+                                dataUrl = canvas.toDataURL('image/jpeg', Math.max(0.25, currentQuality));
+                            }
+
+                            resolve(dataUrl);
+                        } catch (err) {
+                            reject(err);
+                        }
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async handleFileInput(input) {
             const file = input?.files?.[0];
             if (!file) return;
 
-            if (file.size > 5 * 1024 * 1024) {
-                alert("La imagen no debe superar los 5 MB.");
+            // Soporta fotos de cámara de móvil de hasta 20 MB optimizándolas
+            if (file.size > 20 * 1024 * 1024) {
+                alert("La foto seleccionada supera los 20 MB. Selecciona una imagen más ligera.");
+                if (input) input.value = '';
                 return;
             }
 
-            const reader = new FileReader();
-            reader.onload = (e) => {
+            const strip = document.getElementById('sp-chat-preview-strip');
+            const thumb = document.getElementById('sp-chat-preview-thumb');
+
+            // Feedback visual inmediato
+            if (strip && thumb) {
+                thumb.src = '';
+                thumb.style.opacity = '0.35';
+                strip.style.display = 'flex';
+                const infoEl = strip.querySelector('.sp-chat-preview-info');
+                if (infoEl) {
+                    infoEl.innerHTML = `
+                        <div style="font-weight: 800; color: #0f172a;"><i class="fas fa-spinner fa-spin"></i> Optimizando imagen...</div>
+                        <div style="font-size:0.65rem; color:#64748b;">Ajustando para envío ultra rápido</div>
+                    `;
+                }
+            }
+
+            try {
+                const compressedDataUrl = await this.compressImage(file);
                 this.pendingAttachment = {
                     type: 'image',
-                    data: e.target.result
+                    data: compressedDataUrl
                 };
-                const strip = document.getElementById('sp-chat-preview-strip');
-                const thumb = document.getElementById('sp-chat-preview-thumb');
+
                 if (strip && thumb) {
-                    thumb.src = e.target.result;
-                    strip.style.display = 'flex';
+                    thumb.src = compressedDataUrl;
+                    thumb.style.opacity = '1';
+                    const infoEl = strip.querySelector('.sp-chat-preview-info');
+                    if (infoEl) {
+                        infoEl.innerHTML = `
+                            <div style="font-weight: 800; color: #0f172a;">Foto adjunta</div>
+                            <div style="font-size:0.65rem; color:#10b981; font-weight:700;">✓ Optimizada y lista para enviar</div>
+                        `;
+                    }
                 }
-            };
-            reader.readAsDataURL(file);
+            } catch (err) {
+                console.error("[ChatView] Error optimizando foto:", err);
+                alert("No se pudo procesar la imagen: " + (err.message || "Formato no válido"));
+                this.clearAttachment();
+            }
         }
 
         clearAttachment() {
             this.pendingAttachment = null;
             const strip = document.getElementById('sp-chat-preview-strip');
-            if (strip) strip.style.display = 'none';
+            if (strip) {
+                strip.style.display = 'none';
+                const thumb = document.getElementById('sp-chat-preview-thumb');
+                if (thumb) {
+                    thumb.src = '';
+                    thumb.style.opacity = '1';
+                }
+                const infoEl = strip.querySelector('.sp-chat-preview-info');
+                if (infoEl) {
+                    infoEl.innerHTML = `
+                        <div style="font-weight: 800;">Foto adjunta</div>
+                        <div style="font-size:0.65rem; color:#94a3b8;">Lista para enviar</div>
+                    `;
+                }
+            }
             const fileInput = document.getElementById('sp-chat-file-input');
             if (fileInput) fileInput.value = '';
         }

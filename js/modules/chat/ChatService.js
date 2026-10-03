@@ -467,6 +467,15 @@
             const uid = user.id || user.uid;
             if (!uid) return { success: false, error: 'Unauthorized' };
 
+            // Salvaguarda: límite estricto de Firestore (1 MB por documento / campo)
+            if (media && media.data && typeof media.data === 'string' && media.data.length > 950000) {
+                console.warn("[ChatService] Adjunto descartado por exceder límite de tamaño de Firestore:", media.data.length);
+                return {
+                    success: false,
+                    error: 'El archivo adjunto supera el tamaño máximo permitido por base de datos (1 MB). Por favor, selecciona una foto optimizada.'
+                };
+            }
+
             try {
                 const isAdmin = this.hasModerationPrivileges(user);
                 let messageType = isAdmin ? 'admin' : 'standard';

@@ -411,6 +411,30 @@ async function runTestSuite() {
     const totalUnread = context.window.ChatView.calculateTotalUnread(testChats, 'user_player_01');
     assert(totalUnread === 4, `Cálculo de total de no leídos correcto (esperado: 4, obtenido: ${totalUnread})`);
 
+    // 6.5 Manejo y control de tamaño de adjuntos de imagen (Firestore 1MB limit prevention)
+    assert(typeof context.window.ChatView.compressImage === 'function', "ChatView implementa compressImage");
+    assert(typeof context.window.ChatView.openImageModal === 'function', "ChatView implementa openImageModal");
+
+    // Enviar adjunto válido
+    const validMedia = {
+        type: 'image',
+        data: 'data:image/jpeg;base64,' + 'A'.repeat(5000)
+    };
+    const sendValidMediaRes = await context.window.ChatService.sendMessage(event1.id, "Foto de la pista", validMedia);
+    assert(sendValidMediaRes.success, "Mensaje con foto optimizada enviado con éxito");
+    const storedMediaMsg = mockDbStore[`chats_${event1.id}_messages`][sendValidMediaRes.messageId];
+    assert(storedMediaMsg.attachment === validMedia.data, "Attachment data persistido correctamente");
+    assert(storedMediaMsg.attachmentType === 'image', "Attachment type persistido correctamente");
+
+    // Intento de envío de adjunto que excede el límite de Firestore (> 1MB / 950000 chars)
+    const oversizedMedia = {
+        type: 'image',
+        data: 'data:image/jpeg;base64,' + 'X'.repeat(1050000)
+    };
+    const sendOversizedRes = await context.window.ChatService.sendMessage(event1.id, "Foto pesada", oversizedMedia);
+    assert(sendOversizedRes.success === false, "ChatService rechaza de forma segura adjuntos que superan el límite de Firestore");
+    assert(sendOversizedRes.error && sendOversizedRes.error.includes("1 MB"), "ChatService proporciona mensaje descriptivo de error sobre el límite de 1 MB");
+
     // ─────────────────────────────────────────────────────────────
     // RESUMEN FINAL
     // ─────────────────────────────────────────────────────────────
