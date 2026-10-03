@@ -1572,22 +1572,37 @@ body.notif-drawer-open {
     }
 
     .header-notif-btn {
-        width: 44px;
-        height: 44px;
-        min-width: 44px;
-        min-height: 44px;
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        min-height: 36px;
+        border-radius: 10px;
+        font-size: 1.05rem;
     }
 }
 
 @media (max-width: 414px) {
     .header-notif-btn {
-        width: 44px;
-        height: 44px;
-        min-width: 44px;
-        min-height: 44px;
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        min-height: 36px;
+        border-radius: 10px;
+        font-size: 1.05rem;
     }
     .notif-header-main-title {
         font-size: 0.92rem;
+    }
+}
+
+@media (max-width: 380px) {
+    .header-notif-btn {
+        width: 35px;
+        height: 35px;
+        min-width: 35px;
+        min-height: 35px;
+        border-radius: 9px;
+        font-size: 1rem;
     }
 }
 

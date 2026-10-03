@@ -7,7 +7,7 @@
 //  - Firestore y APIs externas: Excluidas de caché (conexión directa)
 // ============================================================================
 
-const CACHE_NAME = 'somospadel-pwa-v2026.5.9';
+const CACHE_NAME = 'somospadel-pwa-v2026.6.0';
 
 // Recursos críticos para el funcionamiento offline básico (App Shell)
 const PRECACHE_ASSETS = [
@@ -43,6 +43,8 @@ const PRECACHE_ASSETS = [
     './css/glassmorphism.css',
     './css/dashboard-premium.css',
     './css/mobile-header-fix.css',
+    './css/responsive-global.css',
+    './css/sp-chat-modal.css',
     './img/logo_somospadel.png',
     './img/badge_somospadel.png',
     './img/ball.png',

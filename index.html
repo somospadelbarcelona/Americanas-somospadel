@@ -269,8 +269,8 @@
     <link rel="apple-touch-startup-image" href="https://cdn-icons-png.flaticon.com/512/33/33736.png">
 
     <!-- CSS Dependencies -->
-    <link rel="stylesheet" href="css/theme-playtomic.css?v=804">
-    <link rel="stylesheet" href="css/notifications.css?v=PRO_CLEAN_WHITE_v8">
+    <link rel="stylesheet" href="css/theme-playtomic.css?v=2026.6.0">
+    <link rel="stylesheet" href="css/notifications.css?v=2026.6.0">
     <link rel="stylesheet" href="css/nav-mobile.css?v=WOW_DOCK_v2">
     <link rel="stylesheet" href="css/glassmorphism.css?v=1.0">
     <link rel="stylesheet" href="css/dashboard-premium.css?v=1.0">
@@ -289,9 +289,9 @@
         href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Inter:wght@400;500;700;900&family=Montserrat:wght@700;900&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="css/mobile-header-fix.css?v=RESPONSIVE_ULTRA_v2">
-    <link rel="stylesheet" href="css/responsive-global.css?v=WOW_DOCK_v2">
-    <link rel="stylesheet" href="css/sp-chat-modal.css?v=3.0_PREMIUM_REDESIGN">
+    <link rel="stylesheet" href="css/mobile-header-fix.css?v=2026.6.0">
+    <link rel="stylesheet" href="css/responsive-global.css?v=2026.6.0">
+    <link rel="stylesheet" href="css/sp-chat-modal.css?v=2026.6.0">
 
     <script>
         // registry initialization
@@ -697,15 +697,15 @@
 
             <!-- COMMAND BAR - LIGHT MODE PRO (STRICT WHITE) -->
             <div class="cmd-bar"
-                style="display: flex; justify-content: space-between; align-items: center; padding: 0 20px; height: 72px; background: #ffffff !important; border-bottom: 1px solid #f1f5f9; box-shadow: 0 2px 10px rgba(15, 23, 42, 0.02);">
+                style="display: flex; justify-content: space-between; align-items: center; background: #ffffff !important; border-bottom: 1px solid #f1f5f9; box-shadow: 0 2px 10px rgba(15, 23, 42, 0.02);">
 
                 <!-- LEFT CLUSTER: 3-BAR HAMBURGER + SOMOSPADEL OFFICIAL BALL LOGO (ALWAYS VISIBLE & TIGHTLY PLACED) -->
-                <div class="header-left-cluster" style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; min-width: fit-content; z-index: 10;">
+                <div class="header-left-cluster" style="display: flex; align-items: center; flex-shrink: 0; min-width: fit-content; z-index: 10;">
                     <div class="header-burger-btn haptic-feedback"
                         id="btn-open-side-drawer"
                         title="Menú lateral de opciones"
                         aria-label="Abrir Menú SomosPadel"
-                        style="color: #0a192f; font-size: 1.25rem; cursor: pointer; background: #f8fafc; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 14px; border: 1.5px solid #e2e8f0; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04); flex-shrink: 0;"
+                        style="color: #0a192f; cursor: pointer; background: #f8fafc; display: flex; align-items: center; justify-content: center; border: 1.5px solid #e2e8f0; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04); flex-shrink: 0;"
                         onclick="window.PlayerView?.haptic?.(20); window.openDrawer ? window.openDrawer() : (document.getElementById('side-drawer-container')?.classList.add('open'), document.getElementById('side-drawer-menu')?.classList.add('open'));">
                         <i class="fas fa-bars"></i>
                     </div>
@@ -716,8 +716,8 @@
                                  id="header-somospadel-ball-logo"
                                  alt="Somos Padel Barcelona"
                                  onerror="this.onerror=null; this.src='img/official_ball_logo.png';"
-                                 style="height: 38px; width: 38px; display: block !important; visibility: visible !important; opacity: 1 !important; object-fit: contain; filter: drop-shadow(0px 1px 2px rgba(0,0,0,0.15)) !important; flex-shrink: 0;">
-                            <span class="header-brand-title-text" style="font-size: 0.56rem; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.7px; white-space: nowrap; display: block !important; line-height: 1;">SOMOSPADEL BCN</span>
+                                 style="display: block !important; visibility: visible !important; opacity: 1 !important; object-fit: contain; filter: drop-shadow(0px 1px 2px rgba(0,0,0,0.15)) !important; flex-shrink: 0;">
+                            <span class="header-brand-title-text" style="font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.7px; white-space: nowrap; display: block !important; line-height: 1;">SOMOSPADEL BCN</span>
                         </div>
                     </div>
                 </div>
@@ -752,11 +752,11 @@
                 <div class="user-dropdown-container" id="user-dropdown-container">
                     <div class="user-dropdown-trigger haptic-feedback" onclick="window._toggleUserDropdown(event)" role="button" aria-label="Abrir menú de perfil">
                         <div id="header-user-level"
-                            style="background: #CCFF00; color: #0a192f; padding: 4px 9px; border-radius: 8px; font-weight: 950; font-size: 0.85rem; border: 1.5px solid #a3e600; box-shadow: 0 2px 8px rgba(204,255,0,0.35);">
+                            style="background: #CCFF00; color: #0a192f; border-radius: 8px; font-weight: 950; border: 1.5px solid #a3e600; box-shadow: 0 2px 8px rgba(204,255,0,0.35);">
                             --
                         </div>
                         <div class="cmd-avatar" id="header-user-avatar"
-                            style="width: 38px; height: 38px; border-radius: 10px; background: #ffffff; color: #0a192f !important; font-weight: 950; display: flex; align-items: center; justify-content: center; font-size: 0.82rem; flex-shrink: 0; border: 1.5px solid #e2e8f0; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);">
+                            style="border-radius: 10px; background: #ffffff; color: #0a192f !important; font-weight: 950; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1.5px solid #e2e8f0; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);">
                             --
                         </div>
                     </div>
