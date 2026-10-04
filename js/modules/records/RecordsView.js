@@ -1,6 +1,6 @@
 /**
  * RecordsView.js
- * SOMOSPADEL WORLD TOUR - SALÓN DE LA FAMA LEYENDAS V2.0 🏆
+ * CIRCUITO OFICIAL SOMOSPADEL - SALÓN DE LA FAMA LEYENDAS V2.0 🏆
  */
 (function () {
     class RecordsView {

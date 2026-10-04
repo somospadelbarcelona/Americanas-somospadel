@@ -196,7 +196,15 @@
                 window.PlayerView?.haptic?.(15);
                 console.log(`🧭 SmartNavigate: ${route} -> tab: ${tab}`);
 
-                const targetRoute = (route === 'teams') ? 'equipos' : route;
+                let targetRoute = route;
+                if (route === 'teams') targetRoute = 'equipos';
+                if (route === 'home' || route === 'community') targetRoute = 'comunidad';
+
+                // Si navegamos a perfil con pestaña específica, preconfigurar PlayerView
+                if (targetRoute === 'profile' && tab && window.PlayerView) {
+                    window.PlayerView.activeTab = tab;
+                    window.PlayerView.activeSubnavTab = tab;
+                }
 
                 // 1. Navegar a la ruta base
                 if (window.Router) {
@@ -207,16 +215,30 @@
                     }
                 }
 
-                // 2. Controlar pestañas específicas (ej: Resultados en Americanas)
+                // 2. Controlar pestañas específicas (ej: Resultados en Americanas, Perfil, etc.)
                 if (tab) {
-                    setTimeout(() => {
-                        if (window.EventsController && typeof window.EventsController.setTab === 'function') {
+                    const applyTab = () => {
+                        if (targetRoute === 'profile') {
+                            if (window.PlayerView && typeof window.PlayerView.setProfileTab === 'function') {
+                                console.log(`🔄 SmartNavigate: Forzando pestaña profile ${tab}`);
+                                window.PlayerView.setProfileTab(tab);
+                            }
+                            const body = document.getElementById('player-profile-tab-body') || document.querySelector('.profile-tab-btn-pill');
+                            if (body) {
+                                try { body.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
+                            }
+                        } else if (window.EventsController && typeof window.EventsController.setTab === 'function') {
                             console.log(`🔄 SmartNavigate: Forzando pestaña ${tab}`);
                             window.EventsController.setTab(tab);
                         } else {
-                            console.warn("⚠️ EventsController no listo para setTab");
+                            console.warn("⚠️ Controller no listo para setTab");
                         }
-                    }, 200);
+                    };
+
+                    setTimeout(applyTab, 200);
+                    if (window.Router?.currentRoute === 'profile') {
+                        applyTab();
+                    }
                 }
 
                 window.closeDrawer();
@@ -924,6 +946,7 @@
                 const isAdmin = ['super_admin', 'superadmin', 'admin', 'admin_player'].includes(roleLower);
                 const isCaptain = ['captain', 'capitan', 'capitanes'].includes(roleLower);
                 const isStaffOrCaptain = isAdmin || isCaptain;
+                const isCampaignActive = window.SeasonCampaignService ? window.SeasonCampaignService.isCampaignActiveSync() : false;
 
                 // A. Render Side Menu (Cyber-Padel Pro)
                 if (menuContainer) {
@@ -1055,7 +1078,101 @@
                                 </div>
                             </div>
 
-                            <!-- SECCIÓN 2: COMPETICIÓN (dot amarillo #FFD700) -->
+                            <!-- SECCIÓN 2: 🌟 COMUNIDAD SOMOSPADEL (HUB PRINCIPAL & SECCIÓN ESTRELLA) -->
+                            <div class="drawer-section drawer-community-section">
+                                <div class="drawer-section-title" style="color: #ff8c00; display: flex; align-items: center; justify-content: space-between; padding-right: 4px;">
+                                    <span style="display: flex; align-items: center; gap: 6px;">
+                                        <span class="dot" style="background:#ff5e00; box-shadow: 0 0 8px #ff5e00;"></span>
+                                        COMUNIDAD SOMOSPADEL
+                                    </span>
+                                    <span style="font-size: 0.58rem; background: linear-gradient(135deg, #ff5e00, #ea580c); color: #ffffff; padding: 2px 7px; border-radius: 6px; font-weight: 950; letter-spacing: 0.8px; box-shadow: 0 0 10px rgba(255, 94, 0, 0.4);">
+                                        HUB PRINCIPAL
+                                    </span>
+                                </div>
+                                <div class="drawer-group-box drawer-community-box">
+                                    <!-- 1. INICIO COMUNIDAD -->
+                                    <div class="drawer-nav-row" onclick="window.smartNavigate('comunidad', null)">
+                                        <div class="drawer-row-icon" style="background: rgba(255, 94, 0, 0.2); color: #ff8c00; border: 1.5px solid rgba(255, 94, 0, 0.45); box-shadow: 0 0 10px rgba(255, 94, 0, 0.35);">
+                                            <i class="fas fa-home"></i>
+                                        </div>
+                                        <span class="drawer-row-title">1. Inicio Comunidad</span>
+                                        <span class="drawer-row-badge" style="background: rgba(255, 94, 0, 0.25); color: #fed7aa; border: 1px solid rgba(255, 94, 0, 0.45); font-weight: 900;">CLUB</span>
+                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
+                                    </div>
+
+                                    <!-- CHAT DEL CLUB -->
+                                    <div class="drawer-nav-row" onclick="window.openCommunityChat()">
+                                        <div class="drawer-row-icon" style="background: rgba(6, 182, 212, 0.2); color: #22d3ee; border: 1.5px solid rgba(6, 182, 212, 0.45); box-shadow: 0 0 10px rgba(6, 182, 212, 0.35);">
+                                            <i class="fas fa-comments"></i>
+                                        </div>
+                                        <span class="drawer-row-title">Chat del Club</span>
+                                        <span class="drawer-row-badge" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.4)); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.55); font-weight: 950;">LIVE 🟢</span>
+                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
+                                    </div>
+
+                                    <!-- 2. ENTRENOS & CLÍNICS -->
+                                    <div class="drawer-nav-row" onclick="window.smartNavigate('entrenos', null)">
+                                        <div class="drawer-row-icon" style="background: rgba(244, 63, 94, 0.2); color: #fb7185; border: 1.5px solid rgba(244, 63, 94, 0.45); box-shadow: 0 0 10px rgba(244, 63, 94, 0.35);">
+                                            <i class="fas fa-table-tennis"></i>
+                                        </div>
+                                        <span class="drawer-row-title">2. Entrenos & Clínics</span>
+                                        <span class="drawer-row-badge" style="background: linear-gradient(135deg, rgba(255, 0, 127, 0.3), rgba(217, 0, 108, 0.4)); color: #fbcfe8; border: 1px solid rgba(255, 0, 127, 0.55); font-weight: 950;">CLINICS</span>
+                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
+                                    </div>
+
+                                    <!-- 3. EQUIPOS DEL CLUB -->
+                                    <div class="drawer-nav-row" onclick="window.smartNavigate('teams', null)">
+                                        <div class="drawer-row-icon" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1.5px solid rgba(59, 130, 246, 0.45); box-shadow: 0 0 10px rgba(59, 130, 246, 0.35);">
+                                            <i class="fas fa-users"></i>
+                                        </div>
+                                        <span class="drawer-row-title">3. Equipos del Club</span>
+                                        <span class="drawer-row-badge" style="background: rgba(59, 130, 246, 0.25); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.45); font-weight: 900;">LIGAS</span>
+                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
+                                    </div>
+
+                                    <!-- 4. MI EQUIPO -->
+                                    <div class="drawer-nav-row" onclick="window.smartNavigate('my_team', null)">
+                                        <div class="drawer-row-icon" style="background: rgba(204, 255, 0, 0.2); color: #CCFF00; border: 1.5px solid rgba(204, 255, 0, 0.45); box-shadow: 0 0 10px rgba(204, 255, 0, 0.35);">
+                                            <i class="fas fa-shield-alt"></i>
+                                        </div>
+                                        <span class="drawer-row-title">4. Mi Equipo</span>
+                                        <span class="drawer-row-badge" style="background: rgba(204, 255, 0, 0.22); color: #CCFF00; border: 1px solid rgba(204, 255, 0, 0.45); font-weight: 950;">MI ESCUDO</span>
+                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
+                                    </div>
+
+                                    <!-- 5. INSCRIPCIONES -->
+                                    <div class="drawer-nav-row" onclick="window.smartNavigate('inscriptions', null)">
+                                        <div class="drawer-row-icon" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1.5px solid rgba(16, 185, 129, 0.45); box-shadow: 0 0 10px rgba(16, 185, 129, 0.35);">
+                                            <i class="fas fa-edit"></i>
+                                        </div>
+                                        <span class="drawer-row-title">5. Inscripciones</span>
+                                        <span class="drawer-row-badge" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(5, 150, 105, 0.4)); color: #a7f3d0; border: 1px solid rgba(16, 185, 129, 0.55); font-weight: 950;">${isCampaignActive ? 'ABIERTA' : 'PRONTO'}</span>
+                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
+                                    </div>
+
+                                    <!-- 6. MI AGENDA -->
+                                    <div class="drawer-nav-row" onclick="window.smartNavigate('agenda', null)">
+                                        <div class="drawer-row-icon" style="background: rgba(251, 191, 36, 0.2); color: #fbbf24; border: 1.5px solid rgba(251, 191, 36, 0.45); box-shadow: 0 0 10px rgba(251, 191, 36, 0.35);">
+                                            <i class="fas fa-calendar-alt"></i>
+                                        </div>
+                                        <span class="drawer-row-title">6. Mi Agenda</span>
+                                        <span class="drawer-row-badge" style="background: rgba(251, 191, 36, 0.22); color: #fde68a; border: 1px solid rgba(251, 191, 36, 0.45); font-weight: 900;">PARTIDOS</span>
+                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
+                                    </div>
+
+                                    <!-- 7. RÉCORDS TEMPORADA -->
+                                    <div class="drawer-nav-row" onclick="window.smartNavigate('records', null)">
+                                        <div class="drawer-row-icon" style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1.5px solid rgba(245, 158, 11, 0.45); box-shadow: 0 0 10px rgba(245, 158, 11, 0.35);">
+                                            <i class="fas fa-trophy"></i>
+                                        </div>
+                                        <span class="drawer-row-title">7. Récords Temporada</span>
+                                        <span class="drawer-row-badge" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(217, 119, 6, 0.4)); color: #fef08a; border: 1px solid rgba(245, 158, 11, 0.55); font-weight: 950;">TOP 🏆</span>
+                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SECCIÓN 3: COMPETICIÓN (dot amarillo #FFD700) -->
                             <div class="drawer-section">
                                 <div class="drawer-section-title"><span class="dot" style="background:#FFD700;"></span> COMPETICIÓN</div>
                                 <div class="drawer-group-box">
@@ -1086,7 +1203,7 @@
                                 </div>
                             </div>
 
-                            <!-- SECCIÓN 3: RANKING & PUNTOS (dot naranja #fb923c) -->
+                            <!-- SECCIÓN 4: RANKING & PUNTOS (dot naranja #fb923c) -->
                             <div class="drawer-section">
                                 <div class="drawer-section-title"><span class="dot" style="background:#fb923c;"></span> RANKING & PUNTOS</div>
                                 <div class="drawer-group-box">
@@ -1117,7 +1234,7 @@
                                 </div>
                             </div>
 
-                            <!-- SECCIÓN 4: PISTA & REGLAS (dot azul cielo #38bdf8) -->
+                            <!-- SECCIÓN 5: PISTA & REGLAS (dot azul cielo #38bdf8) -->
                             <div class="drawer-section">
                                 <div class="drawer-section-title"><span class="dot" style="background:#38bdf8;"></span> PISTA & REGLAS</div>
                                 <div class="drawer-group-box">
@@ -1156,42 +1273,10 @@
                                 </div>
                             </div>
 
-                            <!-- SECCIÓN 5: COMUNIDAD & SOCIAL (dot cian #22d3ee) -->
+                            <!-- SECCIÓN 6: CANALES OFICIALES & RRSS (dot cian #22d3ee) -->
                             <div class="drawer-section">
-                                <div class="drawer-section-title" style="color: #22d3ee; border-color: rgba(6,182,212,0.35);"><span class="dot" style="background:#22d3ee; box-shadow: 0 0 6px #22d3ee;"></span> COMUNIDAD & SOCIAL</div>
-                                <div class="drawer-group-box" style="border-color: rgba(6,182,212,0.25); background: rgba(6,182,212,0.05);">
-                                    <div class="drawer-nav-row" onclick="window.smartNavigate('teams', null)">
-                                        <div class="drawer-row-icon" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);">
-                                            <i class="fas fa-shield-halved"></i>
-                                        </div>
-                                        <span class="drawer-row-title">Equipos del Club</span>
-                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
-                                    </div>
-
-                                    <div class="drawer-nav-row" onclick="window.smartNavigate('entrenos', null)">
-                                        <div class="drawer-row-icon" style="background: rgba(204, 255, 0, 0.15); color: #CCFF00; border: 1px solid rgba(204, 255, 0, 0.3);">
-                                            <i class="fas fa-dumbbell"></i>
-                                        </div>
-                                        <span class="drawer-row-title">Entrenamientos & Partidas</span>
-                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
-                                    </div>
-
-                                    <div class="drawer-nav-row" onclick="window.smartNavigate('inscriptions', null)">
-                                        <div class="drawer-row-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">
-                                            <i class="fas fa-clipboard-list"></i>
-                                        </div>
-                                        <span class="drawer-row-title">Inscripciones</span>
-                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
-                                    </div>
-
-                                    <div class="drawer-nav-row" onclick="window.openCommunityChat()">
-                                        <div class="drawer-row-icon" style="background: rgba(6, 182, 212, 0.15); color: #22d3ee; border: 1px solid rgba(6, 182, 212, 0.3);">
-                                            <i class="fas fa-comments"></i>
-                                        </div>
-                                        <span class="drawer-row-title">Chat del Club</span>
-                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
-                                    </div>
-
+                                <div class="drawer-section-title" style="color: #22d3ee;"><span class="dot" style="background:#22d3ee; box-shadow: 0 0 6px #22d3ee;"></span> CANALES OFICIALES & RRSS</div>
+                                <div class="drawer-group-box">
                                     <div class="drawer-nav-row" onclick="window.openClubWhatsApp()">
                                         <div class="drawer-row-icon" style="background: rgba(37, 211, 102, 0.15); color: #25d366; border: 1px solid rgba(37, 211, 102, 0.3);">
                                             <i class="fab fa-whatsapp"></i>
@@ -1214,7 +1299,7 @@
                                             <i class="fab fa-facebook-f"></i>
                                         </div>
                                         <span class="drawer-row-title">Facebook del Club</span>
-                                        <span class="drawer-row-badge" style="background: rgba(24, 119, 242, 0.2); color: #60a5fa; border: 1px solid rgba(24, 119, 242, 0.35);">COMUNIDAD</span>
+                                        <span class="drawer-row-badge" style="background: rgba(24, 119, 242, 0.2); color: #60a5fa; border: 1px solid rgba(24, 119, 242, 0.35);">FOTOS</span>
                                         <i class="fas fa-chevron-right drawer-row-chevron"></i>
                                     </div>
                                 </div>
@@ -1226,9 +1311,27 @@
                                 <div class="drawer-group-box">
                                     <div class="drawer-nav-row" onclick="window.smartNavigate('profile', null)">
                                         <div class="drawer-row-icon" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3);">
-                                            <i class="fas fa-user-astronaut"></i>
+                                            <i class="fas fa-user"></i>
                                         </div>
                                         <span class="drawer-row-title">Perfil de Jugador</span>
+                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
+                                    </div>
+
+                                    <div class="drawer-nav-row" onclick="window.smartNavigate('profile', 'attributes')">
+                                        <div class="drawer-row-icon" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.35);">
+                                            <i class="fas fa-user-astronaut"></i>
+                                        </div>
+                                        <span class="drawer-row-title">Ficha & Atributos</span>
+                                        <span class="drawer-row-badge" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.35); font-weight: 900;">STATS</span>
+                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
+                                    </div>
+
+                                    <div class="drawer-nav-row" onclick="window.smartNavigate('profile', 'achievements')">
+                                        <div class="drawer-row-icon" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.35);">
+                                            <i class="fas fa-trophy"></i>
+                                        </div>
+                                        <span class="drawer-row-title">Logros & Misiones</span>
+                                        <span class="drawer-row-badge" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(217, 119, 6, 0.35)); color: #fef08a; border: 1px solid rgba(245, 158, 11, 0.5); font-weight: 950;">TOP 🏆</span>
                                         <i class="fas fa-chevron-right drawer-row-chevron"></i>
                                     </div>
 

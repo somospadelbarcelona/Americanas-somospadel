@@ -6535,7 +6535,7 @@
                                             <!-- HEADER STATUS -->
                                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; position: relative; z-index: 5;">
                                                 <span class="fut-badge-gold"><i class="fas fa-crown"></i> LÍDER ${modeLabelUpper}</span>
-                                                <span style="color: rgba(251, 191, 36, 0.7); font-size: 0.65rem; font-weight: 900; letter-spacing: 1px;">SOMOSPADEL ELITE</span>
+                                                <span style="color: rgba(251, 191, 36, 0.7); font-size: 0.65rem; font-weight: 900; letter-spacing: 1px;">CIRCUITO SOMOSPADEL</span>
                                             </div>
 
                                             <!-- CORE DATA ROW -->

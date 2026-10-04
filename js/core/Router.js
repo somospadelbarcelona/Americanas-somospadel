@@ -17,10 +17,22 @@
                 'agenda_americanas': () => this.handleControllerTab('EventsController', 'agenda_americanas'),
                 'help_americanas': () => this.handleControllerTab('EventsController', 'help_americanas'),
                 'finished': () => this.handleControllerTab('EventsController', 'finished'),
-                'profile': () => this.executeControllerInit('PlayerController', 'profile'),
+                'profile': () => {
+                    if (window.SubnavManager) {
+                        const activeSub = (window.PlayerView && window.PlayerView.activeSubnavTab) || 'mi_posicion';
+                        window.SubnavManager.renderProfile(activeSub);
+                    }
+                    this.executeControllerInit('PlayerController', 'profile');
+                },
                 'live': () => this.executeControllerInit('ControlTowerView', 'live', (c) => c.handleLiveRoute()),
                 'live-entreno': () => this.executeControllerInit('EntrenoLiveView', 'live-entreno', (c) => c.handleRoute()),
-                'ranking': () => this.executeControllerInit('RankingController', 'ranking'),
+                'ranking': () => {
+                    if (window.SubnavManager) {
+                        const currentMode = window._dashboardRankingMode || (window.RankingView ? window.RankingView.currentView : null) || 'americanas';
+                        window.SubnavManager.renderRanking(currentMode);
+                    }
+                    this.executeControllerInit('RankingController', 'ranking');
+                },
                 'clima': () => this.handleControllerTab('EventsController', 'meteo'),
                 'weather': () => this.handleControllerTab('EventsController', 'meteo'),
                 'meteo': () => this.handleControllerTab('EventsController', 'meteo'),
@@ -208,8 +220,6 @@
                 });
             } else if (subTab === 'entrenos') {
                 this.handleControllerTab('EventsController', 'entrenos');
-                setTimeout(onDone, 80);
-                setTimeout(onDone, 250);
             } else if (subTab === 'my_team') {
                 this.executeControllerInit('TeamController', 'my_team', (c) => {
                     if (typeof c.renderMyTeam === 'function') {
@@ -266,12 +276,14 @@
 
             // Determinar la subpestaña canónica activa (home, entrenos, teams, my_team, agenda, inscriptions, records)
             let currentTab = activeSubTab || window.activeCommunitySubTab || 'home';
+            if (['entrenos', 'partidas_abiertas'].includes(currentTab)) {
+                if (window.SubnavManager) window.SubnavManager.hide();
+                return;
+            }
             if (['comunidad', 'community', 'home', 'community_home'].includes(currentTab)) {
                 currentTab = 'home';
             } else if (['equipos', 'teams'].includes(currentTab)) {
                 currentTab = 'teams';
-            } else if (['entrenos', 'partidas_abiertas'].includes(currentTab)) {
-                currentTab = 'entrenos';
             } else if (['my_team'].includes(currentTab)) {
                 currentTab = 'my_team';
             } else if (['agenda'].includes(currentTab)) {
@@ -395,10 +407,13 @@
         cleanupPreviousRoute(prevRoute, newRoute) {
             if (prevRoute && prevRoute === newRoute) return;
 
-            const isCommunity = ['comunidad', 'community', 'community_home', 'equipos', 'teams', 'entrenos', 'partidas_abiertas', 'agenda', 'tournaments', 'my_team', 'records', 'inscriptions', 'inscripciones'].includes(newRoute);
+            const isEntrenos = ['entrenos', 'partidas_abiertas'].includes(newRoute);
+            const isCommunity = ['comunidad', 'community', 'community_home', 'equipos', 'teams', 'agenda', 'tournaments', 'my_team', 'records', 'inscriptions', 'inscripciones'].includes(newRoute);
             const isAmericanas = ['events', 'americanas', 'finished_americanas', 'agenda_americanas', 'help_americanas', 'meteo', 'clima', 'weather'].includes(newRoute);
+            const isRanking = ['ranking'].includes(newRoute);
+            const isProfile = ['profile'].includes(newRoute);
 
-            if (!isCommunity && !isAmericanas) {
+            if (!isEntrenos && !isCommunity && !isAmericanas && !isRanking && !isProfile) {
                 if (window.SubnavManager) window.SubnavManager.hide();
                 const comBar = document.getElementById('community-hub-bar');
                 if (comBar) comBar.remove();

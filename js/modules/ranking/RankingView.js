@@ -118,12 +118,12 @@
                         
                         <div style="display: flex; justify-content: space-between; align-items: center; position: relative; margin-bottom: 20px;">
                             <div>
-                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">
-                                    <div style="width: 10px; height: 10px; border-radius: 2px; background: #65a30d; box-shadow: 0 0 10px rgba(101, 163, 13, 0.4);"></div>
-                                    <span style="color: #64748b; font-size: 0.65rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;">${isAmericanasOnly ? 'Ranking Exclusivo Americanas' : 'Somospadel World Tour'}</span>
+                                <div style="display: inline-flex; align-items: center; gap: 7px; margin-bottom: 6px; background: rgba(22, 163, 74, 0.08); border: 1px solid rgba(22, 163, 74, 0.22); padding: 3px 10px; border-radius: 999px;">
+                                    <span style="width: 6px; height: 6px; border-radius: 50%; background: #16a34a; box-shadow: 0 0 6px rgba(22, 163, 74, 0.6); display: inline-block;"></span>
+                                    <span style="color: #15803d; font-size: 0.65rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;">${isAmericanasOnly ? 'Circuito Americanas • Oficial' : 'Circuito Oficial • SomosPadel'}</span>
                                 </div>
                                 <h1 style="font-weight: 950; font-size: 2.3rem; margin: 0; letter-spacing: -1.5px; color: #0f172a; line-height: 1.1; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                                    RANKING <span style="background: linear-gradient(135deg, #15803d 0%, #4d7c0f 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">PRO</span>
+                                    RANKING <span style="background: linear-gradient(135deg, #15803d 0%, #16a34a 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">OFICIAL</span>
                                     <span onclick="window.showRolesLegendModal()" style="cursor: pointer; font-size: 0.62rem; font-weight: 900; padding: 4px 10px; border-radius: 10px; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; text-transform: uppercase; letter-spacing: 0.8px; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s;" onmouseover="this.style.background='#e2e8f0'; this.style.color='#0f172a';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#334155';">
                                         <i class="fas fa-question-circle" style="color: #059669;"></i> Info Roles
                                     </span>
@@ -318,7 +318,7 @@
                             <div style="margin-top: 15px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
                                 <div style="display: flex; align-items: center; gap: 6px; font-size: 0.65rem; font-weight: 800; color: #475569;">
                                     <span style="width: 12px; height: 12px; background: #84cc16; border-radius: 3px; display: inline-block;"></span>
-                                    TÚ (JUGADOR PRO)
+                                    TÚ (TU NIVEL)
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 6px; font-size: 0.65rem; font-weight: 800; color: #475569;">
                                     <span style="width: 12px; height: 12px; background: #FFD700; border-radius: 3px; display: inline-block;"></span>
@@ -333,7 +333,7 @@
                     </div>
 
                     <!-- 3. MI RENDIMIENTO (High-Tech Card) -->
-                    <div style="padding: 0 clamp(12px, 3.5vw, 25px) 25px; position: relative; z-index: 4;">
+                    <div id="ranking-my-stats-root" style="padding: 0 clamp(12px, 3.5vw, 25px) 25px; position: relative; z-index: 4;">
                         <div style="
                             background: #ffffff;
                             border: 1px solid #e2e8f0;
@@ -511,6 +511,11 @@
                 this.initFaceoffWidget(rankedData);
             } catch (errFaceoff) {
                 console.warn("⚠️ [RankingView] Error initializing faceoff widget:", errFaceoff);
+            }
+
+            // Sincronizar submenú oficial de Ranking (mismas medidas que entrenos/americanas)
+            if (window.SubnavManager && typeof window.SubnavManager.renderRanking === 'function') {
+                window.SubnavManager.renderRanking(this.currentView || 'americanas');
             }
         }
 
@@ -1041,7 +1046,7 @@
                     <!-- Header de sección -->
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 4px;">
                         <div style="font-weight:950; font-size:0.85rem; color:#0a192f; letter-spacing:1px; text-transform:uppercase; display:flex; align-items:center; gap:8px;">
-                            <i class="fas fa-trophy" style="color: #fbbf24; font-size: 1rem;"></i> TOP 10 ELITE • ${modeLabelUpper}
+                            <i class="fas fa-trophy" style="color: #fbbf24; font-size: 1rem;"></i> TOP 10 OFICIAL • ${modeLabelUpper}
                         </div>
                         <div style="font-size:0.65rem; color:#64748b; font-weight:800; text-transform:uppercase;">
                             ${rankedData.length} CLASIFICADOS
@@ -1066,7 +1071,7 @@
                                     <!-- HEADER STATUS -->
                                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; position: relative; z-index: 5;">
                                         <span class="fut-badge-gold"><i class="fas fa-crown"></i> LÍDER ${modeLabelUpper}</span>
-                                        <span style="color: rgba(251, 191, 36, 0.7); font-size: 0.65rem; font-weight: 900; letter-spacing: 1px;">SOMOSPADEL ELITE</span>
+                                        <span style="color: rgba(251, 191, 36, 0.7); font-size: 0.65rem; font-weight: 900; letter-spacing: 1px;">CIRCUITO SOMOSPADEL</span>
                                     </div>
 
                                     <!-- CORE DATA ROW -->
@@ -2239,6 +2244,75 @@
             const select = document.getElementById(`ranking-faceoff-select-${side}`);
             if (select && select.value) {
                 this.openPlayerCard(select.value);
+            }
+        }
+
+        /**
+         * 🧭 Navegación interactiva y fluida de las subsecciones del Submenú Ranking
+         * @param {string} tabId Identificador de la subsección seleccionada
+         */
+        handleSubnavTab(tabId) {
+            try { window.PlayerView?.haptic?.(18); } catch (e) {}
+
+            if (tabId === 'americanas' || tabId === 'entrenos') {
+                this.switchView(tabId);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+
+            if (tabId === 'top10') {
+                const el = document.getElementById('ranking-podium-root');
+                if (el) {
+                    const headerOffset = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-actual-height')) || 110;
+                    const y = el.getBoundingClientRect().top + window.pageYOffset - (headerOffset + 15);
+                    window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+                }
+                return;
+            }
+
+            if (tabId === 'my_rank') {
+                const el = document.getElementById('ranking-my-stats-root');
+                if (el) {
+                    const headerOffset = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-actual-height')) || 110;
+                    const y = el.getBoundingClientRect().top + window.pageYOffset - (headerOffset + 15);
+                    window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+                }
+                return;
+            }
+
+            if (tabId === 'faceoff') {
+                const el = document.getElementById('ranking-faceoff-widget-root');
+                if (el) {
+                    const headerOffset = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-actual-height')) || 110;
+                    const y = el.getBoundingClientRect().top + window.pageYOffset - (headerOffset + 15);
+                    window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+                }
+                return;
+            }
+
+            if (tabId === 'radar') {
+                const el = document.getElementById('ranking-performance-chart-container');
+                if (el) {
+                    el.style.display = 'block';
+                    const headerOffset = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-actual-height')) || 110;
+                    const y = el.getBoundingClientRect().top + window.pageYOffset - (headerOffset + 15);
+                    window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+                }
+                return;
+            }
+
+            if (tabId === 'records') {
+                if (window.Router && typeof window.Router.navigate === 'function') {
+                    window.Router.navigate('records');
+                }
+                return;
+            }
+
+            if (tabId === 'points') {
+                if (typeof window.showPointsPolicyModal === 'function') {
+                    window.showPointsPolicyModal();
+                }
+                return;
             }
         }
     }

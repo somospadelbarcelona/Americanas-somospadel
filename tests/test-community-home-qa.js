@@ -160,9 +160,26 @@ eval(controllerCode);
         assert(content.innerHTML.includes('COMUNIDAD SOMOSPADEL'), "Debe contener el título principal");
         assert(content.innerHTML.includes('ch-stats-grid'), "Debe incluir la cuadrícula de KPIs");
         assert(content.innerHTML.includes('ch-hub-grid'), "Debe incluir el grid de accesos directos");
+        assert(content.innerHTML.includes('ch-hero-dropdown-btn'), "Debe incluir el botón desplegable en la cabecera");
+        assert(content.innerHTML.includes('ch-hero-dropdown-panel'), "Debe incluir el panel desplegable evolucionado");
         assert(content.innerHTML.includes('ch-news-grid'), "Debe incluir el grid de noticias");
         assert(content.innerHTML.includes('CÓDIGO DE HONOR SOMOSPADEL'), "Debe incluir el código de honor");
         assert(window.CommunityHomeController.state.articles.length > 0, "Debe haber cargado artículos en state");
+    });
+
+    await test("CommunityHomeView.toggleDropdown gestiona apertura y cierre del desplegable de secciones", () => {
+        const panel = mockDocument.getElementById('ch-hero-dropdown-panel');
+        const btn = mockDocument.getElementById('ch-hero-dropdown-btn');
+
+        panel.style.display = 'none';
+        
+        window.CommunityHomeView.toggleDropdown();
+        assert.strictEqual(panel.style.display, 'block', "Debe desplegarse al clicar el botón");
+        assert.strictEqual(btn.getAttribute('aria-expanded'), 'true', "aria-expanded debe ser true");
+
+        window.CommunityHomeView.toggleDropdown();
+        assert.strictEqual(panel.style.display, 'none', "Debe cerrarse al volver a clicar");
+        assert.strictEqual(btn.getAttribute('aria-expanded'), 'false', "aria-expanded debe ser false");
     });
 
     await test("CommunityHomeView.filterArticles filtra correctamente por categoría", () => {

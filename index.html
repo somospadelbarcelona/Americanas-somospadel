@@ -1017,67 +1017,98 @@
                 }
             </style>
 
-            <!-- SUBNAV APP BAR (SISTEMA OFICIAL DE SUBPESTAÑAS FIJAS: AMERICANAS Y COMUNIDAD) -->
-            <!-- SUBNAV APP BAR (SISTEMA OFICIAL DE SUBPESTAÑAS FIJAS: AMERICANAS Y COMUNIDAD) -->
+            <!-- SUBNAV APP BAR (SISTEMA OFICIAL DE SUBPESTAÑAS FIJAS: AMERICANAS Y COMUNIDAD - CYBER PADEL BANNER) -->
             <style>
                 .subnav-app-bar {
                     width: 100%;
-                    background: #ffffff !important;
-                    border-top: 1px solid #f1f5f9;
-                    border-bottom: 1px solid #e2e8f0;
-                    box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.05);
+                    position: relative;
+                    /* Fondo deportivo de élite: gradiente obsidian / cyber-padel de alto impacto */
+                    background: linear-gradient(135deg, #070d18 0%, #0d172a 50%, #091120 100%) !important;
+                    border-top: 1px solid rgba(255, 255, 255, 0.08);
+                    border-bottom: 2px solid transparent;
+                    border-image: linear-gradient(90deg, rgba(204, 255, 0, 0.1), rgba(204, 255, 0, 0.8) 35%, rgba(0, 240, 255, 0.6) 70%, rgba(204, 255, 0, 0.1)) 1;
+                    box-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.08);
                     box-sizing: border-box;
                     z-index: 10002;
                     overflow: hidden;
                     display: none;
-                    transition: all 0.25s ease;
+                    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
                 }
+
+                /* Efecto Mesh Aurora Dinámico de Pádel */
+                .subnav-app-bar::before {
+                    content: '';
+                    position: absolute;
+                    top: -50%;
+                    left: 10%;
+                    width: 80%;
+                    height: 200%;
+                    background: radial-gradient(ellipse at center, rgba(204, 255, 0, 0.12) 0%, rgba(14, 165, 233, 0.07) 45%, transparent 70%);
+                    pointer-events: none;
+                    z-index: 0;
+                    animation: subnavAuroraPulse 9s ease-in-out infinite alternate;
+                }
+
+                @keyframes subnavAuroraPulse {
+                    0% { transform: translateX(-12%) scale(0.92); opacity: 0.6; }
+                    50% { transform: translateX(8%) scale(1.08); opacity: 0.95; }
+                    100% { transform: translateX(20%) scale(0.96); opacity: 0.7; }
+                }
+
                 .subnav-outer-flex {
                     display: flex;
                     align-items: center;
-                    max-width: 1200px;
+                    max-width: 1240px;
                     margin: 0 auto;
-                    padding: 6px 10px;
+                    padding: 7px 10px;
                     gap: 8px;
                     box-sizing: border-box;
                     position: relative;
+                    z-index: 1;
                 }
+
+                /* Flechas de navegación Neón / Glassmorphism */
                 .subnav-nav-arrow {
-                    background: #ffffff;
-                    border: 1.5px solid #e2e8f0;
-                    color: #0f172a;
-                    width: 30px;
-                    height: 36px;
+                    background: rgba(13, 23, 42, 0.85);
+                    border: 1.5px solid rgba(204, 255, 0, 0.35);
+                    color: #CCFF00;
+                    width: 32px;
+                    height: 38px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     cursor: pointer;
-                    border-radius: 10px;
+                    border-radius: 12px;
                     flex-shrink: 0;
-                    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+                    backdrop-filter: blur(8px);
+                    -webkit-backdrop-filter: blur(8px);
+                    transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
                     padding: 0;
-                    z-index: 2;
-                    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+                    z-index: 4;
+                    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.12);
                 }
                 .subnav-nav-arrow:hover {
                     background: #CCFF00;
-                    border-color: #a3e600;
-                    color: #0a192f;
-                    transform: scale(1.06);
-                    box-shadow: 0 2px 8px rgba(204, 255, 0, 0.3);
+                    border-color: #CCFF00;
+                    color: #07101e;
+                    transform: scale(1.1);
+                    box-shadow: 0 0 18px rgba(204, 255, 0, 0.65);
                 }
                 .subnav-nav-arrow:active {
                     transform: scale(0.92);
                 }
+
+                /* Contenedores de scroll horizontal */
                 .events-submenu-pro-bar,
                 .community-submenu-pro-bar {
                     display: flex;
+                    align-items: center;
                     gap: 8px;
                     overflow-x: auto;
                     -webkit-overflow-scrolling: touch;
                     scroll-behavior: smooth;
                     touch-action: pan-x;
-                    padding: 3px 2px;
+                    padding: 4px 4px;
                     scrollbar-width: none;
                     box-sizing: border-box;
                     flex: 1;
@@ -1089,50 +1120,890 @@
                     width: 0 !important;
                     height: 0 !important;
                 }
+
+                /* Botones / Pills de submenú pro */
                 .esm-pro-btn {
                     flex-shrink: 0;
-                    display: flex;
+                    display: inline-flex;
                     align-items: center;
-                    gap: 8px;
-                    padding: 8px 18px;
+                    gap: 7px;
+                    padding: 8px 16px;
                     border-radius: 999px !important;
                     font-size: 0.72rem;
                     font-weight: 850;
-                    letter-spacing: 0.3px;
+                    letter-spacing: 0.35px;
                     white-space: nowrap;
                     cursor: pointer;
-                    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
                     user-select: none;
                     -webkit-user-select: none;
+                    position: relative;
+                    overflow: hidden;
+                    backdrop-filter: blur(8px);
+                    -webkit-backdrop-filter: blur(8px);
+                    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+                }
+
+                /* Efecto Shimmer Dinámico al pasar el cursor */
+                .esm-pro-btn::after {
+                    content: '';
+                    position: absolute;
+                    top: -50%;
+                    left: -120%;
+                    width: 60%;
+                    height: 200%;
+                    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.24), transparent);
+                    transform: rotate(25deg);
+                    pointer-events: none;
+                }
+                .esm-pro-btn:hover::after {
+                    left: 140%;
+                    transition: left 0.7s ease-in-out;
+                }
+
+                /* Estado Inactivo - Glass Cyber Slate */
+                .esm-pro-btn.inactive {
+                    background: rgba(255, 255, 255, 0.06) !important;
+                    color: #cbd5e1 !important;
+                    border: 1.2px solid rgba(255, 255, 255, 0.12) !important;
+                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+                }
+                .esm-pro-btn.inactive i {
+                    color: #94a3b8;
+                    transition: color 0.2s ease;
+                }
+                .esm-pro-btn.inactive:hover {
+                    background: rgba(255, 255, 255, 0.13) !important;
+                    color: #ffffff !important;
+                    border-color: rgba(204, 255, 0, 0.45) !important;
+                    transform: translateY(-2px) scale(1.03);
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), 0 0 12px rgba(204, 255, 0, 0.2);
+                }
+                .esm-pro-btn.inactive:hover i {
+                    color: #CCFF00;
                 }
                 .esm-pro-btn:active {
                     transform: scale(0.95);
                 }
+
+                /* Estado Activo - SomosPadel Volt Neón */
                 .esm-pro-btn.active {
-                    background: #CCFF00 !important;
-                    color: #0a192f !important;
-                    border: 1.5px solid #a3e600 !important;
-                    box-shadow: 0 3px 12px rgba(179, 230, 0, 0.45) !important;
+                    background: linear-gradient(135deg, #CCFF00 0%, #b8e600 100%) !important;
+                    color: #060d17 !important;
+                    font-weight: 950 !important;
+                    border: 1.5px solid #e5ff54 !important;
+                    box-shadow: 0 0 18px rgba(204, 255, 0, 0.6), 0 4px 12px rgba(0, 0, 0, 0.35) !important;
+                    transform: scale(1.04);
                 }
                 .esm-pro-btn.active i {
-                    color: #0a192f !important;
+                    color: #060d17 !important;
                 }
-                .esm-pro-btn.inactive {
-                    background: #f8fafc !important;
-                    color: #475569 !important;
-                    border: 1.5px solid #e2e8f0 !important;
+
+                /* Micro Badges y Live Dots para el Banner */
+                .subnav-live-dot {
+                    width: 7px;
+                    height: 7px;
+                    border-radius: 50%;
+                    background: #10b981;
+                    display: inline-block;
+                    flex-shrink: 0;
+                    animation: subnavDotPulse 1.4s ease-in-out infinite;
                 }
-                .esm-pro-btn.inactive:hover {
-                    background: #e2e8f0 !important;
-                    color: #0f172a !important;
-                    border-color: #cbd5e1 !important;
-                    transform: translateY(-1px);
+                @keyframes subnavDotPulse {
+                    0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+                    50% { transform: scale(1.3); opacity: 0.8; box-shadow: 0 0 0 5px rgba(16, 185, 129, 0); }
                 }
+
+                .subnav-micro-badge {
+                    font-size: 0.55rem;
+                    font-weight: 950;
+                    padding: 2px 6px;
+                    border-radius: 999px;
+                    letter-spacing: 0.5px;
+                    line-height: 1;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 3px;
+                    text-transform: uppercase;
+                }
+                .subnav-micro-badge.badge-live {
+                    background: #ef4444;
+                    color: #ffffff;
+                    box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+                }
+                .subnav-micro-badge.badge-neon {
+                    background: rgba(204, 255, 0, 0.2);
+                    color: #CCFF00;
+                    border: 1px solid rgba(204, 255, 0, 0.5);
+                }
+                .subnav-micro-badge.badge-dark {
+                    background: rgba(0, 0, 0, 0.3);
+                    color: #060d17;
+                    border: 1px solid rgba(0, 0, 0, 0.2);
+                }
+                .subnav-micro-badge.badge-success {
+                    background: #10b981;
+                    color: #ffffff;
+                }
+
                 .header-tabs-inner {
                     display: none !important;
                 }
                 .nav-tabs-handle {
                     display: none !important;
+                }
+
+                /* ==========================================================================
+                   SUBMENÚ AMERICANAS PRO (Volt Cyber Energy de Alta Definición)
+                   ========================================================================== */
+                .subnav-app-bar.subnav-theme-americanas {
+                    background: linear-gradient(135deg, #a3e600 0%, #CCFF00 28%, #d4ff1a 62%, #95c700 100%) !important;
+                    border-top: 1.5px solid rgba(255, 255, 255, 0.55) !important;
+                    border-bottom: 2.5px solid rgba(15, 23, 42, 0.4) !important;
+                    border-image: none !important;
+                    box-shadow: 0 8px 25px rgba(204, 255, 0, 0.45), 0 3px 10px rgba(0, 0, 0, 0.25) !important;
+                    position: relative !important;
+                }
+
+                .subnav-app-bar.subnav-theme-americanas::before {
+                    background: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.15) 45%, transparent 75%) !important;
+                    opacity: 0.85 !important;
+                }
+
+                /* Flechas de navegación en tema Americanas - Obsidian Glass Pro */
+                .subnav-app-bar.subnav-theme-americanas .subnav-nav-arrow {
+                    background: linear-gradient(145deg, #070d18 0%, rgba(15, 23, 42, 0.98) 100%) !important;
+                    border: 1.5px solid rgba(204, 255, 0, 0.5) !important;
+                    color: #CCFF00 !important;
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(204, 255, 0, 0.25) !important;
+                    backdrop-filter: blur(10px) !important;
+                    -webkit-backdrop-filter: blur(10px) !important;
+                    transition: all 0.24s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+                }
+                .subnav-app-bar.subnav-theme-americanas .subnav-nav-arrow:hover {
+                    background: #070d18 !important;
+                    border-color: #CCFF00 !important;
+                    color: #CCFF00 !important;
+                    box-shadow: 0 0 20px rgba(204, 255, 0, 0.95), 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+                    transform: scale(1.14) !important;
+                }
+                .subnav-app-bar.subnav-theme-americanas .subnav-nav-arrow:active {
+                    transform: scale(0.92) !important;
+                }
+
+                /* Botón Inactivo en tema Americanas - Pure Obsidian Cyber Glass con máximo contraste */
+                .subnav-app-bar.subnav-theme-americanas .esm-pro-btn.inactive {
+                    background: linear-gradient(145deg, rgba(7, 13, 24, 0.92) 0%, rgba(15, 23, 42, 0.96) 100%) !important;
+                    color: #ffffff !important;
+                    border: 1.5px solid rgba(255, 255, 255, 0.24) !important;
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.38), inset 0 1px 1px rgba(255, 255, 255, 0.22), inset 0 -1px 1px #070d18 !important;
+                    backdrop-filter: blur(14px) !important;
+                    -webkit-backdrop-filter: blur(14px) !important;
+                    font-weight: 850 !important;
+                    letter-spacing: 0.35px !important;
+                    text-shadow: 0 1px 2px #070d18 !important;
+                    transition: all 0.26s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+                }
+
+                /* Iluminación cromática temática en los iconos de Americanas */
+                .subnav-app-bar.subnav-theme-americanas .esm-pro-btn.inactive i {
+                    transition: transform 0.22s ease, color 0.22s ease, filter 0.22s ease;
+                }
+                .subnav-app-bar.subnav-theme-americanas button[data-tab-id="events"].inactive i {
+                    color: #CCFF00 !important;
+                    filter: drop-shadow(0 0 7px rgba(204, 255, 0, 0.75));
+                }
+                .subnav-app-bar.subnav-theme-americanas button[data-tab-id="finished_americanas"].inactive i {
+                    color: #94a3b8 !important;
+                    filter: drop-shadow(0 0 6px rgba(148, 163, 184, 0.6));
+                }
+                .subnav-app-bar.subnav-theme-americanas button[data-tab-id="agenda_americanas"].inactive i {
+                    color: #38bdf8 !important;
+                    filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.7));
+                }
+                .subnav-app-bar.subnav-theme-americanas button[data-tab-id="help_americanas"].inactive i {
+                    color: #c084fc !important;
+                    filter: drop-shadow(0 0 6px rgba(192, 132, 252, 0.7));
+                }
+                .subnav-app-bar.subnav-theme-americanas button[data-tab-id="meteo"].inactive i {
+                    color: #fbbf24 !important;
+                    filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.7));
+                }
+
+                /* Hover & Touch Interactivo WOW en Americanas */
+                .subnav-app-bar.subnav-theme-americanas .esm-pro-btn.inactive:hover {
+                    background: linear-gradient(145deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 1) 100%) !important;
+                    color: #ffffff !important;
+                    border-color: rgba(255, 255, 255, 0.7) !important;
+                    transform: translateY(-2.5px) scale(1.05) !important;
+                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 16px rgba(204, 255, 0, 0.35) !important;
+                }
+                .subnav-app-bar.subnav-theme-americanas .esm-pro-btn.inactive:hover i {
+                    transform: scale(1.18);
+                }
+                .subnav-app-bar.subnav-theme-americanas .esm-pro-btn.inactive:active {
+                    transform: scale(0.96) !important;
+                }
+
+                /* Botón Activo en tema Americanas - Deep Obsidian Cyber Neon con Máximo Impacto WOW */
+                .subnav-app-bar.subnav-theme-americanas .esm-pro-btn.active {
+                    background: linear-gradient(145deg, #070d18 0%, #0f172a 100%) !important;
+                    color: #CCFF00 !important;
+                    font-weight: 950 !important;
+                    border: 2px solid #CCFF00 !important;
+                    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.55), 0 0 20px rgba(204, 255, 0, 0.75), inset 0 1px 1px rgba(204, 255, 0, 0.4) !important;
+                    transform: translateY(-1px) scale(1.06) !important;
+                    text-shadow: 0 0 10px rgba(204, 255, 0, 0.6) !important;
+                    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+                }
+                .subnav-app-bar.subnav-theme-americanas .esm-pro-btn.active i {
+                    color: #CCFF00 !important;
+                    transform: scale(1.15) !important;
+                    filter: drop-shadow(0 0 10px rgba(204, 255, 0, 0.9)) !important;
+                }
+
+                /* Badges dentro de los botones en tema Americanas */
+                .subnav-app-bar.subnav-theme-americanas .esm-pro-btn.active .subnav-micro-badge {
+                    background: #CCFF00 !important;
+                    color: #070d18 !important;
+                    border: 1px solid rgba(204, 255, 0, 0.8) !important;
+                    font-weight: 950 !important;
+                    box-shadow: 0 0 10px rgba(204, 255, 0, 0.8) !important;
+                }
+                .subnav-app-bar.subnav-theme-americanas .esm-pro-btn.inactive .subnav-micro-badge {
+                    background: rgba(255, 255, 255, 0.18) !important;
+                    color: #ffffff !important;
+                    border: 1px solid rgba(255, 255, 255, 0.42) !important;
+                    font-weight: 950 !important;
+                    box-shadow: 0 0 8px rgba(255, 255, 255, 0.2) !important;
+                }
+
+                /* Botón de acceso directo PUNTOS RANKING en el submenú Americanas */
+                .subnav-app-bar.subnav-theme-americanas .esm-pro-btn.subnav-btn-ranking-points {
+                    background: linear-gradient(145deg, rgba(15, 23, 42, 0.92) 0%, rgba(8, 14, 26, 0.96) 100%) !important;
+                    border: 1.5px solid rgba(204, 255, 0, 0.45) !important;
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.38) !important;
+                }
+                .subnav-app-bar.subnav-theme-americanas .esm-pro-btn.subnav-btn-ranking-points i,
+                .subnav-app-bar.subnav-theme-americanas .esm-pro-btn.subnav-btn-ranking-points span {
+                    color: #CCFF00 !important;
+                }
+                .subnav-app-bar.subnav-theme-americanas .esm-pro-btn.subnav-btn-ranking-points:hover {
+                    background: linear-gradient(145deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 1) 100%) !important;
+                    border-color: #CCFF00 !important;
+                    transform: translateY(-2px) scale(1.04) !important;
+                    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45), 0 0 14px rgba(204, 255, 0, 0.4) !important;
+                }
+
+                /* ==========================================================================
+                   SUBMENÚ ENTRENOS PRO (Hot Pink Cyber Energy de Alta Definición)
+                   ========================================================================== */
+                .subnav-app-bar.subnav-theme-entrenos {
+                    background: linear-gradient(135deg, #e11d48 0%, #ff007f 28%, #ff2d87 62%, #be123c 100%) !important;
+                    border-top: 1.5px solid rgba(255, 255, 255, 0.45) !important;
+                    border-bottom: 2.5px solid rgba(15, 23, 42, 0.45) !important;
+                    border-image: none !important;
+                    box-shadow: 0 8px 25px rgba(255, 0, 127, 0.48), 0 3px 10px rgba(0, 0, 0, 0.3) !important;
+                    position: relative !important;
+                }
+
+                .subnav-app-bar.subnav-theme-entrenos::before {
+                    background: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.12) 45%, transparent 75%) !important;
+                    opacity: 0.85 !important;
+                }
+
+                /* Flechas de navegación en tema Entrenos - Obsidian Glass Pro */
+                .subnav-app-bar.subnav-theme-entrenos .subnav-nav-arrow {
+                    background: linear-gradient(145deg, rgba(15, 23, 42, 0.94) 0%, rgba(5, 9, 18, 0.98) 100%) !important;
+                    border: 1.5px solid rgba(255, 255, 255, 0.32) !important;
+                    color: #ffffff !important;
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+                    backdrop-filter: blur(10px) !important;
+                    -webkit-backdrop-filter: blur(10px) !important;
+                    transition: all 0.24s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+                }
+                .subnav-app-bar.subnav-theme-entrenos .subnav-nav-arrow:hover {
+                    background: #ffffff !important;
+                    border-color: #ffffff !important;
+                    color: #9f1239 !important;
+                    box-shadow: 0 0 20px rgba(255, 255, 255, 0.95), 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+                    transform: scale(1.14) !important;
+                }
+                .subnav-app-bar.subnav-theme-entrenos .subnav-nav-arrow:active {
+                    transform: scale(0.92) !important;
+                }
+
+                /* Botón Inactivo en tema Entrenos - Pure Obsidian Cyber Glass con máximo contraste */
+                .subnav-app-bar.subnav-theme-entrenos .esm-pro-btn.inactive {
+                    background: linear-gradient(145deg, rgba(15, 23, 42, 0.92) 0%, rgba(8, 14, 26, 0.96) 100%) !important;
+                    color: #ffffff !important;
+                    border: 1.5px solid rgba(255, 255, 255, 0.24) !important;
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.38), inset 0 1px 1px rgba(255, 255, 255, 0.22), inset 0 -1px 1px rgba(0, 0, 0, 0.4) !important;
+                    backdrop-filter: blur(14px) !important;
+                    -webkit-backdrop-filter: blur(14px) !important;
+                    font-weight: 850 !important;
+                    letter-spacing: 0.35px !important;
+                    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6) !important;
+                    transition: all 0.26s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+                }
+
+                /* Iluminación cromática temática en los iconos de Entrenos */
+                .subnav-app-bar.subnav-theme-entrenos .esm-pro-btn.inactive i {
+                    transition: transform 0.22s ease, color 0.22s ease, filter 0.22s ease;
+                }
+                .subnav-app-bar.subnav-theme-entrenos button[data-tab-id="entrenos"].inactive i {
+                    color: #fb7185 !important;
+                    filter: drop-shadow(0 0 7px rgba(251, 113, 133, 0.75));
+                }
+                .subnav-app-bar.subnav-theme-entrenos button[data-tab-id="finished"].inactive i {
+                    color: #94a3b8 !important;
+                    filter: drop-shadow(0 0 6px rgba(148, 163, 184, 0.6));
+                }
+                .subnav-app-bar.subnav-theme-entrenos button[data-tab-id="agenda"].inactive i {
+                    color: #38bdf8 !important;
+                    filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.7));
+                }
+                .subnav-app-bar.subnav-theme-entrenos button[data-tab-id="help"].inactive i {
+                    color: #c084fc !important;
+                    filter: drop-shadow(0 0 6px rgba(192, 132, 252, 0.7));
+                }
+                .subnav-app-bar.subnav-theme-entrenos button[data-tab-id="meteo"].inactive i {
+                    color: #fbbf24 !important;
+                    filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.7));
+                }
+
+                /* Hover & Touch Interactivo WOW en Entrenos */
+                .subnav-app-bar.subnav-theme-entrenos .esm-pro-btn.inactive:hover {
+                    background: linear-gradient(145deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 1) 100%) !important;
+                    color: #ffffff !important;
+                    border-color: rgba(255, 255, 255, 0.7) !important;
+                    transform: translateY(-2.5px) scale(1.05) !important;
+                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 16px rgba(255, 0, 127, 0.35) !important;
+                }
+                .subnav-app-bar.subnav-theme-entrenos .esm-pro-btn.inactive:hover i {
+                    transform: scale(1.18);
+                }
+                .subnav-app-bar.subnav-theme-entrenos .esm-pro-btn.inactive:active {
+                    transform: scale(0.96) !important;
+                }
+
+                /* Botón Activo en tema Entrenos - Diamond Neon White con Máximo Impacto WOW */
+                .subnav-app-bar.subnav-theme-entrenos .esm-pro-btn.active {
+                    background: linear-gradient(145deg, #ffffff 0%, #fff1f2 60%, #ffe4e6 100%) !important;
+                    color: #9f1239 !important;
+                    font-weight: 950 !important;
+                    border: 2px solid #ffffff !important;
+                    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.4), 0 0 24px rgba(255, 255, 255, 0.95), inset 0 2px 2px #ffffff !important;
+                    transform: translateY(-1px) scale(1.06) !important;
+                    text-shadow: none !important;
+                    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+                }
+                .subnav-app-bar.subnav-theme-entrenos .esm-pro-btn.active i {
+                    color: #be123c !important;
+                    transform: scale(1.15) !important;
+                    filter: drop-shadow(0 0 8px rgba(190, 18, 60, 0.6)) !important;
+                }
+
+                /* Badges dentro de los botones en tema Entrenos */
+                .subnav-app-bar.subnav-theme-entrenos .esm-pro-btn.active .subnav-micro-badge {
+                    background: #be123c !important;
+                    color: #ffffff !important;
+                    border: 1px solid rgba(190, 18, 60, 0.4) !important;
+                    font-weight: 950 !important;
+                    box-shadow: 0 2px 8px rgba(190, 18, 60, 0.45) !important;
+                }
+                .subnav-app-bar.subnav-theme-entrenos .esm-pro-btn.inactive .subnav-micro-badge {
+                    background: rgba(255, 255, 255, 0.18) !important;
+                    color: #ffffff !important;
+                    border: 1px solid rgba(255, 255, 255, 0.42) !important;
+                    font-weight: 950 !important;
+                    box-shadow: 0 0 8px rgba(255, 255, 255, 0.2) !important;
+                }
+
+                /* Botón de acceso directo PUNTOS RANKING en el submenú de Entrenos */
+                .subnav-app-bar.subnav-theme-entrenos .esm-pro-btn.subnav-btn-ranking-points {
+                    background: linear-gradient(145deg, rgba(15, 23, 42, 0.92) 0%, rgba(8, 14, 26, 0.96) 100%) !important;
+                    border: 1.5px solid rgba(255, 0, 127, 0.45) !important;
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.38) !important;
+                }
+                .subnav-app-bar.subnav-theme-entrenos .esm-pro-btn.subnav-btn-ranking-points i,
+                .subnav-app-bar.subnav-theme-entrenos .esm-pro-btn.subnav-btn-ranking-points span {
+                    color: #ff007f !important;
+                }
+                .subnav-app-bar.subnav-theme-entrenos .esm-pro-btn.subnav-btn-ranking-points:hover {
+                    background: linear-gradient(145deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 1) 100%) !important;
+                    border-color: #ff007f !important;
+                    transform: translateY(-2px) scale(1.04) !important;
+                    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45), 0 0 14px rgba(255, 0, 127, 0.4) !important;
+                }
+
+                /* ==========================================================================
+                   SUBMENÚ RANKING (Fondo Marrón Dorado / Ámbar Bronce acorde al icono nav inferior)
+                   MISMO TAMAÑO, LARGO, ANCHO Y ESTRUCTURA QUE AMERICANAS Y ENTRENOS
+                   ========================================================================== */
+                .subnav-app-bar.subnav-theme-ranking {
+                    background: #92400e !important;
+                    background: linear-gradient(135deg, #b45309 0%, #92400e 35%, #78350f 70%, #582405 100%) !important;
+                    border-top: 1px solid rgba(255, 215, 0, 0.3) !important;
+                    border-bottom: 2px solid rgba(0, 0, 0, 0.35) !important;
+                    border-image: none !important;
+                    box-shadow: 0 6px 20px rgba(180, 83, 9, 0.42), 0 3px 8px rgba(0, 0, 0, 0.22) !important;
+                }
+
+                .subnav-app-bar.subnav-theme-ranking::before {
+                    background: radial-gradient(ellipse at center, rgba(255, 215, 0, 0.35) 0%, transparent 70%) !important;
+                    opacity: 0.65 !important;
+                }
+
+                /* Flechas de navegación en tema Ranking - Deep Obsidian con icono Dorado/Ámbar */
+                .subnav-app-bar.subnav-theme-ranking .subnav-nav-arrow {
+                    background: #070d18 !important;
+                    border: 1.5px solid rgba(255, 215, 0, 0.4) !important;
+                    color: #ffd700 !important;
+                    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.12) !important;
+                }
+                .subnav-app-bar.subnav-theme-ranking .subnav-nav-arrow:hover {
+                    background: #000000 !important;
+                    border-color: #ffd700 !important;
+                    color: #ffffff !important;
+                    box-shadow: 0 0 14px rgba(255, 215, 0, 0.5) !important;
+                    transform: scale(1.08) !important;
+                }
+
+                /* Botón Inactivo en tema Ranking - Tinted Glass con texto blanco ultralegible y detalles dorados */
+                .subnav-app-bar.subnav-theme-ranking .esm-pro-btn.inactive {
+                    background: rgba(7, 13, 24, 0.22) !important;
+                    color: #ffffff !important;
+                    border: 1.5px solid rgba(255, 255, 255, 0.32) !important;
+                    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.14) !important;
+                    font-weight: 850 !important;
+                }
+                .subnav-app-bar.subnav-theme-ranking .esm-pro-btn.inactive i {
+                    color: #ffd700 !important;
+                    transition: color 0.2s ease;
+                }
+                .subnav-app-bar.subnav-theme-ranking .esm-pro-btn.inactive:hover {
+                    background: rgba(7, 13, 24, 0.38) !important;
+                    color: #ffffff !important;
+                    border-color: rgba(255, 215, 0, 0.6) !important;
+                    transform: translateY(-2px) scale(1.03) !important;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+                }
+                .subnav-app-bar.subnav-theme-ranking .esm-pro-btn.inactive:hover i {
+                    color: #ffffff !important;
+                }
+
+                /* Botón Activo en tema Ranking - Deep Obsidian con Neón Dorado/Oro (#ffd700) */
+                .subnav-app-bar.subnav-theme-ranking .esm-pro-btn.active {
+                    background: #070d18 !important;
+                    background: linear-gradient(135deg, #0e172a 0%, #070d18 100%) !important;
+                    color: #ffd700 !important;
+                    font-weight: 950 !important;
+                    border: 1.5px solid #ffd700 !important;
+                    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45), 0 0 14px rgba(255, 215, 0, 0.35) !important;
+                    transform: scale(1.04) !important;
+                }
+                .subnav-app-bar.subnav-theme-ranking .esm-pro-btn.active i {
+                    color: #ffd700 !important;
+                }
+
+                /* Badges dentro de los botones en tema Ranking */
+                .subnav-app-bar.subnav-theme-ranking .esm-pro-btn.active .subnav-micro-badge {
+                    background: #ffd700 !important;
+                    color: #070d18 !important;
+                    border: 1px solid rgba(0, 0, 0, 0.25) !important;
+                    font-weight: 950 !important;
+                }
+                .subnav-app-bar.subnav-theme-ranking .esm-pro-btn.inactive .subnav-micro-badge {
+                    background: rgba(7, 13, 24, 0.35) !important;
+                    color: #ffffff !important;
+                    border: 1px solid rgba(255, 215, 0, 0.35) !important;
+                    font-weight: 950 !important;
+                }
+
+                /* Botón de acceso directo PUNTOS RANKING en el submenú de Ranking */
+                .subnav-app-bar.subnav-theme-ranking .esm-pro-btn.subnav-btn-ranking-points {
+                    background: #070d18 !important;
+                    border: 1.5px solid #ffd700 !important;
+                    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3) !important;
+                }
+                .subnav-app-bar.subnav-theme-ranking .esm-pro-btn.subnav-btn-ranking-points i,
+                .subnav-app-bar.subnav-theme-ranking .esm-pro-btn.subnav-btn-ranking-points span {
+                    color: #ffd700 !important;
+                }
+                .subnav-app-bar.subnav-theme-ranking .esm-pro-btn.subnav-btn-ranking-points:hover {
+                    background: #000000 !important;
+                    transform: translateY(-2px) scale(1.03) !important;
+                    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.42), 0 0 12px rgba(255, 215, 0, 0.3) !important;
+                }
+
+                /* ==========================================================================
+                   SUBMENÚ PERFIL / RANKING INVERTIDO (Fondo Celeste Neón / Cyan #00d2ff acorde a nav #nav-profile)
+                   MISMO TAMAÑO, LARGO, ANCHO Y ESTRUCTURA QUE AMERICANAS Y ENTRENOS
+                   ========================================================================== */
+                .subnav-app-bar.subnav-theme-profile {
+                    background: #00d2ff !important;
+                    background: linear-gradient(135deg, #0284c7 0%, #00b4d8 28%, #00d2ff 65%, #0284c7 100%) !important;
+                    border-top: 1.5px solid rgba(255, 255, 255, 0.5) !important;
+                    border-bottom: 2.5px solid rgba(15, 23, 42, 0.45) !important;
+                    border-image: none !important;
+                    box-shadow: 0 8px 25px rgba(0, 210, 255, 0.45), 0 3px 10px rgba(0, 0, 0, 0.28) !important;
+                    position: relative !important;
+                }
+
+                .subnav-app-bar.subnav-theme-profile::before {
+                    background: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.15) 45%, transparent 75%) !important;
+                    opacity: 0.85 !important;
+                }
+
+                /* Flechas de navegación en tema Perfil - Obsidian Glass Pro */
+                .subnav-app-bar.subnav-theme-profile .subnav-nav-arrow {
+                    background: linear-gradient(145deg, #070d18 0%, rgba(15, 23, 42, 0.98) 100%) !important;
+                    border: 1.5px solid rgba(0, 210, 255, 0.5) !important;
+                    color: #00d2ff !important;
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(0, 210, 255, 0.25) !important;
+                    backdrop-filter: blur(10px) !important;
+                    -webkit-backdrop-filter: blur(10px) !important;
+                    transition: all 0.24s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+                }
+                .subnav-app-bar.subnav-theme-profile .subnav-nav-arrow:hover {
+                    background: #070d18 !important;
+                    border-color: #00d2ff !important;
+                    color: #00d2ff !important;
+                    box-shadow: 0 0 20px rgba(0, 210, 255, 0.95), 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+                    transform: scale(1.14) !important;
+                }
+                .subnav-app-bar.subnav-theme-profile .subnav-nav-arrow:active {
+                    transform: scale(0.92) !important;
+                }
+
+                /* Botón Inactivo en tema Perfil - Pure Obsidian Cyber Glass con máximo contraste */
+                .subnav-app-bar.subnav-theme-profile .esm-pro-btn.inactive {
+                    background: linear-gradient(145deg, rgba(7, 13, 24, 0.92) 0%, rgba(15, 23, 42, 0.96) 100%) !important;
+                    color: #ffffff !important;
+                    border: 1.5px solid rgba(255, 255, 255, 0.25) !important;
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.38), inset 0 1px 1px rgba(255, 255, 255, 0.22), inset 0 -1px 1px #070d18 !important;
+                    backdrop-filter: blur(14px) !important;
+                    -webkit-backdrop-filter: blur(14px) !important;
+                    font-weight: 850 !important;
+                    letter-spacing: 0.35px !important;
+                    text-shadow: 0 1px 2px #070d18 !important;
+                    transition: all 0.26s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+                }
+
+                /* Iluminación cromática temática en los iconos de Perfil */
+                .subnav-app-bar.subnav-theme-profile .esm-pro-btn.inactive i {
+                    transition: transform 0.22s ease, color 0.22s ease, filter 0.22s ease;
+                }
+                .subnav-app-bar.subnav-theme-profile button[data-tab-id="mi_posicion"].inactive i {
+                    color: #00d2ff !important;
+                    filter: drop-shadow(0 0 7px rgba(0, 210, 255, 0.8));
+                }
+                .subnav-app-bar.subnav-theme-profile button[data-tab-id="ai_performance"].inactive i {
+                    color: #c084fc !important;
+                    filter: drop-shadow(0 0 7px rgba(192, 132, 252, 0.8));
+                }
+                .subnav-app-bar.subnav-theme-profile button[data-tab-id="attributes"].inactive i {
+                    color: #facc15 !important;
+                    filter: drop-shadow(0 0 7px rgba(250, 204, 21, 0.8));
+                }
+
+                /* Hover & Touch Interactivo WOW en Perfil */
+                .subnav-app-bar.subnav-theme-profile .esm-pro-btn.inactive:hover {
+                    background: linear-gradient(145deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 1) 100%) !important;
+                    color: #ffffff !important;
+                    border-color: rgba(255, 255, 255, 0.7) !important;
+                    transform: translateY(-2.5px) scale(1.05) !important;
+                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 16px rgba(0, 210, 255, 0.35) !important;
+                }
+                .subnav-app-bar.subnav-theme-profile .esm-pro-btn.inactive:hover i {
+                    transform: scale(1.18);
+                }
+                .subnav-app-bar.subnav-theme-profile .esm-pro-btn.inactive:active {
+                    transform: scale(0.96) !important;
+                }
+
+                /* Botón Activo en tema Perfil - Deep Obsidian Cyber Neon con Máximo Impacto WOW */
+                .subnav-app-bar.subnav-theme-profile .esm-pro-btn.active {
+                    background: #070d18 !important;
+                    background: linear-gradient(145deg, #070d18 0%, #0f172a 100%) !important;
+                    color: #00d2ff !important;
+                    font-weight: 950 !important;
+                    border: 2px solid #00d2ff !important;
+                    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.55), 0 0 20px rgba(0, 210, 255, 0.75), inset 0 1px 1px rgba(0, 210, 255, 0.4) !important;
+                    transform: translateY(-1px) scale(1.06) !important;
+                    text-shadow: 0 0 10px rgba(0, 210, 255, 0.6) !important;
+                    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+                }
+                .subnav-app-bar.subnav-theme-profile .esm-pro-btn.active i {
+                    color: #00d2ff !important;
+                    transform: scale(1.15) !important;
+                    filter: drop-shadow(0 0 10px rgba(0, 210, 255, 0.9)) !important;
+                }
+
+                /* Badges dentro de los botones en tema Perfil */
+                .subnav-app-bar.subnav-theme-profile .esm-pro-btn.active .subnav-micro-badge {
+                    background: #00d2ff !important;
+                    color: #070d18 !important;
+                    border: 1px solid rgba(0, 210, 255, 0.8) !important;
+                    font-weight: 950 !important;
+                    box-shadow: 0 0 10px rgba(0, 210, 255, 0.8) !important;
+                }
+                .subnav-app-bar.subnav-theme-profile .esm-pro-btn.inactive .subnav-micro-badge {
+                    background: rgba(255, 255, 255, 0.18) !important;
+                    color: #ffffff !important;
+                    border: 1px solid rgba(255, 255, 255, 0.42) !important;
+                    font-weight: 950 !important;
+                    box-shadow: 0 0 8px rgba(255, 255, 255, 0.2) !important;
+                }
+
+                /* Botón de acceso directo PUNTOS RANKING en el submenú de Perfil */
+                .subnav-app-bar.subnav-theme-profile .esm-pro-btn.subnav-btn-ranking-points {
+                    background: #070d18 !important;
+                    border: 1.5px solid rgba(0, 210, 255, 0.5) !important;
+                    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3) !important;
+                }
+                .subnav-app-bar.subnav-theme-profile .esm-pro-btn.subnav-btn-ranking-points i,
+                .subnav-app-bar.subnav-theme-profile .esm-pro-btn.subnav-btn-ranking-points span {
+                    color: #00d2ff !important;
+                }
+                .subnav-app-bar.subnav-theme-profile .esm-pro-btn.subnav-btn-ranking-points:hover {
+                    background: #000000 !important;
+                    transform: translateY(-2px) scale(1.03) !important;
+                    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.42), 0 0 12px rgba(0, 210, 255, 0.35) !important;
+                }
+
+                /* Pestaña Entrenos en la barra comunitaria cuando está activa */
+                .community-submenu-pro-bar button[data-tab-id="entrenos"].active {
+                    background: linear-gradient(135deg, #ff007f 0%, #d9006c 100%) !important;
+                    color: #ffffff !important;
+                    border: 1.5px solid #ff4d9e !important;
+                    box-shadow: 0 0 18px rgba(255, 0, 127, 0.6), 0 4px 12px rgba(0, 0, 0, 0.35) !important;
+                }
+                .community-submenu-pro-bar button[data-tab-id="entrenos"].active i {
+                    color: #ffffff !important;
+                }
+
+                /* ==========================================================================
+                   SUBMENÚ COMUNIDAD PRO (Sunset Cyber Mesh de Alta Definición)
+                   ========================================================================== */
+                .subnav-app-bar.subnav-theme-community {
+                    background: linear-gradient(135deg, #ff3d00 0%, #ff5e00 28%, #ff7700 62%, #ea580c 100%) !important;
+                    border-top: 1.5px solid rgba(255, 255, 255, 0.42) !important;
+                    border-bottom: 2.5px solid rgba(15, 23, 42, 0.45) !important;
+                    border-image: none !important;
+                    box-shadow: 0 8px 25px rgba(255, 94, 0, 0.48), 0 3px 10px rgba(0, 0, 0, 0.3) !important;
+                    position: relative !important;
+                }
+
+                .subnav-app-bar.subnav-theme-community::before {
+                    background: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.12) 45%, transparent 75%) !important;
+                    opacity: 0.85 !important;
+                }
+
+                /* Flechas de navegación en tema Comunidad - Obsidian Glass Pro con Chevron Blanco */
+                .subnav-app-bar.subnav-theme-community .subnav-nav-arrow {
+                    background: linear-gradient(145deg, rgba(15, 23, 42, 0.94) 0%, rgba(5, 9, 18, 0.98) 100%) !important;
+                    border: 1.5px solid rgba(255, 255, 255, 0.32) !important;
+                    color: #ffffff !important;
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+                    backdrop-filter: blur(10px) !important;
+                    -webkit-backdrop-filter: blur(10px) !important;
+                    transition: all 0.24s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+                }
+                .subnav-app-bar.subnav-theme-community .subnav-nav-arrow:hover {
+                    background: #ffffff !important;
+                    border-color: #ffffff !important;
+                    color: #ea580c !important;
+                    box-shadow: 0 0 20px rgba(255, 255, 255, 0.95), 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+                    transform: scale(1.14) !important;
+                }
+                .subnav-app-bar.subnav-theme-community .subnav-nav-arrow:active {
+                    transform: scale(0.92) !important;
+                }
+
+                /* Botón Inactivo en tema Comunidad - Pure Obsidian Cyber Glass con máximo contraste */
+                .subnav-app-bar.subnav-theme-community .esm-pro-btn.inactive {
+                    background: linear-gradient(145deg, rgba(15, 23, 42, 0.92) 0%, rgba(8, 14, 26, 0.96) 100%) !important;
+                    color: #ffffff !important;
+                    border: 1.5px solid rgba(255, 255, 255, 0.24) !important;
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.38), inset 0 1px 1px rgba(255, 255, 255, 0.22), inset 0 -1px 1px rgba(0, 0, 0, 0.4) !important;
+                    backdrop-filter: blur(14px) !important;
+                    -webkit-backdrop-filter: blur(14px) !important;
+                    font-weight: 850 !important;
+                    letter-spacing: 0.35px !important;
+                    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6) !important;
+                    transition: all 0.26s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+                }
+
+                /* Iluminación cromática temática en los iconos de Comunidad */
+                .subnav-app-bar.subnav-theme-community .esm-pro-btn.inactive i {
+                    transition: transform 0.22s ease, color 0.22s ease, filter 0.22s ease;
+                }
+                .subnav-app-bar.subnav-theme-community button[data-tab-id="home"].inactive i {
+                    color: #fed7aa !important;
+                    filter: drop-shadow(0 0 6px rgba(253, 186, 116, 0.6));
+                }
+                .subnav-app-bar.subnav-theme-community button[data-tab-id="chat"].inactive i {
+                    color: #38bdf8 !important;
+                    filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.7));
+                }
+                .subnav-app-bar.subnav-theme-community button[data-tab-id="entrenos"].inactive i {
+                    color: #fb7185 !important;
+                    filter: drop-shadow(0 0 6px rgba(251, 113, 133, 0.7));
+                }
+                .subnav-app-bar.subnav-theme-community button[data-tab-id="teams"].inactive i {
+                    color: #60a5fa !important;
+                    filter: drop-shadow(0 0 6px rgba(96, 165, 250, 0.7));
+                }
+                .subnav-app-bar.subnav-theme-community button[data-tab-id="my_team"].inactive i {
+                    color: #CCFF00 !important;
+                    filter: drop-shadow(0 0 7px rgba(204, 255, 0, 0.75));
+                }
+                .subnav-app-bar.subnav-theme-community button[data-tab-id="inscriptions"].inactive i {
+                    color: #34d399 !important;
+                    filter: drop-shadow(0 0 6px rgba(52, 211, 153, 0.7));
+                }
+                .subnav-app-bar.subnav-theme-community button[data-tab-id="agenda"].inactive i {
+                    color: #fbbf24 !important;
+                    filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.7));
+                }
+                .subnav-app-bar.subnav-theme-community button[data-tab-id="records"].inactive i {
+                    color: #f59e0b !important;
+                    filter: drop-shadow(0 0 7px rgba(245, 158, 11, 0.75));
+                }
+
+                /* Hover & Touch Interactivo WOW en Comunidad */
+                .subnav-app-bar.subnav-theme-community .esm-pro-btn.inactive:hover {
+                    background: linear-gradient(145deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 1) 100%) !important;
+                    color: #ffffff !important;
+                    border-color: rgba(255, 255, 255, 0.7) !important;
+                    transform: translateY(-2.5px) scale(1.05) !important;
+                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 16px rgba(255, 255, 255, 0.3) !important;
+                }
+                .subnav-app-bar.subnav-theme-community .esm-pro-btn.inactive:hover i {
+                    transform: scale(1.18);
+                }
+                .subnav-app-bar.subnav-theme-community .esm-pro-btn.inactive:active {
+                    transform: scale(0.96) !important;
+                }
+
+                /* Botón Activo en tema Comunidad - Diamond Neon White con Máximo Impacto WOW */
+                .subnav-app-bar.subnav-theme-community .esm-pro-btn.active {
+                    background: linear-gradient(145deg, #ffffff 0%, #fff7ed 60%, #ffedd5 100%) !important;
+                    color: #c2410c !important;
+                    font-weight: 950 !important;
+                    border: 2px solid #ffffff !important;
+                    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.4), 0 0 24px rgba(255, 255, 255, 0.9), inset 0 2px 2px #ffffff !important;
+                    transform: translateY(-1px) scale(1.06) !important;
+                    text-shadow: none !important;
+                    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+                }
+                .subnav-app-bar.subnav-theme-community .esm-pro-btn.active i {
+                    color: #ea580c !important;
+                    transform: scale(1.15) !important;
+                    filter: drop-shadow(0 0 8px rgba(234, 88, 12, 0.6)) !important;
+                }
+
+                /* Badges dentro de los botones en tema Comunidad */
+                .subnav-app-bar.subnav-theme-community .esm-pro-btn.active .subnav-micro-badge {
+                    background: #ea580c !important;
+                    color: #ffffff !important;
+                    border: 1px solid rgba(234, 88, 12, 0.4) !important;
+                    font-weight: 950 !important;
+                    box-shadow: 0 2px 8px rgba(234, 88, 12, 0.45) !important;
+                }
+                .subnav-app-bar.subnav-theme-community .esm-pro-btn.inactive .subnav-micro-badge {
+                    background: rgba(255, 255, 255, 0.18) !important;
+                    color: #ffffff !important;
+                    border: 1px solid rgba(255, 255, 255, 0.42) !important;
+                    font-weight: 950 !important;
+                    box-shadow: 0 0 8px rgba(255, 255, 255, 0.2) !important;
+                }
+                .subnav-app-bar.subnav-theme-community .esm-pro-btn .subnav-micro-badge.badge-neon {
+                    background: linear-gradient(135deg, rgba(236, 72, 153, 0.35) 0%, rgba(219, 39, 119, 0.45) 100%) !important;
+                    color: #fbcfe8 !important;
+                    border-color: rgba(244, 114, 182, 0.6) !important;
+                    box-shadow: 0 0 10px rgba(236, 72, 153, 0.45) !important;
+                }
+                .subnav-app-bar.subnav-theme-community .esm-pro-btn .subnav-micro-badge.badge-live {
+                    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%) !important;
+                    color: #ffffff !important;
+                    border: 1px solid rgba(255, 255, 255, 0.35) !important;
+                    box-shadow: 0 0 12px rgba(239, 68, 68, 0.75) !important;
+                    font-weight: 950 !important;
+                }
+                .subnav-app-bar.subnav-theme-community .esm-pro-btn .subnav-micro-badge.badge-success {
+                    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+                    color: #ffffff !important;
+                    border: 1px solid rgba(255, 255, 255, 0.35) !important;
+                    box-shadow: 0 0 12px rgba(16, 185, 129, 0.75) !important;
+                    font-weight: 950 !important;
+                }
+                .subnav-app-bar.subnav-theme-community .esm-pro-btn .subnav-micro-badge.badge-clinics {
+                    background: linear-gradient(135deg, #ff007f 0%, #d9006c 100%) !important;
+                    color: #ffffff !important;
+                    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+                    box-shadow: 0 0 12px rgba(255, 0, 127, 0.7) !important;
+                    font-weight: 950 !important;
+                }
+                .subnav-app-bar.subnav-theme-community .esm-pro-btn .subnav-micro-badge.badge-top {
+                    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+                    color: #ffffff !important;
+                    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+                    box-shadow: 0 0 12px rgba(245, 158, 11, 0.7) !important;
+                    font-weight: 950 !important;
+                }
+
+                /* ==========================================================================
+                   BOTONES Y SECCIÓN COMUNIDAD EN EL MENÚ LATERAL (Side Drawer VIP Hub)
+                   ========================================================================== */
+                .drawer-community-section {
+                    position: relative;
+                }
+                .drawer-community-box {
+                    position: relative;
+                    border: 1.5px solid rgba(255, 94, 0, 0.35) !important;
+                    background: linear-gradient(150deg, rgba(255, 94, 0, 0.09) 0%, rgba(15, 23, 42, 0.85) 60%, rgba(10, 16, 30, 0.95) 100%) !important;
+                    box-shadow: 0 8px 25px rgba(255, 94, 0, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+                    border-radius: 18px !important;
+                    overflow: hidden !important;
+                }
+                .drawer-community-box .drawer-nav-row {
+                    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+                    padding: 3px 12px !important;
+                    min-height: 48px !important;
+                }
+                .drawer-community-box .drawer-nav-row:last-child {
+                    border-bottom: none !important;
+                }
+                .drawer-community-box .drawer-nav-row:hover {
+                    background: linear-gradient(90deg, rgba(255, 94, 0, 0.18) 0%, rgba(255, 94, 0, 0.05) 100%) !important;
+                    transform: translateX(4px) !important;
+                }
+                .drawer-community-box .drawer-nav-row:hover .drawer-row-icon {
+                    transform: scale(1.12) rotate(3deg) !important;
+                    box-shadow: 0 0 14px currentColor !important;
+                }
+                .drawer-community-box .drawer-nav-row:hover .drawer-row-chevron {
+                    color: #ff8c00 !important;
+                    transform: translateX(3px) !important;
+                }
+                .drawer-community-box .drawer-row-icon {
+                    width: 32px !important;
+                    height: 32px !important;
+                    border-radius: 10px !important;
+                    font-size: 0.92rem !important;
+                    transition: all 0.2s ease !important;
+                    flex-shrink: 0 !important;
+                }
+                .drawer-community-box .drawer-row-title {
+                    font-family: 'Outfit', sans-serif !important;
+                    font-weight: 850 !important;
+                    color: #ffffff !important;
+                    letter-spacing: -0.2px !important;
+                    font-size: 0.88rem !important;
+                    line-height: 1.25 !important;
                 }
             </style>
             <div id="subnav-app-bar" class="subnav-app-bar"></div>
@@ -1156,13 +2027,84 @@
                 });
 
                 window.SubnavManager = {
+                    _bannerTimer: null,
+                    _resumeTimer: null,
+                    _isUserInteracting: false,
+                    _bannerCurrentIndex: 0,
+
                     scroll: function(direction) {
+                        if (window.PlayerView?.haptic) window.PlayerView.haptic(12);
+                        this.pauseBanner(5500);
                         const bar = document.querySelector('#subnav-app-bar .events-submenu-pro-bar, #subnav-app-bar .community-submenu-pro-bar');
                         if (bar) {
-                            const offset = direction === 'left' ? -220 : 220;
+                            const offset = direction === 'left' ? -240 : 240;
                             bar.scrollBy({ left: offset, behavior: 'smooth' });
-                            setTimeout(() => this.updateArrows(), 280);
+                            setTimeout(() => this.updateArrows(), 300);
                         }
+                    },
+
+                    pauseBanner: function(ms = 5000) {
+                        this._isUserInteracting = true;
+                        if (this._resumeTimer) clearTimeout(this._resumeTimer);
+                        this._resumeTimer = setTimeout(() => {
+                            this._isUserInteracting = false;
+                        }, ms);
+                    },
+
+                    startBannerAutoScroll: function() {
+                        this.stopBannerAutoScroll();
+                        const bar = document.querySelector('#subnav-app-bar .community-submenu-pro-bar');
+                        if (!bar) return;
+
+                        const doStep = () => {
+                            if (this._isUserInteracting) return;
+                            const container = document.querySelector('#subnav-app-bar .community-submenu-pro-bar');
+                            if (!container) return;
+
+                            const btns = Array.from(container.querySelectorAll('button[data-tab-id]'));
+                            if (btns.length <= 1) return;
+
+                            this._bannerCurrentIndex = ((this._bannerCurrentIndex || 0) + 1) % btns.length;
+                            const targetBtn = btns[this._bannerCurrentIndex];
+                            if (targetBtn) {
+                                try {
+                                    targetBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                                } catch (e) {
+                                    container.scrollLeft = targetBtn.offsetLeft - 30;
+                                }
+                            }
+                            this.updateArrows();
+                        };
+
+                        // Primer desplazamiento a los 1.8s y luego cada 3.2s para una experiencia de banner dinámica pero elegante
+                        setTimeout(doStep, 1800);
+                        this._bannerTimer = setInterval(doStep, 3200);
+
+                        // Pausar si el usuario interactúa manualmente
+                        if (!bar._bannerListenersAttached) {
+                            bar._bannerListenersAttached = true;
+                            const pauseHandler = () => {
+                                this.pauseBanner(5000);
+                            };
+
+                            bar.addEventListener('touchstart', pauseHandler, { passive: true });
+                            bar.addEventListener('mousedown', pauseHandler, { passive: true });
+                            bar.addEventListener('wheel', pauseHandler, { passive: true });
+                            bar.addEventListener('pointerdown', pauseHandler, { passive: true });
+                            bar.addEventListener('mouseenter', () => { this.pauseBanner(4000); });
+                        }
+                    },
+
+                    stopBannerAutoScroll: function() {
+                        if (this._bannerTimer) {
+                            clearInterval(this._bannerTimer);
+                            this._bannerTimer = null;
+                        }
+                        if (this._resumeTimer) {
+                            clearTimeout(this._resumeTimer);
+                            this._resumeTimer = null;
+                        }
+                        this._isUserInteracting = false;
                     },
 
                     updateArrows: function() {
@@ -1172,9 +2114,9 @@
                         if (!bar || !leftBtn || !rightBtn) return;
                         const maxScroll = bar.scrollWidth - bar.clientWidth;
                         if (maxScroll <= 4) {
-                            leftBtn.style.opacity = '0.25';
+                            leftBtn.style.opacity = '0.2';
                             leftBtn.style.pointerEvents = 'none';
-                            rightBtn.style.opacity = '0.25';
+                            rightBtn.style.opacity = '0.2';
                             rightBtn.style.pointerEvents = 'none';
                             return;
                         }
@@ -1195,12 +2137,12 @@
                         bar.addEventListener('wheel', (e) => {
                             if (e.deltaY !== 0) {
                                 e.preventDefault();
-                                bar.scrollLeft += e.deltaY * 1.1;
+                                bar.scrollLeft += e.deltaY * 1.15;
                                 this.updateArrows();
                             }
                         }, { passive: false });
 
-                        // Drag con ratón
+                        // Drag con ratón fluido con inercia
                         let isDown = false;
                         let startX = 0;
                         let scrollLeft = 0;
@@ -1218,19 +2160,25 @@
                             if (!isDown) return;
                             const x = e.pageX - bar.offsetLeft;
                             const diff = x - startX;
-                            bar.scrollLeft = scrollLeft - (diff * 1.4);
+                            bar.scrollLeft = scrollLeft - (diff * 1.35);
                             this.updateArrows();
                         });
 
                         bar.addEventListener('scroll', () => this.updateArrows(), { passive: true });
-                        setTimeout(() => this.updateArrows(), 100);
+                        setTimeout(() => this.updateArrows(), 120);
                     },
 
                     renderAmericanas: function(activeTab = 'events') {
+                        this.stopBannerAutoScroll();
                         const bar = document.getElementById('subnav-app-bar');
                         if (!bar) return;
+                        bar.classList.remove('subnav-theme-community');
+                        bar.classList.remove('subnav-theme-entrenos');
+                        bar.classList.remove('subnav-theme-ranking');
+                        bar.classList.remove('subnav-theme-profile');
+                        bar.classList.add('subnav-theme-americanas');
                         const tabs = [
-                            { id: 'events', label: 'AMERICANAS', icon: 'fa-trophy' },
+                            { id: 'events', label: 'AMERICANAS', icon: 'fa-trophy', badge: 'LIVE' },
                             { id: 'finished_americanas', label: 'FINALIZADAS', icon: 'fa-history' },
                             { id: 'agenda_americanas', label: 'AGENDA', icon: 'fa-calendar-check' },
                             { id: 'help_americanas', label: 'INFO', icon: 'fa-info-circle' },
@@ -1247,28 +2195,32 @@
                                     ${tabs.map(tab => {
                                         const isActive = activeTab === tab.id;
                                         return `
-                                            <button class="esm-pro-btn ${isActive ? 'active' : 'inactive'}"
+                                            <button data-tab-id="${tab.id}" data-tab-active="${isActive ? 'true' : 'false'}"
+                                                class="esm-pro-btn ${isActive ? 'active' : 'inactive'}"
                                                 onclick="(function(btn){
-                                                    if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(12);
+                                                    if (window.PlayerView?.haptic) window.PlayerView.haptic(15);
+                                                    else if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(12);
                                                     if (window.EventsController) window.EventsController.setTab('${tab.id}');
                                                     try { btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
                                                 })(this)"
                                                 aria-label="${tab.label}">
-                                                <i class="fas ${tab.icon}" style="font-size: 0.82rem; color: ${isActive ? '#0a192f' : '#64748b'};"></i>
+                                                <i class="fas ${tab.icon}" style="font-size: 0.82rem;"></i>
                                                 <span style="text-transform: uppercase;">${tab.label}</span>
+                                                ${tab.badge && isActive ? `<span class="subnav-micro-badge badge-dark">${tab.badge}</span>` : ''}
+                                                ${tab.badge && !isActive ? `<span class="subnav-micro-badge badge-neon">${tab.badge}</span>` : ''}
                                             </button>
                                         `;
                                     }).join('')}
-                                    <button class="esm-pro-btn inactive"
-                                        style="border: 1.5px solid rgba(163, 230, 0, 0.7); color: #0a192f; background: rgba(204, 255, 0, 0.16); box-shadow: 0 2px 8px rgba(204, 255, 0, 0.15);"
+                                    <button class="esm-pro-btn subnav-btn-ranking-points inactive"
                                         onclick="(function(btn){
-                                            if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(12);
+                                            if (window.PlayerView?.haptic) window.PlayerView.haptic(15);
+                                            else if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(12);
                                             if (window.showPointsPolicyModal) window.showPointsPolicyModal();
                                             try { btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
                                         })(this)"
                                         aria-label="Sistema Oficial de Puntos">
-                                        <i class="fas fa-balance-scale" style="font-size: 0.82rem; color: #557700;"></i>
-                                        <span style="text-transform: uppercase; font-weight: 950; color: #0a192f;">PUNTOS RANKING</span>
+                                        <i class="fas fa-balance-scale" style="font-size: 0.82rem;"></i>
+                                        <span style="text-transform: uppercase; font-weight: 950;">PUNTOS RANKING</span>
                                     </button>
                                 </div>
                                 <button id="subnav-arrow-right" class="subnav-nav-arrow" onclick="window.SubnavManager.scroll('right')" title="Desplazar a la derecha" aria-label="Desplazar derecha">
@@ -1278,20 +2230,241 @@
                         `;
                         syncHeaderHeight();
                         this.initInteractions();
+
+                        // Centrar la pestaña activa inicialmente
+                        const activeBtn = bar.querySelector('.events-submenu-pro-bar .esm-pro-btn.active');
+                        if (activeBtn) {
+                            try { activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
+                        }
+                    },
+
+                    renderEntrenos: function(activeTab = 'entrenos') {
+                        this.stopBannerAutoScroll();
+                        const bar = document.getElementById('subnav-app-bar');
+                        if (!bar) return;
+                        bar.classList.remove('subnav-theme-community');
+                        bar.classList.remove('subnav-theme-americanas');
+                        bar.classList.remove('subnav-theme-ranking');
+                        bar.classList.remove('subnav-theme-profile');
+                        bar.classList.add('subnav-theme-entrenos');
+                        const tabs = [
+                            { id: 'entrenos', label: 'ENTRENOS', icon: 'fa-table-tennis' },
+                            { id: 'finished', label: 'FINALIZADAS', icon: 'fa-history' },
+                            { id: 'agenda', label: 'AGENDA', icon: 'fa-calendar-check' },
+                            { id: 'help', label: 'INFO', icon: 'fa-info-circle' },
+                            { id: 'meteo', label: 'CLIMA & RADAR', icon: 'fa-cloud-sun' }
+                        ];
+
+                        bar.style.display = 'block';
+                        bar.innerHTML = `
+                            <div class="subnav-outer-flex">
+                                <button id="subnav-arrow-left" class="subnav-nav-arrow" onclick="window.SubnavManager.scroll('left')" title="Desplazar a la izquierda" aria-label="Desplazar izquierda">
+                                    <i class="fas fa-chevron-left" style="font-size: 0.75rem;"></i>
+                                </button>
+                                <div class="events-submenu-pro-bar">
+                                    ${tabs.map(tab => {
+                                        const isActive = activeTab === tab.id;
+                                        return `
+                                            <button data-tab-id="${tab.id}" data-tab-active="${isActive ? 'true' : 'false'}"
+                                                class="esm-pro-btn ${isActive ? 'active' : 'inactive'}"
+                                                onclick="(function(btn){
+                                                    if (window.PlayerView?.haptic) window.PlayerView.haptic(15);
+                                                    else if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(12);
+                                                    if (window.EventsController) window.EventsController.setTab('${tab.id}');
+                                                    try { btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
+                                                })(this)"
+                                                aria-label="${tab.label}">
+                                                <i class="fas ${tab.icon}" style="font-size: 0.82rem;"></i>
+                                                <span style="text-transform: uppercase;">${tab.label}</span>
+                                            </button>
+                                        `;
+                                    }).join('')}
+                                    <button class="esm-pro-btn subnav-btn-ranking-points inactive"
+                                        onclick="(function(btn){
+                                            if (window.PlayerView?.haptic) window.PlayerView.haptic(15);
+                                            else if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(12);
+                                            if (window.showPointsPolicyModal) window.showPointsPolicyModal();
+                                            try { btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
+                                        })(this)"
+                                        aria-label="Sistema Oficial de Puntos">
+                                        <i class="fas fa-balance-scale" style="font-size: 0.82rem;"></i>
+                                        <span style="text-transform: uppercase; font-weight: 950;">PUNTOS RANKING</span>
+                                    </button>
+                                </div>
+                                <button id="subnav-arrow-right" class="subnav-nav-arrow" onclick="window.SubnavManager.scroll('right')" title="Desplazar a la derecha" aria-label="Desplazar derecha">
+                                    <i class="fas fa-chevron-right" style="font-size: 0.75rem;"></i>
+                                </button>
+                            </div>
+                        `;
+                        syncHeaderHeight();
+                        this.initInteractions();
+
+                        // Centrar la pestaña activa inicialmente
+                        const activeBtn = bar.querySelector('.events-submenu-pro-bar .esm-pro-btn.active');
+                        if (activeBtn) {
+                            try { activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
+                        }
+                    },
+
+                    renderRanking: function(activeTab = 'americanas') {
+                        this.stopBannerAutoScroll();
+                        const bar = document.getElementById('subnav-app-bar');
+                        if (!bar) return;
+                        bar.classList.remove('subnav-theme-community');
+                        bar.classList.remove('subnav-theme-americanas');
+                        bar.classList.remove('subnav-theme-entrenos');
+                        bar.classList.remove('subnav-theme-profile');
+                        bar.classList.add('subnav-theme-ranking');
+
+                        const tabs = [
+                            { id: 'americanas', label: 'AMERICANAS', icon: 'fa-trophy', badge: 'CIRCUITO' },
+                            { id: 'entrenos', label: 'ENTRENOS', icon: 'fa-table-tennis', badge: 'CLINICS' },
+                            { id: 'top10', label: 'TOP 10 ÉLITE', icon: 'fa-crown', badge: 'PODIO' },
+                            { id: 'my_rank', label: 'MI POSICIÓN', icon: 'fa-id-card', badge: 'FUT' },
+                            { id: 'faceoff', label: '1 VS 1 DUELOS', icon: 'fa-bolt', badge: 'ESPN' },
+                            { id: 'radar', label: 'RADAR CLUB', icon: 'fa-chart-pie', badge: 'MÉTRICAS' },
+                            { id: 'records', label: 'RÉCORDS', icon: 'fa-medal', badge: 'TOP' }
+                        ];
+
+                        bar.style.display = 'block';
+                        bar.innerHTML = `
+                            <div class="subnav-outer-flex">
+                                <button id="subnav-arrow-left" class="subnav-nav-arrow" onclick="window.SubnavManager.scroll('left')" title="Desplazar a la izquierda" aria-label="Desplazar izquierda">
+                                    <i class="fas fa-chevron-left" style="font-size: 0.75rem;"></i>
+                                </button>
+                                <div class="events-submenu-pro-bar">
+                                    ${tabs.map(tab => {
+                                        const isActive = activeTab === tab.id;
+                                        return `
+                                            <button class="esm-pro-btn ${isActive ? 'active' : 'inactive'}"
+                                                onclick="(function(btn){
+                                                    if (window.PlayerView?.haptic) window.PlayerView.haptic(15);
+                                                    else if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(12);
+                                                    if (window.RankingView && typeof window.RankingView.handleSubnavTab === 'function') {
+                                                        window.RankingView.handleSubnavTab('${tab.id}');
+                                                    }
+                                                    try { btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
+                                                })(this)"
+                                                aria-label="${tab.label}">
+                                                <i class="fas ${tab.icon}" style="font-size: 0.82rem;"></i>
+                                                <span style="text-transform: uppercase;">${tab.label}</span>
+                                                ${tab.badge && isActive ? `<span class="subnav-micro-badge badge-dark">${tab.badge}</span>` : ''}
+                                                ${tab.badge && !isActive ? `<span class="subnav-micro-badge badge-neon" style="background: rgba(255,215,0,0.18); color: #ffd700; border-color: rgba(255,215,0,0.4);">${tab.badge}</span>` : ''}
+                                            </button>
+                                        `;
+                                    }).join('')}
+                                    <button class="esm-pro-btn subnav-btn-ranking-points inactive"
+                                        onclick="(function(btn){
+                                            if (window.PlayerView?.haptic) window.PlayerView.haptic(15);
+                                            else if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(12);
+                                            if (window.showPointsPolicyModal) window.showPointsPolicyModal();
+                                            try { btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
+                                        })(this)"
+                                        aria-label="Sistema Oficial de Puntos">
+                                        <i class="fas fa-balance-scale" style="font-size: 0.82rem;"></i>
+                                        <span style="text-transform: uppercase; font-weight: 950;">PUNTOS RANKING</span>
+                                    </button>
+                                </div>
+                                <button id="subnav-arrow-right" class="subnav-nav-arrow" onclick="window.SubnavManager.scroll('right')" title="Desplazar a la derecha" aria-label="Desplazar derecha">
+                                    <i class="fas fa-chevron-right" style="font-size: 0.75rem;"></i>
+                                </button>
+                            </div>
+                        `;
+                        syncHeaderHeight();
+                        this.initInteractions();
+
+                        // Centrar la pestaña activa inicialmente
+                        const activeBtn = bar.querySelector('.events-submenu-pro-bar .esm-pro-btn.active');
+                        if (activeBtn) {
+                            try { activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
+                        }
+                    },
+
+                    renderProfile: function(activeTab = 'mi_posicion') {
+                        this.stopBannerAutoScroll();
+                        const bar = document.getElementById('subnav-app-bar');
+                        if (!bar) return;
+                        bar.classList.remove('subnav-theme-community');
+                        bar.classList.remove('subnav-theme-americanas');
+                        bar.classList.remove('subnav-theme-entrenos');
+                        bar.classList.remove('subnav-theme-ranking');
+                        bar.classList.add('subnav-theme-profile');
+
+                        const tabs = [
+                            { id: 'mi_posicion', label: 'MI POSICIÓN', icon: 'fa-user-check', badge: 'ELO' },
+                            { id: 'ai_performance', label: 'RENDIMIENTO IA', icon: 'fa-chart-line', badge: 'STATS' },
+                            { id: 'fut_card', label: 'FICHA TÉCNICA', icon: 'fa-id-card', badge: 'FUT' },
+                            { id: 'attributes', label: 'FICHA & ATRIBUTOS', icon: 'fa-user-astronaut', badge: 'STATS' },
+                            { id: 'achievements', label: 'LOGROS & MISIONES', icon: 'fa-trophy', badge: 'TOP' }
+                        ];
+
+                        bar.style.display = 'block';
+                        bar.innerHTML = `
+                            <div class="subnav-outer-flex">
+                                <button id="subnav-arrow-left" class="subnav-nav-arrow" onclick="window.SubnavManager.scroll('left')" title="Desplazar a la izquierda" aria-label="Desplazar izquierda">
+                                    <i class="fas fa-chevron-left" style="font-size: 0.75rem;"></i>
+                                </button>
+                                <div class="events-submenu-pro-bar">
+                                    ${tabs.map(tab => {
+                                        const isActive = activeTab === tab.id;
+                                        return `
+                                            <button data-tab-id="${tab.id}" data-tab-active="${isActive ? 'true' : 'false'}"
+                                                class="esm-pro-btn ${isActive ? 'active' : 'inactive'}"
+                                                onclick="(function(btn){
+                                                    if (window.PlayerView?.haptic) window.PlayerView.haptic(15);
+                                                    else if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(12);
+                                                    if (window.PlayerView && typeof window.PlayerView.handleSubnavTab === 'function') {
+                                                        window.PlayerView.handleSubnavTab('${tab.id}');
+                                                    }
+                                                    try { btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
+                                                })(this)"
+                                                aria-label="${tab.label}">
+                                                <i class="fas ${tab.icon}" style="font-size: 0.82rem;"></i>
+                                                <span style="text-transform: uppercase;">${tab.label}</span>
+                                                ${tab.badge && isActive ? `<span class="subnav-micro-badge badge-dark">${tab.badge}</span>` : ''}
+                                                ${tab.badge && !isActive ? `<span class="subnav-micro-badge">${tab.badge}</span>` : ''}
+                                            </button>
+                                        `;
+                                    }).join('')}
+                                </div>
+                                <button id="subnav-arrow-right" class="subnav-nav-arrow" onclick="window.SubnavManager.scroll('right')" title="Desplazar a la derecha" aria-label="Desplazar derecha">
+                                    <i class="fas fa-chevron-right" style="font-size: 0.75rem;"></i>
+                                </button>
+                            </div>
+                        `;
+                        syncHeaderHeight();
+                        this.initInteractions();
+
+                        // Centrar la pestaña activa inicialmente
+                        const activeBtn = bar.querySelector('.events-submenu-pro-bar .esm-pro-btn.active');
+                        if (activeBtn) {
+                            try { activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
+                        }
                     },
 
                     renderCommunity: function(activeTab = 'home') {
+                        if (activeTab === 'entrenos' || activeTab === 'partidas_abiertas') {
+                            this.renderEntrenos('entrenos');
+                            return;
+                        }
+                        this.stopBannerAutoScroll();
                         const bar = document.getElementById('subnav-app-bar');
                         if (!bar) return;
+                        bar.classList.remove('subnav-theme-americanas');
+                        bar.classList.remove('subnav-theme-entrenos');
+                        bar.classList.remove('subnav-theme-ranking');
+                        bar.classList.remove('subnav-theme-profile');
+                        bar.classList.add('subnav-theme-community');
                         const isCampaignActive = window.SeasonCampaignService ? window.SeasonCampaignService.isCampaignActiveSync() : false;
                         const subtabs = [
-                            { id: 'home', label: '🏠 1. INICIO', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('comunidad');", activeBg: '#CCFF00', glow: 'rgba(204,255,0,0.45)', textColor: '#0a192f' },
-                            { id: 'entrenos', label: '🎾 2. ENTRENOS', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('entrenos');", activeBg: '#ff007f', glow: 'rgba(255,0,127,0.35)', textColor: '#ffffff' },
-                            { id: 'teams', label: '👥 3. EQUIPOS', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('equipos');", activeBg: '#ff5e00', glow: 'rgba(255,94,0,0.35)', textColor: '#ffffff' },
-                            { id: 'my_team', label: '🛡️ 4. MI EQUIPO', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('my_team');", activeBg: '#0ea5e9', glow: 'rgba(14,165,233,0.35)', textColor: '#ffffff' },
-                            { id: 'agenda', label: '📅 5. MI AGENDA', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('agenda');", activeBg: '#CCFF00', glow: 'rgba(204,255,0,0.45)', textColor: '#0a192f' },
-                            { id: 'inscriptions', label: `📝 6. INSCRIPCIONES ${isCampaignActive ? '🟢' : '🔴'}`, action: "window.PlayerView?.haptic?.(15); window.Router.navigate('inscriptions');", activeBg: isCampaignActive ? '#10b981' : '#64748b', glow: isCampaignActive ? 'rgba(16,185,129,0.35)' : 'rgba(100,116,139,0.25)', textColor: '#ffffff' },
-                            { id: 'records', label: '🏆 7. RÉCORDS TEMPORADA', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('records');", activeBg: '#a855f7', glow: 'rgba(168,85,247,0.35)', textColor: '#ffffff' }
+                            { id: 'home', icon: 'fa-home', label: '1. INICIO', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('comunidad');" },
+                            { id: 'chat', icon: 'fa-comments', label: 'CHAT CLUB', badge: 'LIVE', isLive: true, action: "window.PlayerView?.haptic?.(15); window.ChatView?.openGeneralCommunityChat();" },
+                            { id: 'entrenos', icon: 'fa-table-tennis', label: '2. ENTRENOS', badge: 'CLINICS', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('entrenos');" },
+                            { id: 'teams', icon: 'fa-users', label: '3. EQUIPOS', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('equipos');" },
+                            { id: 'my_team', icon: 'fa-shield-alt', label: '4. MI EQUIPO', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('my_team');" },
+                            { id: 'inscriptions', icon: 'fa-edit', label: '5. INSCRIPCIONES', badge: isCampaignActive ? 'ABIERTA' : 'PRONTO', isSuccessBadge: isCampaignActive, action: "window.PlayerView?.haptic?.(15); window.Router.navigate('inscriptions');" },
+                            { id: 'agenda', icon: 'fa-calendar-alt', label: '6. MI AGENDA', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('agenda');" },
+                            { id: 'records', icon: 'fa-trophy', label: '7. RÉCORDS TEMPORADA', badge: 'TOP', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('records');" }
                         ];
 
                         bar.style.display = 'block';
@@ -1303,17 +2476,23 @@
                                 <div class="community-submenu-pro-bar">
                                     ${subtabs.map(tab => {
                                         const isActive = activeTab === tab.id;
-                                        const bg = isActive ? tab.activeBg : '#f8fafc';
-                                        const col = isActive ? (tab.textColor || '#ffffff') : '#475569';
-                                        const border = isActive ? `1.5px solid ${tab.activeBg}` : '1.5px solid #e2e8f0';
-                                        const shadow = isActive ? `box-shadow: 0 3px 12px ${tab.glow};` : 'box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);';
                                         return `
-                                            <button onclick="(function(btn){
+                                            <button data-tab-id="${tab.id}" data-tab-active="${isActive ? 'true' : 'false'}"
+                                                    class="esm-pro-btn ${isActive ? 'active' : 'inactive'}"
+                                                    onclick="(function(btn){
+                                                        if (window.SubnavManager) window.SubnavManager.pauseBanner(6000);
                                                         ${tab.action}
                                                         try { btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
                                                     })(this)" 
-                                                    style="flex-shrink: 0; padding: 8px 18px; border: ${border}; border-radius: 999px; font-weight: 850; font-size: 0.72rem; cursor: pointer; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); background: ${bg}; color: ${col}; ${shadow} text-align: center; white-space: nowrap; user-select: none;">
-                                                ${tab.label}
+                                                    aria-label="${tab.label}">
+                                                ${tab.isLive ? `<span class="subnav-live-dot"></span>` : ''}
+                                                <i class="fas ${tab.icon}" style="font-size: 0.8rem;"></i>
+                                                <span style="text-transform: uppercase;">${tab.label}</span>
+                                                ${tab.badge ? `
+                                                    <span class="subnav-micro-badge ${isActive ? 'badge-dark' : (tab.isLive ? 'badge-live' : (tab.badge === 'CLINICS' ? 'badge-clinics' : (tab.badge === 'TOP' ? 'badge-top' : (tab.isSuccessBadge ? 'badge-success' : 'badge-neon'))))}">
+                                                        ${tab.badge}
+                                                    </span>
+                                                ` : ''}
                                             </button>
                                         `;
                                     }).join('')}
@@ -1325,11 +2504,26 @@
                         `;
                         syncHeaderHeight();
                         this.initInteractions();
+
+                        // Centrar la pestaña activa inicialmente
+                        const activeBtn = bar.querySelector('.community-submenu-pro-bar button[data-tab-active="true"]');
+                        if (activeBtn) {
+                            try { activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
+                        }
+
+                        // Iniciar desplazamiento automático suave estilo banner
+                        this.startBannerAutoScroll();
                     },
 
                     hide: function() {
+                        this.stopBannerAutoScroll();
                         const bar = document.getElementById('subnav-app-bar');
                         if (bar) {
+                            bar.classList.remove('subnav-theme-americanas');
+                            bar.classList.remove('subnav-theme-entrenos');
+                            bar.classList.remove('subnav-theme-community');
+                            bar.classList.remove('subnav-theme-ranking');
+                            bar.classList.remove('subnav-theme-profile');
                             bar.style.display = 'none';
                             bar.innerHTML = '';
                         }
@@ -3208,10 +4402,10 @@
                 <span>Ranking</span>
             </div>
 
-            <!-- 4. COMUNIDAD SOMOSPADEL (Menú Desplegable de Comunidad) -->
+            <!-- 4. COMUNIDAD SOMOSPADEL (1. INICIO COMUNIDAD POR DEFECTO) -->
             <div class="nav-item haptic-feedback" 
                 id="nav-community" 
-                onclick="window.PlayerView?.haptic?.(20); window.toggleCommunityMenu ? window.toggleCommunityMenu(event) : (window.Router && window.Router.navigate('comunidad'))">
+                onclick="window.PlayerView?.haptic?.(20); if (typeof window.closeCommunityMenu === 'function') window.closeCommunityMenu(); window.Router && window.Router.navigate('comunidad');">
                 <i class="fas fa-users"></i>
                 <span>Comunidad</span>
             </div>
@@ -4761,7 +5955,7 @@
     <script src="js/core/CacheService.js" defer></script>
     <script src="js/core/DatabaseService.js" defer></script>
     <script src="js/core/AuthService.js?v=12.4" defer></script>
-    <script src="js/core/Router.js?v=ENTRENOS_NAV_v2" defer></script>
+    <script src="js/core/Router.js?v=RANKING_SUBNAV_v5" defer></script>
     <script src="js/core/SmartTicker.js?v=3" defer></script>
     <script src="js/core/UpdateManager.js" defer></script>
     <script src="js/core/SocialChannelsService.js?v=1.1" defer></script>
@@ -4846,7 +6040,7 @@
     <script src="js/modules/chat/ChatService.js?v=3.0_PREMIUM_REDESIGN" defer></script>
     <script src="js/modules/chat/ChatView.js?v=3.0_PREMIUM_REDESIGN" defer></script>
     <script src="js/modules/americanas/EntrenoLiveView.js" defer></script>
-    <script src="js/modules/americanas/EventsController_V6.js?v=SUBNAV_FINALIZADAS_COMPACT_ALL_V8" defer></script>
+    <script src="js/modules/americanas/EventsController_V6.js?v=SUBNAV_ENTRENOS_PINK_RED_V11" defer></script>
     <script src="js/modules/common/SocialShareService.js" defer></script>
     <script src="js/modules/admin/SocialShareView.js" defer></script>
 
@@ -4866,7 +6060,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 
     <!-- Ranking Module -->
-    <script src="js/modules/ranking/RankingView.js?v=TOP10_ELITE_v3_STABLE" defer></script>
+    <script src="js/modules/ranking/RankingView.js?v=SUBNAV_BROWN_AMBER_v4" defer></script>
     <script src="js/modules/ranking/RankingController.js?v=TOP10_ELITE_v3_STABLE" defer></script>
 
     <!-- Community Home Module -->
@@ -5284,9 +6478,9 @@
         triggerNavClickEffect(e, true);
     }, { passive: true });
 
-    // 🌟 CONTROLADOR DEL MENÚ DESPLEGABLE DE COMUNIDAD (5 OPCIONES)
+    // 🌟 CONTROLADOR DEL ACCESO A COMUNIDAD (POR DEFECTO 1. INICIO COMUNIDAD)
     window.toggleCommunityMenu = function(e) {
-        if (e) e.stopPropagation();
+        if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
 
         // Si el usuario es de rol exclusivo americanas, avisar y no desplegar
         const currentUser = window.Store?.getState('currentUser') || 
@@ -5304,17 +6498,9 @@
             return;
         }
 
-        const menu = document.getElementById('community-popup-menu');
-        const backdrop = document.getElementById('community-popup-backdrop');
-        if (!menu) return;
-
-        const isVisible = menu.style.display !== 'none';
-        if (isVisible) {
-            window.closeCommunityMenu();
-        } else {
-            menu.style.display = 'block';
-            if (backdrop) backdrop.style.display = 'block';
-            if (window.PlayerView?.haptic) window.PlayerView.haptic(25);
+        if (typeof window.closeCommunityMenu === 'function') window.closeCommunityMenu();
+        if (window.Router && typeof window.Router.navigate === 'function') {
+            window.Router.navigate('comunidad');
         }
     };
 
