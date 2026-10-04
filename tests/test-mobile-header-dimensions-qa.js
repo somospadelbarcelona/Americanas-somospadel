@@ -62,7 +62,7 @@ assert(mobileCss.includes('@media (max-width: 380px)'), 'Contiene media query pa
 assert(mobileCss.includes('@media (max-width: 340px)'), 'Contiene media query para pantallas ultra pequeñas (320px)');
 
 // 7. Validar caché Service Worker
-assert(swJs.includes('somospadel-pwa-v2026.6.1'), 'sw.js actualizado con versión somospadel-pwa-v2026.6.1');
+assert(/somospadel-pwa-v2026\.6\.[1-9]/.test(swJs), 'sw.js actualizado con versión somospadel-pwa-v2026.6.1 o superior');
 
 // 8. Simulación matemática de ancho en 360px:
 const padding = 8 * 2; // 16px

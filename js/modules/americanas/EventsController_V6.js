@@ -2316,6 +2316,14 @@
                             0%, 100% { opacity: 1; }
                             50% { opacity: 0.8; transform: scale(1.02); }
                         }
+                        @keyframes neon-pulse-glow {
+                            0% { box-shadow: 0 0 10px rgba(204, 255, 0, 0.3), 0 4px 14px rgba(204, 255, 0, 0.25); }
+                            50% { box-shadow: 0 0 24px rgba(204, 255, 0, 0.65), 0 6px 20px rgba(204, 255, 0, 0.45); }
+                            100% { box-shadow: 0 0 10px rgba(204, 255, 0, 0.3), 0 4px 14px rgba(204, 255, 0, 0.25); }
+                        }
+                        .btn-neon-enter-pulse {
+                            animation: neon-pulse-glow 2.2s ease-in-out infinite;
+                        }
                         .padel-ball-live {
                             animation: ball-physics 3s cubic-bezier(0.45, 0, 0.55, 1) infinite;
                         }
@@ -3325,7 +3333,7 @@
                 btnLabel = 'APUNTARME'; btnIcon = 'fa-plus'; btnColor = '#CCFF00';
                 fabAction = `window.EventsController.joinEvent('${evt.id}', '${evt.type || 'americana'}')`;
             } else if (isJoined) {
-                btnLabel = 'DENTRO'; btnIcon = 'fa-check'; btnColor = '#fff';
+                btnLabel = 'INSCRITO'; btnIcon = 'fa-check-circle'; btnColor = '#4ade80';
                 fabAction = `window.EventsController.leaveEvent('${evt.id}', '${evt.type || 'americana'}')`;
             }
 
@@ -3532,18 +3540,21 @@
                                 </div>
                             </div>
 
-                            <!-- Right: Action Button + Expand Chevron -->
-                            <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
-                                <button id="event-fab-${evt.id}" 
-                                        onclick="event.stopPropagation(); ${fabAction}" 
-                                        aria-label="${btnLabel}"
+                            <!-- Right: Enter Button + Action Button + Expand Chevron -->
+                            <div style="display: flex; align-items: center; gap: 5px; flex-shrink: 0;">
+                                <!-- 🎾 Botón Directo para Entrar a Pistas / Evento -->
+                                <button type="button" 
+                                        onclick="event.stopPropagation(); window.EventsController.openLiveEvent('${evt.id}', '${evt.type || (isEntreno ? 'entreno' : 'americana')}');" 
+                                        title="Entrar a ver pistas, marcador y partidos en directo"
+                                        aria-label="Entrar al evento"
+                                        class="btn-neon-enter-pulse"
                                         style="
-                                            background: ${isFinished ? '#334155' : (isLive ? '#FF2D55' : (isJoined ? '#00E36D' : (isGenderMismatch ? 'rgba(255, 255, 255, 0.08)' : (isFull ? '#eab308' : '#CCFF00'))))} !important;
-                                            color: ${isFinished || isLive ? '#ffffff' : (isGenderMismatch ? '#94a3b8' : '#000000')} !important;
-                                            border: ${isGenderMismatch ? '1px solid rgba(255, 255, 255, 0.15)' : 'none'} !important;
-                                            padding: 8px 11px;
+                                            background: linear-gradient(135deg, #CCFF00 0%, #a3e635 100%) !important;
+                                            color: #0b1329 !important;
+                                            border: none !important;
+                                            padding: 7px 9px;
                                             border-radius: 11px;
-                                            font-size: 0.68rem;
+                                            font-size: 0.67rem;
                                             font-weight: 950;
                                             cursor: pointer;
                                             text-transform: uppercase;
@@ -3551,14 +3562,44 @@
                                             display: flex;
                                             align-items: center;
                                             gap: 4px;
-                                            box-shadow: ${isGenderMismatch ? 'none' : '0 2px 10px rgba(0,0,0,0.3)'};
+                                            box-shadow: 0 2px 10px rgba(204, 255, 0, 0.4);
                                             transition: transform 0.15s ease;
                                         "
-                                        onmouseover="this.style.transform='scale(1.04)';"
+                                        onmouseover="this.style.transform='scale(1.05)';"
                                         onmouseout="this.style.transform='scale(1)';"
                                 >
-                                    <i id="event-fab-icon-${evt.id}" class="fas ${btnIcon}" style="font-size: 0.65rem; color: ${isFinished || isLive ? '#ffffff' : (isGenderMismatch ? '#94a3b8' : '#000000')} !important;"></i>
-                                    <span id="event-fab-label-${evt.id}" style="white-space: nowrap; color: ${isFinished || isLive ? '#ffffff' : (isGenderMismatch ? '#94a3b8' : '#000000')} !important;">${isFinished ? btnLabel : (isCancelled ? 'ANULADO' : (isLive ? 'LIVE' : (isGenderMismatch && !isJoined ? btnLabel : (btnLabel === 'CLAVE ACCESO 🔒' ? 'CLAVE' : (btnLabel === 'DENTRO' ? 'DENTRO' : (isFull && !isJoined ? 'ESPERA' : 'UNIRME'))))))}</span>
+                                    <span style="font-size: 0.72rem;">🎾</span>
+                                    <span style="white-space: nowrap; color: #0b1329 !important; font-weight: 950;">ENTRAR</span>
+                                    <i class="fas fa-arrow-right" style="font-size: 0.55rem; color: #0b1329 !important;"></i>
+                                </button>
+
+                                <!-- Botón FAB de Inscripción / Gestión de Estado -->
+                                <button id="event-fab-${evt.id}" 
+                                        onclick="event.stopPropagation(); ${fabAction}" 
+                                        aria-label="${btnLabel}"
+                                        title="${isJoined ? 'Estás inscrito. Toca para darte de baja' : btnLabel}"
+                                        style="
+                                            background: ${isFinished ? '#334155' : (isLive ? '#FF2D55' : (isJoined ? 'rgba(34, 197, 94, 0.15)' : (isGenderMismatch ? 'rgba(255, 255, 255, 0.08)' : (isFull ? '#eab308' : '#CCFF00'))))} !important;
+                                            color: ${isFinished || isLive ? '#ffffff' : (isJoined ? '#4ade80' : (isGenderMismatch ? '#94a3b8' : '#000000'))} !important;
+                                            border: ${isJoined ? '1px solid rgba(34, 197, 94, 0.4)' : (isGenderMismatch ? '1px solid rgba(255, 255, 255, 0.15)' : 'none')} !important;
+                                            padding: 7px 9px;
+                                            border-radius: 11px;
+                                            font-size: 0.65rem;
+                                            font-weight: 950;
+                                            cursor: pointer;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                            display: flex;
+                                            align-items: center;
+                                            gap: 3.5px;
+                                            box-shadow: ${isGenderMismatch || isJoined ? 'none' : '0 2px 10px rgba(0,0,0,0.3)'};
+                                            transition: all 0.15s ease;
+                                        "
+                                        onmouseover="${isJoined ? "this.style.background='rgba(239, 68, 68, 0.2) !important'; this.style.color='#f87171 !important'; this.style.borderColor='rgba(239, 68, 68, 0.5) !important'; const lbl = this.querySelector('span'); if(lbl) lbl.innerText='BAJA';" : "this.style.transform='scale(1.04)';"}"
+                                        onmouseout="${isJoined ? "this.style.background='rgba(34, 197, 94, 0.15) !important'; this.style.color='#4ade80 !important'; this.style.borderColor='rgba(34, 197, 94, 0.4) !important'; const lbl = this.querySelector('span'); if(lbl) lbl.innerText='INSCRITO';" : "this.style.transform='scale(1)';"}"
+                                >
+                                    <i id="event-fab-icon-${evt.id}" class="fas ${btnIcon}" style="font-size: 0.62rem; color: ${isFinished || isLive ? '#ffffff' : (isJoined ? '#4ade80' : (isGenderMismatch ? '#94a3b8' : '#000000'))} !important;"></i>
+                                    <span id="event-fab-label-${evt.id}" style="white-space: nowrap; color: ${isFinished || isLive ? '#ffffff' : (isJoined ? '#4ade80' : (isGenderMismatch ? '#94a3b8' : '#000000'))} !important;">${isFinished ? btnLabel : (isCancelled ? 'ANULADO' : (isLive ? 'LIVE' : (isGenderMismatch && !isJoined ? btnLabel : (btnLabel === 'CLAVE ACCESO 🔒' ? 'CLAVE' : (isJoined ? 'INSCRITO' : (isFull && !isJoined ? 'ESPERA' : 'UNIRME'))))))}</span>
                                 </button>
 
                                 <!-- Chevron Button for Expand -->
@@ -3772,8 +3813,17 @@
                                 ` : ''}
                             </div>
 
-                            <!-- EVENT TITLE (Full Width, Uncluttered) -->
-                            <h3 style="margin: 0 0 7px 0; font-size: 1.15rem; font-weight: 950; color: #fff; line-height: 1.2; letter-spacing: -0.3px; text-transform: uppercase; word-break: break-word;">${evt.name}</h3>
+                            <!-- EVENT TITLE (Clean, Elegant & Accessible) -->
+                            <div onclick="event.stopPropagation(); window.EventsController.openLiveEvent('${evt.id}', '${evt.type || (isEntreno ? 'entreno' : 'americana')}');" 
+                                 title="Toca para ver información y pistas en directo"
+                                 style="margin: 0 0 10px 0; cursor: pointer;"
+                                 onmouseover="const h = this.querySelector('h3'); if(h) h.style.color='#CCFF00';"
+                                 onmouseout="const h = this.querySelector('h3'); if(h) h.style.color='#ffffff';"
+                            >
+                                <h3 style="margin: 0; font-size: 1.16rem; font-weight: 950; color: #fff; line-height: 1.25; letter-spacing: -0.3px; text-transform: uppercase; word-break: break-word; transition: color 0.15s ease;">
+                                    ${evt.name}
+                                </h3>
+                            </div>
 
                             <!-- DESCRIPTION TEASER NOTICE (Single clean gateway to description modal) -->
                             ${evt.description && evt.description.trim() ? `
@@ -3785,7 +3835,7 @@
                                         border-left: 3px solid #38bdf8;
                                         border-radius: 10px;
                                         padding: 6px 10px;
-                                        margin-bottom: 9px;
+                                        margin-bottom: 10px;
                                         cursor: pointer;
                                         display: flex;
                                         align-items: center;
@@ -3806,43 +3856,49 @@
                                     </span>
                                 </div>
                             ` : ''}
-                            
-                            <!-- 💎 2 ESSENTIAL PILLS (TIME & CATEGORY) -->
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 9px;">
-                                <!-- Time Tile -->
-                                <div class="${tileClass}" style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 7px 9px; display: flex; align-items: center; gap: 7px; border: 1px solid rgba(255,255,255,0.07); box-shadow: 0 2px 8px rgba(0,0,0,0.2); min-width: 0;">
-                                    <div style="width: 24px; height: 24px; background: ${timeIconBg}; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                        <i class="far fa-clock" style="color: ${timeIconColor}; font-size: 0.75rem;"></i>
-                                    </div>
-                                    <span style="font-weight: 900; font-size: 0.78rem; color: #f1f5f9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${timeLabel}</span>
-                                </div>
-                                <!-- Category Tile -->
-                                <div class="${tileClass}" style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 7px 9px; display: flex; align-items: center; gap: 7px; border: 1.2px solid ${categoryColor}40; box-shadow: 0 2px 8px ${categoryColor}15; min-width: 0;">
-                                    <div style="width: 24px; height: 24px; background: ${categoryColor}25; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                        <i class="fas ${categoryIcon}" style="color: ${categoryColor}; font-size: 0.78rem;"></i>
-                                    </div>
-                                    <span style="font-weight: 950; font-size: 0.78rem; color: ${categoryColor}; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.3px;">${categoryLabel}</span>
-                                </div>
-                            </div>
 
-                            <!-- CAPACITY & BUBBLE STACK (INTERACTIVE) -->
-                            <div class="${tileClass}" onclick="event.stopPropagation(); ${(isEventPrivate && !isEventUnlocked) ? `window.EventsController.promptPrivatePassword('${evt.id}', '${evt.type || 'americana'}', 'inscritos')` : `window.EventsController.showInscritosModal('${evt.id}', '${evt.type || 'americana'}')`}" style="background: rgba(255,255,255,0.05); border-radius: 14px; padding: 8px 10px; border: 1px solid rgba(255,255,255,0.07); cursor: pointer; position: relative; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.2); margin-bottom: 9px;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; position: relative; gap: 6px;">
-                                    <div style="display: flex; align-items: center; gap: 5px; min-width: 0; overflow: hidden;">
-                                        ${avatarStackHtml}
-                                        <i id="event-players-icon-${evt.id}" class="fas fa-users" style="color: ${capacityIconColor}; font-size: 0.8rem; margin-left: 1px; flex-shrink: 0;"></i>
-                                        <span id="event-players-label-${evt.id}" style="font-weight: 950; font-size: 0.82rem; color: #fff; white-space: nowrap;">${playerCount} / ${maxPlayers} Plazas</span>
+                            <!-- 🕒 & 👥 CLEAN 2-COLUMN ESSENTIAL GRID (HORARIO Y PLAZAS) -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+                                <!-- Columna 1: Horario -->
+                                <div class="${tileClass}" style="background: rgba(255,255,255,0.04); border-radius: 12px; padding: 8px 10px; display: flex; flex-direction: column; justify-content: center; gap: 3px; border: 1px solid rgba(255,255,255,0.07); box-shadow: 0 2px 8px rgba(0,0,0,0.18); min-width: 0;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
+                                        <span style="font-size: 0.52rem; font-weight: 850; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.4px; display: flex; align-items: center; gap: 3px;">
+                                            <i class="far fa-clock" style="color: ${timeIconColor}; font-size: 0.58rem;"></i> HORARIO
+                                        </span>
+                                        ${(!evt.name || !evt.name.toUpperCase().includes(categoryLabel)) && categoryLabel !== 'ABIERTO' ? `
+                                            <span style="font-size: 0.52rem; font-weight: 900; color: ${categoryColor}; text-transform: uppercase;">
+                                                <i class="fas ${categoryIcon}" style="font-size: 0.48rem;"></i> ${categoryLabel}
+                                            </span>
+                                        ` : ''}
                                     </div>
-                                    <div style="display: flex; align-items: center; gap: 5px; flex-shrink: 0;">
-                                        ${urgencyHtml}
-                                        <span id="event-status-capacity-${evt.id}" style="font-size: 0.62rem; font-weight: 950; color: ${isFinished ? '#94a3b8' : (isFull ? '#FF3B30' : categoryColor)}; text-transform: uppercase; letter-spacing: 0.4px;">${isFinished ? (isEntreno ? 'FINALIZADO' : 'FINALIZADA') : (isFull ? 'COMPLETO' : 'DISPONIBLE')}</span>
+                                    <span style="font-weight: 950; font-size: 0.85rem; color: #f1f5f9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.2px;">
+                                        ${timeLabel}
+                                    </span>
+                                </div>
+
+                                <!-- Columna 2: Plazas y Ocupación (Interactivo para ver inscritos) -->
+                                <div class="${tileClass}" 
+                                     onclick="event.stopPropagation(); ${(isEventPrivate && !isEventUnlocked) ? `window.EventsController.promptPrivatePassword('${evt.id}', '${evt.type || 'americana'}', 'inscritos')` : `window.EventsController.showInscritosModal('${evt.id}', '${evt.type || 'americana'}')`}" 
+                                     title="Toca para ver la lista de jugadores inscritos"
+                                     style="background: rgba(255,255,255,0.04); border-radius: 12px; padding: 8px 10px; display: flex; flex-direction: column; justify-content: center; gap: 4px; border: 1px solid rgba(255,255,255,0.07); box-shadow: 0 2px 8px rgba(0,0,0,0.18); cursor: pointer; min-width: 0; position: relative; overflow: hidden;"
+                                     onmouseover="this.style.borderColor='rgba(204,255,0,0.4)';"
+                                     onmouseout="this.style.borderColor='rgba(255,255,255,0.07)';"
+                                >
+                                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 4px;">
+                                        <div style="display: flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden;">
+                                            <i id="event-players-icon-${evt.id}" class="fas fa-users" style="color: ${capacityIconColor}; font-size: 0.72rem; flex-shrink: 0;"></i>
+                                            <span id="event-players-label-${evt.id}" style="font-weight: 950; font-size: 0.8rem; color: #fff; white-space: nowrap;">${playerCount}/${maxPlayers} Plazas</span>
+                                        </div>
+                                        <span id="event-status-capacity-${evt.id}" style="font-size: 0.58rem; font-weight: 950; color: ${isFinished ? '#94a3b8' : (isFull ? '#ef4444' : '#CCFF00')}; text-transform: uppercase; letter-spacing: 0.3px; flex-shrink: 0;">
+                                            ${isFinished ? (isEntreno ? 'FINAL' : 'FINAL') : (isFull ? 'COMPLETO' : 'LIBRE')}
+                                        </span>
                                     </div>
-                                </div>
-                                <div style="width: 100%; height: 5px; background: rgba(255,255,255,0.06); border-radius: 10px; overflow: hidden;">
-                                    <div id="event-progress-bar-${evt.id}" style="width: ${progress}%; height: 100%; background: ${progressColor}; box-shadow: 0 0 10px ${progressColor}55; transition: width 0.3s ease;"></div>
-                                </div>
-                                <div id="event-waitlist-label-${evt.id}">
-                                    ${(!isFinished && waitlist.length > 0) ? `<div style="margin-top: 4px; font-size: 0.62rem; font-weight: 900; color: #eab308; text-transform: uppercase;">+${waitlist.length} EN ESPERA</div>` : ''}
+                                    <div style="width: 100%; height: 4.5px; background: rgba(255,255,255,0.08); border-radius: 6px; overflow: hidden;">
+                                        <div id="event-progress-bar-${evt.id}" style="width: ${progress}%; height: 100%; background: ${progressColor}; box-shadow: 0 0 8px ${progressColor}55; transition: width 0.3s ease;"></div>
+                                    </div>
+                                    <div id="event-waitlist-label-${evt.id}">
+                                        ${(!isFinished && waitlist.length > 0) ? `<div style="font-size: 0.56rem; font-weight: 900; color: #eab308; text-transform: uppercase; line-height: 1;">+${waitlist.length} en espera</div>` : ''}
+                                    </div>
                                 </div>
                             </div>
 
@@ -3878,11 +3934,80 @@
                                 </button>
 
                                 <!-- ⚡ PRIMARY PRO ACTION BUTTON (Unifies FAB & Status Badge) -->
-                                <div style="position: relative; flex-shrink: 0;">
-                                    ${isLive ? `<div style="position: absolute; inset: -3px; border-radius: 14px; background: #FF2D55; opacity: 0.5; animation: status-breathe 1.2s ease-in-out infinite; filter: blur(4px);"></div>` : ''}
-                                    ${!isLive && !isCancelled && !isFinished && !isJoined ? `<div style="position: absolute; inset: -2px; border-radius: 14px; background: ${categoryColor}; opacity: 0.25; animation: status-breathe 2.2s ease-in-out infinite; filter: blur(3px);"></div>` : ''}
+                                <div style="display: flex; align-items: center; gap: 6px; position: relative; flex-shrink: 0;">
+                                    ${isLive ? `<div style="position: absolute; inset: -3px; border-radius: 14px; background: #FF2D55; opacity: 0.5; animation: status-breathe 1.2s ease-in-out infinite; filter: blur(4px); pointer-events: none;"></div>` : ''}
+                                    ${!isLive && !isCancelled && !isFinished && !isJoined ? `<div style="position: absolute; inset: -2px; border-radius: 14px; background: ${categoryColor}; opacity: 0.25; animation: status-breathe 2.2s ease-in-out infinite; filter: blur(3px); pointer-events: none;"></div>` : ''}
                                     
                                     ${(() => {
+                                        if (isJoined) {
+                                            return `
+                                                <!-- Botón Principal: ENTRAR AL ENTRENO / TORNEO -->
+                                                <button type="button" 
+                                                        onclick="event.stopPropagation(); window.EventsController.openLiveEvent('${evt.id}', '${evt.type || (isEntreno ? 'entreno' : 'americana')}');"
+                                                        title="Entrar a ver pistas, marcador y partidos en directo"
+                                                        aria-label="Entrar al evento"
+                                                        class="btn-neon-enter-pulse"
+                                                        style="
+                                                            position: relative;
+                                                            background: linear-gradient(135deg, #CCFF00 0%, #a3e635 100%) !important;
+                                                            color: #0b1329 !important;
+                                                            padding: 9px 13px;
+                                                            border-radius: 12px;
+                                                            font-size: 0.74rem;
+                                                            font-weight: 950;
+                                                            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+                                                            text-transform: uppercase;
+                                                            letter-spacing: 0.4px;
+                                                            display: flex;
+                                                            align-items: center;
+                                                            gap: 5px;
+                                                            border: none;
+                                                            cursor: pointer;
+                                                            box-shadow: 0 4px 16px rgba(204, 255, 0, 0.45);
+                                                            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                                                        "
+                                                        onmouseover="this.style.transform='scale(1.04)';"
+                                                        onmouseout="this.style.transform='scale(1)';"
+                                                        onmousedown="this.style.transform='scale(0.95)';"
+                                                >
+                                                    <span style="font-size: 0.85rem;">🎾</span>
+                                                    <span style="color: #0b1329 !important; font-weight: 950;">${isEntreno ? 'ENTRAR AL ENTRENO' : 'ENTRAR AL TORNEO'}</span>
+                                                    <i class="fas fa-arrow-right" style="font-size: 0.65rem; color: #0b1329 !important;"></i>
+                                                </button>
+
+                                                <!-- Botón Secundario: Estado INSCRITO / Baja -->
+                                                <button id="event-fab-${evt.id}" 
+                                                        onclick="event.stopPropagation(); ${fabAction}"
+                                                        aria-label="Inscrito"
+                                                        title="Estás dentro del evento. Toca para darte de baja si no puedes asistir"
+                                                        style="
+                                                            position: relative;
+                                                            background: rgba(34, 197, 94, 0.15) !important;
+                                                            color: #4ade80 !important;
+                                                            border: 1.2px solid rgba(34, 197, 94, 0.4) !important;
+                                                            padding: 9px 10px;
+                                                            border-radius: 12px;
+                                                            font-size: 0.68rem;
+                                                            font-weight: 900;
+                                                            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+                                                            text-transform: uppercase;
+                                                            letter-spacing: 0.4px;
+                                                            display: flex;
+                                                            align-items: center;
+                                                            gap: 4px;
+                                                            cursor: pointer;
+                                                            white-space: nowrap;
+                                                            transition: all 0.2s;
+                                                        "
+                                                        onmouseover="this.style.background='rgba(239, 68, 68, 0.2) !important'; this.style.borderColor='rgba(239, 68, 68, 0.5) !important'; this.style.color='#f87171 !important'; const s = this.querySelector('span'); if(s) s.innerText='BAJA';"
+                                                        onmouseout="this.style.background='rgba(34, 197, 94, 0.15) !important'; this.style.borderColor='rgba(34, 197, 94, 0.4) !important'; this.style.color='#4ade80 !important'; const s = this.querySelector('span'); if(s) s.innerText='INSCRITO';"
+                                                >
+                                                    <i id="event-fab-icon-${evt.id}" class="fas fa-check-circle" style="font-size: 0.7rem; color: #4ade80 !important;"></i>
+                                                    <span id="event-fab-label-${evt.id}" style="color: #4ade80 !important; font-weight: 950;">INSCRITO</span>
+                                                </button>
+                                            `;
+                                        }
+
                                         let ctaBg = '#CCFF00';
                                         let ctaTextColor = '#000000';
                                         let ctaShadow = '0 4px 14px rgba(204, 255, 0, 0.4)';
@@ -3899,10 +4024,6 @@
                                             ctaBg = '#475569';
                                             ctaTextColor = '#ffffff';
                                             ctaShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
-                                        } else if (isJoined) {
-                                            ctaBg = '#00E36D';
-                                            ctaTextColor = '#000000';
-                                            ctaShadow = '0 4px 14px rgba(0, 227, 109, 0.4)';
                                         } else if (isWaitlistPending) {
                                             ctaBg = '#CCFF00';
                                             ctaTextColor = '#000000';
@@ -3952,8 +4073,8 @@
                                                     onmouseover="this.style.transform='scale(1.04)';"
                                                     onmouseout="this.style.transform='scale(1)';"
                                                     onmousedown="this.style.transform='scale(0.95)';">
-                                                <i id="event-fab-icon-${evt.id}" class="fas ${btnIcon}" style="font-size: 0.8rem; color: ${ctaTextColor} !important; font-weight: 900;"></i>
-                                                <span id="event-fab-label-${evt.id}" style="color: ${ctaTextColor} !important; font-weight: 950; letter-spacing: 0.5px;">${btnLabel}</span>
+                                                <i id="event-fab-icon-${evt.id}" class="fas ${isLive ? 'fa-play' : btnIcon}" style="font-size: ${isLive ? '0.72rem' : '0.8rem'}; color: ${ctaTextColor} !important; font-weight: 900;"></i>
+                                                <span id="event-fab-label-${evt.id}" style="color: ${ctaTextColor} !important; font-weight: 950; letter-spacing: 0.5px;">${isLive ? 'VER EN DIRECTO' : btnLabel}</span>
                                             </button>
                                         `;
                                     })()}
@@ -8094,7 +8215,7 @@
                     btnLabel = 'APUNTARME'; btnIcon = 'fa-plus'; btnColor = '#CCFF00';
                     fabAction = `window.EventsController.joinEvent('${evt.id}', '${evt.type || 'americana'}')`;
                 } else if (isJoined) {
-                    btnLabel = 'DENTRO'; btnIcon = 'fa-check'; btnColor = '#fff';
+                    btnLabel = 'INSCRITO'; btnIcon = 'fa-check-circle'; btnColor = '#4ade80';
                     fabAction = `window.EventsController.leaveEvent('${evt.id}', '${evt.type || 'americana'}')`;
                 }
 
@@ -8137,9 +8258,9 @@
                     ctaTextColor = '#ffffff';
                     ctaShadow = '0 6px 18px rgba(0, 0, 0, 0.3)';
                 } else if (isJoined) {
-                    ctaBg = '#00E36D';
-                    ctaTextColor = '#000000';
-                    ctaShadow = '0 6px 18px rgba(0, 227, 109, 0.4)';
+                    ctaBg = 'rgba(34, 197, 94, 0.15)';
+                    ctaTextColor = '#4ade80';
+                    ctaShadow = 'none';
                 } else if (isWaitlistPending) {
                     ctaBg = '#CCFF00';
                     ctaTextColor = '#000000';
@@ -8167,7 +8288,7 @@
                     const isMinCard = card.classList.contains('card-view-minimized');
                     let displayLabel = btnLabel;
                     if (isMinCard) {
-                        displayLabel = isFinished ? btnLabel : (isCancelled ? 'ANULADO' : (isLive ? 'LIVE' : (isGenderMismatch && !isJoined ? btnLabel : (btnLabel === 'CLAVE ACCESO 🔒' ? 'CLAVE' : (btnLabel === 'DENTRO' ? 'DENTRO' : (isFull && !isJoined ? 'ESPERA' : 'UNIRME'))))));
+                        displayLabel = isFinished ? btnLabel : (isCancelled ? 'ANULADO' : (isLive ? 'LIVE' : (isGenderMismatch && !isJoined ? btnLabel : (btnLabel === 'CLAVE ACCESO 🔒' ? 'CLAVE' : (isJoined ? 'INSCRITO' : (isFull && !isJoined ? 'ESPERA' : 'UNIRME'))))));
                     }
                     if (fabLabel && fabLabel.innerText !== displayLabel) {
                         fabLabel.innerText = displayLabel;
@@ -8176,7 +8297,9 @@
                     fab.style.setProperty('background', ctaBg, 'important');
                     fab.style.setProperty('color', ctaTextColor, 'important');
                     fab.style.boxShadow = ctaShadow;
-                    if (isGenderMismatch && !isJoined) {
+                    if (isJoined) {
+                        fab.style.border = '1px solid rgba(34, 197, 94, 0.4)';
+                    } else if (isGenderMismatch && !isJoined) {
                         fab.style.border = '1px solid rgba(255, 255, 255, 0.15)';
                     } else {
                         fab.style.border = 'none';
