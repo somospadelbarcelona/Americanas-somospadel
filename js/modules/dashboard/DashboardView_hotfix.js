@@ -201,13 +201,14 @@
               "category": "${chosenCategory.name}",
               "catColor": "${chosenCategory.color}",
               "emoji": "${chosenCategory.emoji}",
-              "imageUrl": "Elige una URL de imagen de Unsplash según el tema. Puedes usar:
-                           - Para Táctica/Clinic: https://images.unsplash.com/photo-1592919505780-303950717480?q=80&w=600&auto=format&fit=crop
-                           - Para Material: https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?q=80&w=600&auto=format&fit=crop
-                           - Para Salud/Mental: https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=600&auto=format&fit=crop
-                           - Para Nutrición: https://images.unsplash.com/photo-1490645935967-10de6ba17061?q=80&w=600&auto=format&fit=crop
-                           - Para Comunidad: https://images.unsplash.com/photo-1528605248644-14dd04022da1?q=80&w=600&auto=format&fit=crop
-                           (U otra URL similar de Unsplash de alta calidad)",
+              "imageUrl": "Elige exactamente una de estas rutas relativas de imagen según el tema del artículo:
+                           - Para Táctica/Clinic/Juego: img/blog_action_smash.png
+                           - Para Comunidad/Parejas/Twister: img/blog_padel_twister_team.jpg
+                           - Para Material/Equipamiento/Palas: img/blog_racket_ball.png
+                           - Para Salud/Fisio/Prevención: img/blog_padel_health.jpg
+                           - Para Nutrición/Hidratación: img/blog_padel_nutrition.jpg
+                           - Para Torneos/Campeonatos/Podium: img/blog_padel_trophy.jpg
+                           - Para Pistas y Club: img/pista_padel_azul.png",
               "imgGrad": "Un gradiente lineal CSS sutil para la cabecera (ej: linear-gradient(135deg, #fb923c 0%, #f97316 100%))",
               "content": "El cuerpo del artículo en formato HTML. Debe ser extenso (mínimo 300 palabras), estructurado e incluir:
                           1. Introducción emocionante.
@@ -237,11 +238,15 @@
             const jsonText = data.candidates[0].content.parts[0].text;
             const parsed = JSON.parse(jsonText);
 
+            const finalImg = (parsed.imageUrl && parsed.imageUrl.startsWith('img/')) 
+                ? parsed.imageUrl 
+                : (chosenCategory.imageUrl || 'img/blog_action_smash.png');
+
             return {
                 title: parsed.title,
                 category: parsed.category || chosenCategory.name,
                 catColor: parsed.catColor || chosenCategory.color,
-                imageUrl: parsed.imageUrl || chosenCategory.imageUrl,
+                imageUrl: finalImg,
                 snippet: parsed.snippet,
                 content: parsed.content,
                 date: 'Hoy',
@@ -2994,6 +2999,7 @@
                         'torneo-primavera': {
                             category: '🏆 TORNEOS',
                             catColor: '#CCFF00',
+                            imageUrl: 'img/blog_padel_trophy.jpg',
                             title: 'Gran Torneo de Primavera 2026',
                             content: 'Llega el evento más esperado del año. El próximo 15 de Junio celebraremos el Gran Torneo de Primavera en las instalaciones de El Prat. Contaremos con categorías masculina, femenina y mixta de todos los niveles. Con tu inscripción recibirás un Welcome Pack (camiseta oficial, grip y bebida energética). Al finalizar, disfrutaremos de una barbacoa comunitaria con sorteos y música. ¡Inscripciones limitadas a 120 plazas, reserva la tuya en la sección de eventos!',
                             date: 'Hoy',
@@ -3004,6 +3010,7 @@
                         'ranking-actualizado': {
                             category: '📊 RANKING',
                             catColor: '#38bdf8',
+                            imageUrl: 'img/americana-night.png',
                             title: 'Ranking Actualizado: Top 5 de la Temporada',
                             content: 'El ranking de la temporada se ha recalculado tras la última jornada de liga. Los nuevos puntos ya están asignados y podrás consultar tu posición actualizada en la sección Ranking. ¡Enhorabuena a los que han subido posiciones esta semana y ánimo a los que luchan por el ascenso!',
                             date: 'Ayer',
@@ -3014,6 +3021,7 @@
                         'tactica-centro': {
                             category: '💡 CONSEJOS',
                             catColor: '#f59e0b',
+                            imageUrl: 'img/blog_ball_glass.png',
                             title: 'Táctica: Jugar al Centro de la Pista',
                             content: 'Jugar por el centro de la pista es una de las tácticas más eficaces en el pádel. Al dirigir la bola al centro, reduces drásticamente los ángulos de rebote del rival, evitas que abran la bola a las paredes y generas dudas de comunicación entre la pareja contraria. Es ideal para situaciones bajo presión o globos difíciles. ¡Probadlo en vuestro próximo partido!',
                             date: 'Hace 3 días',
@@ -3024,6 +3032,7 @@
                         'modos-juego-pareja-fija-vs-twister': {
                             category: '🎮 MODOS DE JUEGO',
                             catColor: '#CCFF00',
+                            imageUrl: 'img/blog_padel_twister_team.jpg',
                             title: 'Pareja Fija vs Twister Individual: ¿En qué formato anotarte según tus objetivos?',
                             content: 'En SomosPadel Barcelona contamos con dos formatos estelares diseñados para cubrir cualquier aspiración: Pareja Fija (en tándem, subís y bajáis juntos de pista según ganes o pierdas, puntuación conjunta y sincronía para torneos) y Twister Individual (inscripción individual sin necesidad de pareja previa, cambio de compañero en cada ronda, y podio por diferencial individual de juegos). ¡Ambos formatos garantizan la máxima emoción!',
                             date: 'Hoy',
@@ -3034,6 +3043,7 @@
                         'modos-juego-twister-individual-guia': {
                             category: '💡 CONSEJOS',
                             catColor: '#ec4899',
+                            imageUrl: 'img/blog_padel_twister_team.jpg',
                             title: 'Guía Táctica Twister: Cómo Adaptarte al Instante a una Nueva Pareja',
                             content: 'Jugar una americana en formato Twister Individual exige compenetración express. Acuerda con tu nueva pareja en 30 segundos los roles de drive y revés, la cobertura del centro en globos rivales y mantén un refuerzo positivo constante. La versatilidad para jugar en ambos lados es la llave del triunfo en las rotaciones individuales.',
                             date: 'Hoy',
@@ -3044,6 +3054,7 @@
                         'modos-juego-suizo-americana-entreno': {
                             category: '🎮 MODOS DE JUEGO',
                             catColor: '#ef4444',
+                            imageUrl: 'img/pista_padel_azul.png',
                             title: 'Sistema Suizo en SomosPadel: 6 Rondas Express, Puntos Individuales y Reagrupación por Pistas',
                             content: 'La 3ª modalidad de SomosPadel Barcelona: el Sistema Suizo (Americana Suiza y Entreno Suizo). Duración 2h, 6 rondas express de juego efectivo (al sonar el silbato concluye el punto). Formato individual con cambio de pareja. Puntos individuales = juegos ganados. Reagrupación tras cada ronda: Top 4 a Pista 1, siguientes a Pista 2, restantes a Pista 3, sin repetir compañero. Campeón: más juegos sumados.',
                             date: 'Hoy',
@@ -3097,16 +3108,21 @@
                     });
                 }
 
-                // Resolver la mejor imagen de fondo para la cabecera (Fototeca Curada HD o pool local)
+                // Resolver la mejor imagen de fondo para la cabecera (Fototeca Curada HD o pool local 100% Pádel)
                 let articleImg = (this.currentImagesMap && this.currentImagesMap[postId]) || 
                                  (this.currentImagesMap && this.currentImagesMap[cleanPostId]) || 
                                  post.imageUrl;
-                if (!articleImg && window.NewsCatalog) {
+
+                const isPadelImage = (url) => {
+                    return url && typeof url === 'string' && url.startsWith('img/') && !url.includes('unsplash');
+                };
+
+                if ((!articleImg || !isPadelImage(articleImg)) && window.NewsCatalog) {
                     const assigned = window.NewsCatalog.assignUniquePhotos([post]);
-                    articleImg = assigned[post.id];
+                    articleImg = assigned[post.id] || assigned[cleanPostId];
                 }
-                if (!articleImg) {
-                    articleImg = 'https://images.unsplash.com/photo-1592919505780-303950717480?q=80&w=1200&auto=format&fit=crop';
+                if (!articleImg || !isPadelImage(articleImg)) {
+                    articleImg = 'img/pista_padel_azul.png';
                 }
 
                 // Detectar si el post tiene acción interactiva integrada

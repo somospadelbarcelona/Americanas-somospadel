@@ -80,7 +80,7 @@
                             
                             <div style="display: flex; align-items: center; gap: 16px; min-width: 260px; flex: 1;">
                                 <div style="position: relative; width: 64px; height: 64px; border-radius: 14px; overflow: hidden; flex-shrink: 0; border: 2px solid #ccff00;">
-                                    <img src="${featuredTournament.poster}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1592910129881-891178e4820c?auto=format&fit=crop&q=80&w=400'">
+                                    <img src="${featuredTournament.poster}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='img/padel-event.jpg'">
                                     <span style="position: absolute; top: 3px; left: 3px; background: #ccff00; color: #000; font-size: 0.55rem; font-weight: 950; padding: 2px 4px; border-radius: 4px;">TOP</span>
                                 </div>
                                 <div>
@@ -418,9 +418,9 @@
                     
                     <!-- 🖼️ COVER / POSTER TOP -->
                     <div style="position: relative; height: 180px; width: 100%; background: #0f172a; overflow: hidden; cursor: pointer;">
-                        <img src="${t.poster || 'https://images.unsplash.com/photo-1592910129881-891178e4820c?auto=format&fit=crop&q=80&w=600'}" 
+                        <img src="${t.poster || 'img/padel-event.jpg'}" 
                              alt="${t.title}"
-                             onerror="this.src='https://images.unsplash.com/photo-1592910129881-891178e4820c?auto=format&fit=crop&q=80&w=600'"
+                             onerror="this.src='img/padel-event.jpg'"
                              style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease;"
                              onmouseover="this.style.transform='scale(1.05)'"
                              onmouseout="this.style.transform='scale(1)'">
@@ -596,7 +596,7 @@
 
                     <!-- Poster Header with Zoom -->
                     <div style="position: relative; height: 260px; background: #0f172a; cursor: zoom-in;" onclick="window.TournamentView.openLightbox('${t.poster}')">
-                        <img src="${t.poster || 'https://images.unsplash.com/photo-1592910129881-891178e4820c?auto=format&fit=crop&q=80&w=800'}" 
+                        <img src="${t.poster || 'img/padel-event.jpg'}" 
                              style="width: 100%; height: 100%; object-fit: cover;">
                         <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(15,23,42,0.95) 0%, rgba(15,23,42,0.2) 60%, transparent 100%);"></div>
                         

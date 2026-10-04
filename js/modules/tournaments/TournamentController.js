@@ -34,7 +34,7 @@
                         {
                             id: 'torneo-cem-hospitalet',
                             title: 'TORNEO CEM HOSPITALET SOMOSPADEL',
-                            poster: 'https://images.unsplash.com/photo-1592910129881-891178e4820c?auto=format&fit=crop&q=80&w=800',
+                            poster: 'img/blog_padel_trophy.jpg',
                             category: 'Masculina (3ª y 4ª), Femenino (4ª) y Mixto',
                             location: 'CEM Hospitalet, Barcelona',
                             dates: '05/06/2026 y 06/06/2026',
@@ -48,7 +48,7 @@
                         {
                             id: 'torneo-siux-anniversary',
                             title: '11º ANIVERSARIO SIUX EVEN PADEL TOUR',
-                            poster: 'https://img.freepik.com/vector-premium/cartel-torneo-padel_1284-41144.jpg',
+                            poster: 'img/americana-pro.png',
                             category: 'Challenger 2ª, 3ª y 4ª Masculina y Femenina',
                             location: 'Padelarium Club, Gavà',
                             dates: '08/05/2026 - 10/05/2026',
@@ -62,7 +62,7 @@
                         {
                             id: 'torneo-open-primavera',
                             title: 'MASTER FINAL PRIMAVERA SOMOSPADEL BCN',
-                            poster: 'https://images.unsplash.com/photo-1622163642998-1ea32b0bbc67?auto=format&fit=crop&q=80&w=800',
+                            poster: 'img/padel-event.jpg',
                             category: 'Categorías 1ª, 2ª, 3ª, 4ª y Mixta Oro',
                             location: 'Vall Parc Padel Club, Barcelona',
                             dates: '19/07/2026 - 21/07/2026',

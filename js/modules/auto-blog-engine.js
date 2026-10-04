@@ -1028,13 +1028,14 @@
               "category": "${categoryName}",
               "catColor": "${catColor}",
               "emoji": "${emoji}",
-              "imageUrl": "Elige una URL de imagen de Unsplash según el tema. Puedes usar:
-                           - Para Táctica/Clinic: https://images.unsplash.com/photo-1592919505780-303950717480?q=80&w=600&auto=format&fit=crop
-                           - Para Material: https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?q=80&w=600&auto=format&fit=crop
-                           - Para Salud/Mental: https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=600&auto=format&fit=crop
-                           - Para Nutrición/Comunidad: https://images.unsplash.com/photo-1528605248644-14dd04022da1?q=80&w=600&auto=format&fit=crop
-                           - Para Ranking/Estadísticas: https://images.unsplash.com/photo-1548690312-e3b507d8c110?q=80&w=600&auto=format&fit=crop
-                           (U otra URL similar de Unsplash de alta calidad)",
+              "imageUrl": "Elige exactamente una de estas rutas relativas de imagen según el tema del artículo:
+                           - Para Táctica/Clinic/Juego: img/blog_action_smash.png
+                           - Para Compañerismo/Twister/Parejas: img/blog_padel_twister_team.jpg
+                           - Para Material/Equipamiento/Palas: img/blog_racket_ball.png
+                           - Para Salud/Lesiones/Fisio/Calentamiento: img/blog_padel_health.jpg
+                           - Para Nutrición/Hidratación: img/blog_padel_nutrition.jpg
+                           - Para Torneos/Campeonatos/Podium: img/blog_padel_trophy.jpg
+                           - Para Pistas y Club: img/pista_padel_azul.png",
               "imgGrad": "Un gradiente lineal CSS sutil para la cabecera (ej: linear-gradient(135deg, #fb923c 0%, #f97316 100%))",
               "content": "El cuerpo del artículo en formato HTML. Debe ser extenso (mínimo 300 palabras), estructurado e incluir:
                           1. Introducción emocionante.
@@ -1068,7 +1069,7 @@
                 title: parsed.title,
                 category: parsed.category || categoryName,
                 catColor: parsed.catColor || catColor,
-                imageUrl: parsed.imageUrl || (chosenType === 'cronica' ? 'https://images.unsplash.com/photo-1592919505780-303950717480?q=80&w=600&auto=format&fit=crop' : 'https://images.unsplash.com/photo-1548690312-e3b507d8c110?q=80&w=600&auto=format&fit=crop'),
+                imageUrl: (parsed.imageUrl && parsed.imageUrl.startsWith('img/')) ? parsed.imageUrl : (chosenType === 'cronica' ? 'img/blog_action_smash.png' : 'img/pista_padel_azul.png'),
                 snippet: parsed.snippet,
                 content: parsed.content,
                 date: 'Hoy',
@@ -1101,7 +1102,7 @@
                     catColor: '#f59e0b',
                     emoji: '🎯',
                     imgGrad: 'linear-gradient(135deg, #fb923c 0%, #f97316 100%)',
-                    imageUrl: 'https://images.unsplash.com/photo-1592919505780-303950717480?q=80&w=600&auto=format&fit=crop',
+                    imageUrl: 'img/blog_action_smash.png',
                     titles: [
                         `Cómo ejecutar la chiquita perfecta y ganar la red`,
                         `El secreto táctico de la chiquita: de la defensa al ataque`,
@@ -1126,7 +1127,7 @@
                     catColor: '#ef4444',
                     emoji: '💪',
                     imgGrad: 'linear-gradient(135deg, #f87171 0%, #ef4444 100%)',
-                    imageUrl: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=600&auto=format&fit=crop',
+                    imageUrl: 'img/blog_padel_health.jpg',
                     titles: [
                         `Evita el codo de tenista: Guía de salud para padeleros`,
                         `Cómo prevenir lesiones de codo jugando tres veces por semana`,
@@ -1151,7 +1152,7 @@
                     catColor: '#ec4899',
                     emoji: '🎈',
                     imgGrad: 'linear-gradient(135deg, #f472b6 0%, #be185d 100%)',
-                    imageUrl: 'https://images.unsplash.com/photo-1592919505780-303950717480?q=80&w=600&auto=format&fit=crop',
+                    imageUrl: 'img/blog_action_smash.png',
                     titles: [
                         `El Globo: La herramienta táctica más poderosa en el pádel`,
                         `Cómo tirar globos defensivos que ahoguen al rival en el fondo`,

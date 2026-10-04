@@ -1147,11 +1147,11 @@ class NotificationUi {
         const isWallSmash = String(item.id || '').includes('wall_smash') || String(item.title || '').toLowerCase().includes('bajada');
         const isCarbon = String(item.id || '').includes('carbon_padel') || String(item.title || '').toLowerCase().includes('carbono');
 
-        let imgUrl = 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?q=80&w=1200&auto=format&fit=crop';
+        let imgUrl = 'img/pista_padel_azul.png';
         let fullArticleHtml = '';
 
         if (isWallSmash) {
-            imgUrl = 'https://images.unsplash.com/photo-1599474924187-334a4ae5bd3c?q=80&w=1200&auto=format&fit=crop';
+            imgUrl = 'img/blog_action_smash.png';
             fullArticleHtml = `
                 <p style="margin: 0 0 14px 0; font-size: 0.95rem; line-height: 1.6; color: #334155;">
                     Cuando el rival lanza un globo corto que rebota alto en el cristal de fondo, tienes la oportunidad de oro para ejecutar una <strong>bajada de pared ofensiva</strong>.
@@ -1168,7 +1168,7 @@ class NotificationUi {
                 </ul>
             `;
         } else if (isCarbon) {
-            imgUrl = 'https://images.unsplash.com/photo-1617083934555-563d61a29f8f?q=80&w=1200&auto=format&fit=crop';
+            imgUrl = 'img/blog_racket_ball.png';
             fullArticleHtml = `
                 <p style="margin: 0 0 14px 0; font-size: 0.95rem; line-height: 1.6; color: #334155;">
                     Jugar en las pistas de Barcelona (El Prat y Cornellà) cerca de la costa significa que la <strong>humedad nocturna</strong> modifica sensiblemente el comportamiento de la bola y los materiales de tu pala.
@@ -1282,7 +1282,7 @@ class NotificationUi {
     showHeadlineNewsModal(item) {
         document.getElementById('notif-content-modal-overlay')?.remove();
 
-        const imgUrl = 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1200&auto=format&fit=crop';
+        const imgUrl = 'img/padel-event.jpg';
         const overlay = document.createElement('div');
         overlay.id = 'notif-content-modal-overlay';
         overlay.style.cssText = `
