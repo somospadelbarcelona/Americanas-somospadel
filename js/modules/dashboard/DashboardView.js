@@ -900,11 +900,11 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
             }
         }
 
-        async shareBlogPost(postId, title) {
-            this.showShareMenu(postId, title);
+        async shareBlogPost(postId, title, explicitImgUrl) {
+            this.showShareMenu(postId, title, explicitImgUrl);
         }
 
-        showShareMenu(postId, title) {
+        showShareMenu(postId, title, explicitImgUrl) {
             const shareUrl = `${window.location.origin}${window.location.pathname}?post=${postId}`;
             const shareText = `¡Mira esta noticia en SomosPadel BCN! 🎾\n\n"${title}"\n\n`;
             
@@ -928,7 +928,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     
                     <!-- Botón de Cerrar del Menú de Compartir -->
                     <button id="share-modal-close-btn" 
-                            style="position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.25s;"
+                            style="position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;"
                             onmouseover="this.style.background='rgba(255,255,255,0.15)'"
                             onmouseout="this.style.background='rgba(255,255,255,0.06)'">
                         <i class="fas fa-times" style="font-size: 0.8rem;"></i>
@@ -937,7 +937,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     <div style="margin-bottom: 22px;">
                         <span style="font-size: 2.5rem; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.3));">📢</span>
                         <h4 style="color: white; font-weight: 950; font-size: 1.25rem; margin: 12px 0 6px 0; letter-spacing: -0.4px;">Compartir Noticia</h4>
-                        <p style="color: rgba(255,255,255,0.5); font-size: 0.78rem; line-height: 1.4; margin: 0; padding: 0 10px;">Selecciona el canal oficial para compartir este contenido con tu red de pádel.</p>
+                        <p style="color: rgba(255,255,255,0.5); font-size: 0.78rem; line-height: 1.4; margin: 0; padding: 0 10px;">Selecciona el canal para compartir la noticia con su imagen oficial.</p>
                     </div>
                     
                     <!-- Lista de Opciones Premium -->
@@ -945,11 +945,11 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         
                         <!-- WhatsApp Option -->
                         <button id="share-btn-whatsapp"
-                                style="background: rgba(37, 211, 102, 0.1); border: 1px solid rgba(37, 211, 102, 0.25); color: #25D366; font-weight: 800; font-size: 0.85rem; padding: 12px 16px; border-radius: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);"
-                                onmouseover="this.style.background='rgba(37, 211, 102, 0.2)';this.style.borderColor='#25D366';this.style.transform='scale(1.03) translateY(-1px)';"
-                                onmouseout="this.style.background='rgba(37, 211, 102, 0.1)';this.style.borderColor='rgba(37, 211, 102, 0.25)';this.style.transform='scale(1) translateY(0)';">
-                            <i class="fab fa-whatsapp" style="font-size: 1.2rem;"></i>
-                            <span>Compartir por WhatsApp</span>
+                                style="background: rgba(37, 211, 102, 0.12); border: 1.5px solid rgba(37, 211, 102, 0.35); color: #25D366; font-weight: 850; font-size: 0.88rem; padding: 13px 16px; border-radius: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);"
+                                onmouseover="this.style.background='rgba(37, 211, 102, 0.25)';this.style.borderColor='#25D366';this.style.transform='scale(1.03) translateY(-1px)';"
+                                onmouseout="this.style.background='rgba(37, 211, 102, 0.12)';this.style.borderColor='rgba(37, 211, 102, 0.35)';this.style.transform='scale(1) translateY(0)';">
+                            <i class="fab fa-whatsapp" style="font-size: 1.25rem;"></i>
+                            <span>Compartir con Foto por WhatsApp</span>
                         </button>
                         
                         <!-- Instagram Option -->
@@ -997,7 +997,12 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
             if (waBtn) {
                 waBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    this.actionShare('whatsapp', shareUrl, encodeURIComponent(shareText));
+                    shareModal.remove();
+                    if (typeof this.shareToWhatsApp === 'function') {
+                        this.shareToWhatsApp(postId, title, e, explicitImgUrl);
+                    } else {
+                        this.actionShare('whatsapp', shareUrl, encodeURIComponent(shareText));
+                    }
                 });
             }
 

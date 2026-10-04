@@ -1617,7 +1617,7 @@
             }
         }
 
-        showShareMenu(postId, title) {
+        showShareMenu(postId, title, explicitImgUrl) {
             const shareUrl = `${window.location.origin}${window.location.pathname}?post=${postId}`;
             const shareText = `¡Mira esta noticia en SomosPadel BCN! 🎾\n\n"${title}"\n\n`;
             
@@ -1650,19 +1650,19 @@
                     <div style="margin-bottom: 22px;">
                         <span style="font-size: 2.5rem; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.3));">📢</span>
                         <h4 style="color: white; font-weight: 950; font-size: 1.25rem; margin: 12px 0 6px 0; letter-spacing: -0.4px;">Compartir Noticia</h4>
-                        <p style="color: rgba(255,255,255,0.5); font-size: 0.78rem; line-height: 1.4; margin: 0; padding: 0 10px;">Selecciona el canal oficial para compartir este contenido con tu red de pádel.</p>
+                        <p style="color: rgba(255,255,255,0.5); font-size: 0.78rem; line-height: 1.4; margin: 0; padding: 0 10px;">Selecciona el canal para compartir la noticia junto con su fotografía oficial.</p>
                     </div>
                     
                     <!-- Lista de Opciones Premium -->
                     <div style="display: flex; flex-direction: column; gap: 12px;">
                         
-                        <!-- WhatsApp Option -->
+                        <!-- WhatsApp Option con Foto -->
                         <button id="share-btn-whatsapp"
-                                style="background: rgba(37, 211, 102, 0.1); border: 1px solid rgba(37, 211, 102, 0.25); color: #25D366; font-weight: 800; font-size: 0.85rem; padding: 12px 16px; border-radius: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);"
-                                onmouseover="this.style.background='rgba(37, 211, 102, 0.2)';this.style.borderColor='#25D366';this.style.transform='scale(1.03) translateY(-1px)';"
-                                onmouseout="this.style.background='rgba(37, 211, 102, 0.1)';this.style.borderColor='rgba(37, 211, 102, 0.25)';this.style.transform='scale(1) translateY(0)';">
-                            <i class="fab fa-whatsapp" style="font-size: 1.2rem;"></i>
-                            <span>Compartir por WhatsApp</span>
+                                style="background: rgba(37, 211, 102, 0.12); border: 1.5px solid rgba(37, 211, 102, 0.35); color: #25D366; font-weight: 850; font-size: 0.88rem; padding: 13px 16px; border-radius: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 4px 15px rgba(37, 211, 102, 0.15);"
+                                onmouseover="this.style.background='rgba(37, 211, 102, 0.25)';this.style.borderColor='#25D366';this.style.transform='scale(1.03) translateY(-1px)';"
+                                onmouseout="this.style.background='rgba(37, 211, 102, 0.12)';this.style.borderColor='rgba(37, 211, 102, 0.35)';this.style.transform='scale(1) translateY(0)';">
+                            <i class="fab fa-whatsapp" style="font-size: 1.25rem;"></i>
+                            <span>Compartir con Foto por WhatsApp</span>
                         </button>
                         
                         <!-- Instagram Option -->
@@ -1710,7 +1710,8 @@
             if (waBtn) {
                 waBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    this.actionShare('whatsapp', shareUrl, encodeURIComponent(shareText));
+                    shareModal.remove();
+                    this.shareToWhatsApp(postId, title, e, explicitImgUrl);
                 });
             }
 
@@ -1732,14 +1733,11 @@
 
             const nativeBtn = shareModal.querySelector('#native-share-btn');
             if (nativeBtn) {
-                if (navigator.share) {
-                    nativeBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        this.actionShare('native', shareUrl, encodeURIComponent(shareText));
-                    });
-                } else {
-                    nativeBtn.style.display = 'none';
-                }
+                nativeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    shareModal.remove();
+                    this.shareToWhatsApp(postId, title, e, explicitImgUrl);
+                });
             }
             
             // Cerrar menú de compartir si se hace clic fuera de la tarjeta
@@ -1805,20 +1803,128 @@
         }
 
         // ─── SOMOS PÁDEL JOURNAL: MÉTODOS SOCIALES & FAVORITOS ───
-        shareBlogPost(postId, title) {
-            this.showShareMenu(postId, title);
+        shareBlogPost(postId, title, explicitImgUrl) {
+            this.showShareMenu(postId, title, explicitImgUrl);
         }
 
-        shareToWhatsApp(postId, title, event) {
+        async shareToWhatsApp(postId, title, event, explicitImgUrl) {
             if (event) {
                 event.stopPropagation();
                 event.preventDefault();
             }
-            const cleanTitle = (title || 'Noticia de Pádel').replace(/["']/g, '');
-            const shareUrl = `${window.location.origin}${window.location.pathname}?post=${postId}`;
-            const text = `🎾 *SOMOS PÁDEL BCN*\n\n¡Mira esta táctica para nuestro próximo partido!\n👉 *"${cleanTitle}"*\n\n📲 Léelo aquí: ${shareUrl}`;
-            const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
-            window.open(waUrl, '_blank');
+
+            // Indicador visual en el botón si existe
+            const clickedBtn = event ? (event.currentTarget || (event.target && event.target.closest ? event.target.closest('button') : null)) : null;
+            const originalBtnHtml = clickedBtn ? clickedBtn.innerHTML : null;
+            if (clickedBtn) {
+                clickedBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size: 0.85rem; color: #25D366;"></i>';
+                clickedBtn.disabled = true;
+            }
+
+            try {
+                const cleanTitle = (title || 'Noticia de Pádel').replace(/["']/g, '');
+                const shareUrl = `${window.location.origin}${window.location.pathname}?post=${postId}`;
+
+                // 1. Resolver ruta relativa de la imagen de la noticia
+                let imgPath = explicitImgUrl || 
+                              (this.currentImagesMap && this.currentImagesMap[postId]) ||
+                              (this.cachedBlogPosts && this.cachedBlogPosts.find(p => p.id === postId)?.imageUrl);
+                
+                if (!imgPath && window.NewsCatalog) {
+                    const cleanPostId = (postId || '').replace(/^news_\d{4}-\d{2}-\d{2}_/, '');
+                    const found = window.NewsCatalog.articles.find(a => a.id === postId || a.id === cleanPostId);
+                    if (found && found.imageUrl) imgPath = found.imageUrl;
+                }
+
+                if (!imgPath || typeof imgPath !== 'string' || imgPath.includes('unsplash')) {
+                    imgPath = 'img/blog_padel_twister_team.jpg';
+                }
+
+                // URL absoluta de la imagen para que sea accesible públicamente y por scrapers
+                const absoluteImgUrl = new URL(imgPath, window.location.href).href;
+
+                // Actualizar meta tags og para bots en caso de SPA
+                try {
+                    let ogImg = document.querySelector('meta[property="og:image"]');
+                    if (ogImg) ogImg.setAttribute('content', absoluteImgUrl);
+                    let ogTitle = document.querySelector('meta[property="og:title"]');
+                    if (ogTitle) ogTitle.setAttribute('content', `${cleanTitle} | SomosPadel BCN`);
+                } catch (_) {}
+
+                // 2. Intentar obtener el archivo de imagen (Blob -> File) para compartir nativo
+                let imageFile = null;
+                try {
+                    const resp = await fetch(imgPath);
+                    if (resp.ok) {
+                        const blob = await resp.blob();
+                        const isPng = imgPath.toLowerCase().endsWith('.png');
+                        const ext = isPng ? 'png' : 'jpg';
+                        const mime = blob.type || (isPng ? 'image/png' : 'image/jpeg');
+                        const filename = `SomosPadel_${(postId || 'noticia').slice(0, 20)}.${ext}`;
+                        imageFile = new File([blob], filename, { type: mime });
+                    }
+                } catch (fetchErr) {
+                    console.warn("No se pudo descargar la imagen local como archivo:", fetchErr);
+                }
+
+                const shareText = `🎾 *SOMOS PÁDEL BCN - REVISTA OFICIAL*\n\n` +
+                                  `👉 *"${cleanTitle}"*\n\n` +
+                                  `📲 *Lee la crónica interactiva en la App:*\n${shareUrl}`;
+
+                // 3. ESTRATEGIA A: Web Share API con archivo adjunto (Móviles iOS / Android con WhatsApp)
+                // Permite a WhatsApp adjuntar la foto real a pantalla completa en el chat con el pie de texto
+                if (imageFile && navigator.canShare && navigator.canShare({ files: [imageFile] })) {
+                    try {
+                        await navigator.share({
+                            title: `${cleanTitle} | SomosPadel BCN`,
+                            text: shareText,
+                            files: [imageFile]
+                        });
+                        this.showJournalToast('¡Noticia con imagen lista para enviar a WhatsApp!', 'fab fa-whatsapp');
+                        return;
+                    } catch (shareErr) {
+                        if (shareErr.name === 'AbortError') {
+                            // Usuario cerró el menú nativo de compartir
+                            return;
+                        }
+                        console.warn("Fallo Web Share API con archivo, probando alternativa wa.me:", shareErr);
+                    }
+                }
+
+                // 4. ESTRATEGIA B: Fallback para WhatsApp Web / Desktop / Navegadores sin Web Share Files
+                // Intentamos copiar la imagen al portapapeles para que al abrir WhatsApp solo tenga que pulsar Ctrl+V
+                let copiedToClipboard = false;
+                if (imageFile && navigator.clipboard && window.ClipboardItem) {
+                    try {
+                        await navigator.clipboard.write([
+                            new ClipboardItem({ [imageFile.type]: imageFile })
+                        ]);
+                        copiedToClipboard = true;
+                    } catch (_) {}
+                }
+
+                // Formatear texto con enlace interactivo y enlace a la foto HD
+                const fullWaText = `${shareText}\n\n📸 *Fotografía de la noticia:*\n${absoluteImgUrl}`;
+                const waUrl = `https://wa.me/?text=${encodeURIComponent(fullWaText)}`;
+
+                if (copiedToClipboard) {
+                    this.showJournalToast('📸 ¡Foto copiada! Pégala en tu chat con Ctrl+V', 'fas fa-camera');
+                } else {
+                    this.showJournalToast('Abriendo WhatsApp con noticia e imagen...', 'fab fa-whatsapp');
+                }
+
+                window.open(waUrl, '_blank');
+
+            } catch (err) {
+                console.error("Error al compartir en WhatsApp:", err);
+                const fallbackUrl = `https://wa.me/?text=${encodeURIComponent('🎾 SOMOS PÁDEL BCN - ' + (title || 'Noticia') + ': ' + window.location.href)}`;
+                window.open(fallbackUrl, '_blank');
+            } finally {
+                if (clickedBtn && originalBtnHtml) {
+                    clickedBtn.innerHTML = originalBtnHtml;
+                    clickedBtn.disabled = false;
+                }
+            }
         }
 
         getSavedBlogPosts() {
@@ -2346,7 +2452,7 @@
                     
                     <!-- Controles rápidos superiores (Compartir WhatsApp & Guardar Favorito) -->
                     <div style="position: absolute; top: 14px; right: 14px; z-index: 4; display: flex; align-items: center; gap: 8px;">
-                        <button onclick="window.DashboardView.shareToWhatsApp('${featured.id}', '${featured.title.replace(/'/g, "\\'")}', event)"
+                        <button onclick="window.DashboardView.shareToWhatsApp('${featured.id}', '${featured.title.replace(/'/g, "\\'")}', event, '${postImagesMap[featured.id]}')"
                                 class="card-quick-btn whatsapp-btn"
                                 style="width: 36px; height: 36px; border-radius: 50%; background: rgba(6, 11, 22, 0.75); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.25); color: #25D366; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.25s;"
                                 onmouseover="this.style.background='#25D366'; this.style.color='#ffffff'; this.style.transform='scale(1.1)';"
@@ -2419,7 +2525,7 @@
 
                             <!-- Acciones Rápidas Flotantes (WhatsApp + Favorito) -->
                             <div style="position: absolute; top: 10px; right: 10px; z-index: 3; display: flex; align-items: center; gap: 7px;">
-                                <button onclick="window.DashboardView.shareToWhatsApp('${post.id}', '${post.title.replace(/'/g, "\\'")}', event)"
+                                <button onclick="window.DashboardView.shareToWhatsApp('${post.id}', '${post.title.replace(/'/g, "\\'")}', event, '${postImagesMap[post.id]}')"
                                         class="card-quick-btn whatsapp-btn"
                                         style="background: rgba(6, 11, 22, 0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.2); color: #25D366; width: 34px; height: 34px; border-radius: 50%;"
                                         title="Compartir por WhatsApp">
@@ -3469,7 +3575,7 @@
                 if (shareBtn) {
                     shareBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        this.shareBlogPost(postId, post.title);
+                        this.shareBlogPost(postId, post.title, articleImg);
                     });
                 }
 
@@ -3477,7 +3583,7 @@
                 if (waBtn) {
                     waBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        this.shareToWhatsApp(postId, post.title, e);
+                        this.shareToWhatsApp(postId, post.title, e, articleImg);
                     });
                 }
 
@@ -3485,7 +3591,7 @@
                 if (coachWaBtn) {
                     coachWaBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        this.shareToWhatsApp(postId, post.title, e);
+                        this.shareToWhatsApp(postId, post.title, e, articleImg);
                     });
                 }
 
