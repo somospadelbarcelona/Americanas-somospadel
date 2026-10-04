@@ -3704,48 +3704,54 @@
                             <!-- BOTTOM BAR OVER IMAGE: FORMAT & COURTS (LEFT) + QUICK ACTIONS (RIGHT) -->
                             <div style="position: absolute; bottom: 8px; left: 10px; right: 10px; display: flex; align-items: center; justify-content: space-between; gap: 6px; z-index: 10; pointer-events: none;">
                                 <!-- Left: Format & Courts -->
-                                <div style="display: flex; align-items: center; gap: 5px; flex-wrap: nowrap; overflow: hidden; pointer-events: auto;">
-                                    ${isEntreno ? `
-                                        <span style="background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%); color: #fff; padding: 3.5px 7px; border-radius: 7px; font-size: 0.58rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 2px 6px rgba(139, 92, 246, 0.4); display: inline-flex; align-items: center; gap: 3px;"><i class="fas fa-user-ninja"></i> ENTRENO</span>
-                                    ` : ''}
-                                    ${isSwiss ?
-                                        `<span style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #fff; padding: 3.5px 7px; border-radius: 7px; font-size: 0.58rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4); display: inline-flex; align-items: center; gap: 3px;"><span style="font-size:0.7rem;">🇨🇭</span> ${isEntreno ? 'ENTRENO SUIZO' : 'SUIZA'}</span>` :
-                                        (isTwister ? 
-                                            `<span style="background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%); color: #fff; padding: 3.5px 7px; border-radius: 7px; font-size: 0.58rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 2px 6px rgba(6, 182, 212, 0.3); display: inline-flex; align-items: center; gap: 3px;"><i class="fas fa-wind"></i> TWISTER</span>` :
-                                            `<span style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: #fff; padding: 3.5px 7px; border-radius: 7px; font-size: 0.58rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 2px 6px rgba(236, 72, 153, 0.3); display: inline-flex; align-items: center; gap: 3px;"><i class="fas fa-lock"></i> PAREJA FIJA</span>`
+                                <div style="display: flex; align-items: center; gap: 4px; flex-wrap: nowrap; overflow: hidden; pointer-events: auto; min-width: 0;">
+                                    ${isEntreno ? 
+                                        (isSwiss ? 
+                                            `<span style="background: linear-gradient(135deg, #a855f7 0%, #ef4444 100%); color: #fff; padding: 3px 6px; border-radius: 7px; font-size: 0.55rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 2px 6px rgba(168, 85, 247, 0.35); display: inline-flex; align-items: center; gap: 3px; white-space: nowrap;"><i class="fas fa-user-ninja"></i> SUIZO</span>` :
+                                            (isTwister ? 
+                                                `<span style="background: linear-gradient(135deg, #a855f7 0%, #06b6d4 100%); color: #fff; padding: 3px 6px; border-radius: 7px; font-size: 0.55rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 2px 6px rgba(6, 182, 212, 0.35); display: inline-flex; align-items: center; gap: 3px; white-space: nowrap;"><i class="fas fa-user-ninja"></i> TWISTER</span>` :
+                                                `<span style="background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%); color: #fff; padding: 3px 6px; border-radius: 7px; font-size: 0.55rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 2px 6px rgba(139, 92, 246, 0.4); display: inline-flex; align-items: center; gap: 3px; white-space: nowrap;"><i class="fas fa-user-ninja"></i> ENTRENO</span>`
+                                            )
+                                        ) :
+                                        (isSwiss ?
+                                            `<span style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #fff; padding: 3px 6px; border-radius: 7px; font-size: 0.55rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4); display: inline-flex; align-items: center; gap: 3px; white-space: nowrap;"><span style="font-size:0.65rem;">🇨🇭</span> SUIZA</span>` :
+                                            (isTwister ? 
+                                                `<span style="background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%); color: #fff; padding: 3px 6px; border-radius: 7px; font-size: 0.55rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 2px 6px rgba(6, 182, 212, 0.3); display: inline-flex; align-items: center; gap: 3px; white-space: nowrap;"><i class="fas fa-wind"></i> TWISTER</span>` :
+                                                `<span style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: #fff; padding: 3px 6px; border-radius: 7px; font-size: 0.55rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 2px 6px rgba(236, 72, 153, 0.3); display: inline-flex; align-items: center; gap: 3px; white-space: nowrap;"><i class="fas fa-lock"></i> PAREJA FIJA</span>`
+                                            )
                                         )
                                     }
-                                    <span style="background: rgba(15, 23, 42, 0.85); color: #fff; padding: 3.5px 7px; border-radius: 7px; border: 1px solid rgba(255,255,255,0.12); font-size: 0.58rem; font-weight: 850; backdrop-filter: blur(8px); display: inline-flex; align-items: center; gap: 3px;"><i class="fas fa-table-tennis" style="color: #CCFF00; font-size: 0.55rem;"></i> ${maxCourts} PISTAS</span>
+                                    <span style="background: rgba(15, 23, 42, 0.85); color: #fff; padding: 3px 6px; border-radius: 7px; border: 1px solid rgba(255,255,255,0.12); font-size: 0.55rem; font-weight: 850; backdrop-filter: blur(8px); display: inline-flex; align-items: center; gap: 3px; white-space: nowrap;"><i class="fas fa-table-tennis" style="color: #CCFF00; font-size: 0.52rem;"></i> ${maxCourts} Pistas</span>
                                 </div>
 
                                 <!-- Right: Quick Actions (Cartel, WhatsApp, Instagram) -->
-                                <div style="display: flex; align-items: center; gap: 5px; flex-shrink: 0; pointer-events: auto;">
+                                <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0; pointer-events: auto;">
                                     <!-- Botón Cartel Oficial -->
                                     <button onclick="event.stopPropagation(); window.EventsController.openPosterModal('${(evt.image_url || 'img/padel-event.jpg').replace(/'/g, "\\'")}', '${(evt.name || '').replace(/'/g, "\\'")}', '${(evt.sede || evt.location || '').replace(/'/g, "\\'")}')" 
                                             title="Ver Cartel Oficial" 
                                             aria-label="Ver cartel del evento"
                                             style="
                                                 background: rgba(15, 23, 42, 0.88);
-                                                height: 30px;
-                                                padding: 0 8px;
-                                                border-radius: 9px;
+                                                height: 28px;
+                                                padding: 0 6px;
+                                                border-radius: 8px;
                                                 border: 1.2px solid rgba(204, 255, 0, 0.5);
                                                 color: #CCFF00;
                                                 display: flex;
                                                 align-items: center;
-                                                gap: 4px;
+                                                gap: 3px;
                                                 cursor: pointer;
                                                 backdrop-filter: blur(10px);
-                                                box-shadow: 0 3px 10px rgba(0,0,0,0.35);
-                                                font-size: 0.65rem;
+                                                box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+                                                font-size: 0.6rem;
                                                 font-weight: 950;
-                                                letter-spacing: 0.4px;
+                                                letter-spacing: 0.3px;
                                                 transition: transform 0.15s;
                                             "
                                             onmouseover="this.style.transform='scale(1.05)';"
                                             onmouseout="this.style.transform='scale(1)';"
                                             onmousedown="this.style.transform='scale(0.95)';">
-                                        <i class="fas fa-file-image" style="font-size: 0.72rem; color: #CCFF00;"></i>
+                                        <i class="fas fa-file-image" style="font-size: 0.68rem; color: #CCFF00;"></i>
                                         <span>CARTEL</span>
                                     </button>
 
@@ -3753,33 +3759,33 @@
                                     <button onclick="event.stopPropagation(); window.EventsController.shareEvent('${evt.id}', '${evt.type || 'americana'}')" 
                                             title="Compartir por WhatsApp" 
                                             aria-label="Compartir evento por WhatsApp"
-                                            style="background: rgba(15, 23, 42, 0.85); width: 30px; height: 30px; border-radius: 9px; border: 1px solid rgba(34, 197, 94, 0.35); color: #22c55e; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(10px); box-shadow: 0 3px 10px rgba(0,0,0,0.35); transition: transform 0.15s;"
+                                            style="background: rgba(15, 23, 42, 0.85); width: 28px; height: 28px; border-radius: 8px; border: 1px solid rgba(34, 197, 94, 0.35); color: #22c55e; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(10px); box-shadow: 0 2px 8px rgba(0,0,0,0.35); transition: transform 0.15s;"
                                             onmouseover="this.style.transform='scale(1.08)';"
                                             onmouseout="this.style.transform='scale(1)';"
                                             onmousedown="this.style.transform='scale(0.92)';">
-                                        <i class="fab fa-whatsapp" style="font-size: 0.95rem;"></i>
+                                        <i class="fab fa-whatsapp" style="font-size: 0.88rem;"></i>
                                     </button>
 
                                     <!-- Botón Compartir Instagram Stories Pro -->
                                     <button onclick="event.stopPropagation(); window.EventsController.shareInstagram('${evt.id}', '${evt.type || 'americana'}')" 
                                             title="Compartir en Instagram Stories" 
                                             aria-label="Compartir en Instagram"
-                                            style="background: rgba(15, 23, 42, 0.85); width: 30px; height: 30px; border-radius: 9px; border: 1px solid rgba(225, 48, 108, 0.45); color: #E1306C; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(10px); box-shadow: 0 3px 10px rgba(0,0,0,0.35); transition: transform 0.15s;"
+                                            style="background: rgba(15, 23, 42, 0.85); width: 28px; height: 28px; border-radius: 8px; border: 1px solid rgba(225, 48, 108, 0.45); color: #E1306C; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(10px); box-shadow: 0 2px 8px rgba(0,0,0,0.35); transition: transform 0.15s;"
                                             onmouseover="this.style.transform='scale(1.08)';"
                                             onmouseout="this.style.transform='scale(1)';"
                                             onmousedown="this.style.transform='scale(0.92)';">
-                                        <i class="fab fa-instagram" style="font-size: 0.95rem; background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                                        <i class="fab fa-instagram" style="font-size: 0.88rem; background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
                                     </button>
 
                                     <!-- Botón Minimizar Tarjeta -->
                                     <button onclick="event.stopPropagation(); window.EventsController.toggleCardExpansion('${evt.id}', event)" 
                                             title="Minimizar esta tarjeta" 
                                             aria-label="Minimizar tarjeta"
-                                            style="background: rgba(15, 23, 42, 0.88); width: 30px; height: 30px; border-radius: 9px; border: 1px solid rgba(255, 255, 255, 0.2); color: #cbd5e1; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(10px); box-shadow: 0 3px 10px rgba(0,0,0,0.35); transition: transform 0.15s;"
+                                            style="background: rgba(15, 23, 42, 0.88); width: 28px; height: 28px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2); color: #cbd5e1; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(10px); box-shadow: 0 2px 8px rgba(0,0,0,0.35); transition: transform 0.15s;"
                                             onmouseover="this.style.transform='scale(1.08)'; this.style.color='#CCFF00'; this.style.borderColor='rgba(204,255,0,0.4)';"
                                             onmouseout="this.style.transform='scale(1)'; this.style.color='#cbd5e1'; this.style.borderColor='rgba(255,255,255,0.2)';"
                                             onmousedown="this.style.transform='scale(0.92)';">
-                                        <i class="fas fa-compress-alt" style="font-size: 0.82rem;"></i>
+                                        <i class="fas fa-compress-alt" style="font-size: 0.78rem;"></i>
                                     </button>
                                 </div>
                             </div>
@@ -3876,68 +3882,80 @@
                                     </span>
                                 </div>
 
-                                <!-- Columna 2: Plazas y Ocupación (Interactivo para ver inscritos) -->
+                                <!-- Columna 2: Plazas y Ocupación (Organizado verticalmente sin colisión) -->
                                 <div class="${tileClass}" 
                                      onclick="event.stopPropagation(); ${(isEventPrivate && !isEventUnlocked) ? `window.EventsController.promptPrivatePassword('${evt.id}', '${evt.type || 'americana'}', 'inscritos')` : `window.EventsController.showInscritosModal('${evt.id}', '${evt.type || 'americana'}')`}" 
                                      title="Toca para ver la lista de jugadores inscritos"
-                                     style="background: rgba(255,255,255,0.04); border-radius: 12px; padding: 8px 10px; display: flex; flex-direction: column; justify-content: center; gap: 4px; border: 1px solid rgba(255,255,255,0.07); box-shadow: 0 2px 8px rgba(0,0,0,0.18); cursor: pointer; min-width: 0; position: relative; overflow: hidden;"
+                                     style="background: rgba(255,255,255,0.04); border-radius: 12px; padding: 8px 10px; display: flex; flex-direction: column; justify-content: center; gap: 3px; border: 1px solid rgba(255,255,255,0.07); box-shadow: 0 2px 8px rgba(0,0,0,0.18); cursor: pointer; min-width: 0; position: relative; overflow: hidden;"
                                      onmouseover="this.style.borderColor='rgba(204,255,0,0.4)';"
                                      onmouseout="this.style.borderColor='rgba(255,255,255,0.07)';"
                                 >
-                                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 4px;">
-                                        <div style="display: flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden;">
-                                            <i id="event-players-icon-${evt.id}" class="fas fa-users" style="color: ${capacityIconColor}; font-size: 0.72rem; flex-shrink: 0;"></i>
-                                            <span id="event-players-label-${evt.id}" style="font-weight: 950; font-size: 0.8rem; color: #fff; white-space: nowrap;">${playerCount}/${maxPlayers} Plazas</span>
-                                        </div>
-                                        <span id="event-status-capacity-${evt.id}" style="font-size: 0.58rem; font-weight: 950; color: ${isFinished ? '#94a3b8' : (isFull ? '#ef4444' : '#CCFF00')}; text-transform: uppercase; letter-spacing: 0.3px; flex-shrink: 0;">
-                                            ${isFinished ? (isEntreno ? 'FINAL' : 'FINAL') : (isFull ? 'COMPLETO' : 'LIBRE')}
+                                    <!-- Línea 1 (Header): PLAZAS (izq) y COMPLETO/DISPONIBLE (der) -->
+                                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
+                                        <span style="font-size: 0.52rem; font-weight: 850; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.4px; display: flex; align-items: center; gap: 3px;">
+                                            <i id="event-players-icon-${evt.id}" class="fas fa-users" style="color: ${capacityIconColor}; font-size: 0.58rem; flex-shrink: 0;"></i> PLAZAS
+                                        </span>
+                                        <span id="event-status-capacity-${evt.id}" style="font-size: 0.52rem; font-weight: 950; color: ${isFinished ? '#94a3b8' : (isFull ? '#ef4444' : '#CCFF00')}; text-transform: uppercase; letter-spacing: 0.3px; flex-shrink: 0;">
+                                            ${isFinished ? 'FINAL' : (isFull ? 'COMPLETO' : 'DISPONIBLE')}
                                         </span>
                                     </div>
-                                    <div style="width: 100%; height: 4.5px; background: rgba(255,255,255,0.08); border-radius: 6px; overflow: hidden;">
-                                        <div id="event-progress-bar-${evt.id}" style="width: ${progress}%; height: 100%; background: ${progressColor}; box-shadow: 0 0 8px ${progressColor}55; transition: width 0.3s ease;"></div>
+
+                                    <!-- Línea 2 (Valor principal): 12 / 12 Plazas y Espera si aplica -->
+                                    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 4px; min-width: 0;">
+                                        <span id="event-players-label-${evt.id}" style="font-weight: 950; font-size: 0.85rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.2px;">
+                                            ${playerCount} / ${maxPlayers} Plazas
+                                        </span>
+                                        <div id="event-waitlist-label-${evt.id}">
+                                            ${(!isFinished && waitlist.length > 0) ? `<span style="font-size: 0.52rem; font-weight: 900; color: #eab308; text-transform: uppercase; line-height: 1;">+${waitlist.length} esp.</span>` : ''}
+                                        </div>
                                     </div>
-                                    <div id="event-waitlist-label-${evt.id}">
-                                        ${(!isFinished && waitlist.length > 0) ? `<div style="font-size: 0.56rem; font-weight: 900; color: #eab308; text-transform: uppercase; line-height: 1;">+${waitlist.length} en espera</div>` : ''}
+
+                                    <!-- Línea 3 (Progreso): Barra visual -->
+                                    <div style="width: 100%; height: 4px; background: rgba(255,255,255,0.08); border-radius: 6px; overflow: hidden; margin-top: 1px;">
+                                        <div id="event-progress-bar-${evt.id}" style="width: ${progress}%; height: 100%; background: ${progressColor}; box-shadow: 0 0 8px ${progressColor}55; transition: width 0.3s ease;"></div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- 📍 LOCATION & UNIFIED PRIMARY ACTION CTA -->
-                            <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 1px; gap: 8px;">
-                                <!-- Sede Oficial Box con GPS / Indicaciones directas -->
-                                <div class="${tileClass}" onclick="event.stopPropagation(); window.EventsController.openDirections('${(evt.sede || evt.location || 'Barcelona Pádel el Prat').replace(/'/g, "\\'")}')" 
-                                     title="Navegar por GPS al club (Google Maps / Apple Maps)"
-                                     style="display: flex; align-items: center; gap: 7px; background: rgba(255,255,255,0.05); padding: 7px 9px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.07); flex: 1; min-width: 0; cursor: pointer;"
-                                     onmouseover="this.style.borderColor='#38bdf8';"
-                                     onmouseout="this.style.borderColor='rgba(255,255,255,0.07)';">
-                                    <div style="width: 26px; height: 26px; background: ${locIconBg}; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                        <i class="fas fa-location-arrow" style="color: ${locIconColor}; font-size: 0.78rem;"></i>
-                                    </div>
-                                    <div style="display: flex; flex-direction: column; min-width: 0; overflow: hidden;">
-                                        <div style="display: flex; align-items: center; gap: 3px;">
-                                            <span style="font-size: 0.5rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.4px;">${(evt.is_external || evt.external || evt.organizer_type === 'external' || evt.origin === 'external') ? 'Club' : 'Sede Oficial'}</span>
-                                            <span style="font-size: 0.5rem; font-weight: 950; color: #38bdf8; text-transform: uppercase;">GPS ↗</span>
+                            <!-- 📍 LOCATION, GPS, CHAT & PRIMARY ACTION CTA (2-TIER RESPONSIVE ERGONOMIC LAYOUT) -->
+                            <div style="display: flex; flex-direction: column; gap: 7px; padding-top: 2px;">
+                                <!-- LÍNEA 1 (Utilidades): Sede Oficial con GPS + Botón Chat Directo -->
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%;">
+                                    <!-- Sede Oficial Box con GPS / Indicaciones directas -->
+                                    <div class="${tileClass}" onclick="event.stopPropagation(); window.EventsController.openDirections('${(evt.sede || evt.location || 'Barcelona Pádel el Prat').replace(/'/g, "\\'")}')" 
+                                         title="Navegar por GPS al club (Google Maps / Apple Maps)"
+                                         style="display: flex; align-items: center; gap: 7px; background: rgba(255,255,255,0.05); padding: 6px 9px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.07); flex: 1; min-width: 0; cursor: pointer; height: 36px; box-sizing: border-box;"
+                                         onmouseover="this.style.borderColor='#38bdf8';"
+                                         onmouseout="this.style.borderColor='rgba(255,255,255,0.07)';">
+                                        <div style="width: 24px; height: 24px; background: ${locIconBg}; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                            <i class="fas fa-location-arrow" style="color: ${locIconColor}; font-size: 0.72rem;"></i>
                                         </div>
-                                        <span style="font-size: 0.78rem; font-weight: 900; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${evt.sede || evt.location || 'Bcn Pádel'}</span>
+                                        <div style="display: flex; flex-direction: column; min-width: 0; overflow: hidden; justify-content: center;">
+                                            <div style="display: flex; align-items: center; gap: 3px; line-height: 1;">
+                                                <span style="font-size: 0.48rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.3px;">${(evt.is_external || evt.external || evt.organizer_type === 'external' || evt.origin === 'external') ? 'Club' : 'Sede'}</span>
+                                                <span style="font-size: 0.48rem; font-weight: 950; color: #38bdf8; text-transform: uppercase;">GPS ↗</span>
+                                            </div>
+                                            <span style="font-size: 0.74rem; font-weight: 900; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;">${evt.sede || evt.location || 'Bcn Pádel'}</span>
+                                        </div>
                                     </div>
+
+                                    <!-- 💬 CHAT DIRECTO DEL EVENTO -->
+                                    <button type="button" 
+                                            onclick="event.stopPropagation(); window.ChatView?.openEventChat({ id: '${evt.id}', name: '${(evt.name || '').replace(/'/g, "\\'")}', date: '${evt.date || ''}', category: '${evt.category || ''}', club: '${(evt.sede || evt.location || evt.club || '').replace(/'/g, "\\'")}', type: '${isEntreno ? 'entreno' : 'americana'}' });"
+                                            title="Abrir Chat de este evento"
+                                            style="background: rgba(204, 255, 0, 0.12); border: 1.2px solid #CCFF00; color: #CCFF00; border-radius: 12px; padding: 0 12px; height: 36px; font-weight: 950; font-size: 0.72rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 5px; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; box-sizing: border-box;"
+                                            onmouseover="this.style.background='rgba(204, 255, 0, 0.25)';"
+                                            onmouseout="this.style.background='rgba(204, 255, 0, 0.12)';">
+                                        <i class="fas fa-comment-dots" style="color: #CCFF00; font-size: 0.78rem;"></i>
+                                        <span>CHAT</span>
+                                    </button>
                                 </div>
 
-                                <!-- 💬 CHAT DIRECTO DEL EVENTO -->
-                                <button type="button" 
-                                        onclick="event.stopPropagation(); window.ChatView?.openEventChat({ id: '${evt.id}', name: '${(evt.name || '').replace(/'/g, "\\'")}', date: '${evt.date || ''}', category: '${evt.category || ''}', club: '${(evt.sede || evt.location || evt.club || '').replace(/'/g, "\\'")}', type: '${isEntreno ? 'entreno' : 'americana'}' });"
-                                        title="Abrir Chat de este evento"
-                                        style="background: rgba(204, 255, 0, 0.12); border: 1.5px solid #CCFF00; color: #CCFF00; border-radius: 12px; padding: 9px 13px; font-weight: 950; font-size: 0.75rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap; flex-shrink: 0;"
-                                        onmouseover="this.style.background='rgba(204, 255, 0, 0.25)';"
-                                        onmouseout="this.style.background='rgba(204, 255, 0, 0.12)';">
-                                    <i class="fas fa-comment-dots" style="color: #CCFF00; font-size: 0.82rem;"></i>
-                                    <span>CHAT</span>
-                                </button>
-
-                                <!-- ⚡ PRIMARY PRO ACTION BUTTON (Unifies FAB & Status Badge) -->
-                                <div style="display: flex; align-items: center; gap: 6px; position: relative; flex-shrink: 0;">
+                                <!-- LÍNEA 2 (Acción Principal de Juego / CTA Fila Completa) -->
+                                <div style="display: flex; align-items: stretch; gap: 7px; width: 100%; position: relative;">
                                     ${isLive ? `<div style="position: absolute; inset: -3px; border-radius: 14px; background: #FF2D55; opacity: 0.5; animation: status-breathe 1.2s ease-in-out infinite; filter: blur(4px); pointer-events: none;"></div>` : ''}
                                     ${!isLive && !isCancelled && !isFinished && !isJoined ? `<div style="position: absolute; inset: -2px; border-radius: 14px; background: ${categoryColor}; opacity: 0.25; animation: status-breathe 2.2s ease-in-out infinite; filter: blur(3px); pointer-events: none;"></div>` : ''}
-                                    
+
                                     ${(() => {
                                         if (isJoined) {
                                             return `
@@ -3949,30 +3967,35 @@
                                                         class="btn-neon-enter-pulse"
                                                         style="
                                                             position: relative;
+                                                            flex: 1 1 auto;
+                                                            min-width: 0;
+                                                            height: 42px;
                                                             background: linear-gradient(135deg, #CCFF00 0%, #a3e635 100%) !important;
                                                             color: #0b1329 !important;
-                                                            padding: 9px 13px;
+                                                            padding: 0 12px;
                                                             border-radius: 12px;
                                                             font-size: 0.74rem;
                                                             font-weight: 950;
                                                             font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
                                                             text-transform: uppercase;
-                                                            letter-spacing: 0.4px;
+                                                            letter-spacing: 0.3px;
                                                             display: flex;
                                                             align-items: center;
+                                                            justify-content: center;
                                                             gap: 5px;
                                                             border: none;
                                                             cursor: pointer;
                                                             box-shadow: 0 4px 16px rgba(204, 255, 0, 0.45);
                                                             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                                                            box-sizing: border-box;
                                                         "
-                                                        onmouseover="this.style.transform='scale(1.04)';"
+                                                        onmouseover="this.style.transform='scale(1.02)';"
                                                         onmouseout="this.style.transform='scale(1)';"
-                                                        onmousedown="this.style.transform='scale(0.95)';"
+                                                        onmousedown="this.style.transform='scale(0.97)';"
                                                 >
-                                                    <span style="font-size: 0.85rem;">🎾</span>
-                                                    <span style="color: #0b1329 !important; font-weight: 950;">${isEntreno ? 'ENTRAR AL ENTRENO' : 'ENTRAR AL TORNEO'}</span>
-                                                    <i class="fas fa-arrow-right" style="font-size: 0.65rem; color: #0b1329 !important;"></i>
+                                                    <span style="font-size: 0.85rem; flex-shrink: 0;">🎾</span>
+                                                    <span style="color: #0b1329 !important; font-weight: 950; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${isEntreno ? 'ENTRAR AL ENTRENO' : 'ENTRAR AL TORNEO'}</span>
+                                                    <i class="fas fa-arrow-right" style="font-size: 0.65rem; color: #0b1329 !important; flex-shrink: 0;"></i>
                                                 </button>
 
                                                 <!-- Botón Secundario: Estado INSCRITO / Baja -->
@@ -3982,27 +4005,31 @@
                                                         title="Estás dentro del evento. Toca para darte de baja si no puedes asistir"
                                                         style="
                                                             position: relative;
+                                                            flex: 0 0 auto;
+                                                            height: 42px;
                                                             background: rgba(34, 197, 94, 0.15) !important;
                                                             color: #4ade80 !important;
                                                             border: 1.2px solid rgba(34, 197, 94, 0.4) !important;
-                                                            padding: 9px 10px;
+                                                            padding: 0 12px;
                                                             border-radius: 12px;
                                                             font-size: 0.68rem;
                                                             font-weight: 900;
                                                             font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
                                                             text-transform: uppercase;
-                                                            letter-spacing: 0.4px;
+                                                            letter-spacing: 0.3px;
                                                             display: flex;
                                                             align-items: center;
+                                                            justify-content: center;
                                                             gap: 4px;
                                                             cursor: pointer;
                                                             white-space: nowrap;
                                                             transition: all 0.2s;
+                                                            box-sizing: border-box;
                                                         "
                                                         onmouseover="this.style.background='rgba(239, 68, 68, 0.2) !important'; this.style.borderColor='rgba(239, 68, 68, 0.5) !important'; this.style.color='#f87171 !important'; const s = this.querySelector('span'); if(s) s.innerText='BAJA';"
                                                         onmouseout="this.style.background='rgba(34, 197, 94, 0.15) !important'; this.style.borderColor='rgba(34, 197, 94, 0.4) !important'; this.style.color='#4ade80 !important'; const s = this.querySelector('span'); if(s) s.innerText='INSCRITO';"
                                                 >
-                                                    <i id="event-fab-icon-${evt.id}" class="fas fa-check-circle" style="font-size: 0.7rem; color: #4ade80 !important;"></i>
+                                                    <i id="event-fab-icon-${evt.id}" class="fas fa-check-circle" style="font-size: 0.72rem; color: #4ade80 !important;"></i>
                                                     <span id="event-fab-label-${evt.id}" style="color: #4ade80 !important; font-weight: 950;">INSCRITO</span>
                                                 </button>
                                             `;
@@ -4052,29 +4079,33 @@
                                                     aria-label="${btnLabel}"
                                                     style="
                                                         position: relative;
+                                                        width: 100%;
+                                                        height: 42px;
                                                         background: ${ctaBg} !important;
                                                         color: ${ctaTextColor} !important;
-                                                        padding: 9px 15px;
+                                                        padding: 0 16px;
                                                         border-radius: 12px;
-                                                        font-size: 0.75rem;
+                                                        font-size: 0.78rem;
                                                         font-weight: 950;
                                                         font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
                                                         text-transform: uppercase;
                                                         letter-spacing: 0.5px;
                                                         display: flex;
                                                         align-items: center;
+                                                        justify-content: center;
                                                         gap: 6px;
                                                         border: none;
                                                         cursor: pointer;
                                                         box-shadow: ${ctaShadow};
                                                         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                                                        box-sizing: border-box;
                                                         ${isLive ? 'animation: status-shake 0.5s ease-in-out infinite alternate;' : ''}
                                                     "
-                                                    onmouseover="this.style.transform='scale(1.04)';"
+                                                    onmouseover="this.style.transform='scale(1.02)';"
                                                     onmouseout="this.style.transform='scale(1)';"
-                                                    onmousedown="this.style.transform='scale(0.95)';">
-                                                <i id="event-fab-icon-${evt.id}" class="fas ${isLive ? 'fa-play' : btnIcon}" style="font-size: ${isLive ? '0.72rem' : '0.8rem'}; color: ${ctaTextColor} !important; font-weight: 900;"></i>
-                                                <span id="event-fab-label-${evt.id}" style="color: ${ctaTextColor} !important; font-weight: 950; letter-spacing: 0.5px;">${isLive ? 'VER EN DIRECTO' : btnLabel}</span>
+                                                    onmousedown="this.style.transform='scale(0.97)';">
+                                                <i id="event-fab-icon-${evt.id}" class="fas ${isLive ? 'fa-play' : btnIcon}" style="font-size: ${isLive ? '0.74rem' : '0.82rem'}; color: ${ctaTextColor} !important; font-weight: 900;"></i>
+                                                <span id="event-fab-label-${evt.id}" style="color: ${ctaTextColor} !important; font-weight: 950; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${isLive ? 'VER EN DIRECTO' : btnLabel}</span>
                                             </button>
                                         `;
                                     })()}
