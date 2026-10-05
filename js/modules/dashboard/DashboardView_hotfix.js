@@ -916,53 +916,91 @@
                          title="Abrir Chat General de SomosPadel"
                          style="
                             margin: 0 15px 16px;
-                            background: linear-gradient(135deg, #090e1a 0%, #17243c 100%);
+                            background: linear-gradient(135deg, #090e1a 0%, #15233c 100%);
                             border-radius: 20px;
-                            border: 1.5px solid #CCFF00;
-                            padding: 14px 16px;
+                            border: 1.5px solid rgba(204, 255, 0, 0.45);
+                            padding: 13px 15px;
                             display: flex;
                             align-items: center;
                             justify-content: space-between;
                             gap: 12px;
                             cursor: pointer;
-                            box-shadow: 0 8px 24px rgba(9, 14, 26, 0.35), 0 0 15px rgba(204, 255, 0, 0.2);
-                            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+                            box-shadow: 0 8px 24px rgba(9, 14, 26, 0.45), 0 0 16px rgba(204, 255, 0, 0.16);
+                            transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
                             position: relative;
                             overflow: hidden;
                          "
-                         onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 10px 28px rgba(9,14,26,0.4), 0 0 20px rgba(204,255,0,0.35)';"
-                         onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 8px 24px rgba(9, 14, 26, 0.35), 0 0 15px rgba(204, 255, 0, 0.2)';"
+                         onmouseover="this.style.transform='translateY(-2px) scale(1.01)'; this.style.borderColor='#CCFF00'; this.style.boxShadow='0 12px 30px rgba(9,14,26,0.5), 0 0 22px rgba(204,255,0,0.3)';"
+                         onmouseout="this.style.transform='none'; this.style.borderColor='rgba(204, 255, 0, 0.45)'; this.style.boxShadow='0 8px 24px rgba(9, 14, 26, 0.45), 0 0 16px rgba(204, 255, 0, 0.16)';"
                          onmousedown="this.style.transform='scale(0.98)';">
                         <!-- Efecto brillo de fondo -->
-                        <div style="position: absolute; right: -20px; top: -20px; width: 100px; height: 100px; background: rgba(204,255,0,0.12); filter: blur(30px); border-radius: 50%; pointer-events: none;"></div>
-                        <div style="display: flex; align-items: center; gap: 12px; min-width: 0; position: relative; z-index: 2;">
+                        <div style="position: absolute; right: -25px; top: -25px; width: 110px; height: 110px; background: radial-gradient(circle, rgba(204,255,0,0.18) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+                        
+                        <!-- Columna Izquierda: Icono + Textos -->
+                        <div style="display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; position: relative; z-index: 2;">
                             <div style="
-                                width: 48px;
-                                height: 48px;
-                                border-radius: 15px;
-                                background: rgba(204, 255, 0, 0.15);
+                                width: 46px;
+                                height: 46px;
+                                border-radius: 14px;
+                                background: linear-gradient(135deg, rgba(204, 255, 0, 0.2) 0%, rgba(204, 255, 0, 0.05) 100%);
                                 border: 1.5px solid #CCFF00;
                                 display: flex;
                                 align-items: center;
                                 justify-content: center;
                                 flex-shrink: 0;
-                                box-shadow: 0 0 12px rgba(204, 255, 0, 0.3);
+                                box-shadow: 0 0 14px rgba(204, 255, 0, 0.28);
+                                position: relative;
                             ">
-                                <i class="fas fa-comments" style="color: #CCFF00; font-size: 1.35rem;"></i>
+                                <i class="fas fa-comments" style="color: #CCFF00; font-size: 1.3rem;"></i>
+                                <span style="position: absolute; top: -3px; right: -3px; width: 9px; height: 9px; background: #22c55e; border: 2px solid #090e1a; border-radius: 50%; box-shadow: 0 0 6px #22c55e;"></span>
                             </div>
-                            <div style="min-width: 0; overflow: hidden;">
-                                <div style="display: flex; align-items: center; gap: 6px;">
-                                    <span style="color: #ffffff; font-weight: 1000; font-size: 0.92rem; text-transform: uppercase; letter-spacing: 0.3px;">CHAT GENERAL SOMOSPADEL</span>
-                                    <span style="background: #CCFF00; color: #000; font-size: 0.52rem; font-weight: 950; padding: 1.5px 6px; border-radius: 6px; letter-spacing: 0.4px;">WHATSAPP APP</span>
+                            <div style="min-width: 0; flex: 1; overflow: hidden;">
+                                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; overflow: hidden;">
+                                    <span style="color: #ffffff; font-weight: 950; font-size: 0.88rem; text-transform: uppercase; letter-spacing: 0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;">
+                                        CHAT GENERAL
+                                    </span>
+                                    <span style="
+                                        background: #CCFF00;
+                                        color: #090e1a;
+                                        font-size: 0.54rem;
+                                        font-weight: 950;
+                                        padding: 2.5px 7px;
+                                        border-radius: 6px;
+                                        letter-spacing: 0.4px;
+                                        white-space: nowrap;
+                                        flex-shrink: 0;
+                                        display: inline-flex;
+                                        align-items: center;
+                                        gap: 3.5px;
+                                        box-shadow: 0 1px 6px rgba(204, 255, 0, 0.3);
+                                    ">
+                                        <i class="fab fa-whatsapp" style="font-size: 0.62rem; color: #090e1a;"></i>
+                                        <span>CHAT APP</span>
+                                    </span>
                                 </div>
-                                <div style="color: #94a3b8; font-size: 0.72rem; font-weight: 600; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                    Habla con toda la comunidad • Propón partidos y retos
+                                <div style="color: #94a3b8; font-size: 0.70rem; font-weight: 600; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    Comunidad en directo • Retos y partidos
                                 </div>
                             </div>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 5px; flex-shrink: 0; position: relative; z-index: 2;">
-                            <span style="color: #CCFF00; font-size: 0.72rem; font-weight: 950; text-transform: uppercase; letter-spacing: 0.4px;">ENTRAR</span>
-                            <i class="fas fa-chevron-right" style="color: #CCFF00; font-size: 0.75rem;"></i>
+
+                        <!-- Columna Derecha: Botón Neón Entrar -->
+                        <div style="
+                            background: linear-gradient(135deg, #CCFF00 0%, #a3e635 100%);
+                            color: #090e1a;
+                            padding: 6px 11px;
+                            border-radius: 11px;
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 5px;
+                            flex-shrink: 0;
+                            position: relative;
+                            z-index: 2;
+                            box-shadow: 0 2px 10px rgba(204, 255, 0, 0.35);
+                            transition: transform 0.15s ease, box-shadow 0.15s ease;
+                        ">
+                            <span style="color: #090e1a !important; font-size: 0.70rem; font-weight: 950; text-transform: uppercase; letter-spacing: 0.4px; line-height: 1;">ENTRAR</span>
+                            <i class="fas fa-arrow-right" style="color: #090e1a !important; font-size: 0.65rem;"></i>
                         </div>
                     </div>
 

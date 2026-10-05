@@ -41,11 +41,11 @@
             }
         }
 
-        setProfileTab(tabName) {
+        setProfileTab(tabName, syncSubnav = true) {
             this.haptic(20);
             this.activeTab = tabName;
             this.activeSubnavTab = tabName;
-            if (window.SubnavManager && window.Router?.currentRoute === 'profile') {
+            if (syncSubnav && window.SubnavManager && (window.Router?.currentRoute === 'profile' || !window.Router?.currentRoute)) {
                 window.SubnavManager.renderProfile(tabName);
             }
             this.renderTabContent();
@@ -58,35 +58,43 @@
                 window.SubnavManager.renderProfile(tabId);
             }
 
+            const headerOffset = (parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-actual-height')) || 110) + 15;
+
             if (tabId === 'mi_posicion') {
-                const target = document.querySelector('.player-profile-wrapper') || document.getElementById('player-header-matches-count');
-                if (target) {
-                    try { target.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
-                }
+                // Desplazamiento suave al inicio del perfil donde se encuentra el nivel, estrellas y ELO
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             } else if (tabId === 'ai_performance') {
-                this.setProfileTab('ai_performance');
-                const body = document.getElementById('player-profile-tab-body');
-                if (body) {
-                    try { body.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
-                }
+                this.setProfileTab('ai_performance', false);
+                setTimeout(() => {
+                    const el = document.getElementById('player-profile-tab-body') || document.querySelector('.profile-tab-btn-pill');
+                    if (el) {
+                        const y = el.getBoundingClientRect().top + window.pageYOffset - headerOffset;
+                        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+                    }
+                }, 60);
             } else if (tabId === 'fut_card') {
-                this.setProfileTab('attributes');
                 const curUser = window.Store ? window.Store.getState('currentUser') : null;
                 if (window.PadelFutCard && typeof window.PadelFutCard.open === 'function') {
                     try { window.PadelFutCard.open(curUser || {}); } catch(e) { console.warn("Error opening PadelFutCard:", e); }
                 }
             } else if (tabId === 'attributes') {
-                this.setProfileTab('attributes');
-                const body = document.getElementById('player-profile-tab-body');
-                if (body) {
-                    try { body.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
-                }
+                this.setProfileTab('attributes', false);
+                setTimeout(() => {
+                    const el = document.getElementById('player-profile-tab-body') || document.querySelector('.profile-tab-btn-pill');
+                    if (el) {
+                        const y = el.getBoundingClientRect().top + window.pageYOffset - headerOffset;
+                        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+                    }
+                }, 60);
             } else if (tabId === 'achievements') {
-                this.setProfileTab('achievements');
-                const body = document.getElementById('player-profile-tab-body');
-                if (body) {
-                    try { body.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
-                }
+                this.setProfileTab('achievements', false);
+                setTimeout(() => {
+                    const el = document.getElementById('player-profile-tab-body') || document.querySelector('.profile-tab-btn-pill');
+                    if (el) {
+                        const y = el.getBoundingClientRect().top + window.pageYOffset - headerOffset;
+                        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+                    }
+                }, 60);
             }
         }
 

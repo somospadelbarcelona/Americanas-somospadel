@@ -90,7 +90,11 @@ class NotificationUi {
                 bell.classList.add('shake-animation');
             }
             if (drawerBadge) {
-                drawerBadge.style.display = 'inline-flex';
+                if (typeof drawerBadge.style?.setProperty === 'function') {
+                    drawerBadge.style.setProperty('display', 'inline-flex', 'important');
+                } else {
+                    drawerBadge.style.display = 'inline-flex';
+                }
                 drawerBadge.innerText = displayCount;
             }
             if (drawerBell) {
@@ -101,7 +105,14 @@ class NotificationUi {
         } else {
             if (badge) badge.style.display = 'none';
             if (bell) bell.classList.remove('shake-animation');
-            if (drawerBadge) drawerBadge.style.display = 'none';
+            if (drawerBadge) {
+                if (typeof drawerBadge.style?.setProperty === 'function') {
+                    drawerBadge.style.setProperty('display', 'none', 'important');
+                } else {
+                    drawerBadge.style.display = 'none';
+                }
+                drawerBadge.innerText = '';
+            }
             if (drawerBell) drawerBell.classList.remove('shake-animation');
         }
     }

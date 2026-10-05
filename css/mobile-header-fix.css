@@ -1072,16 +1072,16 @@ body {
     justify-content: center !important;
 }
 
-/* TÍTULOS DE FILAS: 100% VISIBLES EN BLANCO PURO CON TEXT-SHADOW Y SIN CORTES */
+/* TÍTULOS DE FILAS: TIPOGRAFÍA ELEGANTE, LEGIBLE Y NUNCA ASFIXIADA */
 .drawer-row-title {
     font-family: 'Outfit', sans-serif !important;
     font-size: 0.88rem !important;
-    font-weight: 850 !important;
-    color: #ffffff !important;
+    font-weight: 650 !important;
+    color: #f8fafc !important;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
     flex: 1 1 auto !important;
     min-width: 0 !important;
-    letter-spacing: -0.15px !important;
+    letter-spacing: -0.1px !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
@@ -1094,22 +1094,31 @@ body {
 @media (max-width: 380px) {
     .drawer-row-title {
         font-size: 0.82rem !important;
-        letter-spacing: -0.25px !important;
+        letter-spacing: -0.2px !important;
     }
 }
 
 .drawer-row-badge {
     flex-shrink: 0 !important;
     margin-left: auto !important;
-    padding: 2.5px 8px !important;
-    font-size: 0.68rem !important;
-    font-weight: 900 !important;
-    border-radius: 7px !important;
-    line-height: 1.15 !important;
+    padding: 2px 8px !important;
+    font-size: 0.65rem !important;
+    font-weight: 750 !important;
+    border-radius: 999px !important;
+    line-height: 1.2 !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    letter-spacing: 0.3px !important;
+    letter-spacing: 0.4px !important;
+}
+
+/* Blindaje: Si el badge tiene display: none inline o clase hidden, NUNCA debe forzarse como visible */
+.drawer-row-badge[style*="display: none"],
+.drawer-row-badge[style*="display:none"],
+.drawer-row-badge.hidden,
+#drawer-notif-badge[style*="display: none"],
+#drawer-notif-badge[style*="display:none"] {
+    display: none !important;
 }
 
 .drawer-row-chevron {
