@@ -33,6 +33,8 @@
                     }
                     this.executeControllerInit('RankingController', 'ranking');
                 },
+                'tienda': () => this.executeControllerInit('TiendaController', 'tienda'),
+                'shop': () => this.executeControllerInit('TiendaController', 'tienda'),
                 'clima': () => this.handleControllerTab('EventsController', 'meteo'),
                 'weather': () => this.handleControllerTab('EventsController', 'meteo'),
                 'meteo': () => this.handleControllerTab('EventsController', 'meteo'),
@@ -412,8 +414,9 @@
             const isAmericanas = ['events', 'americanas', 'finished_americanas', 'agenda_americanas', 'help_americanas', 'meteo', 'clima', 'weather'].includes(newRoute);
             const isRanking = ['ranking'].includes(newRoute);
             const isProfile = ['profile'].includes(newRoute);
+            const isTienda = ['tienda', 'shop'].includes(newRoute);
 
-            if (!isEntrenos && !isCommunity && !isAmericanas && !isRanking && !isProfile) {
+            if (!isEntrenos && !isCommunity && !isAmericanas && !isRanking && !isProfile && !isTienda) {
                 if (window.SubnavManager) window.SubnavManager.hide();
                 const comBar = document.getElementById('community-hub-bar');
                 if (comBar) comBar.remove();
@@ -429,6 +432,7 @@
                 { name: 'PlayerController', routes: ['profile'] },
                 { name: 'RecordsController', routes: ['records'] },
                 { name: 'RankingController', routes: ['ranking'] },
+                { name: 'TiendaController', routes: ['tienda', 'shop'] },
                 { name: 'TeamController', routes: ['teams', 'equipos', 'my_team'] },
                 { name: 'TournamentController', routes: ['tournaments'] }
             ];
@@ -482,6 +486,8 @@
                     effectiveRoute = 'entrenos';
                 } else if (['comunidad', 'community', 'agenda', 'help', 'finished', 'partidas_abiertas', 'equipos', 'teams', 'tournaments', 'my_team', 'records', 'inscriptions', 'inscripciones'].includes(route)) {
                     effectiveRoute = 'community';
+                } else if (['tienda', 'shop'].includes(route)) {
+                    effectiveRoute = 'tienda';
                 }
                 const isActive = navRoute === effectiveRoute;
                 btn.classList.toggle('active', isActive);

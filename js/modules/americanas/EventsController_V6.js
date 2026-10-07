@@ -2250,6 +2250,14 @@
                         .btn-neon-enter-pulse {
                             animation: neon-pulse-glow 2.2s ease-in-out infinite;
                         }
+                        @keyframes blue-pulse-glow {
+                            0% { box-shadow: 0 0 10px rgba(56, 189, 248, 0.35), 0 4px 14px rgba(2, 132, 199, 0.25); }
+                            50% { box-shadow: 0 0 22px rgba(56, 189, 248, 0.7), 0 6px 20px rgba(2, 132, 199, 0.45); }
+                            100% { box-shadow: 0 0 10px rgba(56, 189, 248, 0.35), 0 4px 14px rgba(2, 132, 199, 0.25); }
+                        }
+                        .btn-blue-enter-pulse {
+                            animation: blue-pulse-glow 2.2s ease-in-out infinite;
+                        }
                         .padel-ball-live {
                             animation: ball-physics 3s cubic-bezier(0.45, 0, 0.55, 1) infinite;
                         }
@@ -3466,39 +3474,8 @@
                                 </div>
                             </div>
 
-                            <!-- Right: Enter Button + Action Button + Expand Chevron -->
-                            <div style="display: flex; align-items: center; gap: 5px; flex-shrink: 0;">
-                                <!-- 🎾 Botón Directo para Entrar a Pistas / Evento -->
-                                <button type="button" 
-                                        onclick="event.stopPropagation(); window.EventsController.openLiveEvent('${evt.id}', '${evt.type || (isEntreno ? 'entreno' : 'americana')}');" 
-                                        title="Entrar a ver pistas, marcador y partidos en directo"
-                                        aria-label="Entrar al evento"
-                                        class="btn-neon-enter-pulse"
-                                        style="
-                                            background: linear-gradient(135deg, #CCFF00 0%, #a3e635 100%) !important;
-                                            color: #0b1329 !important;
-                                            border: none !important;
-                                            padding: 7px 9px;
-                                            border-radius: 11px;
-                                            font-size: 0.67rem;
-                                            font-weight: 950;
-                                            cursor: pointer;
-                                            text-transform: uppercase;
-                                            letter-spacing: 0.3px;
-                                            display: flex;
-                                            align-items: center;
-                                            gap: 4px;
-                                            box-shadow: 0 2px 10px rgba(204, 255, 0, 0.4);
-                                            transition: transform 0.15s ease;
-                                        "
-                                        onmouseover="this.style.transform='scale(1.05)';"
-                                        onmouseout="this.style.transform='scale(1)';"
-                                >
-                                    <span style="font-size: 0.72rem;">🎾</span>
-                                    <span style="white-space: nowrap; color: #0b1329 !important; font-weight: 950;">ENTRAR</span>
-                                    <i class="fas fa-arrow-right" style="font-size: 0.55rem; color: #0b1329 !important;"></i>
-                                </button>
-
+                            <!-- Right: Action Button + Expand Chevron -->
+                            <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
                                 <!-- Botón FAB de Inscripción / Gestión de Estado -->
                                 <button id="event-fab-${evt.id}" 
                                         onclick="event.stopPropagation(); ${fabAction}" 
@@ -3508,23 +3485,23 @@
                                             background: ${isFinished ? '#334155' : (isLive ? '#FF2D55' : (isJoined ? 'rgba(34, 197, 94, 0.15)' : (isGenderMismatch ? 'rgba(255, 255, 255, 0.08)' : (isFull ? '#eab308' : '#CCFF00'))))} !important;
                                             color: ${isFinished || isLive ? '#ffffff' : (isJoined ? '#4ade80' : (isGenderMismatch ? '#94a3b8' : '#000000'))} !important;
                                             border: ${isJoined ? '1px solid rgba(34, 197, 94, 0.4)' : (isGenderMismatch ? '1px solid rgba(255, 255, 255, 0.15)' : 'none')} !important;
-                                            padding: 7px 9px;
+                                            padding: 7px 11px;
                                             border-radius: 11px;
-                                            font-size: 0.65rem;
+                                            font-size: 0.67rem;
                                             font-weight: 950;
                                             cursor: pointer;
                                             text-transform: uppercase;
                                             letter-spacing: 0.3px;
                                             display: flex;
                                             align-items: center;
-                                            gap: 3.5px;
+                                            gap: 4px;
                                             box-shadow: ${isGenderMismatch || isJoined ? 'none' : '0 2px 10px rgba(0,0,0,0.3)'};
                                             transition: all 0.15s ease;
                                         "
                                         onmouseover="${isJoined ? "this.style.background='rgba(239, 68, 68, 0.2) !important'; this.style.color='#f87171 !important'; this.style.borderColor='rgba(239, 68, 68, 0.5) !important'; const lbl = this.querySelector('span'); if(lbl) lbl.innerText='BAJA';" : "this.style.transform='scale(1.04)';"}"
                                         onmouseout="${isJoined ? "this.style.background='rgba(34, 197, 94, 0.15) !important'; this.style.color='#4ade80 !important'; this.style.borderColor='rgba(34, 197, 94, 0.4) !important'; const lbl = this.querySelector('span'); if(lbl) lbl.innerText='INSCRITO';" : "this.style.transform='scale(1)';"}"
                                 >
-                                    <i id="event-fab-icon-${evt.id}" class="fas ${btnIcon}" style="font-size: 0.62rem; color: ${isFinished || isLive ? '#ffffff' : (isJoined ? '#4ade80' : (isGenderMismatch ? '#94a3b8' : '#000000'))} !important;"></i>
+                                    <i id="event-fab-icon-${evt.id}" class="fas ${btnIcon}" style="font-size: 0.65rem; color: ${isFinished || isLive ? '#ffffff' : (isJoined ? '#4ade80' : (isGenderMismatch ? '#94a3b8' : '#000000'))} !important;"></i>
                                     <span id="event-fab-label-${evt.id}" style="white-space: nowrap; color: ${isFinished || isLive ? '#ffffff' : (isJoined ? '#4ade80' : (isGenderMismatch ? '#94a3b8' : '#000000'))} !important;">${isFinished ? btnLabel : (isCancelled ? 'ANULADO' : (isLive ? 'LIVE' : (isGenderMismatch && !isJoined ? btnLabel : (btnLabel === 'CLAVE ACCESO 🔒' ? 'CLAVE' : (isJoined ? 'INSCRITO' : (isFull && !isJoined ? 'ESPERA' : 'UNIRME'))))))}</span>
                                 </button>
 
@@ -3999,27 +3976,105 @@
                                             ctaShadow = '0 4px 14px rgba(204, 255, 0, 0.4)';
                                         }
 
+                                        if (isCancelled || isFinished || evt.status === 'finished') {
+                                            return `
+                                                <button id="event-fab-${evt.id}" 
+                                                        onclick="event.stopPropagation(); ${fabAction}"
+                                                        aria-label="${btnLabel}"
+                                                        style="
+                                                            position: relative;
+                                                            width: 100%;
+                                                            height: 42px;
+                                                            background: ${ctaBg} !important;
+                                                            color: ${ctaTextColor} !important;
+                                                            padding: 0 16px;
+                                                            border-radius: 12px;
+                                                            font-size: 0.78rem;
+                                                            font-weight: 950;
+                                                            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+                                                            text-transform: uppercase;
+                                                            letter-spacing: 0.5px;
+                                                            display: flex;
+                                                            align-items: center;
+                                                            justify-content: center;
+                                                            gap: 6px;
+                                                            border: none;
+                                                            cursor: pointer;
+                                                            box-shadow: ${ctaShadow};
+                                                            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                                                            box-sizing: border-box;
+                                                        "
+                                                        onmouseover="this.style.transform='scale(1.02)';"
+                                                        onmouseout="this.style.transform='scale(1)';"
+                                                        onmousedown="this.style.transform='scale(0.97)';">
+                                                    <i id="event-fab-icon-${evt.id}" class="fas ${btnIcon}" style="font-size: 0.82rem; color: ${ctaTextColor} !important; font-weight: 900;"></i>
+                                                    <span id="event-fab-label-${evt.id}" style="color: ${ctaTextColor} !important; font-weight: 950; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${btnLabel}</span>
+                                                </button>
+                                            `;
+                                        }
+
                                         return `
+                                            <!-- Botón Principal: ENTRAR AL ENTRENO / TORNEO (Azul Eléctrico Pista para diferenciarse claramente de APUNTARME) -->
+                                            <button type="button" 
+                                                    onclick="event.stopPropagation(); window.EventsController.openLiveEvent('${evt.id}', '${evt.type || (isEntreno ? 'entreno' : 'americana')}');"
+                                                    title="Entrar a ver pistas, marcador y partidos en directo"
+                                                    aria-label="Entrar al evento"
+                                                    class="btn-blue-enter-pulse"
+                                                    style="
+                                                        position: relative;
+                                                        flex: 1 1 auto;
+                                                        min-width: 0;
+                                                        height: 42px;
+                                                        background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%) !important;
+                                                        color: #ffffff !important;
+                                                        padding: 0 12px;
+                                                        border-radius: 12px;
+                                                        font-size: 0.74rem;
+                                                        font-weight: 950;
+                                                        font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+                                                        text-transform: uppercase;
+                                                        letter-spacing: 0.3px;
+                                                        display: flex;
+                                                        align-items: center;
+                                                        justify-content: center;
+                                                        gap: 5px;
+                                                        border: none;
+                                                        cursor: pointer;
+                                                        box-shadow: 0 4px 16px rgba(56, 189, 248, 0.45);
+                                                        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                                                        box-sizing: border-box;
+                                                    "
+                                                    onmouseover="this.style.transform='scale(1.02)';"
+                                                    onmouseout="this.style.transform='scale(1)';"
+                                                    onmousedown="this.style.transform='scale(0.97)';"
+                                            >
+                                                <span style="font-size: 0.85rem; flex-shrink: 0;">🎾</span>
+                                                <span style="color: #ffffff !important; font-weight: 950; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${isEntreno ? 'ENTRAR AL ENTRENO' : 'ENTRAR AL TORNEO'}</span>
+                                                <i class="fas fa-arrow-right" style="font-size: 0.65rem; color: #ffffff !important; flex-shrink: 0;"></i>
+                                            </button>
+
+                                            <!-- Botón CTA de Acción / Inscripción -->
                                             <button id="event-fab-${evt.id}" 
                                                     onclick="event.stopPropagation(); ${fabAction}"
                                                     aria-label="${btnLabel}"
                                                     style="
                                                         position: relative;
-                                                        width: 100%;
+                                                        flex: 1 1 auto;
+                                                        min-width: 0;
                                                         height: 42px;
                                                         background: ${ctaBg} !important;
                                                         color: ${ctaTextColor} !important;
-                                                        padding: 0 16px;
+                                                        padding: 0 12px;
                                                         border-radius: 12px;
-                                                        font-size: 0.78rem;
+                                                        font-size: 0.74rem;
                                                         font-weight: 950;
                                                         font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
                                                         text-transform: uppercase;
-                                                        letter-spacing: 0.5px;
+                                                        letter-spacing: 0.3px;
                                                         display: flex;
                                                         align-items: center;
                                                         justify-content: center;
-                                                        gap: 6px;
+                                                        gap: 5px;
                                                         border: none;
                                                         cursor: pointer;
                                                         box-shadow: ${ctaShadow};
@@ -4031,7 +4086,7 @@
                                                     onmouseout="this.style.transform='scale(1)';"
                                                     onmousedown="this.style.transform='scale(0.97)';">
                                                 <i id="event-fab-icon-${evt.id}" class="fas ${isLive ? 'fa-play' : btnIcon}" style="font-size: ${isLive ? '0.74rem' : '0.82rem'}; color: ${ctaTextColor} !important; font-weight: 900;"></i>
-                                                <span id="event-fab-label-${evt.id}" style="color: ${ctaTextColor} !important; font-weight: 950; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${isLive ? 'VER EN DIRECTO' : btnLabel}</span>
+                                                <span id="event-fab-label-${evt.id}" style="color: ${ctaTextColor} !important; font-weight: 950; letter-spacing: 0.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${isLive ? 'VER EN DIRECTO' : btnLabel}</span>
                                             </button>
                                         `;
                                     })()}
@@ -4040,6 +4095,32 @@
                                     <span id="event-status-badge-${evt.id}" style="display: none;"></span>
                                 </div>
                             </div>
+
+                            <!-- 🛍️ INTEGRACIÓN CON TIENDA SOMOSPADEL BCN (Patrocinador & Material Oficial) -->
+                            ${(() => {
+                                const sponsorName = evt.sponsor || evt.patrocinador || 'Bullpadel & HEAD España';
+                                const ballOfficial = evt.official_ball || evt.pelota_oficial || 'HEAD Padel Pro S';
+                                return `
+                                    <div class="sp-event-sponsor-box" onclick="event.stopPropagation(); window.Router && window.Router.navigate('tienda');" style="cursor: pointer; margin: 10px 0 0 0;" title="Toca para ver ofertas y material oficial en la Tienda">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 4px;">
+                                            <div class="sp-event-sponsor-header" style="margin: 0; font-size: 0.72rem; color: #CCFF00;">
+                                                <i class="fas fa-handshake"></i> Patrocinado por <strong>${sponsorName}</strong>
+                                            </div>
+                                            <span style="font-size: 0.62rem; color: #00F0FF; font-weight: 850; background: rgba(0,240,255,0.12); padding: 2px 7px; border-radius: 6px;">
+                                                🎾 PELOTA OFICIAL: ${ballOfficial}
+                                            </span>
+                                        </div>
+                                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                                            <span style="font-size: 0.7rem; color: #cbd5e1; font-weight: 600;">
+                                                <i class="fas fa-bag-shopping" style="color: #10B981;"></i> Productos recomendados para este evento (descuento exclusivo)
+                                            </span>
+                                            <span style="font-size: 0.68rem; color: #10B981; font-weight: 900; display: flex; align-items: center; gap: 4px;">
+                                                Ver en Tienda <i class="fas fa-arrow-right" style="font-size: 0.6rem;"></i>
+                                            </span>
+                                        </div>
+                                    </div>
+                                `;
+                            })()}
                         </div>
                     </div>
                 </div>

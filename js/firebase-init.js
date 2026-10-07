@@ -458,58 +458,154 @@ const FirebaseDB = {
 
         async getByPhone(phone) {
             if (!phone) return null;
-            const cleanPhone = String(phone).trim().replace(/\D/g, '');
-            if (!cleanPhone) return null;
+            const raw = String(phone).trim();
+            const cleanDigits = raw.replace(/\D/g, '');
+            if (!cleanDigits && !raw) return null;
 
-            // 1. VÍA RÁPIDA: Búsqueda directa por ID (u_<teléfono>) utilizada en la mayoría de cuentas
-            try {
-                const currentDb = window.db || db;
-                if (currentDb) {
-                    const directDoc = await safeFirestoreGet(currentDb.collection('players').doc('u_' + cleanPhone), null, 4000);
+            // Variantes telefónicas prioritarias (+34, 34, 9 dígitos estándar)
+            const variants = new Set();
+            if (cleanDigits) {
+                variants.add(cleanDigits);
+                if (cleanDigits.length === 11 && cleanDigits.startsWith('34')) {
+                    variants.add(cleanDigits.substring(2)); // Los 9 dígitos nacionales
+                } else if (cleanDigits.length === 9) {
+                    variants.add('34' + cleanDigits);      // Con prefijo 34
+                    variants.add('+34' + cleanDigits);     // Con prefijo +34
+                } else if (cleanDigits.length > 11 && cleanDigits.startsWith('0034')) {
+                    variants.add(cleanDigits.substring(4));
+                }
+            }
+            if (raw && !variants.has(raw)) variants.add(raw);
+
+            const currentDb = window.db || db;
+            if (!currentDb) return null;
+
+            // 1. VÍA RÁPIDA: Búsqueda directa por ID (u_<variante>)
+            for (const v of variants) {
+                try {
+                    const directDoc = await safeFirestoreGet(currentDb.collection('players').doc('u_' + v), null, 3000);
                     if (directDoc && directDoc.exists) {
                         return { id: directDoc.id, ...directDoc.data() };
                     }
+                    const rawDoc = await safeFirestoreGet(currentDb.collection('players').doc(v), null, 3000);
+                    if (rawDoc && rawDoc.exists) {
+                        return { id: rawDoc.id, ...rawDoc.data() };
+                    }
+                } catch (e) {
+                    // Ignorar fallo puntual de lectura directa
                 }
-            } catch (directErr) {
-                console.warn("⚠️ [getByPhone] Búsqueda directa u_" + cleanPhone + " diferida:", directErr?.message);
             }
 
-            // 2. Consulta en Firestore por campo 'phone'
-            let snapshot;
-            try {
-                const currentDb = window.db || db;
-                snapshot = await safeFirestoreGet(
-                    currentDb.collection('players')
-                        .where('phone', '==', cleanPhone)
-                        .limit(1),
-                    null,
-                    5000
-                );
-            } catch (err) {
-                console.warn("⚠️ [getByPhone] Fallo al buscar jugador por teléfono:", err);
-                throw err;
-            }
-
-            // Fallback: Si no se encuentra y es numérico, probar como tipo Number
-            if (snapshot.empty && !isNaN(cleanPhone) && cleanPhone !== '') {
+            // 2. Consulta en Firestore por campo 'phone' para cada variante
+            for (const v of variants) {
                 try {
-                    const currentDb = window.db || db;
-                    snapshot = await safeFirestoreGet(
-                        currentDb.collection('players')
-                            .where('phone', '==', Number(cleanPhone))
-                            .limit(1),
+                    let snapshot = await safeFirestoreGet(
+                        currentDb.collection('players').where('phone', '==', v).limit(1),
                         null,
                         4000
                     );
+                    if (snapshot && !snapshot.empty) {
+                        const doc = snapshot.docs[0];
+                        return { id: doc.id, ...doc.data() };
+                    }
+
+                    // Fallback como Number si es estrictamente numérico
+                    if (!isNaN(v) && v !== '') {
+                        snapshot = await safeFirestoreGet(
+                            currentDb.collection('players').where('phone', '==', Number(v)).limit(1),
+                            null,
+                            3000
+                        );
+                        if (snapshot && !snapshot.empty) {
+                            const doc = snapshot.docs[0];
+                            return { id: doc.id, ...doc.data() };
+                        }
+                    }
                 } catch (err) {
-                    console.warn("⚠️ [getByPhone] Fallo al buscar por teléfono numérico:", err);
-                    throw err;
+                    console.warn(`⚠️ [getByPhone] Error consultando variante ${v}:`, err?.message);
                 }
             }
 
-            if (snapshot.empty) return null;
-            const doc = snapshot.docs[0];
-            return { id: doc.id, ...doc.data() };
+            // 3. Fallback de caché local si está disponible en memoria
+            const cachedUsers = window.allUsersCache || (window.CacheService ? window.CacheService.get('players', 'all') : null);
+            if (Array.isArray(cachedUsers)) {
+                for (const u of cachedUsers) {
+                    const uPhoneDigits = String(u.phone || '').replace(/\D/g, '');
+                    for (const v of variants) {
+                        const vDigits = String(v).replace(/\D/g, '');
+                        if (uPhoneDigits && vDigits && (uPhoneDigits === vDigits || (uPhoneDigits.length === 9 && vDigits.endsWith(uPhoneDigits)) || (vDigits.length === 9 && uPhoneDigits.endsWith(vDigits)))) {
+                            return u;
+                        }
+                    }
+                }
+            }
+
+            return null;
+        },
+
+        async getByIdentifier(identifier) {
+            if (!identifier) return null;
+            const clean = String(identifier).trim();
+            if (!clean) return null;
+
+            // Si contiene dígitos suficientes, probar primero como teléfono
+            const digits = clean.replace(/\D/g, '');
+            if (digits.length >= 6) {
+                const byPhone = await this.getByPhone(clean);
+                if (byPhone) return byPhone;
+            }
+
+            const currentDb = window.db || db;
+            if (!currentDb) return null;
+
+            // Si es un email
+            if (clean.includes('@')) {
+                try {
+                    const emailSnap = await safeFirestoreGet(
+                        currentDb.collection('players').where('email', '==', clean.toLowerCase()).limit(1),
+                        null,
+                        4000
+                    );
+                    if (emailSnap && !emailSnap.empty) {
+                        const doc = emailSnap.docs[0];
+                        return { id: doc.id, ...doc.data() };
+                    }
+                } catch (_) {}
+            }
+
+            // Buscar por nombre exacto o como ID de documento
+            try {
+                const docDirect = await safeFirestoreGet(currentDb.collection('players').doc(clean), null, 3000);
+                if (docDirect && docDirect.exists) {
+                    return { id: docDirect.id, ...docDirect.data() };
+                }
+            } catch (_) {}
+
+            try {
+                const nameSnap = await safeFirestoreGet(
+                    currentDb.collection('players').where('name', '==', clean).limit(1),
+                    null,
+                    4000
+                );
+                if (nameSnap && !nameSnap.empty) {
+                    const doc = nameSnap.docs[0];
+                    return { id: doc.id, ...doc.data() };
+                }
+            } catch (_) {}
+
+            // Búsqueda en caché local por nombre (case-insensitive)
+            const cachedUsers = window.allUsersCache || (window.CacheService ? window.CacheService.get('players', 'all') : null);
+            if (Array.isArray(cachedUsers)) {
+                const targetLower = clean.toLowerCase();
+                const matched = cachedUsers.find(u => {
+                    const uName = String(u.name || '').toLowerCase();
+                    const uEmail = String(u.email || '').toLowerCase();
+                    return uName === targetLower || uEmail === targetLower;
+                });
+                if (matched) return matched;
+            }
+
+            return null;
         },
 
         async create(data) {

@@ -292,6 +292,8 @@
     <link rel="stylesheet" href="css/mobile-header-fix.css?v=2026.6.0">
     <link rel="stylesheet" href="css/responsive-global.css?v=2026.6.0">
     <link rel="stylesheet" href="css/sp-chat-modal.css?v=2026.6.0">
+    <link rel="stylesheet" href="css/tienda.css?v=20261007_v2">
+    <link rel="stylesheet" href="css/side-drawer-pro.css?v=3.0.0">
 
     <script>
         // registry initialization
@@ -299,7 +301,7 @@
         // Comprobación ultrarrápida de sesión para evitar parpadeo del login en el arranque
         try {
             var _cached = localStorage.getItem('currentUser');
-            if (_cached && _cached !== 'null') {
+            if (_cached && _cached !== 'null' && _cached !== 'undefined' && _cached.length > 5) {
                 document.documentElement.classList.add('has-session');
             }
         } catch(e) {}
@@ -710,7 +712,12 @@
                         <i class="fas fa-bars"></i>
                     </div>
 
-                    <div class="cmd-brand header-ball-brand" style="display: flex; align-items: center; cursor: pointer; flex-shrink: 0; min-width: fit-content;" onclick="window.scrollTo({top: 0, behavior: 'smooth'});">
+                    <div class="cmd-brand header-ball-brand haptic-feedback"
+                        style="display: flex; align-items: center; cursor: pointer; flex-shrink: 0; min-width: fit-content;"
+                        title="Ir a Inicio"
+                        role="button"
+                        aria-label="Ir a Inicio SomosPadel"
+                        onclick="window.goToHome ? window.goToHome() : (window.Router && window.Router.navigate('dashboard', false, true), window.scrollTo({top: 0, behavior: 'smooth'}));">
                         <div style="display: flex; flex-direction: column; align-items: center; gap: 1px; flex-shrink: 0;">
                             <img src="img/logo_somospadel.png?v=61.0"
                                  id="header-somospadel-ball-logo"
@@ -825,6 +832,18 @@
                                 <i class="fas fa-chevron-right user-dropdown-item-arrow"></i>
                             </button>
 
+                            <!-- 🛍️ Tienda SomosPadel BCN (Sección Principal) -->
+                            <button type="button" class="user-dropdown-item haptic-feedback" onclick="window.Router && window.Router.navigate('tienda'); window._toggleUserDropdown(event)">
+                                <div class="user-dropdown-item-icon" style="background: rgba(16, 185, 129, 0.15); color: #10B981;">
+                                    <i class="fas fa-store"></i>
+                                </div>
+                                <div class="user-dropdown-item-content">
+                                    <span class="user-dropdown-item-title">Tienda SomosPadel BCN</span>
+                                    <span class="user-dropdown-item-subtitle">En construcción • Muy pronto disponible</span>
+                                </div>
+                                <span style="background: #fef08a; color: #713f12; font-size: 0.65rem; font-weight: 950; padding: 2px 7px; border-radius: 6px; letter-spacing: 0.5px;">PRONTO</span>
+                            </button>
+
                             <button type="button" class="user-dropdown-item haptic-feedback" onclick="window._closeUserDropdown && window._closeUserDropdown(); window.PadelFutCard && window.PadelFutCard.open()">
                                 <div class="user-dropdown-item-icon" style="background: rgba(251, 191, 36, 0.15); color: #fbbf24;">
                                     <i class="fas fa-id-card"></i>
@@ -892,6 +911,60 @@
                 </div>
 
                 <script>
+                    window.goToHome = function () {
+                        try {
+                            if (window.PlayerView?.haptic) {
+                                window.PlayerView.haptic(20);
+                            }
+                            // 1. Cerrar menú lateral (side drawer)
+                            if (typeof window.closeDrawer === 'function') {
+                                window.closeDrawer();
+                            } else {
+                                const drawer = document.getElementById('side-drawer-container');
+                                const menu = document.getElementById('side-drawer-menu');
+                                if (drawer) drawer.classList.remove('open');
+                                if (menu) menu.classList.remove('open');
+                            }
+                            // 2. Cerrar dropdown de perfil de usuario
+                            if (typeof window._closeUserDropdown === 'function') {
+                                window._closeUserDropdown();
+                            } else {
+                                const container = document.getElementById('user-dropdown-container');
+                                const backdrop = document.getElementById('user-dropdown-backdrop');
+                                if (container) container.classList.remove('open');
+                                if (backdrop) backdrop.classList.remove('active');
+                            }
+                            // 3. Cerrar popup de comunidad si está activo
+                            if (typeof window.closeCommunityMenu === 'function') {
+                                window.closeCommunityMenu();
+                            }
+                            // 4. Cerrar modales o capas emergentes (sin tocar auth-modal)
+                            const tickerModal = document.getElementById('sp-smart-ticker-modal');
+                            if (tickerModal) tickerModal.remove();
+                            const tickerBackdrop = document.getElementById('sp-ticker-backdrop');
+                            if (tickerBackdrop) tickerBackdrop.remove();
+
+                            document.querySelectorAll('.modal-overlay.open, .modal-overlay.active, .sp-modal-overlay.open, .sp-modal.open').forEach(el => {
+                                if (el.id !== 'auth-modal') {
+                                    el.classList.remove('open', 'active');
+                                    if (el.style) el.style.display = 'none';
+                                }
+                            });
+
+                            // 5. Navegar a la sección INICIO (dashboard)
+                            if (window.Router && typeof window.Router.navigate === 'function') {
+                                window.Router.navigate('dashboard', false, true);
+                            }
+
+                            // 6. Scroll arriba
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        } catch (e) {
+                            console.warn('[Header Brand] Error al ir a Inicio:', e);
+                            if (window.Router) window.Router.navigate('dashboard', false, true);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }
+                    };
+
                     window._closeUserDropdown = function () {
                         const container = document.getElementById('user-dropdown-container');
                         const backdrop = document.getElementById('user-dropdown-backdrop');
@@ -1100,7 +1173,8 @@
 
                 /* Contenedores de scroll horizontal */
                 .events-submenu-pro-bar,
-                .community-submenu-pro-bar {
+                .community-submenu-pro-bar,
+                .tienda-submenu-pro-bar {
                     display: flex;
                     align-items: center;
                     gap: 8px;
@@ -1115,7 +1189,8 @@
                 }
                 .events-submenu-pro-bar::-webkit-scrollbar,
                 .community-submenu-pro-bar::-webkit-scrollbar,
-                .entrenos-submenu-bar::-webkit-scrollbar {
+                .entrenos-submenu-bar::-webkit-scrollbar,
+                .tienda-submenu-pro-bar::-webkit-scrollbar {
                     display: none !important;
                     width: 0 !important;
                     height: 0 !important;
@@ -1955,6 +2030,137 @@
                 }
 
                 /* ==========================================================================
+                   SUBMENÚ TIENDA PRO (Teal / Verde Azulado de Alta Definición Luxury)
+                   MISMO TAMAÑO, LARGO, ANCHO Y ESTRUCTURA CON FLECHAS Y PÍLDORAS
+                   ========================================================================== */
+                .subnav-app-bar.subnav-theme-tienda {
+                    background: linear-gradient(135deg, #0d9488 0%, #0f766e 28%, #115e59 62%, #042f2e 100%) !important;
+                    border-top: 1.5px solid rgba(255, 255, 255, 0.45) !important;
+                    border-bottom: 2.5px solid rgba(4, 47, 46, 0.75) !important;
+                    border-image: none !important;
+                    box-shadow: 0 8px 25px rgba(13, 148, 136, 0.45), 0 3px 10px rgba(0, 0, 0, 0.3) !important;
+                    position: relative !important;
+                }
+
+                .subnav-app-bar.subnav-theme-tienda::before {
+                    background: radial-gradient(ellipse at 50% 0%, rgba(94, 234, 212, 0.45) 0%, rgba(20, 184, 166, 0.15) 45%, transparent 75%) !important;
+                    opacity: 0.85 !important;
+                }
+
+                /* Flechas de navegación en tema Tienda */
+                .subnav-app-bar.subnav-theme-tienda .subnav-nav-arrow {
+                    background: linear-gradient(145deg, #042f2e 0%, #0f766e 100%) !important;
+                    border: 1.5px solid #2dd4bf !important;
+                    color: #2dd4bf !important;
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(45, 212, 191, 0.35) !important;
+                    backdrop-filter: blur(10px) !important;
+                    -webkit-backdrop-filter: blur(10px) !important;
+                    transition: all 0.24s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+                }
+                .subnav-app-bar.subnav-theme-tienda .subnav-nav-arrow:hover {
+                    background: #042f2e !important;
+                    border-color: #5eead4 !important;
+                    color: #ffffff !important;
+                    box-shadow: 0 0 20px rgba(45, 212, 191, 0.95), 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+                    transform: scale(1.14) !important;
+                }
+                .subnav-app-bar.subnav-theme-tienda .subnav-nav-arrow:active {
+                    transform: scale(0.92) !important;
+                }
+
+                /* Botón Inactivo en tema Tienda - Dark Teal Cyber Glass */
+                .subnav-app-bar.subnav-theme-tienda .esm-pro-btn.inactive {
+                    background: linear-gradient(145deg, rgba(4, 47, 46, 0.92) 0%, rgba(15, 118, 110, 0.95) 100%) !important;
+                    color: #ffffff !important;
+                    border: 1.5px solid rgba(45, 212, 191, 0.35) !important;
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.38), inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
+                    backdrop-filter: blur(14px) !important;
+                    -webkit-backdrop-filter: blur(14px) !important;
+                    font-weight: 850 !important;
+                    letter-spacing: 0.35px !important;
+                    text-shadow: 0 1px 2px #042f2e !important;
+                    transition: all 0.26s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+                }
+
+                /* Iluminación cromática temática en los iconos de Tienda */
+                .subnav-app-bar.subnav-theme-tienda .esm-pro-btn.inactive i {
+                    color: #5eead4 !important;
+                    transition: transform 0.22s ease, color 0.22s ease, filter 0.22s ease;
+                    filter: drop-shadow(0 0 6px rgba(94, 234, 212, 0.6));
+                }
+                .subnav-app-bar.subnav-theme-tienda button[data-tab-id="ofertas"].inactive i {
+                    color: #facc15 !important;
+                    filter: drop-shadow(0 0 7px rgba(250, 204, 21, 0.8));
+                }
+                .subnav-app-bar.subnav-theme-tienda button[data-tab-id="cesta"].inactive i {
+                    color: #a7f3d0 !important;
+                    filter: drop-shadow(0 0 7px rgba(167, 243, 208, 0.8));
+                }
+
+                /* Hover & Touch Interactivo WOW en Tienda */
+                .subnav-app-bar.subnav-theme-tienda .esm-pro-btn.inactive:hover {
+                    background: linear-gradient(145deg, rgba(13, 148, 136, 0.98) 0%, rgba(15, 118, 110, 1) 100%) !important;
+                    color: #ffffff !important;
+                    border-color: #5eead4 !important;
+                    transform: translateY(-2.5px) scale(1.05) !important;
+                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 16px rgba(45, 212, 191, 0.5) !important;
+                }
+                .subnav-app-bar.subnav-theme-tienda .esm-pro-btn.inactive:hover i {
+                    transform: scale(1.18);
+                    color: #ffffff !important;
+                }
+                .subnav-app-bar.subnav-theme-tienda .esm-pro-btn.inactive:active {
+                    transform: scale(0.96) !important;
+                }
+
+                /* Botón Activo en tema Tienda - Aguamarina Neón Luminoso */
+                .subnav-app-bar.subnav-theme-tienda .esm-pro-btn.active {
+                    background: linear-gradient(135deg, #2dd4bf 0%, #14b8a6 100%) !important;
+                    color: #042f2e !important;
+                    font-weight: 950 !important;
+                    border: 2px solid #ffffff !important;
+                    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.4), 0 0 22px rgba(45, 212, 191, 0.9), inset 0 2px 2px #ffffff !important;
+                    transform: translateY(-1px) scale(1.06) !important;
+                    text-shadow: none !important;
+                    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+                }
+                .subnav-app-bar.subnav-theme-tienda .esm-pro-btn.active i {
+                    color: #042f2e !important;
+                    transform: scale(1.15) !important;
+                    filter: drop-shadow(0 0 6px rgba(4, 47, 46, 0.35)) !important;
+                }
+
+                /* Badges dentro de los botones en tema Tienda */
+                .subnav-app-bar.subnav-theme-tienda .esm-pro-btn.active .subnav-micro-badge {
+                    background: #042f2e !important;
+                    color: #2dd4bf !important;
+                    border: 1px solid rgba(4, 47, 46, 0.5) !important;
+                    font-weight: 950 !important;
+                    box-shadow: 0 2px 8px rgba(4, 47, 46, 0.35) !important;
+                }
+                .subnav-app-bar.subnav-theme-tienda .esm-pro-btn.inactive .subnav-micro-badge {
+                    background: rgba(45, 212, 191, 0.22) !important;
+                    color: #ccfbf1 !important;
+                    border: 1px solid rgba(45, 212, 191, 0.45) !important;
+                    font-weight: 950 !important;
+                    box-shadow: 0 0 8px rgba(45, 212, 191, 0.25) !important;
+                }
+                .subnav-app-bar.subnav-theme-tienda .esm-pro-btn .subnav-micro-badge.badge-teal-fire {
+                    background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%) !important;
+                    color: #ffffff !important;
+                    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+                    box-shadow: 0 0 10px rgba(245, 158, 11, 0.6) !important;
+                    font-weight: 950 !important;
+                }
+                .subnav-app-bar.subnav-theme-tienda .esm-pro-btn .subnav-micro-badge.badge-teal-cart {
+                    background: linear-gradient(135deg, #CCFF00 0%, #10b981 100%) !important;
+                    color: #042f2e !important;
+                    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+                    box-shadow: 0 0 10px rgba(204, 255, 0, 0.6) !important;
+                    font-weight: 950 !important;
+                }
+
+                /* ==========================================================================
                    BOTONES Y SECCIÓN COMUNIDAD EN EL MENÚ LATERAL (Side Drawer VIP Hub)
                    ========================================================================== */
                 .drawer-community-section {
@@ -2035,7 +2241,7 @@
                     scroll: function(direction) {
                         if (window.PlayerView?.haptic) window.PlayerView.haptic(12);
                         this.pauseBanner(5500);
-                        const bar = document.querySelector('#subnav-app-bar .events-submenu-pro-bar, #subnav-app-bar .community-submenu-pro-bar');
+                        const bar = document.querySelector('#subnav-app-bar .events-submenu-pro-bar, #subnav-app-bar .community-submenu-pro-bar, #subnav-app-bar .tienda-submenu-pro-bar');
                         if (bar) {
                             const offset = direction === 'left' ? -240 : 240;
                             bar.scrollBy({ left: offset, behavior: 'smooth' });
@@ -2108,7 +2314,7 @@
                     },
 
                     updateArrows: function() {
-                        const bar = document.querySelector('#subnav-app-bar .events-submenu-pro-bar, #subnav-app-bar .community-submenu-pro-bar');
+                        const bar = document.querySelector('#subnav-app-bar .events-submenu-pro-bar, #subnav-app-bar .community-submenu-pro-bar, #subnav-app-bar .tienda-submenu-pro-bar');
                         const leftBtn = document.getElementById('subnav-arrow-left');
                         const rightBtn = document.getElementById('subnav-arrow-right');
                         if (!bar || !leftBtn || !rightBtn) return;
@@ -2129,7 +2335,7 @@
                     },
 
                     initInteractions: function() {
-                        const bar = document.querySelector('#subnav-app-bar .events-submenu-pro-bar, #subnav-app-bar .community-submenu-pro-bar');
+                        const bar = document.querySelector('#subnav-app-bar .events-submenu-pro-bar, #subnav-app-bar .community-submenu-pro-bar, #subnav-app-bar .tienda-submenu-pro-bar');
                         if (!bar || bar._hasInteractions) return;
                         bar._hasInteractions = true;
 
@@ -2538,6 +2744,94 @@
                         this.startBannerAutoScroll();
                     },
 
+                    renderTienda: function(activeTab = 'todos') {
+                        this.stopBannerAutoScroll();
+                        const bar = document.getElementById('subnav-app-bar');
+                        if (!bar) return;
+                        bar.classList.remove('subnav-theme-americanas');
+                        bar.classList.remove('subnav-theme-entrenos');
+                        bar.classList.remove('subnav-theme-community');
+                        bar.classList.remove('subnav-theme-ranking');
+                        bar.classList.remove('subnav-theme-profile');
+                        bar.classList.add('subnav-theme-tienda');
+
+                        const subtabs = [
+                            { id: 'todos', icon: 'fa-boxes-stacked', label: 'CATÁLOGO', badge: 'TOP', action: "window.TiendaController && window.TiendaController.handleCategory('todos');" },
+                            { id: 'palas', icon: 'fa-table-tennis-paddle-ball', label: 'PALAS', badge: 'PRO', action: "window.TiendaController && window.TiendaController.handleCategory('palas');" },
+                            { id: 'pelotas', icon: 'fa-circle-dot', label: 'PELOTAS', badge: 'OFICIAL', action: "window.TiendaController && window.TiendaController.handleCategory('pelotas');" },
+                            { id: 'paleteros', icon: 'fa-briefcase', label: 'PALETEROS', badge: 'TOUR', action: "window.TiendaController && window.TiendaController.handleCategory('paleteros');" },
+                            { id: 'mochilas', icon: 'fa-bag-shopping', label: 'MOCHILAS', badge: 'URBAN', action: "window.TiendaController && window.TiendaController.handleCategory('mochilas');" },
+                            { id: 'zapatillas', icon: 'fa-shoe-prints', label: 'ZAPATILLAS', badge: 'CLAY', action: "window.TiendaController && window.TiendaController.handleCategory('zapatillas');" },
+                            { id: 'textil', icon: 'fa-shirt', label: 'TEXTIL', badge: '2026', action: "window.TiendaController && window.TiendaController.handleCategory('textil');" },
+                            { id: 'packs', icon: 'fa-box-open', label: 'PACKS AHORRO', badge: 'OFERTA', action: "window.TiendaController && window.TiendaController.handleCategory('packs');" },
+                            { id: 'ofertas', icon: 'fa-fire', label: 'SUPER OFERTAS', badge: '-15%', isFireBadge: true, action: "window.TiendaController && window.TiendaController.handleTag('Oferta');" },
+                            { id: 'cesta', icon: 'fa-cart-shopping', label: 'MI CESTA', badge: 'CARRITO', isCartBadge: true, action: "window.TiendaController && window.TiendaController.openCart();" }
+                        ];
+
+                        bar.style.display = 'block';
+
+                        const existingBar = bar.querySelector('.tienda-submenu-pro-bar');
+                        if (existingBar) {
+                            existingBar.querySelectorAll('button[data-tab-id]').forEach(btn => {
+                                const tabId = btn.getAttribute('data-tab-id');
+                                const isActive = (tabId === activeTab);
+                                btn.setAttribute('data-tab-active', isActive ? 'true' : 'false');
+                                btn.classList.toggle('active', isActive);
+                                btn.classList.toggle('inactive', !isActive);
+                            });
+                            const activeBtn = bar.querySelector(`.tienda-submenu-pro-bar button[data-tab-id="${activeTab}"]`);
+                            if (activeBtn) {
+                                try { activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
+                            }
+                            syncHeaderHeight();
+                            return;
+                        }
+
+                        bar.innerHTML = `
+                            <div class="subnav-outer-flex">
+                                <button id="subnav-arrow-left" class="subnav-nav-arrow" onclick="window.SubnavManager.scroll('left')" title="Desplazar a la izquierda" aria-label="Desplazar izquierda">
+                                    <i class="fas fa-chevron-left" style="font-size: 0.75rem;"></i>
+                                </button>
+                                <div class="tienda-submenu-pro-bar">
+                                    ${subtabs.map(tab => {
+                                        const isActive = activeTab === tab.id;
+                                        const badgeClass = tab.isFireBadge ? 'badge-teal-fire' : (tab.isCartBadge ? 'badge-teal-cart' : '');
+                                        return `
+                                            <button data-tab-id="${tab.id}" data-tab-active="${isActive ? 'true' : 'false'}"
+                                                    class="esm-pro-btn ${isActive ? 'active' : 'inactive'}"
+                                                    onclick="(function(btn){
+                                                        if (window.PlayerView?.haptic) window.PlayerView.haptic(15);
+                                                        else if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(12);
+                                                        ${tab.action}
+                                                        if (window.SubnavManager) window.SubnavManager.renderTienda('${tab.id}');
+                                                        try { btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
+                                                    })(this)" 
+                                                    aria-label="${tab.label}">
+                                                <i class="fas ${tab.icon}" style="font-size: 0.8rem;"></i>
+                                                <span style="text-transform: uppercase;">${tab.label}</span>
+                                                ${tab.badge ? `
+                                                    <span class="subnav-micro-badge ${isActive ? 'badge-dark' : badgeClass}">
+                                                        ${tab.badge}
+                                                    </span>
+                                                ` : ''}
+                                            </button>
+                                        `;
+                                    }).join('')}
+                                </div>
+                                <button id="subnav-arrow-right" class="subnav-nav-arrow" onclick="window.SubnavManager.scroll('right')" title="Desplazar a la derecha" aria-label="Desplazar derecha">
+                                    <i class="fas fa-chevron-right" style="font-size: 0.75rem;"></i>
+                                </button>
+                            </div>
+                        `;
+                        syncHeaderHeight();
+                        this.initInteractions();
+
+                        const activeBtn = bar.querySelector('.tienda-submenu-pro-bar button[data-tab-active="true"]');
+                        if (activeBtn) {
+                            try { activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
+                        }
+                    },
+
                     hide: function() {
                         this.stopBannerAutoScroll();
                         const bar = document.getElementById('subnav-app-bar');
@@ -2547,12 +2841,16 @@
                             bar.classList.remove('subnav-theme-community');
                             bar.classList.remove('subnav-theme-ranking');
                             bar.classList.remove('subnav-theme-profile');
+                            bar.classList.remove('subnav-theme-tienda');
                             bar.style.display = 'none';
                             bar.innerHTML = '';
                         }
                         syncHeaderHeight();
                     }
                 };
+
+                // NOTA: El menú lateral lo genera js/app.js (App.loadSideMenu). No crear aquí un
+                // AppInstance 'placeholder': impedía instanciar App y sustituía el menú completo.
 
                 window.openDrawer = function() {
                     if (window.PlayerView?.haptic) window.PlayerView.haptic(20);
@@ -3692,6 +3990,10 @@
                 --item-color: #ffd700;
                 --item-color-rgb: 255, 215, 0;
             }
+            #nav-tienda {
+                --item-color: #10b981;
+                --item-color-rgb: 16, 185, 129;
+            }
             #nav-community {
                 --item-color: #ff5e00;
                 --item-color-rgb: 255, 94, 0;
@@ -4425,7 +4727,15 @@
                 <span>Ranking</span>
             </div>
 
-            <!-- 4. COMUNIDAD SOMOSPADEL (1. INICIO COMUNIDAD POR DEFECTO) -->
+            <!-- 5. TIENDA SOMOSPADEL BCN (Escaparate, Ofertas y Colaboradores) -->
+            <div class="nav-item haptic-feedback" 
+                onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('tienda')"
+                id="nav-tienda">
+                <i class="fas fa-store"></i>
+                <span>Tienda</span>
+            </div>
+
+            <!-- 6. COMUNIDAD SOMOSPADEL (1. INICIO COMUNIDAD POR DEFECTO) -->
             <div class="nav-item haptic-feedback" 
                 id="nav-community" 
                 onclick="window.PlayerView?.haptic?.(20); if (typeof window.closeCommunityMenu === 'function') window.closeCommunityMenu(); window.Router && window.Router.navigate('comunidad');">
@@ -5792,7 +6102,7 @@
                         </span>
                         <span>Recordar en este dispositivo</span>
                     </label>
-                    <a href="#" onclick="alert('💡 Para recuperar o restablecer tu clave, contacta con Alejandro o la organización de Somos Pádel.')" class="auth-forgot-link">¿Olvidaste tu clave?</a>
+                    <a href="#" onclick="alert('🎾 AYUDA DE ACCESO SOMOS PÁDEL:\n\n1. Si es tu primera vez o estabas registrado por el club, puedes entrar escribiendo tu número de teléfono como clave (o tus últimos 4 dígitos).\n\n2. Para restablecer o cambiar tu clave, contacta con Alejandro o administración.')" class="auth-forgot-link">¿Olvidaste tu clave?</a>
                 </div>
 
                 <!-- Botón Principal de Iniciar Sesión -->
@@ -6025,7 +6335,7 @@
     <script src="js/modules/ai/TournamentChronicleService.js?v=1.0" defer></script>
     <script src="js/modules/ai/TournamentChronicleModal.js?v=1.0" defer></script>
     <script src="js/app-init.js?v=2.0_FAST_BOOT" defer></script>
-    <script src="js/app.js?v=3007_NO_FLICKER" defer></script>
+    <script src="js/app.js?v=3008_DRAWER_V3" defer></script>
     <script src="js/modules/common/WhatsAppService.js?v=9.2_SYNC_COURTS" defer charset="UTF-8"></script>
     <script src="js/modules/common/LevelService.js?v=3000_CANONICAL" defer></script>
     <script src="js/modules/logic/LevelAdjustmentService.js?v=3000_CANONICAL" defer></script>
@@ -6089,6 +6399,11 @@
     <!-- Ranking Module -->
     <script src="js/modules/ranking/RankingView.js?v=SUBNAV_BROWN_AMBER_v4" defer></script>
     <script src="js/modules/ranking/RankingController.js?v=TOP10_ELITE_v3_STABLE" defer></script>
+
+    <!-- Tienda SomosPadel BCN Module -->
+    <script src="js/modules/tienda/TiendaService.js?v=20261007_v2" defer></script>
+    <script src="js/modules/tienda/TiendaView.js?v=20261007_v2" defer></script>
+    <script src="js/modules/tienda/TiendaController.js?v=20261007_v2" defer></script>
 
     <!-- Community Home Module -->
     <script src="js/modules/community/CommunityHomeView.js" defer></script>
@@ -6354,6 +6669,8 @@
             'americanas': '¡Todas las Americanas de Barcelona! 🎾',
             'events': '¡Todas las Americanas de Barcelona! 🎾',
             'ranking': '¡Asciende y domina el ranking! 🏆',
+            'tienda': 'Tienda en construcción: ¡Pronto estará visible para todos los jugadores! 🚧',
+            'shop': 'Tienda en construcción: ¡Pronto estará visible para todos los jugadores! 🚧',
             'teams': 'Compite con tu equipo y gana 👥',
             'tournaments': 'El gran trofeo te espera 🔥',
             'profile': 'Tus estadísticas al siguiente nivel 📈'

@@ -410,6 +410,13 @@ window.loadAdminView = async function (rawViewName) {
                 throw new Error("Season Campaign Admin Module not loaded");
             }
         }
+        else if (viewName === 'tienda_admin') {
+            const titleEl = document.getElementById('page-title');
+            if (titleEl) titleEl.textContent = 'TIENDA SOMOSPADEL (E-COMMERCE)';
+            if (window.AdminTienda) await window.AdminTienda.init();
+            else if (window.AdminViews && window.AdminViews.tienda_admin) await window.AdminViews.tienda_admin();
+            else throw new Error("AdminTienda Module not loaded");
+        }
         else if (viewName === 'sos_substitutes') {
             if (window.AdminSosSubstitutes) await window.AdminSosSubstitutes.render();
             else throw new Error("AdminSosSubstitutes Module not loaded");

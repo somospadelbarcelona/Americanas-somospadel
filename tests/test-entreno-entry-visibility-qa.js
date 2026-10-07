@@ -46,8 +46,8 @@ const swContent = fs.readFileSync(swPath, 'utf8');
 const cacheMatch = swContent.match(/const\s+CACHE_NAME\s*=\s*['"]([^'"]+)['"]/);
 assert(cacheMatch !== null, "sw.js define la constante CACHE_NAME");
 assert(
-    cacheMatch && cacheMatch[1] === 'somospadel-pwa-v2026.6.4',
-    `CACHE_NAME en sw.js es 'somospadel-pwa-v2026.6.4' (detectado: '${cacheMatch ? cacheMatch[1] : 'ninguno'}')`
+    cacheMatch && cacheMatch[1] === 'somospadel-pwa-v2026.6.6',
+    `CACHE_NAME en sw.js es 'somospadel-pwa-v2026.6.6' (detectado: '${cacheMatch ? cacheMatch[1] : 'ninguno'}')`
 );
 
 // -----------------------------------------------------------------------------
@@ -312,16 +312,8 @@ assert(
     "La tarjeta en modo compacto tiene la clase 'card-view-minimized'"
 );
 assert(
-    renderedMinEntrenoHtml.includes(`window.EventsController.openLiveEvent('entreno_qa_101', 'entreno')`),
-    "La vista compacta incluye el botón directo con llamada a openLiveEvent"
-);
-assert(
-    renderedMinEntrenoHtml.includes('🎾') && renderedMinEntrenoHtml.includes('ENTRAR'),
-    "El botón directo en vista compacta contiene el icono '🎾' y el texto 'ENTRAR'"
-);
-assert(
-    renderedMinEntrenoHtml.includes('btn-neon-enter-pulse'),
-    "El botón directo en vista compacta tiene la clase de estilo 'btn-neon-enter-pulse'"
+    !renderedMinEntrenoHtml.includes('btn-neon-enter-pulse') && !renderedMinEntrenoHtml.includes('>ENTRAR</span>'),
+    "La vista compacta/minimizada NO incluye el botón ENTRAR para evitar confusión y saturación visual"
 );
 assert(
     renderedMinEntrenoHtml.includes(`id="event-fab-entreno_qa_101"`),
@@ -330,6 +322,32 @@ assert(
 assert(
     renderedMinEntrenoHtml.includes('toggleCardExpansion'),
     "La vista compacta permite ampliar detalles mediante toggleCardExpansion"
+);
+
+// Verificación de que en vista ampliada SÍ sale el botón ENTRAR tanto en entrenos como en americanas (incluso sin estar inscrito)
+console.log("\n--- 6.1. Verificación de Botón ENTRAR en Vista Ampliada (No Inscrito) ---");
+controller.state.viewMode = 'expanded';
+controller.state.expandedCards = new Set(['entreno_qa_101', 'americana_qa_202']);
+controller.state.currentUser = { uid: 'user_espectador', name: 'Espectador' };
+
+const renderedExpandedEntreno = controller.renderCard(entrenoEvent);
+assert(
+    renderedExpandedEntreno.includes('ENTRAR AL ENTRENO') && renderedExpandedEntreno.includes(`window.EventsController.openLiveEvent('entreno_qa_101', 'entreno')`),
+    "En vista ampliada (entreno no inscrito), SÍ sale el botón 'ENTRAR AL ENTRENO'"
+);
+assert(
+    renderedExpandedEntreno.includes('btn-blue-enter-pulse') || renderedExpandedEntreno.includes('btn-neon-enter-pulse'),
+    "El botón 'ENTRAR AL ENTRENO' en vista ampliada tiene el estilo de pulso 'btn-blue-enter-pulse'"
+);
+assert(
+    renderedExpandedEntreno.includes('#38bdf8') || renderedExpandedEntreno.includes('#0284c7'),
+    "El botón 'ENTRAR AL ENTRENO' tiene color Azul Eléctrico Pista para no confundirse con APUNTARME"
+);
+
+const renderedExpandedAmericana = controller.renderCard(americanaEvent);
+assert(
+    renderedExpandedAmericana.includes('ENTRAR AL TORNEO') && renderedExpandedAmericana.includes(`window.EventsController.openLiveEvent('americana_qa_202', 'americana')`),
+    "En vista ampliada (americana no inscrita), SÍ sale el botón 'ENTRAR AL TORNEO'"
 );
 
 // -----------------------------------------------------------------------------

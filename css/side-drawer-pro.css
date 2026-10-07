@@ -1,0 +1,661 @@
+/* ==========================================================================
+   SOMOSPADEL — SIDE DRAWER PRO v3
+   Menú lateral claro, accesible y fácil de interpretar para el jugador.
+   - Objetivos táctiles >= 48px, contraste AA, foco visible, reduced-motion.
+   - Clases con prefijo .sdx-* para no chocar con estilos heredados.
+   ========================================================================== */
+
+.side-drawer {
+    width: 340px !important;
+    max-width: 88vw !important;
+    background: linear-gradient(180deg, #080b12 0%, #0b1020 55%, #070a12 100%) !important;
+}
+
+/* Reset de botones dentro del drawer (evita estilos globales de <button>) */
+.side-drawer .sdx-body button,
+.side-drawer .sdx-topbar button {
+    font-family: inherit;
+    margin: 0;
+    -webkit-tap-highlight-color: transparent;
+    text-transform: none;
+    letter-spacing: normal;
+    box-shadow: none;
+}
+
+.side-drawer .sdx-body button:focus-visible,
+.side-drawer .sdx-topbar button:focus-visible {
+    outline: 2px solid #CCFF00 !important;
+    outline-offset: 2px;
+}
+
+/* ---------- TOP BAR ---------- */
+.side-drawer .sdx-topbar {
+    gap: 10px;
+}
+
+.side-drawer .sdx-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: none;
+    padding: 4px 0;
+    color: #fff;
+    cursor: pointer;
+    text-align: left;
+}
+
+.side-drawer .sdx-brand-logo {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 10px;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 1.5px solid rgba(204, 255, 0, 0.35);
+}
+
+.side-drawer .sdx-brand-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+    min-width: 0;
+}
+
+.side-drawer .sdx-brand-title {
+    font-size: 0.95rem;
+    font-weight: 900;
+    letter-spacing: 0.4px;
+    color: #fff;
+}
+
+.side-drawer .sdx-brand-sub {
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 1.4px;
+    color: #CCFF00;
+}
+
+.side-drawer .sdx-icon-btn {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+    font-size: 1.05rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.side-drawer .sdx-icon-btn:hover,
+.side-drawer .sdx-icon-btn:active {
+    background: rgba(204, 255, 0, 0.15);
+    color: #CCFF00;
+}
+
+/* ---------- BODY ---------- */
+.side-drawer .sdx-body {
+    gap: 18px !important;
+    padding: 14px 14px !important;
+    padding-bottom: calc(env(safe-area-inset-bottom, 16px) + 40px) !important;
+}
+
+/* ---------- TARJETA JUGADOR ---------- */
+.side-drawer .sdx-player {
+    flex-shrink: 0;
+    border-radius: 18px;
+    padding: 12px;
+    background:
+        radial-gradient(120% 140% at 0% 0%, rgba(204, 255, 0, 0.12) 0%, transparent 55%),
+        rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(204, 255, 0, 0.22);
+}
+
+.side-drawer .sdx-player-top {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: transparent;
+    border: none;
+    padding: 2px;
+    color: #fff;
+    cursor: pointer;
+    text-align: left;
+    border-radius: 12px;
+}
+
+.side-drawer .sdx-avatar-wrap { flex-shrink: 0; }
+
+.side-drawer .sdx-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #1e293b;
+    border: 2px solid #CCFF00;
+    color: #CCFF00;
+    font-weight: 900;
+    font-size: 1.05rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.side-drawer .sdx-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.side-drawer .sdx-player-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    flex: 1;
+}
+
+.side-drawer .sdx-player-name {
+    font-size: 1.02rem;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1.25;
+    word-break: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.side-drawer .sdx-player-role {
+    align-self: flex-start;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    color: #CCFF00;
+    background: rgba(204, 255, 0, 0.1);
+    border: 1px solid rgba(204, 255, 0, 0.28);
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+
+.side-drawer .sdx-player-cta {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    font-size: 0.72rem;
+    transition: all 0.2s ease;
+}
+
+.side-drawer .sdx-player-top:hover .sdx-player-cta,
+.side-drawer .sdx-player-top:active .sdx-player-cta {
+    background: rgba(204, 255, 0, 0.15);
+    border-color: rgba(204, 255, 0, 0.35);
+    color: #CCFF00;
+}
+
+.side-drawer .sdx-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.side-drawer .sdx-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 4px;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.side-drawer .sdx-stat-val {
+    font-size: 1.02rem;
+    font-weight: 900;
+    color: var(--ic);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.side-drawer .sdx-stat-val i { font-size: 0.72rem; opacity: 0.9; }
+
+.side-drawer .sdx-stat-lbl {
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+
+/* Invitado */
+.side-drawer .sdx-guest-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.side-drawer .sdx-guest-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    flex-shrink: 0;
+    background: rgba(204, 255, 0, 0.14);
+    border: 1.5px solid #CCFF00;
+    color: #CCFF00;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.side-drawer .sdx-guest-title {
+    display: block;
+    font-weight: 900;
+    color: #fff;
+    font-size: 0.95rem;
+}
+
+.side-drawer .sdx-guest-sub {
+    display: block;
+    font-size: 0.74rem;
+    color: #94a3b8;
+    line-height: 1.35;
+    margin-top: 2px;
+}
+
+/* ---------- ACCESOS RÁPIDOS ---------- */
+.side-drawer .sdx-quick {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.side-drawer .sdx-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 2px 9px;
+    min-height: 74px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #e2e8f0;
+    cursor: pointer;
+    transition: transform 0.15s, background 0.2s, border-color 0.2s;
+}
+
+.side-drawer .sdx-tile:active { transform: scale(0.96); }
+
+.side-drawer .sdx-tile.is-active {
+    border-color: var(--ic);
+    background: color-mix(in srgb, var(--ic) 12%, transparent);
+}
+
+.side-drawer .sdx-tile-icon {
+    position: relative;
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: var(--ic);
+    background: color-mix(in srgb, var(--ic) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--ic) 38%, transparent);
+}
+
+.side-drawer .sdx-tile-live {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+}
+
+.side-drawer .sdx-tile-label {
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: #e2e8f0;
+}
+
+/* ---------- SECCIONES ---------- */
+.side-drawer .sdx-section {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.side-drawer .sdx-section-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 4px;
+}
+
+.side-drawer .sdx-section-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    color: #0b1020;
+    background: var(--acc);
+}
+
+.side-drawer .sdx-section-head-text { min-width: 0; }
+
+.side-drawer .sdx-section-title {
+    margin: 0 !important;
+    font-size: 0.82rem !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.9px;
+    text-transform: uppercase;
+    color: var(--acc) !important;
+    line-height: 1.2;
+}
+
+.side-drawer .sdx-section-hint {
+    margin: 1px 0 0 !important;
+    font-size: 0.7rem;
+    color: #8492a6;
+    line-height: 1.25;
+}
+
+.side-drawer .sdx-group {
+    display: flex;
+    flex-direction: column;
+    border-radius: 16px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* ---------- FILAS ---------- */
+.side-drawer .sdx-row {
+    position: relative;
+    width: 100%;
+    min-height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 12px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 0;
+    color: #f1f5f9;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.18s;
+}
+
+.side-drawer .sdx-row:last-child { border-bottom: none; }
+
+.side-drawer .sdx-row:hover { background: rgba(255, 255, 255, 0.045); }
+.side-drawer .sdx-row:active { background: rgba(255, 255, 255, 0.08); }
+
+.side-drawer .sdx-row.is-active {
+    background: color-mix(in srgb, var(--ic) 11%, transparent);
+}
+
+.side-drawer .sdx-row.is-active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 10px;
+    bottom: 10px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--ic);
+}
+
+.side-drawer .sdx-row-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    color: var(--ic);
+    background: color-mix(in srgb, var(--ic) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--ic) 32%, transparent);
+}
+
+.side-drawer .sdx-row-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.side-drawer .sdx-row-title {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: #f8fafc;
+    line-height: 1.2;
+}
+
+.side-drawer .sdx-row-desc {
+    font-size: 0.71rem;
+    font-weight: 500;
+    color: #94a3b8;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.side-drawer .sdx-row.is-active .sdx-row-title { color: var(--ic); }
+
+.side-drawer .sdx-row-chevron {
+    flex-shrink: 0;
+    font-size: 0.66rem;
+    color: #475569;
+}
+
+/* ---------- BADGES ---------- */
+.side-drawer .sdx-badge {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.6rem;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    line-height: 1.2;
+}
+
+.side-drawer .sdx-badge--live    { background: rgba(239, 68, 68, 0.16);  color: #fca5a5; border-color: rgba(239, 68, 68, 0.4); }
+.side-drawer .sdx-badge--danger  { background: #ef4444;                   color: #fff;    border-color: #ef4444; min-width: 22px; justify-content: center; }
+.side-drawer .sdx-badge--success { background: rgba(16, 185, 129, 0.16); color: #6ee7b7; border-color: rgba(16, 185, 129, 0.4); }
+.side-drawer .sdx-badge--gold    { background: rgba(245, 158, 11, 0.16); color: #fcd34d; border-color: rgba(245, 158, 11, 0.4); }
+.side-drawer .sdx-badge--warning { background: #fef08a;                   color: #713f12; border-color: #fde047; }
+.side-drawer .sdx-badge--pink    { background: rgba(225, 48, 108, 0.16); color: #f9a8c4; border-color: rgba(225, 48, 108, 0.4); }
+.side-drawer .sdx-badge--neutral { background: rgba(148, 163, 184, 0.14); color: #cbd5e1; border-color: rgba(148, 163, 184, 0.3); }
+
+.side-drawer .sdx-live-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
+    animation: sdxPulse 1.8s infinite;
+    display: inline-block;
+}
+
+@keyframes sdxPulse {
+    0%   { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6); }
+    70%  { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+
+/* ---------- REDES ---------- */
+.side-drawer .sdx-social {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.side-drawer .sdx-social-btn {
+    min-height: 64px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--ic) 10%, rgba(255, 255, 255, 0.02));
+    border: 1px solid color-mix(in srgb, var(--ic) 35%, transparent);
+    color: #f1f5f9;
+    cursor: pointer;
+}
+
+.side-drawer .sdx-social-btn i { font-size: 1.2rem; color: var(--ic); }
+.side-drawer .sdx-social-btn span { font-size: 0.68rem; font-weight: 800; }
+
+/* ---------- STAFF ---------- */
+.side-drawer .sdx-staff {
+    flex-shrink: 0;
+    border-radius: 16px;
+    padding: 12px;
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.09) 0%, rgba(15, 23, 42, 0.6) 100%);
+    border: 1px solid rgba(251, 191, 36, 0.35);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.side-drawer .sdx-staff-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.side-drawer .sdx-staff-head h3 {
+    margin: 0 !important;
+    font-size: 0.85rem !important;
+    font-weight: 900 !important;
+    color: #fbbf24 !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.side-drawer .sdx-staff-desc {
+    margin: 0 !important;
+    font-size: 0.72rem;
+    color: #cbd5e1;
+    line-height: 1.35;
+}
+
+/* ---------- BOTONES ---------- */
+.side-drawer .sdx-btn {
+    width: 100%;
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 12px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: transform 0.15s, filter 0.2s;
+}
+
+.side-drawer .sdx-btn:active { transform: scale(0.98); }
+
+.side-drawer .sdx-btn--primary { background: #CCFF00; color: #0b1020; }
+.side-drawer .sdx-btn--gold    { background: #fbbf24; color: #0b1020; }
+.side-drawer .sdx-btn--ghost   { background: rgba(255, 255, 255, 0.05); color: #e2e8f0; border-color: rgba(255, 255, 255, 0.12); }
+.side-drawer .sdx-btn--danger  { background: rgba(239, 68, 68, 0.1);   color: #fca5a5; border-color: rgba(239, 68, 68, 0.35); }
+
+/* ---------- FOOTER ---------- */
+.side-drawer .sdx-footer {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.side-drawer .sdx-link {
+    min-height: 44px;
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    cursor: pointer;
+}
+
+.side-drawer .sdx-link i { color: #fbbf24; }
+
+.side-drawer .sdx-version {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    font-size: 0.66rem;
+    font-weight: 700;
+    color: #64748b;
+    padding: 4px 0;
+}
+
+.side-drawer .sdx-online {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 6px #22c55e;
+}
+
+/* Pantallas muy estrechas */
+@media (max-width: 340px) {
+    .side-drawer .sdx-tile-label { font-size: 0.6rem; }
+    .side-drawer .sdx-row-desc { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .side-drawer .sdx-live-dot { animation: none; }
+    .side-drawer .sdx-tile,
+    .side-drawer .sdx-row,
+    .side-drawer .sdx-btn { transition: none; }
+}

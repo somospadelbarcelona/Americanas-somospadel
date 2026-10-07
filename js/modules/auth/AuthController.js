@@ -67,10 +67,10 @@
                     e.preventDefault();
                     e.stopPropagation();
 
-                    const phone = newLoginForm.phone.value.trim();
-                    const password = newLoginForm.password.value.trim();
+                    const rawPhone = (newLoginForm.phone ? newLoginForm.phone.value : '').trim();
+                    const password = (newLoginForm.password ? newLoginForm.password.value : '').trim();
 
-                    if (!phone || !password) {
+                    if (!rawPhone || !password) {
                         alert("❌ Introduce usuario y contraseña");
                         return;
                     }
@@ -91,7 +91,7 @@
                     const scanner = document.getElementById('login-bio-scanner');
                     if (scanner) scanner.style.display = 'block';
 
-                    // Temporizador de seguridad de 8.5s para evitar bloqueo visual permanente
+                    // Temporizador de seguridad de 9s para evitar bloqueo visual permanente
                     const failsafeTimer = setTimeout(() => {
                         if (btn) {
                             btn.disabled = false;
@@ -99,13 +99,10 @@
                         }
                         if (scanner) scanner.style.display = 'none';
                         console.warn("⚠️ [AuthController] Login failsafe triggered.");
-                    }, 8500);
-
-                    let email = phone;
-                    if (!email.includes('@')) email = phone + '@somospadel.com';
+                    }, 9000);
 
                     try {
-                        const result = await window.AuthService.login(email, password);
+                        const result = await window.AuthService.login(rawPhone, password);
                         clearTimeout(failsafeTimer);
 
                         if (!result.success) {
@@ -126,11 +123,16 @@
                         } else {
                             console.log("✅ Login Success!");
 
+                            // Inmediatamente desbloquear la UI para prevenir cualquier parpadeo
+                            if (document.documentElement) {
+                                document.documentElement.classList.add('has-session');
+                            }
+
                             // 🧠 [PRO] MEMORIA DE USUARIO: Guardar para la próxima vez según preferencia
                             const rememberCheck = document.getElementById('auth-remember-device');
                             const shouldRemember = !rememberCheck || rememberCheck.checked;
-                            if (phone && shouldRemember) {
-                                localStorage.setItem('remembered_phone', phone);
+                            if (rawPhone && shouldRemember) {
+                                localStorage.setItem('remembered_phone', rawPhone);
                                 localStorage.setItem('remembered_pwd', password);
                             } else if (!shouldRemember) {
                                 localStorage.removeItem('remembered_phone');
@@ -143,8 +145,6 @@
                             const authModal = document.getElementById('auth-modal');
                             const appShell = document.getElementById('app-shell');
                             
-                            // Navegar al Dashboard inmediatamente para pintar el contenido real en el DOM
-                            // antes de mostrar la pantalla y evitar ver esqueletos
                             if (window.Router) {
                                 window.Router.navigate('dashboard', false, true);
                             }
@@ -194,15 +194,22 @@
                     e.preventDefault();
                     e.stopPropagation();
 
-                    const name = newRegisterForm.name.value.trim();
-                    const phone = newRegisterForm.phone.value.trim();
-                    const password = newRegisterForm.password.value.trim();
+                    const name = (newRegisterForm.name ? newRegisterForm.name.value : '').trim();
+                    let rawPhone = (newRegisterForm.phone ? newRegisterForm.phone.value : '').trim();
+                    const password = (newRegisterForm.password ? newRegisterForm.password.value : '').trim();
                     const gender = newRegisterForm.gender ? newRegisterForm.gender.value : 'chico';
                     const play_preference = newRegisterForm.play_preference ? newRegisterForm.play_preference.value : 'drive';
                     const level = newRegisterForm.self_rate_level ? (parseFloat(newRegisterForm.self_rate_level.value) || 3.5) : 3.5;
 
-                    let email = phone;
-                    if (!email.includes('@')) email = phone + '@somospadel.com';
+                    // Normalizar teléfono a 9 dígitos si viene con prefijo español
+                    let cleanDigits = rawPhone.replace(/\D/g, '');
+                    if (cleanDigits.length === 11 && cleanDigits.startsWith('34')) {
+                        cleanDigits = cleanDigits.substring(2);
+                    }
+                    const finalPhone = cleanDigits || rawPhone;
+
+                    let email = finalPhone;
+                    if (!email.includes('@')) email = finalPhone + '@somospadel.com';
 
                     const btn = newRegisterForm.querySelector('button[type="submit"]');
                     const originalText = btn ? btn.textContent : "Unirme ahora";
@@ -211,6 +218,7 @@
                     try {
                         const result = await window.AuthService.register(email, password, {
                             name,
+                            phone: finalPhone,
                             gender,
                             play_preference,
                             level,
@@ -222,7 +230,6 @@
                             if (btn) btn.textContent = originalText;
                         } else if (result.pendingValidation) {
                             alert("✅ SOLICITUD ENVIADA.\n\nTu cuenta ha sido creada y está pendiente de validación por un administrador (Alejandro).\n\nTe avisaremos cuando esté activa.");
-                            // Reset form and go to login
                             newRegisterForm.reset();
                             if (window.toggleAuthMode) window.toggleAuthMode('login');
                             if (btn) btn.textContent = originalText;

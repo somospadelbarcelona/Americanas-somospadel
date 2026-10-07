@@ -1663,6 +1663,20 @@
                 </div>
 
                 <!-- ========================================== -->
+                <!-- 🛍️ TIENDA SOMOSPADEL BCN (ADMIN & SHOP)    -->
+                <!-- ========================================== -->
+                <div class="sidebar-section" style="margin-bottom: 8px;">
+                    <button class="nav-item-pro btn-tienda" data-view="tienda_admin" onclick="loadAdminView('tienda_admin')" style="background: linear-gradient(135deg, rgba(16,185,129,0.16) 0%, rgba(204,255,0,0.1) 100%); border: 1.5px solid rgba(16,185,129,0.4); text-align: left; width: 100%; display: flex; align-items: center; gap: 10px; border-radius: 12px; padding: 10px 14px; cursor: pointer;">
+                        <span class="icon-box" style="color: #10b981; font-size: 1rem;"><i class="fas fa-store"></i></span>
+                        <span class="nav-text" style="font-weight: 800; color: #fff; font-size: 0.82rem;">TIENDA (E-COMMERCE)</span>
+                        <span class="nav-badge" style="background: #10b981; color: #000; font-weight: 900; margin-left: auto;">ADMIN</span>
+                    </button>
+                    <a href="tienda.html" target="_blank" style="display: flex; align-items: center; justify-content: center; gap: 6px; color: #94a3b8; font-size: 0.7rem; font-weight: 700; text-decoration: none; padding: 4px 8px; margin-top: 4px; transition: color 0.15s;" onmouseover="this.style.color='#CCFF00'" onmouseout="this.style.color='#94a3b8'">
+                        <i class="fas fa-arrow-up-right-from-square" style="font-size: 0.65rem;"></i> Abrir escaparate público
+                    </a>
+                </div>
+
+                <!-- ========================================== -->
                 <!-- B) 🎾 COMPETICIONES & PISTAS               -->
                 <!-- ========================================== -->
                 <div class="sidebar-section section-competitions">
@@ -3108,6 +3122,10 @@
             <script src="js/modules/admin/TournamentLogicAuditService.js?v=20260927_V3"></script>
             <script src="js/modules/admin/AdminTournamentLogicLab.js?v=20260927_V3"></script>
 
+            <!-- 🛍️ Tienda SomosPadel BCN (E-Commerce Backoffice) -->
+            <script src="js/modules/tienda/TiendaService.js?v=20261007_v2"></script>
+            <script src="js/modules/admin-tienda.js?v=20261007_v1"></script>
+
 
             <!-- DIAGNOSTIC SCRIPT (Optional) -->
             <script>
@@ -3929,7 +3947,8 @@
             { view: 'sos_substitutes', label: 'SOS Suplentes', icon: 'fa-user-clock' },
             { view: 'season_campaign', label: 'Equipos 2027', icon: 'fa-shield-halved' },
 
-            // 5. 📈 MARKETING & BLOG
+            // 5. 📈 MARKETING, TIENDA & BLOG
+            { view: 'tienda_admin', label: 'Tienda Admin', icon: 'fa-store', isPrimary: true },
             { view: 'analytics', label: 'Analytics', icon: 'fa-chart-line', isPrimary: true },
             { view: 'blog_posts', label: 'Blog', icon: 'fa-newspaper' },
             { href: 'promo-studio.html?mode=copilot', label: 'Copiloto Alex', icon: 'fa-wand-magic-sparkles', target: '_blank' },
