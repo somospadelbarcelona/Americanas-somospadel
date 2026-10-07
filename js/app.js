@@ -1334,6 +1334,23 @@
                                 </div>
                             </div>
 
+                            <!-- SECCIÓN: SOMOSPADEL BCN | ORGANIZACIÓN Y CONTROL DE EVENTOS (ERP) -->
+                            <div class="drawer-admin-box" style="border: 1.5px solid rgba(204, 255, 0, 0.4); background: linear-gradient(135deg, rgba(204, 255, 0, 0.08) 0%, rgba(15, 23, 42, 0.95) 100%); margin-bottom: 12px;">
+                                <div class="drawer-admin-header">
+                                    <div style="font-weight: 900; font-size: 0.82rem; color: #ccff00; display: flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-building-columns"></i> ORGANIZACIÓN SOMOSPADEL BCN
+                                    </div>
+                                    <span class="drawer-admin-badge" style="background: #ccff00; color: #000; font-weight: 900;">ERP</span>
+                                </div>
+                                <div style="font-size: 0.72rem; color: #cbd5e1; margin-bottom: 10px; line-height: 1.4;">
+                                    Centro de control empresarial, rentabilidad por club, simulador de personal y balances económicos.
+                                </div>
+                                
+                                <button class="drawer-action-btn" style="background: #ccff00; color: #000; font-weight: 900; margin-bottom: 8px; box-shadow: 0 4px 14px rgba(204, 255, 0, 0.3);" onclick="window.closeDrawer(); window.location.href='organizacion.html'">
+                                    <i class="fas fa-chart-pie"></i> ENTRAR AL CENTRO DE CONTROL
+                                </button>
+                            </div>
+
                             <!-- SECCIÓN 7: GESTIÓN & CAPITANES (ALEX Y CAPITANES) -->
                             <div class="drawer-admin-box">
                                 <div class="drawer-admin-header">

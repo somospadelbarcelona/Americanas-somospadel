@@ -166,8 +166,11 @@ window.AdminViews.americanas_create = async function () {
                     <button type="button" class="btn-micro" onclick="window.applyAmericanaPreset('fem4')" style="background: rgba(236, 72, 153, 0.2); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.4);">🌸 Fem 4 Pistas</button>
                     <button type="button" class="btn-micro" onclick="window.applyAmericanaPreset('mixta4')" style="background: rgba(234, 179, 8, 0.2); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.4);">⚡ Mixta 4 Pistas</button>
                     <button type="button" class="btn-micro" onclick="window.applyAmericanaPreset('twister')" style="background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4);">🌪️ Twister Indiv.</button>
-                    <button type="button" class="btn-micro" onclick="window.applyAmericanaPreset('suiza')" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4);">🇨🇭 Americana Suiza (2h • 6 Rondas)</button>
-                    <button type="button" class="btn-micro" onclick="window.applyAmericanaPreset('club')" style="background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.4);">🏛️ Club Colaborador</button>
+                    <button type="button" class="btn-micro" onclick="window.applyAmericanaPreset('suiza')" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4);">🇨🇭 Suiza</button>
+                    <button type="button" class="btn-micro" onclick="window.applyAmericanaPreset('prat')" style="background: #fffbeb; color: #b45309; border: 1px solid #fde68a; font-weight: 800;">⭐ Bcn Prat</button>
+                    <button type="button" class="btn-micro" onclick="window.applyAmericanaPreset('delfos')" style="background: #fffbeb; color: #b45309; border: 1px solid #fde68a; font-weight: 800;">⭐ Delfos</button>
+                    <button type="button" class="btn-micro" onclick="window.applyAmericanaPreset('new_play')" style="background: #38bdf8; color: #0f172a; border: 1px solid #0284c7; font-weight: 900;">⭐ New Play Pro</button>
+                    <button type="button" class="btn-micro" onclick="window.applyAmericanaPreset('cem_tennis')" style="background: #0284c7; color: #ffffff; border: 1px solid #0369a1; font-weight: 800;">⭐ CEM Hospitalet</button>
                 </div>
 
                 <form id="create-americana-form" class="pro-form compact-admin-form">
@@ -395,6 +398,10 @@ window.AdminViews.americanas_create = async function () {
                                 onclick="window.selectCreateAmericanaImage('img/entreno todo prat.jpg')">Prat</button>
                             <button type="button" class="btn-micro" style="background: #ffffff; color: black;"
                                 onclick="window.selectCreateAmericanaImage('img/entreno todo delfos.jpg')">Delfos</button>
+                            <button type="button" class="btn-micro" style="background: #38bdf8; color: black; font-weight: 800;"
+                                onclick="window.selectCreateAmericanaImage('img/new_play_padel_pro.png')">⭐ New Play</button>
+                            <button type="button" class="btn-micro" style="background: #0284c7; color: white; font-weight: 800;"
+                                onclick="window.selectCreateAmericanaImage('img/cem_tennis_hospitalet.png')">⭐ CEM Tennis</button>
                             <button type="button" class="btn-micro"
                                 onclick="window.selectCreateAmericanaImage('img/ball-mixta.png')">Pelota</button>
                         </div>
@@ -469,6 +476,26 @@ window.applyAmericanaPreset = (type) => {
         form.querySelector('[name=category]').value = 'open';
         form.querySelector('[name=pair_mode]').value = 'fixed';
         form.querySelector('[name=max_courts]').value = '4';
+    } else if (type === 'prat') {
+        form.querySelector('[name=name]').value = 'AMERICANA BARCELONA PÁDEL EL PRAT';
+        form.querySelector('[name=location]').value = 'Barcelona Pádel el Prat';
+        form.querySelector('[name=max_courts]').value = '4';
+        window.selectCreateAmericanaImage('img/entreno todo prat.jpg');
+    } else if (type === 'delfos') {
+        form.querySelector('[name=name]').value = 'AMERICANA DELFOS CORNELLÀ';
+        form.querySelector('[name=location]').value = 'Delfos Cornellà';
+        form.querySelector('[name=max_courts]').value = '8';
+        window.selectCreateAmericanaImage('img/entreno todo delfos.jpg');
+    } else if (type === 'new_play') {
+        form.querySelector('[name=name]').value = 'AMERICANA NEW PLAY PÁDEL PRO';
+        form.querySelector('[name=location]').value = 'New Play Pádel Pro';
+        form.querySelector('[name=max_courts]').value = '5';
+        window.selectCreateAmericanaImage('img/new_play_padel_pro.png');
+    } else if (type === 'cem_tennis') {
+        form.querySelector('[name=name]').value = 'AMERICANA CEM TENNIS HOSPITALET';
+        form.querySelector('[name=location]').value = 'CEM Tennis Hospitalet';
+        form.querySelector('[name=max_courts]').value = '4';
+        window.selectCreateAmericanaImage('img/cem_tennis_hospitalet.png');
     }
 
     const pairModeEl = form.querySelector('[name=pair_mode]');

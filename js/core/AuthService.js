@@ -189,13 +189,20 @@
             try {
                 if (!auth) throw new Error("Firebase Auth not initialized");
 
-                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                // Timeout de seguridad en Firebase Auth (2.5s) para evitar congelamiento si no está configurado o hay red lenta
+                const authTimeout = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error("auth/timeout")), 2500)
+                );
+                const userCredential = await Promise.race([
+                    auth.signInWithEmailAndPassword(email, password),
+                    authTimeout
+                ]);
                 const user = userCredential.user;
 
                 const playerData = await this._fetchPlayerProfile(user.uid, user.email || email);
 
                 if (playerData && playerData.status === 'pending') {
-                    await auth.signOut(); // Force signout
+                    await auth.signOut().catch(() => {}); // Force signout
                     throw new Error("⏳ TU CUENTA ESTÁ PENDIENTE DE VALIDACIÓN POR UN ADMINISTRADOR.");
                 }
 
@@ -212,7 +219,7 @@
                 }
                 return { success: true, user: finalUser };
             } catch (error) {
-                console.warn("⚠️ Firebase Login failed, trying Local Fallback...", error.code);
+                console.warn("⚠️ Firebase Login failed, trying Local Fallback...", error.code || error.message);
 
                 // Re-throw pending validation error immediately
                 if (error.message && error.message.includes("PENDIENTE")) {
@@ -223,20 +230,36 @@
                 // Try to authenticate against Firestore directly
                 try {
                     const phone = email.includes('@') ? email.split('@')[0] : email;
-                    const playerData = await window.FirebaseDB.players.getByPhone(phone);
+                    const cleanPhone = (phone || '').toString().trim().replace(/\D/g, '');
+                    const playerData = await window.FirebaseDB.players.getByPhone(cleanPhone || phone);
 
                     if (!playerData) {
                         throw new Error("Usuario no encontrado");
                     }
 
-                    // SECURITY: Check password (Hashed or Legacy)
-                    const inputHash = await this.hashPassword(password);
+                    // SECURITY: Check password (Hashed, Case-Insensitive, Trimmed, Legacy)
+                    const cleanPass = (password || '').trim();
+                    const upperPass = cleanPass.toUpperCase();
+                    const lowerPass = cleanPass.toLowerCase();
+
+                    const inputHash = await this.hashPassword(cleanPass);
+                    const inputHashUpper = await this.hashPassword(upperPass);
+                    const inputHashLower = await this.hashPassword(lowerPass);
+
                     let isValid = false;
                     let needsMigration = false;
 
-                    if (playerData.password === inputHash) {
+                    if (
+                        playerData.password === inputHash ||
+                        playerData.password === inputHashUpper ||
+                        playerData.password === inputHashLower
+                    ) {
                         isValid = true;
-                    } else if (playerData.password === password) {
+                    } else if (
+                        playerData.password === cleanPass ||
+                        playerData.password === upperPass ||
+                        playerData.password === lowerPass
+                    ) {
                         // LEGACY PLAIN TEXT MATCH
                         isValid = true;
                         needsMigration = true;
@@ -246,12 +269,12 @@
                         throw new Error("Contraseña incorrecta");
                     }
 
-                    // AUTO-MIGRATE TO HASHED PASSWORD
+                    // AUTO-MIGRATE TO HASHED PASSWORD (no bloqueante)
                     if (needsMigration) {
                         console.log("🔐 Migrating legacy password for:", phone);
-                        await window.FirebaseDB.players.update(playerData.id, {
-                            password: inputHash
-                        });
+                        window.FirebaseDB.players.update(playerData.id, {
+                            password: inputHashUpper
+                        }).catch(e => console.warn("Password migration diferida:", e?.message));
                     }
 
                     // Check if account is pending

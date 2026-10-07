@@ -76,18 +76,38 @@
                     }
 
                     const btn = newLoginForm.querySelector('button[type="submit"]');
-                    const originalText = btn ? btn.textContent : "INICIAR SESIÓN 🎾";
-                    if (btn) btn.textContent = "ESCANEANDO BIOMETRÍA...";
+                    const originalHTML = btn ? btn.innerHTML : '<span>ENTRAR A LA PISTA</span> <i class="fas fa-arrow-right"></i>';
+                    const isBio = !!window._isBiometricLoginActive;
+                    window._isBiometricLoginActive = false;
+
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.innerHTML = isBio
+                            ? '<i class="fas fa-fingerprint fa-pulse" style="margin-right: 8px;"></i> <span>ESCANEANDO BIOMETRÍA...</span>'
+                            : '<i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i> <span>ENTRANDO A LA PISTA...</span>';
+                    }
 
                     // Activar Escáner Láser Cibernético de Biometría
                     const scanner = document.getElementById('login-bio-scanner');
                     if (scanner) scanner.style.display = 'block';
+
+                    // Temporizador de seguridad de 8.5s para evitar bloqueo visual permanente
+                    const failsafeTimer = setTimeout(() => {
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.innerHTML = originalHTML;
+                        }
+                        if (scanner) scanner.style.display = 'none';
+                        console.warn("⚠️ [AuthController] Login failsafe triggered.");
+                    }, 8500);
 
                     let email = phone;
                     if (!email.includes('@')) email = phone + '@somospadel.com';
 
                     try {
                         const result = await window.AuthService.login(email, password);
+                        clearTimeout(failsafeTimer);
+
                         if (!result.success) {
                             // Feedback de sacudida y alerta roja
                             const card = document.querySelector('.glass-card-pro');
@@ -98,7 +118,10 @@
                             }
                             
                             alert("❌ Error de acceso: " + result.error);
-                            if (btn) btn.textContent = originalText;
+                            if (btn) {
+                                btn.disabled = false;
+                                btn.innerHTML = originalHTML;
+                            }
                             if (scanner) scanner.style.display = 'none';
                         } else {
                             console.log("✅ Login Success!");
@@ -150,8 +173,12 @@
                             }
                         }
                     } catch (err) {
+                        clearTimeout(failsafeTimer);
                         alert("❌ Error Inesperado: " + err.message);
-                        if (btn) btn.textContent = originalText;
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.innerHTML = originalHTML;
+                        }
                         if (scanner) scanner.style.display = 'none';
                     }
                 });

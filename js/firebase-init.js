@@ -145,11 +145,16 @@ async function reinitializeFirestore() {
 }
 window.reinitializeFirestore = reinitializeFirestore;
 
-// Helper seguro para consultas Firestore con auto-recuperación ante aserciones corruptas o terminaciones
-async function safeFirestoreGet(ref, options) {
+// Helper seguro para consultas Firestore con auto-recuperación ante aserciones corruptas o terminaciones y timeout de seguridad
+async function safeFirestoreGet(ref, options, timeoutMs = 8000) {
     if (!ref) throw new Error("safeFirestoreGet: ref no válida");
+    const getPromise = options ? ref.get(options) : ref.get();
+    const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Firestore operation timed out (" + (timeoutMs / 1000) + "s)")), timeoutMs)
+    );
+
     try {
-        return options ? await ref.get(options) : await ref.get();
+        return await Promise.race([getPromise, timeoutPromise]);
     } catch (err) {
         const msg = (err && (err.message || String(err))) || '';
         const lowerMsg = msg.toLowerCase();
@@ -453,26 +458,48 @@ const FirebaseDB = {
 
         async getByPhone(phone) {
             if (!phone) return null;
-            const cleanPhone = String(phone).trim();
+            const cleanPhone = String(phone).trim().replace(/\D/g, '');
+            if (!cleanPhone) return null;
+
+            // 1. VÍA RÁPIDA: Búsqueda directa por ID (u_<teléfono>) utilizada en la mayoría de cuentas
+            try {
+                const currentDb = window.db || db;
+                if (currentDb) {
+                    const directDoc = await safeFirestoreGet(currentDb.collection('players').doc('u_' + cleanPhone), null, 4000);
+                    if (directDoc && directDoc.exists) {
+                        return { id: directDoc.id, ...directDoc.data() };
+                    }
+                }
+            } catch (directErr) {
+                console.warn("⚠️ [getByPhone] Búsqueda directa u_" + cleanPhone + " diferida:", directErr?.message);
+            }
+
+            // 2. Consulta en Firestore por campo 'phone'
             let snapshot;
             try {
+                const currentDb = window.db || db;
                 snapshot = await safeFirestoreGet(
-                    db.collection('players')
+                    currentDb.collection('players')
                         .where('phone', '==', cleanPhone)
-                        .limit(1)
+                        .limit(1),
+                    null,
+                    5000
                 );
             } catch (err) {
                 console.warn("⚠️ [getByPhone] Fallo al buscar jugador por teléfono:", err);
                 throw err;
             }
 
-            // Fallback: If not found and it's a number, try querying as type Number
+            // Fallback: Si no se encuentra y es numérico, probar como tipo Number
             if (snapshot.empty && !isNaN(cleanPhone) && cleanPhone !== '') {
                 try {
+                    const currentDb = window.db || db;
                     snapshot = await safeFirestoreGet(
-                        db.collection('players')
+                        currentDb.collection('players')
                             .where('phone', '==', Number(cleanPhone))
-                            .limit(1)
+                            .limit(1),
+                        null,
+                        4000
                     );
                 } catch (err) {
                     console.warn("⚠️ [getByPhone] Fallo al buscar por teléfono numérico:", err);

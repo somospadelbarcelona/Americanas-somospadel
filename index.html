@@ -5701,12 +5701,16 @@
                             // Haptic éxito
                             if (navigator.vibrate) navigator.vibrate([60, 30, 100]);
                             
+                            // Marcar flag biométrico para que el botón muestre el estado correcto
+                            window._isBiometricLoginActive = true;
+
                             // Enviar formulario (disparará el handler de submit)
                             if (loginForm) {
                                 const btnSubmit = loginForm.querySelector('button[type="submit"]');
                                 if (btnSubmit) btnSubmit.click();
                             }
                         } else {
+                            window._isBiometricLoginActive = false;
                             if (scanner) scanner.style.display = 'none';
                             
                             _updateTelemetry([
@@ -5969,7 +5973,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js" defer></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js" defer></script>
     <script src="js/firebase-config.js" defer></script>
-    <script src="js/firebase-init.js?v=1.2" defer></script>
+    <script src="js/firebase-init.js?v=1.3_AUTH_FAILSAFE" defer></script>
     
     <!-- CORE SERVICES -->
     <script src="js/modules/core/Constants.js?v=5036_CLUBS_CATALOG" defer></script>
@@ -5977,7 +5981,7 @@
     <script src="js/core/StateManager.js?v=1.1" defer></script>
     <script src="js/core/CacheService.js" defer></script>
     <script src="js/core/DatabaseService.js" defer></script>
-    <script src="js/core/AuthService.js?v=12.4" defer></script>
+    <script src="js/core/AuthService.js?v=12.5_FAILSAFE" defer></script>
     <script src="js/core/Router.js?v=RANKING_SUBNAV_v5" defer></script>
     <script src="js/core/SmartTicker.js?v=3" defer></script>
     <script src="js/core/UpdateManager.js" defer></script>
@@ -6025,7 +6029,7 @@
     <script src="js/modules/common/WhatsAppService.js?v=9.2_SYNC_COURTS" defer charset="UTF-8"></script>
     <script src="js/modules/common/LevelService.js?v=3000_CANONICAL" defer></script>
     <script src="js/modules/logic/LevelAdjustmentService.js?v=3000_CANONICAL" defer></script>
-    <script src="js/modules/auth/AuthController.js?v=12.3" defer></script>
+    <script src="js/modules/auth/AuthController.js?v=12.4_FAILSAFE" defer></script>
     <script src="js/modules/common/PartnerSynergyService.js" defer></script>
     <script src="js/modules/common/PartnerSynergyWidget.js" defer></script>
     <script src="js/modules/common/SosSubstitutesService.js?v=1.0" defer></script>

@@ -304,6 +304,10 @@ window.AdminViews.entrenos_create = async function () {
                                 onclick="selectCreateEntrenoImage('img/entreno femenino delfos.jpg')">Delfos Fem</button>
                             <button type="button" class="btn-micro" style="background: #ccff00; color: #000;"
                                 onclick="selectCreateEntrenoImage('img/entreno mixto delfos.jpg')">Delfos Mixto</button>
+                            <button type="button" class="btn-micro" style="background: #38bdf8; color: #000; font-weight: 800;"
+                                onclick="selectCreateEntrenoImage('img/new_play_padel_pro.png')">⭐ New Play Padel</button>
+                            <button type="button" class="btn-micro" style="background: #0284c7; color: #fff; font-weight: 800;"
+                                onclick="selectCreateEntrenoImage('img/cem_tennis_hospitalet.png')">⭐ CEM Tennis</button>
                         </div>
                     </div>
 
