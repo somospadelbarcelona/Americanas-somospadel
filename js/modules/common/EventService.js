@@ -162,8 +162,9 @@ window.EventService = {
      */
     getAutoImage(location, category, type = 'entreno') {
         const cat = category || 'open';
+        const loc = (location || '').toLowerCase().trim();
 
-        if (location === 'Barcelona Pádel el Prat') {
+        if (loc.includes('prat')) {
             // Use Americana images if type is Americana, else Entreno (PRAT default)
             if (type === AppConstants.EVENT_TYPES.AMERICANA) {
                 return AppConstants.IMAGES.AMERICANA[cat] || AppConstants.IMAGES.AMERICANA.open;
@@ -171,10 +172,17 @@ window.EventService = {
             return AppConstants.IMAGES.PRAT[cat] || AppConstants.IMAGES.PRAT.open;
         }
 
-        if (location === 'Delfos Cornellá') {
-            // Simplified logic for Delfos based on existing code, can be expanded
-            if (type === AppConstants.EVENT_TYPES.AMERICANA) return 'img/delfos.png';
+        if (loc.includes('delfos')) {
+            if (type === AppConstants.EVENT_TYPES.AMERICANA) return 'img/entreno todo delfos.jpg';
             return AppConstants.IMAGES.DELFOS[cat] || AppConstants.IMAGES.DELFOS.open;
+        }
+
+        if (loc.includes('new play') || loc.includes('new padel')) {
+            return 'img/new_play_padel_pro.png';
+        }
+
+        if (loc.includes('cem tennis') || loc.includes('hospitalet')) {
+            return 'img/cem_tennis_hospitalet.png';
         }
 
         // Fallback for other locations

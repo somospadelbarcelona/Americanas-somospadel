@@ -8,71 +8,58 @@
     const PHOTO_LIBRARY = {
         // Pistas panorámicas profesionales de cristal, moqueta azul e iluminación nocturna
         courts: [
-            'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?q=80&w=1200&auto=format&fit=crop', // Pista deportiva profesional con iluminación nocturna
-            'https://images.unsplash.com/photo-1592919505780-303950717480?q=80&w=1200&auto=format&fit=crop', // Pista panorámica cristal y red tensada
-            'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?q=80&w=1200&auto=format&fit=crop', // Cancha azul moderna con líneas nítidas
-            'https://images.unsplash.com/photo-1622163642998-1ea32b0bbc67?q=80&w=1200&auto=format&fit=crop', // Pista de pádel indoor con moqueta azul rey
-            'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1200&auto=format&fit=crop', // Estadio iluminado de competición
             'img/pista_padel_azul.png',
-            'img/blog_court_night.png'
+            'img/blog_court_night.png',
+            'img/americana-mixed.png',
+            'img/americana-night.png',
+            'img/americana-pro.png'
         ],
-        // Palas de carbono, pelotas amarillas sobre moqueta y zapatillas técnicas
+        // Palas de carbono, pelotas amarillas sobre moqueta, overgrips y equipación
         material: [
-            'https://images.unsplash.com/photo-1617083934555-563d61a29f8f?q=80&w=1200&auto=format&fit=crop', // Palas pro y pelotas en moqueta de pista
-            'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?q=80&w=1200&auto=format&fit=crop', // Macro bola amarilla de pádel en moqueta con textura HD
-            'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?q=80&w=1200&auto=format&fit=crop', // Pelotas de pádel con fibra y textura nítida
-            'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1200&auto=format&fit=crop', // Zapatillas deportivas de agarre técnico en pista
-            'https://images.unsplash.com/photo-1511556532299-8f662fc26c06?q=80&w=1200&auto=format&fit=crop', // Suela de espiga y tracción en movimiento
             'img/blog_racket_ball.png',
-            'img/blog_ball_glass.png'
+            'img/blog_ball_glass.png',
+            'img/americana-pro.png',
+            'img/sudadera.jpg'
         ],
-        // Acción de juego en pista: smash en suspensión, volea cortada y bajada de pared
+        // Acción de juego en pista: smash en suspensión, volea cortada, choque de palas
         action: [
-            'https://images.unsplash.com/photo-1599474924187-334a4ae5bd3c?q=80&w=1200&auto=format&fit=crop', // Remate en suspensión y potencia aérea
-            'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?q=80&w=1200&auto=format&fit=crop', // Volea y golpe de potencia en red
-            'https://images.unsplash.com/photo-1530549387789-4c1017266635?q=80&w=1200&auto=format&fit=crop', // Desplazamiento dinámico en pista
-            'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=1200&auto=format&fit=crop', // Reacción rápida y split step en red
-            'https://images.unsplash.com/photo-1547347298-4074fc3086f0?q=80&w=1200&auto=format&fit=crop', // Impacto preciso con la bola en primer plano
-            'img/blog_action_smash.png'
+            'img/blog_padel_twister_team.jpg',
+            'img/blog_action_smash.png',
+            'img/padel-event.jpg',
+            'img/blog_ball_glass.png'
         ],
         // Salud, fisioterapia de pádel, calentamiento y prevención de lesiones
         health: [
-            'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=1200&auto=format&fit=crop', // Preparación física específica de tren superior
-            'https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=1200&auto=format&fit=crop', // Movilidad de hombro y manguito rotador para el saque
-            'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=1200&auto=format&fit=crop', // Estiramientos y flexibilidad articular en pista
-            'https://images.unsplash.com/photo-1574680096145-d05b474e2155?q=80&w=1200&auto=format&fit=crop'  // Recuperación muscular y fuerza preventiva
+            'img/blog_padel_health.jpg',
+            'img/blog_padel_nutrition.jpg',
+            'img/blog_action_smash.png'
         ],
         // Nutrición deportiva, sales, hidratación y energía en descansos de americana
         nutrition: [
-            'https://images.unsplash.com/photo-1550547660-d9450f859349?q=80&w=1200&auto=format&fit=crop', // Hidratación isotónica en el banco de la pista
-            'https://images.unsplash.com/photo-1522844990619-4951c40f7eda?q=80&w=1200&auto=format&fit=crop', // Bebida deportiva y electrolitos en el banquillo
-            'https://images.unsplash.com/photo-1576045057995-568f588f82fb?q=80&w=1200&auto=format&fit=crop', // Frutos secos y recarga rápida de glucógeno
-            'https://images.unsplash.com/photo-1490645935967-10de6ba17061?q=80&w=1200&auto=format&fit=crop'  // Fruta fresca (plátano y sales) para el tercer tiempo
+            'img/blog_padel_nutrition.jpg',
+            'img/blog_club_lounge.png',
+            'img/blog_padel_health.jpg'
         ],
-        // Psicología de pista: concentración en punto de oro, guardia en el resto y foco táctico
+        // Psicología de pista: concentración en punto de oro, guardia en el resto y química de pareja
         mental: [
-            'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?q=80&w=1200&auto=format&fit=crop', // Jugador en posición de resto concentrado antes del saque
-            'https://images.unsplash.com/photo-1574680096145-d05b474e2155?q=80&w=1200&auto=format&fit=crop', // Foco y determinación mental en puntos calientes
-            'https://images.unsplash.com/photo-1526676037777-05a232554f77?q=80&w=1200&auto=format&fit=crop', // Concentración táctica y templanza bajo presión
-            'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1200&auto=format&fit=crop'  // Estrategia y conexión mental de pareja en el banquillo
+            'img/blog_player_victory.png',
+            'img/blog_padel_twister_team.jpg',
+            'img/blog_ball_glass.png'
         ],
         // Comunidad, Fair Play, compañerismo y choque de palas en la red
         community: [
-            'https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=1200&auto=format&fit=crop', // Pareja de pádel chocando manos en la red con deportividad
-            'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?q=80&w=1200&auto=format&fit=crop', // Pasión, respeto deportivo y celebración compartida
-            'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?q=80&w=1200&auto=format&fit=crop', // Saludo deportivo entre rivales en la red
-            'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?q=80&w=1200&auto=format&fit=crop', // Abrazo y complicidad de equipo tras el partido
-            'img/blog_player_victory.png',
-            'img/blog_club_lounge.png'
+            'img/blog_padel_twister_team.jpg',
+            'img/blog_club_lounge.png',
+            'img/blog_player_victory.png'
         ],
         // Torneos, trofeos de campeonato, podiums y medallas de americana
         tournaments: [
-            'https://images.unsplash.com/photo-1578269174936-2709b6aeb913?q=80&w=1200&auto=format&fit=crop', // Trofeo dorado de campeones de americana
-            'https://images.unsplash.com/photo-1569517282132-25d22f4573e6?q=80&w=1200&auto=format&fit=crop', // Medallas y celebración oficial en pista
-            'https://images.unsplash.com/photo-1530549387789-4c1017266635?q=80&w=1200&auto=format&fit=crop', // Máxima intensidad de competición en Pista 1
-            'https://images.unsplash.com/photo-1551958219-acbc608c6377?q=80&w=1200&auto=format&fit=crop', // Victoria y gloria en el podium del torneo
+            'img/blog_padel_trophy.jpg',
+            'img/padel-event.jpg',
+            'img/blog_player_victory.png',
             'img/americana-night.png',
-            'img/americana-pro.png'
+            'img/americana-pro.png',
+            'img/pista_padel_azul.png'
         ]
     };
 
@@ -93,6 +80,7 @@
         // ── 🚀 NOVEDADES APP ──────────────────────────────────────────────────
         {
             id: 'app-noticia-notificaciones-push-movil',
+            imageUrl: 'img/americana-pro.png',
             title: '¡Llegan las Notificaciones Push en Vivo a SomosPadel Barcelona!',
             category: '🚀 NOVEDADES APP',
             catColor: '#0284c7',
@@ -114,6 +102,7 @@
         // ── 🎮 MODOS DE JUEGO SOMOSPADEL BCN ──────────────────────────────────
         {
             id: 'modos-juego-pareja-fija-vs-twister',
+            imageUrl: 'img/blog_padel_twister_team.jpg',
             title: 'Pareja Fija vs Twister Individual: ¿En qué formato anotarte según tus objetivos?',
             category: '🎮 MODOS DE JUEGO',
             catColor: '#CCFF00',
@@ -137,6 +126,7 @@
         },
         {
             id: 'modos-juego-suizo-americana-entreno',
+            imageUrl: 'img/pista_padel_azul.png',
             title: 'Sistema Suizo en SomosPadel: 6 Rondas Express, Puntos Individuales y Reagrupación por Pistas',
             category: '🎮 MODOS DE JUEGO',
             catColor: '#ef4444',
@@ -160,6 +150,7 @@
         },
         {
             id: 'modos-juego-twister-individual-guia',
+            imageUrl: 'img/blog_padel_twister_team.jpg',
             title: 'Guía Táctica Twister: Cómo Adaptarte al Instante a una Nueva Pareja',
             category: '💡 CONSEJOS',
             catColor: '#ec4899',
@@ -179,6 +170,7 @@
         // ── 💡 TÁCTICA & ESTRATEGIA ─────────────────────────────────────────────
         {
             id: 'tactica-teoria-centro',
+            imageUrl: 'img/blog_ball_glass.png',
             title: 'La Teoría del Centro: El Secreto Más Seguro del Pádel',
             category: '💡 CONSEJOS',
             catColor: '#f59e0b',
@@ -191,6 +183,7 @@
         },
         {
             id: 'tactica-transicion-defensa-ataque',
+            imageUrl: 'img/blog_action_smash.png',
             title: 'El Arte de la Transición: Cómo Salir de la Pared y Ganar la Red',
             category: '💡 CONSEJOS',
             catColor: '#f59e0b',
@@ -203,6 +196,7 @@
         },
         {
             id: 'tactica-juego-contra-zurdos',
+            imageUrl: 'img/blog_court_night.png',
             title: 'Cómo Jugar Frente a un Zurdo en el Lado Derecho',
             category: '💡 CONSEJOS',
             catColor: '#f59e0b',
@@ -215,6 +209,7 @@
         },
         {
             id: 'tactica-romper-ritmo-partido',
+            imageUrl: 'img/blog_ball_glass.png',
             title: 'Romper el Ritmo: Cómo Frenar a Rivales Rápidos y Pegadores',
             category: '💡 CONSEJOS',
             catColor: '#f59e0b',
@@ -227,6 +222,7 @@
         },
         {
             id: 'tactica-defensa-doble-pared',
+            imageUrl: 'img/blog_ball_glass.png',
             title: 'Domina la Doble Pared que Abre: Lectura y Giros Perfectos',
             category: '💡 CONSEJOS',
             catColor: '#f59e0b',
@@ -241,6 +237,7 @@
         // ── 👟 MATERIAL & EQUIPAMIENTO ──────────────────────────────────────────
         {
             id: 'material-suela-clay-vs-omni',
+            imageUrl: 'img/blog_racket_ball.png',
             title: 'Suela Omni vs. Suela Clay: ¿Qué Calzado Elegir en Pista?',
             category: '👟 MATERIAL',
             catColor: '#fb923c',
@@ -253,6 +250,7 @@
         },
         {
             id: 'material-goma-eva-vs-foam',
+            imageUrl: 'img/blog_racket_ball.png',
             title: 'Goma EVA Soft vs. Black EVA vs. FOAM: ¿Cuál se Adapta a Ti?',
             category: '👟 MATERIAL',
             catColor: '#fb923c',
@@ -265,6 +263,7 @@
         },
         {
             id: 'material-overgrips-y-peso',
+            imageUrl: 'img/blog_racket_ball.png',
             title: 'El Arte del Overgrip: Cómo un Milímetro Cambia el Balance',
             category: '👟 MATERIAL',
             catColor: '#fb923c',
@@ -277,6 +276,7 @@
         },
         {
             id: 'material-presurizadores-pelotas',
+            imageUrl: 'img/blog_racket_ball.png',
             title: 'Presurizadores de Pelotas: ¿Ahorro Real o Mito en Padel?',
             category: '👟 MATERIAL',
             catColor: '#fb923c',
@@ -289,6 +289,7 @@
         },
         {
             id: 'material-palas-forma-balance',
+            imageUrl: 'img/blog_racket_ball.png',
             title: 'Forma Redonda, Lágrima o Diamante: Encuentra Tu Pala Perfecta',
             category: '👟 MATERIAL',
             catColor: '#fb923c',
@@ -303,6 +304,7 @@
         // ── 💪 SALUD, FISIOTERAPIA & PREVENCIÓN ──────────────────────────────────
         {
             id: 'salud-prevencion-epicondilitis',
+            imageUrl: 'img/blog_padel_health.jpg',
             title: 'Cómo Prevenir y Tratar la Epicondilitis o Codo de Tenista',
             category: '💪 SALUD',
             catColor: '#ef4444',
@@ -315,6 +317,7 @@
         },
         {
             id: 'salud-fascitis-plantar-cesped',
+            imageUrl: 'img/blog_padel_health.jpg',
             title: 'Fascitis Plantar en Césped Sintético: Síntomas y Cuidados',
             category: '💪 SALUD',
             catColor: '#ef4444',
@@ -327,6 +330,7 @@
         },
         {
             id: 'salud-calentamiento-manguito-rotador',
+            imageUrl: 'img/blog_padel_health.jpg',
             title: 'Protege Tus Hombros: 5 Minutos de Calentamiento Específico',
             category: '💪 SALUD',
             catColor: '#ef4444',
@@ -339,6 +343,7 @@
         },
         {
             id: 'salud-calambres-tercer-set',
+            imageUrl: 'img/blog_padel_health.jpg',
             title: 'Evita los Calambres en Gemelos en Partidos Largos de Liga',
             category: '💪 SALUD',
             catColor: '#ef4444',
@@ -353,6 +358,7 @@
         // ── 🍎 NUTRICIÓN & RENDIMIENTO ──────────────────────────────────────────
         {
             id: 'nutricion-hidratacion-inteligente',
+            imageUrl: 'img/blog_padel_nutrition.jpg',
             title: 'Hidratación Deportiva: Por Qué el Agua Sola No es Suficiente',
             category: '🍎 NUTRICIÓN',
             catColor: '#22c55e',
@@ -365,6 +371,7 @@
         },
         {
             id: 'nutricion-comida-pre-partido',
+            imageUrl: 'img/blog_padel_nutrition.jpg',
             title: 'Qué Comer 2 Horas Antes de una Americana de Fin de Semana',
             category: '🍎 NUTRICIÓN',
             catColor: '#22c55e',
@@ -377,6 +384,7 @@
         },
         {
             id: 'nutricion-recuperacion-post-partido',
+            imageUrl: 'img/blog_padel_nutrition.jpg',
             title: 'La Ventana de Recuperación: El Tercer Tiempo Saludable',
             category: '🍎 NUTRICIÓN',
             catColor: '#22c55e',
@@ -391,6 +399,7 @@
         // ── 🧠 PSICOLOGÍA & MINDSET ─────────────────────────────────────────────
         {
             id: 'match-point-oro',
+            imageUrl: 'img/blog_player_victory.png',
             title: 'El Punto de Oro (40-40): Psicología y Táctica de Resto sin Margen de Error',
             category: '🧠 MENTAL',
             catColor: '#38bdf8',
@@ -416,6 +425,7 @@
         },
         {
             id: 'mental-gestion-punto-de-oro',
+            imageUrl: 'img/blog_player_victory.png',
             title: 'El Punto de Oro (40-40): Psicología Bajo Máxima Presión',
             category: '🧠 MENTAL',
             catColor: '#38bdf8',
@@ -433,6 +443,7 @@
         },
         {
             id: 'mental-remontar-marcador-adverso',
+            imageUrl: 'img/blog_player_victory.png',
             title: 'Cómo Remontar un Set 0-3 Abajo sin Perder los Nervios',
             category: '🧠 MENTAL',
             catColor: '#38bdf8',
@@ -445,6 +456,7 @@
         },
         {
             id: 'mental-quimica-en-pareja',
+            imageUrl: 'img/blog_padel_twister_team.jpg',
             title: 'La Química en Pista: Prohibido Reprochar Fallos a Tu Pareja',
             category: '🤝 COMUNIDAD',
             catColor: '#a855f7',
@@ -459,6 +471,7 @@
         // ── 🏫 CLÍNIC & TÉCNICA DE GOLPES ───────────────────────────────────────
         {
             id: 'clinic-bandeja-vs-vibora',
+            imageUrl: 'img/blog_action_smash.png',
             title: 'Bandeja vs. Víbora: Diferencias Técnicas y Cuándo Usar Cada Golpe',
             category: '🏫 CLINIC',
             catColor: '#ec4899',
@@ -471,6 +484,7 @@
         },
         {
             id: 'clinic-bajada-pared-potente',
+            imageUrl: 'img/padel-event.jpg',
             title: 'La Bajada de Pared: Cómo Acelerar la Bola con Máxima Precisión',
             category: '🏫 CLINIC',
             catColor: '#ec4899',
@@ -483,6 +497,7 @@
         },
         {
             id: 'clinic-la-chiquita-al-pie',
+            imageUrl: 'img/blog_action_smash.png',
             title: 'La Chiquita Milimétrica: El Golpe Que Desarma a Parejas Fuertes',
             category: '🏫 CLINIC',
             catColor: '#ec4899',
@@ -495,6 +510,7 @@
         },
         {
             id: 'clinic-la-volea-bloqueo',
+            imageUrl: 'img/blog_ball_glass.png',
             title: 'Volea de Bloqueo: Neutraliza los Tiros al Cuerpo en la Red',
             category: '🏫 CLINIC',
             catColor: '#ec4899',
@@ -509,6 +525,7 @@
         // ── 📡 REGLAMENTO OFICIAL & DUDAS EN PISTA ──────────────────────────────
         {
             id: 'reglamento-red-y-malla',
+            imageUrl: 'img/blog_court_night.png',
             title: '¿Toca la Red y Luego la Malla? Qué Dice el Reglamento Oficial',
             category: '📡 REGLAMENTO',
             catColor: '#0ea5e9',
@@ -521,6 +538,7 @@
         },
         {
             id: 'reglamento-invasion-de-pista',
+            imageUrl: 'img/blog_court_night.png',
             title: 'Invasión por Encima de la Red: Cuándo es Falta y Cuándo es Válido',
             category: '📡 REGLAMENTO',
             catColor: '#0ea5e9',
@@ -535,6 +553,7 @@
         // ── 🏆 AMERICANAS, RANKING & COMUNIDAD SOMOSPADEL ──────────────────────
         {
             id: 'torneos-guia-americana-perfecta',
+            imageUrl: 'img/blog_padel_trophy.jpg',
             title: 'Guía para Brillar en Tu Primera Americana en SomosPadel',
             category: '🏆 TORNEOS',
             catColor: '#facc15',
@@ -547,6 +566,7 @@
         },
         {
             id: 'ranking-como-funciona-algoritmo-elo',
+            imageUrl: 'img/americana-night.png',
             title: 'Algoritmo ELO de SomosPadel: Cómo Subir de Nivel Rápido',
             category: '📈 RANKING',
             catColor: '#34d399',
@@ -559,6 +579,7 @@
         },
         {
             id: 'comunidad-cronica-equipos-guinotprunera',
+            imageUrl: 'img/blog_club_lounge.png',
             title: 'Los 8 Equipos de SomosPadel en la Lliga GuinotPrunera 2026',
             category: '🤝 COMUNIDAD',
             catColor: '#a855f7',
@@ -573,6 +594,7 @@
         // ── 🚀 NOVEDADES & SUCESOS OFICIALES DE LA APP SOMOSPADEL ──────────────
         {
             id: 'app-noticia-equipos-2027-preinscripcion',
+            imageUrl: 'img/blog_club_lounge.png',
             title: 'Pre-Inscripciones Abiertas Liga 2027: ¡Asegura tu Plaza en los Equipos Oficiales!',
             category: '🚀 NOVEDADES APP',
             catColor: '#CCFF00',
@@ -585,6 +607,7 @@
         },
         {
             id: 'app-noticia-doble-ranking-inicio',
+            imageUrl: 'img/americana-night.png',
             title: 'Nuevo Doble Ranking en Inicio: Alterna al Instante entre Entrenos y Americanas',
             category: '🚀 NOVEDADES APP',
             catColor: '#38bdf8',
@@ -597,6 +620,7 @@
         },
         {
             id: 'app-noticia-cartas-fut-3d-interactivas',
+            imageUrl: 'img/americana-pro.png',
             title: 'Cartas de Jugador 3D estilo FUT: Descubre tu Valoración Media (OVR) y Habilidades',
             category: '🚀 NOVEDADES APP',
             catColor: '#facc15',
@@ -609,6 +633,7 @@
         },
         {
             id: 'app-noticia-sudadera-oficial-edicion-limitada',
+            imageUrl: 'img/sudadera.jpg',
             title: 'Sudadera Oficial SomosPadel 2026: Tejido Premium de 320g y Edición Limitada',
             category: '🚀 NOVEDADES APP',
             catColor: '#fb923c',
@@ -621,6 +646,7 @@
         },
         {
             id: 'app-noticia-piloto-automatico-matchmaking',
+            imageUrl: 'img/pista_padel_azul.png',
             title: 'Piloto Automático de Cruces: Matchmaking Inteligente 4 Horas Antes de Cada Evento',
             category: '🚀 NOVEDADES APP',
             catColor: '#a855f7',
@@ -633,6 +659,7 @@
         },
         {
             id: 'app-noticia-comunidad-500-americanas-record',
+            imageUrl: 'img/blog_club_lounge.png',
             title: '¡Hito Histórico! Superamos las 500 Americanas Disputadas y 1.200 Jugadores',
             category: '🚀 NOVEDADES APP',
             catColor: '#22c55e',
@@ -645,6 +672,7 @@
         },
         {
             id: 'app-noticia-protocolo-pista-1-corona',
+            imageUrl: 'img/pista_padel_azul.png',
             title: 'Protocolo Pista 1 "La Corona": Dinámica Oficial de Ascensos y Permanencia',
             category: '🚀 NOVEDADES APP',
             catColor: '#f59e0b',
@@ -657,6 +685,7 @@
         },
         {
             id: 'app-noticia-radar-meteorologico-live',
+            imageUrl: 'img/americana-mixed.png',
             title: 'Radar Meteorológico en Vivo: Humedad, Viento y su Efecto en el Bote de la Bola',
             category: '🚀 NOVEDADES APP',
             catColor: '#38bdf8',
@@ -669,6 +698,7 @@
         },
         {
             id: 'cultura-fair-play',
+            imageUrl: 'img/blog_padel_twister_team.jpg',
             title: 'Cultura Fair Play: Protocolo de Convivencia y Regla de "Dos Bolas" ante Dudas',
             category: '🤝 COMUNIDAD',
             catColor: '#a855f7',
@@ -693,6 +723,7 @@
         },
         {
             id: 'app-noticia-fair-play-regla-dos-bolas',
+            imageUrl: 'img/blog_padel_twister_team.jpg',
             title: 'Cultura Fair Play: Protocolo de Convivencia y Regla de "Dos Bolas" ante Dudas',
             category: '🤝 COMUNIDAD',
             catColor: '#a855f7',
@@ -707,6 +738,7 @@
         },
         {
             id: 'palas-control-potencia',
+            imageUrl: 'img/blog_racket_ball.png',
             title: 'Palas de Control vs Potencia: ¿Qué Formato Maximiza Tu Rendimiento Real?',
             category: '👟 MATERIAL',
             catColor: '#fb923c',
@@ -724,6 +756,7 @@
         },
         {
             id: 'nutricion-hidratacion',
+            imageUrl: 'img/blog_padel_nutrition.jpg',
             title: 'Hidratación Inteligente: Por Qué el Agua Sola No Evita el Bajón en el Tercer Set',
             category: '🍎 NUTRICIÓN',
             catColor: '#22c55e',
@@ -741,6 +774,7 @@
         },
         {
             id: 'tactica-defensa-cristal',
+            imageUrl: 'img/blog_ball_glass.png',
             title: 'Defensa de Doble Pared: Los Giros Mecánicos y la Lectura del Rebote',
             category: '💡 CONSEJOS',
             catColor: '#f59e0b',
@@ -775,6 +809,7 @@
         },
         {
             id: 'app-noticia-pwa-instalacion-movil',
+            imageUrl: 'img/americana-pro.png',
             title: 'Cómo Instalar SomosPadel como App Nativa en iPhone y Android sin Tiendas',
             category: '🚀 NOVEDADES APP',
             catColor: '#CCFF00',
@@ -907,46 +942,67 @@
 
         /**
          * Obtiene una lista de fotos deduplicadas para un conjunto de posts,
-         * sustituyendo automáticamente fotos locales repetidas por fotos nuevas HD.
+         * respetando la foto temática del artículo y garantizando fotos 100% de pádel.
          */
         assignUniquePhotos(posts) {
             const assigned = {};
             const used = new Set();
-            const legacyLocalImages = [
-                'img/blog_action_smash.png', 
-                'img/blog_court_night.png', 
-                'img/blog_racket_ball.png', 
-                'img/blog_ball_glass.png', 
-                'img/blog_player_victory.png', 
-                'img/blog_club_lounge.png',
-                'img/pista_padel_azul.png'
-            ];
+
+            const isValidPadelImage = (url) => {
+                if (!url || typeof url !== 'string') return false;
+                if (url.includes('unsplash.com')) return false; // Descartar URLs externas de Unsplash
+                if (url.includes('soccer') || url.includes('football') || url.includes('nike')) return false;
+                return url.startsWith('img/');
+            };
 
             posts.forEach((post, idx) => {
-                const theme = post.theme || this.detectTheme(post);
-                const candidates = PHOTO_LIBRARY[theme] || ALL_PHOTOS;
+                // Si coincide con un artículo curado del catálogo, priorizar su imagen curada
+                const postTitleNorm = (post.title || '').trim().toLowerCase();
+                const catalogMatch = ARTICLES_DATABASE.find(a => 
+                    a.id === post.id || 
+                    (a.title && a.title.trim().toLowerCase() === postTitleNorm) ||
+                    (post.id && post.id.includes(a.id))
+                );
 
-                // Si la imagen es una de las locales antiguas repetidas o no tiene foto, forzar una foto nueva HD del tema
-                const isLegacy = !post.imageUrl || legacyLocalImages.some(leg => post.imageUrl.includes(leg));
-                
-                if (!isLegacy && !used.has(post.imageUrl)) {
-                    assigned[post.id] = post.imageUrl;
-                    used.add(post.imageUrl);
+                let preferredUrl = (catalogMatch && catalogMatch.imageUrl) 
+                    ? catalogMatch.imageUrl 
+                    : (isValidPadelImage(post.imageUrl) ? post.imageUrl : null);
+
+                // Asignación de rescate por palabras clave si no hay preferredUrl válida
+                if (!preferredUrl) {
+                    const fullText = (postTitleNorm + ' ' + (post.category || '')).toLowerCase();
+                    if (fullText.includes('twister') || fullText.includes('pareja') || fullText.includes('compañer')) {
+                        preferredUrl = 'img/blog_padel_twister_team.jpg';
+                    } else if (fullText.includes('nutrici') || fullText.includes('hidrat') || fullText.includes('aliment')) {
+                        preferredUrl = 'img/blog_padel_nutrition.jpg';
+                    } else if (fullText.includes('salud') || fullText.includes('codo') || fullText.includes('lesi') || fullText.includes('manguito') || fullText.includes('calentami')) {
+                        preferredUrl = 'img/blog_padel_health.jpg';
+                    } else if (fullText.includes('trofeo') || fullText.includes('torneo') || fullText.includes('campeon') || fullText.includes('premio')) {
+                        preferredUrl = 'img/blog_padel_trophy.jpg';
+                    }
+                }
+
+                // 1. Si el post tiene imagen válida de pádel y aún no se ha usado en este lote, usarla
+                if (preferredUrl && !used.has(preferredUrl)) {
+                    assigned[post.id] = preferredUrl;
+                    used.add(preferredUrl);
                     return;
                 }
 
-                // Buscar foto fresca no usada del tema que no sea de las antiguas
-                const fresh = candidates.find(img => !used.has(img) && !legacyLocalImages.some(leg => img.includes(leg)));
+                // 2. Si ya se utilizó en la misma vista o no es válida, asignar una foto alternativa del mismo tema de pádel
+                const theme = post.theme || (catalogMatch && catalogMatch.theme) || this.detectTheme(post);
+                const candidates = PHOTO_LIBRARY[theme] || PHOTO_LIBRARY.courts;
+                const fresh = candidates.find(img => !used.has(img));
 
                 if (fresh) {
                     assigned[post.id] = fresh;
                     used.add(fresh);
+                } else if (preferredUrl) {
+                    assigned[post.id] = preferredUrl;
                 } else {
-                    // Si se agotaron las del tema, tomar cualquiera no usada del pool global
-                    const anyFresh = ALL_PHOTOS.find(img => !used.has(img) && !legacyLocalImages.some(leg => img.includes(leg)));
-                    const chosen = anyFresh || candidates[idx % candidates.length];
-                    assigned[post.id] = chosen;
-                    used.add(chosen);
+                    const fallback = candidates[idx % candidates.length];
+                    assigned[post.id] = fallback;
+                    used.add(fallback);
                 }
             });
 
@@ -960,7 +1016,7 @@
             if (t.includes('nutrici') || t.includes('hidrat') || t.includes('comida') || t.includes('recupera')) return 'nutrition';
             if (t.includes('mental') || t.includes('oro') || t.includes('concentra') || t.includes('nervios')) return 'mental';
             if (t.includes('torneo') || t.includes('americana') || t.includes('ranking') || t.includes('elo') || t.includes('novedad') || t.includes('push')) return 'tournaments';
-            if (t.includes('comunidad') || t.includes('equipo') || t.includes('pareja')) return 'community';
+            if (t.includes('comunidad') || t.includes('equipo') || t.includes('pareja') || t.includes('twister')) return 'community';
             if (t.includes('smash') || t.includes('bandeja') || t.includes('víbora') || t.includes('remate') || t.includes('volea')) return 'action';
             return 'courts';
         },
@@ -994,7 +1050,7 @@
          */
         getFullCatalog(player1 = 'Alejandro Coscolín', player2 = 'Bernat Pecharromán') {
             const base = ARTICLES_DATABASE.map((art, idx) => {
-                const img = this.getPhoto(art.theme, idx);
+                const img = art.imageUrl || this.getPhoto(art.theme, idx);
                 const content = (art.contentTemplate || art.content || '')
                     .replace(/{PLAYER1}/g, player1)
                     .replace(/{PLAYER2}/g, player2);

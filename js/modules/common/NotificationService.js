@@ -1885,99 +1885,332 @@ window.NotificationServiceClass = class NotificationService {
     }
 
     /**
-     * Observa los chats de eventos activos para mostrar mensajes en tiempo real
+     * Procesa mensajes nuevos entrantes para chat general, eventos y directos,
+     * integrándolos con el sistema de alertas in-app, sonido y badges de SomosPadel.
+     */
+    _processIncomingChatMessage({ chatId, chatTitle, chatType, changeDoc, currentUid, eventId = null, targetUrl = 'chat' }) {
+        if (!changeDoc) return;
+        const msg = (typeof changeDoc.data === 'function') ? changeDoc.data() : (changeDoc.data || changeDoc);
+        if (!msg) return;
+
+        // Ignorar mensajes enviados por el propio usuario actual
+        if (msg.senderId && currentUid && msg.senderId === currentUid) {
+            return;
+        }
+
+        // Timestamp del mensaje (soporta FieldValue / Date / Timestamp Firestore / Epoch)
+        const msgTime = msg.timestamp
+            ? (typeof msg.timestamp.toMillis === 'function'
+                ? msg.timestamp.toMillis()
+                : (msg.timestamp instanceof Date
+                    ? msg.timestamp.getTime()
+                    : (Number(msg.timestamp) || Date.now())))
+            : Date.now();
+
+        // Condición: timestamp posterior a this.serviceStartTime o dentro de los últimos 2 minutos
+        const isAfterStart = msgTime >= (this.serviceStartTime - 5000); // 5s margen por discrepancia horaria
+        const isWithinLast2Min = msgTime >= (Date.now() - 120000);
+        if (!isAfterStart && !isWithinLast2Min) {
+            return;
+        }
+
+        // Deduplicación por ID único para evitar entradas repetidas
+        const docId = changeDoc.id || ('msg_' + msgTime);
+        const chatNotifId = `chat_${chatId}_${docId}`;
+        if (this.chatNotifications.some(n => n && n.id === chatNotifId)) {
+            return;
+        }
+
+        // Formato del contenido y remitente
+        const senderName = msg.senderName || 'Jugador';
+        let previewText = msg.text || '';
+        if (!previewText && msg.attachment) {
+            previewText = (msg.attachmentType === 'audio') ? '🎤 Mensaje de voz' : '📷 Imagen adjunta';
+        }
+
+        let title = '';
+        if (chatType === 'general' || chatId === 'general_somospadel') {
+            title = `💬 Chat General SomosPadel`;
+        } else if (chatType === 'direct') {
+            title = `💬 Mensaje de ${senderName}`;
+        } else {
+            title = `🎾 ${chatTitle || 'Chat de Partido'}`;
+        }
+
+        const body = (chatType === 'direct') ? previewText : `${senderName}: ${previewText}`;
+
+        // Agrega a this.chatNotifications con read: false (para que sume al badge y aparezca como alerta pendiente)
+        const notifItem = {
+            id: chatNotifId,
+            title: title,
+            body: body,
+            timestamp: msg.timestamp || new Date(),
+            read: false,
+            icon: 'comment-dots',
+            type: 'chat',
+            category: 'chat',
+            isChat: true,
+            data: {
+                chatId: chatId,
+                eventId: eventId || null,
+                chatType: chatType,
+                senderId: msg.senderId || null,
+                senderName: senderName,
+                url: targetUrl || 'chat'
+            }
+        };
+
+        this.chatNotifications.unshift(notifItem);
+        if (this.chatNotifications.length > 50) {
+            this.chatNotifications.pop();
+        }
+
+        // Emitir alerta interactiva (Toast, Sonido y Notificación Nativa) deduplicando si ya se alertó en 10s
+        this._recentlyAlertedChats = this._recentlyAlertedChats || new Set();
+        if (!this._recentlyAlertedChats.has(chatNotifId)) {
+            this._recentlyAlertedChats.add(chatNotifId);
+            setTimeout(() => {
+                if (this._recentlyAlertedChats) this._recentlyAlertedChats.delete(chatNotifId);
+            }, 10000);
+
+            // 1. In-app Toast interactivo
+            this.showInAppToast(title, body, 'chat', targetUrl || 'chat');
+
+            // 2. Reproducir sonido si está disponible
+            if (window.NotificationUi && typeof window.NotificationUi.playNotificationSound === 'function') {
+                try {
+                    window.NotificationUi.playNotificationSound();
+                } catch (_) {}
+            }
+
+            // 3. Notificación nativa Web Push / OS
+            this.showNativeNotification(title, body, {
+                id: chatNotifId,
+                chatId: chatId,
+                eventId: eventId,
+                chatType: chatType,
+                senderId: msg.senderId,
+                senderName: senderName,
+                url: targetUrl || 'chat'
+            });
+        }
+
+        // 4. Notificar suscriptores y actualizar el badge de la app
+        this.notifySubscribers();
+        this.updateAppBadge();
+    }
+
+    /**
+     * Observa los chats en tiempo real integrados con el sistema global de alertas de SomosPadel:
+     * a) Eventos activos donde el usuario esté apuntado (o todos los eventos activos si es invitado/miembro)
+     * b) Chat general ('chats/general_somospadel/messages')
+     * c) Chats privados del usuario actual ('chats' con participants array-contains currentUser.uid y type === 'direct')
      */
     async initChatObserver() {
-        // NOTA: No limpiamos agresivamente para no interrumpir listeners activos
-        // Solo añadiremos los eventos que no tengan listener
+        const firestore = window.db || (window.firebase && typeof window.firebase.firestore === 'function' ? window.firebase.firestore() : null);
+        if (!firestore) {
+            let attempts = 0;
+            const timer = setInterval(() => {
+                attempts++;
+                const fs = window.db || (window.firebase && typeof window.firebase.firestore === 'function' ? window.firebase.firestore() : null);
+                if (fs || attempts > 40) {
+                    clearInterval(timer);
+                    if (fs) this.initChatObserver();
+                }
+            }, 250);
+            return;
+        }
 
-        try {
-            if (!window.AmericanaService) return;
+        const currentUid = this.currentUserUid || (window.auth?.currentUser?.uid) || (window.Store?.getState('currentUser')?.uid) || null;
 
-            // Reintentar si no hay eventos activos (puede ser que se estén cargando)
-            let events = await window.AmericanaService.getAllActiveEvents();
-            if (!events || events.length === 0) {
-                console.log("💬 [NotificationService] No initial events found, retrying in 2s...");
-                await new Promise(r => setTimeout(r, 2000));
-                events = await window.AmericanaService.getAllActiveEvents();
-            }
-
-            if (!events || events.length === 0) {
-                console.warn("💬 [NotificationService] No direct active events found to monitor chats.");
-                return;
-            }
-
-            console.log(`💬 [NotificationService] Total events to monitor: ${events.length}. Current active observers: ${this.chatUnsubscribes.size}`);
-
-            // Filtrar solo eventos nuevos para no duplicar listeners
-            const newEvents = events.filter(evt => !this.chatUnsubscribes.has(evt.id));
-            if (newEvents.length === 0) {
-                console.log("💬 [NotificationService] No new events detected for chat monitoring.");
-                return;
-            }
-
-            console.log(`💬 [NotificationService] SUBSCRIBING to ${newEvents.length} NEW chats:`, newEvents.map(e => e.name));
-
-            newEvents.forEach(evt => {
-                const unsub = window.db.collection('chats').doc(evt.id).collection('messages')
+        // b) Chat General del Club ('chats/general_somospadel/messages')
+        if (!this.chatUnsubscribes.has('general_somospadel')) {
+            try {
+                const unsubGeneral = firestore.collection('chats')
+                    .doc('general_somospadel')
+                    .collection('messages')
                     .orderBy('timestamp', 'desc')
                     .limit(5)
                     .onSnapshot(snap => {
-                        let hasNew = false;
                         snap.docChanges().forEach(change => {
                             if (change.type === 'added') {
-                                const msg = change.doc.data();
-                                // IMPORTANTE: El timestamp de servidor puede venir null en el primer cambio local
-                                const msgTime = msg.timestamp ? (msg.timestamp.toMillis ? msg.timestamp.toMillis() : msg.timestamp) : Date.now();
-
-                                console.log(`💬 [Chat Debug] Msg from ${msg.senderName}: "${msg.text?.substring(0, 15)}..." Time: ${msgTime} vs Service: ${this.serviceStartTime}`);
-
-                                // Relajamos el filtro: aceptamos cualquier mensaje recibido DESDE que se inició el servicio
-                                // con un margen de 5 minutos por discrepancias de reloj.
-                                if (msgTime > this.serviceStartTime - 300000) {
-                                    // Evitar duplicados con ID robusto
-                                    const chatNotifId = `chat_${evt.id}_${change.doc.id}`;
-                                    if (!this.chatNotifications.find(n => n.id === chatNotifId)) {
-                                        console.log("💬 [Chat Observer] New message detected:", msg.text);
-                                        this.chatNotifications.push({
-                                            id: chatNotifId,
-                                            title: `💬 ${msg.senderName || 'Chat'} [${evt.name || 'Evento'}]:`,
-                                            body: msg.text,
-                                            timestamp: msg.timestamp || new Date(),
-                                            read: true, // Marcar como leída para no inflar el contador del badge
-                                            icon: 'comment-dots',
-                                            isChat: true,
-                                            data: { url: 'live', eventId: evt.id }
-                                        });
-                                        hasNew = true;
-                                    }
-                                }
+                                this._processIncomingChatMessage({
+                                    chatId: 'general_somospadel',
+                                    chatTitle: 'Chat General SomosPadel',
+                                    chatType: 'general',
+                                    changeDoc: change.doc,
+                                    currentUid: currentUid,
+                                    targetUrl: 'chat'
+                                });
                             }
                         });
+                    }, err => {
+                        console.warn("⚠️ [NotificationService] Error observando chat general:", err?.message);
+                    });
 
-                        if (hasNew) {
-                            console.log("💬 [NotificationService] New chat messages loaded, notifying subscribers");
-                            // Limitar cache local de chats
-                            if (this.chatNotifications.length > 20) {
-                                this.chatNotifications = this.chatNotifications.slice(-20);
+                this.chatUnsubscribes.set('general_somospadel', unsubGeneral);
+            } catch (errGen) {
+                console.warn("⚠️ [NotificationService] Error suscribiendo a chat general:", errGen);
+            }
+        }
+
+        // c) Chats Privados 1 a 1 del usuario actual ('chats' con participants array-contains currentUid y type === 'direct')
+        if (currentUid && !this.chatUnsubscribes.has('direct_chats_listener')) {
+            try {
+                const attachDirectMessagesListener = (roomId, otherName) => {
+                    if (this.chatUnsubscribes.has(roomId)) return;
+                    const unsubRoom = firestore.collection('chats')
+                        .doc(roomId)
+                        .collection('messages')
+                        .orderBy('timestamp', 'desc')
+                        .limit(5)
+                        .onSnapshot(msgSnap => {
+                            msgSnap.docChanges().forEach(change => {
+                                if (change.type === 'added') {
+                                    this._processIncomingChatMessage({
+                                        chatId: roomId,
+                                        chatTitle: otherName,
+                                        chatType: 'direct',
+                                        changeDoc: change.doc,
+                                        currentUid: currentUid,
+                                        targetUrl: 'chat'
+                                    });
+                                }
+                            });
+                        }, err => {
+                            console.warn(`⚠️ [NotificationService] Error escuchando mensajes directos en ${roomId}:`, err?.message);
+                        });
+                    this.chatUnsubscribes.set(roomId, unsubRoom);
+                };
+
+                const handleDirectRoomsSnap = (roomsSnap) => {
+                    roomsSnap.docs.forEach(roomDoc => {
+                        const rData = roomDoc.data() || {};
+                        const rId = roomDoc.id;
+                        let otherName = 'Chat Privado';
+                        if (rData.participantDetails) {
+                            const otherKey = Object.keys(rData.participantDetails).find(k => k !== currentUid);
+                            if (otherKey && rData.participantDetails[otherKey]?.name) {
+                                otherName = rData.participantDetails[otherKey].name;
                             }
-                            this.notifySubscribers();
+                        }
+                        attachDirectMessagesListener(rId, otherName);
+                    });
+                };
+
+                const directQuery = firestore.collection('chats')
+                    .where('type', '==', 'direct')
+                    .where('participants', 'array-contains', currentUid);
+
+                const unsubDirect = directQuery.onSnapshot(handleDirectRoomsSnap, fallbackErr => {
+                    console.warn("⚠️ [NotificationService] Fallback index en chats directos:", fallbackErr?.message);
+                    try {
+                        const fallbackUnsub = firestore.collection('chats')
+                            .where('participants', 'array-contains', currentUid)
+                            .onSnapshot(fbSnap => {
+                                const directDocs = fbSnap.docs.filter(d => (d.data() || {}).type === 'direct');
+                                handleDirectRoomsSnap({ docs: directDocs });
+                            }, fbErr => console.warn("⚠️ [NotificationService] Fallback direct chats query falló:", fbErr?.message));
+                        this.chatUnsubscribes.set('direct_chats_listener', fallbackUnsub);
+                    } catch (_) {}
+                });
+
+                this.chatUnsubscribes.set('direct_chats_listener', unsubDirect);
+            } catch (errDirect) {
+                console.warn("⚠️ [NotificationService] Excepción configurando chats directos:", errDirect);
+            }
+        }
+
+        // a) Eventos activos donde el usuario esté apuntado (o todos los eventos activos si es invitado/miembro)
+        try {
+            if (window.AmericanaService && typeof window.AmericanaService.getAllActiveEvents === 'function') {
+                let events = await window.AmericanaService.getAllActiveEvents();
+                if (!events || events.length === 0) {
+                    await new Promise(r => setTimeout(r, 1500));
+                    events = await window.AmericanaService.getAllActiveEvents();
+                }
+
+                if (Array.isArray(events) && events.length > 0) {
+                    const isUserInEvent = (evt) => {
+                        if (!currentUid) return true;
+                        const checkList = (list) => {
+                            if (!Array.isArray(list)) return false;
+                            return list.some(p => {
+                                if (!p) return false;
+                                if (typeof p === 'string') return p === currentUid;
+                                return p.id === currentUid || p.uid === currentUid || p.playerId === currentUid;
+                            });
+                        };
+                        return checkList(evt.players) || checkList(evt.registeredPlayers) || checkList(evt.participants) || checkList(evt.registeredPlayerIds);
+                    };
+
+                    let eventsToMonitor = events;
+                    if (currentUid) {
+                        const userEvents = events.filter(isUserInEvent);
+                        if (userEvents.length > 0) {
+                            eventsToMonitor = userEvents;
+                        }
+                    }
+
+                    eventsToMonitor.forEach(evt => {
+                        const cleanEventId = String(evt.id || '').replace(/^event_/, '');
+                        const canonicalChatId = String(evt.id || '').startsWith('event_') ? String(evt.id) : `event_${cleanEventId}`;
+                        const eventTitle = evt.name || evt.title || 'Chat de Partido';
+
+                        if (!this.chatUnsubscribes.has(canonicalChatId)) {
+                            try {
+                                const unsubEvt = firestore.collection('chats')
+                                    .doc(canonicalChatId)
+                                    .collection('messages')
+                                    .orderBy('timestamp', 'desc')
+                                    .limit(5)
+                                    .onSnapshot(snap => {
+                                        snap.docChanges().forEach(change => {
+                                            if (change.type === 'added') {
+                                                this._processIncomingChatMessage({
+                                                    chatId: canonicalChatId,
+                                                    chatTitle: eventTitle,
+                                                    chatType: 'event',
+                                                    changeDoc: change.doc,
+                                                    currentUid: currentUid,
+                                                    eventId: cleanEventId,
+                                                    targetUrl: 'chat'
+                                                });
+                                            }
+                                        });
+                                    }, errEvt => {
+                                        console.warn(`⚠️ [NotificationService] Error observando chat evento ${canonicalChatId}:`, errEvt?.message);
+                                    });
+
+                                this.chatUnsubscribes.set(canonicalChatId, unsubEvt);
+                            } catch (e) {
+                                console.warn(`⚠️ [NotificationService] Excepción observando ${canonicalChatId}:`, e);
+                            }
                         }
                     });
-                this.chatUnsubscribes.set(evt.id, unsub);
-            });
-
-            // No llamamos notifySubscribers() aquí incondicionalmente — 
-            // solo se notifica dentro del snapshot cuando hay mensajes realmente nuevos (hasNew=true).
-        } catch (e) {
-            console.warn("💬 [NotificationService] Chat observation failed:", e);
+                }
+            }
+        } catch (errEvents) {
+            console.warn("⚠️ [NotificationService] Error cargando eventos para chat:", errEvents);
         }
     }
 
     stopChatObserver() {
-        this.chatUnsubscribes.forEach(unsub => unsub());
+        const executed = new Set();
+        this.chatUnsubscribes.forEach((unsub, key) => {
+            try {
+                if (typeof unsub === 'function' && !executed.has(unsub)) {
+                    executed.add(unsub);
+                    unsub();
+                }
+            } catch (e) {
+                console.warn(`⚠️ [NotificationService] Error desuscribiendo listener de chat ${key}:`, e);
+            }
+        });
         this.chatUnsubscribes.clear();
         this.chatNotifications = [];
+        this._chatObserverStarted = false;
+        console.log("🛑 [NotificationService] Chat observers detenidos limpiamente.");
     }
 
     unsubscribeFirestore() {
@@ -2290,7 +2523,8 @@ window.NotificationServiceClass = class NotificationService {
             const options = {
                 body: 'Ya tienes activados los avisos en tiempo real para partidos, plazas libres y chat.',
                 icon: 'img/logo_somospadel.png',
-                badge: 'img/logo_somospadel.png',
+                badge: 'img/badge_somospadel.png',
+                color: '#CCFF00',
                 data: { url: './', type: 'welcome' },
                 vibrate: [200, 100, 200],
                 tag: 'somospadel-welcome',
@@ -2888,7 +3122,8 @@ window.NotificationServiceClass = class NotificationService {
             const options = {
                 body: body,
                 icon: 'img/logo_somospadel.png',
-                badge: 'img/logo_somospadel.png',
+                badge: 'img/badge_somospadel.png',
+                color: '#CCFF00',
                 data: data,
                 vibrate: [200, 100, 200],
                 tag: data.id || 'somospadel-notification', // TAG único por ID para poder borrarla específicamente
@@ -2942,6 +3177,9 @@ window.NotificationServiceClass = class NotificationService {
         } else if (type === 'broadcast') {
             iconHtml = '<i class="fas fa-bullhorn"></i>';
             labelText = '📢 COMUNICADO CLUB';
+        } else if (type === 'chat') {
+            iconHtml = '<i class="fas fa-comment-dots"></i>';
+            labelText = '💬 CHAT';
         } else if (type === 'news') {
             iconHtml = '<i class="fas fa-newspaper"></i>';
             labelText = '📰 DIARIO SOMOSPADEL';

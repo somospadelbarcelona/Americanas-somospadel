@@ -63,6 +63,13 @@ window.ParticipantService = {
                 registeredPlayers: players
             });
 
+            // Auto-regeneración si la ronda fue generada y ningún partido ha comenzado
+            if (window.RoundAutoRegenerationService && typeof window.RoundAutoRegenerationService.checkAndHandlePlayerAdded === 'function') {
+                window.RoundAutoRegenerationService.checkAndHandlePlayerAdded(eventId, eventType, newPlayer, { responsible: 'admin' }).catch(e => {
+                    console.warn("⚠️ [ParticipantService] Error en auto-regeneración de ronda:", e);
+                });
+            }
+
             // Trigger Intelligent Substitution if live (async, non-blocking)
             this._handleLiveSubstitution(eventId, eventType, event.status, newPlayer);
 

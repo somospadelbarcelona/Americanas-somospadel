@@ -62,6 +62,20 @@ window.AppConstants = {
             mixed: 'img/entreno mixto delfos.jpg',
             open: 'img/entreno todo delfos.jpg'
         },
+        NEW_PADEL: {
+            male: 'img/new_play_padel_pro.png',
+            female: 'img/new_play_padel_pro.png',
+            mixed: 'img/new_play_padel_pro.png',
+            open: 'img/new_play_padel_pro.png',
+            profile: 'img/new_play_padel_pro.png'
+        },
+        CEM_HOSPITALET: {
+            male: 'img/cem_tennis_hospitalet.png',
+            female: 'img/cem_tennis_hospitalet.png',
+            mixed: 'img/cem_tennis_hospitalet.png',
+            open: 'img/cem_tennis_hospitalet.png',
+            profile: 'img/cem_tennis_hospitalet.png'
+        },
         AMERICANA: {
             male: 'img/americana%20masculina.jpg',
             female: 'img/americana%20femeninas.jpg',
@@ -110,7 +124,7 @@ window.AppConstants = {
 
     // 🎾 Catálogo de Clubes & Sedes de Pádel (L'Hospitalet, Cornellà, El Prat, Barcelona)
     CLUBS: [
-        // --- EL PRAT DE LLOBREGAT ---
+        // --- ⭐ CLUBES COLABORADORES (FAVORITOS ARRIBA DEL TODO) ---
         {
             id: 'prat_bcn',
             name: "Barcelona Pádel el Prat",
@@ -119,8 +133,52 @@ window.AppConstants = {
             sede: "Barcelona Pádel el Prat",
             address: "Autovía de Castelldefels, Km 4.6, 08820 El Prat de Llobregat",
             courts: 14,
-            coords: { lat: 41.325, lng: 2.088 }
+            coords: { lat: 41.325, lng: 2.088 },
+            isFavorite: true,
+            favoriteOrder: 1,
+            image: "img/entreno todo prat.jpg"
         },
+        {
+            id: 'cornella_delfos',
+            name: "Complex Esportiu Delfos",
+            shortName: "Delfos Cornellà",
+            zone: "Cornellà de Llobregat",
+            sede: "Delfos Cornellà",
+            address: "Carrer de la Verge de Montserrat, s/n, 08940 Cornellà de Llobregat",
+            courts: 8,
+            coords: { lat: 41.353, lng: 2.067 },
+            isFavorite: true,
+            favoriteOrder: 2,
+            image: "img/entreno todo delfos.jpg"
+        },
+        {
+            id: 'new_play_padel_pro',
+            name: "New Play Pádel Pro",
+            shortName: "New Play Pádel",
+            zone: "Barcelona y Alrededores",
+            sede: "New Play Pádel Pro",
+            address: "Barcelona y Alrededores",
+            courts: 5,
+            coords: { lat: 41.380, lng: 2.070 },
+            isFavorite: true,
+            favoriteOrder: 3,
+            image: "img/new_play_padel_pro.png"
+        },
+        {
+            id: 'hosp_cem_tennis',
+            name: "CEM Tennis & Pádel Hospitalet",
+            shortName: "CEM Hospitalet",
+            zone: "L'Hospitalet de Llobregat",
+            sede: "CEM Tennis Hospitalet",
+            address: "Carrer de la Feixa Llarga, s/n, 08907 L'Hospitalet de Llobregat",
+            courts: 4,
+            coords: { lat: 41.345, lng: 2.108 },
+            isFavorite: true,
+            favoriteOrder: 4,
+            image: "img/cem_tennis_hospitalet.png"
+        },
+
+        // --- EL PRAT DE LLOBREGAT ---
         {
             id: 'prat_estruch',
             name: "CEM Estruch Pádel",
@@ -143,16 +201,6 @@ window.AppConstants = {
         },
 
         // --- CORNELLÀ DE LLOBREGAT ---
-        {
-            id: 'cornella_delfos',
-            name: "Complex Esportiu Delfos",
-            shortName: "Delfos Cornellà",
-            zone: "Cornellà de Llobregat",
-            sede: "Delfos Cornellá",
-            address: "Carrer de la Verge de Montserrat, s/n, 08940 Cornellà de Llobregat",
-            courts: 8,
-            coords: { lat: 41.353, lng: 2.067 }
-        },
         {
             id: 'cornella_aurial',
             name: "Aurial Cornellà",
@@ -185,16 +233,6 @@ window.AppConstants = {
         },
 
         // --- L'HOSPITALET DE LLOBREGAT ---
-        {
-            id: 'hosp_cem_tennis',
-            name: "CEM Tennis & Pádel Hospitalet",
-            shortName: "CEM Hospitalet",
-            zone: "L'Hospitalet de Llobregat",
-            sede: "CEM Hospitalet Tennis",
-            address: "Carrer de la Feixa Llarga, s/n, 08907 L'Hospitalet de Llobregat",
-            courts: 8,
-            coords: { lat: 41.345, lng: 2.108 }
-        },
         {
             id: 'hosp_indoor',
             name: "Pádel Indoor L'Hospitalet",
@@ -307,6 +345,12 @@ window.setupSedeCombobox = function (inputElOrId, options = {}) {
 
     const clubs = window.PADEL_CLUBS_CATALOG || [];
 
+    // ⭐ Clubes colaboradores prioritarios (Favoritos arriba del todo) en orden estricto
+    const favoriteClubIds = ['prat_bcn', 'cornella_delfos', 'new_play_padel_pro', 'hosp_cem_tennis'];
+    const favoriteClubs = favoriteClubIds
+        .map(id => clubs.find(c => c.id === id))
+        .filter(Boolean);
+
     const zones = [
         { label: "📍 EL PRAT DE LLOBREGAT", zoneKey: "El Prat de Llobregat" },
         { label: "📍 CORNELLÀ DE LLOBREGAT", zoneKey: "Cornellà de Llobregat" },
@@ -319,6 +363,43 @@ window.setupSedeCombobox = function (inputElOrId, options = {}) {
         const q = (query || '').toLowerCase().trim();
         let html = '';
 
+        // 1. ⭐ SECCIÓN FAVORITOS / CLUBES COLABORADORES (ARRIBA DEL TODO)
+        const matchingFavorites = favoriteClubs.filter(c => {
+            if (!q) return true;
+            return (c.name && c.name.toLowerCase().includes(q)) ||
+                   (c.sede && c.sede.toLowerCase().includes(q)) ||
+                   (c.shortName && c.shortName.toLowerCase().includes(q)) ||
+                   (c.address && c.address.toLowerCase().includes(q));
+        });
+
+        if (matchingFavorites.length > 0) {
+            html += `<div class="sede-combobox-group sede-combobox-group-favorites">
+                <i class="fas fa-star" style="color: #f59e0b; margin-right: 4px;"></i> ⭐ CLUBES COLABORADORES (FAVORITOS)
+            </div>`;
+            matchingFavorites.forEach(c => {
+                const displayName = c.sede || c.name;
+                const safeSede = displayName.replace(/"/g, '&quot;');
+                const safeClub = (c.name || displayName).replace(/"/g, '&quot;');
+                const imgThumb = c.image 
+                    ? `<img src="${c.image}" alt="" class="sede-thumb-img" onerror="this.style.display='none'">` 
+                    : '';
+                html += `
+                    <div class="sede-combobox-item sede-combobox-item-favorite" 
+                         data-sede="${safeSede}" 
+                         data-club="${safeClub}" 
+                         data-courts="${c.courts || 4}">
+                        <div class="sede-item-left">
+                            <span class="sede-fav-badge"><i class="fas fa-star"></i></span>
+                            ${imgThumb}
+                            <span class="sede-item-name-fav">${displayName}</span>
+                        </div>
+                        <span class="sede-fav-tag">Colaborador</span>
+                    </div>
+                `;
+            });
+        }
+
+        // 2. 📍 SECCIONES POR ZONA GEOGRÁFICA
         zones.forEach(z => {
             const isOther = z.zoneKey === 'Barcelona';
             const zoneClubs = clubs.filter(c => {
@@ -342,12 +423,17 @@ window.setupSedeCombobox = function (inputElOrId, options = {}) {
                     const displayName = c.sede || c.name;
                     const safeSede = displayName.replace(/"/g, '&quot;');
                     const safeClub = (c.name || displayName).replace(/"/g, '&quot;');
+                    const isFav = favoriteClubIds.includes(c.id);
+                    const favStar = isFav ? `<span class="sede-fav-badge-mini" title="Club Colaborador"><i class="fas fa-star"></i></span>` : '';
                     html += `
                         <div class="sede-combobox-item" 
                              data-sede="${safeSede}" 
                              data-club="${safeClub}" 
                              data-courts="${c.courts || 4}">
-                            <span>${displayName}</span>
+                            <div class="sede-item-left">
+                                ${favStar}
+                                <span>${displayName}</span>
+                            </div>
                         </div>
                     `;
                 });
@@ -447,12 +533,97 @@ window.setupSedeCombobox = function (inputElOrId, options = {}) {
         }
     });
 
-    input.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            closeDropdown();
-        }
-    });
+    // Inyección de estilos de soporte para Sede Combobox y Favoritos si no están presentes
+    if (!document.getElementById('sede-combobox-dynamic-styles')) {
+        const style = document.createElement('style');
+        style.id = 'sede-combobox-dynamic-styles';
+        style.textContent = `
+            .sede-combobox-group-favorites {
+                background: linear-gradient(90deg, #fef3c7 0%, #fffbeb 100%) !important;
+                color: #b45309 !important;
+                border-top: none !important;
+                border-bottom: 1px solid #fde68a !important;
+                font-weight: 900 !important;
+                letter-spacing: 0.6px;
+                display: flex !important;
+                align-items: center;
+                gap: 6px;
+                padding: 8px 12px !important;
+            }
+            .sede-combobox-item-favorite {
+                background: #fffdf5;
+                border: 1px solid #fef3c7;
+                margin: 3px 6px !important;
+                padding: 8px 12px !important;
+                border-radius: 8px;
+            }
+            .sede-combobox-item-favorite:hover {
+                background: #fef9c3 !important;
+                border-color: #fde047 !important;
+                color: #854d0e !important;
+                transform: translateX(2px);
+            }
+            .sede-item-left {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                min-width: 0;
+            }
+            .sede-item-name-fav {
+                font-weight: 700;
+                color: #0f172a;
+                font-size: 0.88rem;
+            }
+            .sede-thumb-img {
+                width: 24px;
+                height: 24px;
+                border-radius: 6px;
+                object-fit: cover;
+                border: 1px solid #cbd5e1;
+                flex-shrink: 0;
+            }
+            .sede-fav-badge {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                background: #fef3c7;
+                color: #d97706;
+                font-size: 0.72rem;
+                flex-shrink: 0;
+            }
+            .sede-fav-badge-mini {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                margin-right: 6px;
+                color: #f59e0b;
+                font-size: 0.72rem;
+            }
+            .sede-fav-tag {
+                font-size: 0.65rem;
+                font-weight: 800;
+                padding: 3px 8px;
+                border-radius: 999px;
+                background: #fef3c7;
+                color: #b45309;
+                letter-spacing: 0.3px;
+                white-space: nowrap;
+                border: 1px solid #fde68a;
+            }
+        `;
+        document.head.appendChild(style);
+    }
 };
 
-console.log("🚀 AppConstants Loaded with Padel Clubs Catalog & SedeCombobox");
+window.AppConstants.FAVORITE_CLUBS = [
+    { id: 'prat_bcn', name: "Barcelona Pádel el Prat", order: 1 },
+    { id: 'cornella_delfos', name: "Delfos Cornellà", order: 2 },
+    { id: 'new_play_padel_pro', name: "New Play Pádel Pro", order: 3 },
+    { id: 'hosp_cem_tennis', name: "CEM Tennis Hospitalet", order: 4 }
+];
+
+console.log("🚀 AppConstants Loaded with Padel Clubs Catalog (Favorites on top) & SedeCombobox");
 

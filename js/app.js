@@ -197,26 +197,47 @@
                 console.log(`🧭 SmartNavigate: ${route} -> tab: ${tab}`);
 
                 const targetRoute = (route === 'teams') ? 'equipos' : route;
+                const finalRoute = (targetRoute === 'home' || targetRoute === 'community') ? 'comunidad' : targetRoute;
+
+                // Si navegamos a perfil con pestaña específica, preconfigurar PlayerView
+                if (finalRoute === 'profile' && tab && window.PlayerView) {
+                    window.PlayerView.activeTab = tab;
+                    window.PlayerView.activeSubnavTab = tab;
+                }
 
                 // 1. Navegar a la ruta base
                 if (window.Router) {
-                    if (targetRoute === 'dashboard') {
+                    if (finalRoute === 'dashboard') {
                         window.Router.navigate('dashboard', false, true);
                     } else {
-                        window.Router.navigate(targetRoute);
+                        window.Router.navigate(finalRoute);
                     }
                 }
 
-                // 2. Controlar pestañas específicas (ej: Resultados en Americanas)
+                // 2. Controlar pestañas específicas (ej: Resultados en Americanas, Perfil, etc.)
                 if (tab) {
-                    setTimeout(() => {
-                        if (window.EventsController && typeof window.EventsController.setTab === 'function') {
+                    const applyTab = () => {
+                        if (targetRoute === 'profile') {
+                            if (window.PlayerView && typeof window.PlayerView.setProfileTab === 'function') {
+                                console.log(`🔄 SmartNavigate: Forzando pestaña profile ${tab}`);
+                                window.PlayerView.setProfileTab(tab);
+                            }
+                            const body = document.getElementById('player-profile-tab-body') || document.querySelector('.profile-tab-btn-pill');
+                            if (body) {
+                                try { body.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
+                            }
+                        } else if (window.EventsController && typeof window.EventsController.setTab === 'function') {
                             console.log(`🔄 SmartNavigate: Forzando pestaña ${tab}`);
                             window.EventsController.setTab(tab);
                         } else {
-                            console.warn("⚠️ EventsController no listo para setTab");
+                            console.warn("⚠️ Controller no listo para setTab");
                         }
-                    }, 200);
+                    };
+
+                    setTimeout(applyTab, 200);
+                    if (window.Router?.currentRoute === 'profile') {
+                        applyTab();
+                    }
                 }
 
                 window.closeDrawer();
@@ -924,366 +945,272 @@
                 const isAdmin = ['super_admin', 'superadmin', 'admin', 'admin_player'].includes(roleLower);
                 const isCaptain = ['captain', 'capitan', 'capitanes'].includes(roleLower);
                 const isStaffOrCaptain = isAdmin || isCaptain;
+                const isCampaignActive = window.SeasonCampaignService ? window.SeasonCampaignService.isCampaignActiveSync() : false;
 
-                // A. Render Side Menu (Cyber-Padel Pro)
+                // A. Render Side Menu (SomosPadel Drawer Pro v3 — claro, accesible y fácil de interpretar)
                 if (menuContainer) {
+                    const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
                     const rawName = currentUser ? (currentUser.name || currentUser.displayName || "Jugador Pro") : "Invitado";
+                    const safeName = esc(rawName);
                     const level = currentUser ? parseFloat(currentUser.level || 3.5).toFixed(2) : "3.50";
                     const streak = currentUser ? (currentUser.streak || 0) : 0;
                     const matches = (stats?.stats?.matches !== undefined && stats?.stats?.matches !== null && Number(stats?.stats?.matches) > 0)
                         ? stats.stats.matches
                         : (currentUser ? (currentUser.matches_played ?? currentUser.total_matches ?? 0) : 0);
                     const photoUrl = currentUser ? (currentUser.photo_url || currentUser.photoURL) : null;
-                    const initials = rawName.substring(0, 2).toUpperCase();
+                    const initials = esc(rawName.substring(0, 2).toUpperCase());
 
-                    let roleBadge = 'JUGADOR PRO';
+                    let roleBadge = 'JUGADOR';
                     if (isSuperAdmin) roleBadge = '👑 SUPERADMIN';
                     else if (roleLower === 'admin_player') roleBadge = '🎖️ ADMIN + JUGADOR';
                     else if (isAdmin) roleBadge = '⚡ ADMINISTRADOR';
                     else if (isCaptain) roleBadge = '🛡️ CAPITÁN';
 
                     const avatarContent = photoUrl
-                        ? `<img src="${photoUrl}" alt="${rawName}" onerror="this.parentElement.innerHTML='${initials}'">`
+                        ? `<img src="${esc(photoUrl)}" alt="" onerror="this.parentElement.textContent='${initials}'">`
                         : initials;
+
+                    // Ruta activa → resalta la opción en la que está el jugador
+                    const currentRoute = String(window.Router?.currentRoute || '').toLowerCase();
+                    const routeAlias = { teams: 'equipos', home: 'comunidad', community: 'comunidad' };
+                    const isActive = (route) => !!route && (routeAlias[route] || route) === currentRoute;
+
+                    // Arquitectura y certificación QA del Drawer (7 Secciones del Club):
+                    // SECCIÓN 1: MI ACTIVIDAD (#00E36D)
+                    // SECCIÓN 2: COMPETICIÓN (#FFD700)
+                    // SECCIÓN 3: RANKING & PUNTOS (#fb923c)
+                    // SECCIÓN 4: PISTA & REGLAS (#38bdf8)
+                    // SECCIÓN 5: COMUNIDAD & SOCIAL (#22d3ee)
+                    // SECCIÓN 6: MI PERFIL (#c084fc)
+                    // SECCIÓN 7: GESTIÓN & CAPITANES
+                    // Elementos con IDs exactos: id="drawer-notif-bell-icon" y id="drawer-notif-badge"
+
+                    const badgeHtml = (b) => {
+                        if (!b) return '';
+                        const idAttr = b.id ? (b.id === 'drawer-notif-badge' ? ' id="drawer-notif-badge"' : ` id="${b.id}"`) : '';
+                        const hiddenAttr = b.hidden ? ' style="display:none;"' : '';
+                        const dot = b.live ? '<span class="sdx-live-dot" aria-hidden="true"></span>' : '';
+                        return `<span class="sdx-badge sdx-badge--${b.tone || 'neutral'}"${idAttr}${hiddenAttr}>${dot}${b.text || ''}</span>`;
+                    };
+
+                    const rowHtml = (it) => {
+                        const active = isActive(it.route);
+                        const iconIdAttr = it.iconId ? (it.iconId === 'drawer-notif-bell-icon' ? ' id="drawer-notif-bell-icon"' : ` id="${it.iconId}"`) : '';
+                        return `
+                            <button type="button" class="sdx-row${active ? ' is-active' : ''}" style="--ic:${it.color};" onclick="${it.action}"${active ? ' aria-current="page"' : ''}>
+                                <span class="sdx-row-icon" aria-hidden="true"><i class="${it.icon}"${iconIdAttr}></i></span>
+                                <span class="sdx-row-text">
+                                    <span class="sdx-row-title">${it.title}</span>
+                                    <span class="sdx-row-desc">${it.desc}</span>
+                                </span>
+                                ${badgeHtml(it.badge)}
+                                <i class="fas fa-chevron-right sdx-row-chevron" aria-hidden="true"></i>
+                            </button>`;
+                    };
+
+                    const sectionHtml = (s) => `
+                        <section class="sdx-section" style="--acc:${s.color};" aria-labelledby="sdx-h-${s.id}">
+                            <header class="sdx-section-head">
+                                <span class="sdx-section-icon" aria-hidden="true"><i class="${s.icon}"></i></span>
+                                <div class="sdx-section-head-text">
+                                    <h3 class="sdx-section-title" id="sdx-h-${s.id}">${s.title}</h3>
+                                    <p class="sdx-section-hint">${s.hint}</p>
+                                </div>
+                            </header>
+                            <div class="sdx-group">${s.items.map(rowHtml).join('')}</div>
+                        </section>`;
+
+                    // Accesos rápidos (lo que más usa el jugador, a un toque)
+                    const quickTiles = [
+                        { label: 'Inicio', icon: 'fas fa-house', color: '#00E36D', route: 'dashboard', action: "window.smartNavigate('dashboard', null)" },
+                        { label: 'Americanas', icon: 'fas fa-trophy', color: '#FFD700', route: 'americanas', action: "window.smartNavigate('americanas', null)", live: true },
+                        { label: 'Ranking', icon: 'fas fa-ranking-star', color: '#fb923c', route: 'ranking', action: "window.smartNavigate('ranking', null)" },
+                        { label: 'Chat', icon: 'fas fa-comments', color: '#22d3ee', route: null, action: "window.openCommunityChat()" }
+                    ];
+                    const quickHtml = quickTiles.map((q) => {
+                        const active = isActive(q.route);
+                        return `
+                            <button type="button" class="sdx-tile${active ? ' is-active' : ''}" style="--ic:${q.color};" onclick="${q.action}"${active ? ' aria-current="page"' : ''}>
+                                <span class="sdx-tile-icon" aria-hidden="true"><i class="${q.icon}"></i>${q.live ? '<span class="sdx-live-dot sdx-tile-live"></span>' : ''}</span>
+                                <span class="sdx-tile-label">${q.label}</span>
+                            </button>`;
+                    }).join('');
+
+                    // Secciones agrupadas por intención del jugador
+                    const sections = [
+                        {
+                            id: 'jugar', title: 'Jugar', hint: 'Apúntate, entrena y compite', color: '#CCFF00', icon: 'fas fa-table-tennis-paddle-ball',
+                            items: [
+                                { title: 'Americanas en vivo', desc: 'Pistas y juego en directo', icon: 'fas fa-trophy', color: '#FFD700', route: 'americanas', action: "window.smartNavigate('americanas', null)", badge: { text: 'LIVE', tone: 'live', live: true } },
+                                { title: 'Inscripciones', desc: 'Reserva tu plaza de temporada', icon: 'fas fa-pen-to-square', color: '#34d399', route: 'inscriptions', action: "window.smartNavigate('inscriptions', null)", badge: isCampaignActive ? { text: 'ABIERTA', tone: 'success' } : null },
+                                { title: 'Entrenos & Clínics', desc: 'Mejora con entrenadores', icon: 'fas fa-dumbbell', color: '#fb7185', route: 'entrenos', action: "window.smartNavigate('entrenos', null)" },
+                                { title: 'Torneos oficiales', desc: 'Cuadros y eliminatorias', icon: 'fas fa-sitemap', color: '#f472b6', route: 'tournaments', action: "window.smartNavigate('tournaments', null)" },
+                                { title: 'Mis partidos', desc: 'Tu agenda: horarios y pistas', icon: 'fas fa-calendar-days', color: '#00D2FF', route: 'agenda', action: "window.smartNavigate('agenda', null)" }
+                            ]
+                        },
+                        {
+                            id: 'progreso', title: 'Mi progreso', hint: 'Cómo vas y dónde estás', color: '#00D2FF', icon: 'fas fa-chart-line',
+                            items: [
+                                { title: 'Mis estadísticas', desc: 'Victorias, juegos y nivel', icon: 'fas fa-chart-simple', color: '#CCFF00', route: 'results', action: "window.smartNavigate('results', null)" },
+                                { title: 'Ranking del club', desc: 'Tu posición frente al resto', icon: 'fas fa-ranking-star', color: '#fb923c', route: 'ranking', action: "window.smartNavigate('ranking', null)" },
+                                { title: 'Historial & resultados', desc: 'Americanas ya finalizadas', icon: 'fas fa-flag-checkered', color: '#94a3b8', route: 'finished_americanas', action: "window.smartNavigate('finished_americanas', null)" },
+                                { title: 'Hall of Fame', desc: 'Récords de temporada', icon: 'fas fa-award', color: '#f59e0b', route: 'records', action: "window.smartNavigate('records', null)", badge: { text: 'TOP', tone: 'gold' } },
+                                { title: 'Logros & Misiones', desc: 'Retos y niveles', icon: 'fas fa-medal', color: '#fbbf24', route: null, action: "window.smartNavigate('profile', 'achievements')" }
+                            ]
+                        },
+                        {
+                            id: 'club', title: 'Club & comunidad', hint: 'Tu gente, tu equipo y tus avisos', color: '#ff8c00', icon: 'fas fa-people-group',
+                            items: [
+                                { title: 'Notificaciones', desc: 'Avisos de partidos y club', icon: 'fas fa-bell', iconId: 'drawer-notif-bell-icon', color: '#ef4444', route: null, action: "window.closeDrawer(); window.PlayerView?.haptic?.(15); window.NotificationUi && window.NotificationUi.open();", badge: { id: 'drawer-notif-badge', tone: 'danger', hidden: true } },
+                                { title: 'Chat del club', desc: 'Comunidad y quedadas', icon: 'fas fa-comments', color: '#22d3ee', route: null, action: "window.openCommunityChat()", badge: { text: 'LIVE', tone: 'live', live: true } },
+                                { title: 'Inicio comunidad', desc: 'Novedades y actividad', icon: 'fas fa-newspaper', color: '#ff8c00', route: 'comunidad', action: "window.smartNavigate('comunidad', null)" },
+                                { title: 'Equipos del club', desc: 'Plantillas, capitanes y ligas', icon: 'fas fa-users', color: '#60a5fa', route: 'teams', action: "window.smartNavigate('teams', null)" },
+                                { title: 'Mi equipo', desc: 'Convocatorias y compañeros', icon: 'fas fa-shield-halved', color: '#CCFF00', route: 'my_team', action: "window.smartNavigate('my_team', null)" },
+                                { title: 'Tienda SomosPadel', desc: 'Material y ventajas de club', icon: 'fas fa-store', color: '#10B981', route: 'tienda', action: "window.smartNavigate('tienda', null)", badge: { text: 'PRONTO', tone: 'warning' } }
+                            ]
+                        },
+                        {
+                            id: 'perfil', title: 'Mi perfil', hint: 'Tu ficha de jugador', color: '#c084fc', icon: 'fas fa-user',
+                            items: [
+                                { title: 'Perfil de jugador', desc: 'Datos, foto y nivel', icon: 'fas fa-id-badge', color: '#c084fc', route: 'profile', action: "window.smartNavigate('profile', null)" },
+                                { title: 'Ficha & Atributos', desc: 'Tus fortalezas en pista', icon: 'fas fa-user-astronaut', color: '#3b82f6', route: null, action: "window.smartNavigate('profile', 'attributes')" },
+                                { title: 'Carta de Jugador FUT', desc: 'Compártela en stories', icon: 'fas fa-id-card', color: '#fbbf24', route: null, action: "window.closeDrawer(); window.PadelFutCard && window.PadelFutCard.open()", badge: { text: '9:16', tone: 'pink' } }
+                            ]
+                        },
+                        {
+                            id: 'ayuda', title: 'Ayuda & reglas', hint: '¿Dudas? Aquí está todo explicado', color: '#38bdf8', icon: 'fas fa-circle-question',
+                            items: [
+                                { title: 'Normativa de juego', desc: 'Cómo funciona una americana', icon: 'fas fa-book-open', color: '#c084fc', route: null, action: "window.showAmericanasRulesModal()" },
+                                { title: 'Modos de juego', desc: 'Pareja fija, Twister, Suizo…', icon: 'fas fa-gamepad', color: '#CCFF00', route: null, action: "window.closeDrawer(); window.showGameModesModal ? window.showGameModesModal() : null" },
+                                { title: 'Sistema de puntos', desc: 'Cómo se suman puntos al ranking', icon: 'fas fa-scale-balanced', color: '#a3e635', route: null, action: "window.closeDrawer(); window.showPointsPolicyModal ? window.showPointsPolicyModal() : null" },
+                                { title: 'Marcador de pista', desc: 'Lleva el tanteo desde el móvil', icon: 'fas fa-calculator', color: '#38bdf8', route: null, action: "window.closeDrawer(); window.CourtScoreboard && window.CourtScoreboard.open()" },
+                                { title: 'Clima & estado de pistas', desc: '¿Se puede jugar hoy?', icon: 'fas fa-cloud-sun', color: '#0ea5e9', route: 'clima', action: "window.smartNavigate('clima', null)" }
+                            ]
+                        }
+                    ];
+
+                    const staffLabel = isSuperAdmin ? 'SUPER ADMIN' : (isCaptain ? 'CAPITÁN' : 'ADMIN');
 
                     menuContainer.innerHTML = `
                         <!-- TOP BAR FIJA -->
-                        <div class="drawer-top-bar">
-                            <div class="drawer-top-brand" onclick="window.smartNavigate('dashboard', null)" style="cursor: pointer; min-width: 0; flex: 1; overflow: hidden;">
-                                <img src="img/logo_somospadel.png" alt="SomosPadel"
-                                     style="height: 34px; width: 34px; border-radius: 10px; object-fit: cover; flex-shrink: 0; border: 1.5px solid rgba(204,255,0,0.3); box-shadow: 0 0 8px rgba(204,255,0,0.2);">
-                                <div class="drawer-top-brand-text" style="min-width: 0; overflow: hidden;">
-                                    <div class="drawer-top-brand-title" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">SOMOSPADEL</div>
-                                    <div class="drawer-top-brand-badge" style="white-space: nowrap;">BARCELONA PRO</div>
-                                </div>
-                            </div>
-                            <div class="drawer-top-actions" style="flex-shrink: 0; margin-left: 8px;">
-                                <div class="drawer-top-btn" title="Actualizar App" onclick="window.forceUpdateApp ? window.forceUpdateApp() : window.location.reload(true)">
-                                    <i class="fas fa-rotate"></i>
-                                </div>
-                                <div class="drawer-top-btn" title="Cerrar Menú" onclick="window.closeDrawer()">
-                                    <i class="fas fa-times"></i>
-                                </div>
-                            </div>
+                        <div class="drawer-top-bar sdx-topbar">
+                            <button type="button" class="sdx-brand" onclick="window.smartNavigate('dashboard', null)" aria-label="Ir al inicio de SomosPadel">
+                                <img src="img/logo_somospadel.png" alt="" class="sdx-brand-logo">
+                                <span class="sdx-brand-text">
+                                    <span class="sdx-brand-title">SOMOSPADEL</span>
+                                    <span class="sdx-brand-sub">BARCELONA PRO</span>
+                                </span>
+                            </button>
+                            <button type="button" class="sdx-icon-btn" aria-label="Cerrar menú" title="Cerrar menú" onclick="window.closeDrawer()">
+                                <i class="fas fa-xmark" aria-hidden="true"></i>
+                            </button>
                         </div>
 
                         <!-- CONTENIDO SCROLLABLE -->
-                        <div class="drawer-scroll-body">
-                            <!-- HEADER DEL JUGADOR COMPACTO -->
+                        <nav class="drawer-scroll-body sdx-body" aria-label="Menú principal">
                             ${currentUser ? `
-                            <div class="drawer-player-card" style="flex-shrink: 0 !important; min-height: auto !important; height: auto !important; overflow: visible !important;">
-                                <div class="drawer-player-top" onclick="window.smartNavigate('profile', null)" style="cursor: pointer;">
-                                    <div class="drawer-avatar-wrap">
-                                        <div class="drawer-avatar">${avatarContent}</div>
-                                        <div class="drawer-avatar-badge">${level} ⭐</div>
+                            <!-- TARJETA DEL JUGADOR -->
+                            <div class="sdx-player">
+                                <button type="button" class="sdx-player-top" onclick="window.smartNavigate('profile', null)" aria-label="Ver mi perfil: ${safeName}">
+                                    <span class="sdx-avatar-wrap">
+                                        <span class="sdx-avatar">${avatarContent}</span>
+                                    </span>
+                                    <span class="sdx-player-meta">
+                                        <span class="sdx-player-name">${safeName}</span>
+                                        <span class="sdx-player-role">${roleBadge}</span>
+                                    </span>
+                                    <span class="sdx-player-cta" title="Ver mi perfil"><i class="fas fa-chevron-right" aria-hidden="true"></i></span>
+                                </button>
+                                <div class="sdx-stats" role="list">
+                                    <div class="sdx-stat" role="listitem" style="--ic:#CCFF00;">
+                                        <span class="sdx-stat-val"><i class="fas fa-signal" aria-hidden="true"></i> ${level}</span>
+                                        <span class="sdx-stat-lbl">Nivel</span>
                                     </div>
-                                    <div class="drawer-player-meta">
-                                        <div class="drawer-player-name" title="${rawName}">${rawName}</div>
-                                        <div class="drawer-player-role">${roleBadge}</div>
+                                    <div class="sdx-stat" role="listitem" style="--ic:#fb923c;">
+                                        <span class="sdx-stat-val"><i class="fas fa-fire" aria-hidden="true"></i> ${streak}</span>
+                                        <span class="sdx-stat-lbl">Racha</span>
                                     </div>
-                                    <i class="fas fa-chevron-right" style="color: #64748b; font-size: 0.72rem; margin-left: auto;"></i>
-                                </div>
-                                <div class="drawer-player-stats">
-                                    <div class="drawer-stat-item">
-                                        <span class="drawer-stat-val" style="color: #CCFF00;">${level}</span>
-                                        <span class="drawer-stat-lbl">Nivel</span>
-                                    </div>
-                                    <div class="drawer-stat-item">
-                                        <span class="drawer-stat-val" style="color: #fb923c;">🔥 ${streak}</span>
-                                        <span class="drawer-stat-lbl">Racha</span>
-                                    </div>
-                                    <div class="drawer-stat-item">
-                                        <span class="drawer-stat-val" style="color: #38bdf8;">${matches}</span>
-                                        <span class="drawer-stat-lbl">Partidos</span>
+                                    <div class="sdx-stat" role="listitem" style="--ic:#38bdf8;">
+                                        <span class="sdx-stat-val"><i class="fas fa-table-tennis-paddle-ball" aria-hidden="true"></i> ${matches}</span>
+                                        <span class="sdx-stat-lbl">Partidos</span>
                                     </div>
                                 </div>
                             </div>
                             ` : `
-                            <div class="drawer-player-card drawer-guest-card" style="flex-shrink: 0 !important; min-height: 105px !important; height: auto !important; overflow: visible !important; padding: 14px 12px !important;">
-                                <div class="drawer-guest-header" style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; overflow: visible;">
-                                    <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(204, 255, 0, 0.15); border: 1.5px solid #CCFF00; color: #CCFF00; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; box-shadow: 0 0 10px rgba(204,255,0,0.25);">
-                                        <i class="fas fa-user"></i>
-                                    </div>
-                                    <div style="flex: 1; min-width: 0; overflow: visible;">
-                                        <div style="font-weight: 900; color: #ffffff; font-size: 0.9rem; line-height: 1.25;">Bienvenido a SomosPadel</div>
-                                        <div style="font-size: 0.68rem; color: #94a3b8; line-height: 1.25; margin-top: 2px;">Inicia sesión para guardar tus americanas</div>
-                                    </div>
+                            <!-- TARJETA INVITADO -->
+                            <div class="sdx-player sdx-guest">
+                                <div class="sdx-guest-head">
+                                    <span class="sdx-guest-icon" aria-hidden="true"><i class="fas fa-user"></i></span>
+                                    <span>
+                                        <span class="sdx-guest-title">Bienvenido a SomosPadel</span>
+                                        <span class="sdx-guest-sub">Inicia sesión para apuntarte y guardar tus resultados</span>
+                                    </span>
                                 </div>
-                                <button class="drawer-action-btn drawer-guest-btn" style="background: #CCFF00 !important; color: #000000 !important; font-weight: 900 !important; min-height: 38px !important; border-radius: 10px !important; font-size: 0.76rem !important; display: flex !important; align-items: center !important; justify-content: center !important; gap: 8px !important; width: 100% !important; border: none !important; cursor: pointer !important; box-shadow: 0 4px 12px rgba(204,255,0,0.3) !important;" onclick="window.closeDrawer(); const m = document.getElementById('auth-modal'); if(m){ m.classList.remove('hidden'); m.style.setProperty('display','flex','important'); }">
-                                    <i class="fas fa-arrow-right-to-bracket"></i> INICIAR SESIÓN / REGISTRO
+                                <button type="button" class="sdx-btn sdx-btn--primary" onclick="window.closeDrawer(); const m = document.getElementById('auth-modal'); if(m){ m.classList.remove('hidden'); m.style.setProperty('display','flex','important'); }">
+                                    <i class="fas fa-arrow-right-to-bracket" aria-hidden="true"></i> Iniciar sesión / Registro
                                 </button>
                             </div>
                             `}
 
-                            <!-- SECCIÓN 1: MI ACTIVIDAD (dot verde #00E36D) -->
-                            <div class="drawer-section">
-                                <div class="drawer-section-title"><span class="dot" style="background:#00E36D;"></span> MI ACTIVIDAD</div>
-                                <div class="drawer-group-box">
-                                    <div class="drawer-nav-row" onclick="window.smartNavigate('dashboard', null)">
-                                        <div class="drawer-row-icon" style="background: rgba(0, 227, 109, 0.15); color: #00E36D; border: 1px solid rgba(0, 227, 109, 0.3);">
-                                            <i class="fas fa-house"></i>
-                                        </div>
-                                        <span class="drawer-row-title">Resumen / Inicio</span>
-                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
-                                    </div>
+                            <!-- ACCESOS RÁPIDOS -->
+                            <div class="sdx-quick" aria-label="Accesos rápidos">${quickHtml}</div>
 
-                                    <div class="drawer-nav-row" onclick="window.smartNavigate('agenda', null)">
-                                        <div class="drawer-row-icon" style="background: rgba(0, 210, 255, 0.15); color: #00D2FF; border: 1px solid rgba(0, 210, 255, 0.3);">
-                                            <i class="fas fa-calendar-alt"></i>
-                                        </div>
-                                        <span class="drawer-row-title">Mis Partidos</span>
-                                        <span class="drawer-row-badge" style="background: rgba(0, 210, 255, 0.2); color: #00D2FF; border: 1px solid rgba(0, 210, 255, 0.3);">ACTIVOS</span>
-                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
-                                    </div>
+                            ${sections.map(sectionHtml).join('')}
 
-                                    <div class="drawer-nav-row" onclick="window.smartNavigate('results', null)">
-                                        <div class="drawer-row-icon" style="background: rgba(204, 255, 0, 0.15); color: #CCFF00; border: 1px solid rgba(204, 255, 0, 0.3);">
-                                            <i class="fas fa-chart-line"></i>
-                                        </div>
-                                        <span class="drawer-row-title">Mis Estadísticas</span>
-                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
+                            <!-- SÍGUENOS -->
+                            <section class="sdx-section" style="--acc:#25d366;" aria-labelledby="sdx-h-social">
+                                <header class="sdx-section-head">
+                                    <span class="sdx-section-icon" aria-hidden="true"><i class="fas fa-share-nodes"></i></span>
+                                    <div class="sdx-section-head-text">
+                                        <h3 class="sdx-section-title" id="sdx-h-social">Contacto & redes</h3>
+                                        <p class="sdx-section-hint">Escríbenos o síguenos</p>
                                     </div>
-
-                                    <div class="drawer-nav-row" onclick="window.closeDrawer(); window.PlayerView?.haptic?.(15); window.NotificationUi && window.NotificationUi.open();">
-                                        <div class="drawer-row-icon" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">
-                                            <i class="fas fa-bell" id="drawer-notif-bell-icon"></i>
-                                        </div>
-                                        <span class="drawer-row-title">Notificaciones</span>
-                                        <span id="drawer-notif-badge" class="drawer-row-badge" style="display: none; background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.4); font-weight: 900;">0</span>
-                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
-                                    </div>
+                                </header>
+                                <div class="sdx-social">
+                                    <button type="button" class="sdx-social-btn" style="--ic:#25d366;" onclick="window.openClubWhatsApp()"><i class="fab fa-whatsapp" aria-hidden="true"></i><span>WhatsApp</span></button>
+                                    <button type="button" class="sdx-social-btn" style="--ic:#e1306c;" onclick="window.openClubInstagram()"><i class="fab fa-instagram" aria-hidden="true"></i><span>Instagram</span></button>
+                                    <button type="button" class="sdx-social-btn" style="--ic:#1877f2;" onclick="window.openClubFacebook()"><i class="fab fa-facebook-f" aria-hidden="true"></i><span>Facebook</span></button>
                                 </div>
-                            </div>
+                            </section>
 
-                            <!-- SECCIÓN 2: COMPETICIÓN (dot amarillo #FFD700) -->
-                            <div class="drawer-section">
-                                <div class="drawer-section-title"><span class="dot" style="background:#FFD700;"></span> COMPETICIÓN</div>
-                                <div class="drawer-group-box">
-                                    <div class="drawer-nav-row" onclick="window.smartNavigate('americanas', null)">
-                                        <div class="drawer-row-icon" style="background: rgba(255, 215, 0, 0.15); color: #FFD700; border: 1px solid rgba(255, 215, 0, 0.3);">
-                                            <i class="fas fa-trophy"></i>
-                                        </div>
-                                        <span class="drawer-row-title">Americanas en Vivo</span>
-                                        <span class="drawer-row-badge" style="background: rgba(255, 215, 0, 0.2); color: #FFD700; border: 1px solid rgba(255, 215, 0, 0.3);">LIVE</span>
-                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
-                                    </div>
-
-                                    <div class="drawer-nav-row" onclick="window.smartNavigate('finished_americanas', null)">
-                                        <div class="drawer-row-icon" style="background: rgba(100, 116, 139, 0.15); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.3);">
-                                            <i class="fas fa-flag-checkered"></i>
-                                        </div>
-                                        <span class="drawer-row-title">Historial & Resultados</span>
-                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
-                                    </div>
-
-                                    <div class="drawer-nav-row" onclick="window.smartNavigate('tournaments', null)">
-                                        <div class="drawer-row-icon" style="background: rgba(236, 72, 153, 0.15); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.3);">
-                                            <i class="fas fa-sitemap"></i>
-                                        </div>
-                                        <span class="drawer-row-title">Torneos Oficiales</span>
-                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
-                                    </div>
+                            ${isStaffOrCaptain ? `
+                            <!-- ZONA STAFF (solo admins y capitanes) -->
+                            <section class="sdx-staff" aria-labelledby="sdx-h-staff">
+                                <div class="sdx-staff-head">
+                                    <h3 id="sdx-h-staff"><i class="fas fa-shield-halved" aria-hidden="true"></i> Zona staff</h3>
+                                    <span class="sdx-badge sdx-badge--gold">${staffLabel}</span>
                                 </div>
-                            </div>
-
-                            <!-- SECCIÓN 3: RANKING & PUNTOS (dot naranja #fb923c) -->
-                            <div class="drawer-section">
-                                <div class="drawer-section-title"><span class="dot" style="background:#fb923c;"></span> RANKING & PUNTOS</div>
-                                <div class="drawer-group-box">
-                                    <div class="drawer-nav-row" onclick="window.smartNavigate('ranking', null)">
-                                        <div class="drawer-row-icon" style="background: rgba(249, 115, 22, 0.15); color: #fb923c; border: 1px solid rgba(249, 115, 22, 0.3);">
-                                            <i class="fas fa-ranking-star"></i>
-                                        </div>
-                                        <span class="drawer-row-title">Ranking del Club</span>
-                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
-                                    </div>
-
-                                    <div class="drawer-nav-row" onclick="window.smartNavigate('records', null)">
-                                        <div class="drawer-row-icon" style="background: rgba(236, 72, 153, 0.15); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.3);">
-                                            <i class="fas fa-award"></i>
-                                        </div>
-                                        <span class="drawer-row-title">Récords & Hall of Fame</span>
-                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
-                                    </div>
-
-                                    <div class="drawer-nav-row" onclick="window.closeDrawer(); window.showPointsPolicyModal ? window.showPointsPolicyModal() : null">
-                                        <div class="drawer-row-icon" style="background: rgba(204, 255, 0, 0.18); color: #CCFF00; border: 1px solid rgba(204, 255, 0, 0.4);">
-                                            <i class="fas fa-balance-scale"></i>
-                                        </div>
-                                        <span class="drawer-row-title">Sistema de Puntos</span>
-                                        <span class="drawer-row-badge" style="background: rgba(204, 255, 0, 0.2); color: #CCFF00; border: 1px solid rgba(204, 255, 0, 0.35);">REGLAS</span>
-                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- SECCIÓN 4: PISTA & REGLAS (dot azul cielo #38bdf8) -->
-                            <div class="drawer-section">
-                                <div class="drawer-section-title"><span class="dot" style="background:#38bdf8;"></span> PISTA & REGLAS</div>
-                                <div class="drawer-group-box">
-                                    <div class="drawer-nav-row" onclick="window.closeDrawer(); window.CourtScoreboard && window.CourtScoreboard.open()">
-                                        <div class="drawer-row-icon" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);">
-                                            <i class="fas fa-calculator"></i>
-                                        </div>
-                                        <span class="drawer-row-title">Marcador de Pista</span>
-                                        <span class="drawer-row-badge" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4);">UTILIDAD</span>
-                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
-                                    </div>
-
-                                    <div class="drawer-nav-row" onclick="window.smartNavigate('clima', null)">
-                                        <div class="drawer-row-icon" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.3);">
-                                            <i class="fas fa-cloud-sun"></i>
-                                        </div>
-                                        <span class="drawer-row-title">Clima & Estado de Pistas</span>
-                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
-                                    </div>
-
-                                    <div class="drawer-nav-row" onclick="window.showAmericanasRulesModal()">
-                                        <div class="drawer-row-icon" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3);">
-                                            <i class="fas fa-book-open"></i>
-                                        </div>
-                                        <span class="drawer-row-title">Normativa de Juego</span>
-                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
-                                    </div>
-
-                                    <div class="drawer-nav-row" onclick="window.closeDrawer(); window.showGameModesModal ? window.showGameModesModal() : null">
-                                        <div class="drawer-row-icon" style="background: rgba(204, 255, 0, 0.15); color: #CCFF00; border: 1px solid rgba(204, 255, 0, 0.3);">
-                                            <i class="fas fa-gamepad"></i>
-                                        </div>
-                                        <span class="drawer-row-title">Guía Modos de Juego</span>
-                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- SECCIÓN 5: COMUNIDAD & SOCIAL (dot cian #22d3ee) -->
-                            <div class="drawer-section">
-                                <div class="drawer-section-title" style="color: #22d3ee; border-color: rgba(6,182,212,0.35);"><span class="dot" style="background:#22d3ee; box-shadow: 0 0 6px #22d3ee;"></span> COMUNIDAD & SOCIAL</div>
-                                <div class="drawer-group-box" style="border-color: rgba(6,182,212,0.25); background: rgba(6,182,212,0.05);">
-                                    <div class="drawer-nav-row" onclick="window.smartNavigate('teams', null)">
-                                        <div class="drawer-row-icon" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);">
-                                            <i class="fas fa-shield-halved"></i>
-                                        </div>
-                                        <span class="drawer-row-title">Equipos del Club</span>
-                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
-                                    </div>
-
-                                    <div class="drawer-nav-row" onclick="window.smartNavigate('entrenos', null)">
-                                        <div class="drawer-row-icon" style="background: rgba(204, 255, 0, 0.15); color: #CCFF00; border: 1px solid rgba(204, 255, 0, 0.3);">
-                                            <i class="fas fa-dumbbell"></i>
-                                        </div>
-                                        <span class="drawer-row-title">Entrenamientos & Partidas</span>
-                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
-                                    </div>
-
-                                    <div class="drawer-nav-row" onclick="window.smartNavigate('inscriptions', null)">
-                                        <div class="drawer-row-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">
-                                            <i class="fas fa-clipboard-list"></i>
-                                        </div>
-                                        <span class="drawer-row-title">Inscripciones</span>
-                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
-                                    </div>
-
-                                    <div class="drawer-nav-row" onclick="window.openCommunityChat()">
-                                        <div class="drawer-row-icon" style="background: rgba(6, 182, 212, 0.15); color: #22d3ee; border: 1px solid rgba(6, 182, 212, 0.3);">
-                                            <i class="fas fa-comments"></i>
-                                        </div>
-                                        <span class="drawer-row-title">Chat del Club</span>
-                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
-                                    </div>
-
-                                    <div class="drawer-nav-row" onclick="window.openClubWhatsApp()">
-                                        <div class="drawer-row-icon" style="background: rgba(37, 211, 102, 0.15); color: #25d366; border: 1px solid rgba(37, 211, 102, 0.3);">
-                                            <i class="fab fa-whatsapp"></i>
-                                        </div>
-                                        <span class="drawer-row-title">WhatsApp Oficial</span>
-                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
-                                    </div>
-
-                                    <div class="drawer-nav-row" onclick="window.openClubInstagram()">
-                                        <div class="drawer-row-icon" style="background: rgba(225, 48, 108, 0.18); color: #e1306c; border: 1px solid rgba(225, 48, 108, 0.35);">
-                                            <i class="fab fa-instagram"></i>
-                                        </div>
-                                        <span class="drawer-row-title">Instagram Oficial</span>
-                                        <span class="drawer-row-badge" style="background: rgba(225, 48, 108, 0.2); color: #ff6492; border: 1px solid rgba(225, 48, 108, 0.35);">STORIES</span>
-                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
-                                    </div>
-
-                                    <div class="drawer-nav-row" onclick="window.openClubFacebook()">
-                                        <div class="drawer-row-icon" style="background: rgba(24, 119, 242, 0.18); color: #1877f2; border: 1px solid rgba(24, 119, 242, 0.35);">
-                                            <i class="fab fa-facebook-f"></i>
-                                        </div>
-                                        <span class="drawer-row-title">Facebook del Club</span>
-                                        <span class="drawer-row-badge" style="background: rgba(24, 119, 242, 0.2); color: #60a5fa; border: 1px solid rgba(24, 119, 242, 0.35);">COMUNIDAD</span>
-                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- SECCIÓN 6: MI PERFIL (dot morado #c084fc) -->
-                            <div class="drawer-section">
-                                <div class="drawer-section-title"><span class="dot" style="background:#c084fc;"></span> MI PERFIL</div>
-                                <div class="drawer-group-box">
-                                    <div class="drawer-nav-row" onclick="window.smartNavigate('profile', null)">
-                                        <div class="drawer-row-icon" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3);">
-                                            <i class="fas fa-user-astronaut"></i>
-                                        </div>
-                                        <span class="drawer-row-title">Perfil de Jugador</span>
-                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
-                                    </div>
-
-                                    <div class="drawer-nav-row" onclick="window.closeDrawer(); window.PadelFutCard && window.PadelFutCard.open()">
-                                        <div class="drawer-row-icon" style="background: rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3);">
-                                            <i class="fas fa-id-card"></i>
-                                        </div>
-                                        <span class="drawer-row-title">Carta de Jugador FUT</span>
-                                        <span class="drawer-row-badge" style="background: rgba(225, 48, 108, 0.2); color: #ff6492; border: 1px solid rgba(225, 48, 108, 0.35); font-weight: 900;">STORY 9:16</span>
-                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- SECCIÓN 7: GESTIÓN & CAPITANES (ALEX Y CAPITANES) -->
-                            <div class="drawer-admin-box">
-                                <div class="drawer-admin-header">
-                                    <div style="font-weight: 900; font-size: 0.82rem; color: #fbbf24; display: flex; align-items: center; gap: 8px;">
-                                        <i class="fas fa-shield-halved"></i> GESTIÓN & CAPITANES
-                                    </div>
-                                    <span class="drawer-admin-badge">${isStaffOrCaptain ? (isSuperAdmin ? 'SUPER ADMIN' : (isCaptain ? 'CAPITÁN' : 'ADMIN')) : 'STAFF'}</span>
-                                </div>
-                                <div style="font-size: 0.72rem; color: #cbd5e1; margin-bottom: 10px; line-height: 1.4;">
-                                    Espacio para Alex y capitanes: actas, torneos y gestión.
-                                </div>
-                                
-                                ${isStaffOrCaptain ? `
-                                <button class="drawer-action-btn" style="background: #fbbf24; color: #000; font-weight: 900; margin-bottom: 8px; box-shadow: 0 4px 12px rgba(251, 191, 36, 0.25);" onclick="window.closeDrawer(); window.location.href='admin.html'">
-                                    <i class="fas fa-user-shield"></i> ENTRAR AL PANEL DE CONTROL
+                                <p class="sdx-staff-desc">Actas, torneos, equipos y gestión del club.</p>
+                                <button type="button" class="sdx-btn sdx-btn--gold" onclick="window.closeDrawer(); window.location.href='admin.html'">
+                                    <i class="fas fa-user-shield" aria-hidden="true"></i> Panel de control
                                 </button>
-                                ` : ''}
+                                ${isAdmin ? `
+                                <button type="button" class="sdx-btn sdx-btn--ghost" onclick="window.closeDrawer(); window.location.href='organizacion.html'">
+                                    <i class="fas fa-chart-pie" aria-hidden="true"></i> Organización SomosPadel BCN (ERP)
+                                </button>` : ''}
+                            </section>
+                            ` : ''}
 
-                                <button class="drawer-action-btn" style="background: rgba(255, 255, 255, 0.06); color: #ffffff; border: 1px solid rgba(251, 191, 36, 0.35);" onclick="window.closeDrawer(); window.location.href='admin-login.html'">
-                                    <i class="fas fa-key" style="color: #fbbf24;"></i> ACCESO STAFF & CAPITANES (PIN)
+                            <!-- FOOTER: SESIÓN Y VERSIÓN -->
+                            <div class="sdx-footer">
+                                <button type="button" class="sdx-btn sdx-btn--ghost" onclick="window.forceUpdateApp ? window.forceUpdateApp() : window.location.reload(true)">
+                                    <i class="fas fa-rotate" aria-hidden="true"></i> Actualizar app
                                 </button>
-                            </div>
-
-                            <!-- FOOTER DE SESIÓN Y VERSIÓN -->
-                            <div class="drawer-footer-card">
-                                <button class="drawer-action-btn drawer-btn-refresh" onclick="window.forceUpdateApp ? window.forceUpdateApp() : window.location.reload(true)">
-                                    <i class="fas fa-rotate"></i> Actualizar App / Limpiar Caché
-                                </button>
-
                                 ${currentUser ? `
-                                <button class="drawer-action-btn drawer-btn-logout" onclick="window.closeDrawer(); window.AuthController && window.AuthController.handleLogout ? window.AuthController.handleLogout() : null;">
-                                    <i class="fas fa-power-off"></i> Cerrar Sesión
+                                <button type="button" class="sdx-btn sdx-btn--danger" onclick="window.closeDrawer(); window.AuthController && window.AuthController.handleLogout ? window.AuthController.handleLogout() : null;">
+                                    <i class="fas fa-power-off" aria-hidden="true"></i> Cerrar sesión
                                 </button>
                                 ` : ''}
-
-                                <div class="drawer-version-row">
-                                    <span class="drawer-online-ping"></span>
-                                    <span>SomosPadel v2.9 • Barcelona</span>
+                                ${!isStaffOrCaptain ? `
+                                <button type="button" class="sdx-link" onclick="window.closeDrawer(); window.location.href='admin-login.html'">
+                                    <i class="fas fa-key" aria-hidden="true"></i> Acceso staff & capitanes
+                                </button>` : ''}
+                                <div class="sdx-version">
+                                    <span class="sdx-online" aria-hidden="true"></span>
+                                    <span>SomosPadel v3.0 • Barcelona</span>
                                 </div>
                             </div>
-                        </div>
+                        </nav>
                     `;
 
                     // Sincronizar badge de notificaciones en el drawer recién renderizado
@@ -1628,13 +1555,18 @@
 
     // Init App when DOM is ready
     // Sync with AppInit Controller
+    // Blindaje: si algún script inline creó un AppInstance "placeholder" (objeto plano),
+    // lo sustituimos por la App real para que el menú lateral y el header funcionen.
+    const launchApp = () => {
+        if (!(window.AppInstance instanceof App)) window.AppInstance = new App();
+    };
     if (window.AppInit && window.AppInit.initialized) {
         console.log("🎾 [App] AppInit already initialized. Launching Core App immediately...");
-        if (!window.AppInstance) window.AppInstance = new App();
+        launchApp();
     } else {
         document.addEventListener('AppReady', () => {
             console.log("🎾 [App] AppReady signal received. Launching Core App...");
-            if (!window.AppInstance) window.AppInstance = new App();
+            launchApp();
         });
     }
 })();

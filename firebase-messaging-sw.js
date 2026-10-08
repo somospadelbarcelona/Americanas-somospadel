@@ -63,12 +63,20 @@ if (messaging) {
         const notificationOptions = {
             body: notificationBody,
             icon: notificationIcon,
-            badge: './img/logo_somospadel.png',
+            badge: './img/badge_somospadel.png',
+            color: '#CCFF00',
             tag: notificationData.notificationId || notificationData.id || notificationData.tag || 'somospadel-push',
             data: notificationData,
             vibrate: [200, 100, 200],
             renotify: true
         };
+
+        if (typeof self.navigator !== 'undefined' && 'setAppBadge' in self.navigator) {
+            try {
+                const badgeCount = parseInt(notificationData.unreadCount || notificationData.count || 1, 10);
+                self.navigator.setAppBadge(badgeCount).catch(() => {});
+            } catch (_) {}
+        }
 
         const inboxItem = {
             id: notificationData.notificationId || notificationData.id || ('push_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6)),
@@ -164,12 +172,20 @@ self.addEventListener('push', (event) => {
     const options = {
         body: body,
         icon: icon,
-        badge: './img/logo_somospadel.png',
+        badge: './img/badge_somospadel.png',
+        color: '#CCFF00',
         data: data,
         tag: tag,
         vibrate: [200, 100, 200],
         renotify: true
     };
+
+    if (typeof self.navigator !== 'undefined' && 'setAppBadge' in self.navigator) {
+        try {
+            const badgeCount = parseInt(data.unreadCount || data.count || 1, 10);
+            self.navigator.setAppBadge(badgeCount).catch(() => {});
+        } catch (_) {}
+    }
 
     const inboxItem = {
         id: data.notificationId || data.id || ('push_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6)),
@@ -235,6 +251,10 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
     console.log('🔔 [FCM SW] Clic en notificación push:', event.notification);
     event.notification.close();
+
+    if (typeof self.navigator !== 'undefined' && 'clearAppBadge' in self.navigator) {
+        try { self.navigator.clearAppBadge().catch(() => {}); } catch (_) {}
+    }
 
     const data = event.notification.data || {};
     let targetPath = data.url || data.link || './';

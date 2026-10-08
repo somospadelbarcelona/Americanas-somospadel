@@ -2653,12 +2653,10 @@ body {
     /* Take available space */
 }
 
-/* Ensure Logo is Visible on Dark BG */
+/* Preserve natural official SomosPadel yellow ball logo colors */
 .cmd-brand img {
-    filter: brightness(0) invert(1);
-    /* Force White Logo */
+    filter: drop-shadow(0px 1px 2px rgba(0,0,0,0.15));
     height: 40px !important;
-    /* Larger Logo */
     width: auto;
 }
 
@@ -4244,7 +4242,7 @@ body {
 
 .auth-overlay-enterprise {
     background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.8)), 
-                url('https://images.unsplash.com/photo-1626248294249-19943fce2657?q=80&w=2070&auto=format&fit=crop') !important;
+                url('../img/blog_court_night.png') !important;
     background-size: cover !important;
     background-position: center !important;
     backdrop-filter: blur(10px);
@@ -4590,34 +4588,49 @@ body {
 .drawer-player-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 4px;
-    background: rgba(0, 0, 0, 0.25);
-    border: 1px solid rgba(255, 255, 255, 0.04);
-    border-radius: 9px;
-    padding: 5px 6px;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 12px;
+    padding: 7px 4px;
     text-align: center;
-    margin-top: 8px;
+    margin-top: 10px;
     margin-bottom: 0;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .drawer-stat-item {
     display: flex;
     flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.drawer-stat-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 15%;
+    height: 70%;
+    width: 1px;
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .drawer-stat-val {
-    font-size: 0.84rem;
-    font-weight: 900;
+    font-size: 0.86rem;
+    font-weight: 850;
     color: #ffffff;
     letter-spacing: -0.2px;
+    line-height: 1.2;
 }
 
 .drawer-stat-lbl {
-    font-size: 0.52rem;
+    font-size: 0.53rem;
     color: #94a3b8;
-    font-weight: 700;
+    font-weight: 650;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
 }
 
 .drawer-profile-btn {

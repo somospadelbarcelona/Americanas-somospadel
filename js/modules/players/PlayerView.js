@@ -8,6 +8,7 @@
         constructor() {
             this.charts = {}; // Store chart instances
             this.activeTab = 'ai_performance'; // 'ai_performance' | 'attributes' | 'achievements'
+            this.activeSubnavTab = 'mi_posicion';
             this.forceDemoMode = false;
             this.currentAiHistoryData = null;
             this.currentAchievementsData = null;
@@ -40,10 +41,61 @@
             }
         }
 
-        setProfileTab(tabName) {
+        setProfileTab(tabName, syncSubnav = true) {
             this.haptic(20);
             this.activeTab = tabName;
+            this.activeSubnavTab = tabName;
+            if (syncSubnav && window.SubnavManager && (window.Router?.currentRoute === 'profile' || !window.Router?.currentRoute)) {
+                window.SubnavManager.renderProfile(tabName);
+            }
             this.renderTabContent();
+        }
+
+        handleSubnavTab(tabId) {
+            this.haptic(15);
+            this.activeSubnavTab = tabId;
+            if (window.SubnavManager) {
+                window.SubnavManager.renderProfile(tabId);
+            }
+
+            const headerOffset = (parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-actual-height')) || 110) + 15;
+
+            if (tabId === 'mi_posicion') {
+                // Desplazamiento suave al inicio del perfil donde se encuentra el nivel, estrellas y ELO
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else if (tabId === 'ai_performance') {
+                this.setProfileTab('ai_performance', false);
+                setTimeout(() => {
+                    const el = document.getElementById('player-profile-tab-body') || document.querySelector('.profile-tab-btn-pill');
+                    if (el) {
+                        const y = el.getBoundingClientRect().top + window.pageYOffset - headerOffset;
+                        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+                    }
+                }, 60);
+            } else if (tabId === 'fut_card') {
+                const curUser = window.Store ? window.Store.getState('currentUser') : null;
+                if (window.PadelFutCard && typeof window.PadelFutCard.open === 'function') {
+                    try { window.PadelFutCard.open(curUser || {}); } catch(e) { console.warn("Error opening PadelFutCard:", e); }
+                }
+            } else if (tabId === 'attributes') {
+                this.setProfileTab('attributes', false);
+                setTimeout(() => {
+                    const el = document.getElementById('player-profile-tab-body') || document.querySelector('.profile-tab-btn-pill');
+                    if (el) {
+                        const y = el.getBoundingClientRect().top + window.pageYOffset - headerOffset;
+                        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+                    }
+                }, 60);
+            } else if (tabId === 'achievements') {
+                this.setProfileTab('achievements', false);
+                setTimeout(() => {
+                    const el = document.getElementById('player-profile-tab-body') || document.querySelector('.profile-tab-btn-pill');
+                    if (el) {
+                        const y = el.getBoundingClientRect().top + window.pageYOffset - headerOffset;
+                        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+                    }
+                }, 60);
+            }
         }
 
         haptic(ms = 30) {
@@ -222,6 +274,9 @@
             // Si el perfil ya está en pantalla y los datos son idénticos, no destruir el DOM
             const stateHash = `${user.id || user.uid}_${currentLvl}_${rawMatches}_${rawWon}_${rawLost}_${progress}_${this.activeTab || 'ai'}`;
             if (this._lastRenderedStateHash === stateHash && container.querySelector('.player-profile-wrapper')) {
+                if (window.SubnavManager && window.Router?.currentRoute === 'profile') {
+                    window.SubnavManager.renderProfile(this.activeSubnavTab || 'mi_posicion');
+                }
                 return; // Vista idéntica ya montada. Cero parpadeo.
             }
             this._lastRenderedStateHash = stateHash;
@@ -504,6 +559,10 @@
                 </div>
             `;
 
+            if (window.SubnavManager && window.Router?.currentRoute === 'profile') {
+                window.SubnavManager.renderProfile(this.activeSubnavTab || 'mi_posicion');
+            }
+
             setTimeout(() => {
                 this.renderTabContent();
             }, 60);
@@ -557,17 +616,21 @@
                 // Pestaña Ficha & Atributos
                 body.innerHTML = this.renderAttributesTabHtml(data, user);
                 setTimeout(() => {
-                    this.initAttributesCharts(data, user);
-                    const context = data?.context || { status: 'EMPTY' };
+                    try {
+                        this.initAttributesCharts(data, user);
+                        const context = data?.context || { status: 'EMPTY' };
 
-                    const pLevelRoot = document.getElementById('profile-power-level-root');
-                    if (pLevelRoot && window.PowerLevelCard) pLevelRoot.innerHTML = window.PowerLevelCard.render(user);
+                        const pLevelRoot = document.getElementById('profile-power-level-root');
+                        if (pLevelRoot && window.PowerLevelCard) pLevelRoot.innerHTML = window.PowerLevelCard.render(user);
 
-                    const techHubRoot = document.getElementById('profile-tech-hub-root');
-                    if (techHubRoot) techHubRoot.innerHTML = this.renderTechHub();
+                        const techHubRoot = document.getElementById('profile-tech-hub-root');
+                        if (techHubRoot && typeof this.renderTechHub === 'function') techHubRoot.innerHTML = this.renderTechHub();
 
-                    if (window.DashboardView && window.DashboardView.renderActivityFeed) {
-                        window.DashboardView.renderActivityFeed('profile-activity-root');
+                        if (window.DashboardView && window.DashboardView.renderActivityFeed) {
+                            window.DashboardView.renderActivityFeed('profile-activity-root');
+                        }
+                    } catch (e) {
+                        console.warn("⚠️ [PlayerView] Error inicializando widgets de Ficha Técnica:", e);
                     }
                 }, 100);
             }
@@ -2186,6 +2249,61 @@
         // ==========================================
         // 🏅 PESTAÑA DE FICHA Y ATRIBUTOS
         // ==========================================
+
+        getSkillVal(user, skillKey) {
+            if (!user) return 75;
+            const lvl = parseFloat(user.level || user.nivel || 3.5);
+            const base = Math.min(99, Math.max(50, Math.round(45 + (lvl * 10))));
+            const side = String(user.position || user.preferred_side || 'drive').toLowerCase();
+            
+            const isReves = side.includes('rev') || side.includes('izq');
+            const isDrive = side.includes('drv') || side.includes('der');
+
+            switch (skillKey) {
+                case 'atk':
+                    return Math.min(99, Math.max(50, isReves ? base + 5 : (isDrive ? base - 2 : base)));
+                case 'def':
+                    return Math.min(99, Math.max(50, isDrive ? base + 5 : (isReves ? base - 2 : base)));
+                case 'tec':
+                    return Math.min(99, Math.max(50, base + 2));
+                case 'fis':
+                    return Math.min(99, Math.max(50, base));
+                default:
+                    return base;
+            }
+        }
+
+        renderTechHub() {
+            const user = window.Store ? window.Store.getState('currentUser') : null;
+            const side = user?.preferred_side || user?.position || 'Drive (Derecha)';
+            const racket = user?.racket || user?.pala || 'Head Speed Pro';
+            const playStyle = user?.play_style || 'Ofensivo / Táctico';
+
+            return `
+                <div style="background: #ffffff; border-radius: 24px; padding: 20px; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0,0,0,0.02); text-align: left;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                        <span style="font-size:0.8rem; font-weight:950; color:#0F172A; text-transform:uppercase; letter-spacing:1px;">
+                            <i class="fas fa-id-card-alt" style="color:#00d2ff; margin-right:6px;"></i> Equipamiento & Posición
+                        </span>
+                        <span style="font-size:0.62rem; font-weight:900; background:rgba(0,210,255,0.12); color:#0284c7; padding:3px 8px; border-radius:8px;">OFICIAL</span>
+                    </div>
+                    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px;">
+                        <div style="background:#f8fafc; padding:10px 12px; border-radius:14px; border:1px solid #e2e8f0;">
+                            <div style="font-size:0.58rem; color:#64748B; font-weight:800; text-transform:uppercase;">POSICIÓN</div>
+                            <div style="font-size:0.85rem; color:#0F172A; font-weight:950; margin-top:2px;">${side}</div>
+                        </div>
+                        <div style="background:#f8fafc; padding:10px 12px; border-radius:14px; border:1px solid #e2e8f0;">
+                            <div style="font-size:0.58rem; color:#64748B; font-weight:800; text-transform:uppercase;">PALA</div>
+                            <div style="font-size:0.85rem; color:#0F172A; font-weight:950; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${racket}</div>
+                        </div>
+                        <div style="background:#f8fafc; padding:10px 12px; border-radius:14px; border:1px solid #e2e8f0;">
+                            <div style="font-size:0.58rem; color:#64748B; font-weight:800; text-transform:uppercase;">ESTILO</div>
+                            <div style="font-size:0.85rem; color:#0F172A; font-weight:950; margin-top:2px;">${playStyle}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
 
         renderAttributesTabHtml(data, user) {
             const stats = data?.stats || { matches: 0, won: 0, winRate: 0 };

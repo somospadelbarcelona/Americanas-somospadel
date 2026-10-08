@@ -70,10 +70,22 @@ body {
    -------------------------------------------------------------------------- */
 .glass-card, .americana-card, .event-card, .dashboard-card {
     background: var(--player-card) !important;
-    border: 1px solid #f1f5f9 !important;
-    border-radius: 24px !important;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.03) !important;
+    border: 1px solid rgba(15, 23, 42, 0.08) !important;
+    border-radius: 22px !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 10px 25px -5px rgba(15, 23, 42, 0.05) !important;
     padding: 1.5rem !important;
+    transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.24s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.24s ease !important;
+}
+
+.glass-card:hover, .americana-card:hover, .event-card:hover, .dashboard-card:hover {
+    transform: translateY(-3px) !important;
+    border-color: rgba(15, 23, 42, 0.15) !important;
+    box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.04), 0 16px 32px -4px rgba(15, 23, 42, 0.09) !important;
+}
+
+.glass-card:active, .americana-card:active, .event-card:active, .dashboard-card:active {
+    transform: scale(0.985) !important;
+    transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .badge-status {
@@ -87,7 +99,7 @@ body {
    -------------------------------------------------------------------------- */
 .auth-overlay-enterprise {
     background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.8)), 
-                url('https://images.unsplash.com/photo-1626248294249-19943fce2657?q=80&w=2070&auto=format&fit=crop') !important;
+                url('../img/blog_court_night.png') !important;
     background-size: cover !important;
     background-position: center !important;
     backdrop-filter: blur(8px);

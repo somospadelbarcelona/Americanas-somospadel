@@ -223,129 +223,8 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         </div>
                     </div>
 
-                    <!-- ⭐ REDES SOCIALES: SÉ PROTAGONISTA (COMPACTO) ⭐ -->
-                    <div class="sp-social-compact-card" style="
-                        margin: 0 15px 12px !important;
-                        background: linear-gradient(135deg, #090e1a 0%, #0f172a 60%, #152238 100%);
-                        border: 1.2px solid rgba(204, 255, 0, 0.4);
-                        border-radius: 18px;
-                        padding: 12px 14px;
-                        color: #ffffff;
-                        box-shadow: 0 8px 22px -5px rgba(0, 0, 0, 0.45), 0 0 16px rgba(204, 255, 0, 0.08);
-                        position: relative;
-                        overflow: hidden;
-                        animation: floatUp 0.35s ease-out forwards;
-                    ">
-                        <!-- Glow sutil de fondo -->
-                        <div style="position: absolute; top: -25px; right: -25px; width: 90px; height: 90px; background: radial-gradient(circle, rgba(225, 48, 108, 0.2) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
-
-                        <!-- Fila 1: Badge + Título y Botón Copiar -->
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <span style="
-                                    background: rgba(204, 255, 0, 0.15);
-                                    color: #CCFF00;
-                                    border: 1px solid rgba(204, 255, 0, 0.45);
-                                    padding: 2px 7px;
-                                    border-radius: 7px;
-                                    font-size: 0.62rem;
-                                    font-weight: 950;
-                                    letter-spacing: 0.4px;
-                                ">
-                                    📸 SÉ PROTAGONISTA
-                                </span>
-                                <span style="font-size: 0.82rem; font-weight: 950; color: #ffffff; letter-spacing: -0.2px;">
-                                    ¡Etiquétanos y sal en la app!
-                                </span>
-                            </div>
-
-                            <button type="button" onclick="window.SocialChannelsService ? window.SocialChannelsService.copyTag(this) : (navigator.clipboard?.writeText('@somospadelbarcelona_'))" class="haptic-feedback" style="
-                                background: rgba(255, 255, 255, 0.08);
-                                border: 1px solid rgba(255, 255, 255, 0.18);
-                                color: #ffffff;
-                                padding: 3px 9px;
-                                border-radius: 8px;
-                                font-size: 0.66rem;
-                                font-weight: 850;
-                                cursor: pointer;
-                                display: inline-flex;
-                                align-items: center;
-                                gap: 4px;
-                                transition: all 0.15s ease;
-                            "
-                            onmouseover="this.style.background='rgba(255,255,255,0.14)';"
-                            onmouseout="this.style.background='rgba(255,255,255,0.08)';">
-                                <i class="fas fa-copy" style="color: #CCFF00; font-size: 0.66rem;"></i>
-                                <span>Copiar @</span>
-                            </button>
-                        </div>
-
-                        <!-- Fila 2: Texto breve y directo -->
-                        <div style="font-size: 0.72rem; color: #94a3b8; line-height: 1.35; margin-bottom: 9px;">
-                            Fotos de tus partidos, podios y los mejores puntazos en <strong style="color: #CCFF00;">@somospadelbarcelona_</strong> con <strong style="color: #38bdf8;">#SomosPadelBCN</strong>.
-                        </div>
-
-                        <!-- Fila 3: 2 Botones Compactos en Grid (Instagram y Facebook) -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                            <!-- Botón Instagram -->
-                            <div onclick="window.openClubInstagram ? window.openClubInstagram() : window.open('https://www.instagram.com/somospadelbarcelona_/?hl=es', '_blank')"
-                                 class="haptic-feedback"
-                                 style="
-                                     background: rgba(255, 255, 255, 0.04);
-                                     border: 1px solid rgba(225, 48, 108, 0.35);
-                                     border-radius: 12px;
-                                     padding: 7px 9px;
-                                     cursor: pointer;
-                                     display: flex;
-                                     align-items: center;
-                                     justify-content: space-between;
-                                     gap: 6px;
-                                     transition: transform 0.15s, border-color 0.15s;
-                                 "
-                                 onmouseover="this.style.transform='translateY(-1px)'; this.style.borderColor='#ff6492';"
-                                 onmouseout="this.style.transform='none'; this.style.borderColor='rgba(225, 48, 108, 0.35)';">
-                                <div style="display: flex; align-items: center; gap: 7px; min-width: 0;">
-                                    <div style="width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(45deg, #f09433, #dc2743, #bc1888); display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 0.92rem; flex-shrink: 0; box-shadow: 0 2px 7px rgba(220,39,67,0.35);">
-                                        <i class="fab fa-instagram"></i>
-                                    </div>
-                                    <div style="min-width: 0;">
-                                        <div style="font-weight: 950; font-size: 0.74rem; color: #ffffff; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Instagram</div>
-                                        <div style="font-size: 0.59rem; color: #ff6492; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Fotos & Reels</div>
-                                    </div>
-                                </div>
-                                <span style="color: #CCFF00; font-weight: 950; font-size: 0.68rem; flex-shrink: 0;">➔</span>
-                            </div>
-
-                            <!-- Botón Facebook -->
-                            <div onclick="window.openClubFacebook ? window.openClubFacebook() : window.open('https://www.facebook.com/?locale=es_ES', '_blank')"
-                                 class="haptic-feedback"
-                                 style="
-                                     background: rgba(255, 255, 255, 0.04);
-                                     border: 1px solid rgba(24, 119, 242, 0.35);
-                                     border-radius: 12px;
-                                     padding: 7px 9px;
-                                     cursor: pointer;
-                                     display: flex;
-                                     align-items: center;
-                                     justify-content: space-between;
-                                     gap: 6px;
-                                     transition: transform 0.15s, border-color 0.15s;
-                                 "
-                                 onmouseover="this.style.transform='translateY(-1px)'; this.style.borderColor='#60a5fa';"
-                                 onmouseout="this.style.transform='none'; this.style.borderColor='rgba(24, 119, 242, 0.35)';">
-                                <div style="display: flex; align-items: center; gap: 7px; min-width: 0;">
-                                    <div style="width: 28px; height: 28px; border-radius: 8px; background: #1877f2; display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 0.92rem; flex-shrink: 0; box-shadow: 0 2px 7px rgba(24,119,242,0.35);">
-                                        <i class="fab fa-facebook-f"></i>
-                                    </div>
-                                    <div style="min-width: 0;">
-                                        <div style="font-weight: 950; font-size: 0.74rem; color: #ffffff; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Facebook</div>
-                                        <div style="font-size: 0.59rem; color: #60a5fa; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Comunidad</div>
-                                    </div>
-                                </div>
-                                <span style="color: #60a5fa; font-weight: 950; font-size: 0.68rem; flex-shrink: 0;">➔</span>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- Contenedor oculto de notificaciones push (gestión 100% modal intermitente) -->
+                    <div id="push-notification-promo-banner-root" style="display: none !important;"></div>
 
                     <!-- ① WELCOME HERO — PadelPulse -->
                     <div id="padel-pulse-widget-root" style="animation: floatUp 0.4s ease-out forwards;"></div>
@@ -646,97 +525,69 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
 
 
 
-                    <!-- ⚖️ TARJETA OFICIAL: SISTEMA DE PUNTOS Y PONDERACIÓN DEL RANKING -->
-                    <div id="points-policy-card-root" style="margin: 0 15px 16px !important; animation: floatUp 0.8s ease-out forwards;">
+                    <!-- ⚖️ TARJETA OFICIAL: SISTEMA DE PUNTOS Y PONDERACIÓN DEL RANKING (COMPACTO & PROFESIONAL) -->
+                    <div id="points-policy-card-root" style="margin: 0 15px 14px !important; animation: floatUp 0.8s ease-out forwards;">
                         <div style="
-                            background: linear-gradient(145deg, #090e1a 0%, #0f172a 55%, #152238 100%);
-                            border: 1.5px solid rgba(204, 255, 0, 0.4);
-                            border-radius: 22px;
-                            padding: 18px 18px 16px;
+                            background: linear-gradient(135deg, rgba(8, 14, 28, 0.95) 0%, rgba(15, 23, 42, 0.92) 100%);
+                            border: 1px solid rgba(56, 189, 248, 0.28);
+                            border-radius: 18px;
+                            padding: 12px 16px;
                             position: relative;
                             overflow: hidden;
-                            box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.5), 0 0 25px rgba(204, 255, 0, 0.12);
+                            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px rgba(56, 189, 248, 0.08);
                             color: #ffffff;
                             font-family: 'Outfit', sans-serif;
                         ">
-                            <!-- Glows sutiles -->
-                            <div style="position: absolute; top: -35px; right: -35px; width: 130px; height: 130px; background: radial-gradient(circle, rgba(204, 255, 0, 0.22) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
-                            <div style="position: absolute; bottom: -35px; left: -35px; width: 120px; height: 120px; background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+                            <!-- Top laser accent line -->
+                            <div style="position: absolute; top: 0; left: 0; right: 0; height: 2.5px; background: linear-gradient(90deg, #38bdf8, #CCFF00); border-radius: 18px 18px 0 0;"></div>
 
-                            <!-- Header Badges -->
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; position: relative; z-index: 2; flex-wrap: wrap; gap: 6px;">
-                                <div style="display: flex; align-items: center; gap: 6px;">
-                                    <span style="background: #CCFF00; color: #000000; font-size: 0.62rem; font-weight: 950; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 2px 8px rgba(204,255,0,0.3);">
-                                        ⚖️ REGLAMENTO OFICIAL
-                                    </span>
-                                    <span style="background: rgba(34, 197, 94, 0.15); color: #4ade80; font-size: 0.60rem; font-weight: 900; padding: 3px 7px; border-radius: 6px; border: 1px solid rgba(34, 197, 94, 0.3);">
-                                        ENTRENOS & AMERICANAS 1:1
-                                    </span>
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+                                <!-- Left: Info & Title -->
+                                <div style="flex: 1; min-width: 200px;">
+                                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
+                                        <span style="background: rgba(56, 189, 248, 0.14); color: #38bdf8; font-size: 0.60rem; font-weight: 950; padding: 2px 7px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.6px; border: 1px solid rgba(56, 189, 248, 0.3);">
+                                            ⚖️ REGLAMENTO OFICIAL
+                                        </span>
+                                        <span style="font-size: 0.62rem; color: #94a3b8; font-weight: 700;">• Entrenos & Americanas 1:1</span>
+                                    </div>
+                                    <div style="font-size: 0.92rem; font-weight: 950; color: #ffffff; letter-spacing: -0.2px; line-height: 1.25;">
+                                        Sistema de Puntos & Baremo de Ranking
+                                    </div>
+                                    <div style="font-size: 0.72rem; color: #cbd5e1; font-weight: 500; margin-top: 1px;">
+                                        100 pts (1º) • 80 pts (2º) • 65 pts (3º)... +2 pts por victoria (PG).
+                                    </div>
                                 </div>
-                                <span style="font-size: 0.68rem; color: #94a3b8; font-weight: 700; display: flex; align-items: center; gap: 4px;">
-                                    <span>👑</span> Baremo Actualizado
-                                </span>
+
+                                <!-- Right: Compact Action Button -->
+                                <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                                    <button 
+                                        type="button" 
+                                        onclick="window.showPointsPolicyModal ? window.showPointsPolicyModal() : null;" 
+                                        style="
+                                            background: #CCFF00;
+                                            color: #000000;
+                                            border: none;
+                                            padding: 8px 14px;
+                                            border-radius: 12px;
+                                            font-weight: 1000;
+                                            font-size: 0.76rem;
+                                            letter-spacing: 0.2px;
+                                            cursor: pointer;
+                                            display: inline-flex;
+                                            align-items: center;
+                                            gap: 6px;
+                                            box-shadow: 0 3px 12px rgba(204, 255, 0, 0.35);
+                                            transition: all 0.2s ease;
+                                            white-space: nowrap;
+                                            font-family: 'Outfit', sans-serif;
+                                        "
+                                        onmouseover="this.style.transform='scale(1.04)';"
+                                        onmouseout="this.style.transform='scale(1)';">
+                                        <i class="fas fa-balance-scale" style="font-size: 0.85rem;"></i>
+                                        <span>Ver Baremo & Simulador</span>
+                                    </button>
+                                </div>
                             </div>
-
-                            <!-- Título y Descripción -->
-                            <div style="position: relative; z-index: 2; margin-bottom: 12px;">
-                                <h3 style="margin: 0 0 5px; font-size: 1.15rem; font-weight: 950; color: #ffffff; letter-spacing: -0.3px; display: flex; align-items: center; gap: 6px;">
-                                    <span>Sistema de Puntos & Ranking</span>
-                                    <span style="color: #CCFF00; font-size: 0.85rem;">⚡</span>
-                                </h3>
-                                <p style="margin: 0; font-size: 0.77rem; color: #cbd5e1; line-height: 1.42;">
-                                    Nuevo sistema unificado para todos los eventos: <strong style="color: #CCFF00;">100 pts</strong> (1º), <strong style="color: #ffffff;">80 pts</strong> (2º), <strong style="color: #f59e0b;">65 pts</strong> (3º)... más <strong style="color: #38bdf8;">+2 pts extra por cada victoria (PG)</strong>.
-                                </p>
-                            </div>
-
-                            <!-- 3 Pastillas visuales de modos -->
-                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 14px; position: relative; z-index: 2;">
-                                <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(236, 72, 153, 0.3); border-radius: 12px; padding: 8px 6px; text-align: center;">
-                                    <div style="font-size: 1.05rem; line-height: 1;">🌪️</div>
-                                    <div style="font-size: 0.68rem; font-weight: 950; color: #f472b6; margin-top: 2px;">Twister</div>
-                                    <div style="font-size: 0.58rem; color: #94a3b8; font-weight: 600;">Puesto Indiv.</div>
-                                </div>
-                                <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 8px 6px; text-align: center;">
-                                    <div style="font-size: 1.05rem; line-height: 1; color: #ef4444; font-weight: 900;">✚</div>
-                                    <div style="font-size: 0.68rem; font-weight: 950; color: #fca5a5; margin-top: 2px;">Suizo</div>
-                                    <div style="font-size: 0.58rem; color: #94a3b8; font-weight: 600;">Por Juegos</div>
-                                </div>
-                                <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 12px; padding: 8px 6px; text-align: center;">
-                                    <div style="font-size: 1.05rem; line-height: 1;">👥</div>
-                                    <div style="font-size: 0.68rem; font-weight: 950; color: #38bdf8; margin-top: 2px;">Pareja Fija</div>
-                                    <div style="font-size: 0.58rem; color: #94a3b8; font-weight: 600;">Puntos Dupla</div>
-                                </div>
-                            </div>
-
-                            <!-- Botón CTA -->
-                            <button 
-                                type="button" 
-                                onclick="window.showPointsPolicyModal ? window.showPointsPolicyModal() : null;" 
-                                style="
-                                    width: 100%;
-                                    padding: 12px 16px;
-                                    background: #CCFF00;
-                                    color: #000000;
-                                    border: none;
-                                    border-radius: 14px;
-                                    font-weight: 950;
-                                    font-size: 0.84rem;
-                                    letter-spacing: 0.4px;
-                                    cursor: pointer;
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                    gap: 8px;
-                                    box-shadow: 0 4px 18px rgba(204, 255, 0, 0.35);
-                                    transition: transform 0.2s, box-shadow 0.2s;
-                                    position: relative;
-                                    z-index: 2;
-                                "
-                                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 22px rgba(204, 255, 0, 0.5)';"
-                                onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 18px rgba(204, 255, 0, 0.35)';">
-                                <i class="fas fa-balance-scale" style="font-size: 0.95rem;"></i>
-                                <span>VER SISTEMA COMPLETO & SIMULADOR</span>
-                            </button>
                         </div>
                     </div>
 
@@ -1049,11 +900,11 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
             }
         }
 
-        async shareBlogPost(postId, title) {
-            this.showShareMenu(postId, title);
+        async shareBlogPost(postId, title, explicitImgUrl) {
+            this.showShareMenu(postId, title, explicitImgUrl);
         }
 
-        showShareMenu(postId, title) {
+        showShareMenu(postId, title, explicitImgUrl) {
             const shareUrl = `${window.location.origin}${window.location.pathname}?post=${postId}`;
             const shareText = `¡Mira esta noticia en SomosPadel BCN! 🎾\n\n"${title}"\n\n`;
             
@@ -1077,7 +928,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     
                     <!-- Botón de Cerrar del Menú de Compartir -->
                     <button id="share-modal-close-btn" 
-                            style="position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.25s;"
+                            style="position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;"
                             onmouseover="this.style.background='rgba(255,255,255,0.15)'"
                             onmouseout="this.style.background='rgba(255,255,255,0.06)'">
                         <i class="fas fa-times" style="font-size: 0.8rem;"></i>
@@ -1086,7 +937,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     <div style="margin-bottom: 22px;">
                         <span style="font-size: 2.5rem; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.3));">📢</span>
                         <h4 style="color: white; font-weight: 950; font-size: 1.25rem; margin: 12px 0 6px 0; letter-spacing: -0.4px;">Compartir Noticia</h4>
-                        <p style="color: rgba(255,255,255,0.5); font-size: 0.78rem; line-height: 1.4; margin: 0; padding: 0 10px;">Selecciona el canal oficial para compartir este contenido con tu red de pádel.</p>
+                        <p style="color: rgba(255,255,255,0.5); font-size: 0.78rem; line-height: 1.4; margin: 0; padding: 0 10px;">Selecciona el canal para compartir la noticia con su imagen oficial.</p>
                     </div>
                     
                     <!-- Lista de Opciones Premium -->
@@ -1094,11 +945,11 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         
                         <!-- WhatsApp Option -->
                         <button id="share-btn-whatsapp"
-                                style="background: rgba(37, 211, 102, 0.1); border: 1px solid rgba(37, 211, 102, 0.25); color: #25D366; font-weight: 800; font-size: 0.85rem; padding: 12px 16px; border-radius: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);"
-                                onmouseover="this.style.background='rgba(37, 211, 102, 0.2)';this.style.borderColor='#25D366';this.style.transform='scale(1.03) translateY(-1px)';"
-                                onmouseout="this.style.background='rgba(37, 211, 102, 0.1)';this.style.borderColor='rgba(37, 211, 102, 0.25)';this.style.transform='scale(1) translateY(0)';">
-                            <i class="fab fa-whatsapp" style="font-size: 1.2rem;"></i>
-                            <span>Compartir por WhatsApp</span>
+                                style="background: rgba(37, 211, 102, 0.12); border: 1.5px solid rgba(37, 211, 102, 0.35); color: #25D366; font-weight: 850; font-size: 0.88rem; padding: 13px 16px; border-radius: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);"
+                                onmouseover="this.style.background='rgba(37, 211, 102, 0.25)';this.style.borderColor='#25D366';this.style.transform='scale(1.03) translateY(-1px)';"
+                                onmouseout="this.style.background='rgba(37, 211, 102, 0.12)';this.style.borderColor='rgba(37, 211, 102, 0.35)';this.style.transform='scale(1) translateY(0)';">
+                            <i class="fab fa-whatsapp" style="font-size: 1.25rem;"></i>
+                            <span>Compartir con Foto por WhatsApp</span>
                         </button>
                         
                         <!-- Instagram Option -->
@@ -1146,7 +997,12 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
             if (waBtn) {
                 waBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    this.actionShare('whatsapp', shareUrl, encodeURIComponent(shareText));
+                    shareModal.remove();
+                    if (typeof this.shareToWhatsApp === 'function') {
+                        this.shareToWhatsApp(postId, title, e, explicitImgUrl);
+                    } else {
+                        this.actionShare('whatsapp', shareUrl, encodeURIComponent(shareText));
+                    }
                 });
             }
 
@@ -2522,8 +2378,8 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                                 <div class="fut-card-inner">
                                     <!-- HEADER STATUS -->
                                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; position: relative; z-index: 5;">
-                                        <span class="fut-badge-gold"><i class="fas fa-crown"></i> MVP OF THE WEEK</span>
-                                        <span style="color: rgba(251, 191, 36, 0.7); font-size: 0.65rem; font-weight: 900; letter-spacing: 1px;">SOMOSPADEL ELITE</span>
+                                        <span class="fut-badge-gold"><i class="fas fa-crown"></i> MVP DE LA SEMANA</span>
+                                        <span style="color: rgba(251, 191, 36, 0.7); font-size: 0.65rem; font-weight: 900; letter-spacing: 1px;">CIRCUITO SOMOSPADEL</span>
                                     </div>
 
                                     <!-- CORE DATA ROW -->

@@ -13,7 +13,7 @@ service cloud.firestore {
     // Verifica si el usuario tiene rol de administrador
     function isAdmin() {
       return isAuthenticated() && 
-             get(/databases/$(database)/documents/players/$(request.auth.uid)).data.role in ['admin', 'admin_player', 'super_admin'];
+             get(/databases/$(database)/documents/players/$(request.auth.uid)).data.role in ['admin', 'admin_player', 'super_admin', 'superadmin', 'organizador_bcn', 'organizer_bcn'];
     }
 
     // Verifica si el documento pertenece al usuario autenticado

@@ -315,6 +315,11 @@
                         }
                     }
 
+                    // Auto-reconcile desincronizaciones entre jugadores inscritos y partidos programados (si no han empezado)
+                    if (this.allMatches.length > 0 && window.RoundAutoRegenerationService && !this.isGeneratingRound) {
+                        window.RoundAutoRegenerationService.reconcileEventRounds(eventId, isEntreno ? 'entreno' : 'americana').catch(() => {});
+                    }
+
                     // --- DETECT NEW DRAW FOR ANIMATION (Improved for Sync) ---
                     if (this.allMatches.length > 0 && window.ShuffleAnimator && !this.isGeneratingRound) {
                         const maxRound = Math.max(...this.allMatches.map(m => parseInt(m.round)));
@@ -1623,6 +1628,16 @@
                         [field]: newVal
                     });
                     console.log(`✅ Score synced (debounced): ${field} = ${newVal}`);
+                    const match = this.allMatches.find(m => m.id === matchId);
+                    if (match && (match.status === 'finished' || match.status === 'finalizado')) {
+                        if (window.RoundAutoRegenerationService) {
+                            window.RoundAutoRegenerationService.handleScoreCorrection(
+                                this.currentAmericanaDoc?.id,
+                                isEntreno ? 'entreno' : 'americana',
+                                parseInt(match.round || 1)
+                            );
+                        }
+                    }
                 } catch (e) {
                     console.error("❌ Firebase debounced update failed:", e);
                     window.PremiumModal.alert({
@@ -1694,9 +1709,12 @@
 
             const isEntreno = this.currentAmericanaDoc?.isEntreno;
             const collection = isEntreno ? 'entrenos_matches' : 'matches';
+            const pairMode = String(this.currentAmericanaDoc?.pair_mode || '').toLowerCase();
+            const isTwisterOrPozo = pairMode === 'twister' || pairMode === 'pozo' || pairMode.includes('rey') || pairMode === 'rotating';
 
-            // ⛔ ANTI-EMPATE: En entrenos no se permiten empates (bloquean la lógica de avance)
-            if (isEntreno) {
+            // ⛔ ANTI-EMPATE: En entrenos y en modalidades de ascensos/descensos (Twister, Pozo, Rey)
+            // no se permiten empates porque bloquean la determinación matemática de ascensos y parejas
+            if (isEntreno || isTwisterOrPozo) {
                 const match = this.allMatches.find(m => m.id === matchId);
                 if (match) {
                     const sA = parseInt(match.score_a || 0);
@@ -1705,7 +1723,7 @@
                         if (window.navigator?.vibrate) window.navigator.vibrate([100, 50, 100]);
                         window.PremiumModal.alert({
                             title: '⚠️ EMPATE NO PERMITIDO',
-                            message: `El resultado está igualado (${sA}-${sB}). En los entrenos debe haber un ganador claro. Ajusta el marcador antes de finalizar.`,
+                            message: `El resultado está igualado (${sA}-${sB}). En ${isTwisterOrPozo ? 'el modo Twister/Pozo' : 'los entrenos'} debe haber un ganador claro para calcular ascensos y parejas. Ajusta el marcador antes de finalizar.`,
                             type: 'warning'
                         });
                         return; // Block finalization
@@ -1765,6 +1783,14 @@
                     matchCardEl.outerHTML = this.renderTournamentCard(match);
                 }
                 this.recalc();
+
+                if (window.RoundAutoRegenerationService && match) {
+                    window.RoundAutoRegenerationService.handleScoreCorrection(
+                        this.currentAmericanaDoc?.id,
+                        isEntreno ? 'entreno' : 'americana',
+                        parseInt(match.round || 1)
+                    );
+                }
             } catch (e) {
                 console.error("Finish match failed:", e);
                 if (matchCardEl) {
@@ -1798,6 +1824,9 @@
                     console.log(`🗑️ Purging round ${r}...`);
                     await window.AmericanaService.deleteRound(eventId, r, type);
                 }
+
+                // Sincronizar memoria local inmediatamente eliminando partidos purgados
+                this.allMatches = this.allMatches.filter(m => parseInt(m.round) <= fromRound);
 
                 // 2. Unlock current round matches
                 const currentMatches = this.allMatches.filter(m => parseInt(m.round) === fromRound);
@@ -1988,15 +2017,22 @@
                 console.log(`🗑️ Deleting current round ${roundNum}...`);
                 await window.AmericanaService.deleteRound(eventId, roundNum, eventType);
 
+                // Sincronizar memoria local inmediatamente
+                this.allMatches = this.allMatches.filter(m => parseInt(m.round) < roundNum);
+
                 // 3. Generar la ronda de nuevo
+                let newMatches = [];
                 if (roundNum === 1) {
-                    await window.AmericanaService.generateFirstRoundMatches(eventId, eventType);
+                    newMatches = await window.AmericanaService.generateFirstRoundMatches(eventId, eventType);
                 } else {
                     if (window.MatchMakingService) {
-                        await window.MatchMakingService.generateRound(eventId, eventType, roundNum, true);
+                        newMatches = await window.MatchMakingService.generateRound(eventId, eventType, roundNum, true);
                     } else if (window.AmericanaService?.generateNextRound) {
-                        await window.AmericanaService.generateNextRound(eventId, roundNum - 1, eventType);
+                        newMatches = await window.AmericanaService.generateNextRound(eventId, roundNum - 1, eventType);
                     }
+                }
+                if (Array.isArray(newMatches) && newMatches.length > 0) {
+                    this.allMatches = [...this.allMatches, ...newMatches];
                 }
 
                 // 4. Actualizar documento principal

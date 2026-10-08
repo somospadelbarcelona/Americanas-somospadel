@@ -79,6 +79,21 @@ runSubtest("Mejoras de Frontend & Clonación Lógica Lab", "test-logic-lab-front
 // 16. Eventos Finalizados y Reordenación de Submenús QA
 runSubtest("Eventos Finalizados & Submenús Inmediatos", "test-finished-events-and-submenus-qa.js");
 
+// 17. Pizarra Táctica de Pistas & Club (DashboardView)
+runSubtest("Pizarra Táctica de Pistas & Club (Multi-Eventos y Convocatoria)", "test-dashboard-pizarra-tactica-qa.js");
+
+// 18. Integridad de UI/UX, Selectores e IDs Interactivos
+runSubtest("Integridad UI/UX, Selectores e IDs Interactivos", "test-ui-elements-qa.js");
+
+// 19. Logo de Inicio, Dimensionamiento & Centrado Responsive
+runSubtest("Logo de Inicio, Dimensionamiento & Centrado Responsive", "test-login-logo-qa.js");
+
+// 20. Suplentes, Reservas y Cotillear Perfil en Modal Roster
+runSubtest("Suplentes, Reservas y Cotillear Perfil (EventsController QA)", "test-suplentes-cotillear-battle-qa.js");
+
+// 21. Chat Estilo Playtomic (ChatService & ChatView QA)
+runSubtest("Chat Estilo Playtomic (ChatService & ChatView QA)", "test-chat-playtomic-qa.js");
+
 console.log("\n================================================================");
 console.log(" RESUMEN GLOBAL DE CALIDAD:");
 reports.forEach(r => {

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>TIENDA SOMOSPADEL BCN | Escaparate Comercial, Marcas & Colaboradores Oficiales</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Estilos de la Tienda -->
+    <link rel="stylesheet" href="css/tienda.css?v=20261007_v2">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f8fafc;
+            color: #0f172a;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Top Bar de Branding - Fondo Blanco & Letra Negra */
+        .sp-top-nav-global {
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+        }
+
+        .sp-top-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: #0f172a;
+        }
+
+        .sp-top-logo {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            object-fit: contain;
+        }
+
+        .sp-top-brand-text h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 900;
+            margin: 0;
+            letter-spacing: -0.3px;
+            color: #0f172a;
+        }
+
+        .sp-top-brand-text span {
+            font-size: 0.68rem;
+            color: #0284c7;
+            font-weight: 800;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+        }
+
+        .sp-quick-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sp-btn-back-app {
+            background: #f8fafc;
+            color: #1e293b;
+            border: 1px solid #cbd5e1;
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+
+        .sp-btn-back-app:hover {
+            color: #000;
+            background: #e2e8f0;
+            border-color: #94a3b8;
+        }
+
+        .sp-btn-back-app.sp-btn-admin-tienda {
+            background: #fef08a;
+            border: 1.5px solid #eab308;
+            color: #713f12;
+            font-weight: 900;
+        }
+
+        .sp-btn-back-app.sp-btn-admin-tienda:hover {
+            background: #fde047;
+            border-color: #ca8a04;
+            color: #000;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- TOP BAR DE NAVEGACIÓN GLOBAL -->
+    <nav class="sp-top-nav-global">
+        <a href="index.html" class="sp-top-brand">
+            <img src="img/logo_somospadel.png" alt="SomosPadel BCN" class="sp-top-logo" onerror="this.style.display='none'">
+            <div class="sp-top-brand-text">
+                <h1>SOMOSPADEL BCN</h1>
+                <span>Tienda & Partners Oficial</span>
+            </div>
+        </a>
+
+        <div class="sp-quick-actions">
+            <a href="index.html" class="sp-btn-back-app" title="Volver a la App del Jugador">
+                <i class="fas fa-mobile-screen"></i> Jugador
+            </a>
+            <a href="admin.html#tienda_admin" class="sp-btn-back-app sp-btn-admin-tienda" title="Panel de Administración de Tienda (Clave PADEL21)">
+                <i class="fas fa-lock"></i> Admin Tienda
+            </a>
+            <a href="admin.html" class="sp-btn-back-app" title="Panel de Administración General">
+                <i class="fas fa-shield"></i> Admin
+            </a>
+            <a href="organizacion.html" class="sp-btn-back-app" title="Organización ERP">
+                <i class="fas fa-chart-line"></i> Organización
+            </a>
+        </div>
+    </nav>
+
+    <!-- SUBNAV BAR TIENDA VERDE AZULADO -->
+    <div id="subnav-app-bar" class="subnav-app-bar subnav-theme-tienda"></div>
+
+    <!-- CONTENEDOR PRINCIPAL -->
+    <main id="content-area">
+        <div style="display: flex; justify-content: center; align-items: center; height: 60vh;">
+            <div style="text-align: center; color: #94a3b8;">
+                <i class="fas fa-circle-notch fa-spin" style="font-size: 2rem; color: #CCFF00; margin-bottom: 12px;"></i>
+                <div style="font-weight: 700; font-size: 0.95rem;">Cargando Tienda SomosPadel BCN...</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts de la Tienda -->
+    <script src="js/modules/tienda/TiendaService.js?v=20261007_v2"></script>
+    <script src="js/modules/tienda/TiendaView.js?v=20261007_v2"></script>
+    <script src="js/modules/tienda/TiendaController.js?v=20261007_v2"></script>
+
+    <script>
+        if (!window.SubnavManager) {
+            window.SubnavManager = {
+                scroll: function(direction) {
+                    const bar = document.querySelector('#subnav-app-bar .tienda-submenu-pro-bar');
+                    if (bar) {
+                        const offset = direction === 'left' ? -240 : 240;
+                        bar.scrollBy({ left: offset, behavior: 'smooth' });
+                    }
+                },
+                renderTienda: function(activeTab = 'todos') {
+                    const bar = document.getElementById('subnav-app-bar');
+                    if (!bar) return;
+                    bar.classList.add('subnav-theme-tienda');
+                    const subtabs = [
+                        { id: 'todos', icon: 'fa-boxes-stacked', label: 'CATÁLOGO', badge: 'TOP', action: "window.TiendaController && window.TiendaController.handleCategory('todos');" },
+                        { id: 'palas', icon: 'fa-table-tennis-paddle-ball', label: 'PALAS', badge: 'PRO', action: "window.TiendaController && window.TiendaController.handleCategory('palas');" },
+                        { id: 'pelotas', icon: 'fa-circle-dot', label: 'PELOTAS', badge: 'OFICIAL', action: "window.TiendaController && window.TiendaController.handleCategory('pelotas');" },
+                        { id: 'paleteros', icon: 'fa-briefcase', label: 'PALETEROS', badge: 'TOUR', action: "window.TiendaController && window.TiendaController.handleCategory('paleteros');" },
+                        { id: 'mochilas', icon: 'fa-bag-shopping', label: 'MOCHILAS', badge: 'URBAN', action: "window.TiendaController && window.TiendaController.handleCategory('mochilas');" },
+                        { id: 'zapatillas', icon: 'fa-shoe-prints', label: 'ZAPATILLAS', badge: 'CLAY', action: "window.TiendaController && window.TiendaController.handleCategory('zapatillas');" },
+                        { id: 'textil', icon: 'fa-shirt', label: 'TEXTIL', badge: '2026', action: "window.TiendaController && window.TiendaController.handleCategory('textil');" },
+                        { id: 'packs', icon: 'fa-box-open', label: 'PACKS AHORRO', badge: 'OFERTA', action: "window.TiendaController && window.TiendaController.handleCategory('packs');" },
+                        { id: 'ofertas', icon: 'fa-fire', label: 'SUPER OFERTAS', badge: '-15%', isFireBadge: true, action: "window.TiendaController && window.TiendaController.handleTag('Oferta');" },
+                        { id: 'cesta', icon: 'fa-cart-shopping', label: 'MI CESTA', badge: 'CARRITO', isCartBadge: true, action: "window.TiendaController && window.TiendaController.openCart();" }
+                    ];
+
+                    const existingBar = bar.querySelector('.tienda-submenu-pro-bar');
+                    if (existingBar) {
+                        existingBar.querySelectorAll('button[data-tab-id]').forEach(btn => {
+                            const tabId = btn.getAttribute('data-tab-id');
+                            const isActive = (tabId === activeTab);
+                            btn.setAttribute('data-tab-active', isActive ? 'true' : 'false');
+                            btn.classList.toggle('active', isActive);
+                            btn.classList.toggle('inactive', !isActive);
+                        });
+                        const activeBtn = bar.querySelector(`.tienda-submenu-pro-bar button[data-tab-id="${activeTab}"]`);
+                        if (activeBtn) {
+                            try { activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
+                        }
+                        return;
+                    }
+
+                    bar.innerHTML = `
+                        <div class="subnav-outer-flex">
+                            <button id="subnav-arrow-left" class="subnav-nav-arrow" onclick="window.SubnavManager.scroll('left')" title="Desplazar a la izquierda" aria-label="Desplazar izquierda">
+                                <i class="fas fa-chevron-left" style="font-size: 0.75rem;"></i>
+                            </button>
+                            <div class="tienda-submenu-pro-bar">
+                                ${subtabs.map(tab => {
+                                    const isActive = activeTab === tab.id;
+                                    const badgeClass = tab.isFireBadge ? 'badge-teal-fire' : (tab.isCartBadge ? 'badge-teal-cart' : '');
+                                    return `
+                                        <button data-tab-id="${tab.id}" data-tab-active="${isActive ? 'true' : 'false'}"
+                                                class="esm-pro-btn ${isActive ? 'active' : 'inactive'}"
+                                                onclick="(function(btn){
+                                                    ${tab.action}
+                                                    if (window.SubnavManager) window.SubnavManager.renderTienda('${tab.id}');
+                                                    try { btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
+                                                })(this)" 
+                                                aria-label="${tab.label}">
+                                            <i class="fas ${tab.icon}" style="font-size: 0.8rem;"></i>
+                                            <span style="text-transform: uppercase;">${tab.label}</span>
+                                            ${tab.badge ? `
+                                                <span class="subnav-micro-badge ${isActive ? 'badge-dark' : badgeClass}">
+                                                    ${tab.badge}
+                                                </span>
+                                            ` : ''}
+                                        </button>
+                                    `;
+                                }).join('')}
+                            </div>
+                            <button id="subnav-arrow-right" class="subnav-nav-arrow" onclick="window.SubnavManager.scroll('right')" title="Desplazar a la derecha" aria-label="Desplazar derecha">
+                                <i class="fas fa-chevron-right" style="font-size: 0.75rem;"></i>
+                            </button>
+                        </div>
+                    `;
+                }
+            };
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window.SubnavManager) {
+                window.SubnavManager.renderTienda('todos');
+            }
+            if (window.TiendaController) {
+                window.TiendaController.init('content-area');
+            }
+        });
+    </script>
+</body>
+
+</html>

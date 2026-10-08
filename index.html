@@ -252,13 +252,26 @@
     <meta name="theme-color" content="#CCFF00">
     <meta name="description" content="Resultados a tiempo real de nuestra comunidad">
 
-    <!-- Open Graph (SEO & Social Sharing) -->
-    <meta property="og:title" content="App Somospadel BCN">
-    <meta property="og:description" content="Resultados a tiempo real de nuestra comunidad">
-    <meta property="og:image" content="img/logo_somospadel.png">
+    <!-- Open Graph (SEO & Social Sharing para WhatsApp, Telegram, etc.) -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Somos Pádel Barcelona">
+    <meta property="og:title" content="Somos Pádel Barcelona | Torneos y Americanas">
+    <meta property="og:description" content="Inscríbete a americanas, torneos y entrenos de pádel en Barcelona con marcadores y resultados en directo.">
+    <meta property="og:url" content="https://somospadelbarcelona.github.io/Americanas-somospadel/">
+    <meta property="og:image" content="https://somospadelbarcelona.github.io/Americanas-somospadel/img/logo_somospadel.png">
+    <meta property="og:image:secure_url" content="https://somospadelbarcelona.github.io/Americanas-somospadel/img/logo_somospadel.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="512">
+    <meta property="og:image:height" content="512">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Somos Pádel Barcelona | Torneos y Americanas">
+    <meta name="twitter:description" content="Inscríbete a americanas, torneos y entrenos de pádel en Barcelona con marcadores y resultados en directo.">
+    <meta name="twitter:image" content="https://somospadelbarcelona.github.io/Americanas-somospadel/img/logo_somospadel.png">
 
     <!-- Apple Touch Icon -->
-    <link rel="apple-touch-icon" href="img/logo_somospadel.png">
+    <link rel="apple-touch-icon" href="https://somospadelbarcelona.github.io/Americanas-somospadel/img/logo_somospadel.png">
 
     <!-- Mobile Optimization -->
     <meta name="HandheldFriendly" content="true">
@@ -269,8 +282,8 @@
     <link rel="apple-touch-startup-image" href="https://cdn-icons-png.flaticon.com/512/33/33736.png">
 
     <!-- CSS Dependencies -->
-    <link rel="stylesheet" href="css/theme-playtomic.css?v=804">
-    <link rel="stylesheet" href="css/notifications.css?v=PRO_CLEAN_WHITE_v8">
+    <link rel="stylesheet" href="css/theme-playtomic.css?v=2026.6.0">
+    <link rel="stylesheet" href="css/notifications.css?v=2026.6.0">
     <link rel="stylesheet" href="css/nav-mobile.css?v=WOW_DOCK_v2">
     <link rel="stylesheet" href="css/glassmorphism.css?v=1.0">
     <link rel="stylesheet" href="css/dashboard-premium.css?v=1.0">
@@ -289,8 +302,11 @@
         href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Inter:wght@400;500;700;900&family=Montserrat:wght@700;900&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="css/mobile-header-fix.css?v=RESPONSIVE_ULTRA_v2">
-    <link rel="stylesheet" href="css/responsive-global.css?v=WOW_DOCK_v2">
+    <link rel="stylesheet" href="css/mobile-header-fix.css?v=2026.6.0">
+    <link rel="stylesheet" href="css/responsive-global.css?v=2026.6.0">
+    <link rel="stylesheet" href="css/sp-chat-modal.css?v=2026.6.0">
+    <link rel="stylesheet" href="css/tienda.css?v=20261007_v2">
+    <link rel="stylesheet" href="css/side-drawer-pro.css?v=3.0.0">
 
     <script>
         // registry initialization
@@ -298,7 +314,7 @@
         // Comprobación ultrarrápida de sesión para evitar parpadeo del login en el arranque
         try {
             var _cached = localStorage.getItem('currentUser');
-            if (_cached && _cached !== 'null') {
+            if (_cached && _cached !== 'null' && _cached !== 'undefined' && _cached.length > 5) {
                 document.documentElement.classList.add('has-session');
             }
         } catch(e) {}
@@ -493,14 +509,18 @@
             animation: loginBallLife 3s ease-in-out infinite;
         }
         #login-ball-wrap {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             position: relative;
+            width: 82px;
+            height: 82px;
             cursor: pointer;
             user-select: none;
             -webkit-user-select: none;
             transform-style: preserve-3d;
             perspective: 800px;
-            margin-bottom: 20px;
+            margin: 0 auto 18px auto;
         }
         #login-ball-wrap.breathing #login-ball-img {
             animation: ballBreathing 3.2s ease-in-out infinite;
@@ -509,10 +529,14 @@
             animation: ballSmash 0.65s cubic-bezier(0.22,1,0.36,1) forwards;
         }
         #login-ball-img {
-            height: 110px;
+            width: 82px !important;
+            max-width: 82px !important;
+            height: 82px !important;
+            object-fit: contain;
             display: block;
+            margin: 0 auto;
             transition: transform 0.12s ease-out;
-            filter: drop-shadow(0 0 18px rgba(204,255,0,0.5)) drop-shadow(0 0 35px rgba(204,255,0,0.2));
+            filter: drop-shadow(0 0 14px rgba(204,255,0,0.55)) drop-shadow(0 0 28px rgba(204,255,0,0.2));
             will-change: transform, filter;
             transform-origin: center center;
         }
@@ -688,35 +712,49 @@
 
             <!-- COMMAND BAR - LIGHT MODE PRO (STRICT WHITE) -->
             <div class="cmd-bar"
-                style="display: flex; justify-content: space-between; align-items: center; padding: 0 20px; height: 72px; background: #ffffff !important; border-bottom: 1px solid #e2e8f0;">
+                style="display: flex; justify-content: space-between; align-items: center; background: #ffffff !important; border-bottom: 1px solid #f1f5f9; box-shadow: 0 2px 10px rgba(15, 23, 42, 0.02);">
 
-                <div class="header-burger-btn haptic-feedback"
-                    id="btn-open-side-drawer"
-                    title="Menú lateral de opciones"
-                    aria-label="Abrir Menú SomosPadel"
-                    style="color: #0a192f; font-size: 1.35rem; cursor: pointer; background: #f8fafc; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; border-radius: 14px; border: 1px solid #e2e8f0; transition: all 0.2s;"
-                    onclick="window.PlayerView?.haptic?.(20); window.openDrawer ? window.openDrawer() : (document.getElementById('side-drawer-container')?.classList.add('open'), document.getElementById('side-drawer-menu')?.classList.add('open'));">
-                    <i class="fas fa-bars"></i>
-                </div>
+                <!-- LEFT CLUSTER: 3-BAR HAMBURGER + SOMOSPADEL OFFICIAL BALL LOGO (ALWAYS VISIBLE & TIGHTLY PLACED) -->
+                <div class="header-left-cluster" style="display: flex; align-items: center; flex-shrink: 0; min-width: fit-content; z-index: 10;">
+                    <div class="header-burger-btn haptic-feedback"
+                        id="btn-open-side-drawer"
+                        title="Menú lateral de opciones"
+                        aria-label="Abrir Menú SomosPadel"
+                        style="color: #0a192f; cursor: pointer; background: #f8fafc; display: flex; align-items: center; justify-content: center; border: 1.5px solid #e2e8f0; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04); flex-shrink: 0;"
+                        onclick="window.PlayerView?.haptic?.(20); window.openDrawer ? window.openDrawer() : (document.getElementById('side-drawer-container')?.classList.add('open'), document.getElementById('side-drawer-menu')?.classList.add('open'));">
+                        <i class="fas fa-bars"></i>
+                    </div>
 
-                <div class="cmd-brand" style="display: flex; align-items: center; gap: 14px;">
-                    <img src="img/logo_somospadel.png?v=60.1"
-                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
-                         style="height: 44px; display: block; object-fit: contain; filter: drop-shadow(0px 0px 0.5px rgba(0,0,0,0.8));">
-                    <div style="display:none; color:var(--brand-neon); font-size:1.5rem; font-weight:900;">SOMOS PÁDEL</div>
-                    <div style="height: 30px; width: 2px; background: #e1e8f0;"></div>
-                    <div style="display: flex; flex-direction: column; line-height: 1.1;">
-                        <span
-                            style="font-size: 1.1rem; font-weight: 900; color: #0a192f !important; letter-spacing: -0.5px;">SOMOSPADEL
-                            <span style="color: #99cc00;">BCN</span></span>
-                        <span
-                            style="font-size: 0.6rem; color: #555 !important; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;">COMPITE
-                            Y DISFRUTA</span>
+                    <div class="cmd-brand header-ball-brand haptic-feedback"
+                        style="display: flex; align-items: center; cursor: pointer; flex-shrink: 0; min-width: fit-content;"
+                        title="Ir a Inicio"
+                        role="button"
+                        aria-label="Ir a Inicio SomosPadel"
+                        onclick="window.goToHome ? window.goToHome() : (window.Router && window.Router.navigate('dashboard', false, true), window.scrollTo({top: 0, behavior: 'smooth'}));">
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 1px; flex-shrink: 0;">
+                            <img src="img/logo_somospadel.png?v=61.0"
+                                 id="header-somospadel-ball-logo"
+                                 alt="Somos Padel Barcelona"
+                                 onerror="this.onerror=null; this.src='img/official_ball_logo.png';"
+                                 style="display: block !important; visibility: visible !important; opacity: 1 !important; object-fit: contain; filter: drop-shadow(0px 1px 2px rgba(0,0,0,0.15)) !important; flex-shrink: 0;">
+                            <span class="header-brand-title-text" style="font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.7px; white-space: nowrap; display: block !important; line-height: 1;">SOMOSPADEL BCN</span>
+                        </div>
                     </div>
                 </div>
 
                 <!-- DESTACADOS & EN VIVO (2 ESFERAS DINÁMICAS AUTO-ROTATIVAS EN EL HEADER) -->
                 <div id="header-story-rotator" class="header-story-rotator"></div>
+
+                <!-- ACCESO A MIS MENSAJES / CHAT (PLAYTOMIC STYLE) -->
+                <button type="button"
+                    class="header-notif-btn haptic-feedback sp-chat-header-btn"
+                    id="btn-header-chat"
+                    title="Mis Mensajes"
+                    aria-label="Abrir mis mensajes"
+                    onclick="if(window.ChatView) window.ChatView.openInbox();">
+                    <i class="fas fa-comment-dots" id="chat-header-icon" style="color: #0f172a;"></i>
+                    <span id="chat-unread-badge" class="notif-header-badge sp-unread-chat-badge" style="display: none; background: #CCFF00; color: #0a0f1d; border: 1.5px solid #0f172a;">0</span>
+                </button>
 
                 <!-- CENTRO DE NOTIFICACIONES (OFICIAL SOMOSPADEL CYBER-PADEL) -->
                 <button type="button"
@@ -734,11 +772,11 @@
                 <div class="user-dropdown-container" id="user-dropdown-container">
                     <div class="user-dropdown-trigger haptic-feedback" onclick="window._toggleUserDropdown(event)" role="button" aria-label="Abrir menú de perfil">
                         <div id="header-user-level"
-                            style="background: #CCFF00; color: #0a192f; padding: 4px 8px; border-radius: 8px; font-weight: 950; font-size: 0.85rem; border: 1px solid #ffffff; box-shadow: 0 0 10px rgba(204,255,0,0.3);">
+                            style="background: #CCFF00; color: #0a192f; border-radius: 8px; font-weight: 950; border: 1.5px solid #a3e600; box-shadow: 0 2px 8px rgba(204,255,0,0.35);">
                             --
                         </div>
                         <div class="cmd-avatar" id="header-user-avatar"
-                            style="width: 38px; height: 38px; border-radius: 10px; background: #ffffff; color: #0a192f !important; font-weight: 950; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.2);">
+                            style="border-radius: 10px; background: #ffffff; color: #0a192f !important; font-weight: 950; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1.5px solid #e2e8f0; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);">
                             --
                         </div>
                     </div>
@@ -807,6 +845,18 @@
                                 <i class="fas fa-chevron-right user-dropdown-item-arrow"></i>
                             </button>
 
+                            <!-- 🛍️ Tienda SomosPadel BCN (Sección Principal) -->
+                            <button type="button" class="user-dropdown-item haptic-feedback" onclick="window.Router && window.Router.navigate('tienda'); window._toggleUserDropdown(event)">
+                                <div class="user-dropdown-item-icon" style="background: rgba(16, 185, 129, 0.15); color: #10B981;">
+                                    <i class="fas fa-store"></i>
+                                </div>
+                                <div class="user-dropdown-item-content">
+                                    <span class="user-dropdown-item-title">Tienda SomosPadel BCN</span>
+                                    <span class="user-dropdown-item-subtitle">En construcción • Muy pronto disponible</span>
+                                </div>
+                                <span style="background: #fef08a; color: #713f12; font-size: 0.65rem; font-weight: 950; padding: 2px 7px; border-radius: 6px; letter-spacing: 0.5px;">PRONTO</span>
+                            </button>
+
                             <button type="button" class="user-dropdown-item haptic-feedback" onclick="window._closeUserDropdown && window._closeUserDropdown(); window.PadelFutCard && window.PadelFutCard.open()">
                                 <div class="user-dropdown-item-icon" style="background: rgba(251, 191, 36, 0.15); color: #fbbf24;">
                                     <i class="fas fa-id-card"></i>
@@ -815,7 +865,7 @@
                                     <span class="user-dropdown-item-title">Mi Carta FUT</span>
                                     <span class="user-dropdown-item-subtitle">FUT Card 3D & Stories de Victoria</span>
                                 </div>
-                                <span style="background: #fbbf24; color: #000; font-size: 0.55rem; font-weight: 950; padding: 2px 6px; border-radius: 6px;">PRO</span>
+                                <span style="background: #fbbf24; color: #000; font-size: 0.68rem; font-weight: 950; padding: 2px 7px; border-radius: 6px; letter-spacing: 0.5px;">PRO</span>
                             </button>
 
                             <button type="button" class="user-dropdown-item haptic-feedback" onclick="window._closeUserDropdown && window._closeUserDropdown(); window.CourtScoreboard && window.CourtScoreboard.open()">
@@ -826,7 +876,7 @@
                                     <span class="user-dropdown-item-title">Marcador de Pista</span>
                                     <span class="user-dropdown-item-subtitle">Modo Pista FIP con Punto de Oro</span>
                                 </div>
-                                <span style="background: #CCFF00; color: #000; font-size: 0.55rem; font-weight: 950; padding: 2px 6px; border-radius: 6px;">LIVE</span>
+                                <span style="background: #CCFF00; color: #000; font-size: 0.68rem; font-weight: 950; padding: 2px 7px; border-radius: 6px; letter-spacing: 0.5px;">LIVE</span>
                             </button>
 
                             <button type="button" class="user-dropdown-item haptic-feedback" onclick="window._shareUserProfile && window._shareUserProfile()">
@@ -874,6 +924,60 @@
                 </div>
 
                 <script>
+                    window.goToHome = function () {
+                        try {
+                            if (window.PlayerView?.haptic) {
+                                window.PlayerView.haptic(20);
+                            }
+                            // 1. Cerrar menú lateral (side drawer)
+                            if (typeof window.closeDrawer === 'function') {
+                                window.closeDrawer();
+                            } else {
+                                const drawer = document.getElementById('side-drawer-container');
+                                const menu = document.getElementById('side-drawer-menu');
+                                if (drawer) drawer.classList.remove('open');
+                                if (menu) menu.classList.remove('open');
+                            }
+                            // 2. Cerrar dropdown de perfil de usuario
+                            if (typeof window._closeUserDropdown === 'function') {
+                                window._closeUserDropdown();
+                            } else {
+                                const container = document.getElementById('user-dropdown-container');
+                                const backdrop = document.getElementById('user-dropdown-backdrop');
+                                if (container) container.classList.remove('open');
+                                if (backdrop) backdrop.classList.remove('active');
+                            }
+                            // 3. Cerrar popup de comunidad si está activo
+                            if (typeof window.closeCommunityMenu === 'function') {
+                                window.closeCommunityMenu();
+                            }
+                            // 4. Cerrar modales o capas emergentes (sin tocar auth-modal)
+                            const tickerModal = document.getElementById('sp-smart-ticker-modal');
+                            if (tickerModal) tickerModal.remove();
+                            const tickerBackdrop = document.getElementById('sp-ticker-backdrop');
+                            if (tickerBackdrop) tickerBackdrop.remove();
+
+                            document.querySelectorAll('.modal-overlay.open, .modal-overlay.active, .sp-modal-overlay.open, .sp-modal.open').forEach(el => {
+                                if (el.id !== 'auth-modal') {
+                                    el.classList.remove('open', 'active');
+                                    if (el.style) el.style.display = 'none';
+                                }
+                            });
+
+                            // 5. Navegar a la sección INICIO (dashboard)
+                            if (window.Router && typeof window.Router.navigate === 'function') {
+                                window.Router.navigate('dashboard', false, true);
+                            }
+
+                            // 6. Scroll arriba
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        } catch (e) {
+                            console.warn('[Header Brand] Error al ir a Inicio:', e);
+                            if (window.Router) window.Router.navigate('dashboard', false, true);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }
+                    };
+
                     window._closeUserDropdown = function () {
                         const container = document.getElementById('user-dropdown-container');
                         const backdrop = document.getElementById('user-dropdown-backdrop');
@@ -999,55 +1103,93 @@
                 }
             </style>
 
-            <!-- SUBNAV APP BAR (SISTEMA OFICIAL DE SUBPESTAÑAS FIJAS: AMERICANAS Y COMUNIDAD) -->
+            <!-- SUBNAV APP BAR (SISTEMA OFICIAL DE SUBPESTAÑAS FIJAS: AMERICANAS Y COMUNIDAD - CYBER PADEL BANNER) -->
             <style>
                 .subnav-app-bar {
                     width: 100%;
-                    background: #0b0f19 !important;
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-                    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+                    position: relative;
+                    /* Fondo deportivo de élite: gradiente obsidian / cyber-padel de alto impacto */
+                    background: linear-gradient(135deg, #070d18 0%, #0d172a 50%, #091120 100%) !important;
+                    border-top: 1px solid rgba(255, 255, 255, 0.08);
+                    border-bottom: 2px solid transparent;
+                    border-image: linear-gradient(90deg, rgba(204, 255, 0, 0.1), rgba(204, 255, 0, 0.8) 35%, rgba(0, 240, 255, 0.6) 70%, rgba(204, 255, 0, 0.1)) 1;
+                    box-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.08);
                     box-sizing: border-box;
                     z-index: 10002;
                     overflow: hidden;
                     display: none;
+                    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
                 }
+
+                /* Efecto Mesh Aurora Dinámico de Pádel */
+                .subnav-app-bar::before {
+                    content: '';
+                    position: absolute;
+                    top: -50%;
+                    left: 10%;
+                    width: 80%;
+                    height: 200%;
+                    background: radial-gradient(ellipse at center, rgba(204, 255, 0, 0.12) 0%, rgba(14, 165, 233, 0.07) 45%, transparent 70%);
+                    pointer-events: none;
+                    z-index: 0;
+                    animation: subnavAuroraPulse 9s ease-in-out infinite alternate;
+                }
+
+                @keyframes subnavAuroraPulse {
+                    0% { transform: translateX(-12%) scale(0.92); opacity: 0.6; }
+                    50% { transform: translateX(8%) scale(1.08); opacity: 0.95; }
+                    100% { transform: translateX(20%) scale(0.96); opacity: 0.7; }
+                }
+
                 .subnav-outer-flex {
                     display: flex;
                     align-items: center;
-                    max-width: 1200px;
+                    max-width: 1240px;
                     margin: 0 auto;
-                    padding: 5px 8px;
-                    gap: 6px;
+                    padding: 7px 10px;
+                    gap: 8px;
                     box-sizing: border-box;
                     position: relative;
+                    z-index: 1;
                 }
+
+                /* Flechas de navegación Neón / Glassmorphism */
                 .subnav-nav-arrow {
-                    background: rgba(15, 23, 42, 0.95);
-                    border: 1px solid rgba(255, 255, 255, 0.12);
+                    background: rgba(13, 23, 42, 0.85);
+                    border: 1.5px solid rgba(204, 255, 0, 0.35);
                     color: #CCFF00;
-                    width: 28px;
-                    height: 34px;
+                    width: 32px;
+                    height: 38px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     cursor: pointer;
-                    border-radius: 9px;
+                    border-radius: 12px;
                     flex-shrink: 0;
-                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                    backdrop-filter: blur(8px);
+                    -webkit-backdrop-filter: blur(8px);
+                    transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
                     padding: 0;
-                    z-index: 2;
+                    z-index: 4;
+                    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.12);
                 }
                 .subnav-nav-arrow:hover {
                     background: #CCFF00;
-                    color: #000000;
-                    transform: scale(1.06);
+                    border-color: #CCFF00;
+                    color: #07101e;
+                    transform: scale(1.1);
+                    box-shadow: 0 0 18px rgba(204, 255, 0, 0.65);
                 }
                 .subnav-nav-arrow:active {
                     transform: scale(0.92);
                 }
+
+                /* Contenedores de scroll horizontal */
                 .events-submenu-pro-bar,
-                .community-submenu-pro-bar {
+                .community-submenu-pro-bar,
+                .tienda-submenu-pro-bar {
                     display: flex;
+                    align-items: center;
                     gap: 8px;
                     overflow-x: auto;
                     -webkit-overflow-scrolling: touch;
@@ -1060,51 +1202,1027 @@
                 }
                 .events-submenu-pro-bar::-webkit-scrollbar,
                 .community-submenu-pro-bar::-webkit-scrollbar,
-                .entrenos-submenu-bar::-webkit-scrollbar {
+                .entrenos-submenu-bar::-webkit-scrollbar,
+                .tienda-submenu-pro-bar::-webkit-scrollbar {
                     display: none !important;
                     width: 0 !important;
                     height: 0 !important;
                 }
+
+                /* Botones / Pills de submenú pro */
                 .esm-pro-btn {
                     flex-shrink: 0;
-                    display: flex;
+                    display: inline-flex;
                     align-items: center;
-                    gap: 8px;
-                    padding: 8px 18px;
+                    gap: 7px;
+                    padding: 8px 16px;
                     border-radius: 999px !important;
                     font-size: 0.72rem;
-                    font-weight: 950;
-                    letter-spacing: 0.3px;
+                    font-weight: 850;
+                    letter-spacing: 0.35px;
                     white-space: nowrap;
                     cursor: pointer;
-                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                    user-select: none;
+                    -webkit-user-select: none;
+                    position: relative;
+                    overflow: hidden;
+                    backdrop-filter: blur(8px);
+                    -webkit-backdrop-filter: blur(8px);
+                    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
                 }
-                .esm-pro-btn:active {
-                    transform: scale(0.96);
+
+                /* Efecto Shimmer Dinámico al pasar el cursor */
+                .esm-pro-btn::after {
+                    content: '';
+                    position: absolute;
+                    top: -50%;
+                    left: -120%;
+                    width: 60%;
+                    height: 200%;
+                    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.24), transparent);
+                    transform: rotate(25deg);
+                    pointer-events: none;
                 }
-                .esm-pro-btn.active {
-                    background: #CCFF00 !important;
-                    color: #000000 !important;
-                    border: 1.5px solid #CCFF00 !important;
-                    box-shadow: 0 0 16px rgba(204, 255, 0, 0.45) !important;
+                .esm-pro-btn:hover::after {
+                    left: 140%;
+                    transition: left 0.7s ease-in-out;
                 }
-                .esm-pro-btn.active i {
-                    color: #000000 !important;
-                }
+
+                /* Estado Inactivo - Glass Cyber Slate */
                 .esm-pro-btn.inactive {
-                    background: rgba(255, 255, 255, 0.05) !important;
-                    color: #94a3b8 !important;
-                    border: 1.5px solid rgba(255, 255, 255, 0.08) !important;
+                    background: rgba(255, 255, 255, 0.06) !important;
+                    color: #cbd5e1 !important;
+                    border: 1.2px solid rgba(255, 255, 255, 0.12) !important;
+                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+                }
+                .esm-pro-btn.inactive i {
+                    color: #94a3b8;
+                    transition: color 0.2s ease;
                 }
                 .esm-pro-btn.inactive:hover {
-                    background: rgba(255, 255, 255, 0.09) !important;
+                    background: rgba(255, 255, 255, 0.13) !important;
                     color: #ffffff !important;
+                    border-color: rgba(204, 255, 0, 0.45) !important;
+                    transform: translateY(-2px) scale(1.03);
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), 0 0 12px rgba(204, 255, 0, 0.2);
                 }
+                .esm-pro-btn.inactive:hover i {
+                    color: #CCFF00;
+                }
+                .esm-pro-btn:active {
+                    transform: scale(0.95);
+                }
+
+                /* Estado Activo - SomosPadel Volt Neón */
+                .esm-pro-btn.active {
+                    background: linear-gradient(135deg, #CCFF00 0%, #b8e600 100%) !important;
+                    color: #060d17 !important;
+                    font-weight: 950 !important;
+                    border: 1.5px solid #e5ff54 !important;
+                    box-shadow: 0 0 18px rgba(204, 255, 0, 0.6), 0 4px 12px rgba(0, 0, 0, 0.35) !important;
+                    transform: scale(1.04);
+                }
+                .esm-pro-btn.active i {
+                    color: #060d17 !important;
+                }
+
+                /* Micro Badges y Live Dots para el Banner */
+                .subnav-live-dot {
+                    width: 7px;
+                    height: 7px;
+                    border-radius: 50%;
+                    background: #10b981;
+                    display: inline-block;
+                    flex-shrink: 0;
+                    animation: subnavDotPulse 1.4s ease-in-out infinite;
+                }
+                @keyframes subnavDotPulse {
+                    0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+                    50% { transform: scale(1.3); opacity: 0.8; box-shadow: 0 0 0 5px rgba(16, 185, 129, 0); }
+                }
+
+                .subnav-micro-badge {
+                    font-size: 0.55rem;
+                    font-weight: 950;
+                    padding: 2px 6px;
+                    border-radius: 999px;
+                    letter-spacing: 0.5px;
+                    line-height: 1;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 3px;
+                    text-transform: uppercase;
+                }
+                .subnav-micro-badge.badge-live {
+                    background: #ef4444;
+                    color: #ffffff;
+                    box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+                }
+                .subnav-micro-badge.badge-neon {
+                    background: rgba(204, 255, 0, 0.2);
+                    color: #CCFF00;
+                    border: 1px solid rgba(204, 255, 0, 0.5);
+                }
+                .subnav-micro-badge.badge-dark {
+                    background: rgba(0, 0, 0, 0.3);
+                    color: #060d17;
+                    border: 1px solid rgba(0, 0, 0, 0.2);
+                }
+                .subnav-micro-badge.badge-success {
+                    background: #10b981;
+                    color: #ffffff;
+                }
+
                 .header-tabs-inner {
                     display: none !important;
                 }
                 .nav-tabs-handle {
                     display: none !important;
+                }
+
+                /* ==========================================================================
+                   SUBMENÚ AMERICANAS PRO (Volt Cyber Energy de Alta Definición)
+                   ========================================================================== */
+                .subnav-app-bar.subnav-theme-americanas {
+                    background: linear-gradient(135deg, #a3e600 0%, #CCFF00 28%, #d4ff1a 62%, #95c700 100%) !important;
+                    border-top: 1.5px solid rgba(255, 255, 255, 0.55) !important;
+                    border-bottom: 2.5px solid rgba(15, 23, 42, 0.4) !important;
+                    border-image: none !important;
+                    box-shadow: 0 8px 25px rgba(204, 255, 0, 0.45), 0 3px 10px rgba(0, 0, 0, 0.25) !important;
+                    position: relative !important;
+                }
+
+                .subnav-app-bar.subnav-theme-americanas::before {
+                    background: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.15) 45%, transparent 75%) !important;
+                    opacity: 0.85 !important;
+                }
+
+                /* Flechas de navegación en tema Americanas - Obsidian Glass Pro */
+                .subnav-app-bar.subnav-theme-americanas .subnav-nav-arrow {
+                    background: linear-gradient(145deg, #070d18 0%, rgba(15, 23, 42, 0.98) 100%) !important;
+                    border: 1.5px solid rgba(204, 255, 0, 0.5) !important;
+                    color: #CCFF00 !important;
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(204, 255, 0, 0.25) !important;
+                    backdrop-filter: blur(10px) !important;
+                    -webkit-backdrop-filter: blur(10px) !important;
+                    transition: all 0.24s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+                }
+                .subnav-app-bar.subnav-theme-americanas .subnav-nav-arrow:hover {
+                    background: #070d18 !important;
+                    border-color: #CCFF00 !important;
+                    color: #CCFF00 !important;
+                    box-shadow: 0 0 20px rgba(204, 255, 0, 0.95), 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+                    transform: scale(1.14) !important;
+                }
+                .subnav-app-bar.subnav-theme-americanas .subnav-nav-arrow:active {
+                    transform: scale(0.92) !important;
+                }
+
+                /* Botón Inactivo en tema Americanas - Pure Obsidian Cyber Glass con máximo contraste */
+                .subnav-app-bar.subnav-theme-americanas .esm-pro-btn.inactive {
+                    background: linear-gradient(145deg, rgba(7, 13, 24, 0.92) 0%, rgba(15, 23, 42, 0.96) 100%) !important;
+                    color: #ffffff !important;
+                    border: 1.5px solid rgba(255, 255, 255, 0.24) !important;
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.38), inset 0 1px 1px rgba(255, 255, 255, 0.22), inset 0 -1px 1px #070d18 !important;
+                    backdrop-filter: blur(14px) !important;
+                    -webkit-backdrop-filter: blur(14px) !important;
+                    font-weight: 850 !important;
+                    letter-spacing: 0.35px !important;
+                    text-shadow: 0 1px 2px #070d18 !important;
+                    transition: all 0.26s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+                }
+
+                /* Iluminación cromática temática en los iconos de Americanas */
+                .subnav-app-bar.subnav-theme-americanas .esm-pro-btn.inactive i {
+                    transition: transform 0.22s ease, color 0.22s ease, filter 0.22s ease;
+                }
+                .subnav-app-bar.subnav-theme-americanas button[data-tab-id="events"].inactive i {
+                    color: #CCFF00 !important;
+                    filter: drop-shadow(0 0 7px rgba(204, 255, 0, 0.75));
+                }
+                .subnav-app-bar.subnav-theme-americanas button[data-tab-id="finished_americanas"].inactive i {
+                    color: #94a3b8 !important;
+                    filter: drop-shadow(0 0 6px rgba(148, 163, 184, 0.6));
+                }
+                .subnav-app-bar.subnav-theme-americanas button[data-tab-id="agenda_americanas"].inactive i {
+                    color: #38bdf8 !important;
+                    filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.7));
+                }
+                .subnav-app-bar.subnav-theme-americanas button[data-tab-id="help_americanas"].inactive i {
+                    color: #c084fc !important;
+                    filter: drop-shadow(0 0 6px rgba(192, 132, 252, 0.7));
+                }
+                .subnav-app-bar.subnav-theme-americanas button[data-tab-id="meteo"].inactive i {
+                    color: #fbbf24 !important;
+                    filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.7));
+                }
+
+                /* Hover & Touch Interactivo WOW en Americanas */
+                .subnav-app-bar.subnav-theme-americanas .esm-pro-btn.inactive:hover {
+                    background: linear-gradient(145deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 1) 100%) !important;
+                    color: #ffffff !important;
+                    border-color: rgba(255, 255, 255, 0.7) !important;
+                    transform: translateY(-2.5px) scale(1.05) !important;
+                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 16px rgba(204, 255, 0, 0.35) !important;
+                }
+                .subnav-app-bar.subnav-theme-americanas .esm-pro-btn.inactive:hover i {
+                    transform: scale(1.18);
+                }
+                .subnav-app-bar.subnav-theme-americanas .esm-pro-btn.inactive:active {
+                    transform: scale(0.96) !important;
+                }
+
+                /* Botón Activo en tema Americanas - Deep Obsidian Cyber Neon con Máximo Impacto WOW */
+                .subnav-app-bar.subnav-theme-americanas .esm-pro-btn.active {
+                    background: linear-gradient(145deg, #070d18 0%, #0f172a 100%) !important;
+                    color: #CCFF00 !important;
+                    font-weight: 950 !important;
+                    border: 2px solid #CCFF00 !important;
+                    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.55), 0 0 20px rgba(204, 255, 0, 0.75), inset 0 1px 1px rgba(204, 255, 0, 0.4) !important;
+                    transform: translateY(-1px) scale(1.06) !important;
+                    text-shadow: 0 0 10px rgba(204, 255, 0, 0.6) !important;
+                    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+                }
+                .subnav-app-bar.subnav-theme-americanas .esm-pro-btn.active i {
+                    color: #CCFF00 !important;
+                    transform: scale(1.15) !important;
+                    filter: drop-shadow(0 0 10px rgba(204, 255, 0, 0.9)) !important;
+                }
+
+                /* Badges dentro de los botones en tema Americanas */
+                .subnav-app-bar.subnav-theme-americanas .esm-pro-btn.active .subnav-micro-badge {
+                    background: #CCFF00 !important;
+                    color: #070d18 !important;
+                    border: 1px solid rgba(204, 255, 0, 0.8) !important;
+                    font-weight: 950 !important;
+                    box-shadow: 0 0 10px rgba(204, 255, 0, 0.8) !important;
+                }
+                .subnav-app-bar.subnav-theme-americanas .esm-pro-btn.inactive .subnav-micro-badge {
+                    background: rgba(255, 255, 255, 0.18) !important;
+                    color: #ffffff !important;
+                    border: 1px solid rgba(255, 255, 255, 0.42) !important;
+                    font-weight: 950 !important;
+                    box-shadow: 0 0 8px rgba(255, 255, 255, 0.2) !important;
+                }
+
+                /* Botón de acceso directo PUNTOS RANKING en el submenú Americanas */
+                .subnav-app-bar.subnav-theme-americanas .esm-pro-btn.subnav-btn-ranking-points {
+                    background: linear-gradient(145deg, rgba(15, 23, 42, 0.92) 0%, rgba(8, 14, 26, 0.96) 100%) !important;
+                    border: 1.5px solid rgba(204, 255, 0, 0.45) !important;
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.38) !important;
+                }
+                .subnav-app-bar.subnav-theme-americanas .esm-pro-btn.subnav-btn-ranking-points i,
+                .subnav-app-bar.subnav-theme-americanas .esm-pro-btn.subnav-btn-ranking-points span {
+                    color: #CCFF00 !important;
+                }
+                .subnav-app-bar.subnav-theme-americanas .esm-pro-btn.subnav-btn-ranking-points:hover {
+                    background: linear-gradient(145deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 1) 100%) !important;
+                    border-color: #CCFF00 !important;
+                    transform: translateY(-2px) scale(1.04) !important;
+                    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45), 0 0 14px rgba(204, 255, 0, 0.4) !important;
+                }
+
+                /* ==========================================================================
+                   SUBMENÚ ENTRENOS PRO (Hot Pink Cyber Energy de Alta Definición)
+                   ========================================================================== */
+                .subnav-app-bar.subnav-theme-entrenos {
+                    background: linear-gradient(135deg, #e11d48 0%, #ff007f 28%, #ff2d87 62%, #be123c 100%) !important;
+                    border-top: 1.5px solid rgba(255, 255, 255, 0.45) !important;
+                    border-bottom: 2.5px solid rgba(15, 23, 42, 0.45) !important;
+                    border-image: none !important;
+                    box-shadow: 0 8px 25px rgba(255, 0, 127, 0.48), 0 3px 10px rgba(0, 0, 0, 0.3) !important;
+                    position: relative !important;
+                }
+
+                .subnav-app-bar.subnav-theme-entrenos::before {
+                    background: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.12) 45%, transparent 75%) !important;
+                    opacity: 0.85 !important;
+                }
+
+                /* Flechas de navegación en tema Entrenos - Obsidian Glass Pro */
+                .subnav-app-bar.subnav-theme-entrenos .subnav-nav-arrow {
+                    background: linear-gradient(145deg, rgba(15, 23, 42, 0.94) 0%, rgba(5, 9, 18, 0.98) 100%) !important;
+                    border: 1.5px solid rgba(255, 255, 255, 0.32) !important;
+                    color: #ffffff !important;
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+                    backdrop-filter: blur(10px) !important;
+                    -webkit-backdrop-filter: blur(10px) !important;
+                    transition: all 0.24s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+                }
+                .subnav-app-bar.subnav-theme-entrenos .subnav-nav-arrow:hover {
+                    background: #ffffff !important;
+                    border-color: #ffffff !important;
+                    color: #9f1239 !important;
+                    box-shadow: 0 0 20px rgba(255, 255, 255, 0.95), 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+                    transform: scale(1.14) !important;
+                }
+                .subnav-app-bar.subnav-theme-entrenos .subnav-nav-arrow:active {
+                    transform: scale(0.92) !important;
+                }
+
+                /* Botón Inactivo en tema Entrenos - Pure Obsidian Cyber Glass con máximo contraste */
+                .subnav-app-bar.subnav-theme-entrenos .esm-pro-btn.inactive {
+                    background: linear-gradient(145deg, rgba(15, 23, 42, 0.92) 0%, rgba(8, 14, 26, 0.96) 100%) !important;
+                    color: #ffffff !important;
+                    border: 1.5px solid rgba(255, 255, 255, 0.24) !important;
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.38), inset 0 1px 1px rgba(255, 255, 255, 0.22), inset 0 -1px 1px rgba(0, 0, 0, 0.4) !important;
+                    backdrop-filter: blur(14px) !important;
+                    -webkit-backdrop-filter: blur(14px) !important;
+                    font-weight: 850 !important;
+                    letter-spacing: 0.35px !important;
+                    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6) !important;
+                    transition: all 0.26s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+                }
+
+                /* Iluminación cromática temática en los iconos de Entrenos */
+                .subnav-app-bar.subnav-theme-entrenos .esm-pro-btn.inactive i {
+                    transition: transform 0.22s ease, color 0.22s ease, filter 0.22s ease;
+                }
+                .subnav-app-bar.subnav-theme-entrenos button[data-tab-id="entrenos"].inactive i {
+                    color: #fb7185 !important;
+                    filter: drop-shadow(0 0 7px rgba(251, 113, 133, 0.75));
+                }
+                .subnav-app-bar.subnav-theme-entrenos button[data-tab-id="finished"].inactive i {
+                    color: #94a3b8 !important;
+                    filter: drop-shadow(0 0 6px rgba(148, 163, 184, 0.6));
+                }
+                .subnav-app-bar.subnav-theme-entrenos button[data-tab-id="agenda"].inactive i {
+                    color: #38bdf8 !important;
+                    filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.7));
+                }
+                .subnav-app-bar.subnav-theme-entrenos button[data-tab-id="help"].inactive i {
+                    color: #c084fc !important;
+                    filter: drop-shadow(0 0 6px rgba(192, 132, 252, 0.7));
+                }
+                .subnav-app-bar.subnav-theme-entrenos button[data-tab-id="meteo"].inactive i {
+                    color: #fbbf24 !important;
+                    filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.7));
+                }
+
+                /* Hover & Touch Interactivo WOW en Entrenos */
+                .subnav-app-bar.subnav-theme-entrenos .esm-pro-btn.inactive:hover {
+                    background: linear-gradient(145deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 1) 100%) !important;
+                    color: #ffffff !important;
+                    border-color: rgba(255, 255, 255, 0.7) !important;
+                    transform: translateY(-2.5px) scale(1.05) !important;
+                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 16px rgba(255, 0, 127, 0.35) !important;
+                }
+                .subnav-app-bar.subnav-theme-entrenos .esm-pro-btn.inactive:hover i {
+                    transform: scale(1.18);
+                }
+                .subnav-app-bar.subnav-theme-entrenos .esm-pro-btn.inactive:active {
+                    transform: scale(0.96) !important;
+                }
+
+                /* Botón Activo en tema Entrenos - Diamond Neon White con Máximo Impacto WOW */
+                .subnav-app-bar.subnav-theme-entrenos .esm-pro-btn.active {
+                    background: linear-gradient(145deg, #ffffff 0%, #fff1f2 60%, #ffe4e6 100%) !important;
+                    color: #9f1239 !important;
+                    font-weight: 950 !important;
+                    border: 2px solid #ffffff !important;
+                    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.4), 0 0 24px rgba(255, 255, 255, 0.95), inset 0 2px 2px #ffffff !important;
+                    transform: translateY(-1px) scale(1.06) !important;
+                    text-shadow: none !important;
+                    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+                }
+                .subnav-app-bar.subnav-theme-entrenos .esm-pro-btn.active i {
+                    color: #be123c !important;
+                    transform: scale(1.15) !important;
+                    filter: drop-shadow(0 0 8px rgba(190, 18, 60, 0.6)) !important;
+                }
+
+                /* Badges dentro de los botones en tema Entrenos */
+                .subnav-app-bar.subnav-theme-entrenos .esm-pro-btn.active .subnav-micro-badge {
+                    background: #be123c !important;
+                    color: #ffffff !important;
+                    border: 1px solid rgba(190, 18, 60, 0.4) !important;
+                    font-weight: 950 !important;
+                    box-shadow: 0 2px 8px rgba(190, 18, 60, 0.45) !important;
+                }
+                .subnav-app-bar.subnav-theme-entrenos .esm-pro-btn.inactive .subnav-micro-badge {
+                    background: rgba(255, 255, 255, 0.18) !important;
+                    color: #ffffff !important;
+                    border: 1px solid rgba(255, 255, 255, 0.42) !important;
+                    font-weight: 950 !important;
+                    box-shadow: 0 0 8px rgba(255, 255, 255, 0.2) !important;
+                }
+
+                /* Botón de acceso directo PUNTOS RANKING en el submenú de Entrenos */
+                .subnav-app-bar.subnav-theme-entrenos .esm-pro-btn.subnav-btn-ranking-points {
+                    background: linear-gradient(145deg, rgba(15, 23, 42, 0.92) 0%, rgba(8, 14, 26, 0.96) 100%) !important;
+                    border: 1.5px solid rgba(255, 0, 127, 0.45) !important;
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.38) !important;
+                }
+                .subnav-app-bar.subnav-theme-entrenos .esm-pro-btn.subnav-btn-ranking-points i,
+                .subnav-app-bar.subnav-theme-entrenos .esm-pro-btn.subnav-btn-ranking-points span {
+                    color: #ff007f !important;
+                }
+                .subnav-app-bar.subnav-theme-entrenos .esm-pro-btn.subnav-btn-ranking-points:hover {
+                    background: linear-gradient(145deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 1) 100%) !important;
+                    border-color: #ff007f !important;
+                    transform: translateY(-2px) scale(1.04) !important;
+                    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45), 0 0 14px rgba(255, 0, 127, 0.4) !important;
+                }
+
+                /* ==========================================================================
+                   SUBMENÚ RANKING (Fondo Marrón Dorado / Ámbar Bronce acorde al icono nav inferior)
+                   MISMO TAMAÑO, LARGO, ANCHO Y ESTRUCTURA QUE AMERICANAS Y ENTRENOS
+                   ========================================================================== */
+                .subnav-app-bar.subnav-theme-ranking {
+                    background: #92400e !important;
+                    background: linear-gradient(135deg, #b45309 0%, #92400e 35%, #78350f 70%, #582405 100%) !important;
+                    border-top: 1px solid rgba(255, 215, 0, 0.3) !important;
+                    border-bottom: 2px solid rgba(0, 0, 0, 0.35) !important;
+                    border-image: none !important;
+                    box-shadow: 0 6px 20px rgba(180, 83, 9, 0.42), 0 3px 8px rgba(0, 0, 0, 0.22) !important;
+                }
+
+                .subnav-app-bar.subnav-theme-ranking::before {
+                    background: radial-gradient(ellipse at center, rgba(255, 215, 0, 0.35) 0%, transparent 70%) !important;
+                    opacity: 0.65 !important;
+                }
+
+                /* Flechas de navegación en tema Ranking - Deep Obsidian con icono Dorado/Ámbar */
+                .subnav-app-bar.subnav-theme-ranking .subnav-nav-arrow {
+                    background: #070d18 !important;
+                    border: 1.5px solid rgba(255, 215, 0, 0.4) !important;
+                    color: #ffd700 !important;
+                    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.12) !important;
+                }
+                .subnav-app-bar.subnav-theme-ranking .subnav-nav-arrow:hover {
+                    background: #000000 !important;
+                    border-color: #ffd700 !important;
+                    color: #ffffff !important;
+                    box-shadow: 0 0 14px rgba(255, 215, 0, 0.5) !important;
+                    transform: scale(1.08) !important;
+                }
+
+                /* Botón Inactivo en tema Ranking - Tinted Glass con texto blanco ultralegible y detalles dorados */
+                .subnav-app-bar.subnav-theme-ranking .esm-pro-btn.inactive {
+                    background: rgba(7, 13, 24, 0.22) !important;
+                    color: #ffffff !important;
+                    border: 1.5px solid rgba(255, 255, 255, 0.32) !important;
+                    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.14) !important;
+                    font-weight: 850 !important;
+                }
+                .subnav-app-bar.subnav-theme-ranking .esm-pro-btn.inactive i {
+                    color: #ffd700 !important;
+                    transition: color 0.2s ease;
+                }
+                .subnav-app-bar.subnav-theme-ranking .esm-pro-btn.inactive:hover {
+                    background: rgba(7, 13, 24, 0.38) !important;
+                    color: #ffffff !important;
+                    border-color: rgba(255, 215, 0, 0.6) !important;
+                    transform: translateY(-2px) scale(1.03) !important;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+                }
+                .subnav-app-bar.subnav-theme-ranking .esm-pro-btn.inactive:hover i {
+                    color: #ffffff !important;
+                }
+
+                /* Botón Activo en tema Ranking - Deep Obsidian con Neón Dorado/Oro (#ffd700) */
+                .subnav-app-bar.subnav-theme-ranking .esm-pro-btn.active {
+                    background: #070d18 !important;
+                    background: linear-gradient(135deg, #0e172a 0%, #070d18 100%) !important;
+                    color: #ffd700 !important;
+                    font-weight: 950 !important;
+                    border: 1.5px solid #ffd700 !important;
+                    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45), 0 0 14px rgba(255, 215, 0, 0.35) !important;
+                    transform: scale(1.04) !important;
+                }
+                .subnav-app-bar.subnav-theme-ranking .esm-pro-btn.active i {
+                    color: #ffd700 !important;
+                }
+
+                /* Badges dentro de los botones en tema Ranking */
+                .subnav-app-bar.subnav-theme-ranking .esm-pro-btn.active .subnav-micro-badge {
+                    background: #ffd700 !important;
+                    color: #070d18 !important;
+                    border: 1px solid rgba(0, 0, 0, 0.25) !important;
+                    font-weight: 950 !important;
+                }
+                .subnav-app-bar.subnav-theme-ranking .esm-pro-btn.inactive .subnav-micro-badge {
+                    background: rgba(7, 13, 24, 0.35) !important;
+                    color: #ffffff !important;
+                    border: 1px solid rgba(255, 215, 0, 0.35) !important;
+                    font-weight: 950 !important;
+                }
+
+                /* Botón de acceso directo PUNTOS RANKING en el submenú de Ranking */
+                .subnav-app-bar.subnav-theme-ranking .esm-pro-btn.subnav-btn-ranking-points {
+                    background: #070d18 !important;
+                    border: 1.5px solid #ffd700 !important;
+                    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3) !important;
+                }
+                .subnav-app-bar.subnav-theme-ranking .esm-pro-btn.subnav-btn-ranking-points i,
+                .subnav-app-bar.subnav-theme-ranking .esm-pro-btn.subnav-btn-ranking-points span {
+                    color: #ffd700 !important;
+                }
+                .subnav-app-bar.subnav-theme-ranking .esm-pro-btn.subnav-btn-ranking-points:hover {
+                    background: #000000 !important;
+                    transform: translateY(-2px) scale(1.03) !important;
+                    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.42), 0 0 12px rgba(255, 215, 0, 0.3) !important;
+                }
+
+                /* ==========================================================================
+                   SUBMENÚ PERFIL / RANKING INVERTIDO (Fondo Celeste Neón / Cyan #00d2ff acorde a nav #nav-profile)
+                   MISMO TAMAÑO, LARGO, ANCHO Y ESTRUCTURA QUE AMERICANAS Y ENTRENOS
+                   ========================================================================== */
+                .subnav-app-bar.subnav-theme-profile {
+                    background: #00d2ff !important;
+                    background: linear-gradient(135deg, #0284c7 0%, #00b4d8 28%, #00d2ff 65%, #0284c7 100%) !important;
+                    border-top: 1.5px solid rgba(255, 255, 255, 0.5) !important;
+                    border-bottom: 2.5px solid rgba(15, 23, 42, 0.45) !important;
+                    border-image: none !important;
+                    box-shadow: 0 8px 25px rgba(0, 210, 255, 0.45), 0 3px 10px rgba(0, 0, 0, 0.28) !important;
+                    position: relative !important;
+                }
+
+                .subnav-app-bar.subnav-theme-profile::before {
+                    background: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.15) 45%, transparent 75%) !important;
+                    opacity: 0.85 !important;
+                }
+
+                /* Flechas de navegación en tema Perfil - Obsidian Glass Pro */
+                .subnav-app-bar.subnav-theme-profile .subnav-nav-arrow {
+                    background: linear-gradient(145deg, #070d18 0%, rgba(15, 23, 42, 0.98) 100%) !important;
+                    border: 1.5px solid rgba(0, 210, 255, 0.5) !important;
+                    color: #00d2ff !important;
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(0, 210, 255, 0.25) !important;
+                    backdrop-filter: blur(10px) !important;
+                    -webkit-backdrop-filter: blur(10px) !important;
+                    transition: all 0.24s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+                }
+                .subnav-app-bar.subnav-theme-profile .subnav-nav-arrow:hover {
+                    background: #070d18 !important;
+                    border-color: #00d2ff !important;
+                    color: #00d2ff !important;
+                    box-shadow: 0 0 20px rgba(0, 210, 255, 0.95), 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+                    transform: scale(1.14) !important;
+                }
+                .subnav-app-bar.subnav-theme-profile .subnav-nav-arrow:active {
+                    transform: scale(0.92) !important;
+                }
+
+                /* Botón Inactivo en tema Perfil - Pure Obsidian Cyber Glass con máximo contraste */
+                .subnav-app-bar.subnav-theme-profile .esm-pro-btn.inactive {
+                    background: linear-gradient(145deg, rgba(7, 13, 24, 0.92) 0%, rgba(15, 23, 42, 0.96) 100%) !important;
+                    color: #ffffff !important;
+                    border: 1.5px solid rgba(255, 255, 255, 0.25) !important;
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.38), inset 0 1px 1px rgba(255, 255, 255, 0.22), inset 0 -1px 1px #070d18 !important;
+                    backdrop-filter: blur(14px) !important;
+                    -webkit-backdrop-filter: blur(14px) !important;
+                    font-weight: 850 !important;
+                    letter-spacing: 0.35px !important;
+                    text-shadow: 0 1px 2px #070d18 !important;
+                    transition: all 0.26s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+                }
+
+                /* Iluminación cromática temática en los iconos de Perfil */
+                .subnav-app-bar.subnav-theme-profile .esm-pro-btn.inactive i {
+                    transition: transform 0.22s ease, color 0.22s ease, filter 0.22s ease;
+                }
+                .subnav-app-bar.subnav-theme-profile button[data-tab-id="mi_posicion"].inactive i {
+                    color: #00d2ff !important;
+                    filter: drop-shadow(0 0 7px rgba(0, 210, 255, 0.8));
+                }
+                .subnav-app-bar.subnav-theme-profile button[data-tab-id="ai_performance"].inactive i {
+                    color: #c084fc !important;
+                    filter: drop-shadow(0 0 7px rgba(192, 132, 252, 0.8));
+                }
+                .subnav-app-bar.subnav-theme-profile button[data-tab-id="attributes"].inactive i {
+                    color: #facc15 !important;
+                    filter: drop-shadow(0 0 7px rgba(250, 204, 21, 0.8));
+                }
+
+                /* Hover & Touch Interactivo WOW en Perfil */
+                .subnav-app-bar.subnav-theme-profile .esm-pro-btn.inactive:hover {
+                    background: linear-gradient(145deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 1) 100%) !important;
+                    color: #ffffff !important;
+                    border-color: rgba(255, 255, 255, 0.7) !important;
+                    transform: translateY(-2.5px) scale(1.05) !important;
+                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 16px rgba(0, 210, 255, 0.35) !important;
+                }
+                .subnav-app-bar.subnav-theme-profile .esm-pro-btn.inactive:hover i {
+                    transform: scale(1.18);
+                }
+                .subnav-app-bar.subnav-theme-profile .esm-pro-btn.inactive:active {
+                    transform: scale(0.96) !important;
+                }
+
+                /* Botón Activo en tema Perfil - Deep Obsidian Cyber Neon con Máximo Impacto WOW */
+                .subnav-app-bar.subnav-theme-profile .esm-pro-btn.active {
+                    background: #070d18 !important;
+                    background: linear-gradient(145deg, #070d18 0%, #0f172a 100%) !important;
+                    color: #00d2ff !important;
+                    font-weight: 950 !important;
+                    border: 2px solid #00d2ff !important;
+                    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.55), 0 0 20px rgba(0, 210, 255, 0.75), inset 0 1px 1px rgba(0, 210, 255, 0.4) !important;
+                    transform: translateY(-1px) scale(1.06) !important;
+                    text-shadow: 0 0 10px rgba(0, 210, 255, 0.6) !important;
+                    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+                }
+                .subnav-app-bar.subnav-theme-profile .esm-pro-btn.active i {
+                    color: #00d2ff !important;
+                    transform: scale(1.15) !important;
+                    filter: drop-shadow(0 0 10px rgba(0, 210, 255, 0.9)) !important;
+                }
+
+                /* Badges dentro de los botones en tema Perfil */
+                .subnav-app-bar.subnav-theme-profile .esm-pro-btn.active .subnav-micro-badge {
+                    background: #00d2ff !important;
+                    color: #070d18 !important;
+                    border: 1px solid rgba(0, 210, 255, 0.8) !important;
+                    font-weight: 950 !important;
+                    box-shadow: 0 0 10px rgba(0, 210, 255, 0.8) !important;
+                }
+                .subnav-app-bar.subnav-theme-profile .esm-pro-btn.inactive .subnav-micro-badge {
+                    background: rgba(255, 255, 255, 0.18) !important;
+                    color: #ffffff !important;
+                    border: 1px solid rgba(255, 255, 255, 0.42) !important;
+                    font-weight: 950 !important;
+                    box-shadow: 0 0 8px rgba(255, 255, 255, 0.2) !important;
+                }
+
+                /* Botón de acceso directo PUNTOS RANKING en el submenú de Perfil */
+                .subnav-app-bar.subnav-theme-profile .esm-pro-btn.subnav-btn-ranking-points {
+                    background: #070d18 !important;
+                    border: 1.5px solid rgba(0, 210, 255, 0.5) !important;
+                    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3) !important;
+                }
+                .subnav-app-bar.subnav-theme-profile .esm-pro-btn.subnav-btn-ranking-points i,
+                .subnav-app-bar.subnav-theme-profile .esm-pro-btn.subnav-btn-ranking-points span {
+                    color: #00d2ff !important;
+                }
+                .subnav-app-bar.subnav-theme-profile .esm-pro-btn.subnav-btn-ranking-points:hover {
+                    background: #000000 !important;
+                    transform: translateY(-2px) scale(1.03) !important;
+                    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.42), 0 0 12px rgba(0, 210, 255, 0.35) !important;
+                }
+
+                /* Pestaña Entrenos en la barra comunitaria cuando está activa */
+                .community-submenu-pro-bar button[data-tab-id="entrenos"].active {
+                    background: linear-gradient(135deg, #ff007f 0%, #d9006c 100%) !important;
+                    color: #ffffff !important;
+                    border: 1.5px solid #ff4d9e !important;
+                    box-shadow: 0 0 18px rgba(255, 0, 127, 0.6), 0 4px 12px rgba(0, 0, 0, 0.35) !important;
+                }
+                .community-submenu-pro-bar button[data-tab-id="entrenos"].active i {
+                    color: #ffffff !important;
+                }
+
+                /* ==========================================================================
+                   SUBMENÚ COMUNIDAD PRO (Sunset Cyber Mesh de Alta Definición)
+                   ========================================================================== */
+                .subnav-app-bar.subnav-theme-community {
+                    background: linear-gradient(135deg, #ff3d00 0%, #ff5e00 28%, #ff7700 62%, #ea580c 100%) !important;
+                    border-top: 1.5px solid rgba(255, 255, 255, 0.42) !important;
+                    border-bottom: 2.5px solid rgba(15, 23, 42, 0.45) !important;
+                    border-image: none !important;
+                    box-shadow: 0 8px 25px rgba(255, 94, 0, 0.48), 0 3px 10px rgba(0, 0, 0, 0.3) !important;
+                    position: relative !important;
+                }
+
+                .subnav-app-bar.subnav-theme-community::before {
+                    background: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.12) 45%, transparent 75%) !important;
+                    opacity: 0.85 !important;
+                }
+
+                /* Flechas de navegación en tema Comunidad - Obsidian Glass Pro con Chevron Blanco */
+                .subnav-app-bar.subnav-theme-community .subnav-nav-arrow {
+                    background: linear-gradient(145deg, rgba(15, 23, 42, 0.94) 0%, rgba(5, 9, 18, 0.98) 100%) !important;
+                    border: 1.5px solid rgba(255, 255, 255, 0.32) !important;
+                    color: #ffffff !important;
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+                    backdrop-filter: blur(10px) !important;
+                    -webkit-backdrop-filter: blur(10px) !important;
+                    transition: all 0.24s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+                }
+                .subnav-app-bar.subnav-theme-community .subnav-nav-arrow:hover {
+                    background: #ffffff !important;
+                    border-color: #ffffff !important;
+                    color: #ea580c !important;
+                    box-shadow: 0 0 20px rgba(255, 255, 255, 0.95), 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+                    transform: scale(1.14) !important;
+                }
+                .subnav-app-bar.subnav-theme-community .subnav-nav-arrow:active {
+                    transform: scale(0.92) !important;
+                }
+
+                /* Botón Inactivo en tema Comunidad - Pure Obsidian Cyber Glass con máximo contraste */
+                .subnav-app-bar.subnav-theme-community .esm-pro-btn.inactive {
+                    background: linear-gradient(145deg, rgba(15, 23, 42, 0.92) 0%, rgba(8, 14, 26, 0.96) 100%) !important;
+                    color: #ffffff !important;
+                    border: 1.5px solid rgba(255, 255, 255, 0.24) !important;
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.38), inset 0 1px 1px rgba(255, 255, 255, 0.22), inset 0 -1px 1px rgba(0, 0, 0, 0.4) !important;
+                    backdrop-filter: blur(14px) !important;
+                    -webkit-backdrop-filter: blur(14px) !important;
+                    font-weight: 850 !important;
+                    letter-spacing: 0.35px !important;
+                    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6) !important;
+                    transition: all 0.26s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+                }
+
+                /* Iluminación cromática temática en los iconos de Comunidad */
+                .subnav-app-bar.subnav-theme-community .esm-pro-btn.inactive i {
+                    transition: transform 0.22s ease, color 0.22s ease, filter 0.22s ease;
+                }
+                .subnav-app-bar.subnav-theme-community button[data-tab-id="home"].inactive i {
+                    color: #fed7aa !important;
+                    filter: drop-shadow(0 0 6px rgba(253, 186, 116, 0.6));
+                }
+                .subnav-app-bar.subnav-theme-community button[data-tab-id="chat"].inactive i {
+                    color: #38bdf8 !important;
+                    filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.7));
+                }
+                .subnav-app-bar.subnav-theme-community button[data-tab-id="entrenos"].inactive i {
+                    color: #fb7185 !important;
+                    filter: drop-shadow(0 0 6px rgba(251, 113, 133, 0.7));
+                }
+                .subnav-app-bar.subnav-theme-community button[data-tab-id="teams"].inactive i {
+                    color: #60a5fa !important;
+                    filter: drop-shadow(0 0 6px rgba(96, 165, 250, 0.7));
+                }
+                .subnav-app-bar.subnav-theme-community button[data-tab-id="my_team"].inactive i {
+                    color: #CCFF00 !important;
+                    filter: drop-shadow(0 0 7px rgba(204, 255, 0, 0.75));
+                }
+                .subnav-app-bar.subnav-theme-community button[data-tab-id="inscriptions"].inactive i {
+                    color: #34d399 !important;
+                    filter: drop-shadow(0 0 6px rgba(52, 211, 153, 0.7));
+                }
+                .subnav-app-bar.subnav-theme-community button[data-tab-id="agenda"].inactive i {
+                    color: #fbbf24 !important;
+                    filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.7));
+                }
+                .subnav-app-bar.subnav-theme-community button[data-tab-id="records"].inactive i {
+                    color: #f59e0b !important;
+                    filter: drop-shadow(0 0 7px rgba(245, 158, 11, 0.75));
+                }
+
+                /* Hover & Touch Interactivo WOW en Comunidad */
+                .subnav-app-bar.subnav-theme-community .esm-pro-btn.inactive:hover {
+                    background: linear-gradient(145deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 1) 100%) !important;
+                    color: #ffffff !important;
+                    border-color: rgba(255, 255, 255, 0.7) !important;
+                    transform: translateY(-2.5px) scale(1.05) !important;
+                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 16px rgba(255, 255, 255, 0.3) !important;
+                }
+                .subnav-app-bar.subnav-theme-community .esm-pro-btn.inactive:hover i {
+                    transform: scale(1.18);
+                }
+                .subnav-app-bar.subnav-theme-community .esm-pro-btn.inactive:active {
+                    transform: scale(0.96) !important;
+                }
+
+                /* Botón Activo en tema Comunidad - Diamond Neon White con Máximo Impacto WOW */
+                .subnav-app-bar.subnav-theme-community .esm-pro-btn.active {
+                    background: linear-gradient(145deg, #ffffff 0%, #fff7ed 60%, #ffedd5 100%) !important;
+                    color: #c2410c !important;
+                    font-weight: 950 !important;
+                    border: 2px solid #ffffff !important;
+                    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.4), 0 0 24px rgba(255, 255, 255, 0.9), inset 0 2px 2px #ffffff !important;
+                    transform: translateY(-1px) scale(1.06) !important;
+                    text-shadow: none !important;
+                    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+                }
+                .subnav-app-bar.subnav-theme-community .esm-pro-btn.active i {
+                    color: #ea580c !important;
+                    transform: scale(1.15) !important;
+                    filter: drop-shadow(0 0 8px rgba(234, 88, 12, 0.6)) !important;
+                }
+
+                /* Badges dentro de los botones en tema Comunidad */
+                .subnav-app-bar.subnav-theme-community .esm-pro-btn.active .subnav-micro-badge {
+                    background: #ea580c !important;
+                    color: #ffffff !important;
+                    border: 1px solid rgba(234, 88, 12, 0.4) !important;
+                    font-weight: 950 !important;
+                    box-shadow: 0 2px 8px rgba(234, 88, 12, 0.45) !important;
+                }
+                .subnav-app-bar.subnav-theme-community .esm-pro-btn.inactive .subnav-micro-badge {
+                    background: rgba(255, 255, 255, 0.18) !important;
+                    color: #ffffff !important;
+                    border: 1px solid rgba(255, 255, 255, 0.42) !important;
+                    font-weight: 950 !important;
+                    box-shadow: 0 0 8px rgba(255, 255, 255, 0.2) !important;
+                }
+                .subnav-app-bar.subnav-theme-community .esm-pro-btn .subnav-micro-badge.badge-neon {
+                    background: linear-gradient(135deg, rgba(236, 72, 153, 0.35) 0%, rgba(219, 39, 119, 0.45) 100%) !important;
+                    color: #fbcfe8 !important;
+                    border-color: rgba(244, 114, 182, 0.6) !important;
+                    box-shadow: 0 0 10px rgba(236, 72, 153, 0.45) !important;
+                }
+                .subnav-app-bar.subnav-theme-community .esm-pro-btn .subnav-micro-badge.badge-live {
+                    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%) !important;
+                    color: #ffffff !important;
+                    border: 1px solid rgba(255, 255, 255, 0.35) !important;
+                    box-shadow: 0 0 12px rgba(239, 68, 68, 0.75) !important;
+                    font-weight: 950 !important;
+                }
+                .subnav-app-bar.subnav-theme-community .esm-pro-btn .subnav-micro-badge.badge-success {
+                    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+                    color: #ffffff !important;
+                    border: 1px solid rgba(255, 255, 255, 0.35) !important;
+                    box-shadow: 0 0 12px rgba(16, 185, 129, 0.75) !important;
+                    font-weight: 950 !important;
+                }
+                .subnav-app-bar.subnav-theme-community .esm-pro-btn .subnav-micro-badge.badge-clinics {
+                    background: linear-gradient(135deg, #ff007f 0%, #d9006c 100%) !important;
+                    color: #ffffff !important;
+                    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+                    box-shadow: 0 0 12px rgba(255, 0, 127, 0.7) !important;
+                    font-weight: 950 !important;
+                }
+                .subnav-app-bar.subnav-theme-community .esm-pro-btn .subnav-micro-badge.badge-top {
+                    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+                    color: #ffffff !important;
+                    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+                    box-shadow: 0 0 12px rgba(245, 158, 11, 0.7) !important;
+                    font-weight: 950 !important;
+                }
+
+                /* ==========================================================================
+                   SUBMENÚ TIENDA PRO (Teal / Verde Azulado de Alta Definición Luxury)
+                   MISMO TAMAÑO, LARGO, ANCHO Y ESTRUCTURA CON FLECHAS Y PÍLDORAS
+                   ========================================================================== */
+                .subnav-app-bar.subnav-theme-tienda {
+                    background: linear-gradient(135deg, #0d9488 0%, #0f766e 28%, #115e59 62%, #042f2e 100%) !important;
+                    border-top: 1.5px solid rgba(255, 255, 255, 0.45) !important;
+                    border-bottom: 2.5px solid rgba(4, 47, 46, 0.75) !important;
+                    border-image: none !important;
+                    box-shadow: 0 8px 25px rgba(13, 148, 136, 0.45), 0 3px 10px rgba(0, 0, 0, 0.3) !important;
+                    position: relative !important;
+                }
+
+                .subnav-app-bar.subnav-theme-tienda::before {
+                    background: radial-gradient(ellipse at 50% 0%, rgba(94, 234, 212, 0.45) 0%, rgba(20, 184, 166, 0.15) 45%, transparent 75%) !important;
+                    opacity: 0.85 !important;
+                }
+
+                /* Flechas de navegación en tema Tienda */
+                .subnav-app-bar.subnav-theme-tienda .subnav-nav-arrow {
+                    background: linear-gradient(145deg, #042f2e 0%, #0f766e 100%) !important;
+                    border: 1.5px solid #2dd4bf !important;
+                    color: #2dd4bf !important;
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(45, 212, 191, 0.35) !important;
+                    backdrop-filter: blur(10px) !important;
+                    -webkit-backdrop-filter: blur(10px) !important;
+                    transition: all 0.24s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+                }
+                .subnav-app-bar.subnav-theme-tienda .subnav-nav-arrow:hover {
+                    background: #042f2e !important;
+                    border-color: #5eead4 !important;
+                    color: #ffffff !important;
+                    box-shadow: 0 0 20px rgba(45, 212, 191, 0.95), 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+                    transform: scale(1.14) !important;
+                }
+                .subnav-app-bar.subnav-theme-tienda .subnav-nav-arrow:active {
+                    transform: scale(0.92) !important;
+                }
+
+                /* Botón Inactivo en tema Tienda - Dark Teal Cyber Glass */
+                .subnav-app-bar.subnav-theme-tienda .esm-pro-btn.inactive {
+                    background: linear-gradient(145deg, rgba(4, 47, 46, 0.92) 0%, rgba(15, 118, 110, 0.95) 100%) !important;
+                    color: #ffffff !important;
+                    border: 1.5px solid rgba(45, 212, 191, 0.35) !important;
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.38), inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
+                    backdrop-filter: blur(14px) !important;
+                    -webkit-backdrop-filter: blur(14px) !important;
+                    font-weight: 850 !important;
+                    letter-spacing: 0.35px !important;
+                    text-shadow: 0 1px 2px #042f2e !important;
+                    transition: all 0.26s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+                }
+
+                /* Iluminación cromática temática en los iconos de Tienda */
+                .subnav-app-bar.subnav-theme-tienda .esm-pro-btn.inactive i {
+                    color: #5eead4 !important;
+                    transition: transform 0.22s ease, color 0.22s ease, filter 0.22s ease;
+                    filter: drop-shadow(0 0 6px rgba(94, 234, 212, 0.6));
+                }
+                .subnav-app-bar.subnav-theme-tienda button[data-tab-id="ofertas"].inactive i {
+                    color: #facc15 !important;
+                    filter: drop-shadow(0 0 7px rgba(250, 204, 21, 0.8));
+                }
+                .subnav-app-bar.subnav-theme-tienda button[data-tab-id="cesta"].inactive i {
+                    color: #a7f3d0 !important;
+                    filter: drop-shadow(0 0 7px rgba(167, 243, 208, 0.8));
+                }
+
+                /* Hover & Touch Interactivo WOW en Tienda */
+                .subnav-app-bar.subnav-theme-tienda .esm-pro-btn.inactive:hover {
+                    background: linear-gradient(145deg, rgba(13, 148, 136, 0.98) 0%, rgba(15, 118, 110, 1) 100%) !important;
+                    color: #ffffff !important;
+                    border-color: #5eead4 !important;
+                    transform: translateY(-2.5px) scale(1.05) !important;
+                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 16px rgba(45, 212, 191, 0.5) !important;
+                }
+                .subnav-app-bar.subnav-theme-tienda .esm-pro-btn.inactive:hover i {
+                    transform: scale(1.18);
+                    color: #ffffff !important;
+                }
+                .subnav-app-bar.subnav-theme-tienda .esm-pro-btn.inactive:active {
+                    transform: scale(0.96) !important;
+                }
+
+                /* Botón Activo en tema Tienda - Aguamarina Neón Luminoso */
+                .subnav-app-bar.subnav-theme-tienda .esm-pro-btn.active {
+                    background: linear-gradient(135deg, #2dd4bf 0%, #14b8a6 100%) !important;
+                    color: #042f2e !important;
+                    font-weight: 950 !important;
+                    border: 2px solid #ffffff !important;
+                    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.4), 0 0 22px rgba(45, 212, 191, 0.9), inset 0 2px 2px #ffffff !important;
+                    transform: translateY(-1px) scale(1.06) !important;
+                    text-shadow: none !important;
+                    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+                }
+                .subnav-app-bar.subnav-theme-tienda .esm-pro-btn.active i {
+                    color: #042f2e !important;
+                    transform: scale(1.15) !important;
+                    filter: drop-shadow(0 0 6px rgba(4, 47, 46, 0.35)) !important;
+                }
+
+                /* Badges dentro de los botones en tema Tienda */
+                .subnav-app-bar.subnav-theme-tienda .esm-pro-btn.active .subnav-micro-badge {
+                    background: #042f2e !important;
+                    color: #2dd4bf !important;
+                    border: 1px solid rgba(4, 47, 46, 0.5) !important;
+                    font-weight: 950 !important;
+                    box-shadow: 0 2px 8px rgba(4, 47, 46, 0.35) !important;
+                }
+                .subnav-app-bar.subnav-theme-tienda .esm-pro-btn.inactive .subnav-micro-badge {
+                    background: rgba(45, 212, 191, 0.22) !important;
+                    color: #ccfbf1 !important;
+                    border: 1px solid rgba(45, 212, 191, 0.45) !important;
+                    font-weight: 950 !important;
+                    box-shadow: 0 0 8px rgba(45, 212, 191, 0.25) !important;
+                }
+                .subnav-app-bar.subnav-theme-tienda .esm-pro-btn .subnav-micro-badge.badge-teal-fire {
+                    background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%) !important;
+                    color: #ffffff !important;
+                    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+                    box-shadow: 0 0 10px rgba(245, 158, 11, 0.6) !important;
+                    font-weight: 950 !important;
+                }
+                .subnav-app-bar.subnav-theme-tienda .esm-pro-btn .subnav-micro-badge.badge-teal-cart {
+                    background: linear-gradient(135deg, #CCFF00 0%, #10b981 100%) !important;
+                    color: #042f2e !important;
+                    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+                    box-shadow: 0 0 10px rgba(204, 255, 0, 0.6) !important;
+                    font-weight: 950 !important;
+                }
+
+                /* ==========================================================================
+                   BOTONES Y SECCIÓN COMUNIDAD EN EL MENÚ LATERAL (Side Drawer VIP Hub)
+                   ========================================================================== */
+                .drawer-community-section {
+                    position: relative;
+                }
+                .drawer-community-box {
+                    position: relative;
+                    border: 1.5px solid rgba(255, 94, 0, 0.35) !important;
+                    background: linear-gradient(150deg, rgba(255, 94, 0, 0.09) 0%, rgba(15, 23, 42, 0.85) 60%, rgba(10, 16, 30, 0.95) 100%) !important;
+                    box-shadow: 0 8px 25px rgba(255, 94, 0, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+                    border-radius: 18px !important;
+                    overflow: hidden !important;
+                }
+                .drawer-community-box .drawer-nav-row {
+                    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+                    padding: 3px 12px !important;
+                    min-height: 48px !important;
+                }
+                .drawer-community-box .drawer-nav-row:last-child {
+                    border-bottom: none !important;
+                }
+                .drawer-community-box .drawer-nav-row:hover {
+                    background: linear-gradient(90deg, rgba(255, 94, 0, 0.18) 0%, rgba(255, 94, 0, 0.05) 100%) !important;
+                    transform: translateX(4px) !important;
+                }
+                .drawer-community-box .drawer-nav-row:hover .drawer-row-icon {
+                    transform: scale(1.12) rotate(3deg) !important;
+                    box-shadow: 0 0 14px currentColor !important;
+                }
+                .drawer-community-box .drawer-nav-row:hover .drawer-row-chevron {
+                    color: #ff8c00 !important;
+                    transform: translateX(3px) !important;
+                }
+                .drawer-community-box .drawer-row-icon {
+                    width: 32px !important;
+                    height: 32px !important;
+                    border-radius: 10px !important;
+                    font-size: 0.92rem !important;
+                    transition: all 0.2s ease !important;
+                    flex-shrink: 0 !important;
+                }
+                .drawer-community-box .drawer-row-title {
+                    font-family: 'Outfit', sans-serif !important;
+                    font-weight: 650 !important;
+                    color: #ffffff !important;
+                    letter-spacing: -0.1px !important;
+                    font-size: 0.88rem !important;
+                    line-height: 1.25 !important;
                 }
             </style>
             <div id="subnav-app-bar" class="subnav-app-bar"></div>
@@ -1128,25 +2246,96 @@
                 });
 
                 window.SubnavManager = {
+                    _bannerTimer: null,
+                    _resumeTimer: null,
+                    _isUserInteracting: false,
+                    _bannerCurrentIndex: 0,
+
                     scroll: function(direction) {
-                        const bar = document.querySelector('#subnav-app-bar .events-submenu-pro-bar, #subnav-app-bar .community-submenu-pro-bar');
+                        if (window.PlayerView?.haptic) window.PlayerView.haptic(12);
+                        this.pauseBanner(5500);
+                        const bar = document.querySelector('#subnav-app-bar .events-submenu-pro-bar, #subnav-app-bar .community-submenu-pro-bar, #subnav-app-bar .tienda-submenu-pro-bar');
                         if (bar) {
-                            const offset = direction === 'left' ? -220 : 220;
+                            const offset = direction === 'left' ? -240 : 240;
                             bar.scrollBy({ left: offset, behavior: 'smooth' });
-                            setTimeout(() => this.updateArrows(), 280);
+                            setTimeout(() => this.updateArrows(), 300);
                         }
                     },
 
+                    pauseBanner: function(ms = 5000) {
+                        this._isUserInteracting = true;
+                        if (this._resumeTimer) clearTimeout(this._resumeTimer);
+                        this._resumeTimer = setTimeout(() => {
+                            this._isUserInteracting = false;
+                        }, ms);
+                    },
+
+                    startBannerAutoScroll: function() {
+                        this.stopBannerAutoScroll();
+                        const bar = document.querySelector('#subnav-app-bar .community-submenu-pro-bar');
+                        if (!bar) return;
+
+                        const doStep = () => {
+                            if (this._isUserInteracting) return;
+                            const container = document.querySelector('#subnav-app-bar .community-submenu-pro-bar');
+                            if (!container) return;
+
+                            const btns = Array.from(container.querySelectorAll('button[data-tab-id]'));
+                            if (btns.length <= 1) return;
+
+                            this._bannerCurrentIndex = ((this._bannerCurrentIndex || 0) + 1) % btns.length;
+                            const targetBtn = btns[this._bannerCurrentIndex];
+                            if (targetBtn) {
+                                try {
+                                    targetBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                                } catch (e) {
+                                    container.scrollLeft = targetBtn.offsetLeft - 30;
+                                }
+                            }
+                            this.updateArrows();
+                        };
+
+                        // Primer desplazamiento a los 1.8s y luego cada 3.2s para una experiencia de banner dinámica pero elegante
+                        setTimeout(doStep, 1800);
+                        this._bannerTimer = setInterval(doStep, 3200);
+
+                        // Pausar si el usuario interactúa manualmente
+                        if (!bar._bannerListenersAttached) {
+                            bar._bannerListenersAttached = true;
+                            const pauseHandler = () => {
+                                this.pauseBanner(5000);
+                            };
+
+                            bar.addEventListener('touchstart', pauseHandler, { passive: true });
+                            bar.addEventListener('mousedown', pauseHandler, { passive: true });
+                            bar.addEventListener('wheel', pauseHandler, { passive: true });
+                            bar.addEventListener('pointerdown', pauseHandler, { passive: true });
+                            bar.addEventListener('mouseenter', () => { this.pauseBanner(4000); });
+                        }
+                    },
+
+                    stopBannerAutoScroll: function() {
+                        if (this._bannerTimer) {
+                            clearInterval(this._bannerTimer);
+                            this._bannerTimer = null;
+                        }
+                        if (this._resumeTimer) {
+                            clearTimeout(this._resumeTimer);
+                            this._resumeTimer = null;
+                        }
+                        this._isUserInteracting = false;
+                    },
+
                     updateArrows: function() {
-                        const bar = document.querySelector('#subnav-app-bar .events-submenu-pro-bar, #subnav-app-bar .community-submenu-pro-bar');
+                        const bar = document.querySelector('#subnav-app-bar .events-submenu-pro-bar, #subnav-app-bar .community-submenu-pro-bar, #subnav-app-bar .tienda-submenu-pro-bar');
                         const leftBtn = document.getElementById('subnav-arrow-left');
                         const rightBtn = document.getElementById('subnav-arrow-right');
                         if (!bar || !leftBtn || !rightBtn) return;
                         const maxScroll = bar.scrollWidth - bar.clientWidth;
                         if (maxScroll <= 4) {
-                            leftBtn.style.opacity = '0.25';
+                            leftBtn.style.opacity = '0.2';
                             leftBtn.style.pointerEvents = 'none';
-                            rightBtn.style.opacity = '0.25';
+                            rightBtn.style.opacity = '0.2';
                             rightBtn.style.pointerEvents = 'none';
                             return;
                         }
@@ -1159,7 +2348,7 @@
                     },
 
                     initInteractions: function() {
-                        const bar = document.querySelector('#subnav-app-bar .events-submenu-pro-bar, #subnav-app-bar .community-submenu-pro-bar');
+                        const bar = document.querySelector('#subnav-app-bar .events-submenu-pro-bar, #subnav-app-bar .community-submenu-pro-bar, #subnav-app-bar .tienda-submenu-pro-bar');
                         if (!bar || bar._hasInteractions) return;
                         bar._hasInteractions = true;
 
@@ -1167,12 +2356,12 @@
                         bar.addEventListener('wheel', (e) => {
                             if (e.deltaY !== 0) {
                                 e.preventDefault();
-                                bar.scrollLeft += e.deltaY * 1.1;
+                                bar.scrollLeft += e.deltaY * 1.15;
                                 this.updateArrows();
                             }
                         }, { passive: false });
 
-                        // Drag con ratón
+                        // Drag con ratón fluido con inercia
                         let isDown = false;
                         let startX = 0;
                         let scrollLeft = 0;
@@ -1190,19 +2379,25 @@
                             if (!isDown) return;
                             const x = e.pageX - bar.offsetLeft;
                             const diff = x - startX;
-                            bar.scrollLeft = scrollLeft - (diff * 1.4);
+                            bar.scrollLeft = scrollLeft - (diff * 1.35);
                             this.updateArrows();
                         });
 
                         bar.addEventListener('scroll', () => this.updateArrows(), { passive: true });
-                        setTimeout(() => this.updateArrows(), 100);
+                        setTimeout(() => this.updateArrows(), 120);
                     },
 
                     renderAmericanas: function(activeTab = 'events') {
+                        this.stopBannerAutoScroll();
                         const bar = document.getElementById('subnav-app-bar');
                         if (!bar) return;
+                        bar.classList.remove('subnav-theme-community');
+                        bar.classList.remove('subnav-theme-entrenos');
+                        bar.classList.remove('subnav-theme-ranking');
+                        bar.classList.remove('subnav-theme-profile');
+                        bar.classList.add('subnav-theme-americanas');
                         const tabs = [
-                            { id: 'events', label: 'AMERICANAS', icon: 'fa-trophy' },
+                            { id: 'events', label: 'AMERICANAS', icon: 'fa-trophy', badge: 'LIVE' },
                             { id: 'finished_americanas', label: 'FINALIZADAS', icon: 'fa-history' },
                             { id: 'agenda_americanas', label: 'AGENDA', icon: 'fa-calendar-check' },
                             { id: 'help_americanas', label: 'INFO', icon: 'fa-info-circle' },
@@ -1219,27 +2414,31 @@
                                     ${tabs.map(tab => {
                                         const isActive = activeTab === tab.id;
                                         return `
-                                            <button class="esm-pro-btn ${isActive ? 'active' : 'inactive'}"
+                                            <button data-tab-id="${tab.id}" data-tab-active="${isActive ? 'true' : 'false'}"
+                                                class="esm-pro-btn ${isActive ? 'active' : 'inactive'}"
                                                 onclick="(function(btn){
-                                                    if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(12);
+                                                    if (window.PlayerView?.haptic) window.PlayerView.haptic(15);
+                                                    else if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(12);
                                                     if (window.EventsController) window.EventsController.setTab('${tab.id}');
                                                     try { btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
                                                 })(this)"
                                                 aria-label="${tab.label}">
-                                                <i class="fas ${tab.icon}" style="font-size: 0.82rem; color: ${isActive ? '#000000' : '#94a3b8'};"></i>
+                                                <i class="fas ${tab.icon}" style="font-size: 0.82rem;"></i>
                                                 <span style="text-transform: uppercase;">${tab.label}</span>
+                                                ${tab.badge && isActive ? `<span class="subnav-micro-badge badge-dark">${tab.badge}</span>` : ''}
+                                                ${tab.badge && !isActive ? `<span class="subnav-micro-badge badge-neon">${tab.badge}</span>` : ''}
                                             </button>
                                         `;
                                     }).join('')}
-                                    <button class="esm-pro-btn inactive"
-                                        style="border: 1.5px solid rgba(204, 255, 0, 0.45); color: #CCFF00; background: rgba(204, 255, 0, 0.08);"
+                                    <button class="esm-pro-btn subnav-btn-ranking-points inactive"
                                         onclick="(function(btn){
-                                            if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(12);
+                                            if (window.PlayerView?.haptic) window.PlayerView.haptic(15);
+                                            else if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(12);
                                             if (window.showPointsPolicyModal) window.showPointsPolicyModal();
                                             try { btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
                                         })(this)"
                                         aria-label="Sistema Oficial de Puntos">
-                                        <i class="fas fa-balance-scale" style="font-size: 0.82rem; color: #CCFF00;"></i>
+                                        <i class="fas fa-balance-scale" style="font-size: 0.82rem;"></i>
                                         <span style="text-transform: uppercase; font-weight: 950;">PUNTOS RANKING</span>
                                     </button>
                                 </div>
@@ -1250,20 +2449,264 @@
                         `;
                         syncHeaderHeight();
                         this.initInteractions();
+
+                        // Centrar la pestaña activa inicialmente
+                        const activeBtn = bar.querySelector('.events-submenu-pro-bar .esm-pro-btn.active');
+                        if (activeBtn) {
+                            try { activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
+                        }
+                    },
+
+                    renderEntrenos: function(activeTab = 'entrenos') {
+                        this.stopBannerAutoScroll();
+                        const bar = document.getElementById('subnav-app-bar');
+                        if (!bar) return;
+                        bar.classList.remove('subnav-theme-community');
+                        bar.classList.remove('subnav-theme-americanas');
+                        bar.classList.remove('subnav-theme-ranking');
+                        bar.classList.remove('subnav-theme-profile');
+                        bar.classList.add('subnav-theme-entrenos');
+                        const tabs = [
+                            { id: 'entrenos', label: 'ENTRENOS', icon: 'fa-table-tennis' },
+                            { id: 'finished', label: 'FINALIZADAS', icon: 'fa-history' },
+                            { id: 'agenda', label: 'AGENDA', icon: 'fa-calendar-check' },
+                            { id: 'help', label: 'INFO', icon: 'fa-info-circle' },
+                            { id: 'meteo', label: 'CLIMA & RADAR', icon: 'fa-cloud-sun' }
+                        ];
+
+                        bar.style.display = 'block';
+                        bar.innerHTML = `
+                            <div class="subnav-outer-flex">
+                                <button id="subnav-arrow-left" class="subnav-nav-arrow" onclick="window.SubnavManager.scroll('left')" title="Desplazar a la izquierda" aria-label="Desplazar izquierda">
+                                    <i class="fas fa-chevron-left" style="font-size: 0.75rem;"></i>
+                                </button>
+                                <div class="events-submenu-pro-bar">
+                                    ${tabs.map(tab => {
+                                        const isActive = activeTab === tab.id;
+                                        return `
+                                            <button data-tab-id="${tab.id}" data-tab-active="${isActive ? 'true' : 'false'}"
+                                                class="esm-pro-btn ${isActive ? 'active' : 'inactive'}"
+                                                onclick="(function(btn){
+                                                    if (window.PlayerView?.haptic) window.PlayerView.haptic(15);
+                                                    else if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(12);
+                                                    if (window.EventsController) window.EventsController.setTab('${tab.id}');
+                                                    try { btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
+                                                })(this)"
+                                                aria-label="${tab.label}">
+                                                <i class="fas ${tab.icon}" style="font-size: 0.82rem;"></i>
+                                                <span style="text-transform: uppercase;">${tab.label}</span>
+                                            </button>
+                                        `;
+                                    }).join('')}
+                                    <button class="esm-pro-btn subnav-btn-ranking-points inactive"
+                                        onclick="(function(btn){
+                                            if (window.PlayerView?.haptic) window.PlayerView.haptic(15);
+                                            else if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(12);
+                                            if (window.showPointsPolicyModal) window.showPointsPolicyModal();
+                                            try { btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
+                                        })(this)"
+                                        aria-label="Sistema Oficial de Puntos">
+                                        <i class="fas fa-balance-scale" style="font-size: 0.82rem;"></i>
+                                        <span style="text-transform: uppercase; font-weight: 950;">PUNTOS RANKING</span>
+                                    </button>
+                                </div>
+                                <button id="subnav-arrow-right" class="subnav-nav-arrow" onclick="window.SubnavManager.scroll('right')" title="Desplazar a la derecha" aria-label="Desplazar derecha">
+                                    <i class="fas fa-chevron-right" style="font-size: 0.75rem;"></i>
+                                </button>
+                            </div>
+                        `;
+                        syncHeaderHeight();
+                        this.initInteractions();
+
+                        // Centrar la pestaña activa inicialmente
+                        const activeBtn = bar.querySelector('.events-submenu-pro-bar .esm-pro-btn.active');
+                        if (activeBtn) {
+                            try { activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
+                        }
+                    },
+
+                    renderRanking: function(activeTab = 'americanas') {
+                        this.stopBannerAutoScroll();
+                        const bar = document.getElementById('subnav-app-bar');
+                        if (!bar) return;
+                        bar.classList.remove('subnav-theme-community');
+                        bar.classList.remove('subnav-theme-americanas');
+                        bar.classList.remove('subnav-theme-entrenos');
+                        bar.classList.remove('subnav-theme-profile');
+                        bar.classList.add('subnav-theme-ranking');
+
+                        const tabs = [
+                            { id: 'americanas', label: 'AMERICANAS', icon: 'fa-trophy', badge: 'CIRCUITO' },
+                            { id: 'entrenos', label: 'ENTRENOS', icon: 'fa-table-tennis', badge: 'CLINICS' },
+                            { id: 'top10', label: 'TOP 10 ÉLITE', icon: 'fa-crown', badge: 'PODIO' },
+                            { id: 'my_rank', label: 'MI POSICIÓN', icon: 'fa-id-card', badge: 'FUT' },
+                            { id: 'faceoff', label: '1 VS 1 DUELOS', icon: 'fa-bolt', badge: 'ESPN' },
+                            { id: 'radar', label: 'RADAR CLUB', icon: 'fa-chart-pie', badge: 'MÉTRICAS' },
+                            { id: 'records', label: 'RÉCORDS', icon: 'fa-medal', badge: 'TOP' }
+                        ];
+
+                        bar.style.display = 'block';
+                        bar.innerHTML = `
+                            <div class="subnav-outer-flex">
+                                <button id="subnav-arrow-left" class="subnav-nav-arrow" onclick="window.SubnavManager.scroll('left')" title="Desplazar a la izquierda" aria-label="Desplazar izquierda">
+                                    <i class="fas fa-chevron-left" style="font-size: 0.75rem;"></i>
+                                </button>
+                                <div class="events-submenu-pro-bar">
+                                    ${tabs.map(tab => {
+                                        const isActive = activeTab === tab.id;
+                                        return `
+                                            <button class="esm-pro-btn ${isActive ? 'active' : 'inactive'}"
+                                                onclick="(function(btn){
+                                                    if (window.PlayerView?.haptic) window.PlayerView.haptic(15);
+                                                    else if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(12);
+                                                    if (window.RankingView && typeof window.RankingView.handleSubnavTab === 'function') {
+                                                        window.RankingView.handleSubnavTab('${tab.id}');
+                                                    }
+                                                    try { btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
+                                                })(this)"
+                                                aria-label="${tab.label}">
+                                                <i class="fas ${tab.icon}" style="font-size: 0.82rem;"></i>
+                                                <span style="text-transform: uppercase;">${tab.label}</span>
+                                                ${tab.badge && isActive ? `<span class="subnav-micro-badge badge-dark">${tab.badge}</span>` : ''}
+                                                ${tab.badge && !isActive ? `<span class="subnav-micro-badge badge-neon" style="background: rgba(255,215,0,0.18); color: #ffd700; border-color: rgba(255,215,0,0.4);">${tab.badge}</span>` : ''}
+                                            </button>
+                                        `;
+                                    }).join('')}
+                                    <button class="esm-pro-btn subnav-btn-ranking-points inactive"
+                                        onclick="(function(btn){
+                                            if (window.PlayerView?.haptic) window.PlayerView.haptic(15);
+                                            else if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(12);
+                                            if (window.showPointsPolicyModal) window.showPointsPolicyModal();
+                                            try { btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
+                                        })(this)"
+                                        aria-label="Sistema Oficial de Puntos">
+                                        <i class="fas fa-balance-scale" style="font-size: 0.82rem;"></i>
+                                        <span style="text-transform: uppercase; font-weight: 950;">PUNTOS RANKING</span>
+                                    </button>
+                                </div>
+                                <button id="subnav-arrow-right" class="subnav-nav-arrow" onclick="window.SubnavManager.scroll('right')" title="Desplazar a la derecha" aria-label="Desplazar derecha">
+                                    <i class="fas fa-chevron-right" style="font-size: 0.75rem;"></i>
+                                </button>
+                            </div>
+                        `;
+                        syncHeaderHeight();
+                        this.initInteractions();
+
+                        // Centrar la pestaña activa inicialmente
+                        const activeBtn = bar.querySelector('.events-submenu-pro-bar .esm-pro-btn.active');
+                        if (activeBtn) {
+                            try { activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
+                        }
+                    },
+
+                    renderProfile: function(activeTab = 'mi_posicion') {
+                        this.stopBannerAutoScroll();
+                        const bar = document.getElementById('subnav-app-bar');
+                        if (!bar) return;
+                        bar.classList.remove('subnav-theme-community');
+                        bar.classList.remove('subnav-theme-americanas');
+                        bar.classList.remove('subnav-theme-entrenos');
+                        bar.classList.remove('subnav-theme-ranking');
+                        bar.classList.add('subnav-theme-profile');
+
+                        const tabs = [
+                            { id: 'mi_posicion', label: 'MI POSICIÓN', icon: 'fa-user-check', badge: 'ELO' },
+                            { id: 'ai_performance', label: 'RENDIMIENTO IA', icon: 'fa-chart-line', badge: 'STATS' },
+                            { id: 'fut_card', label: 'FICHA TÉCNICA', icon: 'fa-id-card', badge: 'FUT' },
+                            { id: 'attributes', label: 'FICHA & ATRIBUTOS', icon: 'fa-user-astronaut', badge: 'STATS' },
+                            { id: 'achievements', label: 'LOGROS & MISIONES', icon: 'fa-trophy', badge: 'TOP' }
+                        ];
+
+                        bar.style.display = 'block';
+
+                        // Actualización in-place si ya existe la barra de perfil para evitar parpadeos y pérdida de estado
+                        const existingButtons = bar.querySelectorAll('.events-submenu-pro-bar .esm-pro-btn[data-tab-id]');
+                        if (existingButtons && existingButtons.length === tabs.length) {
+                            existingButtons.forEach(btn => {
+                                const tabId = btn.getAttribute('data-tab-id');
+                                const isActive = (tabId === activeTab);
+                                btn.setAttribute('data-tab-active', isActive ? 'true' : 'false');
+                                btn.classList.toggle('active', isActive);
+                                btn.classList.toggle('inactive', !isActive);
+                                const badgeEl = btn.querySelector('.subnav-micro-badge');
+                                if (badgeEl) {
+                                    badgeEl.classList.toggle('badge-dark', isActive);
+                                }
+                            });
+                            const activeBtn = bar.querySelector(`.events-submenu-pro-bar .esm-pro-btn[data-tab-id="${activeTab}"]`);
+                            if (activeBtn) {
+                                try { activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
+                            }
+                            syncHeaderHeight();
+                            return;
+                        }
+
+                        bar.innerHTML = `
+                            <div class="subnav-outer-flex">
+                                <button id="subnav-arrow-left" class="subnav-nav-arrow" onclick="window.SubnavManager.scroll('left')" title="Desplazar a la izquierda" aria-label="Desplazar izquierda">
+                                    <i class="fas fa-chevron-left" style="font-size: 0.75rem;"></i>
+                                </button>
+                                <div class="events-submenu-pro-bar">
+                                    ${tabs.map(tab => {
+                                        const isActive = activeTab === tab.id;
+                                        return `
+                                            <button data-tab-id="${tab.id}" data-tab-active="${isActive ? 'true' : 'false'}"
+                                                class="esm-pro-btn ${isActive ? 'active' : 'inactive'}"
+                                                onclick="(function(btn){
+                                                    if (window.PlayerView?.haptic) window.PlayerView.haptic(15);
+                                                    else if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(12);
+                                                    if (window.PlayerView && typeof window.PlayerView.handleSubnavTab === 'function') {
+                                                        window.PlayerView.handleSubnavTab('${tab.id}');
+                                                    }
+                                                    try { btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
+                                                })(this)"
+                                                aria-label="${tab.label}">
+                                                <i class="fas ${tab.icon}" style="font-size: 0.82rem;"></i>
+                                                <span style="text-transform: uppercase;">${tab.label}</span>
+                                                ${tab.badge && isActive ? `<span class="subnav-micro-badge badge-dark">${tab.badge}</span>` : ''}
+                                                ${tab.badge && !isActive ? `<span class="subnav-micro-badge">${tab.badge}</span>` : ''}
+                                            </button>
+                                        `;
+                                    }).join('')}
+                                </div>
+                                <button id="subnav-arrow-right" class="subnav-nav-arrow" onclick="window.SubnavManager.scroll('right')" title="Desplazar a la derecha" aria-label="Desplazar derecha">
+                                    <i class="fas fa-chevron-right" style="font-size: 0.75rem;"></i>
+                                </button>
+                            </div>
+                        `;
+                        syncHeaderHeight();
+                        this.initInteractions();
+
+                        // Centrar la pestaña activa inicialmente
+                        const activeBtn = bar.querySelector('.events-submenu-pro-bar .esm-pro-btn.active');
+                        if (activeBtn) {
+                            try { activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
+                        }
                     },
 
                     renderCommunity: function(activeTab = 'home') {
+                        if (activeTab === 'entrenos' || activeTab === 'partidas_abiertas') {
+                            this.renderEntrenos('entrenos');
+                            return;
+                        }
+                        this.stopBannerAutoScroll();
                         const bar = document.getElementById('subnav-app-bar');
                         if (!bar) return;
+                        bar.classList.remove('subnav-theme-americanas');
+                        bar.classList.remove('subnav-theme-entrenos');
+                        bar.classList.remove('subnav-theme-ranking');
+                        bar.classList.remove('subnav-theme-profile');
+                        bar.classList.add('subnav-theme-community');
                         const isCampaignActive = window.SeasonCampaignService ? window.SeasonCampaignService.isCampaignActiveSync() : false;
                         const subtabs = [
-                            { id: 'home', label: '🏠 1. INICIO', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('comunidad');", activeBg: '#CCFF00', glow: 'rgba(204,255,0,0.45)', textColor: '#000000' },
-                            { id: 'entrenos', label: '🎾 2. ENTRENOS', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('entrenos');", activeBg: '#ff007f', glow: 'rgba(255,0,127,0.45)' },
-                            { id: 'teams', label: '👥 3. EQUIPOS', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('equipos');", activeBg: '#ff5e00', glow: 'rgba(255,94,0,0.45)' },
-                            { id: 'my_team', label: '🛡️ 4. MI EQUIPO', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('my_team');", activeBg: '#0ea5e9', glow: 'rgba(14,165,233,0.45)' },
-                            { id: 'agenda', label: '📅 5. MI AGENDA', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('agenda');", activeBg: '#CCFF00', glow: 'rgba(204,255,0,0.45)', textColor: '#000000' },
-                            { id: 'inscriptions', label: `📝 6. INSCRIPCIONES ${isCampaignActive ? '🟢' : '🔴'}`, action: "window.PlayerView?.haptic?.(15); window.Router.navigate('inscriptions');", activeBg: isCampaignActive ? '#10b981' : '#475569', glow: isCampaignActive ? 'rgba(16,185,129,0.45)' : 'rgba(71,85,105,0.4)' },
-                            { id: 'records', label: '🏆 7. RÉCORDS TEMPORADA', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('records');", activeBg: '#a855f7', glow: 'rgba(168,85,247,0.45)' }
+                            { id: 'home', icon: 'fa-home', label: '1. INICIO', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('comunidad');" },
+                            { id: 'chat', icon: 'fa-comments', label: 'CHAT CLUB', badge: 'LIVE', isLive: true, action: "window.PlayerView?.haptic?.(15); window.ChatView?.openGeneralCommunityChat();" },
+                            { id: 'entrenos', icon: 'fa-table-tennis', label: '2. ENTRENOS', badge: 'CLINICS', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('entrenos');" },
+                            { id: 'teams', icon: 'fa-users', label: '3. EQUIPOS', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('equipos');" },
+                            { id: 'my_team', icon: 'fa-shield-alt', label: '4. MI EQUIPO', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('my_team');" },
+                            { id: 'inscriptions', icon: 'fa-edit', label: '5. INSCRIPCIONES', badge: isCampaignActive ? 'ABIERTA' : 'PRONTO', isSuccessBadge: isCampaignActive, action: "window.PlayerView?.haptic?.(15); window.Router.navigate('inscriptions');" },
+                            { id: 'agenda', icon: 'fa-calendar-alt', label: '6. MI AGENDA', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('agenda');" },
+                            { id: 'records', icon: 'fa-trophy', label: '7. RÉCORDS TEMPORADA', badge: 'TOP', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('records');" }
                         ];
 
                         bar.style.display = 'block';
@@ -1275,17 +2718,23 @@
                                 <div class="community-submenu-pro-bar">
                                     ${subtabs.map(tab => {
                                         const isActive = activeTab === tab.id;
-                                        const bg = isActive ? tab.activeBg : 'rgba(255,255,255,0.05)';
-                                        const col = isActive ? (tab.textColor || '#ffffff') : '#94a3b8';
-                                        const border = isActive ? `1.5px solid ${tab.activeBg}` : '1.5px solid rgba(255,255,255,0.08)';
-                                        const shadow = isActive ? `box-shadow: 0 4px 14px ${tab.glow};` : '';
                                         return `
-                                            <button onclick="(function(btn){
+                                            <button data-tab-id="${tab.id}" data-tab-active="${isActive ? 'true' : 'false'}"
+                                                    class="esm-pro-btn ${isActive ? 'active' : 'inactive'}"
+                                                    onclick="(function(btn){
+                                                        if (window.SubnavManager) window.SubnavManager.pauseBanner(6000);
                                                         ${tab.action}
                                                         try { btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
                                                     })(this)" 
-                                                    style="flex-shrink: 0; padding: 8px 18px; border: ${border}; border-radius: 999px; font-weight: 950; font-size: 0.72rem; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); background: ${bg}; color: ${col}; ${shadow} text-align: center; white-space: nowrap;">
-                                                ${tab.label}
+                                                    aria-label="${tab.label}">
+                                                ${tab.isLive ? `<span class="subnav-live-dot"></span>` : ''}
+                                                <i class="fas ${tab.icon}" style="font-size: 0.8rem;"></i>
+                                                <span style="text-transform: uppercase;">${tab.label}</span>
+                                                ${tab.badge ? `
+                                                    <span class="subnav-micro-badge ${isActive ? 'badge-dark' : (tab.isLive ? 'badge-live' : (tab.badge === 'CLINICS' ? 'badge-clinics' : (tab.badge === 'TOP' ? 'badge-top' : (tab.isSuccessBadge ? 'badge-success' : 'badge-neon'))))}">
+                                                        ${tab.badge}
+                                                    </span>
+                                                ` : ''}
                                             </button>
                                         `;
                                     }).join('')}
@@ -1297,17 +2746,124 @@
                         `;
                         syncHeaderHeight();
                         this.initInteractions();
+
+                        // Centrar la pestaña activa inicialmente
+                        const activeBtn = bar.querySelector('.community-submenu-pro-bar button[data-tab-active="true"]');
+                        if (activeBtn) {
+                            try { activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
+                        }
+
+                        // Iniciar desplazamiento automático suave estilo banner
+                        this.startBannerAutoScroll();
+                    },
+
+                    renderTienda: function(activeTab = 'todos') {
+                        this.stopBannerAutoScroll();
+                        const bar = document.getElementById('subnav-app-bar');
+                        if (!bar) return;
+                        bar.classList.remove('subnav-theme-americanas');
+                        bar.classList.remove('subnav-theme-entrenos');
+                        bar.classList.remove('subnav-theme-community');
+                        bar.classList.remove('subnav-theme-ranking');
+                        bar.classList.remove('subnav-theme-profile');
+                        bar.classList.add('subnav-theme-tienda');
+
+                        const subtabs = [
+                            { id: 'todos', icon: 'fa-boxes-stacked', label: 'CATÁLOGO', badge: 'TOP', action: "window.TiendaController && window.TiendaController.handleCategory('todos');" },
+                            { id: 'palas', icon: 'fa-table-tennis-paddle-ball', label: 'PALAS', badge: 'PRO', action: "window.TiendaController && window.TiendaController.handleCategory('palas');" },
+                            { id: 'pelotas', icon: 'fa-circle-dot', label: 'PELOTAS', badge: 'OFICIAL', action: "window.TiendaController && window.TiendaController.handleCategory('pelotas');" },
+                            { id: 'paleteros', icon: 'fa-briefcase', label: 'PALETEROS', badge: 'TOUR', action: "window.TiendaController && window.TiendaController.handleCategory('paleteros');" },
+                            { id: 'mochilas', icon: 'fa-bag-shopping', label: 'MOCHILAS', badge: 'URBAN', action: "window.TiendaController && window.TiendaController.handleCategory('mochilas');" },
+                            { id: 'zapatillas', icon: 'fa-shoe-prints', label: 'ZAPATILLAS', badge: 'CLAY', action: "window.TiendaController && window.TiendaController.handleCategory('zapatillas');" },
+                            { id: 'textil', icon: 'fa-shirt', label: 'TEXTIL', badge: '2026', action: "window.TiendaController && window.TiendaController.handleCategory('textil');" },
+                            { id: 'packs', icon: 'fa-box-open', label: 'PACKS AHORRO', badge: 'OFERTA', action: "window.TiendaController && window.TiendaController.handleCategory('packs');" },
+                            { id: 'ofertas', icon: 'fa-fire', label: 'SUPER OFERTAS', badge: '-15%', isFireBadge: true, action: "window.TiendaController && window.TiendaController.handleTag('Oferta');" },
+                            { id: 'cesta', icon: 'fa-cart-shopping', label: 'MI CESTA', badge: 'CARRITO', isCartBadge: true, action: "window.TiendaController && window.TiendaController.openCart();" }
+                        ];
+
+                        bar.style.display = 'block';
+
+                        const existingBar = bar.querySelector('.tienda-submenu-pro-bar');
+                        if (existingBar) {
+                            existingBar.querySelectorAll('button[data-tab-id]').forEach(btn => {
+                                const tabId = btn.getAttribute('data-tab-id');
+                                const isActive = (tabId === activeTab);
+                                btn.setAttribute('data-tab-active', isActive ? 'true' : 'false');
+                                btn.classList.toggle('active', isActive);
+                                btn.classList.toggle('inactive', !isActive);
+                            });
+                            const activeBtn = bar.querySelector(`.tienda-submenu-pro-bar button[data-tab-id="${activeTab}"]`);
+                            if (activeBtn) {
+                                try { activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
+                            }
+                            syncHeaderHeight();
+                            return;
+                        }
+
+                        bar.innerHTML = `
+                            <div class="subnav-outer-flex">
+                                <button id="subnav-arrow-left" class="subnav-nav-arrow" onclick="window.SubnavManager.scroll('left')" title="Desplazar a la izquierda" aria-label="Desplazar izquierda">
+                                    <i class="fas fa-chevron-left" style="font-size: 0.75rem;"></i>
+                                </button>
+                                <div class="tienda-submenu-pro-bar">
+                                    ${subtabs.map(tab => {
+                                        const isActive = activeTab === tab.id;
+                                        const badgeClass = tab.isFireBadge ? 'badge-teal-fire' : (tab.isCartBadge ? 'badge-teal-cart' : '');
+                                        return `
+                                            <button data-tab-id="${tab.id}" data-tab-active="${isActive ? 'true' : 'false'}"
+                                                    class="esm-pro-btn ${isActive ? 'active' : 'inactive'}"
+                                                    onclick="(function(btn){
+                                                        if (window.PlayerView?.haptic) window.PlayerView.haptic(15);
+                                                        else if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(12);
+                                                        ${tab.action}
+                                                        if (window.SubnavManager) window.SubnavManager.renderTienda('${tab.id}');
+                                                        try { btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
+                                                    })(this)" 
+                                                    aria-label="${tab.label}">
+                                                <i class="fas ${tab.icon}" style="font-size: 0.8rem;"></i>
+                                                <span style="text-transform: uppercase;">${tab.label}</span>
+                                                ${tab.badge ? `
+                                                    <span class="subnav-micro-badge ${isActive ? 'badge-dark' : badgeClass}">
+                                                        ${tab.badge}
+                                                    </span>
+                                                ` : ''}
+                                            </button>
+                                        `;
+                                    }).join('')}
+                                </div>
+                                <button id="subnav-arrow-right" class="subnav-nav-arrow" onclick="window.SubnavManager.scroll('right')" title="Desplazar a la derecha" aria-label="Desplazar derecha">
+                                    <i class="fas fa-chevron-right" style="font-size: 0.75rem;"></i>
+                                </button>
+                            </div>
+                        `;
+                        syncHeaderHeight();
+                        this.initInteractions();
+
+                        const activeBtn = bar.querySelector('.tienda-submenu-pro-bar button[data-tab-active="true"]');
+                        if (activeBtn) {
+                            try { activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } catch(e){}
+                        }
                     },
 
                     hide: function() {
+                        this.stopBannerAutoScroll();
                         const bar = document.getElementById('subnav-app-bar');
                         if (bar) {
+                            bar.classList.remove('subnav-theme-americanas');
+                            bar.classList.remove('subnav-theme-entrenos');
+                            bar.classList.remove('subnav-theme-community');
+                            bar.classList.remove('subnav-theme-ranking');
+                            bar.classList.remove('subnav-theme-profile');
+                            bar.classList.remove('subnav-theme-tienda');
                             bar.style.display = 'none';
                             bar.innerHTML = '';
                         }
                         syncHeaderHeight();
                     }
                 };
+
+                // NOTA: El menú lateral lo genera js/app.js (App.loadSideMenu). No crear aquí un
+                // AppInstance 'placeholder': impedía instanciar App y sustituía el menú completo.
 
                 window.openDrawer = function() {
                     if (window.PlayerView?.haptic) window.PlayerView.haptic(20);
@@ -1351,20 +2907,20 @@
             <!-- Live Active Initial Cards (Sin Skeletons Grises) -->
             <div style="padding: 15px; display: flex; flex-direction: column; gap: 16px;">
                 <!-- Tarjeta 2: Comunidad & Ranking -->
-                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 24px; padding: 22px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);">
+                <div style="background: #ffffff; border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 22px; padding: 22px; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 10px 25px -5px rgba(15, 23, 42, 0.05); transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.24s cubic-bezier(0.16, 1, 0.3, 1);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                        <span style="font-size: 0.65rem; font-weight: 900; background: rgba(59, 130, 246, 0.1); color: #2563eb; padding: 3px 8px; border-radius: 8px; text-transform: uppercase;">
+                        <span style="font-size: 0.68rem; font-weight: 900; background: rgba(59, 130, 246, 0.1); color: #2563eb; padding: 3.5px 9px; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
                             💡 CONSEJO DE COMUNIDAD
                         </span>
                         <span style="font-size: 0.75rem; color: #64748b; font-weight: 700;">SomosPadel BCN</span>
                     </div>
-                    <h4 style="margin: 0 0 6px 0; font-size: 1rem; font-weight: 900; color: #0f172a;">
+                    <h4 style="margin: 0 0 6px 0; font-size: 1.05rem; font-weight: 900; color: #0f172a; font-family: 'Outfit', sans-serif;">
                         ¡Compite, suma puntos y sube de nivel!
                     </h4>
-                    <p style="font-size: 0.82rem; color: #64748b; margin: 0 0 14px 0; line-height: 1.4;">
+                    <p style="font-size: 0.85rem; color: #64748b; margin: 0 0 14px 0; line-height: 1.45; font-family: 'Inter', sans-serif;">
                         Mantén tu racha activa de partidos para desbloquear estadísticas avanzadas y premios exclusivos.
                     </p>
-                    <button onclick="if(window.Router) window.Router.navigate('community')" style="width: 100%; background: #f8fafc; border: 1px solid #cbd5e1; color: #0f172a; font-weight: 900; font-size: 0.82rem; padding: 10px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <button onclick="if(window.Router) window.Router.navigate('comunidad')" style="width: 100%; background: #f8fafc; border: 1.5px solid #e2e8f0; color: #0f172a; font-weight: 850; font-size: 0.82rem; padding: 11px; border-radius: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);">
                         <i class="fas fa-users" style="color: #2563eb;"></i>
                         <span>Ver Ranking de Jugadores</span>
                     </button>
@@ -2407,30 +3963,30 @@
         })();
         </script>
 
-        <!-- Navigation Dock - LIGHT COURT BLUE STYLE -->
+        <!-- Navigation Dock - ULTRA CYBER-PADEL AAA STYLE -->
         <style>
-            /* 🌈 BOTTOM NAVIGATION BAR (AI COLORFUL EDITION) */
+            /* 🌈 BOTTOM NAVIGATION BAR (CYBER NEON EDITION - ANTI-BLEEDTHROUGH) */
             .bottom-nav-bar {
                 position: fixed;
                 bottom: 0;
                 left: 0;
                 width: 100%;
                 height: 75px;
-                background: rgba(10, 10, 12, 0.9) !important;
-                backdrop-filter: blur(25px) saturate(180%);
-                -webkit-backdrop-filter: blur(25px) saturate(180%);
-                border-top: 1px solid rgba(255, 255, 255, 0.08);
+                background: rgba(10, 14, 26, 0.98) !important;
+                backdrop-filter: blur(30px) saturate(190%) !important;
+                -webkit-backdrop-filter: blur(30px) saturate(190%) !important;
+                border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
                 display: flex;
                 justify-content: space-around;
                 align-items: center;
                 z-index: 10000;
                 padding-bottom: env(safe-area-inset-bottom);
                 /* Sombra neón dinámica controlada por Javascript */
-                box-shadow: 0 -8px 30px var(--nav-glow-color, rgba(204, 255, 0, 0.15));
+                box-shadow: 0 -8px 30px var(--nav-glow-color, rgba(204, 255, 0, 0.15)), 0 -1px 0 rgba(255, 255, 255, 0.08) inset !important;
                 transition: box-shadow 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
             }
 
-            /* Configuración individual de colores y sombras para cada pestaña (5 pestañas oficiales) */
+            /* Configuración individual de colores y sombras para cada pestaña oficial */
             #nav-dashboard {
                 --item-color: #00f0ff;
                 --item-color-rgb: 0, 240, 255;
@@ -2446,6 +4002,10 @@
             #nav-ranking {
                 --item-color: #ffd700;
                 --item-color-rgb: 255, 215, 0;
+            }
+            #nav-tienda {
+                --item-color: #10b981;
+                --item-color-rgb: 16, 185, 129;
             }
             #nav-community {
                 --item-color: #ff5e00;
@@ -2482,6 +4042,25 @@
                 color: var(--item-color) !important;
             }
 
+            /* 🚀 REBOTE FÍSICO ELÁSTICO DEL ICONO (SQUASH & SPRING POP) */
+            @keyframes navIconSpringPop {
+                0% {
+                    transform: translateY(0) scale(1, 1);
+                }
+                25% {
+                    transform: translateY(-8px) scale(0.78, 1.25);
+                }
+                50% {
+                    transform: translateY(2px) scale(1.22, 0.85);
+                }
+                75% {
+                    transform: translateY(-3px) scale(0.95, 1.05);
+                }
+                100% {
+                    transform: translateY(-4px) scale(1.18, 1.18);
+                }
+            }
+
             .nav-item i {
                 width: 28px !important;
                 height: 26px !important;
@@ -2499,6 +4078,19 @@
                 position: relative !important;
                 z-index: 2 !important;
                 transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.35s ease, color 0.3s ease !important;
+            }
+
+            /* Icono activo con elevación elástica y doble halo neon */
+            .nav-item.active i {
+                color: var(--item-color) !important;
+                transform: translateY(-4px) scale(1.18) !important;
+                filter: drop-shadow(0 0 8px rgba(var(--item-color-rgb), 0.9)) 
+                        drop-shadow(0 0 18px rgba(var(--item-color-rgb), 0.45)) !important;
+            }
+
+            .nav-item.active i,
+            .nav-item i.spring-pop {
+                animation: navIconSpringPop 0.52s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
             }
 
             .nav-item span {
@@ -2535,14 +4127,6 @@
                 transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease !important;
             }
 
-            /* Icono activo con elevación elástica y doble halo neon */
-            .nav-item.active i {
-                color: var(--item-color) !important;
-                transform: translateY(-4px) scale(1.18) !important;
-                filter: drop-shadow(0 0 8px rgba(var(--item-color-rgb), 0.9)) 
-                        drop-shadow(0 0 18px rgba(var(--item-color-rgb), 0.45)) !important;
-            }
-
             /* Texto activo nítido con glow */
             .nav-item.active span {
                 color: var(--item-color) !important;
@@ -2556,18 +4140,18 @@
                 opacity: 1 !important;
             }
 
-            /* Halo Centrado Geométrico (Aura Radial Activa) */
+            /* 🌟 PODIO DE LUZ NEÓN / AURA ACTIVA MEJORADA */
             .nav-item::before {
                 content: '' !important;
                 position: absolute !important;
                 top: calc(50% - 9px) !important;
                 left: 50% !important;
-                width: 46px !important;
-                height: 46px !important;
+                width: 48px !important;
+                height: 48px !important;
                 border-radius: 50% !important;
-                background: radial-gradient(circle, rgba(var(--item-color-rgb), 0.28) 0%, rgba(var(--item-color-rgb), 0.08) 52%, transparent 72%) !important;
-                border: 1px solid rgba(var(--item-color-rgb), 0.22) !important;
-                box-shadow: 0 0 16px rgba(var(--item-color-rgb), 0.25) !important;
+                background: radial-gradient(circle, rgba(var(--item-color-rgb), 0.35) 0%, rgba(var(--item-color-rgb), 0.12) 55%, transparent 75%) !important;
+                border: 1px solid rgba(var(--item-color-rgb), 0.35) !important;
+                box-shadow: 0 0 20px rgba(var(--item-color-rgb), 0.4), inset 0 0 10px rgba(var(--item-color-rgb), 0.2) !important;
                 transform: translate(-50%, -50%) scale(0) !important;
                 opacity: 0 !important;
                 pointer-events: none !important;
@@ -2584,11 +4168,13 @@
             @keyframes navAuraPulse {
                 0%, 100% {
                     transform: translate(-50%, -50%) scale(1);
-                    opacity: 0.9;
+                    opacity: 0.95;
+                    box-shadow: 0 0 20px rgba(var(--item-color-rgb), 0.4), inset 0 0 10px rgba(var(--item-color-rgb), 0.2);
                 }
                 50% {
-                    transform: translate(-50%, -50%) scale(1.15);
-                    opacity: 0.45;
+                    transform: translate(-50%, -50%) scale(1.14);
+                    opacity: 0.65;
+                    box-shadow: 0 0 28px rgba(var(--item-color-rgb), 0.6), inset 0 0 14px rgba(var(--item-color-rgb), 0.35);
                 }
             }
 
@@ -2621,22 +4207,103 @@
                 transform: translateX(-50%) translateY(0);
             }
 
-            /* Micropartículas al hacer clic */
+            /* 💥 1. SHOCKWAVE RING (ONDA EXPANSIVA CIBERNÉTICA NEÓN) */
+            .nav-click-shockwave {
+                position: fixed;
+                pointer-events: none;
+                z-index: 99998;
+                width: 44px;
+                height: 44px;
+                margin-left: -22px;
+                margin-top: -22px;
+                border-radius: 50%;
+                border: 2px solid currentColor;
+                box-shadow: 0 0 15px currentColor, 0 0 30px currentColor, inset 0 0 10px currentColor;
+                animation: navShockwaveExpand 0.5s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+                will-change: transform, opacity;
+            }
+
+            @keyframes navShockwaveExpand {
+                0% {
+                    transform: scale(0.2);
+                    opacity: 1;
+                }
+                100% {
+                    transform: scale(2.5);
+                    opacity: 0;
+                }
+            }
+
+            /* ⚡ 2. CORE FLASH (FOGONAZO ESFÉRICO CENTRAL DE LUZ) */
+            .nav-click-core-flash {
+                position: fixed;
+                pointer-events: none;
+                z-index: 99999;
+                width: 50px;
+                height: 50px;
+                margin-left: -25px;
+                margin-top: -25px;
+                border-radius: 50%;
+                filter: blur(2px);
+                animation: navCoreFlash 0.2s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+                will-change: transform, opacity;
+            }
+
+            @keyframes navCoreFlash {
+                0% {
+                    transform: scale(0.35);
+                    opacity: 1;
+                }
+                100% {
+                    transform: scale(1.75);
+                    opacity: 0;
+                }
+            }
+
+            /* ✨ 3. CHISPAS NEÓN CON ESTELA & MICROPARTÍCULAS */
+            .nav-click-sparkle {
+                position: fixed;
+                border-radius: 999px;
+                pointer-events: none;
+                z-index: 99999;
+                opacity: 1;
+                animation: navSparkleFly var(--fly-duration, 0.55s) cubic-bezier(0.12, 0.9, 0.25, 1) forwards;
+                will-change: transform, opacity;
+                box-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
+            }
+
+            @keyframes navSparkleFly {
+                0% {
+                    transform: translate(0, 0) rotate(var(--angle, 0deg)) scale(1, 1);
+                    opacity: 1;
+                }
+                60% {
+                    opacity: 0.95;
+                }
+                100% {
+                    transform: translate(var(--tx), var(--ty)) rotate(var(--angle, 0deg)) scale(0.15, 0.15);
+                    opacity: 0;
+                }
+            }
+
             .nav-click-particle {
                 position: fixed;
                 border-radius: 50%;
                 pointer-events: none;
                 z-index: 99999;
                 opacity: 1;
-                animation: navParticleFly 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+                animation: navParticleFly var(--fly-duration, 0.55s) cubic-bezier(0.12, 0.9, 0.25, 1) forwards;
                 will-change: transform, opacity;
-                box-shadow: 0 0 8px currentColor;
+                box-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
             }
             
             @keyframes navParticleFly {
                 0% {
                     transform: translate(0, 0) scale(1);
                     opacity: 1;
+                }
+                70% {
+                    opacity: 0.9;
                 }
                 100% {
                     transform: translate(var(--tx), var(--ty)) scale(0.2);
@@ -2763,7 +4430,7 @@
 
             .community-popup-title {
                 font-family: 'Outfit', sans-serif;
-                font-size: 0.86rem;
+                font-size: 0.88rem;
                 font-weight: 950;
                 color: #ffffff;
                 letter-spacing: 0.5px;
@@ -2772,7 +4439,7 @@
             }
 
             .community-popup-subtitle {
-                font-size: 0.66rem;
+                font-size: 0.72rem;
                 color: #94a3b8;
                 font-weight: 600;
             }
@@ -2781,15 +4448,15 @@
                 background: rgba(255, 255, 255, 0.06);
                 border: 1px solid rgba(255, 255, 255, 0.12);
                 color: #94a3b8;
-                width: 28px;
-                height: 28px;
+                width: 30px;
+                height: 30px;
                 border-radius: 50%;
                 cursor: pointer;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                font-size: 0.75rem;
-                transition: all 0.2s;
+                font-size: 0.78rem;
+                transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             }
 
             .community-popup-close:active {
@@ -2806,10 +4473,10 @@
 
             .community-opt-btn {
                 width: 100%;
-                background: rgba(255, 255, 255, 0.035);
-                border: 1px solid rgba(255, 255, 255, 0.07);
-                border-radius: 14px;
-                padding: 9px 12px;
+                background: rgba(255, 255, 255, 0.04);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                border-radius: 16px;
+                padding: 10px 14px;
                 display: flex;
                 align-items: center;
                 gap: 12px;
@@ -2820,8 +4487,8 @@
             }
 
             .community-opt-btn:hover {
-                background: rgba(255, 255, 255, 0.08);
-                border-color: rgba(255, 255, 255, 0.15);
+                background: rgba(255, 255, 255, 0.09);
+                border-color: rgba(255, 255, 255, 0.18);
                 transform: translateY(-1px);
             }
 
@@ -2840,13 +4507,13 @@
             }
 
             .opt-icon-box {
-                width: 36px;
-                height: 36px;
-                border-radius: 11px;
+                width: 38px;
+                height: 38px;
+                border-radius: 12px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                font-size: 0.95rem;
+                font-size: 0.98rem;
                 flex-shrink: 0;
             }
 
@@ -2857,7 +4524,7 @@
 
             .opt-title {
                 font-family: 'Outfit', sans-serif;
-                font-size: 0.82rem;
+                font-size: 0.85rem;
                 font-weight: 900;
                 color: #ffffff;
                 letter-spacing: 0.4px;
@@ -2866,20 +4533,20 @@
             }
 
             .opt-desc {
-                font-size: 0.67rem;
+                font-size: 0.72rem;
                 color: #94a3b8;
                 font-weight: 500;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
-                line-height: 1.2;
+                line-height: 1.25;
                 margin-top: 2px;
             }
 
             .opt-arrow {
-                font-size: 0.72rem;
-                color: #475569;
-                transition: transform 0.2s;
+                font-size: 0.75rem;
+                color: #64748b;
+                transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s ease;
             }
 
             .community-opt-btn:hover .opt-arrow {
@@ -2890,9 +4557,9 @@
             .opt-badge-pill {
                 background: #ff5e00;
                 color: #ffffff;
-                font-size: 0.52rem;
+                font-size: 0.65rem;
                 font-weight: 950;
-                padding: 1px 6px;
+                padding: 2px 7px;
                 border-radius: 6px;
                 letter-spacing: 0.4px;
                 text-transform: uppercase;
@@ -2932,6 +4599,21 @@
             </div>
 
             <div class="community-popup-options">
+                <!-- 0. CHAT GENERAL DE LA COMUNIDAD -->
+                <button class="community-opt-btn" onclick="window.ChatView?.openGeneralCommunityChat(); window.closeCommunityMenu && window.closeCommunityMenu(); window.toggleCommunityMenu && window.toggleCommunityMenu(event);">
+                    <div class="opt-icon-box" style="background: rgba(204, 255, 0, 0.15); border: 1px solid rgba(204, 255, 0, 0.45); color: #CCFF00;">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <div class="opt-text-box">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <div class="opt-title" style="color: #ffffff; font-weight: 950;">CHAT GENERAL COMUNIDAD</div>
+                            <span class="opt-badge-pill" style="background: #CCFF00; color: #000; font-weight: 900;">ONLINE</span>
+                        </div>
+                        <div class="opt-desc">Habla con todos los integrantes de SomosPadel</div>
+                    </div>
+                    <i class="fas fa-chevron-right opt-arrow" style="color: #CCFF00;"></i>
+                </button>
+
                 <!-- 1. INICIO COMUNIDAD -->
                 <button class="community-opt-btn" onclick="window.selectCommunityOption('comunidad')">
                     <div class="opt-icon-box" style="background: rgba(204, 255, 0, 0.15); border: 1px solid rgba(204, 255, 0, 0.35); color: #CCFF00;">
@@ -3058,10 +4740,18 @@
                 <span>Ranking</span>
             </div>
 
-            <!-- 4. COMUNIDAD SOMOSPADEL (Menú Desplegable de Comunidad) -->
+            <!-- 5. TIENDA SOMOSPADEL BCN (Escaparate, Ofertas y Colaboradores) -->
+            <div class="nav-item haptic-feedback" 
+                onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('tienda')"
+                id="nav-tienda">
+                <i class="fas fa-store"></i>
+                <span>Tienda</span>
+            </div>
+
+            <!-- 6. COMUNIDAD SOMOSPADEL (1. INICIO COMUNIDAD POR DEFECTO) -->
             <div class="nav-item haptic-feedback" 
                 id="nav-community" 
-                onclick="window.PlayerView?.haptic?.(20); window.toggleCommunityMenu ? window.toggleCommunityMenu(event) : (window.Router && window.Router.navigate('comunidad'))">
+                onclick="window.PlayerView?.haptic?.(20); if (typeof window.closeCommunityMenu === 'function') window.closeCommunityMenu(); window.Router && window.Router.navigate('comunidad');">
                 <i class="fas fa-users"></i>
                 <span>Comunidad</span>
             </div>
@@ -3244,7 +4934,7 @@
             /* === NASA GRAVITATIONAL HOLOGRAPHIC HUD === */
             .nasa-hud-wrap {
                 position: absolute;
-                inset: -38px;
+                inset: -26px;
                 pointer-events: none;
                 display: flex;
                 align-items: center;
@@ -3253,7 +4943,7 @@
                 transition: opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1), transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
                 transform: scale(0.95);
                 font-family: 'Courier New', Courier, monospace;
-                font-size: 0.55rem;
+                font-size: 0.50rem;
                 color: #CCFF00;
                 z-index: 0;
             }
@@ -3264,16 +4954,16 @@
             
             .hud-circle-outer {
                 position: absolute;
-                width: 176px;
-                height: 176px;
+                width: 130px;
+                height: 130px;
                 border: 1px dashed rgba(204, 255, 0, 0.5);
                 border-radius: 50%;
                 animation: spinClockwise 25s linear infinite;
             }
             .hud-circle-inner {
                 position: absolute;
-                width: 146px;
-                height: 146px;
+                width: 108px;
+                height: 108px;
                 border: 1px dotted rgba(0, 210, 255, 0.55);
                 border-radius: 50%;
                 animation: spinCounterClockwise 15s linear infinite;
@@ -3289,33 +4979,33 @@
             
             .hud-bracket {
                 position: absolute;
-                width: 196px;
-                height: 196px;
+                width: 144px;
+                height: 144px;
                 border-left: 2px solid rgba(204, 255, 0, 0.45);
                 border-right: 2px solid rgba(204, 255, 0, 0.45);
-                border-radius: 24px;
+                border-radius: 20px;
                 opacity: 0.35;
                 pointer-events: none;
             }
             
             .hud-telemetry {
                 position: absolute;
-                font-size: 0.52rem;
+                font-size: 0.50rem;
                 font-weight: 900;
-                letter-spacing: 1.5px;
+                letter-spacing: 1.2px;
                 white-space: nowrap;
                 text-align: left;
-                line-height: 1.4;
+                line-height: 1.35;
                 text-shadow: 0 0 6px rgba(204, 255, 0, 0.65);
                 transition: color 0.3s;
             }
             .hud-telemetry.left {
-                right: 125%;
+                right: 116%;
                 top: 50%;
                 transform: translateY(-50%);
             }
             .hud-telemetry.right {
-                left: 125%;
+                left: 116%;
                 top: 50%;
                 transform: translateY(-50%);
             }
@@ -3325,12 +5015,12 @@
                 position: absolute;
                 top: 50%;
                 left: 50%;
-                width: 140px;
-                height: 140px;
+                width: 105px;
+                height: 105px;
                 transform: translate(-50%, -50%);
                 background: radial-gradient(circle, rgba(204, 255, 0, 0.45) 0%, rgba(204, 255, 0, 0.2) 35%, rgba(139, 92, 246, 0.28) 60%, transparent 75%);
                 border-radius: 50%;
-                filter: blur(14px);
+                filter: blur(12px);
                 pointer-events: none;
                 z-index: 0;
                 animation: volumetricPulse 3.5s ease-in-out infinite alternate;
@@ -3338,7 +5028,7 @@
 
             @keyframes volumetricPulse {
                 0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.75; }
-                100% { transform: translate(-50%, -50%) scale(1.22); opacity: 1; }
+                100% { transform: translate(-50%, -50%) scale(1.18); opacity: 1; }
             }
 
             /* Efecto de glitch cuántico */
@@ -3940,36 +5630,26 @@
                 }
 
                 .nasa-hud-wrap {
-                    inset: -18px;
+                    inset: -16px;
                 }
 
                 .hud-circle-outer {
-                    width: 145px;
-                    height: 145px;
+                    width: 114px;
+                    height: 114px;
                 }
 
                 .hud-circle-inner {
-                    width: 125px;
-                    height: 125px;
+                    width: 96px;
+                    height: 96px;
                 }
 
                 .hud-bracket {
-                    width: 160px;
-                    height: 160px;
+                    width: 124px;
+                    height: 124px;
                 }
 
                 .hud-telemetry {
-                    font-size: 0.44rem;
-                    letter-spacing: 0.8px;
-                    line-height: 1.3;
-                }
-
-                .hud-telemetry.left {
-                    right: 104%;
-                }
-
-                .hud-telemetry.right {
-                    left: 104%;
+                    display: none !important;
                 }
 
                 .sport-btn-primary {
@@ -3979,9 +5659,6 @@
             }
 
             @media (max-width: 375px) {
-                .hud-telemetry {
-                    display: none !important;
-                }
                 .glass-card-pro {
                     padding: 28px 16px !important;
                 }
@@ -4008,14 +5685,14 @@
                 <i class="fas fa-bolt"></i> SOMOS PÁDEL BARCELONA
             </div>
 
-            <div style="margin-bottom: 24px; position: relative; z-index: 2;">
+            <div style="margin-bottom: 24px; position: relative; z-index: 2; text-align: center;">
                 <!-- 🎾 INTERACTIVE MAGNETIC BALL CON RESPLANDOR VOLUMÉTRICO 3D -->
                 <div id="login-ball-wrap" class="breathing" onclick="_ballSmash(event)" title="¡Dale un smash!">
                     <!-- Resplandor volumétrico 3D detrás de la pelota -->
                     <div class="ball-volumetric-aura"></div>
 
                     <!-- Neon ring de energía — detrás de la imagen -->
-                    <div id="ball-neon-ring" style="position:absolute; inset:-12px; border-radius:50%; border:3px solid transparent; background: transparent padding-box, conic-gradient(from var(--ring-angle,0deg), transparent 55%, #CCFF00 75%, transparent 100%) border-box; pointer-events:none; opacity:0; transition:opacity 0.4s; z-index:0;"></div>
+                    <div id="ball-neon-ring" style="position:absolute; inset:-8px; border-radius:50%; border:2px solid transparent; background: transparent padding-box, conic-gradient(from var(--ring-angle,0deg), transparent 55%, #CCFF00 75%, transparent 100%) border-box; pointer-events:none; opacity:0; transition:opacity 0.4s; z-index:0;"></div>
                     
                     <!-- NASA Gravitational HUD -->
                     <div class="nasa-hud-wrap">
@@ -4039,12 +5716,12 @@
                     <!-- Logo principal con sombra volumétrica y profundidad -->
                     <img id="login-ball-img" src="img/official_ball_logo.png"
                          alt="Somos Padel"
-                         style="position:relative; z-index:1; filter: drop-shadow(0 0 25px rgba(204, 255, 0, 0.65)) drop-shadow(0 15px 35px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 50px rgba(204, 255, 0, 0.25));"
+                         style="position:relative; z-index:1; width:82px !important; height:82px !important; object-fit:contain; margin:0 auto; display:block; filter: drop-shadow(0 0 16px rgba(204, 255, 0, 0.6)) drop-shadow(0 10px 24px rgba(0, 0, 0, 0.8));"
                          onerror="this.style.display='none'; document.getElementById('login-ball-fallback').style.display='flex';">
                     <!-- Fallback si no carga la imagen -->
-                    <div id="login-ball-fallback" style="display:none; position:relative; z-index:1; width:110px; height:110px; border-radius:50%; background: radial-gradient(circle at 38% 38%, #CCFF00, #7ac200); align-items:center; justify-content:center; font-size:2.5rem; box-shadow:0 0 30px rgba(204,255,0,0.5);">🎾</div>
+                    <div id="login-ball-fallback" style="display:none; position:relative; z-index:1; width:82px; height:82px; border-radius:50%; background: radial-gradient(circle at 38% 38%, #CCFF00, #7ac200); align-items:center; justify-content:center; font-size:2rem; box-shadow:0 0 24px rgba(204,255,0,0.5); margin:0 auto;">🎾</div>
                     <!-- Tooltip hint -->
-                    <div style="position:absolute; bottom:-28px; left:50%; transform:translateX(-50%); white-space:nowrap; font-size:0.6rem; font-weight:900; color:rgba(204,255,0,0.55); letter-spacing:1.5px; pointer-events:none; text-transform:uppercase; z-index:2;">¡Pulsa para smash!</div>
+                    <div style="position:absolute; bottom:-24px; left:50%; transform:translateX(-50%); white-space:nowrap; font-size:0.58rem; font-weight:900; color:rgba(204,255,0,0.55); letter-spacing:1.5px; pointer-events:none; text-transform:uppercase; z-index:2;">¡Pulsa para smash!</div>
                 </div>
 
                 <h1 style="color: white; font-weight: 900; font-size: 1.6rem; letter-spacing: -0.5px; margin: 0; font-family: 'Outfit';">
@@ -4347,12 +6024,16 @@
                             // Haptic éxito
                             if (navigator.vibrate) navigator.vibrate([60, 30, 100]);
                             
+                            // Marcar flag biométrico para que el botón muestre el estado correcto
+                            window._isBiometricLoginActive = true;
+
                             // Enviar formulario (disparará el handler de submit)
                             if (loginForm) {
                                 const btnSubmit = loginForm.querySelector('button[type="submit"]');
                                 if (btnSubmit) btnSubmit.click();
                             }
                         } else {
+                            window._isBiometricLoginActive = false;
                             if (scanner) scanner.style.display = 'none';
                             
                             _updateTelemetry([
@@ -4434,7 +6115,7 @@
                         </span>
                         <span>Recordar en este dispositivo</span>
                     </label>
-                    <a href="#" onclick="alert('💡 Para recuperar o restablecer tu clave, contacta con Alejandro o la organización de Somos Pádel.')" class="auth-forgot-link">¿Olvidaste tu clave?</a>
+                    <a href="#" onclick="alert('🎾 AYUDA DE ACCESO SOMOS PÁDEL:\n\n1. Si es tu primera vez o estabas registrado por el club, puedes entrar escribiendo tu número de teléfono como clave (o tus últimos 4 dígitos).\n\n2. Para restablecer o cambiar tu clave, contacta con Alejandro o administración.')" class="auth-forgot-link">¿Olvidaste tu clave?</a>
                 </div>
 
                 <!-- Botón Principal de Iniciar Sesión -->
@@ -4615,7 +6296,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js" defer></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js" defer></script>
     <script src="js/firebase-config.js" defer></script>
-    <script src="js/firebase-init.js?v=1.2" defer></script>
+    <script src="js/firebase-init.js?v=1.3_AUTH_FAILSAFE" defer></script>
     
     <!-- CORE SERVICES -->
     <script src="js/modules/core/Constants.js?v=5036_CLUBS_CATALOG" defer></script>
@@ -4623,8 +6304,8 @@
     <script src="js/core/StateManager.js?v=1.1" defer></script>
     <script src="js/core/CacheService.js" defer></script>
     <script src="js/core/DatabaseService.js" defer></script>
-    <script src="js/core/AuthService.js?v=12.4" defer></script>
-    <script src="js/core/Router.js?v=ENTRENOS_NAV_v2" defer></script>
+    <script src="js/core/AuthService.js?v=12.5_FAILSAFE" defer></script>
+    <script src="js/core/Router.js?v=RANKING_SUBNAV_v5" defer></script>
     <script src="js/core/SmartTicker.js?v=3" defer></script>
     <script src="js/core/UpdateManager.js" defer></script>
     <script src="js/core/SocialChannelsService.js?v=1.1" defer></script>
@@ -4638,19 +6319,40 @@
     <!-- NOTIFICATIONS -->
     <script src="js/modules/common/NotificationService.js?v=PRO_CLEAN_WHITE_v12" defer></script>
     <script src="js/modules/ui/NotificationUi.js?v=PRO_CLEAN_WHITE_v12" defer></script>
-    <script src="js/fixed-pairs-logic.js?v=5014" defer></script>
-    <script src="js/rotating-pozo-logic.js?v=5014" defer></script>
-    <script src="js/modules/logic/MatchMakingService.js?v=5014" defer></script>
+    <!-- Tournament Engine (NASA Grade CSP) -->
+    <script src="js/tournament-engine/DecisionLogger.js?v=2026.5" defer></script>
+    <script src="js/tournament-engine/TournamentConstraints.js?v=2026.5" defer></script>
+    <script src="js/tournament-engine/FeasibilityValidator.js?v=2026.5" defer></script>
+    <script src="js/tournament-engine/TournamentSolver.js?v=2026.5.2" defer></script>
+    <script src="js/tournament-engine/modes/BaseTournamentMode.js?v=2026.5.2" defer></script>
+    <script src="js/tournament-engine/modes/AmericanaClasicaMode.js?v=2026.5.2" defer></script>
+    <script src="js/tournament-engine/modes/AmericanaMexicanaMode.js?v=2026.5.2" defer></script>
+    <script src="js/tournament-engine/modes/AmericanaMixtaMode.js?v=2026.5.2" defer></script>
+    <script src="js/tournament-engine/modes/AmericanaTwisterMode.js?v=2026.5.2" defer></script>
+    <script src="js/tournament-engine/modes/ReyDeLaPistaMode.js?v=2026.5.2" defer></script>
+    <script src="js/tournament-engine/modes/PozoAmericanoMode.js?v=2026.5.2" defer></script>
+    <script src="js/tournament-engine/modes/EntrenoRotacionesMode.js?v=2026.5.2" defer></script>
+    <script src="js/tournament-engine/modes/EntrenoNivelesMode.js?v=2026.5.2" defer></script>
+    <script src="js/tournament-engine/modes/EntrenoLibreMode.js?v=2026.5.2" defer></script>
+    <script src="js/tournament-engine/TwisterInvariantGuard.js?v=2026.5.2" defer></script>
+    <script src="js/tournament-engine/TournamentEngine.js?v=2026.5.2" defer></script>
+
+    <script src="js/fixed-pairs-logic.js?v=2026.5.3" defer></script>
+    <script src="js/rotating-pozo-logic.js?v=2026.5.3" defer></script>
+    <script src="js/modules/logic/PreFlightRoundVerifier.js?v=2026.5.3" defer></script>
+    <script src="js/modules/logic/MatchMakingService.js?v=2026.5.3" defer></script>
+    <script src="js/modules/logic/RoundAutoRegenerationService.js?v=2026.5.3" defer></script>
+    <script src="js/modules/ui/RoundAutoRegenNotice.js?v=2026.5.3" defer></script>
     <script src="js/modules/americanas/AmericanaLogic.js" defer></script>
-    <script src="js/modules/americanas/AmericanaService.js?v=1014" defer></script>
+    <script src="js/modules/americanas/AmericanaService.js?v=1015" defer></script>
     <script src="js/modules/ai/TournamentChronicleService.js?v=1.0" defer></script>
     <script src="js/modules/ai/TournamentChronicleModal.js?v=1.0" defer></script>
     <script src="js/app-init.js?v=2.0_FAST_BOOT" defer></script>
-    <script src="js/app.js?v=3007_NO_FLICKER" defer></script>
+    <script src="js/app.js?v=3008_DRAWER_V3" defer></script>
     <script src="js/modules/common/WhatsAppService.js?v=9.2_SYNC_COURTS" defer charset="UTF-8"></script>
     <script src="js/modules/common/LevelService.js?v=3000_CANONICAL" defer></script>
     <script src="js/modules/logic/LevelAdjustmentService.js?v=3000_CANONICAL" defer></script>
-    <script src="js/modules/auth/AuthController.js?v=12.3" defer></script>
+    <script src="js/modules/auth/AuthController.js?v=12.4_FAILSAFE" defer></script>
     <script src="js/modules/common/PartnerSynergyService.js" defer></script>
     <script src="js/modules/common/PartnerSynergyWidget.js" defer></script>
     <script src="js/modules/common/SosSubstitutesService.js?v=1.0" defer></script>
@@ -4671,7 +6373,7 @@
     <script src="js/modules/dashboard/StoryFeedWidget.js?v=FAST_SWIPE_v3" defer></script>
     <script src="js/modules/dashboard/PadelPulse.js?v=6.2" defer></script>
     <script src="js/modules/dashboard/NewsCatalog.js?v=1.2" defer></script>
-    <script src="js/modules/dashboard/DashboardView_hotfix.js?v=SOMOSPADEL_SOCIAL_v9" defer></script>
+    <script src="js/modules/dashboard/DashboardView_hotfix.js?v=SOMOSPADEL_SOCIAL_v11_CHAT_GENERAL" defer></script>
     <script src="js/modules/dashboard/DashboardController.js" defer></script>
     <script src="js/utils/RoleService.js?v=PLAYER_AMERICANAS_v1" defer></script>
     <script src="js/modules/stats/AchievementsService.js?v=1.0" defer></script>
@@ -4685,10 +6387,10 @@
     <script src="js/modules/americanas/ControlTowerSummary.js?v=5.5_SUMMARY" defer></script>
     <script src="js/modules/americanas/ControlTowerView.js?v=4045_PRIVATE_LOCK" defer></script>
     <script src="js/modules/americanas/TVView.js?v=2.0" defer></script>
-    <script src="js/modules/chat/ChatService.js?v=1.1" defer></script>
-    <script src="js/modules/chat/ChatView.js?v=1.2" defer></script>
+    <script src="js/modules/chat/ChatService.js?v=3.0_PREMIUM_REDESIGN" defer></script>
+    <script src="js/modules/chat/ChatView.js?v=3.0_PREMIUM_REDESIGN" defer></script>
     <script src="js/modules/americanas/EntrenoLiveView.js" defer></script>
-    <script src="js/modules/americanas/EventsController_V6.js?v=SUBNAV_FINALIZADAS_COMPACT_ALL_V6" defer></script>
+    <script src="js/modules/americanas/EventsController_V6.js?v=SUBNAV_ENTRENOS_PINK_RED_V11" defer></script>
     <script src="js/modules/common/SocialShareService.js" defer></script>
     <script src="js/modules/admin/SocialShareView.js" defer></script>
 
@@ -4708,8 +6410,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 
     <!-- Ranking Module -->
-    <script src="js/modules/ranking/RankingView.js?v=TOP10_ELITE_v2" defer></script>
-    <script src="js/modules/ranking/RankingController.js?v=TOP10_ELITE_v2" defer></script>
+    <script src="js/modules/ranking/RankingView.js?v=SUBNAV_BROWN_AMBER_v4" defer></script>
+    <script src="js/modules/ranking/RankingController.js?v=TOP10_ELITE_v3_STABLE" defer></script>
+
+    <!-- Tienda SomosPadel BCN Module -->
+    <script src="js/modules/tienda/TiendaService.js?v=20261007_v2" defer></script>
+    <script src="js/modules/tienda/TiendaView.js?v=20261007_v2" defer></script>
+    <script src="js/modules/tienda/TiendaController.js?v=20261007_v2" defer></script>
 
     <!-- Community Home Module -->
     <script src="js/modules/community/CommunityHomeView.js" defer></script>
@@ -4741,7 +6448,8 @@
 
     <!-- Match Story Card (Post-Match Shareable) -->
     <script src="js/modules/players/MatchStoryCard.js?v=1.4" defer></script>
-    <script src="js/modules/players/PadelFutCard.js?v=RESPONSIVE_ULTRA_v2" defer></script>
+    <script src="js/modules/players/PlayerHistoryService.js?v=2026.1" defer></script>
+    <script src="js/modules/players/PadelFutCard.js?v=COTILLEAR_WHITE_v2026_2" defer></script>
     <script src="js/modules/court/CourtScoreboard.js?v=RESPONSIVE_MOBILE_v2" defer></script>
 
     <!-- Entry Point -->
@@ -4974,6 +6682,8 @@
             'americanas': '¡Todas las Americanas de Barcelona! 🎾',
             'events': '¡Todas las Americanas de Barcelona! 🎾',
             'ranking': '¡Asciende y domina el ranking! 🏆',
+            'tienda': 'Tienda en construcción: ¡Pronto estará visible para todos los jugadores! 🚧',
+            'shop': 'Tienda en construcción: ¡Pronto estará visible para todos los jugadores! 🚧',
             'teams': 'Compite con tu equipo y gana 👥',
             'tournaments': 'El gran trofeo te espera 🔥',
             'profile': 'Tus estadísticas al siguiente nivel 📈'
@@ -4989,62 +6699,145 @@
         }, 2000);
     };
 
-    // Función para crear partículas coloridas
-    function createNavParticles(x, y, color) {
-        const particleCount = 10;
+    // 💥 SISTEMA DE EFECTOS AAA CYBER-PADEL: SHOCKWAVE, CORE FLASH, SPARKS & SPRING POP
+    function triggerNavHaptic() {
+        try {
+            if (window.PlayerView && typeof window.PlayerView.haptic === 'function') {
+                window.PlayerView.haptic(20);
+            } else if (navigator && navigator.vibrate) {
+                navigator.vibrate(18);
+            }
+        } catch(e) {}
+    }
+
+    function createNavParticles(x, y, color, navItem) {
         const container = document.body;
-        
-        for (let i = 0; i < particleCount; i++) {
-            const particle = document.createElement('div');
-            particle.className = 'nav-click-particle';
-            particle.style.color = color;
-            particle.style.background = color;
-            particle.style.left = `${x}px`;
-            particle.style.top = `${y}px`;
-            
-            const size = Math.random() * 4 + 4; // de 4px a 8px
-            particle.style.width = `${size}px`;
-            particle.style.height = `${size}px`;
-            
-            const angle = Math.random() * Math.PI * 2;
-            const velocity = Math.random() * 50 + 20;
+        if (!container) return;
+
+        // Calcular punto óptico centrado exactamente en el icono del nav-item
+        let focalX = x;
+        let focalY = y;
+        if (navItem) {
+            const iconEl = navItem.querySelector('i') || navItem;
+            const rect = iconEl.getBoundingClientRect();
+            if (rect.width > 0 && rect.height > 0) {
+                focalX = rect.left + rect.width / 2;
+                focalY = rect.top + rect.height / 2;
+            }
+        }
+
+        // 1. Shockwave Ring (Onda expansiva cibernética neón)
+        const shockwave = document.createElement('div');
+        shockwave.className = 'nav-click-shockwave';
+        shockwave.style.color = color;
+        shockwave.style.borderColor = color;
+        shockwave.style.left = `${focalX}px`;
+        shockwave.style.top = `${focalY}px`;
+        container.appendChild(shockwave);
+        setTimeout(() => shockwave.remove(), 550);
+
+        // 2. Destello central (Core Flash / Glow Flare)
+        const coreFlash = document.createElement('div');
+        coreFlash.className = 'nav-click-core-flash';
+        coreFlash.style.background = `radial-gradient(circle, #ffffff 15%, ${color} 65%, transparent 80%)`;
+        coreFlash.style.boxShadow = `0 0 25px ${color}, 0 0 50px ${color}`;
+        coreFlash.style.left = `${focalX}px`;
+        coreFlash.style.top = `${focalY}px`;
+        container.appendChild(coreFlash);
+        setTimeout(() => coreFlash.remove(), 250);
+
+        // 3. Chispas neón con estela y micropartículas de alta energía (14-18 chispas)
+        const sparkCount = Math.floor(Math.random() * 5) + 14; // 14 a 18 partículas
+        for (let i = 0; i < sparkCount; i++) {
+            const isStreak = (i % 2 === 0);
+            const spark = document.createElement('div');
+            spark.className = isStreak ? 'nav-click-sparkle' : 'nav-click-particle';
+            spark.style.color = color;
+            spark.style.backgroundColor = (i % 3 === 0) ? '#ffffff' : color;
+            spark.style.left = `${focalX}px`;
+            spark.style.top = `${focalY}px`;
+
+            // Abanico circular proyectado hacia arriba y los costados (-165° a -15°)
+            const angle = (-Math.PI * 0.95) + (Math.random() * Math.PI * 0.9);
+            const velocity = Math.random() * 55 + 28; // de 28px a 83px
             const tx = Math.cos(angle) * velocity;
-            const ty = Math.sin(angle) * velocity - 10; // tendiendo ligeramente hacia arriba
-            
-            particle.style.setProperty('--tx', `${tx}px`);
-            particle.style.setProperty('--ty', `${ty}px`);
-            
-            container.appendChild(particle);
-            
-            setTimeout(() => {
-                particle.remove();
-            }, 600);
+            const ty = Math.sin(angle) * velocity;
+            const duration = (0.42 + Math.random() * 0.18).toFixed(2); // 0.42s a 0.60s
+
+            spark.style.setProperty('--tx', `${tx.toFixed(1)}px`);
+            spark.style.setProperty('--ty', `${ty.toFixed(1)}px`);
+            spark.style.setProperty('--fly-duration', `${duration}s`);
+
+            if (isStreak) {
+                const streakWidth = Math.random() * 8 + 6;
+                const streakHeight = Math.random() * 2 + 2;
+                spark.style.width = `${streakWidth}px`;
+                spark.style.height = `${streakHeight}px`;
+                const rotDeg = Math.atan2(ty, tx) * (180 / Math.PI);
+                spark.style.setProperty('--angle', `${rotDeg.toFixed(1)}deg`);
+            } else {
+                const size = Math.random() * 4 + 3;
+                spark.style.width = `${size}px`;
+                spark.style.height = `${size}px`;
+            }
+
+            container.appendChild(spark);
+            setTimeout(() => spark.remove(), 650);
         }
     }
 
-    // Escuchar clics en los elementos del menú
-    document.addEventListener('click', function(e) {
+    // Manejador unificado de interacción táctil y clic con debounce
+    let lastNavTouchTime = 0;
+    function triggerNavClickEffect(e, isTouch = false) {
         const navItem = e.target.closest('.nav-item');
-        if (navItem) {
-            const style = getComputedStyle(navItem);
-            const color = style.getPropertyValue('--item-color').trim() || '#CCFF00';
-            createNavParticles(e.clientX, e.clientY, color);
+        if (!navItem) return;
+
+        const now = Date.now();
+        if (isTouch) {
+            lastNavTouchTime = now;
+        } else if (now - lastNavTouchTime < 350) {
+            // Prevenir doble disparo en dispositivos táctiles que emiten click tras touch
+            return;
         }
+
+        // 1. Feedback háptico
+        triggerNavHaptic();
+
+        // 2. Rebote físico elástico en el icono (Squash & Spring Pop)
+        const icon = navItem.querySelector('i');
+        if (icon) {
+            icon.classList.remove('spring-pop');
+            void icon.offsetWidth; // Force DOM reflow
+            icon.classList.add('spring-pop');
+            setTimeout(() => icon.classList.remove('spring-pop'), 580);
+        }
+
+        // 3. Obtener color insignia de la pestaña
+        const style = getComputedStyle(navItem);
+        const color = style.getPropertyValue('--item-color').trim() || '#CCFF00';
+
+        let clientX = e.clientX;
+        let clientY = e.clientY;
+        if (e.touches && e.touches[0]) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        }
+
+        createNavParticles(clientX, clientY, color, navItem);
+    }
+
+    // Escuchar clics y toques táctiles en el dock
+    document.addEventListener('click', function(e) {
+        triggerNavClickEffect(e, false);
     });
 
-    // Escuchar toques en dispositivos táctiles
     document.addEventListener('touchstart', function(e) {
-        const navItem = e.target.closest('.nav-item');
-        if (navItem && e.touches && e.touches[0]) {
-            const style = getComputedStyle(navItem);
-            const color = style.getPropertyValue('--item-color').trim() || '#CCFF00';
-            createNavParticles(e.touches[0].clientX, e.touches[0].clientY, color);
-        }
+        triggerNavClickEffect(e, true);
     }, { passive: true });
 
-    // 🌟 CONTROLADOR DEL MENÚ DESPLEGABLE DE COMUNIDAD (5 OPCIONES)
+    // 🌟 CONTROLADOR DEL ACCESO A COMUNIDAD (POR DEFECTO 1. INICIO COMUNIDAD)
     window.toggleCommunityMenu = function(e) {
-        if (e) e.stopPropagation();
+        if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
 
         // Si el usuario es de rol exclusivo americanas, avisar y no desplegar
         const currentUser = window.Store?.getState('currentUser') || 
@@ -5062,17 +6855,9 @@
             return;
         }
 
-        const menu = document.getElementById('community-popup-menu');
-        const backdrop = document.getElementById('community-popup-backdrop');
-        if (!menu) return;
-
-        const isVisible = menu.style.display !== 'none';
-        if (isVisible) {
-            window.closeCommunityMenu();
-        } else {
-            menu.style.display = 'block';
-            if (backdrop) backdrop.style.display = 'block';
-            if (window.PlayerView?.haptic) window.PlayerView.haptic(25);
+        if (typeof window.closeCommunityMenu === 'function') window.closeCommunityMenu();
+        if (window.Router && typeof window.Router.navigate === 'function') {
+            window.Router.navigate('comunidad');
         }
     };
 

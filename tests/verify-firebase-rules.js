@@ -75,7 +75,7 @@ async function verifyFirebaseRules() {
         if (!userRole) {
             results.warnings.push("⚠️ No se pudo determinar el rol del usuario");
             console.warn("⚠️ TEST 4 WARNING: User role not found");
-        } else if (userRole === 'super_admin' || userRole === 'admin_player') {
+        } else if (['admin', 'admin_player', 'super_admin', 'superadmin'].includes(userRole)) {
             results.passed.push(`✅ Usuario tiene permisos de admin (${userRole})`);
             console.log("✅ TEST 4 PASSED: User is admin");
 

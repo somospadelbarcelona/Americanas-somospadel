@@ -206,6 +206,7 @@ window.AdminAuth = {
 
     async login(pin, isAuto = false) {
         const ACCESS_CODES = {
+            '210021': { role: 'organizador_bcn', name: 'Organizador SomosPadel BCN' },
             '212121': { role: 'super_admin', name: 'Super Admin' },
             '501501': { role: 'admin', name: 'Admin' },
             '262524': { role: 'captain', name: 'Capitán' },
@@ -281,6 +282,11 @@ window.AdminAuth = {
         this.updateProfileUI();
         this.applyRoleRestrictions();
         const role = (user.role || '').toString().toLowerCase().trim();
+        if (role === 'organizador_bcn' || role === 'organizer_bcn') {
+            localStorage.setItem('sp_organizacion_auth', JSON.stringify(user));
+            window.location.href = 'organizacion.html';
+            return;
+        }
         const isOrganizer = ['organizer', 'organizador', 'organizadores', 'organizers'].includes(role);
         const hashView = window.location.hash ? window.location.hash.replace('#', '').split('?')[0].trim() : null;
         const targetView = hashView || sessionStorage.getItem('admin_last_view') || (isOrganizer ? 'americanas_mgmt' : 'dashboard_home');
@@ -403,6 +409,13 @@ window.loadAdminView = async function (rawViewName) {
             } else {
                 throw new Error("Season Campaign Admin Module not loaded");
             }
+        }
+        else if (viewName === 'tienda_admin') {
+            const titleEl = document.getElementById('page-title');
+            if (titleEl) titleEl.textContent = 'TIENDA SOMOSPADEL (E-COMMERCE)';
+            if (window.AdminTienda) await window.AdminTienda.init();
+            else if (window.AdminViews && window.AdminViews.tienda_admin) await window.AdminViews.tienda_admin();
+            else throw new Error("AdminTienda Module not loaded");
         }
         else if (viewName === 'sos_substitutes') {
             if (window.AdminSosSubstitutes) await window.AdminSosSubstitutes.render();

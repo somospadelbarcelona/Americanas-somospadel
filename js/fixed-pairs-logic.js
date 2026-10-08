@@ -448,8 +448,27 @@ const FixedPairsLogic = {
 
                 const scoreA = parseInt(match.score_a || 0);
                 const scoreB = parseInt(match.score_b || 0);
-                const winner = scoreA >= scoreB ? pairA : pairB;
-                const loser = scoreA >= scoreB ? pairB : pairA;
+                let winner = null;
+                let loser = null;
+                const w = String(match.winner || '').toLowerCase().trim();
+                if (w === 'team_a' || w === 'a' || w === 'teama' || w === '1') {
+                    winner = pairA; loser = pairB;
+                } else if (w === 'team_b' || w === 'b' || w === 'teamb' || w === '2') {
+                    winner = pairB; loser = pairA;
+                } else if (scoreA > scoreB) {
+                    winner = pairA; loser = pairB;
+                } else if (scoreB > scoreA) {
+                    winner = pairB; loser = pairA;
+                } else {
+                    // Desempate por diferencia de juegos / victorias acumuladas
+                    const diffA = (pairA.games_won || 0) - (pairA.games_lost || 0);
+                    const diffB = (pairB.games_won || 0) - (pairB.games_lost || 0);
+                    if (diffA > diffB || (diffA === diffB && (pairA.wins || 0) >= (pairB.wins || 0))) {
+                        winner = pairA; loser = pairB;
+                    } else {
+                        winner = pairB; loser = pairA;
+                    }
+                }
                 return { court: parseInt(match.court), winner, loser };
             }).filter(Boolean);
 
@@ -527,6 +546,11 @@ const FixedPairsLogic = {
     }
 };
 
-// Exportar globalmente
-window.FixedPairsLogic = FixedPairsLogic;
+// Exportar globalmente (Browser y Node.js)
+if (typeof window !== 'undefined') {
+    window.FixedPairsLogic = FixedPairsLogic;
+}
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { FixedPairsLogic };
+}
 console.log("🔒 FixedPairsLogic cargado");

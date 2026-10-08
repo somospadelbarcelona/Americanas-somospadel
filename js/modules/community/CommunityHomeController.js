@@ -423,6 +423,9 @@ Porque el pádel es un deporte fabuloso, pero los amigos con los que lo comparte
             }
             if (window.CommunityHomeView) {
                 window.CommunityHomeView.closeArticleModal();
+                if (typeof window.CommunityHomeView.destroy === 'function') {
+                    window.CommunityHomeView.destroy();
+                }
             }
         }
     }

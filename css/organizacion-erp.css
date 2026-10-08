@@ -1,0 +1,2328 @@
+/* ==========================================================================
+   SOMOSPADEL BCN | ORGANIZACIÓN Y CONTROL DE EVENTOS
+   ERP EMPRESARIAL & DIRECCIÓN ECONÓMICA DE EVENTOS DEPORTIVOS
+   EDICIÓN CORPORATIVA HIGH CONTRAST (FONDO BLANCO / LETRA NEGRA)
+   ========================================================================== */
+
+:root {
+    --erp-bg-body: #f8fafc;
+    --erp-bg-sidebar: #ffffff;
+    --erp-bg-card: #ffffff;
+    --erp-bg-card-hover: #f1f5f9;
+    --erp-bg-input: #ffffff;
+    
+    --erp-border: #e2e8f0;
+    --erp-border-hover: #cbd5e1;
+    --erp-border-accent: #ccff00;
+    --erp-border-dark: #0f172a;
+
+    --erp-primary: #84cc16; /* Verde lima elegante sobre blanco */
+    --erp-primary-badge: #ccff00;
+    --erp-primary-hover: #65a30d;
+    --erp-primary-glow: rgba(132, 204, 22, 0.2);
+
+    --erp-cyan: #0284c7;
+    --erp-cyan-bg: #e0f2fe;
+    
+    --erp-emerald: #16a34a;
+    --erp-emerald-bg: #dcfce7;
+
+    --erp-amber: #d97706;
+    --erp-amber-bg: #fef3c7;
+
+    --erp-rose: #e11d48;
+    --erp-rose-bg: #ffe4e6;
+
+    --erp-purple: #9333ea;
+    --erp-purple-bg: #f3e8ff;
+
+    --erp-text-main: #0f172a;
+    --erp-text-muted: #475569;
+    --erp-text-dim: #64748b;
+
+    --erp-radius-sm: 8px;
+    --erp-radius-md: 14px;
+    --erp-radius-lg: 18px;
+    --erp-radius-xl: 24px;
+
+    --erp-font-title: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+    --erp-font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+    --erp-shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.05);
+    --erp-shadow-md: 0 6px 20px rgba(15, 23, 42, 0.08);
+    --erp-shadow-lg: 0 12px 35px rgba(15, 23, 42, 0.12);
+}
+
+/* Reset y base */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body.erp-body {
+    background-color: var(--erp-bg-body);
+    background-image: 
+        radial-gradient(circle at 10% 10%, rgba(204, 255, 0, 0.1) 0%, transparent 35%),
+        radial-gradient(circle at 90% 90%, rgba(2, 132, 199, 0.05) 0%, transparent 35%);
+    color: var(--erp-text-main);
+    font-family: var(--erp-font-body);
+    min-height: 100vh;
+    overflow-x: hidden;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar fina */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* ==========================================================================
+   LAYOUT DEL ERP (SHELL)
+   ========================================================================== */
+.erp-shell {
+    display: flex;
+    min-height: 100vh;
+    position: relative;
+}
+
+/* SIDEBAR EMPRESARIAL BLANCO */
+.erp-sidebar {
+    width: 290px;
+    background: var(--erp-bg-sidebar);
+    border-right: 1px solid var(--erp-border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1000;
+    box-shadow: var(--erp-shadow-sm);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.erp-brand-header {
+    padding: 1.5rem 1.25rem 1.25rem;
+    border-bottom: 1px solid var(--erp-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.erp-brand-logo-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.erp-brand-logo {
+    height: 38px;
+    width: auto;
+}
+
+.erp-brand-titles h1 {
+    font-family: var(--erp-font-title);
+    font-size: 0.95rem;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    color: var(--erp-text-main);
+    line-height: 1.2;
+}
+
+.erp-brand-titles p {
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: #0284c7;
+    text-transform: uppercase;
+}
+
+.erp-nav-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.erp-nav-group-title {
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--erp-text-dim);
+    padding: 12px 14px 6px;
+    margin-top: 6px;
+}
+
+.erp-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 11px 14px;
+    border-radius: var(--erp-radius-md);
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--erp-text-muted);
+    font-family: var(--erp-font-body);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.erp-nav-item:hover {
+    background: #f1f5f9;
+    color: var(--erp-text-main);
+    transform: translateX(3px);
+}
+
+.erp-nav-item.active {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+    color: #166534;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(22, 101, 52, 0.08);
+}
+
+.erp-nav-item.active .erp-nav-icon {
+    color: #16a34a;
+}
+
+.erp-nav-item.highlight-proposal {
+    background: #fefce8;
+    border-color: #fef08a;
+    color: #854d0e;
+    font-weight: 800;
+}
+.erp-nav-item.highlight-proposal .erp-nav-icon {
+    color: #ca8a04;
+}
+
+.erp-nav-icon {
+    font-size: 0.95rem;
+    width: 22px;
+    text-align: center;
+    color: var(--erp-text-dim);
+    transition: color 0.2s ease;
+}
+
+.erp-nav-badge {
+    margin-left: auto;
+    font-size: 0.62rem;
+    font-weight: 900;
+    padding: 2px 7px;
+    border-radius: 10px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.badge-green {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+}
+
+.badge-neon {
+    background: #ccff00;
+    color: #0f172a;
+    border: 1px solid #a3e635;
+}
+
+.badge-cyan {
+    background: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+}
+
+.badge-amber {
+    background: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+
+/* User & Session Footer */
+.erp-sidebar-footer {
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--erp-border);
+    background: #f8fafc;
+}
+
+.erp-user-badge {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.erp-user-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: #0f172a;
+    border: 1.5px solid #ccff00;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ccff00;
+    font-weight: 900;
+    font-size: 1rem;
+    box-shadow: var(--erp-shadow-sm);
+}
+
+.erp-user-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.erp-user-name {
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: var(--erp-text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.erp-user-role {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #0284c7;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.erp-footer-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.erp-btn-micro {
+    flex: 1;
+    padding: 7px 10px;
+    background: #ffffff;
+    border: 1px solid var(--erp-border);
+    border-radius: 8px;
+    color: var(--erp-text-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.erp-btn-micro:hover {
+    background: #f1f5f9;
+    color: var(--erp-text-main);
+    border-color: var(--erp-border-hover);
+}
+
+.erp-btn-micro.logout:hover {
+    background: #ffe4e6;
+    border-color: #fecdd3;
+    color: #e11d48;
+}
+
+/* ==========================================================================
+   MAIN WRAPPER & TOP BAR
+   ========================================================================== */
+.erp-main {
+    flex: 1;
+    margin-left: 290px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.erp-topbar {
+    height: 70px;
+    padding: 0 2rem;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--erp-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 900;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.erp-topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.erp-mobile-menu-btn {
+    display: none;
+    background: transparent;
+    border: none;
+    color: var(--erp-text-main);
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 6px;
+}
+
+.erp-view-title-wrap h2 {
+    font-family: var(--erp-font-title);
+    font-size: 1.15rem;
+    font-weight: 900;
+    color: var(--erp-text-main);
+    letter-spacing: 0.3px;
+}
+
+.erp-view-title-wrap p {
+    font-size: 0.72rem;
+    color: var(--erp-text-dim);
+    font-weight: 500;
+}
+
+.erp-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.erp-date-indicator {
+    padding: 6px 14px;
+    background: #f1f5f9;
+    border: 1px solid var(--erp-border);
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--erp-text-muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.erp-live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #16a34a;
+    box-shadow: 0 0 6px #16a34a;
+    animation: livePulse 2s infinite ease-in-out;
+}
+
+@keyframes livePulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+/* WORKSPACE CONTAINER */
+.erp-workspace {
+    flex: 1;
+    padding: 2rem;
+    max-width: 1600px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+/* ==========================================================================
+   COMPONENTES UI & ESTILOS DE TARJETAS (BLANCO & ALTO CONTRASTE)
+   ========================================================================== */
+.erp-card {
+    background: var(--erp-bg-card);
+    border: 1px solid var(--erp-border);
+    border-radius: var(--erp-radius-lg);
+    padding: 1.5rem;
+    box-shadow: var(--erp-shadow-sm);
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.erp-card:hover {
+    border-color: var(--erp-border-hover);
+    box-shadow: var(--erp-shadow-md);
+}
+
+.erp-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+}
+
+.erp-card-title {
+    font-family: var(--erp-font-title);
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--erp-text-main);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.erp-card-title i {
+    color: #0284c7;
+    font-size: 1.05rem;
+}
+
+.erp-card-subtitle {
+    font-size: 0.75rem;
+    color: var(--erp-text-muted);
+    margin-top: 2px;
+}
+
+/* KPI GRID / DASHBOARD EJECUTIVO */
+.erp-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+}
+
+.erp-kpi-card {
+    background: #ffffff;
+    border: 1px solid var(--erp-border);
+    border-radius: var(--erp-radius-lg);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 125px;
+    position: relative;
+    box-shadow: var(--erp-shadow-sm);
+    transition: all 0.25s ease;
+}
+
+.erp-kpi-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--erp-border-hover);
+    box-shadow: var(--erp-shadow-md);
+}
+
+.erp-kpi-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.erp-kpi-label {
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--erp-text-dim);
+}
+
+.erp-kpi-icon-box {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    background: #f8fafc;
+    border: 1px solid var(--erp-border);
+    color: #0f172a;
+}
+
+.erp-kpi-val {
+    font-family: var(--erp-font-title);
+    font-size: 1.65rem;
+    font-weight: 900;
+    color: var(--erp-text-main);
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+}
+
+.erp-kpi-sub {
+    font-size: 0.72rem;
+    color: var(--erp-text-dim);
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.erp-kpi-sub .delta-up {
+    color: #16a34a;
+    font-weight: 700;
+}
+.erp-kpi-sub .delta-down {
+    color: #e11d48;
+    font-weight: 700;
+}
+
+/* Tarjeta KPI Hero Destacada */
+.erp-kpi-hero {
+    grid-column: span 2;
+    background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 60%);
+    border: 1.5px solid #86efac;
+    box-shadow: 0 4px 20px rgba(22, 163, 74, 0.08);
+}
+
+.erp-kpi-hero .erp-kpi-val {
+    color: #15803d;
+    font-size: 2.1rem;
+}
+
+/* ==========================================================================
+   SEMÁFORO DE RENTABILIDAD POR CLUB (ALTO CONTRASTE)
+   🟢 Muy rentable (>30% margen)
+   🟡 Rentable (15%-30%)
+   🔴 Poco rentable (<15%)
+   ========================================================================== */
+.traffic-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.traffic-badge.green {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #86efac;
+}
+
+.traffic-badge.green::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #16a34a;
+    box-shadow: 0 0 6px #16a34a;
+}
+
+.traffic-badge.yellow {
+    background: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+
+.traffic-badge.yellow::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #f59e0b;
+    box-shadow: 0 0 6px #f59e0b;
+}
+
+.traffic-badge.red {
+    background: #ffe4e6;
+    color: #be123c;
+    border: 1px solid #fecdd3;
+}
+
+.traffic-badge.red::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e11d48;
+    box-shadow: 0 0 6px #e11d48;
+}
+
+/* TABLA EMPRESARIAL FONDO BLANCO */
+.erp-table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: var(--erp-radius-md);
+    border: 1px solid var(--erp-border);
+    background: #ffffff;
+}
+
+.erp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    text-align: left;
+}
+
+.erp-table th {
+    background: #f8fafc;
+    padding: 12px 16px;
+    color: var(--erp-text-muted);
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: 0.68rem;
+    letter-spacing: 0.8px;
+    border-bottom: 1px solid var(--erp-border);
+    white-space: nowrap;
+}
+
+.erp-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    color: var(--erp-text-main);
+    vertical-align: middle;
+}
+
+.erp-table tr:hover td {
+    background: #f8fafc;
+}
+
+.erp-table tr:last-child td {
+    border-bottom: none;
+}
+
+.erp-money {
+    font-family: var(--erp-font-title);
+    font-weight: 700;
+    letter-spacing: 0.2px;
+}
+
+.erp-money.positive {
+    color: #15803d;
+}
+
+.erp-money.negative {
+    color: #e11d48;
+}
+
+.erp-money.neutral {
+    color: var(--erp-text-muted);
+}
+
+/* BOTONES EMPRESARIALES */
+.btn-erp {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: var(--erp-radius-md);
+    font-family: var(--erp-font-body);
+    font-size: 0.82rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    text-decoration: none;
+}
+
+.btn-erp-primary {
+    background: #0f172a;
+    color: #ccff00;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+}
+
+.btn-erp-primary:hover {
+    transform: translateY(-2px);
+    background: #1e293b;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.25);
+}
+
+.btn-erp-secondary {
+    background: #ffffff;
+    color: var(--erp-text-main);
+    border: 1px solid var(--erp-border);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.btn-erp-secondary:hover {
+    background: #f8fafc;
+    border-color: var(--erp-border-hover);
+}
+
+.btn-erp-outline-cyan {
+    background: #e0f2fe;
+    color: #0284c7;
+    border: 1px solid #bae6fd;
+}
+
+.btn-erp-outline-cyan:hover {
+    background: #bae6fd;
+}
+
+/* ==========================================================================
+   FICHA ECONÓMICA DE EVENTO (MODAL / DESGLOSE)
+   ========================================================================== */
+.financial-split-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.financial-box {
+    background: #f8fafc;
+    border: 1px solid var(--erp-border);
+    border-radius: var(--erp-radius-md);
+    padding: 1.25rem;
+}
+
+.financial-box-title {
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.financial-box.income .financial-box-title {
+    color: #15803d;
+}
+
+.financial-box.expense .financial-box-title {
+    color: #e11d48;
+}
+
+.financial-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.82rem;
+}
+
+.financial-row:last-child {
+    border-bottom: none;
+}
+
+.financial-row .label {
+    color: var(--erp-text-muted);
+}
+
+.financial-row .input-wrapper {
+    width: 120px;
+}
+
+.financial-input {
+    width: 100%;
+    padding: 8px 12px;
+    background: #ffffff;
+    border: 1px solid var(--erp-border);
+    border-radius: 8px;
+    color: var(--erp-text-main);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-align: right;
+    font-family: var(--erp-font-title);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.financial-input:focus {
+    outline: none;
+    border-color: #0284c7;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+
+/* TOTALES Y MARGEN RESUMEN */
+.financial-summary-banner {
+    background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+    border: 1.5px solid #86efac;
+    border-radius: var(--erp-radius-lg);
+    padding: 1.25rem 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    align-items: center;
+    margin-top: 1rem;
+    box-shadow: var(--erp-shadow-sm);
+}
+
+.summary-metric {
+    text-align: center;
+}
+
+.summary-metric .label {
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--erp-text-muted);
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.summary-metric .value {
+    font-family: var(--erp-font-title);
+    font-size: 1.35rem;
+    font-weight: 900;
+    color: var(--erp-text-main);
+}
+
+.summary-metric .value.accent {
+    color: #15803d;
+}
+
+.summary-metric .value.positive {
+    color: #15803d;
+}
+
+.summary-metric .value.negative {
+    color: #e11d48;
+}
+
+/* ==========================================================================
+   SIMULADOR DE CONTRATACIONES & BREAK-EVEN
+   ========================================================================== */
+.simulator-container {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.simulator-controls {
+    background: #ffffff;
+    border: 1px solid var(--erp-border);
+    border-radius: var(--erp-radius-lg);
+    padding: 1.75rem;
+    box-shadow: var(--erp-shadow-sm);
+}
+
+.sim-slider-group {
+    margin-bottom: 1.5rem;
+}
+
+.sim-slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.sim-slider-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--erp-text-main);
+}
+
+.sim-slider-val {
+    font-family: var(--erp-font-title);
+    font-size: 1.05rem;
+    font-weight: 900;
+    color: #0f172a;
+}
+
+.sim-slider {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+}
+
+.sim-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #0f172a;
+    border: 2px solid #ccff00;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    transition: transform 0.15s;
+}
+
+.sim-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+}
+
+.simulator-result-card {
+    background: #ffffff;
+    border: 1.5px solid var(--erp-border-hover);
+    border-radius: var(--erp-radius-lg);
+    padding: 1.75rem;
+    box-shadow: var(--erp-shadow-md);
+}
+
+.break-even-pill {
+    background: #f0fdf4;
+    border: 1.5px solid #86efac;
+    border-radius: var(--erp-radius-md);
+    padding: 1.25rem;
+    text-align: center;
+    margin: 1.25rem 0;
+}
+
+.break-even-number {
+    font-family: var(--erp-font-title);
+    font-size: 2.75rem;
+    font-weight: 900;
+    color: #15803d;
+    line-height: 1;
+}
+
+.break-even-text {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--erp-text-main);
+    margin-top: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ==========================================================================
+   ESTILOS ESPECÍFICOS DE LA PROPUESTA NEW PADEL PRO
+   ========================================================================== */
+.pro-negotiation-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 800;
+}
+
+.pro-badge-ask {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+
+.pro-badge-offer {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+}
+
+/* ==========================================================================
+   ESTILOS ULTRA RÁPIDOS Y VISUALES: PRESETS, CHIPS Y BARRA FINANCIERA
+   ========================================================================== */
+.preset-pill-group {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    margin-bottom: 1.25rem;
+    scrollbar-width: thin;
+}
+
+.preset-pill-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: #ffffff;
+    border: 1.5px solid var(--erp-border);
+    border-radius: 12px;
+    color: var(--erp-text-main);
+    font-family: var(--erp-font-title);
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: var(--erp-shadow-sm);
+}
+
+.preset-pill-btn:hover {
+    background: #f8fafc;
+    border-color: #0f172a;
+    transform: translateY(-2px);
+    box-shadow: var(--erp-shadow-md);
+}
+
+.preset-pill-btn.active {
+    background: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+}
+
+.preset-pill-btn.active .traffic-badge {
+    box-shadow: 0 0 0 1px #ffffff;
+}
+
+.chip-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.chip-btn {
+    padding: 6px 12px;
+    border-radius: 8px;
+    background: #ffffff;
+    border: 1px solid var(--erp-border);
+    font-family: var(--erp-font-title);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--erp-text-muted);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.chip-btn:hover {
+    background: #f1f5f9;
+    color: var(--erp-text-main);
+    border-color: #94a3b8;
+}
+
+.chip-btn.active {
+    background: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
+    font-weight: 800;
+}
+
+.counter-stepper {
+    display: inline-flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1.5px solid var(--erp-border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.counter-stepper button {
+    background: #f8fafc;
+    border: none;
+    width: 38px;
+    height: 38px;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--erp-text-main);
+    cursor: pointer;
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.counter-stepper button:hover {
+    background: #e2e8f0;
+}
+
+.counter-stepper span {
+    min-width: 60px;
+    text-align: center;
+    font-family: var(--erp-font-title);
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--erp-text-main);
+    padding: 0 8px;
+}
+
+.sharing-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.sharing-card {
+    background: #ffffff;
+    border: 1.5px solid var(--erp-border);
+    border-radius: 12px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.sharing-card:hover {
+    border-color: #94a3b8;
+    background: #f8fafc;
+    transform: translateY(-1px);
+}
+
+.sharing-card.active {
+    border-color: #16a34a;
+    background: #f0fdf4;
+    box-shadow: 0 2px 8px rgba(22, 163, 74, 0.12);
+}
+
+.financial-waterfall-bar {
+    width: 100%;
+    height: 28px;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    background: #e2e8f0;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin: 12px 0 8px 0;
+}
+
+.financial-waterfall-seg {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    transition: width 0.3s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    padding: 0 4px;
+}
+
+.seg-court { background: #e11d48; }
+.seg-balls { background: #f59e0b; }
+.seg-helpers { background: #8b5cf6; }
+.seg-alex { background: #0284c7; }
+.seg-socio { background: #15803d; }
+
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    color: var(--erp-text-muted);
+}
+
+.legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+}
+.calendar-view-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.calendar-tabs {
+    display: flex;
+    background: #f1f5f9;
+    border: 1px solid var(--erp-border);
+    padding: 4px;
+    border-radius: 12px;
+    gap: 4px;
+}
+
+.calendar-tab-btn {
+    padding: 6px 14px;
+    background: transparent;
+    border: none;
+    color: var(--erp-text-muted);
+    font-size: 0.78rem;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.calendar-tab-btn.active {
+    background: #ffffff;
+    color: var(--erp-text-main);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.calendar-grid-month {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+}
+
+.calendar-day-header {
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--erp-text-dim);
+    text-transform: uppercase;
+    padding: 8px 0;
+}
+
+.calendar-day-cell {
+    background: #ffffff;
+    border: 1px solid var(--erp-border);
+    border-radius: var(--erp-radius-md);
+    min-height: 110px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    transition: background 0.2s, box-shadow 0.2s;
+}
+
+.calendar-day-cell:hover {
+    background: #f8fafc;
+    box-shadow: var(--erp-shadow-sm);
+}
+
+.calendar-day-cell.today {
+    border-color: #0284c7;
+    background: #f0f9ff;
+}
+
+.calendar-day-num {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--erp-text-dim);
+    margin-bottom: 6px;
+}
+
+.calendar-day-cell.today .calendar-day-num {
+    color: #0284c7;
+}
+
+.calendar-event-tag {
+    background: #e0f2fe;
+    border-left: 3px solid #0284c7;
+    border-radius: 4px;
+    padding: 4px 6px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #0369a1;
+    margin-bottom: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: transform 0.15s;
+}
+
+.calendar-event-tag:hover {
+    transform: scale(1.02);
+}
+
+.calendar-event-tag.profitable {
+    border-left-color: #16a34a;
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.calendar-event-tag.low-margin {
+    border-left-color: #e11d48;
+    background: #ffe4e6;
+    color: #be123c;
+}
+
+/* ==========================================================================
+   MODAL DE AUTENTICACIÓN POR PIN DE 6 DÍGITOS (210021)
+   ========================================================================== */
+.erp-auth-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+}
+
+.erp-auth-card {
+    background: #ffffff;
+    border: 2px solid var(--erp-border);
+    border-radius: var(--erp-radius-xl);
+    padding: 2.75rem 2.25rem;
+    width: 100%;
+    max-width: 440px;
+    text-align: center;
+    box-shadow: var(--erp-shadow-lg);
+    animation: authPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes authPop {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.erp-auth-badge {
+    display: inline-block;
+    padding: 5px 14px;
+    background: #f8fafc;
+    border: 1px solid var(--erp-border);
+    border-radius: 20px;
+    color: #0f172a;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 1.25rem;
+}
+
+.erp-auth-pin-display {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 1.75rem 0;
+}
+
+.pin-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid #cbd5e1;
+    background: transparent;
+    transition: all 0.2s ease;
+}
+
+.pin-dot.filled {
+    background: #0f172a;
+    border-color: #0f172a;
+    box-shadow: 0 0 8px rgba(15, 23, 42, 0.4);
+}
+
+.erp-keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    max-width: 290px;
+    margin: 0 auto;
+}
+
+.keypad-btn {
+    height: 56px;
+    border-radius: 14px;
+    background: #f8fafc;
+    border: 1px solid var(--erp-border);
+    color: var(--erp-text-main);
+    font-family: var(--erp-font-title);
+    font-size: 1.35rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.keypad-btn:hover {
+    background: #f1f5f9;
+    border-color: var(--erp-border-hover);
+    transform: translateY(-2px);
+}
+
+.keypad-btn:active {
+    transform: scale(0.96);
+    background: #e2e8f0;
+}
+
+.keypad-btn.action {
+    font-size: 1rem;
+    color: var(--erp-text-muted);
+}
+
+/* MODALES GENERALES */
+.erp-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(8px);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.erp-modal-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.erp-modal-content {
+    background: #ffffff;
+    border: 1px solid var(--erp-border);
+    border-radius: var(--erp-radius-lg);
+    width: 100%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 2rem;
+    position: relative;
+    box-shadow: var(--erp-shadow-lg);
+}
+
+.erp-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--erp-border);
+}
+
+.erp-modal-close {
+    background: transparent;
+    border: none;
+    color: var(--erp-text-muted);
+    font-size: 1.35rem;
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+}
+
+.erp-modal-close:hover {
+    color: var(--erp-text-main);
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN (MÓVIL & TABLET)
+   ========================================================================== */
+@media (max-width: 992px) {
+    .erp-sidebar {
+        transform: translateX(-100%);
+    }
+
+    .erp-sidebar.open {
+        transform: translateX(0);
+        box-shadow: 20px 0 50px rgba(15, 23, 42, 0.25);
+    }
+
+    .erp-main {
+        margin-left: 0;
+    }
+
+    .erp-mobile-menu-btn {
+        display: block;
+    }
+
+    .erp-topbar {
+        padding: 0 1.25rem;
+    }
+
+    .erp-workspace {
+        padding: 1.25rem 1rem;
+    }
+
+    .financial-split-grid,
+    .simulator-container {
+        grid-template-columns: 1fr;
+    }
+
+    .erp-kpi-hero {
+        grid-column: span 1;
+    }
+}
+
+/* ==========================================================================
+   NAVEGACIÓN POR PESTAÑAS DE CLUBES Y VISTA DETALLADA POR CLUB
+   ========================================================================== */
+.club-tabs-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 6px 2px 14px 2px;
+    margin-bottom: 1.25rem;
+    border-bottom: 1.5px solid var(--erp-border);
+    scrollbar-width: thin;
+}
+
+.club-tabs-nav::-webkit-scrollbar {
+    height: 4px;
+}
+
+.club-tabs-nav::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.club-tab-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 16px;
+    background: #ffffff;
+    border: 1.5px solid var(--erp-border);
+    border-radius: 12px;
+    font-family: var(--erp-font-title);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--erp-text-muted);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: var(--erp-shadow-sm);
+}
+
+.club-tab-pill:hover {
+    background: #f8fafc;
+    color: var(--erp-text-main);
+    border-color: var(--erp-border-hover);
+    transform: translateY(-1px);
+}
+
+.club-tab-pill.active {
+    background: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+}
+
+.club-tab-pill.active .traffic-badge {
+    box-shadow: 0 0 0 1px #ffffff;
+}
+
+.club-tab-pill-add {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 14px;
+    background: #f0fdf4;
+    border: 1.5px dashed #86efac;
+    border-radius: 12px;
+    font-family: var(--erp-font-title);
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: #166534;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.club-tab-pill-add:hover {
+    background: #dcfce7;
+    border-color: #4ade80;
+    transform: translateY(-1px);
+}
+
+.club-header-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 1.5px solid var(--erp-border);
+    border-radius: var(--erp-radius-lg);
+    box-shadow: var(--erp-shadow-sm);
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.club-sim-card {
+    background: #ffffff;
+    border: 1.5px solid var(--erp-border);
+    border-radius: var(--erp-radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--erp-shadow-sm);
+}
+
+/* ==========================================================================
+   EVOLUCIÓN VISUAL: SELECTOR DE FRANJAS (OPCIONES A Y B) & CANCHAS PÁDEL
+   ========================================================================== */
+.franja-selector-tabs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.franja-tab-card {
+    background: #ffffff;
+    border: 2px solid var(--erp-border);
+    border-radius: 14px;
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: var(--erp-shadow-sm);
+}
+
+.franja-tab-card:hover {
+    border-color: #94a3b8;
+    transform: translateY(-2px);
+    box-shadow: var(--erp-shadow-md);
+}
+
+.franja-tab-card.active {
+    border-color: #0f172a;
+    background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+}
+
+.franja-tab-card.active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: #0f172a;
+    border-radius: 14px 14px 0 0;
+}
+
+.franja-tab-card.morning.active::before {
+    background: #0284c7;
+}
+
+.franja-tab-card.friday.active::before {
+    background: #16a34a;
+}
+
+.franja-tab-card.all.active::before {
+    background: #9333ea;
+}
+
+/* CANCHAS GRÁFICAS DE PÁDEL (1 A 5 PISTAS MÁXIMO) */
+.padel-court-visual-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin: 4px 0 6px 0;
+}
+
+@media (max-width: 768px) {
+    .padel-court-visual-grid {
+        grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+    }
+}
+
+.padel-court-item {
+    background: #f1f5f9;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 4px 2px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.padel-court-item:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--erp-shadow-sm);
+}
+
+.padel-court-item.active {
+    background: linear-gradient(180deg, #dcfce7 0%, #bbf7d0 100%);
+    border-color: #16a34a;
+    box-shadow: 0 2px 8px rgba(22, 163, 74, 0.2);
+}
+
+.padel-court-item.morning-style.active {
+    background: linear-gradient(180deg, #e0f2fe 0%, #bae6fd 100%);
+    border-color: #0284c7;
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.2);
+}
+
+.padel-court-diagram {
+    width: 100%;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(15, 23, 42, 0.2);
+    border-radius: 3px;
+    margin: 2px auto 3px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.padel-court-net {
+    width: 100%;
+    height: 1.5px;
+    background: #0f172a;
+    position: relative;
+}
+
+.padel-court-players {
+    display: flex;
+    justify-content: space-around;
+    padding: 1px 2px;
+    font-size: 0.58rem;
+    line-height: 1;
+}
+
+/* TABLA DE PROPUESTA OFICIAL (FIEL A LAS CAPTURAS) */
+.proposal-table-official {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 0.82rem;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.proposal-table-official th {
+    background: #0f172a;
+    color: #ffffff;
+    font-family: var(--erp-font-title);
+    font-weight: 800;
+    text-align: left;
+    padding: 10px 14px;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+}
+
+.proposal-table-official td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #e2e8f0;
+    color: var(--erp-text-main);
+}
+
+.proposal-table-official tr:nth-child(even) td {
+    background: #f8fafc;
+}
+
+.proposal-table-official tr:hover td {
+    background: #f1f5f9;
+}
+
+.proposal-table-official tr.row-net-profit td {
+    background: #ecfdf5 !important;
+    font-weight: 800;
+    color: #065f46;
+    border-top: 2px solid #a7f3d0;
+    border-bottom: 2px solid #a7f3d0;
+}
+
+/* ==========================================================================
+   ESTILOS EXCLUSIVOS: EL PACTÓMETRO & SIMULADOR DE BENEFICIOS (VISTA EN 1 HOJA DEL TIRÓN)
+   Tablero táctico interactivo de movimientos, rentabilidad y reparto societario
+   ========================================================================== */
+.erp-workspace.pactometro-compact-workspace {
+    padding: 0.75rem 1.25rem;
+}
+
+.pactometro-one-page {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: 100%;
+    width: 100%;
+}
+
+.pactometro-header-card {
+    background: #0f172a;
+    color: #ffffff;
+    border-radius: 10px;
+    padding: 0.45rem 0.95rem;
+    margin-bottom: 0.45rem;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    border: 1px solid #1e293b;
+}
+
+.pactometro-live-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(225, 29, 72, 0.2);
+    color: #fb7185;
+    border: 1px solid #e11d48;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.65rem;
+    font-weight: 900;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    animation: livePulse 2s infinite ease-in-out;
+}
+
+@keyframes livePulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.75; transform: scale(0.98); }
+}
+
+.pactometro-meter-card {
+    background: #ffffff;
+    border: 2px solid #0f172a;
+    border-radius: 12px;
+    padding: 0.65rem 0.95rem;
+    margin-bottom: 0.45rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    position: relative;
+    overflow: hidden;
+}
+
+.pactometro-track-wrap {
+    position: relative;
+    background: #e2e8f0;
+    border-radius: 999px;
+    height: 22px;
+    padding: 2px;
+    margin: 0.4rem 0 0.35rem 0;
+    border: 2px solid #0f172a;
+    overflow: hidden;
+}
+
+.pactometro-fill-bar {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+    color: #ffffff;
+    font-family: var(--erp-font-title);
+    font-weight: 900;
+    font-size: 0.75rem;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    min-width: 35px;
+}
+
+.pactometro-target-marker {
+    position: absolute;
+    top: -6px;
+    bottom: -6px;
+    width: 3px;
+    background: #e11d48;
+    box-shadow: 0 0 8px rgba(225, 29, 72, 0.8);
+    z-index: 5;
+    pointer-events: none;
+}
+
+.pactometro-target-flag {
+    position: absolute;
+    top: -20px;
+    transform: translateX(-50%);
+    background: #e11d48;
+    color: #ffffff;
+    font-size: 0.58rem;
+    font-weight: 900;
+    padding: 1px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(225, 29, 72, 0.4);
+    z-index: 6;
+}
+
+.pactometro-status-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 12px;
+    border-radius: 8px;
+    margin-top: 4px;
+    font-family: var(--erp-font-title);
+    font-weight: 800;
+    font-size: 0.82rem;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.pactometro-status-banner.success {
+    background: #dcfce7;
+    color: #14532d;
+    border: 1.5px solid #86efac;
+}
+
+.pactometro-status-banner.warning {
+    background: #fef9c3;
+    color: #713f12;
+    border: 1.5px solid #fde047;
+}
+
+.pactometro-status-banner.danger {
+    background: #ffe4e6;
+    color: #881337;
+    border: 1.5px solid #fda4af;
+}
+
+.pactometro-goal-pills {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 2px;
+}
+
+.pactometro-goal-btn {
+    padding: 3px 8px;
+    background: #f1f5f9;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pactometro-goal-btn:hover {
+    border-color: #0f172a;
+    background: #e2e8f0;
+}
+
+.pactometro-goal-btn.active {
+    background: #0f172a;
+    color: #ccff00;
+    border-color: #0f172a;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.2);
+}
+
+.pactometro-scoreboard-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.55rem;
+    margin-bottom: 0.45rem;
+}
+
+.pactometro-screen-card {
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 0.55rem 0.75rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    position: relative;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pactometro-screen-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.pactometro-presets-box {
+    margin-bottom: 0.55rem;
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 0.55rem 0.85rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+}
+
+.pactometro-presets-title {
+    font-size: 0.72rem;
+    font-weight: 900;
+    color: #0f172a;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    letter-spacing: 0.4px;
+}
+
+.pactometro-presets-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 0.45rem;
+}
+
+.preset-pill-group {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 1px 0;
+}
+
+.preset-pill-btn {
+    padding: 3px 8px;
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #334155;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.preset-pill-btn:hover {
+    border-color: #0f172a;
+    background: #f8fafc;
+}
+
+.preset-pill-btn.active {
+    background: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
+}
+
+.pactometro-moves-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.15fr;
+    gap: 0.55rem;
+    margin-bottom: 0;
+}
+
+.pactometro-console-box {
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.6rem 0.8rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.pacto-share-tile {
+    text-align: left !important;
+    padding: 5px 8px !important;
+    border-radius: 6px !important;
+    border: 1.5px solid #cbd5e1 !important;
+    background: #f8fafc !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pacto-share-tile:hover {
+    border-color: #0f172a !important;
+    background: #f1f5f9 !important;
+}
+
+.pacto-share-tile.active {
+    background: #0f172a !important;
+    color: #ccff00 !important;
+    border-color: #0f172a !important;
+}
+
+/* ==========================================================================
+   SELECTOR DE VISTA: RESUMEN TOTAL VS DETALLE AMERICANA POR AMERICANA
+   ========================================================================== */
+.pactometro-view-selector-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 6px 12px;
+    margin-bottom: 0.45rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.pactometro-toggle-pill {
+    padding: 5px 12px;
+    background: #f8fafc;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 0.76rem;
+    font-weight: 800;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pactometro-toggle-pill:hover {
+    background: #e2e8f0;
+    border-color: #0f172a;
+}
+
+.pactometro-toggle-pill.active {
+    background: #0f172a;
+    color: #ccff00;
+    border-color: #0f172a;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
+}
+
+.pactometro-sub-pill {
+    padding: 4px 10px;
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pactometro-sub-pill:hover {
+    border-color: #0284c7;
+    color: #0284c7;
+}
+
+.pactometro-sub-pill.active {
+    background: #0284c7;
+    color: #ffffff;
+    border-color: #0284c7;
+    font-weight: 800;
+}
+
+.pactometro-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+    margin-bottom: 0.6rem;
+}
+
+.pactometro-detail-card {
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 0.75rem 0.9rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.pactometro-detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.74rem;
+}
+
+.pactometro-detail-table th {
+    background: #f8fafc;
+    color: #0f172a;
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: 0.68rem;
+    letter-spacing: 0.5px;
+    padding: 8px 10px;
+    border-bottom: 2px solid #e2e8f0;
+    text-align: left;
+}
+
+.pactometro-detail-table td {
+    padding: 7px 10px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+}
+
+.pactometro-detail-table tr:hover td {
+    background: #f8fafc;
+}
+
+
+/* ==========================================================================
+   ESTILOS DE IMPRESIÓN (UNA SOLA HOJA DEL TIRÓN / DOSSIER EJECUTIVO)
+   ========================================================================== */
+@media print {
+    @page {
+        size: A4 landscape;
+        margin: 6mm 6mm 6mm 6mm;
+    }
+
+    html, body, body.erp-body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        width: 100% !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        font-size: 11px !important;
+    }
+
+    .erp-sidebar,
+    .erp-topbar,
+    .erp-auth-overlay,
+    .btn-erp,
+    .erp-btn-micro,
+    .club-tab-pill-add,
+    .no-print {
+        display: none !important;
+    }
+
+    .erp-main {
+        margin-left: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+    }
+
+    .erp-workspace,
+    .erp-workspace.pactometro-compact-workspace {
+        padding: 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+
+    .pactometro-one-page {
+        gap: 2.5mm !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    .pactometro-header-card {
+        background: #0f172a !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        padding: 2mm 4mm !important;
+        margin-bottom: 2mm !important;
+    }
+
+    .pactometro-meter-card,
+    .pactometro-scoreboard-grid,
+    .pactometro-screen-card,
+    .pactometro-moves-grid,
+    .pactometro-console-box,
+    .pactometro-presets-bar {
+        border: 1px solid #cbd5e1 !important;
+        box-shadow: none !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    .pactometro-track-wrap {
+        height: 18px !important;
+        margin: 2mm 0 !important;
+    }
+
+    .pactometro-scoreboard-grid {
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 2mm !important;
+    }
+
+    .pactometro-moves-grid {
+        grid-template-columns: 1fr 1fr 1.15fr !important;
+        gap: 2mm !important;
+    }
+
+    .padel-court-visual-grid {
+        gap: 1.5mm !important;
+        margin: 1.5mm 0 !important;
+    }
+
+    .padel-court-diagram {
+        height: 20px !important;
+    }
+
+    .erp-kpi-val, .erp-card-title, h1, h2, h3, h4 {
+        color: #000000 !important;
+    }
+}

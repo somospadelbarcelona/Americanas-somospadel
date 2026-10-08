@@ -118,6 +118,81 @@
             border-top: none;
             margin-top: 0;
         }
+        .sede-combobox-group-favorites {
+            background: linear-gradient(90deg, #fef3c7 0%, #fffbeb 100%) !important;
+            color: #b45309 !important;
+            border-top: none !important;
+            border-bottom: 1px solid #fde68a !important;
+            font-weight: 900 !important;
+            letter-spacing: 0.6px;
+            display: flex !important;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px !important;
+        }
+        .sede-combobox-item-favorite {
+            background: #fffdf5;
+            border: 1px solid #fef3c7;
+            margin: 3px 6px !important;
+            padding: 8px 12px !important;
+            border-radius: 8px;
+        }
+        .sede-combobox-item-favorite:hover {
+            background: #fef9c3 !important;
+            border-color: #fde047 !important;
+            color: #854d0e !important;
+            transform: translateX(2px);
+        }
+        .sede-item-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+        .sede-item-name-fav {
+            font-weight: 700;
+            color: #0f172a;
+            font-size: 0.88rem;
+        }
+        .sede-thumb-img {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            object-fit: cover;
+            border: 1px solid #cbd5e1;
+            flex-shrink: 0;
+        }
+        .sede-fav-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #fef3c7;
+            color: #d97706;
+            font-size: 0.72rem;
+            flex-shrink: 0;
+        }
+        .sede-fav-badge-mini {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 6px;
+            color: #f59e0b;
+            font-size: 0.72rem;
+        }
+        .sede-fav-tag {
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: #fef3c7;
+            color: #b45309;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+            border: 1px solid #fde68a;
+        }
         .sede-combobox-item {
             padding: 9px 14px;
             font-size: 0.85rem;
@@ -1577,6 +1652,31 @@
                 </div>
 
                 <!-- ========================================== -->
+                <!-- 🏢 CONTROL EMPRESARIAL & EVENTOS (ERP)     -->
+                <!-- ========================================== -->
+                <div class="sidebar-section" style="margin-bottom: 8px;">
+                    <a href="organizacion.html" class="nav-item-pro" style="background: linear-gradient(135deg, rgba(204,255,0,0.12) 0%, rgba(56,189,248,0.08) 100%); border: 1.5px solid rgba(204,255,0,0.35); text-decoration: none; display: flex; align-items: center; gap: 10px; border-radius: 12px; padding: 10px 14px;">
+                        <span class="icon-box" style="color: #ccff00; font-size: 1rem;"><i class="fas fa-chart-line"></i></span>
+                        <span class="nav-text" style="font-weight: 800; color: #fff; font-size: 0.82rem;">ORGANIZACIÓN SOMOSPADEL</span>
+                        <span class="nav-badge" style="background: #ccff00; color: #000; font-weight: 900; margin-left: auto;">ERP</span>
+                    </a>
+                </div>
+
+                <!-- ========================================== -->
+                <!-- 🛍️ TIENDA SOMOSPADEL BCN (ADMIN & SHOP)    -->
+                <!-- ========================================== -->
+                <div class="sidebar-section" style="margin-bottom: 8px;">
+                    <button class="nav-item-pro btn-tienda" data-view="tienda_admin" onclick="loadAdminView('tienda_admin')" style="background: linear-gradient(135deg, rgba(16,185,129,0.16) 0%, rgba(204,255,0,0.1) 100%); border: 1.5px solid rgba(16,185,129,0.4); text-align: left; width: 100%; display: flex; align-items: center; gap: 10px; border-radius: 12px; padding: 10px 14px; cursor: pointer;">
+                        <span class="icon-box" style="color: #10b981; font-size: 1rem;"><i class="fas fa-store"></i></span>
+                        <span class="nav-text" style="font-weight: 800; color: #fff; font-size: 0.82rem;">TIENDA (E-COMMERCE)</span>
+                        <span class="nav-badge" style="background: #10b981; color: #000; font-weight: 900; margin-left: auto;">ADMIN</span>
+                    </button>
+                    <a href="tienda.html" target="_blank" style="display: flex; align-items: center; justify-content: center; gap: 6px; color: #94a3b8; font-size: 0.7rem; font-weight: 700; text-decoration: none; padding: 4px 8px; margin-top: 4px; transition: color 0.15s;" onmouseover="this.style.color='#CCFF00'" onmouseout="this.style.color='#94a3b8'">
+                        <i class="fas fa-arrow-up-right-from-square" style="font-size: 0.65rem;"></i> Abrir escaparate público
+                    </a>
+                </div>
+
+                <!-- ========================================== -->
                 <!-- B) 🎾 COMPETICIONES & PISTAS               -->
                 <!-- ========================================== -->
                 <div class="sidebar-section section-competitions">
@@ -2304,9 +2404,9 @@
                             <div class="form-group">
                                 <label>MODO DE JUEGO</label>
                                 <select name="pair_mode" id="edit-entreno-pair-mode" class="pro-input" onchange="window.updatePairModeHelper(this, 'edit-entreno-pair-mode-desc')">
-                                    <option value="fixed">🔒 PAREJA FIJA</option>
-                                    <option value="rotating">🌪️ TWISTER INDIVIDUAL</option>
-                                    <option value="swiss">🇨🇭 SUIZO (Americana / Entreno Suizo)</option>
+                                    <option value="twister">🌪️ TWISTER INDIVIDUAL (Pozo rotativo)</option>
+                                    <option value="fixed">🔒 PAREJA FIJA (Dupla todo el torneo)</option>
+                                    <option value="swiss">🇨🇭 SUIZO (Puntos acumulados)</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -2413,6 +2513,10 @@
                                     onclick="selectEntrenoImage('img/entreno femenino delfos.jpg')">Delfos Fem</button>
                                 <button type="button" class="btn-micro" style="background: #ccff00; color: #000;"
                                     onclick="selectEntrenoImage('img/entreno mixto delfos.jpg')">Delfos Mixto</button>
+                                <button type="button" class="btn-micro" style="background: #38bdf8; color: #000; font-weight: 800;"
+                                    onclick="selectEntrenoImage('img/new_play_padel_pro.png')">⭐ New Play Padel</button>
+                                <button type="button" class="btn-micro" style="background: #0284c7; color: #fff; font-weight: 800;"
+                                    onclick="selectEntrenoImage('img/cem_tennis_hospitalet.png')">⭐ CEM Tennis</button>
                             </div>
                         </div>
 
@@ -2628,9 +2732,9 @@
                             <div class="form-group">
                                 <label>MODO DE JUEGO</label>
                                 <select name="pair_mode" id="edit-americana-pair-mode" class="pro-input" onchange="window.updatePairModeHelper(this, 'edit-americana-pair-mode-desc')">
-                                    <option value="fixed">🔒 PAREJA FIJA</option>
-                                    <option value="rotating">🌪️ TWISTER INDIVIDUAL</option>
-                                    <option value="swiss">🇨🇭 SUIZO (Americana / Entreno Suizo)</option>
+                                    <option value="twister">🌪️ TWISTER INDIVIDUAL (Pozo rotativo)</option>
+                                    <option value="fixed">🔒 PAREJA FIJA (Dupla todo el torneo)</option>
+                                    <option value="swiss">🇨🇭 SUIZO (Puntos acumulados)</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -2730,6 +2834,8 @@
                                 <button type="button" class="btn-micro" onclick="window.selectAmericanaImage('img/americana mixta.jpg')" style="background: #ccff00; color: black;">Mixta</button>
                                 <button type="button" class="btn-micro" onclick="window.selectAmericanaImage('img/entreno todo prat.jpg')" style="background: #ffffff; color: black;">Prat</button>
                                 <button type="button" class="btn-micro" onclick="window.selectAmericanaImage('img/entreno todo delfos.jpg')" style="background: #ffffff; color: black;">Delfos</button>
+                                <button type="button" class="btn-micro" onclick="window.selectAmericanaImage('img/new_play_padel_pro.png')" style="background: #38bdf8; color: black; font-weight: 800;">⭐ New Play</button>
+                                <button type="button" class="btn-micro" onclick="window.selectAmericanaImage('img/cem_tennis_hospitalet.png')" style="background: #0284c7; color: white; font-weight: 800;">⭐ CEM Tennis</button>
                                 <button type="button" class="btn-micro" onclick="window.selectAmericanaImage('img/ball-mixta.png')">Pelota</button>
                             </div>
                         </div>
@@ -2924,10 +3030,31 @@
             <!-- LEGACY SERVICES (Keep for compatibility if needed during transition) -->
             <!-- AmericanaService duplicated above -->
 
+            <!-- Tournament Engine (NASA Grade CSP) -->
+            <script src="js/tournament-engine/DecisionLogger.js?v=2026.5"></script>
+            <script src="js/tournament-engine/TournamentConstraints.js?v=2026.5"></script>
+            <script src="js/tournament-engine/FeasibilityValidator.js?v=2026.5.2"></script>
+            <script src="js/tournament-engine/TournamentSolver.js?v=2026.5.2"></script>
+            <script src="js/tournament-engine/modes/BaseTournamentMode.js?v=2026.5.2"></script>
+            <script src="js/tournament-engine/modes/AmericanaClasicaMode.js?v=2026.5.2"></script>
+            <script src="js/tournament-engine/modes/AmericanaMexicanaMode.js?v=2026.5.2"></script>
+            <script src="js/tournament-engine/modes/AmericanaMixtaMode.js?v=2026.5.2"></script>
+            <script src="js/tournament-engine/modes/AmericanaTwisterMode.js?v=2026.5.2"></script>
+            <script src="js/tournament-engine/modes/ReyDeLaPistaMode.js?v=2026.5.2"></script>
+            <script src="js/tournament-engine/modes/PozoAmericanoMode.js?v=2026.5.2"></script>
+            <script src="js/tournament-engine/modes/EntrenoRotacionesMode.js?v=2026.5.2"></script>
+            <script src="js/tournament-engine/modes/EntrenoNivelesMode.js?v=2026.5.2"></script>
+            <script src="js/tournament-engine/modes/EntrenoLibreMode.js?v=2026.5.2"></script>
+            <script src="js/tournament-engine/TwisterInvariantGuard.js?v=2026.5.2"></script>
+            <script src="js/tournament-engine/TournamentEngine.js?v=2026.5.2"></script>
+
             <!-- Logic Services (CORE) -->
-            <script src="js/fixed-pairs-logic.js?v=5013"></script>
-            <script src="js/rotating-pozo-logic.js?v=5013"></script>
-            <script src="js/MatchMakingService.js?v=5003"></script>
+            <script src="js/fixed-pairs-logic.js?v=2026.5.3"></script>
+            <script src="js/rotating-pozo-logic.js?v=2026.5.3"></script>
+            <script src="js/PreFlightRoundVerifier.js?v=2026.5.3"></script>
+            <script src="js/MatchMakingService.js?v=2026.5.3"></script>
+            <script src="js/modules/logic/RoundAutoRegenerationService.js?v=2026.5.3"></script>
+            <script src="js/modules/ui/RoundAutoRegenNotice.js?v=2026.5.3"></script>
             <script src="js/modules/logic/LevelAdjustmentService.js"></script>
             <script src="js/modules/common/LevelService.js?v=2001"></script>
             <script>
@@ -2940,6 +3067,8 @@
             </script>
             <script src="js/modules/americanas/AmericanaLogic.js"></script>
             <script src="js/modules/americanas/AmericanaService.js"></script>
+            <script src="js/modules/players/PlayerHistoryService.js?v=2026.1"></script>
+            <script src="js/modules/players/PadelFutCard.js?v=COTILLEAR_WHITE_v2026_2"></script>
             <script src="js/modules/logic/AutomationService.js"></script>
             <script src="js/app-init.js"></script>
 
@@ -2993,6 +3122,10 @@
             <script src="js/modules/admin/TournamentLogicAuditService.js?v=20260927_V3"></script>
             <script src="js/modules/admin/AdminTournamentLogicLab.js?v=20260927_V3"></script>
 
+            <!-- 🛍️ Tienda SomosPadel BCN (E-Commerce Backoffice) -->
+            <script src="js/modules/tienda/TiendaService.js?v=20261007_v2"></script>
+            <script src="js/modules/admin-tienda.js?v=20261007_v1"></script>
+
 
             <!-- DIAGNOSTIC SCRIPT (Optional) -->
             <script>
@@ -3018,48 +3151,89 @@
 
             <!-- DIAGNOSTIC CONSOLE -->
             <div id="debug-console"
-                style="position: fixed; bottom: 0; left: 0; width: 100%; background: #000; color: #0f0; border-top: 2px solid #0f0; padding: 10px; font-family: monospace; font-size: 12px; z-index: 99999; max-height: 150px; overflow-y: auto; display: none;">
+                style="position: fixed; bottom: 0; left: 0; width: 100%; background: #000; color: #0f0; border-top: 2px solid #0f0; padding: 10px; font-family: monospace; font-size: 12px; z-index: 99999; max-height: 160px; overflow-y: auto; display: none;">
                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,255,0,0.3); padding-bottom: 4px; margin-bottom: 6px;">
                     <div>🚀 CONSOLA DE DIAGNÓSTICO (v2.0)</div>
-                    <button onclick="document.getElementById('debug-console').style.display='none'" style="background: rgba(255,255,255,0.15); color: #fff; border: 1px solid #555; border-radius: 4px; padding: 2px 8px; font-size: 11px; cursor: pointer;">Cerrar ✕</button>
+                    <div style="display: flex; gap: 6px;">
+                        <button onclick="const m=document.getElementById('debug-console-messages'); if(m) m.innerHTML='';" style="background: rgba(255,255,255,0.15); color: #fff; border: 1px solid #555; border-radius: 4px; padding: 2px 8px; font-size: 11px; cursor: pointer;">Limpiar</button>
+                        <button onclick="document.getElementById('debug-console').style.display='none'" style="background: rgba(255,255,255,0.15); color: #fff; border: 1px solid #555; border-radius: 4px; padding: 2px 8px; font-size: 11px; cursor: pointer;">Cerrar ✕</button>
+                    </div>
                 </div>
+                <div id="debug-console-messages"></div>
             </div>
             <script>
-                window.onerror = function (msg, url, line, col, error) {
-                    const lower = String(msg || '').toLowerCase();
-                    // 1. Suprimir errores opacos de CORS / Script Error
-                    if (lower.includes('script error') || !msg || (!url && !line) || (line === 0)) {
-                        console.warn("⚠️ [admin.onerror] CORS/Script error suprimido:", msg, url, line);
-                        return true;
-                    }
-                    // 2. Suprimir aserciones benignas de Firestore / IndexedDB
-                    if (lower.includes('internal assertion failed') || lower.includes('unexpected state') || lower.includes('assertion failed')) {
-                        console.warn("⚠️ [admin.onerror] Firestore assertion suprimida:", msg);
-                        return true;
-                    }
-                    // 3. Mostrar errores reales con detalle y opción de descarte
-                    const c = document.getElementById('debug-console');
-                    if (c) { 
-                        c.style.display = 'block'; 
-                        const errDesc = error ? (error.message || String(error)) : msg;
-                        c.innerHTML += `<div style="color:red; margin-top:3px;">❌ ${errDesc} (L${line || 0})</div>`; 
-                    }
-                };
-                window.onunhandledrejection = function (e) {
-                    const reason = e ? (e.reason || '') : '';
-                    const reasonStr = (reason && (reason.message || (typeof reason === 'string' ? reason : reason.toString()))) || '';
-                    const lower = String(reasonStr).toLowerCase();
-                    if (lower.includes('internal assertion failed') || lower.includes('unexpected state') || lower.includes('assertion failed') || lower.includes('script error') || !reasonStr) {
-                        console.warn("⚠️ [admin.onunhandledrejection] Firestore/CORS assertion suprimida:", reasonStr);
-                        if (typeof e.preventDefault === 'function') e.preventDefault();
-                        return;
-                    }
-                    const c = document.getElementById('debug-console');
-                    if (c) { 
-                        c.style.display = 'block'; 
-                        c.innerHTML += `<div style="color:yellow; margin-top:3px;">⚠️ PROMISE: ${reasonStr}</div>`; 
-                    }
-                };
+                (function() {
+                    let isHandlingError = false;
+                    window.onerror = function (msg, url, line, col, error) {
+                        if (isHandlingError) return true;
+                        isHandlingError = true;
+                        try {
+                            const lower = String(msg || '').toLowerCase();
+                            // 1. Suprimir errores opacos de CORS / Script Error
+                            if (lower.includes('script error') || !msg || (!url && !line) || (line === 0)) {
+                                console.warn("⚠️ [admin.onerror] CORS/Script error suprimido:", msg, url, line);
+                                return true;
+                            }
+                            // 2. Suprimir aserciones benignas de Firestore / IndexedDB
+                            if (lower.includes('internal assertion failed') || lower.includes('unexpected state') || lower.includes('assertion failed')) {
+                                console.warn("⚠️ [admin.onerror] Firestore assertion suprimida:", msg);
+                                return true;
+                            }
+                            // 3. Auto-recuperación de RangeError / Maximum call stack size exceeded de IndexedDB
+                            if (lower.includes('maximum call stack size exceeded') || lower.includes('rangeerror')) {
+                                console.warn("⚠️ [admin.onerror] Call stack size exceeded capturado y aislado:", msg);
+                                try {
+                                    window.indexedDB?.deleteDatabase?.('firestore/[DEFAULT]/americanas-somospadel/main');
+                                } catch (_) {}
+                                return true;
+                            }
+                            // 4. Mostrar errores reales de forma limpia sin romper el DOM ni provocar re-flows masivos
+                            const c = document.getElementById('debug-console');
+                            const m = document.getElementById('debug-console-messages') || c;
+                            if (c && m) { 
+                                c.style.display = 'block'; 
+                                const file = url ? url.split('/').pop().split('?')[0] : 'admin.html';
+                                const errDesc = error ? (error.message || String(error)) : msg;
+                                const item = document.createElement('div');
+                                item.style.color = '#ef4444';
+                                item.style.marginTop = '3px';
+                                item.textContent = `❌ [${file}:${line || 0}] ${errDesc}`;
+                                m.appendChild(item);
+                                while (m.children.length > 40) {
+                                    m.removeChild(m.firstChild);
+                                }
+                            }
+                        } catch (e) {
+                            // Ignorar errores internos en el manejador
+                        } finally {
+                            isHandlingError = false;
+                        }
+                    };
+
+                    window.onunhandledrejection = function (e) {
+                        const reason = e ? (e.reason || '') : '';
+                        const reasonStr = (reason && (reason.message || (typeof reason === 'string' ? reason : reason.toString()))) || '';
+                        const lower = String(reasonStr).toLowerCase();
+                        if (lower.includes('internal assertion failed') || lower.includes('unexpected state') || lower.includes('assertion failed') || lower.includes('script error') || lower.includes('maximum call stack') || !reasonStr) {
+                            console.warn("⚠️ [admin.onunhandledrejection] Excepción asíncrona suprimida/recuperada:", reasonStr);
+                            if (typeof e?.preventDefault === 'function') e.preventDefault();
+                            return;
+                        }
+                        const c = document.getElementById('debug-console');
+                        const m = document.getElementById('debug-console-messages') || c;
+                        if (c && m) { 
+                            c.style.display = 'block'; 
+                            const item = document.createElement('div');
+                            item.style.color = '#f59e0b';
+                            item.style.marginTop = '3px';
+                            item.textContent = `⚠️ PROMISE: ${reasonStr}`;
+                            m.appendChild(item);
+                            while (m.children.length > 40) {
+                                m.removeChild(m.firstChild);
+                            }
+                        }
+                    };
+                })();
 
                 // Mobile/Tablet Sidebar Drawer Toggle
                 window.toggleAdminSidebar = function (forceState) {
@@ -3407,36 +3581,83 @@
                     }
                 };
 
-                // Interceptar console.log y mostrarlo en nuestra consola
+                function addToConsole(message, type = 'log') {
+                    // Optimización de rendimiento: no hacer nada en el DOM si la consola de emergencia no está visible
+                    const consoleElem = document.getElementById('emergency-console');
+                    if (!consoleElem || consoleElem.style.display !== 'block') return;
+
+                    const output = document.getElementById('console-output');
+                    if (!output) return;
+
+                    const color = type === 'error' ? '#ff0000' : type === 'warn' ? '#ffff00' : '#00ff00';
+                    const timestamp = new Date().toLocaleTimeString();
+                    
+                    const entry = document.createElement('div');
+                    entry.style.cssText = `color:${color}; margin-bottom:4px; font-family:monospace; font-size:11px; word-break:break-all;`;
+                    entry.textContent = `[${timestamp}] ${message}`;
+                    output.appendChild(entry);
+
+                    // Mantener máximo 100 líneas para no degradar memoria ni FPS
+                    while (output.childNodes.length > 100) {
+                        output.removeChild(output.firstChild);
+                    }
+                    output.scrollTop = output.scrollHeight;
+                }
+                window.addToConsole = addToConsole;
+
+                // Interceptar console.log y mostrarlo en nuestra consola de forma segura y sin impacto en rendimiento
                 (function () {
                     const originalLog = console.log;
                     const originalError = console.error;
                     const originalWarn = console.warn;
+                    let isLogging = false;
 
-                    function addToConsole(message, type = 'log') {
-                        const output = document.getElementById('console-output');
-                        if (output) {
-                            const color = type === 'error' ? '#ff0000' : type === 'warn' ? '#ffff00' : '#00ff00';
-                            const timestamp = new Date().toLocaleTimeString();
-                            output.innerHTML += `<div style="color:${color}; margin-bottom:5px;">[${timestamp}] ${message}</div>`;
-                            output.scrollTop = output.scrollHeight;
+                    function safeFormatArg(arg) {
+                        if (arg === null) return 'null';
+                        if (arg === undefined) return 'undefined';
+                        if (typeof arg === 'string') return arg;
+                        if (typeof arg === 'number' || typeof arg === 'boolean') return String(arg);
+                        try {
+                            if (arg instanceof Error) return arg.message + (arg.stack ? '\n' + arg.stack : '');
+                            return JSON.stringify(arg);
+                        } catch (_) {
+                            try { return String(arg); } catch (__) { return '[Object]'; }
                         }
                     }
 
                     console.log = function (...args) {
                         originalLog.apply(console, args);
-                        addToConsole(args.join(' '), 'log');
+                        if (isLogging) return;
+                        isLogging = true;
+                        try {
+                            const msg = args.map(safeFormatArg).join(' ');
+                            addToConsole(msg, 'log');
+                        } catch (_) {}
+                        finally { isLogging = false; }
                     };
 
                     console.error = function (...args) {
                         originalError.apply(console, args);
-                        addToConsole('❌ ERROR: ' + args.join(' '), 'error');
+                        if (isLogging) return;
+                        isLogging = true;
+                        try {
+                            const msg = args.map(safeFormatArg).join(' ');
+                            addToConsole('❌ ERROR: ' + msg, 'error');
+                        } catch (_) {}
+                        finally { isLogging = false; }
                     };
 
                     console.warn = function (...args) {
                         originalWarn.apply(console, args);
-                        addToConsole('⚠️ WARNING: ' + args.join(' '), 'warn');
+                        if (isLogging) return;
+                        isLogging = true;
+                        try {
+                            const msg = args.map(safeFormatArg).join(' ');
+                            addToConsole('⚠️ WARNING: ' + msg, 'warn');
+                        } catch (_) {}
+                        finally { isLogging = false; }
                     };
+                })();
 
                     // Ejecutar comandos desde la consola
                     window.executeConsoleCommand = function () {
@@ -3523,7 +3744,6 @@
                             }
                         }
                     };
-                })();
             </script>
             <style>
                 /* --- 🏳️ WHITE THEME: ENTRENO MODAL OVERRIDE (PURE BLACK EDITION) --- */
@@ -3727,7 +3947,8 @@
             { view: 'sos_substitutes', label: 'SOS Suplentes', icon: 'fa-user-clock' },
             { view: 'season_campaign', label: 'Equipos 2027', icon: 'fa-shield-halved' },
 
-            // 5. 📈 MARKETING & BLOG
+            // 5. 📈 MARKETING, TIENDA & BLOG
+            { view: 'tienda_admin', label: 'Tienda Admin', icon: 'fa-store', isPrimary: true },
             { view: 'analytics', label: 'Analytics', icon: 'fa-chart-line', isPrimary: true },
             { view: 'blog_posts', label: 'Blog', icon: 'fa-newspaper' },
             { href: 'promo-studio.html?mode=copilot', label: 'Copiloto Alex', icon: 'fa-wand-magic-sparkles', target: '_blank' },

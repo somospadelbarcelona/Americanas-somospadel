@@ -125,20 +125,18 @@ window.WhatsAppService = {
 
     /**
      * Construye la URL canónica directa para un evento (Americanas o Entrenos)
-     * Formato canónico:
-     * - Americanas: https://somospadelbarcelona.github.io/Americanas-somospadel/?event=${event.id}#americanas
-     * - Entrenos: https://somospadelbarcelona.github.io/Americanas-somospadel/?event=${event.id}#entrenos
+     * Formato limpio y optimizado para compartir en WhatsApp
      */
     getEventCanonicalUrl(event) {
         const baseUrl = "https://somospadelbarcelona.github.io/Americanas-somospadel/";
         if (!event) return baseUrl;
         const name = (event.name || '').toUpperCase();
         const isEntreno = event.type === 'entreno' || name.includes('ENTRENO');
-        const sectionHash = isEntreno ? "#entrenos" : "#americanas";
         const rawId = event.id || event._id || event.uid;
         const eventId = rawId ? encodeURIComponent(String(rawId).trim()) : '';
-        const queryParam = eventId ? `?event=${eventId}` : '';
-        return `${baseUrl}${queryParam}${sectionHash}`;
+        if (!eventId) return baseUrl;
+        const typeParam = isEntreno ? '&type=entreno' : '';
+        return `${baseUrl}?event=${eventId}${typeParam}`;
     },
 
     /**

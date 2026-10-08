@@ -201,13 +201,14 @@
               "category": "${chosenCategory.name}",
               "catColor": "${chosenCategory.color}",
               "emoji": "${chosenCategory.emoji}",
-              "imageUrl": "Elige una URL de imagen de Unsplash según el tema. Puedes usar:
-                           - Para Táctica/Clinic: https://images.unsplash.com/photo-1592919505780-303950717480?q=80&w=600&auto=format&fit=crop
-                           - Para Material: https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?q=80&w=600&auto=format&fit=crop
-                           - Para Salud/Mental: https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=600&auto=format&fit=crop
-                           - Para Nutrición: https://images.unsplash.com/photo-1490645935967-10de6ba17061?q=80&w=600&auto=format&fit=crop
-                           - Para Comunidad: https://images.unsplash.com/photo-1528605248644-14dd04022da1?q=80&w=600&auto=format&fit=crop
-                           (U otra URL similar de Unsplash de alta calidad)",
+              "imageUrl": "Elige exactamente una de estas rutas relativas de imagen según el tema del artículo:
+                           - Para Táctica/Clinic/Juego: img/blog_action_smash.png
+                           - Para Comunidad/Parejas/Twister: img/blog_padel_twister_team.jpg
+                           - Para Material/Equipamiento/Palas: img/blog_racket_ball.png
+                           - Para Salud/Fisio/Prevención: img/blog_padel_health.jpg
+                           - Para Nutrición/Hidratación: img/blog_padel_nutrition.jpg
+                           - Para Torneos/Campeonatos/Podium: img/blog_padel_trophy.jpg
+                           - Para Pistas y Club: img/pista_padel_azul.png",
               "imgGrad": "Un gradiente lineal CSS sutil para la cabecera (ej: linear-gradient(135deg, #fb923c 0%, #f97316 100%))",
               "content": "El cuerpo del artículo en formato HTML. Debe ser extenso (mínimo 300 palabras), estructurado e incluir:
                           1. Introducción emocionante.
@@ -237,11 +238,15 @@
             const jsonText = data.candidates[0].content.parts[0].text;
             const parsed = JSON.parse(jsonText);
 
+            const finalImg = (parsed.imageUrl && parsed.imageUrl.startsWith('img/')) 
+                ? parsed.imageUrl 
+                : (chosenCategory.imageUrl || 'img/blog_action_smash.png');
+
             return {
                 title: parsed.title,
                 category: parsed.category || chosenCategory.name,
                 catColor: parsed.catColor || chosenCategory.color,
-                imageUrl: parsed.imageUrl || chosenCategory.imageUrl,
+                imageUrl: finalImg,
                 snippet: parsed.snippet,
                 content: parsed.content,
                 date: 'Hoy',
@@ -542,6 +547,19 @@
                     setTimeout(() => card.remove(), 260);
                 }
             };
+
+            // Handlers para abrir popups modales minimizados
+            window.showSocialModal = () => this.showSocialModal();
+            window.openSocialModal = () => this.showSocialModal();
+            window.closeSocialModal = () => {
+                const overlay = document.getElementById('sp-social-modal-overlay');
+                if (overlay) {
+                    overlay.style.opacity = '0';
+                    overlay.style.transition = 'opacity 0.2s ease';
+                    setTimeout(() => overlay.remove(), 210);
+                }
+            };
+            window.openPushModal = () => this.showPushNotificationPopup();
 
             // Escuchar cambios de permiso push en tiempo real para refrescar banner
             if (!this._pushPermissionListenerAttached) {
@@ -893,135 +911,104 @@
                         </div>
                     </div>
 
-                    <!-- ⭐ 3. REDES SOCIALES: SÉ PROTAGONISTA (COMPACTO) ⭐ -->
-                    <div class="sp-social-compact-card" style="
-                        margin: 0 15px 12px !important;
-                        background: linear-gradient(135deg, #090e1a 0%, #0f172a 60%, #152238 100%);
-                        border: 1.2px solid rgba(204, 255, 0, 0.4);
-                        border-radius: 18px;
-                        padding: 12px 14px;
-                        color: #ffffff;
-                        box-shadow: 0 8px 22px -5px rgba(0, 0, 0, 0.45), 0 0 16px rgba(204, 255, 0, 0.08);
-                        position: relative;
-                        overflow: hidden;
-                        animation: floatUp 0.35s ease-out forwards;
-                    ">
-                        <!-- Glow sutil de fondo -->
-                        <div style="position: absolute; top: -25px; right: -25px; width: 90px; height: 90px; background: radial-gradient(circle, rgba(225, 48, 108, 0.2) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
-
-                        <!-- Fila 1: Badge + Título y Botón Copiar -->
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <span style="
-                                    background: rgba(204, 255, 0, 0.15);
-                                    color: #CCFF00;
-                                    border: 1px solid rgba(204, 255, 0, 0.45);
-                                    padding: 2px 7px;
-                                    border-radius: 7px;
-                                    font-size: 0.62rem;
-                                    font-weight: 950;
-                                    letter-spacing: 0.4px;
-                                ">
-                                    📸 SÉ PROTAGONISTA
-                                </span>
-                                <span style="font-size: 0.82rem; font-weight: 950; color: #ffffff; letter-spacing: -0.2px;">
-                                    ¡Etiquétanos y sal en la app!
-                                </span>
-                            </div>
-
-                            <button type="button" onclick="window.SocialChannelsService ? window.SocialChannelsService.copyTag(this) : (navigator.clipboard?.writeText('@somospadelbarcelona_'))" class="haptic-feedback" style="
-                                background: rgba(255, 255, 255, 0.08);
-                                border: 1px solid rgba(255, 255, 255, 0.18);
-                                color: #ffffff;
-                                padding: 3px 9px;
-                                border-radius: 8px;
-                                font-size: 0.66rem;
-                                font-weight: 850;
-                                cursor: pointer;
-                                display: inline-flex;
+                    <!-- 💬 CHAT GENERAL SOMOSPADEL (ACCESO DESTACADO EN EL INICIO) -->
+                    <div onclick="window.PlayerView?.haptic?.(20); window.ChatView?.openGeneralCommunityChat();" 
+                         title="Abrir Chat General de SomosPadel"
+                         style="
+                            margin: 0 15px 16px;
+                            background: linear-gradient(135deg, #090e1a 0%, #15233c 100%);
+                            border-radius: 20px;
+                            border: 1.5px solid rgba(204, 255, 0, 0.45);
+                            padding: 13px 15px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                            gap: 12px;
+                            cursor: pointer;
+                            box-shadow: 0 8px 24px rgba(9, 14, 26, 0.45), 0 0 16px rgba(204, 255, 0, 0.16);
+                            transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+                            position: relative;
+                            overflow: hidden;
+                         "
+                         onmouseover="this.style.transform='translateY(-2px) scale(1.01)'; this.style.borderColor='#CCFF00'; this.style.boxShadow='0 12px 30px rgba(9,14,26,0.5), 0 0 22px rgba(204,255,0,0.3)';"
+                         onmouseout="this.style.transform='none'; this.style.borderColor='rgba(204, 255, 0, 0.45)'; this.style.boxShadow='0 8px 24px rgba(9, 14, 26, 0.45), 0 0 16px rgba(204, 255, 0, 0.16)';"
+                         onmousedown="this.style.transform='scale(0.98)';">
+                        <!-- Efecto brillo de fondo -->
+                        <div style="position: absolute; right: -25px; top: -25px; width: 110px; height: 110px; background: radial-gradient(circle, rgba(204,255,0,0.18) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+                        
+                        <!-- Columna Izquierda: Icono + Textos -->
+                        <div style="display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; position: relative; z-index: 2;">
+                            <div style="
+                                width: 46px;
+                                height: 46px;
+                                border-radius: 14px;
+                                background: linear-gradient(135deg, rgba(204, 255, 0, 0.2) 0%, rgba(204, 255, 0, 0.05) 100%);
+                                border: 1.5px solid #CCFF00;
+                                display: flex;
                                 align-items: center;
-                                gap: 4px;
-                                transition: all 0.15s ease;
-                            "
-                            onmouseover="this.style.background='rgba(255,255,255,0.14)';"
-                            onmouseout="this.style.background='rgba(255,255,255,0.08)';">
-                                <i class="fas fa-copy" style="color: #CCFF00; font-size: 0.66rem;"></i>
-                                <span>Copiar @</span>
-                            </button>
+                                justify-content: center;
+                                flex-shrink: 0;
+                                box-shadow: 0 0 14px rgba(204, 255, 0, 0.28);
+                                position: relative;
+                            ">
+                                <i class="fas fa-comments" style="color: #CCFF00; font-size: 1.3rem;"></i>
+                                <span style="position: absolute; top: -3px; right: -3px; width: 9px; height: 9px; background: #22c55e; border: 2px solid #090e1a; border-radius: 50%; box-shadow: 0 0 6px #22c55e;"></span>
+                            </div>
+                            <div style="min-width: 0; flex: 1; overflow: hidden;">
+                                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; overflow: hidden;">
+                                    <span style="color: #ffffff; font-weight: 950; font-size: 0.88rem; text-transform: uppercase; letter-spacing: 0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;">
+                                        CHAT GENERAL
+                                    </span>
+                                    <span style="
+                                        background: #CCFF00;
+                                        color: #090e1a;
+                                        font-size: 0.54rem;
+                                        font-weight: 950;
+                                        padding: 2.5px 7px;
+                                        border-radius: 6px;
+                                        letter-spacing: 0.4px;
+                                        white-space: nowrap;
+                                        flex-shrink: 0;
+                                        display: inline-flex;
+                                        align-items: center;
+                                        gap: 3.5px;
+                                        box-shadow: 0 1px 6px rgba(204, 255, 0, 0.3);
+                                    ">
+                                        <i class="fab fa-whatsapp" style="font-size: 0.62rem; color: #090e1a;"></i>
+                                        <span>CHAT APP</span>
+                                    </span>
+                                </div>
+                                <div style="color: #94a3b8; font-size: 0.70rem; font-weight: 600; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    Comunidad en directo • Retos y partidos
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Fila 2: Texto breve y directo -->
-                        <div style="font-size: 0.72rem; color: #94a3b8; line-height: 1.35; margin-bottom: 9px;">
-                            Fotos de tus partidos, podios y los mejores puntazos en <strong style="color: #CCFF00;">@somospadelbarcelona_</strong> con <strong style="color: #38bdf8;">#SomosPadelBCN</strong>.
-                        </div>
-
-                        <!-- Fila 3: 2 Botones Compactos en Grid (Instagram y Facebook) -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                            <!-- Botón Instagram -->
-                            <div onclick="window.openClubInstagram ? window.openClubInstagram() : window.open('https://www.instagram.com/somospadelbarcelona_/?hl=es', '_blank')"
-                                 class="haptic-feedback"
-                                 style="
-                                     background: rgba(255, 255, 255, 0.04);
-                                     border: 1px solid rgba(225, 48, 108, 0.35);
-                                     border-radius: 12px;
-                                     padding: 7px 9px;
-                                     cursor: pointer;
-                                     display: flex;
-                                     align-items: center;
-                                     justify-content: space-between;
-                                     gap: 6px;
-                                     transition: transform 0.15s, border-color 0.15s;
-                                 "
-                                 onmouseover="this.style.transform='translateY(-1px)'; this.style.borderColor='#ff6492';"
-                                 onmouseout="this.style.transform='none'; this.style.borderColor='rgba(225, 48, 108, 0.35)';">
-                                <div style="display: flex; align-items: center; gap: 7px; min-width: 0;">
-                                    <div style="width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(45deg, #f09433, #dc2743, #bc1888); display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 0.92rem; flex-shrink: 0; box-shadow: 0 2px 7px rgba(220,39,67,0.35);">
-                                        <i class="fab fa-instagram"></i>
-                                    </div>
-                                    <div style="min-width: 0;">
-                                        <div style="font-weight: 950; font-size: 0.74rem; color: #ffffff; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Instagram</div>
-                                        <div style="font-size: 0.59rem; color: #ff6492; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Fotos & Reels</div>
-                                    </div>
-                                </div>
-                                <span style="color: #CCFF00; font-weight: 950; font-size: 0.68rem; flex-shrink: 0;">➔</span>
-                            </div>
-
-                            <!-- Botón Facebook -->
-                            <div onclick="window.openClubFacebook ? window.openClubFacebook() : window.open('https://www.facebook.com/?locale=es_ES', '_blank')"
-                                 class="haptic-feedback"
-                                 style="
-                                     background: rgba(255, 255, 255, 0.04);
-                                     border: 1px solid rgba(24, 119, 242, 0.35);
-                                     border-radius: 12px;
-                                     padding: 7px 9px;
-                                     cursor: pointer;
-                                     display: flex;
-                                     align-items: center;
-                                     justify-content: space-between;
-                                     gap: 6px;
-                                     transition: transform 0.15s, border-color 0.15s;
-                                 "
-                                 onmouseover="this.style.transform='translateY(-1px)'; this.style.borderColor='#60a5fa';"
-                                 onmouseout="this.style.transform='none'; this.style.borderColor='rgba(24, 119, 242, 0.35)';">
-                                <div style="display: flex; align-items: center; gap: 7px; min-width: 0;">
-                                    <div style="width: 28px; height: 28px; border-radius: 8px; background: #1877f2; display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 0.92rem; flex-shrink: 0; box-shadow: 0 2px 7px rgba(24,119,242,0.35);">
-                                        <i class="fab fa-facebook-f"></i>
-                                    </div>
-                                    <div style="min-width: 0;">
-                                        <div style="font-weight: 950; font-size: 0.74rem; color: #ffffff; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Facebook</div>
-                                        <div style="font-size: 0.59rem; color: #60a5fa; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Comunidad</div>
-                                    </div>
-                                </div>
-                                <span style="color: #60a5fa; font-weight: 950; font-size: 0.68rem; flex-shrink: 0;">➔</span>
-                            </div>
+                        <!-- Columna Derecha: Botón Neón Entrar -->
+                        <div style="
+                            background: linear-gradient(135deg, #CCFF00 0%, #a3e635 100%);
+                            color: #090e1a;
+                            padding: 6px 11px;
+                            border-radius: 11px;
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 5px;
+                            flex-shrink: 0;
+                            position: relative;
+                            z-index: 2;
+                            box-shadow: 0 2px 10px rgba(204, 255, 0, 0.35);
+                            transition: transform 0.15s ease, box-shadow 0.15s ease;
+                        ">
+                            <span style="color: #090e1a !important; font-size: 0.70rem; font-weight: 950; text-transform: uppercase; letter-spacing: 0.4px; line-height: 1;">ENTRAR</span>
+                            <i class="fas fa-arrow-right" style="color: #090e1a !important; font-size: 0.65rem;"></i>
                         </div>
                     </div>
 
+                    <!-- Contenedor de notificaciones push oculto (gestión 100% modal intermitente) -->
+                    <div id="push-notification-promo-banner-root" style="display: none !important;"></div>
+
                     <!-- 🌦️ BANNER SPOTLIGHT: NUEVO RADAR Y CLIMA DE PISTAS -->
                     <div id="radar-clima-notification-banner-root"></div>
-
-                    <!-- 🔔 BANNER PROMO: NOTIFICACIONES PUSH EN TIEMPO REAL -->
-                    <div id="push-notification-promo-banner-root"></div>
 
                     <!-- 🔥 HERO CARD PREMIUM: TEMPORADA 2027 | EQUIPOS SOMOSPADEL -->
                     <div id="season-campaign-banner-root" style="margin: 0 15px 20px !important; animation: floatUp 0.5s ease-out forwards;">
@@ -1337,104 +1324,74 @@
                         <!-- Content loaded via JS -->
                     </div>
 
-                    <!-- 3.6 ESPACIO CLUBES & ORGANIZADORES (HIPER LLAMATIVO) -->
-                    <div id="dashboard-organizers-promo-root" style="margin: 0 15px 16px !important; animation: floatUp 0.8s ease-out forwards;">
+                    <!-- 3.6 ESPACIO CLUBES & ORGANIZADORES (COMPACTO & PROFESIONAL) -->
+                    <div id="dashboard-organizers-promo-root" style="margin: 0 15px 10px !important; animation: floatUp 0.8s ease-out forwards;">
                         <!-- Content loaded via JS -->
                     </div>
 
-
-
-                    <!-- ⚖️ TARJETA OFICIAL: SISTEMA DE PUNTOS Y PONDERACIÓN DEL RANKING -->
-                    <div id="points-policy-card-root" style="margin: 0 15px 16px !important; animation: floatUp 0.8s ease-out forwards;">
+                    <!-- ⚖️ TARJETA OFICIAL: SISTEMA DE PUNTOS Y PONDERACIÓN DEL RANKING (COMPACTO & PROFESIONAL) -->
+                    <div id="points-policy-card-root" style="margin: 0 15px 14px !important; animation: floatUp 0.8s ease-out forwards;">
                         <div style="
-                            background: linear-gradient(145deg, #090e1a 0%, #0f172a 55%, #152238 100%);
-                            border: 1.5px solid rgba(204, 255, 0, 0.4);
-                            border-radius: 22px;
-                            padding: 18px 18px 16px;
+                            background: linear-gradient(135deg, rgba(8, 14, 28, 0.95) 0%, rgba(15, 23, 42, 0.92) 100%);
+                            border: 1px solid rgba(56, 189, 248, 0.28);
+                            border-radius: 18px;
+                            padding: 12px 16px;
                             position: relative;
                             overflow: hidden;
-                            box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.5), 0 0 25px rgba(204, 255, 0, 0.12);
+                            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px rgba(56, 189, 248, 0.08);
                             color: #ffffff;
                             font-family: 'Outfit', sans-serif;
                         ">
-                            <!-- Glows sutiles -->
-                            <div style="position: absolute; top: -35px; right: -35px; width: 130px; height: 130px; background: radial-gradient(circle, rgba(204, 255, 0, 0.22) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
-                            <div style="position: absolute; bottom: -35px; left: -35px; width: 120px; height: 120px; background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+                            <!-- Top laser accent line -->
+                            <div style="position: absolute; top: 0; left: 0; right: 0; height: 2.5px; background: linear-gradient(90deg, #38bdf8, #CCFF00); border-radius: 18px 18px 0 0;"></div>
 
-                            <!-- Header Badges -->
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; position: relative; z-index: 2; flex-wrap: wrap; gap: 6px;">
-                                <div style="display: flex; align-items: center; gap: 6px;">
-                                    <span style="background: #CCFF00; color: #000000; font-size: 0.62rem; font-weight: 950; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 2px 8px rgba(204,255,0,0.3);">
-                                        ⚖️ REGLAMENTO OFICIAL
-                                    </span>
-                                    <span style="background: rgba(34, 197, 94, 0.15); color: #4ade80; font-size: 0.60rem; font-weight: 900; padding: 3px 7px; border-radius: 6px; border: 1px solid rgba(34, 197, 94, 0.3);">
-                                        ENTRENOS & AMERICANAS 1:1
-                                    </span>
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+                                <!-- Left: Info & Title -->
+                                <div style="flex: 1; min-width: 200px;">
+                                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
+                                        <span style="background: rgba(56, 189, 248, 0.14); color: #38bdf8; font-size: 0.60rem; font-weight: 950; padding: 2px 7px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.6px; border: 1px solid rgba(56, 189, 248, 0.3);">
+                                            ⚖️ REGLAMENTO OFICIAL
+                                        </span>
+                                        <span style="font-size: 0.62rem; color: #94a3b8; font-weight: 700;">• Entrenos & Americanas 1:1</span>
+                                    </div>
+                                    <div style="font-size: 0.92rem; font-weight: 950; color: #ffffff; letter-spacing: -0.2px; line-height: 1.25;">
+                                        Sistema de Puntos & Baremo de Ranking
+                                    </div>
+                                    <div style="font-size: 0.72rem; color: #cbd5e1; font-weight: 500; margin-top: 1px;">
+                                        100 pts (1º) • 80 pts (2º) • 65 pts (3º)... +2 pts por victoria (PG).
+                                    </div>
                                 </div>
-                                <span style="font-size: 0.68rem; color: #94a3b8; font-weight: 700; display: flex; align-items: center; gap: 4px;">
-                                    <span>👑</span> Baremo Actualizado
-                                </span>
+
+                                <!-- Right: Compact Action Button -->
+                                <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                                    <button 
+                                        type="button" 
+                                        onclick="window.showPointsPolicyModal ? window.showPointsPolicyModal() : null;" 
+                                        style="
+                                            background: #CCFF00;
+                                            color: #000000;
+                                            border: none;
+                                            padding: 8px 14px;
+                                            border-radius: 12px;
+                                            font-weight: 1000;
+                                            font-size: 0.76rem;
+                                            letter-spacing: 0.2px;
+                                            cursor: pointer;
+                                            display: inline-flex;
+                                            align-items: center;
+                                            gap: 6px;
+                                            box-shadow: 0 3px 12px rgba(204, 255, 0, 0.35);
+                                            transition: all 0.2s ease;
+                                            white-space: nowrap;
+                                            font-family: 'Outfit', sans-serif;
+                                        "
+                                        onmouseover="this.style.transform='scale(1.04)';"
+                                        onmouseout="this.style.transform='scale(1)';">
+                                        <i class="fas fa-balance-scale" style="font-size: 0.85rem;"></i>
+                                        <span>Ver Baremo & Simulador</span>
+                                    </button>
+                                </div>
                             </div>
-
-                            <!-- Título y Descripción -->
-                            <div style="position: relative; z-index: 2; margin-bottom: 12px;">
-                                <h3 style="margin: 0 0 5px; font-size: 1.15rem; font-weight: 950; color: #ffffff; letter-spacing: -0.3px; display: flex; align-items: center; gap: 6px;">
-                                    <span>Sistema de Puntos & Ranking</span>
-                                    <span style="color: #CCFF00; font-size: 0.85rem;">⚡</span>
-                                </h3>
-                                <p style="margin: 0; font-size: 0.77rem; color: #cbd5e1; line-height: 1.42;">
-                                    Nuevo sistema unificado para todos los eventos: <strong style="color: #CCFF00;">100 pts</strong> (1º), <strong style="color: #ffffff;">80 pts</strong> (2º), <strong style="color: #f59e0b;">65 pts</strong> (3º)... más <strong style="color: #38bdf8;">+2 pts extra por cada victoria (PG)</strong>.
-                                </p>
-                            </div>
-
-                            <!-- 3 Pastillas visuales de modos -->
-                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 14px; position: relative; z-index: 2;">
-                                <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(236, 72, 153, 0.3); border-radius: 12px; padding: 8px 6px; text-align: center;">
-                                    <div style="font-size: 1.05rem; line-height: 1;">🌪️</div>
-                                    <div style="font-size: 0.68rem; font-weight: 950; color: #f472b6; margin-top: 2px;">Twister</div>
-                                    <div style="font-size: 0.58rem; color: #94a3b8; font-weight: 600;">Puesto Indiv.</div>
-                                </div>
-                                <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 8px 6px; text-align: center;">
-                                    <div style="font-size: 1.05rem; line-height: 1; color: #ef4444; font-weight: 900;">✚</div>
-                                    <div style="font-size: 0.68rem; font-weight: 950; color: #fca5a5; margin-top: 2px;">Suizo</div>
-                                    <div style="font-size: 0.58rem; color: #94a3b8; font-weight: 600;">Por Juegos</div>
-                                </div>
-                                <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 12px; padding: 8px 6px; text-align: center;">
-                                    <div style="font-size: 1.05rem; line-height: 1;">👥</div>
-                                    <div style="font-size: 0.68rem; font-weight: 950; color: #38bdf8; margin-top: 2px;">Pareja Fija</div>
-                                    <div style="font-size: 0.58rem; color: #94a3b8; font-weight: 600;">Puntos Dupla</div>
-                                </div>
-                            </div>
-
-                            <!-- Botón CTA -->
-                            <button 
-                                type="button" 
-                                onclick="window.showPointsPolicyModal ? window.showPointsPolicyModal() : null;" 
-                                style="
-                                    width: 100%;
-                                    padding: 12px 16px;
-                                    background: #CCFF00;
-                                    color: #000000;
-                                    border: none;
-                                    border-radius: 14px;
-                                    font-weight: 950;
-                                    font-size: 0.84rem;
-                                    letter-spacing: 0.4px;
-                                    cursor: pointer;
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                    gap: 8px;
-                                    box-shadow: 0 4px 18px rgba(204, 255, 0, 0.35);
-                                    transition: transform 0.2s, box-shadow 0.2s;
-                                    position: relative;
-                                    z-index: 2;
-                                "
-                                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 22px rgba(204, 255, 0, 0.5)';"
-                                onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 18px rgba(204, 255, 0, 0.35)';">
-                                <i class="fas fa-balance-scale" style="font-size: 0.95rem;"></i>
-                                <span>VER SISTEMA COMPLETO & SIMULADOR</span>
-                            </button>
                         </div>
                     </div>
 
@@ -1698,7 +1655,7 @@
             }
         }
 
-        showShareMenu(postId, title) {
+        showShareMenu(postId, title, explicitImgUrl) {
             const shareUrl = `${window.location.origin}${window.location.pathname}?post=${postId}`;
             const shareText = `¡Mira esta noticia en SomosPadel BCN! 🎾\n\n"${title}"\n\n`;
             
@@ -1731,19 +1688,19 @@
                     <div style="margin-bottom: 22px;">
                         <span style="font-size: 2.5rem; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.3));">📢</span>
                         <h4 style="color: white; font-weight: 950; font-size: 1.25rem; margin: 12px 0 6px 0; letter-spacing: -0.4px;">Compartir Noticia</h4>
-                        <p style="color: rgba(255,255,255,0.5); font-size: 0.78rem; line-height: 1.4; margin: 0; padding: 0 10px;">Selecciona el canal oficial para compartir este contenido con tu red de pádel.</p>
+                        <p style="color: rgba(255,255,255,0.5); font-size: 0.78rem; line-height: 1.4; margin: 0; padding: 0 10px;">Selecciona el canal para compartir la noticia junto con su fotografía oficial.</p>
                     </div>
                     
                     <!-- Lista de Opciones Premium -->
                     <div style="display: flex; flex-direction: column; gap: 12px;">
                         
-                        <!-- WhatsApp Option -->
+                        <!-- WhatsApp Option con Foto -->
                         <button id="share-btn-whatsapp"
-                                style="background: rgba(37, 211, 102, 0.1); border: 1px solid rgba(37, 211, 102, 0.25); color: #25D366; font-weight: 800; font-size: 0.85rem; padding: 12px 16px; border-radius: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);"
-                                onmouseover="this.style.background='rgba(37, 211, 102, 0.2)';this.style.borderColor='#25D366';this.style.transform='scale(1.03) translateY(-1px)';"
-                                onmouseout="this.style.background='rgba(37, 211, 102, 0.1)';this.style.borderColor='rgba(37, 211, 102, 0.25)';this.style.transform='scale(1) translateY(0)';">
-                            <i class="fab fa-whatsapp" style="font-size: 1.2rem;"></i>
-                            <span>Compartir por WhatsApp</span>
+                                style="background: rgba(37, 211, 102, 0.12); border: 1.5px solid rgba(37, 211, 102, 0.35); color: #25D366; font-weight: 850; font-size: 0.88rem; padding: 13px 16px; border-radius: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 4px 15px rgba(37, 211, 102, 0.15);"
+                                onmouseover="this.style.background='rgba(37, 211, 102, 0.25)';this.style.borderColor='#25D366';this.style.transform='scale(1.03) translateY(-1px)';"
+                                onmouseout="this.style.background='rgba(37, 211, 102, 0.12)';this.style.borderColor='rgba(37, 211, 102, 0.35)';this.style.transform='scale(1) translateY(0)';">
+                            <i class="fab fa-whatsapp" style="font-size: 1.25rem;"></i>
+                            <span>Compartir con Foto por WhatsApp</span>
                         </button>
                         
                         <!-- Instagram Option -->
@@ -1791,7 +1748,8 @@
             if (waBtn) {
                 waBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    this.actionShare('whatsapp', shareUrl, encodeURIComponent(shareText));
+                    shareModal.remove();
+                    this.shareToWhatsApp(postId, title, e, explicitImgUrl);
                 });
             }
 
@@ -1813,14 +1771,11 @@
 
             const nativeBtn = shareModal.querySelector('#native-share-btn');
             if (nativeBtn) {
-                if (navigator.share) {
-                    nativeBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        this.actionShare('native', shareUrl, encodeURIComponent(shareText));
-                    });
-                } else {
-                    nativeBtn.style.display = 'none';
-                }
+                nativeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    shareModal.remove();
+                    this.shareToWhatsApp(postId, title, e, explicitImgUrl);
+                });
             }
             
             // Cerrar menú de compartir si se hace clic fuera de la tarjeta
@@ -1886,20 +1841,128 @@
         }
 
         // ─── SOMOS PÁDEL JOURNAL: MÉTODOS SOCIALES & FAVORITOS ───
-        shareBlogPost(postId, title) {
-            this.showShareMenu(postId, title);
+        shareBlogPost(postId, title, explicitImgUrl) {
+            this.showShareMenu(postId, title, explicitImgUrl);
         }
 
-        shareToWhatsApp(postId, title, event) {
+        async shareToWhatsApp(postId, title, event, explicitImgUrl) {
             if (event) {
                 event.stopPropagation();
                 event.preventDefault();
             }
-            const cleanTitle = (title || 'Noticia de Pádel').replace(/["']/g, '');
-            const shareUrl = `${window.location.origin}${window.location.pathname}?post=${postId}`;
-            const text = `🎾 *SOMOS PÁDEL BCN*\n\n¡Mira esta táctica para nuestro próximo partido!\n👉 *"${cleanTitle}"*\n\n📲 Léelo aquí: ${shareUrl}`;
-            const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
-            window.open(waUrl, '_blank');
+
+            // Indicador visual en el botón si existe
+            const clickedBtn = event ? (event.currentTarget || (event.target && event.target.closest ? event.target.closest('button') : null)) : null;
+            const originalBtnHtml = clickedBtn ? clickedBtn.innerHTML : null;
+            if (clickedBtn) {
+                clickedBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size: 0.85rem; color: #25D366;"></i>';
+                clickedBtn.disabled = true;
+            }
+
+            try {
+                const cleanTitle = (title || 'Noticia de Pádel').replace(/["']/g, '');
+                const shareUrl = `${window.location.origin}${window.location.pathname}?post=${postId}`;
+
+                // 1. Resolver ruta relativa de la imagen de la noticia
+                let imgPath = explicitImgUrl || 
+                              (this.currentImagesMap && this.currentImagesMap[postId]) ||
+                              (this.cachedBlogPosts && this.cachedBlogPosts.find(p => p.id === postId)?.imageUrl);
+                
+                if (!imgPath && window.NewsCatalog) {
+                    const cleanPostId = (postId || '').replace(/^news_\d{4}-\d{2}-\d{2}_/, '');
+                    const found = window.NewsCatalog.articles.find(a => a.id === postId || a.id === cleanPostId);
+                    if (found && found.imageUrl) imgPath = found.imageUrl;
+                }
+
+                if (!imgPath || typeof imgPath !== 'string' || imgPath.includes('unsplash')) {
+                    imgPath = 'img/blog_padel_twister_team.jpg';
+                }
+
+                // URL absoluta de la imagen para que sea accesible públicamente y por scrapers
+                const absoluteImgUrl = new URL(imgPath, window.location.href).href;
+
+                // Actualizar meta tags og para bots en caso de SPA
+                try {
+                    let ogImg = document.querySelector('meta[property="og:image"]');
+                    if (ogImg) ogImg.setAttribute('content', absoluteImgUrl);
+                    let ogTitle = document.querySelector('meta[property="og:title"]');
+                    if (ogTitle) ogTitle.setAttribute('content', `${cleanTitle} | SomosPadel BCN`);
+                } catch (_) {}
+
+                // 2. Intentar obtener el archivo de imagen (Blob -> File) para compartir nativo
+                let imageFile = null;
+                try {
+                    const resp = await fetch(imgPath);
+                    if (resp.ok) {
+                        const blob = await resp.blob();
+                        const isPng = imgPath.toLowerCase().endsWith('.png');
+                        const ext = isPng ? 'png' : 'jpg';
+                        const mime = blob.type || (isPng ? 'image/png' : 'image/jpeg');
+                        const filename = `SomosPadel_${(postId || 'noticia').slice(0, 20)}.${ext}`;
+                        imageFile = new File([blob], filename, { type: mime });
+                    }
+                } catch (fetchErr) {
+                    console.warn("No se pudo descargar la imagen local como archivo:", fetchErr);
+                }
+
+                const shareText = `🎾 *SOMOS PÁDEL BCN - REVISTA OFICIAL*\n\n` +
+                                  `👉 *"${cleanTitle}"*\n\n` +
+                                  `📲 *Lee la crónica interactiva en la App:*\n${shareUrl}`;
+
+                // 3. ESTRATEGIA A: Web Share API con archivo adjunto (Móviles iOS / Android con WhatsApp)
+                // Permite a WhatsApp adjuntar la foto real a pantalla completa en el chat con el pie de texto
+                if (imageFile && navigator.canShare && navigator.canShare({ files: [imageFile] })) {
+                    try {
+                        await navigator.share({
+                            title: `${cleanTitle} | SomosPadel BCN`,
+                            text: shareText,
+                            files: [imageFile]
+                        });
+                        this.showJournalToast('¡Noticia con imagen lista para enviar a WhatsApp!', 'fab fa-whatsapp');
+                        return;
+                    } catch (shareErr) {
+                        if (shareErr.name === 'AbortError') {
+                            // Usuario cerró el menú nativo de compartir
+                            return;
+                        }
+                        console.warn("Fallo Web Share API con archivo, probando alternativa wa.me:", shareErr);
+                    }
+                }
+
+                // 4. ESTRATEGIA B: Fallback para WhatsApp Web / Desktop / Navegadores sin Web Share Files
+                // Intentamos copiar la imagen al portapapeles para que al abrir WhatsApp solo tenga que pulsar Ctrl+V
+                let copiedToClipboard = false;
+                if (imageFile && navigator.clipboard && window.ClipboardItem) {
+                    try {
+                        await navigator.clipboard.write([
+                            new ClipboardItem({ [imageFile.type]: imageFile })
+                        ]);
+                        copiedToClipboard = true;
+                    } catch (_) {}
+                }
+
+                // Formatear texto con enlace interactivo y enlace a la foto HD
+                const fullWaText = `${shareText}\n\n📸 *Fotografía de la noticia:*\n${absoluteImgUrl}`;
+                const waUrl = `https://wa.me/?text=${encodeURIComponent(fullWaText)}`;
+
+                if (copiedToClipboard) {
+                    this.showJournalToast('📸 ¡Foto copiada! Pégala en tu chat con Ctrl+V', 'fas fa-camera');
+                } else {
+                    this.showJournalToast('Abriendo WhatsApp con noticia e imagen...', 'fab fa-whatsapp');
+                }
+
+                window.open(waUrl, '_blank');
+
+            } catch (err) {
+                console.error("Error al compartir en WhatsApp:", err);
+                const fallbackUrl = `https://wa.me/?text=${encodeURIComponent('🎾 SOMOS PÁDEL BCN - ' + (title || 'Noticia') + ': ' + window.location.href)}`;
+                window.open(fallbackUrl, '_blank');
+            } finally {
+                if (clickedBtn && originalBtnHtml) {
+                    clickedBtn.innerHTML = originalBtnHtml;
+                    clickedBtn.disabled = false;
+                }
+            }
         }
 
         getSavedBlogPosts() {
@@ -1993,135 +2056,85 @@
         renderClubOrganizersPromo() {
             return `
                 <div class="dashboard-organizer-card" style="
-                    background: linear-gradient(135deg, rgba(8, 14, 28, 0.98) 0%, rgba(15, 23, 42, 0.98) 50%, rgba(3, 7, 18, 0.98) 100%);
-                    border: 1.5px solid rgba(204, 255, 0, 0.45);
-                    border-radius: 26px;
-                    padding: 22px 24px;
+                    background: linear-gradient(135deg, rgba(8, 14, 28, 0.95) 0%, rgba(15, 23, 42, 0.92) 100%);
+                    border: 1px solid rgba(204, 255, 0, 0.28);
+                    border-radius: 18px;
+                    padding: 12px 16px;
                     position: relative;
                     overflow: hidden;
-                    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.85), 0 0 35px -5px rgba(204, 255, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.25);
-                    backdrop-filter: blur(20px);
+                    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px rgba(204, 255, 0, 0.08);
                     font-family: 'Outfit', sans-serif;
                 ">
-                    <!-- Laser Gradient Line on Top -->
-                    <div style="position: absolute; top: 0; left: 0; right: 0; height: 3.5px; background: linear-gradient(90deg, #CCFF00, #38bdf8, #a855f7, #CCFF00); background-size: 200% 100%; animation: neonLaserFlow 4s linear infinite; border-radius: 26px 26px 0 0;"></div>
+                    <!-- Top laser accent line -->
+                    <div style="position: absolute; top: 0; left: 0; right: 0; height: 2.5px; background: linear-gradient(90deg, #CCFF00, #38bdf8); border-radius: 18px 18px 0 0;"></div>
 
-                    <!-- Ambient Glow Orbs -->
-                    <div style="position: absolute; top: -45px; left: -45px; width: 170px; height: 170px; background: radial-gradient(circle, rgba(204, 255, 0, 0.25) 0%, transparent 70%); filter: blur(30px); pointer-events: none;"></div>
-                    <div style="position: absolute; bottom: -45px; right: -45px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(56, 189, 248, 0.22) 0%, transparent 70%); filter: blur(35px); pointer-events: none;"></div>
-                    
-                    <!-- Decorative Background Watermark -->
-                    <i class="fas fa-trophy" style="position: absolute; right: -15px; bottom: -20px; font-size: 8.5rem; color: #CCFF00; opacity: 0.05; transform: rotate(-12deg); pointer-events: none; z-index: 1;"></i>
-
-                    <div style="position: relative; z-index: 2;">
-                        <!-- Top Header: High-Impact Badge + Glowing Trophy Emblem -->
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 12px;">
-                            <div style="display: inline-flex; align-items: center; gap: 7px; background: linear-gradient(135deg, rgba(204, 255, 0, 0.18) 0%, rgba(56, 189, 248, 0.12) 100%); border: 1.5px solid rgba(204, 255, 0, 0.55); padding: 5px 14px; border-radius: 999px; box-shadow: 0 0 18px rgba(204, 255, 0, 0.35);">
-                                <i class="fas fa-crown" style="color: #CCFF00; font-size: 0.75rem; filter: drop-shadow(0 0 4px #CCFF00);"></i>
-                                <span style="color: #CCFF00; font-size: 0.68rem; font-weight: 1000; text-transform: uppercase; letter-spacing: 0.9px;">ESPACIO CLUBES & ORGANIZADORES</span>
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+                        <!-- Left: Info & Title -->
+                        <div style="flex: 1; min-width: 200px;">
+                            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
+                                <span style="background: rgba(204, 255, 0, 0.14); color: #CCFF00; font-size: 0.60rem; font-weight: 950; padding: 2px 7px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.6px; border: 1px solid rgba(204, 255, 0, 0.3);">
+                                    👑 CLUBES & ORGANIZADORES
+                                </span>
+                                <span style="font-size: 0.62rem; color: #94a3b8; font-weight: 700;">• +1.500 Jugadores</span>
                             </div>
-
-                            <div style="width: 48px; height: 48px; border-radius: 16px; background: linear-gradient(135deg, rgba(204, 255, 0, 0.22) 0%, rgba(56, 189, 248, 0.16) 100%); border: 2px solid #CCFF00; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 0 25px rgba(204, 255, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.4); animation: emblemFloat 3s ease-in-out infinite alternate;">
-                                <i class="fas fa-trophy" style="color: #CCFF00; font-size: 1.45rem; filter: drop-shadow(0 2px 8px rgba(204, 255, 0, 0.8));"></i>
+                            <div style="font-size: 0.92rem; font-weight: 950; color: #ffffff; letter-spacing: -0.2px; line-height: 1.25;">
+                                ¿Organizas Americanas en Barcelona?
+                            </div>
+                            <div style="font-size: 0.72rem; color: #cbd5e1; font-weight: 500; margin-top: 1px;">
+                                Publica torneos con Torre de Control y marcador en vivo.
                             </div>
                         </div>
 
-                        <!-- Headline -->
-                        <h3 style="margin: 0 0 8px; color: #ffffff; font-size: 1.32rem; font-weight: 1000; line-height: 1.25; letter-spacing: -0.4px;">
-                            ¿Organizas Americanas en <span style="background: linear-gradient(90deg, #CCFF00 0%, #38bdf8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 0 25px rgba(204,255,0,0.5);">Barcelona</span>?
-                        </h3>
-
-                        <!-- Subtitle -->
-                        <p style="margin: 0 0 14px; color: #cbd5e1; font-size: 0.82rem; line-height: 1.55; font-weight: 500;">
-                            Publica tus torneos aquí, atrae a nuestra comunidad y gestiona en directo con la <strong style="color: #CCFF00; font-weight: 950; text-shadow: 0 0 8px rgba(204,255,0,0.4);">Torre de Control digital</strong>.
-                        </p>
-
-                        <!-- Key Benefits Micro-Chips -->
-                        <div style="display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 16px;">
-                            <span style="background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 10px; padding: 4px 10px; font-size: 0.68rem; font-weight: 900; color: #e2e8f0; display: inline-flex; align-items: center; gap: 6px;">
-                                <i class="fas fa-users" style="color: #38bdf8; font-size: 0.7rem;"></i> +1.500 Jugadores
-                            </span>
-                            <span style="background: rgba(204, 255, 0, 0.1); border: 1px solid rgba(204, 255, 0, 0.35); border-radius: 10px; padding: 4px 10px; font-size: 0.68rem; font-weight: 900; color: #e2e8f0; display: inline-flex; align-items: center; gap: 6px;">
-                                <i class="fas fa-tv" style="color: #CCFF00; font-size: 0.7rem;"></i> Marcador en Vivo
-                            </span>
-                            <span style="background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 10px; padding: 4px 10px; font-size: 0.68rem; font-weight: 900; color: #e2e8f0; display: inline-flex; align-items: center; gap: 6px;">
-                                <i class="fas fa-bolt" style="color: #fbbf24; font-size: 0.7rem;"></i> Sin Coste Fijo
-                            </span>
-                            <span style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 10px; padding: 4px 10px; font-size: 0.68rem; font-weight: 900; color: #e2e8f0; display: inline-flex; align-items: center; gap: 6px;">
-                                <i class="fas fa-rocket" style="color: #c084fc; font-size: 0.7rem;"></i> Llenado Automático
-                            </span>
-                        </div>
-                        
-                        <!-- Actions Grid -->
-                        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                        <!-- Right: Compact Action Buttons -->
+                        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                            <button onclick="window.renderClubBenefitsModal ? window.renderClubBenefitsModal() : (window.EventsController && window.EventsController.renderClubBenefitsModal())"
+                                    style="
+                                        background: rgba(56, 189, 248, 0.1);
+                                        border: 1px solid rgba(56, 189, 248, 0.35);
+                                        color: #38bdf8;
+                                        padding: 8px 12px;
+                                        border-radius: 12px;
+                                        font-weight: 900;
+                                        font-size: 0.74rem;
+                                        cursor: pointer;
+                                        display: inline-flex;
+                                        align-items: center;
+                                        gap: 5px;
+                                        letter-spacing: 0.2px;
+                                        transition: all 0.2s ease;
+                                        font-family: 'Outfit', sans-serif;
+                                    "
+                                    onmouseover="this.style.background='rgba(56, 189, 248, 0.2)'; this.style.borderColor='#38bdf8';"
+                                    onmouseout="this.style.background='rgba(56, 189, 248, 0.1)'; this.style.borderColor='rgba(56, 189, 248, 0.35)';">
+                                <i class="fas fa-info-circle" style="font-size: 0.8rem;"></i>
+                                <span>Ventajas</span>
+                            </button>
                             <a href="https://wa.me/34649219350?text=¡Hola%20Alex!%20Soy%20organizador/club%20de%20pádel%20y%20me%20gustaría%20publicar%20mis%20americanas%20en%20SomosPadel%20BCN." 
                                target="_blank" 
                                rel="noopener noreferrer" 
                                style="
                                    background: #CCFF00;
                                    color: #050b14;
-                                   padding: 12px 20px;
-                                   border-radius: 16px;
+                                   padding: 8px 14px;
+                                   border-radius: 12px;
                                    font-weight: 1000;
-                                   font-size: 0.82rem;
+                                   font-size: 0.76rem;
                                    text-decoration: none;
                                    display: inline-flex;
                                    align-items: center;
-                                   justify-content: center;
-                                   gap: 8px;
-                                   box-shadow: 0 6px 22px rgba(204, 255, 0, 0.45);
-                                   letter-spacing: 0.3px;
-                                   transition: all 0.25s ease;
-                                   flex: 1;
-                                   min-width: 175px;
+                                   gap: 6px;
+                                   box-shadow: 0 3px 12px rgba(204, 255, 0, 0.35);
+                                   letter-spacing: 0.2px;
+                                   transition: all 0.2s ease;
                                "
-                               onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 26px rgba(204, 255, 0, 0.65)';"
-                               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 22px rgba(204, 255, 0, 0.45)';"
-                               onmousedown="this.style.transform='scale(0.97)';">
-                                <i class="fab fa-whatsapp" style="font-size: 1.15rem; color: #050b14;"></i>
-                                <span>PUBLICAR MI EVENTO</span>
+                               onmouseover="this.style.transform='scale(1.04)';"
+                               onmouseout="this.style.transform='scale(1)';">
+                                <i class="fab fa-whatsapp" style="font-size: 0.95rem;"></i>
+                                <span>Publicar</span>
                             </a>
-                            <button onclick="window.renderClubBenefitsModal ? window.renderClubBenefitsModal() : (window.EventsController && window.EventsController.renderClubBenefitsModal())" 
-                                    style="
-                                        background: rgba(56, 189, 248, 0.12);
-                                        border: 1.5px solid rgba(56, 189, 248, 0.35);
-                                        color: #ffffff;
-                                        padding: 12px 18px;
-                                        border-radius: 16px;
-                                        font-weight: 950;
-                                        font-size: 0.82rem;
-                                        cursor: pointer;
-                                        display: inline-flex;
-                                        align-items: center;
-                                        justify-content: center;
-                                        gap: 8px;
-                                        backdrop-filter: blur(10px);
-                                        letter-spacing: 0.3px;
-                                        transition: all 0.25s ease;
-                                        flex: 1;
-                                        min-width: 155px;
-                                        font-family: 'Outfit', sans-serif;
-                                    "
-                                    onmouseover="this.style.background='rgba(56, 189, 248, 0.22)'; this.style.borderColor='#38bdf8'; this.style.transform='translateY(-2px)';"
-                                    onmouseout="this.style.background='rgba(56, 189, 248, 0.12)'; this.style.borderColor='rgba(56, 189, 248, 0.35)'; this.style.transform='translateY(0)';"
-                                    onmousedown="this.style.transform='scale(0.97)';">
-                                <i class="fas fa-info-circle" style="color: #38bdf8; font-size: 0.95rem;"></i>
-                                <span>VENTAJAS CLUBES</span>
-                            </button>
                         </div>
                     </div>
                 </div>
-
-                <style>
-                    @keyframes neonLaserFlow {
-                        0% { background-position: 0% 50%; }
-                        100% { background-position: 200% 50%; }
-                    }
-                    @keyframes emblemFloat {
-                        0% { transform: translateY(0) rotate(0deg); }
-                        100% { transform: translateY(-4px) rotate(3deg); }
-                    }
-                </style>
             `;
         }
 
@@ -2200,45 +2213,49 @@
             }, 100);
 
             return `
-                <div class="blog-widget-main-container" style="background: #ffffff; border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 28px; padding: 20px; box-shadow: 0 10px 30px rgba(10, 25, 47, 0.03); position: relative; overflow: hidden; perspective: 1000px; transform-style: preserve-3d;">
-                    <!-- Efectos de brillo de fondo ultra sutiles (marca SomosPadel) -->
-                    <div style="position: absolute; top: -60px; right: -40px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(204,255,0,0.06) 0%, transparent 70%); pointer-events: none; filter: blur(25px);"></div>
-                    <div style="position: absolute; bottom: -60px; left: -40px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(46,97,255,0.04) 0%, transparent 70%); pointer-events: none; filter: blur(25px);"></div>
+                <div class="blog-widget-main-container" style="background: linear-gradient(165deg, rgba(13, 22, 42, 0.96) 0%, rgba(7, 12, 23, 0.98) 100%); border: 1.5px solid rgba(56, 189, 248, 0.28); border-radius: 28px; padding: 22px 20px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 35px rgba(56, 189, 248, 0.12), inset 0 1px 0 rgba(255,255,255,0.12); position: relative; overflow: hidden; perspective: 1000px; transform-style: preserve-3d;">
+                    <!-- Efectos de brillo de fondo Cyber-Sport de alta fidelidad -->
+                    <div style="position: absolute; top: -80px; right: -50px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(204,255,0,0.18) 0%, transparent 70%); pointer-events: none; filter: blur(35px);"></div>
+                    <div style="position: absolute; bottom: -80px; left: -50px; width: 240px; height: 240px; background: radial-gradient(circle, rgba(56,189,248,0.16) 0%, transparent 70%); pointer-events: none; filter: blur(40px);"></div>
                     
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid rgba(15, 23, 42, 0.06);">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <div style="width: 38px; height: 38px; border-radius: 12px; background: #000000; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(204,255,0,0.25); border: 1.5px solid #CCFF00; flex-shrink: 0;">
-                                <i class="fas fa-newspaper" style="font-size: 0.95rem; color: #CCFF00;"></i>
+                    <!-- Cabecera Editorial Espectacular -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); position: relative; z-index: 2;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 44px; height: 44px; border-radius: 14px; background: linear-gradient(135deg, #091322 0%, #000000 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(204,255,0,0.35); border: 1.5px solid #CCFF00; flex-shrink: 0; position: relative;">
+                                <i class="fas fa-newspaper" style="font-size: 1.15rem; color: #CCFF00; filter: drop-shadow(0 0 8px rgba(204,255,0,0.6));"></i>
                             </div>
                             <div>
-                                <div style="font-size: 0.95rem; font-weight: 1000; color: #0f172a; letter-spacing: -0.3px; text-transform: uppercase; font-family: 'Outfit', sans-serif;">Somos Pádel Journal</div>
-                                <div style="font-size: 0.62rem; color: #64748b; font-weight: 850; letter-spacing: 0.6px; text-transform: uppercase;">NOTICIAS, TÁCTICA Y NOVEDADES</div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 1.05rem; font-weight: 1000; color: #ffffff; letter-spacing: -0.3px; text-transform: uppercase; font-family: 'Outfit', sans-serif;">SOMOSPÁDEL <span style="color: #CCFF00; text-shadow: 0 0 15px rgba(204,255,0,0.45);">JOURNAL</span></span>
+                                    <span style="font-size: 0.55rem; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; font-weight: 900; padding: 2px 7px; border-radius: 6px; letter-spacing: 0.5px;">EDICIÓN PRO</span>
+                                </div>
+                                <div style="font-size: 0.65rem; color: #94a3b8; font-weight: 750; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 1px;">REVISTA TÁCTICA & ACTUALIDAD DEL CIRCUITO</div>
                             </div>
                         </div>
-                        <div style="background: rgba(204,255,0,0.14); border: 1px solid rgba(132,204,22,0.3); padding: 5px 12px; border-radius: 20px; font-size: 0.62rem; font-weight: 1000; color: #3f6212; letter-spacing: 0.8px; text-transform: uppercase; display: flex; align-items: center; gap: 5px; flex-shrink: 0;">
-                            <span style="width: 6px; height: 6px; background: #CCFF00; border-radius: 50%; display: inline-block; animation: neonPulseGreen 1.5s infinite alternate; box-shadow: 0 0 5px #CCFF00;"></span>OFICIAL
+                        <div style="background: rgba(204,255,0,0.12); border: 1px solid rgba(204,255,0,0.4); padding: 6px 14px; border-radius: 20px; font-size: 0.62rem; font-weight: 1000; color: #CCFF00; letter-spacing: 0.8px; text-transform: uppercase; display: flex; align-items: center; gap: 6px; flex-shrink: 0; box-shadow: 0 0 16px rgba(204,255,0,0.2);">
+                            <span style="width: 7px; height: 7px; background: #CCFF00; border-radius: 50%; display: inline-block; animation: neonPulseGreen 1.5s infinite alternate; box-shadow: 0 0 8px #CCFF00;"></span>LIVE STREAM
                         </div>
                     </div>
 
-                    <!-- Fila de filtros de categoría premium con máscara degradada de desvanecimiento horizontal -->
-                    <div style="position: relative; margin-bottom: 16px;">
-                        <div class="blog-categories-filter" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; padding-right: 20px; scrollbar-width: none; -ms-overflow-style: none; -webkit-mask-image: linear-gradient(to right, black calc(100% - 36px), transparent 100%); mask-image: linear-gradient(to right, black calc(100% - 36px), transparent 100%);">
-                            <button onclick="window.DashboardView.filterBlogCategory('ALL')" class="blog-filter-btn active" style="flex-shrink: 0; background: #CCFF00; border: 1px solid #CCFF00; color: #000; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 900; cursor: pointer; transition: all 0.25s; font-family: 'Outfit'; box-shadow: 0 4px 10px rgba(204,255,0,0.2);">TODAS</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('NOVEDADES')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.09); color: #475569; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">🚀 NOVEDADES</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('TORNEOS')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.09); color: #475569; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">🏆 TORNEOS</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('CONSEJOS')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.09); color: #475569; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">💡 CONSEJOS</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('RANKING')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.09); color: #475569; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">📊 RANKING</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('CRÓNICAS')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.09); color: #475569; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">📝 CRÓNICAS</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('COMUNIDAD')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.09); color: #475569; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">👥 COMUNIDAD</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('FAVORITOS')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.09); color: #475569; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">⭐ GUARDADOS</button>
+                    <!-- Fila de filtros de categoría premium con máscara degradada -->
+                    <div style="position: relative; margin-bottom: 18px; z-index: 2;">
+                        <div class="blog-categories-filter" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; padding-right: 20px; scrollbar-width: none; -ms-overflow-style: none;">
+                            <button onclick="window.DashboardView.filterBlogCategory('ALL')" class="blog-filter-btn active" style="flex-shrink: 0; background: #CCFF00; border: 1px solid #CCFF00; color: #000; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 950; cursor: pointer; transition: all 0.25s; font-family: 'Outfit'; box-shadow: 0 4px 14px rgba(204,255,0,0.35);">TODAS</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('NOVEDADES')" class="blog-filter-btn" style="flex-shrink: 0; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">🚀 NOVEDADES</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('TORNEOS')" class="blog-filter-btn" style="flex-shrink: 0; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">🏆 TORNEOS</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('CONSEJOS')" class="blog-filter-btn" style="flex-shrink: 0; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">💡 CONSEJOS</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('RANKING')" class="blog-filter-btn" style="flex-shrink: 0; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">📊 RANKING</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('CRÓNICAS')" class="blog-filter-btn" style="flex-shrink: 0; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">📝 CRÓNICAS</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('COMUNIDAD')" class="blog-filter-btn" style="flex-shrink: 0; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">👥 COMUNIDAD</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('FAVORITOS')" class="blog-filter-btn" style="flex-shrink: 0; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">⭐ GUARDADOS</button>
                         </div>
                     </div>
                     
-                    <div id="dynamic-blog-posts-container" style="display: flex; flex-direction: column; gap: 12px;">
+                    <div id="dynamic-blog-posts-container" style="display: flex; flex-direction: column; gap: 14px; position: relative; z-index: 2;">
                         <!-- Cargando posts dinámicos -->
-                        <div style="text-align: center; padding: 25px; color: #94a3b8; font-size: 0.75rem; font-family: 'Outfit';">
-                            <i class="fas fa-circle-notch fa-spin" style="color: #CCFF00; font-size: 1.2rem; margin-bottom: 6px; display: block;"></i>
-                            Cargando las últimas noticias...
+                        <div style="text-align: center; padding: 35px 20px; color: #94a3b8; font-size: 0.78rem; font-family: 'Outfit';">
+                            <i class="fas fa-circle-notch fa-spin" style="color: #CCFF00; font-size: 1.4rem; margin-bottom: 8px; display: block;"></i>
+                            Sintonizando crónicas de SomosPádel Journal...
                         </div>
                     </div>
                 </div>
@@ -2257,18 +2274,16 @@
                     .premium-blog-3d-card:hover .featured-blog-btn {
                         background: #CCFF00 !important;
                         color: #000000 !important;
-                        border-color: #CCFF00 !important;
-                        box-shadow: 0 6px 16px rgba(204,255,0,0.35);
+                        box-shadow: 0 6px 20px rgba(204,255,0,0.5);
                     }
                     .premium-blog-3d-card:hover .featured-blog-btn i {
-                        transform: translateX(3px);
+                        transform: translateX(4px);
                     }
-                    .premium-blog-compact-card:hover .compact-chevron {
-                        transform: translateX(3px);
+                    .premium-blog-magazine-card:hover .compact-blog-thumb {
+                        transform: scale(1.06);
+                    }
+                    .premium-blog-magazine-card:hover .magazine-card-title {
                         color: #CCFF00 !important;
-                    }
-                    .premium-blog-compact-card:hover .compact-blog-thumb {
-                        transform: scale(1.08);
                     }
                     
                     /* Botones táctiles optimizados para móvil y escritorio */
@@ -2284,9 +2299,11 @@
                         display: inline-flex;
                         align-items: center;
                         justify-content: center;
-                        background: rgba(15, 23, 42, 0.04);
-                        border: 1px solid rgba(15, 23, 42, 0.09);
-                        color: #64748b;
+                        background: rgba(6, 11, 22, 0.75);
+                        backdrop-filter: blur(8px);
+                        -webkit-backdrop-filter: blur(8px);
+                        border: 1px solid rgba(255, 255, 255, 0.2);
+                        color: #94a3b8;
                         cursor: pointer;
                         transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
                         font-size: 0.88rem;
@@ -2299,18 +2316,18 @@
                         background: #090f1e;
                         color: #CCFF00;
                         border-color: #CCFF00;
-                        box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+                        box-shadow: 0 0 12px rgba(204,255,0,0.4);
                     }
                     .card-quick-btn.whatsapp-btn {
-                        background: rgba(37, 211, 102, 0.1);
-                        border-color: rgba(37, 211, 102, 0.25);
-                        color: #16a34a;
+                        background: rgba(37, 211, 102, 0.15);
+                        border-color: rgba(37, 211, 102, 0.35);
+                        color: #25D366;
                     }
                     .card-quick-btn.whatsapp-btn:hover, .card-quick-btn.whatsapp-btn:active {
                         background: #25D366 !important;
                         color: #ffffff !important;
                         border-color: #25D366 !important;
-                        box-shadow: 0 3px 10px rgba(37,211,102,0.35);
+                        box-shadow: 0 0 14px rgba(37,211,102,0.45);
                     }
                     
                     /* Responsive Móvil Exclusivo - Full-Width Experience */
@@ -2319,8 +2336,8 @@
                             margin: 0 6px 14px !important;
                         }
                         .blog-widget-main-container {
-                            padding: 14px 10px !important;
-                            border-radius: 22px !important;
+                            padding: 16px 12px !important;
+                            border-radius: 24px !important;
                         }
                         .blog-categories-filter {
                             gap: 7px !important;
@@ -2335,14 +2352,14 @@
                             border-radius: 18px !important;
                         }
                         .magazine-card-thumb-wrap {
-                            height: 150px !important;
+                            height: 155px !important;
                         }
                         .magazine-card-title {
-                            font-size: 1.08rem !important;
+                            font-size: 1.05rem !important;
                             line-height: 1.3 !important;
                         }
                         .magazine-card-snippet {
-                            font-size: 0.8rem !important;
+                            font-size: 0.78rem !important;
                             line-height: 1.4 !important;
                             -webkit-line-clamp: 2 !important;
                         }
@@ -2367,7 +2384,7 @@
         }
 
         filterBlogCategory(category) {
-            // Actualizar botones activos
+            // Actualizar botones activos con estilo cyber-dark
             const filterContainer = document.querySelector('.blog-categories-filter');
             if (filterContainer) {
                 const buttons = filterContainer.querySelectorAll('.blog-filter-btn');
@@ -2377,14 +2394,14 @@
                         btn.classList.add('active');
                         btn.style.background = '#CCFF00';
                         btn.style.borderColor = '#CCFF00';
-                        btn.style.color = '#000';
-                        btn.style.boxShadow = '0 4px 10px rgba(204,255,0,0.2)';
-                        btn.style.fontWeight = '900';
+                        btn.style.color = '#000000';
+                        btn.style.boxShadow = '0 4px 14px rgba(204,255,0,0.35)';
+                        btn.style.fontWeight = '950';
                     } else {
                         btn.classList.remove('active');
-                        btn.style.background = 'transparent';
-                        btn.style.borderColor = 'rgba(15, 23, 42, 0.08)';
-                        btn.style.color = '#475569';
+                        btn.style.background = 'rgba(255, 255, 255, 0.06)';
+                        btn.style.borderColor = 'rgba(255, 255, 255, 0.12)';
+                        btn.style.color = '#cbd5e1';
                         btn.style.boxShadow = 'none';
                         btn.style.fontWeight = '850';
                     }
@@ -2414,14 +2431,14 @@
 
             if (filtered.length === 0) {
                 const emptyMsg = categoryFilter === 'FAVORITOS' 
-                    ? `<span style="font-size: 0.76rem; font-weight: 800; display: block; color: #0f172a;">No tienes noticias guardadas</span>
-                       <span style="font-size: 0.65rem; color: #64748b; display: block; margin-top: 4px; max-width: 280px; margin-left: auto; margin-right: auto;">Toca el icono de marcador 🔖 en cualquier artículo para tenerlo a mano antes de tus partidos.</span>`
-                    : `<span style="font-size: 0.72rem; font-weight: 700; display: block;">No hay noticias en esta categoría</span>
-                       <span style="font-size: 0.58rem; color: #cbd5e1; display: block; margin-top: 2px;">¡Pronto publicaremos nuevo contenido táctico!</span>`;
+                    ? `<span style="font-size: 0.82rem; font-weight: 850; display: block; color: #ffffff;">No tienes tácticas guardadas</span>
+                       <span style="font-size: 0.7rem; color: #94a3b8; display: block; margin-top: 4px; max-width: 280px; margin-left: auto; margin-right: auto;">Toca el marcador 🔖 en cualquier crónica para tenerla siempre a mano antes de tus partidos.</span>`
+                    : `<span style="font-size: 0.8rem; font-weight: 800; display: block; color: #ffffff;">No hay artículos en esta categoría</span>
+                       <span style="font-size: 0.68rem; color: #94a3b8; display: block; margin-top: 4px;">¡Pronto publicaremos nuevo contenido táctico exclusivo!</span>`;
 
                 container.innerHTML = `
-                    <div class="blog-animate-fade-in" style="text-align: center; padding: 34px 14px; color: #94a3b8; font-family: 'Outfit';">
-                        <i class="${categoryFilter === 'FAVORITOS' ? 'far fa-bookmark' : 'far fa-folder-open'}" style="font-size: 2rem; color: rgba(15, 23, 42, 0.2); margin-bottom: 10px; display: block;"></i>
+                    <div class="blog-animate-fade-in" style="text-align: center; padding: 40px 16px; color: #94a3b8; font-family: 'Outfit'; background: rgba(255,255,255,0.02); border-radius: 20px; border: 1px dashed rgba(255,255,255,0.1);">
+                        <i class="${categoryFilter === 'FAVORITOS' ? 'far fa-bookmark' : 'far fa-folder-open'}" style="font-size: 2.2rem; color: rgba(204, 255, 0, 0.4); margin-bottom: 12px; display: block;"></i>
                         ${emptyMsg}
                     </div>
                 `;
@@ -2457,143 +2474,148 @@
             const rest = visiblePosts.slice(1);
             const isFeaturedSaved = this.isPostSaved(featured.id);
 
+            // 🌟 1. PORTADA PRINCIPAL DE REVISTA (WORLD PADEL TOUR STYLE)
             const featuredCard = `
                 <div onclick="window.DashboardView.openBlogPost('${featured.id}')"
                      class="premium-blog-3d-card blog-animate-fade-in"
-                     style="border-radius: 24px; overflow: hidden; cursor: pointer; position: relative; min-height: 235px; box-shadow: 0 14px 34px rgba(10,25,47,0.08); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); border: 1px solid rgba(15, 23, 42, 0.08); transform-style: preserve-3d; perspective: 1000px;"
-                     onmouseover="this.style.transform='translateY(-4px) scale(1.005)';"
-                     onmouseout="this.style.transform='translateY(0) scale(1)';"
+                     style="border-radius: 26px; overflow: hidden; cursor: pointer; position: relative; min-height: 255px; box-shadow: 0 20px 45px rgba(0,0,0,0.65), 0 0 30px rgba(204,255,0,0.15); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); border: 1.5px solid rgba(204, 255, 0, 0.45); transform-style: preserve-3d; perspective: 1000px;"
+                     onmouseover="this.style.transform='translateY(-4px) scale(1.008)'; this.style.borderColor='#CCFF00'; this.style.boxShadow='0 25px 55px rgba(0,0,0,0.75), 0 0 35px rgba(204,255,0,0.28)';"
+                     onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.borderColor='rgba(204, 255, 0, 0.45)'; this.style.boxShadow='0 20px 45px rgba(0,0,0,0.65), 0 0 30px rgba(204,255,0,0.15)';"
                 >
-                    <!-- Imagen de fondo de pádel con zoom fluido -->
-                    <div class="featured-blog-bg-image" style="position: absolute; inset: 0; background-image: url('${postImagesMap[featured.id]}'); background-size: cover; background-position: center; transition: transform 0.6s ease;"></div>
+                    <!-- Imagen de fondo de pádel cinematográfica con zoom fluido -->
+                    <div class="featured-blog-bg-image" style="position: absolute; inset: 0; background-image: url('${postImagesMap[featured.id]}'); background-size: cover; background-position: center; transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);"></div>
                     
-                    <!-- Overlay degradado multicapa oscuro y limpio para máxima legibilidad -->
-                    <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(9, 15, 30, 0.2) 0%, rgba(9, 15, 30, 0.6) 45%, rgba(9, 15, 30, 0.96) 100%); z-index: 2;"></div>
+                    <!-- Overlay degradado multicapa con profundidad extrema -->
+                    <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(6, 11, 22, 0.3) 0%, rgba(6, 11, 22, 0.65) 45%, rgba(6, 11, 22, 0.98) 100%); z-index: 2;"></div>
                     
                     <!-- Controles rápidos superiores (Compartir WhatsApp & Guardar Favorito) -->
                     <div style="position: absolute; top: 14px; right: 14px; z-index: 4; display: flex; align-items: center; gap: 8px;">
-                        <button onclick="window.DashboardView.shareToWhatsApp('${featured.id}', '${featured.title.replace(/'/g, "\\'")}', event)"
-                                style="width: 32px; height: 32px; border-radius: 50%; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.2); color: #25D366; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.25s;"
-                                onmouseover="this.style.background='#25D366';this.style.color='#ffffff';this.style.transform='scale(1.1)';"
-                                onmouseout="this.style.background='rgba(15, 23, 42, 0.65)';this.style.color='#25D366';this.style.transform='scale(1)';"
+                        <button onclick="window.DashboardView.shareToWhatsApp('${featured.id}', '${featured.title.replace(/'/g, "\\'")}', event, '${postImagesMap[featured.id]}')"
+                                class="card-quick-btn whatsapp-btn"
+                                style="width: 36px; height: 36px; border-radius: 50%; background: rgba(6, 11, 22, 0.75); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.25); color: #25D366; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.25s;"
+                                onmouseover="this.style.background='#25D366'; this.style.color='#ffffff'; this.style.transform='scale(1.1)';"
+                                onmouseout="this.style.background='rgba(6, 11, 22, 0.75)'; this.style.color='#25D366'; this.style.transform='scale(1)';"
                                 title="Enviar a mi pareja por WhatsApp">
-                            <i class="fab fa-whatsapp" style="font-size: 0.95rem;"></i>
+                            <i class="fab fa-whatsapp" style="font-size: 1.05rem;"></i>
                         </button>
                         <button onclick="window.DashboardView.toggleSaveBlogPost('${featured.id}', event)"
-                                class="journal-bookmark-btn"
+                                class="card-quick-btn journal-bookmark-btn"
                                 data-post-id="${featured.id}"
-                                style="width: 32px; height: 32px; border-radius: 50%; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid ${isFeaturedSaved ? '#CCFF00' : 'rgba(255,255,255,0.2)'}; color: ${isFeaturedSaved ? '#CCFF00' : '#ffffff'}; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.25s;"
-                                onmouseover="this.style.transform='scale(1.1)';this.style.borderColor='#CCFF00';"
+                                style="width: 36px; height: 36px; border-radius: 50%; background: rgba(6, 11, 22, 0.75); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid ${isFeaturedSaved ? '#CCFF00' : 'rgba(255,255,255,0.25)'}; color: ${isFeaturedSaved ? '#CCFF00' : '#ffffff'}; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.25s;"
+                                onmouseover="this.style.transform='scale(1.1)'; this.style.borderColor='#CCFF00';"
                                 onmouseout="this.style.transform='scale(1)';"
                                 title="${isFeaturedSaved ? 'Eliminar de guardados' : 'Guardar táctica'}">
-                            <i class="${isFeaturedSaved ? 'fas' : 'far'} fa-bookmark" style="font-size: 0.85rem;"></i>
+                            <i class="${isFeaturedSaved ? 'fas' : 'far'} fa-bookmark" style="font-size: 0.95rem;"></i>
                         </button>
                     </div>
 
                     <!-- Contenido interior -->
-                    <div style="position: relative; z-index: 3; padding: 18px 20px; display: flex; flex-direction: column; justify-content: flex-end; min-height: 235px; box-sizing: border-box;">
+                    <div style="position: relative; z-index: 3; padding: 22px 22px 20px; display: flex; flex-direction: column; justify-content: flex-end; min-height: 255px; box-sizing: border-box;">
                         <!-- Badge unificado con glassmorphism -->
-                        <div style="margin-bottom: 8px;">
-                            <div style="display: inline-flex; align-items: center; gap: 7px; background: rgba(9, 15, 30, 0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 3px 9px 3px 4px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.18);">
-                                <span style="font-size: 0.52rem; font-weight: 1000; color: #000; background: #CCFF00; padding: 3px 8px; border-radius: 12px; letter-spacing: 0.7px; text-transform: uppercase;">${featured.category||'TORNEOS'}</span>
-                                <span style="font-size: 0.52rem; font-weight: 900; color: rgba(255,255,255,0.92); letter-spacing: 0.6px; text-transform: uppercase; display: flex; align-items: center; gap: 4px;">
-                                    <span style="width: 4px; height: 4px; background: #CCFF00; border-radius: 50%; display: inline-block; box-shadow: 0 0 6px #CCFF00;"></span>DESTACADO
+                        <div style="margin-bottom: 10px;">
+                            <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(6, 11, 22, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding: 4px 10px 4px 4px; border-radius: 20px; border: 1px solid rgba(204, 255, 0, 0.4);">
+                                <span style="font-size: 0.56rem; font-weight: 1000; color: #000000; background: #CCFF00; padding: 3px 9px; border-radius: 12px; letter-spacing: 0.8px; text-transform: uppercase;">PORTADA OFICIAL</span>
+                                <span style="font-size: 0.56rem; font-weight: 900; color: #ffffff; letter-spacing: 0.6px; text-transform: uppercase; display: flex; align-items: center; gap: 5px;">
+                                    <span style="width: 5px; height: 5px; background: #CCFF00; border-radius: 50%; display: inline-block; box-shadow: 0 0 8px #CCFF00;"></span>${featured.category||'DESTACADO'}
                                 </span>
                             </div>
                         </div>
 
-                        <h3 style="margin: 0 0 6px 0; color: #ffffff; font-weight: 950; font-size: 1.18rem; line-height: 1.25; letter-spacing: -0.3px; font-family: 'Outfit', sans-serif; text-shadow: 0 2px 5px rgba(0,0,0,0.7);">${featured.title}</h3>
-                        <p style="margin: 0 0 12px 0; color: rgba(255,255,255,0.88); font-size: 0.72rem; font-weight: 500; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-family: 'Inter', sans-serif;">${featured.snippet}</p>
+                        <h3 style="margin: 0 0 8px 0; color: #ffffff; font-weight: 950; font-size: 1.25rem; line-height: 1.25; letter-spacing: -0.3px; font-family: 'Outfit', sans-serif; text-shadow: 0 2px 10px rgba(0,0,0,0.9);">${featured.title}</h3>
+                        <p style="margin: 0 0 14px 0; color: #cbd5e1; font-size: 0.78rem; font-weight: 500; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-family: 'Inter', sans-serif;">${featured.snippet}</p>
                         
-                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-                            <div style="display: flex; align-items: center; gap: 12px;">
-                                <span style="font-size: 0.62rem; color: rgba(255,255,255,0.75); font-weight: 700; display: flex; align-items: center; gap: 4px;"><i class="far fa-calendar" style="font-size: 0.58rem; color: #CCFF00;"></i>${featured.date||'Hoy'}</span>
-                                <span style="font-size: 0.62rem; color: rgba(255,255,255,0.75); font-weight: 700; display: flex; align-items: center; gap: 4px;"><i class="far fa-clock" style="font-size: 0.58rem; color: #CCFF00;"></i>${featured.readTime||'3 min'}</span>
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                            <div style="display: flex; align-items: center; gap: 14px;">
+                                <span style="font-size: 0.66rem; color: #94a3b8; font-weight: 750; display: flex; align-items: center; gap: 5px;"><i class="far fa-calendar" style="font-size: 0.62rem; color: #CCFF00;"></i>${featured.date||'Hoy'}</span>
+                                <span style="font-size: 0.66rem; color: #94a3b8; font-weight: 750; display: flex; align-items: center; gap: 5px;"><i class="far fa-clock" style="font-size: 0.62rem; color: #38bdf8;"></i>${featured.readTime||'3 min'}</span>
                             </div>
-                            <div style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 20px; padding: 6px 14px; font-size: 0.6rem; font-weight: 950; color: #ffffff; display: flex; align-items: center; gap: 5px; transition: all 0.25s;"
+                            <div style="background: linear-gradient(135deg, #CCFF00 0%, #a3e600 100%); color: #000000; border: none; border-radius: 14px; padding: 7px 18px; font-size: 0.68rem; font-weight: 950; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(204, 255, 0, 0.4); transition: all 0.25s;"
                                  class="featured-blog-btn">
-                                LEER MÁS <i class="fas fa-arrow-right" style="font-size: 0.5rem; transition: transform 0.2s;"></i>
+                                LEER CRÓNICA <i class="fas fa-arrow-right" style="font-size: 0.58rem; transition: transform 0.2s;"></i>
                             </div>
                         </div>
                     </div>
                 </div>`;
 
+            // 📰 2. TARJETAS SECUNDARIAS DEPORTIVAS DE ALTA GAMA
             const compactCards = rest.map((post, index) => {
                 const isSaved = this.isPostSaved(post.id);
                 const catName = (post.category || 'NOTICIAS').replace(/^[^\s]+\s/, '');
+                const categoryColor = post.catColor || '#38bdf8';
                 return `
                     <div onclick="window.DashboardView.openBlogPost('${post.id}')"
                          class="premium-blog-magazine-card blog-animate-fade-in"
-                         style="display: flex; flex-direction: column; border-radius: 22px; cursor: pointer; background: #ffffff; border: 1px solid rgba(15, 23, 42, 0.08); transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden; box-shadow: 0 4px 18px rgba(10,25,47,0.04); animation-delay: ${(index + 1) * 0.04}s;"
-                         onmouseover="this.style.background='#ffffff';this.style.borderColor='rgba(15,23,42,0.16)';this.style.transform='translateY(-2px)';"
-                         onmouseout="this.style.background='#ffffff';this.style.borderColor='rgba(15,23,42,0.08)';this.style.transform='translateY(0)';"
+                         style="display: flex; flex-direction: column; border-radius: 22px; cursor: pointer; background: linear-gradient(145deg, rgba(17, 27, 49, 0.9) 0%, rgba(10, 16, 31, 0.96) 100%); border: 1.5px solid rgba(255, 255, 255, 0.08); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.45); animation-delay: ${(index + 1) * 0.04}s;"
+                         onmouseover="this.style.borderColor='${categoryColor}'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 14px 34px rgba(0,0,0,0.65), 0 0 20px ${categoryColor}25';"
+                         onmouseout="this.style.borderColor='rgba(255, 255, 255, 0.08)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.45)';"
                     >
                         <!-- Imagen Panorámica Grande de Pádel -->
-                        <div class="magazine-card-thumb-wrap" style="position: relative; width: 100%; height: 165px; overflow: hidden; background: #0f172a;">
-                            <div style="width: 100%; height: 100%; background-image: url('${postImagesMap[post.id]}'); background-size: cover; background-position: center; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);" class="compact-blog-thumb"></div>
+                        <div class="magazine-card-thumb-wrap" style="position: relative; width: 100%; height: 165px; overflow: hidden; background: #070d19;">
+                            <div style="width: 100%; height: 100%; background-image: url('${postImagesMap[post.id]}'); background-size: cover; background-position: center; transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);" class="compact-blog-thumb"></div>
                             
-                            <!-- Degradado suave superior e inferior sobre la imagen -->
-                            <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,23,42,0.45) 0%, transparent 40%, rgba(15,23,42,0.65) 100%); pointer-events: none;"></div>
+                            <!-- Degradado cinematográfico sobre la imagen -->
+                            <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(6, 11, 22, 0.45) 0%, transparent 40%, rgba(6, 11, 22, 0.9) 100%); pointer-events: none;"></div>
 
-                            <!-- Badge de Categoría Flotante (Esquina Superior Izquierda) -->
+                            <!-- Badge de Categoría Flotante con color temático -->
                             <div style="position: absolute; top: 12px; left: 12px; z-index: 2;">
-                                <span style="background: #CCFF00; color: #000000; font-size: 0.64rem; font-weight: 1000; padding: 4px 10px; border-radius: 8px; letter-spacing: 0.8px; text-transform: uppercase; box-shadow: 0 2px 8px rgba(0,0,0,0.3); font-family: 'Outfit', sans-serif;">${catName}</span>
+                                <span style="background: ${categoryColor}; color: #000000; font-size: 0.62rem; font-weight: 1000; padding: 4px 11px; border-radius: 8px; letter-spacing: 0.8px; text-transform: uppercase; box-shadow: 0 2px 10px rgba(0,0,0,0.5); font-family: 'Outfit', sans-serif;">${catName}</span>
                             </div>
 
-                            <!-- Acciones Rápidas Flotantes (WhatsApp + Favorito) (Esquina Superior Derecha) -->
+                            <!-- Acciones Rápidas Flotantes (WhatsApp + Favorito) -->
                             <div style="position: absolute; top: 10px; right: 10px; z-index: 3; display: flex; align-items: center; gap: 7px;">
-                                <button onclick="window.DashboardView.shareToWhatsApp('${post.id}', '${post.title.replace(/'/g, "\\'")}', event)"
+                                <button onclick="window.DashboardView.shareToWhatsApp('${post.id}', '${post.title.replace(/'/g, "\\'")}', event, '${postImagesMap[post.id]}')"
                                         class="card-quick-btn whatsapp-btn"
-                                        style="background: rgba(0,0,0,0.55); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.25); color: #25D366; width: 34px; height: 34px;"
+                                        style="background: rgba(6, 11, 22, 0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.2); color: #25D366; width: 34px; height: 34px; border-radius: 50%;"
                                         title="Compartir por WhatsApp">
                                     <i class="fab fa-whatsapp" style="font-size: 0.95rem;"></i>
                                 </button>
                                 <button onclick="window.DashboardView.toggleSaveBlogPost('${post.id}', event)"
                                         class="card-quick-btn journal-bookmark-btn"
                                         data-post-id="${post.id}"
-                                        style="background: rgba(0,0,0,0.55); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid ${isSaved ? '#CCFF00' : 'rgba(255,255,255,0.25)'}; color: ${isSaved ? '#CCFF00' : '#ffffff'}; width: 34px; height: 34px;"
+                                        style="background: rgba(6, 11, 22, 0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid ${isSaved ? '#CCFF00' : 'rgba(255,255,255,0.2)'}; color: ${isSaved ? '#CCFF00' : '#ffffff'}; width: 34px; height: 34px; border-radius: 50%;"
                                         title="${isSaved ? 'Eliminar de guardados' : 'Guardar táctica'}">
                                     <i class="${isSaved ? 'fas' : 'far'} fa-bookmark" style="font-size: 0.85rem;"></i>
                                 </button>
                             </div>
 
-                            <!-- Meta info sobre la foto (Esquina Inferior Izquierda) -->
+                            <!-- Meta info sobre la foto -->
                             <div style="position: absolute; bottom: 10px; left: 14px; z-index: 2; display: flex; align-items: center; gap: 10px;">
-                                <span style="font-size: 0.68rem; color: #ffffff; font-weight: 800; text-shadow: 0 1px 3px rgba(0,0,0,0.8); display: flex; align-items: center; gap: 4px;">
-                                    <i class="far fa-clock" style="color: #CCFF00; font-size: 0.62rem;"></i> ${post.readTime||'3 min'}
+                                <span style="font-size: 0.68rem; color: #ffffff; font-weight: 800; text-shadow: 0 1px 4px rgba(0,0,0,0.9); display: flex; align-items: center; gap: 4px;">
+                                    <i class="far fa-clock" style="color: ${categoryColor}; font-size: 0.62rem;"></i> ${post.readTime||'3 min'}
                                 </span>
-                                <span style="font-size: 0.68rem; color: rgba(255,255,255,0.85); font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">
+                                <span style="font-size: 0.68rem; color: #cbd5e1; font-weight: 700; text-shadow: 0 1px 4px rgba(0,0,0,0.9);">
                                     ${post.date||'Hoy'}
                                 </span>
                             </div>
                         </div>
                         
-                        <!-- Contenido Principal: 100% Ancho, Título Grande y Legible -->
-                        <div style="padding: 14px 16px 14px; display: flex; flex-direction: column; gap: 5px;">
-                            <h4 class="magazine-card-title" style="margin: 0; color: #0f172a; font-weight: 950; font-size: 1.15rem; line-height: 1.3; letter-spacing: -0.3px; font-family: 'Outfit', sans-serif;">${post.title}</h4>
-                            <p class="magazine-card-snippet" style="margin: 0; color: #475569; font-size: 0.82rem; font-weight: 500; line-height: 1.45; font-family: 'Inter', sans-serif; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${post.snippet}</p>
+                        <!-- Contenido Principal -->
+                        <div style="padding: 16px 18px 16px; display: flex; flex-direction: column; gap: 6px;">
+                            <h4 class="magazine-card-title" style="margin: 0; color: #ffffff; font-weight: 950; font-size: 1.15rem; line-height: 1.3; letter-spacing: -0.3px; font-family: 'Outfit', sans-serif; transition: color 0.2s ease;">${post.title}</h4>
+                            <p class="magazine-card-snippet" style="margin: 0; color: #94a3b8; font-size: 0.8rem; font-weight: 500; line-height: 1.45; font-family: 'Inter', sans-serif; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${post.snippet}</p>
                             
                             <!-- Pie con enlace "Leer artículo completo" -->
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 6px; padding-top: 8px; border-top: 1px solid rgba(15, 23, 42, 0.06);">
-                                <span style="font-size: 0.76rem; font-weight: 900; color: #15803d; display: flex; align-items: center; gap: 5px; font-family: 'Outfit', sans-serif;">
-                                    LEER ARTÍCULO <i class="fas fa-arrow-right" style="font-size: 0.65rem; transition: transform 0.2s;"></i>
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+                                <span style="font-size: 0.74rem; font-weight: 900; color: #CCFF00; display: flex; align-items: center; gap: 6px; font-family: 'Outfit', sans-serif;">
+                                    LEER CRÓNICA <i class="fas fa-arrow-right" style="font-size: 0.62rem; transition: transform 0.2s;"></i>
                                 </span>
-                                <span style="font-size: 0.62rem; color: #94a3b8; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">SOMOSPADEL JOURNAL</span>
+                                <span style="font-size: 0.6rem; color: #64748b; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase;">SOMOSPÁDEL JOURNAL</span>
                             </div>
                         </div>
                     </div>
                 `;
             }).join('');
 
+            // 📚 3. BOTÓN DE HEMEROTECA COMPLETA
             const historyButtonHtml = `
-                <div style="margin-top: 16px; text-align: center;" class="blog-animate-fade-in" style="animation-delay: 0.16s;">
+                <div style="margin-top: 18px; text-align: center;" class="blog-animate-fade-in">
                     <button onclick="window.DashboardView.openBlogHistory()"
                             id="blog-history-open-btn"
-                            style="width: 100%; background: #ffffff; border: 1.5px solid rgba(15, 23, 42, 0.09); color: #0f172a; padding: 13px 20px; border-radius: 16px; font-size: 0.82rem; font-weight: 900; cursor: pointer; transition: all 0.25s; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: 'Outfit', sans-serif; box-shadow: 0 4px 14px rgba(10,25,47,0.02);"
-                            onmouseover="this.style.background='#f8fafc';this.style.borderColor='rgba(15, 23, 42, 0.16)';this.style.transform='translateY(-1px)';"
-                            onmouseout="this.style.background='#ffffff';this.style.borderColor='rgba(15, 23, 42, 0.09)';this.style.transform='translateY(0)';"
+                            style="width: 100%; background: rgba(255, 255, 255, 0.04); border: 1.5px solid rgba(56, 189, 248, 0.28); color: #f8fafc; padding: 14px 20px; border-radius: 18px; font-size: 0.84rem; font-weight: 900; cursor: pointer; transition: all 0.25s; display: flex; align-items: center; justify-content: center; gap: 10px; font-family: 'Outfit', sans-serif; box-shadow: 0 4px 18px rgba(0,0,0,0.3);"
+                            onmouseover="this.style.background='rgba(56, 189, 248, 0.14)'; this.style.borderColor='#38bdf8'; this.style.color='#38bdf8'; this.style.transform='translateY(-1px)';"
+                            onmouseout="this.style.background='rgba(255, 255, 255, 0.04)'; this.style.borderColor='rgba(56, 189, 248, 0.28)'; this.style.color='#f8fafc'; this.style.transform='translateY(0)';"
                     >
-                        <i class="fas fa-history" style="font-size: 0.85rem; color: #4d7c0f;"></i> VER MÁS NOTICIAS (HISTÓRICO COMPLETO)
+                        <i class="fas fa-layer-group" style="font-size: 0.95rem; color: #38bdf8;"></i> EXPLORAR HEMEROTECA COMPLETA (35+ ARTÍCULOS)
                     </button>
                 </div>
             `;
@@ -3121,6 +3143,7 @@
                         'torneo-primavera': {
                             category: '🏆 TORNEOS',
                             catColor: '#CCFF00',
+                            imageUrl: 'img/blog_padel_trophy.jpg',
                             title: 'Gran Torneo de Primavera 2026',
                             content: 'Llega el evento más esperado del año. El próximo 15 de Junio celebraremos el Gran Torneo de Primavera en las instalaciones de El Prat. Contaremos con categorías masculina, femenina y mixta de todos los niveles. Con tu inscripción recibirás un Welcome Pack (camiseta oficial, grip y bebida energética). Al finalizar, disfrutaremos de una barbacoa comunitaria con sorteos y música. ¡Inscripciones limitadas a 120 plazas, reserva la tuya en la sección de eventos!',
                             date: 'Hoy',
@@ -3131,6 +3154,7 @@
                         'ranking-actualizado': {
                             category: '📊 RANKING',
                             catColor: '#38bdf8',
+                            imageUrl: 'img/americana-night.png',
                             title: 'Ranking Actualizado: Top 5 de la Temporada',
                             content: 'El ranking de la temporada se ha recalculado tras la última jornada de liga. Los nuevos puntos ya están asignados y podrás consultar tu posición actualizada en la sección Ranking. ¡Enhorabuena a los que han subido posiciones esta semana y ánimo a los que luchan por el ascenso!',
                             date: 'Ayer',
@@ -3141,6 +3165,7 @@
                         'tactica-centro': {
                             category: '💡 CONSEJOS',
                             catColor: '#f59e0b',
+                            imageUrl: 'img/blog_ball_glass.png',
                             title: 'Táctica: Jugar al Centro de la Pista',
                             content: 'Jugar por el centro de la pista es una de las tácticas más eficaces en el pádel. Al dirigir la bola al centro, reduces drásticamente los ángulos de rebote del rival, evitas que abran la bola a las paredes y generas dudas de comunicación entre la pareja contraria. Es ideal para situaciones bajo presión o globos difíciles. ¡Probadlo en vuestro próximo partido!',
                             date: 'Hace 3 días',
@@ -3151,6 +3176,7 @@
                         'modos-juego-pareja-fija-vs-twister': {
                             category: '🎮 MODOS DE JUEGO',
                             catColor: '#CCFF00',
+                            imageUrl: 'img/blog_padel_twister_team.jpg',
                             title: 'Pareja Fija vs Twister Individual: ¿En qué formato anotarte según tus objetivos?',
                             content: 'En SomosPadel Barcelona contamos con dos formatos estelares diseñados para cubrir cualquier aspiración: Pareja Fija (en tándem, subís y bajáis juntos de pista según ganes o pierdas, puntuación conjunta y sincronía para torneos) y Twister Individual (inscripción individual sin necesidad de pareja previa, cambio de compañero en cada ronda, y podio por diferencial individual de juegos). ¡Ambos formatos garantizan la máxima emoción!',
                             date: 'Hoy',
@@ -3161,6 +3187,7 @@
                         'modos-juego-twister-individual-guia': {
                             category: '💡 CONSEJOS',
                             catColor: '#ec4899',
+                            imageUrl: 'img/blog_padel_twister_team.jpg',
                             title: 'Guía Táctica Twister: Cómo Adaptarte al Instante a una Nueva Pareja',
                             content: 'Jugar una americana en formato Twister Individual exige compenetración express. Acuerda con tu nueva pareja en 30 segundos los roles de drive y revés, la cobertura del centro en globos rivales y mantén un refuerzo positivo constante. La versatilidad para jugar en ambos lados es la llave del triunfo en las rotaciones individuales.',
                             date: 'Hoy',
@@ -3171,6 +3198,7 @@
                         'modos-juego-suizo-americana-entreno': {
                             category: '🎮 MODOS DE JUEGO',
                             catColor: '#ef4444',
+                            imageUrl: 'img/pista_padel_azul.png',
                             title: 'Sistema Suizo en SomosPadel: 6 Rondas Express, Puntos Individuales y Reagrupación por Pistas',
                             content: 'La 3ª modalidad de SomosPadel Barcelona: el Sistema Suizo (Americana Suiza y Entreno Suizo). Duración 2h, 6 rondas express de juego efectivo (al sonar el silbato concluye el punto). Formato individual con cambio de pareja. Puntos individuales = juegos ganados. Reagrupación tras cada ronda: Top 4 a Pista 1, siguientes a Pista 2, restantes a Pista 3, sin repetir compañero. Campeón: más juegos sumados.',
                             date: 'Hoy',
@@ -3196,25 +3224,49 @@
                     );
                 }
 
+                // Buscar en los posts cacheados activos en pantalla si aún no se encontró
+                if (!post && this.cachedBlogPosts && Array.isArray(this.cachedBlogPosts)) {
+                    post = this.cachedBlogPosts.find(p => 
+                        p.id === postId || 
+                        p.id === cleanPostId || 
+                        (p.title && postId && p.title.toLowerCase() === postId.toLowerCase())
+                    );
+                }
+
                 if (!post) return;
 
                 // Formateo de contenido para máxima calidad editorial (párrafos, bullets y consejos)
                 let formattedContent = post.content || post.contentTemplate || post.body || '';
                 if (!formattedContent && post.snippet) formattedContent = post.snippet;
                 if (typeof formattedContent === 'string' && formattedContent.includes('\n\n')) {
-                    formattedContent = formattedContent.split('\n\n').map(par => `<p style="margin: 0 0 14px 0;">${par.replace(/\n/g, '<br>')}</p>`).join('');
+                    formattedContent = formattedContent.split('\n\n').map(par => `<p style="margin: 0 0 16px 0; line-height: 1.8;">${par.replace(/\n/g, '<br>')}</p>`).join('');
+                } else if (typeof formattedContent === 'string' && !formattedContent.startsWith('<p')) {
+                    formattedContent = `<p style="margin: 0 0 16px 0; line-height: 1.8;">${formattedContent.replace(/\n/g, '<br>')}</p>`;
                 }
 
-                // Resolver la mejor imagen de fondo para la cabecera (Fototeca Curada HD o pool local)
+                // Drop-cap editorial de lujo en la primera letra del primer párrafo
+                const catColor = post.catColor || '#CCFF00';
+                if (formattedContent && typeof formattedContent === 'string') {
+                    formattedContent = formattedContent.replace(/<p([^>]*)>([A-Za-zÁÉÍÓÚáéíóúÑñ])/, (match, pAttrs, firstChar) => {
+                        return `<p${pAttrs}><span style="float: left; font-size: 2.75rem; line-height: 0.82; font-weight: 950; color: ${catColor}; margin: 4px 10px 0 0; font-family: 'Outfit', sans-serif; text-shadow: 0 0 18px ${catColor}55;">${firstChar}</span>`;
+                    });
+                }
+
+                // Resolver la mejor imagen de fondo para la cabecera (Fototeca Curada HD o pool local 100% Pádel)
                 let articleImg = (this.currentImagesMap && this.currentImagesMap[postId]) || 
                                  (this.currentImagesMap && this.currentImagesMap[cleanPostId]) || 
                                  post.imageUrl;
-                if (!articleImg && window.NewsCatalog) {
+
+                const isPadelImage = (url) => {
+                    return url && typeof url === 'string' && url.startsWith('img/') && !url.includes('unsplash');
+                };
+
+                if ((!articleImg || !isPadelImage(articleImg)) && window.NewsCatalog) {
                     const assigned = window.NewsCatalog.assignUniquePhotos([post]);
-                    articleImg = assigned[post.id];
+                    articleImg = assigned[post.id] || assigned[cleanPostId];
                 }
-                if (!articleImg) {
-                    articleImg = 'https://images.unsplash.com/photo-1592919505780-303950717480?q=80&w=1200&auto=format&fit=crop';
+                if (!articleImg || !isPadelImage(articleImg)) {
+                    articleImg = 'img/pista_padel_azul.png';
                 }
 
                 // Detectar si el post tiene acción interactiva integrada
@@ -3228,16 +3280,19 @@
                 let interactiveActionHtml = '';
                 if (isGameModesPost) {
                     interactiveActionHtml = `
-                        <div style="margin: 20px 0 16px; background: linear-gradient(135deg, rgba(204, 255, 0, 0.12) 0%, rgba(56, 189, 248, 0.1) 100%); border: 1.5px solid rgba(204, 255, 0, 0.45); border-radius: 18px; padding: 18px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.35);">
-                            <div style="font-size: 1.6rem; margin-bottom: 6px;">🎮 👥 🌪️ 🇨🇭</div>
-                            <div style="font-size: 0.98rem; font-weight: 950; color: #ffffff; margin-bottom: 4px;">Comparativa & Normativa Oficial</div>
-                            <div style="font-size: 0.78rem; color: #cbd5e1; margin-bottom: 14px; line-height: 1.45;">
-                                Abre la guía interactiva oficial para consultar todas las reglas, dinámicas de rotación y sistemas de puntuación.
+                        <div style="margin: 24px 0 20px; background: linear-gradient(135deg, rgba(204, 255, 0, 0.12) 0%, rgba(56, 189, 248, 0.08) 100%); border: 1.5px solid rgba(204, 255, 0, 0.45); border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 25px rgba(204, 255, 0, 0.1);">
+                            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(204, 255, 0, 0.15); border: 1px solid rgba(204, 255, 0, 0.35); padding: 3px 10px; border-radius: 999px; font-size: 0.62rem; font-weight: 900; color: #CCFF00; letter-spacing: 0.6px; margin-bottom: 10px;">
+                                <i class="fas fa-sparkles"></i> GUÍA & COMPARADOR OFICIAL
+                            </div>
+                            <div style="font-size: 1.8rem; margin-bottom: 6px;">🎮 👥 🌪️ 🇨🇭</div>
+                            <div style="font-size: 1.05rem; font-weight: 950; color: #ffffff; margin-bottom: 6px;">Modos de Competición Interactivos</div>
+                            <div style="font-size: 0.82rem; color: #cbd5e1; margin-bottom: 16px; line-height: 1.5;">
+                                Consulta las reglas oficiales, rotación por pistas, sistema de puntuación y desempates en nuestra guía interactiva.
                             </div>
                             <button id="blog-modal-modes-action-btn" 
-                                    style="background: #CCFF00; color: #000000; font-weight: 950; font-size: 0.82rem; border: none; padding: 11px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(204, 255, 0, 0.35); transition: all 0.2s ease;"
-                                    onmouseover="this.style.transform='scale(1.04)';"
-                                    onmouseout="this.style.transform='scale(1)';"
+                                    style="background: #CCFF00; color: #000000; font-weight: 950; font-size: 0.84rem; border: none; padding: 12px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 18px rgba(204, 255, 0, 0.4); transition: all 0.2s ease;"
+                                    onmouseover="this.style.transform='scale(1.05) translateY(-1px)';"
+                                    onmouseout="this.style.transform='scale(1) translateY(0)';"
                                     onmousedown="this.style.transform='scale(0.97)';">
                                 <i class="fas fa-gamepad"></i> ABRIR MODOS DE JUEGO
                             </button>
@@ -3245,16 +3300,19 @@
                     `;
                 } else if (isTeamsPost) {
                     interactiveActionHtml = `
-                        <div style="margin: 20px 0 16px; background: linear-gradient(135deg, rgba(204, 255, 0, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%); border: 1.5px solid rgba(204, 255, 0, 0.5); border-radius: 18px; padding: 18px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.35);">
-                            <div style="font-size: 1.6rem; margin-bottom: 6px;">🏆 🛡️ 🇪🇸</div>
-                            <div style="font-size: 0.98rem; font-weight: 950; color: #ffffff; margin-bottom: 4px;">Pre-Inscripción Liga 2027</div>
-                            <div style="font-size: 0.78rem; color: #cbd5e1; margin-bottom: 14px; line-height: 1.45;">
-                                Consulta las convocatorias de nuestros 8 equipos y solicita tu prueba de nivel para la próxima temporada.
+                        <div style="margin: 24px 0 20px; background: linear-gradient(135deg, rgba(204, 255, 0, 0.14) 0%, rgba(15, 23, 42, 0.85) 100%); border: 1.5px solid rgba(204, 255, 0, 0.5); border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 25px rgba(204, 255, 0, 0.1);">
+                            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(204, 255, 0, 0.15); border: 1px solid rgba(204, 255, 0, 0.35); padding: 3px 10px; border-radius: 999px; font-size: 0.62rem; font-weight: 900; color: #CCFF00; letter-spacing: 0.6px; margin-bottom: 10px;">
+                                <i class="fas fa-shield-halved"></i> EQUIPOS DE CLUB 2027
+                            </div>
+                            <div style="font-size: 1.8rem; margin-bottom: 6px;">🏆 🛡️ 🇪🇸</div>
+                            <div style="font-size: 1.05rem; font-weight: 950; color: #ffffff; margin-bottom: 6px;">Pre-Inscripción Liga Catalana 2027</div>
+                            <div style="font-size: 0.82rem; color: #cbd5e1; margin-bottom: 16px; line-height: 1.5;">
+                                Consulta las convocatorias de nuestros 8 equipos oficiales y reserva tu prueba de nivel para la próxima temporada.
                             </div>
                             <button id="blog-modal-teams-action-btn" 
-                                    style="background: #CCFF00; color: #000000; font-weight: 950; font-size: 0.82rem; border: none; padding: 11px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(204, 255, 0, 0.35); transition: all 0.2s ease;"
-                                    onmouseover="this.style.transform='scale(1.04)';"
-                                    onmouseout="this.style.transform='scale(1)';"
+                                    style="background: #CCFF00; color: #000000; font-weight: 950; font-size: 0.84rem; border: none; padding: 12px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 18px rgba(204, 255, 0, 0.4); transition: all 0.2s ease;"
+                                    onmouseover="this.style.transform='scale(1.05) translateY(-1px)';"
+                                    onmouseout="this.style.transform='scale(1) translateY(0)';"
                                     onmousedown="this.style.transform='scale(0.97)';">
                                 <i class="fas fa-users"></i> IR A SECCIÓN DE EQUIPOS
                             </button>
@@ -3262,16 +3320,19 @@
                     `;
                 } else if (isRankingPost) {
                     interactiveActionHtml = `
-                        <div style="margin: 20px 0 16px; background: linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%); border: 1.5px solid rgba(56, 189, 248, 0.5); border-radius: 18px; padding: 18px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.35);">
-                            <div style="font-size: 1.6rem; margin-bottom: 6px;">📊 🥇 🥈 🥉</div>
-                            <div style="font-size: 0.98rem; font-weight: 950; color: #ffffff; margin-bottom: 4px;">Doble Ranking en Inicio</div>
-                            <div style="font-size: 0.78rem; color: #cbd5e1; margin-bottom: 14px; line-height: 1.45;">
-                                Comprueba las posiciones del Top 10 Élite alternando entre el modo Entrenos y Americanas.
+                        <div style="margin: 24px 0 20px; background: linear-gradient(135deg, rgba(56, 189, 248, 0.16) 0%, rgba(15, 23, 42, 0.85) 100%); border: 1.5px solid rgba(56, 189, 248, 0.5); border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 25px rgba(56, 189, 248, 0.12);">
+                            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.35); padding: 3px 10px; border-radius: 999px; font-size: 0.62rem; font-weight: 900; color: #38bdf8; letter-spacing: 0.6px; margin-bottom: 10px;">
+                                <i class="fas fa-ranking-star"></i> CLASIFICACIÓN EN TIEMPO REAL
+                            </div>
+                            <div style="font-size: 1.8rem; margin-bottom: 6px;">📊 🥇 🥈 🥉</div>
+                            <div style="font-size: 1.05rem; font-weight: 950; color: #ffffff; margin-bottom: 6px;">Doble Ranking Élite en Inicio</div>
+                            <div style="font-size: 0.82rem; color: #cbd5e1; margin-bottom: 16px; line-height: 1.5;">
+                                Alterna al instante entre el ranking de Entrenamientos y Americanas para revisar el Top 10 del circuito.
                             </div>
                             <button id="blog-modal-ranking-action-btn" 
-                                    style="background: #38bdf8; color: #000000; font-weight: 950; font-size: 0.82rem; border: none; padding: 11px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(56, 189, 248, 0.35); transition: all 0.2s ease;"
-                                    onmouseover="this.style.transform='scale(1.04)';"
-                                    onmouseout="this.style.transform='scale(1)';"
+                                    style="background: #38bdf8; color: #000000; font-weight: 950; font-size: 0.84rem; border: none; padding: 12px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 18px rgba(56, 189, 248, 0.4); transition: all 0.2s ease;"
+                                    onmouseover="this.style.transform='scale(1.05) translateY(-1px)';"
+                                    onmouseout="this.style.transform='scale(1) translateY(0)';"
                                     onmousedown="this.style.transform='scale(0.97)';">
                                 <i class="fas fa-chart-line"></i> VER TOP 10 EN INICIO
                             </button>
@@ -3279,16 +3340,19 @@
                     `;
                 } else if (isFutPost) {
                     interactiveActionHtml = `
-                        <div style="margin: 20px 0 16px; background: linear-gradient(135deg, rgba(250, 204, 21, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%); border: 1.5px solid rgba(250, 204, 21, 0.5); border-radius: 18px; padding: 18px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.35);">
-                            <div style="font-size: 1.6rem; margin-bottom: 6px;">🃏 ⚡ 💎</div>
-                            <div style="font-size: 0.98rem; font-weight: 950; color: #ffffff; margin-bottom: 4px;">Tu Carta FUT Holográfica</div>
-                            <div style="font-size: 0.78rem; color: #cbd5e1; margin-bottom: 14px; line-height: 1.45;">
-                                Consulta tu valoración OVR, atributos en 3D y compártela directamente con tus compañeros de juego.
+                        <div style="margin: 24px 0 20px; background: linear-gradient(135deg, rgba(250, 204, 21, 0.16) 0%, rgba(15, 23, 42, 0.85) 100%); border: 1.5px solid rgba(250, 204, 21, 0.5); border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 25px rgba(250, 204, 21, 0.12);">
+                            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(250, 204, 21, 0.15); border: 1px solid rgba(250, 204, 21, 0.35); padding: 3px 10px; border-radius: 999px; font-size: 0.62rem; font-weight: 900; color: #facc15; letter-spacing: 0.6px; margin-bottom: 10px;">
+                                <i class="fas fa-id-card-clip"></i> CARTA DIGITAL EXCLUSIVA
+                            </div>
+                            <div style="font-size: 1.8rem; margin-bottom: 6px;">🃏 ⚡ 💎</div>
+                            <div style="font-size: 1.05rem; font-weight: 950; color: #ffffff; margin-bottom: 6px;">Tu Carta FUT Holográfica 3D</div>
+                            <div style="font-size: 0.82rem; color: #cbd5e1; margin-bottom: 16px; line-height: 1.5;">
+                                Consulta tu valoración global OVR, atributos de ataque y defensa, y compártela directamente con tu grupo.
                             </div>
                             <button id="blog-modal-fut-action-btn" 
-                                    style="background: #facc15; color: #000000; font-weight: 950; font-size: 0.82rem; border: none; padding: 11px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(250, 204, 21, 0.35); transition: all 0.2s ease;"
-                                    onmouseover="this.style.transform='scale(1.04)';"
-                                    onmouseout="this.style.transform='scale(1)';"
+                                    style="background: #facc15; color: #000000; font-weight: 950; font-size: 0.84rem; border: none; padding: 12px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 18px rgba(250, 204, 21, 0.4); transition: all 0.2s ease;"
+                                    onmouseover="this.style.transform='scale(1.05) translateY(-1px)';"
+                                    onmouseout="this.style.transform='scale(1) translateY(0)';"
                                     onmousedown="this.style.transform='scale(0.97)';">
                                 <i class="fas fa-id-card"></i> ABRIR MI PERFIL DE JUGADOR
                             </button>
@@ -3296,147 +3360,247 @@
                     `;
                 } else if (isWeatherPost) {
                     interactiveActionHtml = `
-                        <div style="margin: 20px 0 16px; background: linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%); border: 1.5px solid rgba(56, 189, 248, 0.5); border-radius: 18px; padding: 18px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.35);">
-                            <div style="font-size: 1.6rem; margin-bottom: 6px;">🌦️ 💨 🎾</div>
-                            <div style="font-size: 0.98rem; font-weight: 950; color: #ffffff; margin-bottom: 4px;">Radar Meteorológico en Vivo</div>
-                            <div style="font-size: 0.78rem; color: #cbd5e1; margin-bottom: 14px; line-height: 1.45;">
-                                Consulta la predicción en tiempo real de humedad y velocidad de bola para planificar tu estrategia.
+                        <div style="margin: 24px 0 20px; background: linear-gradient(135deg, rgba(56, 189, 248, 0.18) 0%, rgba(15, 23, 42, 0.9) 100%); border: 1.5px solid rgba(56, 189, 248, 0.55); border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 25px rgba(56, 189, 248, 0.15);">
+                            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.35); padding: 3px 10px; border-radius: 999px; font-size: 0.62rem; font-weight: 900; color: #38bdf8; letter-spacing: 0.6px; margin-bottom: 10px;">
+                                <i class="fas fa-satellite-dish"></i> RADAR METEOROLÓGICO TÁCTICO
+                            </div>
+                            <div style="font-size: 1.8rem; margin-bottom: 6px;">🌦️ 💨 🎾</div>
+                            <div style="font-size: 1.05rem; font-weight: 950; color: #ffffff; margin-bottom: 6px;">Predicción de Pista en Vivo</div>
+                            <div style="font-size: 0.82rem; color: #cbd5e1; margin-bottom: 16px; line-height: 1.5;">
+                                Consulta en tiempo real el radar Doppler, viento, probabilidad de lluvia y velocidad de bola para adaptar tu táctica.
                             </div>
                             <button id="blog-modal-weather-action-btn" 
-                                    style="background: #38bdf8; color: #000000; font-weight: 950; font-size: 0.82rem; border: none; padding: 11px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(56, 189, 248, 0.35); transition: all 0.2s ease;"
-                                    onmouseover="this.style.transform='scale(1.04)';"
-                                    onmouseout="this.style.transform='scale(1)';"
+                                    style="background: #38bdf8; color: #000000; font-weight: 950; font-size: 0.84rem; border: none; padding: 12px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 18px rgba(56, 189, 248, 0.4); transition: all 0.2s ease;"
+                                    onmouseover="this.style.transform='scale(1.05) translateY(-1px)';"
+                                    onmouseout="this.style.transform='scale(1) translateY(0)';"
                                     onmousedown="this.style.transform='scale(0.97)';">
-                                <i class="fas fa-cloud-sun"></i> VER METEOROLOGÍA EN INICIO
+                                <i class="fas fa-satellite-dish"></i> ABRIR RADAR METEOROLÓGICO
                             </button>
                         </div>
                     `;
                 }
 
+                // Generar recuentos de reacciones locales realistas para feedback de la comunidad
+                const safeReactKey = (type) => `sp_blog_react_${postId}_${type}`;
+                const getInitialReactCount = (type, offset) => {
+                    const saved = localStorage.getItem(safeReactKey(type));
+                    if (saved !== null) return parseInt(saved, 10);
+                    const hashVal = (postId || '').split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+                    return offset + (hashVal % 15);
+                };
+                const fireCount = getInitialReactCount('fire', 28);
+                const topCount = getInitialReactCount('top', 19);
+                const brutalCount = getInitialReactCount('brutal', 34);
+
+                const isVoted = (type) => localStorage.getItem(`sp_blog_voted_${postId}_${type}`) === 'true';
+
                 const modal = document.createElement('div');
                 modal.id = 'blog-post-modal';
                 modal.style = `
                     position: fixed; inset: 0; z-index: 999999999 !important;
-                    background: rgba(0,0,0,0.85); backdrop-filter: blur(15px);
+                    background: rgba(4, 8, 16, 0.88); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
                     display: flex; align-items: center; justify-content: center;
-                    padding: 20px; font-family: 'Outfit', sans-serif;
-                    animation: fadeIn 0.3s ease-out;
+                    padding: 16px; font-family: 'Outfit', sans-serif;
+                    animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
                 `;
                 
                 modal.innerHTML = `
-                    <div style="background: #090f1e; border: 1px solid rgba(255,255,255,0.12); border-radius: 32px; width: 100%; max-width: 480px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 35px 80px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1); position: relative; overflow: hidden; animation: slideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);">
+                    <div style="background: #060b17; border: 1px solid rgba(204,255,0,0.22); border-radius: 28px; width: 100%; max-width: 530px; max-height: 92vh; display: flex; flex-direction: column; box-shadow: 0 30px 90px rgba(0,0,0,0.92), 0 0 50px rgba(204,255,0,0.08), inset 0 1px 0 rgba(255,255,255,0.15); position: relative; overflow: hidden; animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);">
                         
-                        <!-- Premium Background Glow/Aura -->
-                        <div style="position: absolute; top: 100px; left: -50px; width: 150px; height: 150px; background: radial-gradient(circle, ${post.catColor || '#CCFF00'}15 0%, transparent 70%); pointer-events: none; filter: blur(30px);"></div>
-                        
-                        <!-- Premium Image Header Area (Magazine style) -->
-                        <div style="background-image: url('${articleImg}'); background-size: cover; background-position: center; height: 210px; position: relative; overflow: hidden; border-bottom: 1px solid rgba(255,255,255,0.06); flex-shrink: 0;">
-                            <!-- Overlay degradado para fundido limpio a negro (#090f1e) en la base y oscurecimiento para botones -->
-                            <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(9, 15, 30, 0.25) 0%, rgba(9, 15, 30, 0.65) 60%, #090f1e 100%); pointer-events: none;"></div>
-                            
-                            <!-- Glassmorphism Floating Emoji Badge -->
-                            <div class="blog-modal-emoji-badge" style="position: absolute; bottom: 16px; right: 16px; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; background: rgba(15, 23, 42, 0.6); border: 1.5px solid rgba(255, 255, 255, 0.25); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); z-index: 2; animation: badgePop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both 0.15s;">
-                                ${post.emoji || '🎾'}
-                            </div>
-                        </div>
+                        <!-- Reading Progress Bar at the top edge -->
+                        <div id="blog-modal-progress-bar" style="position: absolute; top: 0; left: 0; width: 0%; height: 3.5px; background: linear-gradient(90deg, ${catColor}, #38bdf8); z-index: 1000; box-shadow: 0 0 12px ${catColor}; transition: width 0.08s ease-out; border-radius: 0 2px 2px 0;"></div>
 
-                        <!-- Content Area -->
-                        <div id="blog-post-content-area" style="padding: 24px; padding-top: 16px; position: relative; z-index: 2; overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1;">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
-                                <span style="font-size: 0.58rem; font-weight: 1000; color: ${post.catColor || '#CCFF00'}; border: 1px solid ${post.catColor || '#CCFF00'}45; padding: 4px 10px; border-radius: 8px; background: ${post.catColor || '#CCFF00'}12; letter-spacing: 0.8px; text-transform: uppercase;">${post.category || 'REVISTA SOMOSPADEL'}</span>
-                                <span style="font-size: 0.62rem; color: rgba(255,255,255,0.45); font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase;">• ${post.readTime || '3 MIN'} DE LECTURA</span>
-                            </div>
-                            
-                            <h3 style="color: white; font-weight: 950; font-size: 1.35rem; margin: 0 0 16px 0; line-height: 1.25; letter-spacing: -0.4px; text-shadow: 0 2px 10px rgba(0,0,0,0.4);">${post.title}</h3>
-                            
-                            <div style="color: rgba(255,255,255,0.88); font-size: 0.88rem; font-weight: 450; line-height: 1.7; margin: 0 0 20px 0; word-break: break-word;">${formattedContent}</div>
-                            
-                            ${interactiveActionHtml}
+                        <!-- Ambient Glows -->
+                        <div style="position: absolute; top: 120px; right: -40px; width: 200px; height: 200px; background: radial-gradient(circle, ${catColor}18 0%, transparent 70%); pointer-events: none; filter: blur(40px); z-index: 1;"></div>
+                        <div style="position: absolute; bottom: 80px; left: -60px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, transparent 70%); pointer-events: none; filter: blur(50px); z-index: 1;"></div>
 
-                            <!-- Bloque de Firma y Aval del Coach SomosPadel Academy -->
-                            <div style="margin: 22px 0 16px; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
-                                <div style="display: flex; align-items: center; gap: 12px;">
-                                    <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #CCFF00 0%, #10b981 100%); display: flex; align-items: center; justify-content: center; color: #000; font-size: 1.1rem; font-weight: 950; box-shadow: 0 4px 14px rgba(204,255,0,0.35);">
-                                        <i class="fas fa-medal"></i>
-                                    </div>
-                                    <div>
-                                        <div style="font-size: 0.82rem; font-weight: 950; color: #ffffff; letter-spacing: 0.2px;">Alex Coscolín • Head Coach</div>
-                                        <div style="font-size: 0.68rem; color: #CCFF00; font-weight: 700; letter-spacing: 0.3px;">SOMOSPADEL BARCELONA ACADEMY</div>
-                                    </div>
-                                </div>
-                                <button onclick="window.DashboardView.shareToWhatsApp('${post.id}', '${post.title.replace(/'/g, "\\'")}', event)"
-                                        style="background: #25D366; color: #ffffff; border: none; font-weight: 950; font-size: 0.74rem; padding: 8px 14px; border-radius: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(37,211,102,0.3); transition: transform 0.2s;"
-                                        onmouseover="this.style.transform='scale(1.04)';"
-                                        onmouseout="this.style.transform='scale(1)';">
-                                    <i class="fab fa-whatsapp"></i> COMPARTIR CON MI PAREJA
+                        <!-- Sticky Frosted Glass Top Navigation Bar -->
+                        <div style="position: absolute; top: 14px; left: 14px; right: 14px; z-index: 999; display: flex; align-items: center; justify-content: space-between; pointer-events: none;">
+                            <!-- Left Controls Pill -->
+                            <div style="display: flex; align-items: center; gap: 4px; background: rgba(6, 11, 23, 0.76); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); padding: 5px 8px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.18); box-shadow: 0 8px 24px rgba(0,0,0,0.5); pointer-events: auto;">
+                                <button id="blog-modal-share-btn"
+                                        style="background: transparent; border: none; color: #cbd5e1; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);"
+                                        onmouseover="this.style.background='rgba(56, 189, 248, 0.25)';this.style.color='#38bdf8';this.style.transform='scale(1.15)';"
+                                        onmouseout="this.style.background='transparent';this.style.color='#cbd5e1';this.style.transform='scale(1)';"
+                                        title="Compartir Noticia">
+                                    <i class="fas fa-share-nodes" style="font-size: 0.95rem;"></i>
+                                </button>
+
+                                <button id="blog-modal-whatsapp-btn"
+                                        style="background: transparent; border: none; color: #25D366; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);"
+                                        onmouseover="this.style.background='rgba(37, 211, 102, 0.25)';this.style.transform='scale(1.15)';"
+                                        onmouseout="this.style.background='transparent';this.style.transform='scale(1)';"
+                                        title="Compartir por WhatsApp">
+                                    <i class="fab fa-whatsapp" style="font-size: 1.05rem;"></i>
+                                </button>
+
+                                <button id="blog-modal-save-btn"
+                                        style="background: transparent; border: none; color: ${this.isPostSaved(postId) ? '#CCFF00' : '#cbd5e1'}; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);"
+                                        onmouseover="this.style.background='rgba(204, 255, 0, 0.2)';this.style.transform='scale(1.15)';"
+                                        onmouseout="this.style.background='transparent';this.style.transform='scale(1)';"
+                                        title="${this.isPostSaved(postId) ? 'Guardado en favoritas' : 'Guardar en favoritas'}">
+                                    <i class="${this.isPostSaved(postId) ? 'fas' : 'far'} fa-bookmark" style="font-size: 0.95rem;"></i>
                                 </button>
                             </div>
 
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 0.68rem; color: rgba(255,255,255,0.4); font-weight: 800; letter-spacing: 0.5px;">
-                                <span>Publicado: ${post.date || 'Recientemente'}</span>
-                                <span style="color: #CCFF00; font-weight: 900; letter-spacing: 0.8px;">SOMOSPADEL BCN JOURNAL</span>
-                            </div>
+                            <!-- Right Close Button -->
+                            <button id="blog-modal-close-btn"
+                                    style="background: rgba(6, 11, 23, 0.76); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.18); color: #ffffff; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 8px 24px rgba(0,0,0,0.5); pointer-events: auto;"
+                                    onmouseover="this.style.background='#CCFF00';this.style.borderColor='#CCFF00';this.style.color='#000000';this.style.transform='scale(1.1) rotate(90deg)';"
+                                    onmouseout="this.style.background='rgba(6, 11, 23, 0.76)';this.style.borderColor='rgba(255, 255, 255, 0.18)';this.style.color='#ffffff';this.style.transform='scale(1) rotate(0deg)';"
+                                    title="Cerrar Noticia">
+                                <i class="fas fa-times" style="font-size: 1rem; font-weight: 900;"></i>
+                            </button>
                         </div>
+
+                        <!-- Content Scrollable Body -->
+                        <div id="blog-post-content-area" style="position: relative; z-index: 2; overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1; scroll-behavior: smooth;">
                             
-                            ${interactiveActionHtml}
+                            <!-- Cinematic Hero Image Header -->
+                            <div style="background-image: url('${articleImg}'); background-size: cover; background-position: center; height: 235px; position: relative; overflow: hidden; flex-shrink: 0;">
+                                <!-- Smooth gradient overlay -->
+                                <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(6, 11, 23, 0.3) 0%, rgba(6, 11, 23, 0.65) 55%, #060b17 100%);"></div>
 
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 0.68rem; color: rgba(255,255,255,0.4); font-weight: 800; letter-spacing: 0.5px;">
-                                <span>Publicado: ${post.date || 'Recientemente'}</span>
-                                <span style="color: #CCFF00; font-weight: 900; letter-spacing: 0.8px;">SOMOSPADEL BCN</span>
+                                <!-- Live Category & Read Time Pills -->
+                                <div style="position: absolute; bottom: 18px; left: 20px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                    <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.62rem; font-weight: 900; letter-spacing: 0.8px; color: #000000; background: ${catColor}; padding: 4px 10px; border-radius: 999px; text-transform: uppercase; box-shadow: 0 2px 12px ${catColor}70;">
+                                        <i class="fas fa-bolt" style="font-size: 0.6rem;"></i>
+                                        ${post.category || 'REVISTA SOMOSPADEL'}
+                                    </span>
+                                    <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.65rem; color: #ffffff; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); padding: 4px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.15); font-weight: 700;">
+                                        <i class="far fa-clock" style="color: #38bdf8;"></i> ${post.readTime || '3 MIN'} LECTURA
+                                    </span>
+                                </div>
+
+                                <!-- 3D Holographic Emoji Floating Badge -->
+                                <div class="blog-modal-emoji-badge" style="position: absolute; bottom: 14px; right: 20px; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.7rem; background: rgba(15, 23, 42, 0.7); border: 2px solid rgba(255, 255, 255, 0.3); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 10px 25px rgba(0,0,0,0.5), 0 0 20px ${catColor}40; z-index: 2; animation: badgePop 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) both 0.15s;">
+                                    ${post.emoji || '🎾'}
+                                </div>
+                            </div>
+
+                            <!-- Editorial Article Container -->
+                            <div style="padding: 20px 24px 28px;">
+                                <!-- Editorial Meta Subheader -->
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; font-size: 0.72rem; color: #94a3b8; font-weight: 600;">
+                                    <span style="display: flex; align-items: center; gap: 6px;">
+                                        <i class="fas fa-feather-pointed" style="color: ${catColor};"></i>
+                                        <span>SomosPádel Editorial • BCN</span>
+                                    </span>
+                                    <span style="display: flex; align-items: center; gap: 6px;">
+                                        <i class="far fa-calendar-alt" style="color: #64748b;"></i>
+                                        <span>${post.date || 'Edición 2026-2027'}</span>
+                                    </span>
+                                </div>
+
+                                <!-- Article Headline -->
+                                <h2 style="color: #ffffff; font-weight: 950; font-size: 1.45rem; line-height: 1.28; margin: 0 0 16px 0; letter-spacing: -0.4px; text-shadow: 0 2px 14px rgba(0,0,0,0.5);">
+                                    ${post.title}
+                                </h2>
+
+                                <!-- Neon Visual Accent Divider -->
+                                <div style="height: 2px; width: 60px; background: linear-gradient(90deg, ${catColor}, transparent); margin-bottom: 20px; border-radius: 2px;"></div>
+
+                                <!-- Formatted Editorial Content -->
+                                <div class="sp-editorial-body" style="color: #e2e8f0; font-size: 0.94rem; font-weight: 400; line-height: 1.78; margin: 0 0 24px 0; word-break: break-word;">
+                                    ${formattedContent}
+                                </div>
+
+                                <!-- Interactive Action Module (if any) -->
+                                ${interactiveActionHtml}
+
+                                <!-- Community Reactions Interactive Bar -->
+                                <div style="margin: 24px 0 20px; padding: 16px 18px; background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; backdrop-filter: blur(10px);">
+                                    <div style="font-size: 0.70rem; font-weight: 900; color: #94a3b8; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+                                        <span>¿QUÉ TE HA PARECIDO ESTA CRÓNICA?</span>
+                                        <span style="color: #CCFF00; font-size: 0.65rem; font-weight: 950;">SOMOSPADEL FEEDBACK</span>
+                                    </div>
+                                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                                        <button id="blog-react-btn-fire"
+                                                style="background: ${isVoted('fire') ? 'rgba(255, 107, 0, 0.2)' : 'rgba(255, 255, 255, 0.04)'}; border: 1px solid ${isVoted('fire') ? '#ff6b00' : 'rgba(255, 255, 255, 0.1)'}; color: #ffffff; padding: 9px 8px; border-radius: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.78rem; font-weight: 800; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);">
+                                            <span>🔥</span>
+                                            <span style="color: #cbd5e1; font-size: 0.72rem;">Me sirve</span>
+                                            <span id="blog-react-count-fire" style="color: #ff6b00; font-weight: 950; font-size: 0.76rem;">${fireCount}</span>
+                                        </button>
+
+                                        <button id="blog-react-btn-top"
+                                                style="background: ${isVoted('top') ? 'rgba(204, 255, 0, 0.2)' : 'rgba(255, 255, 255, 0.04)'}; border: 1px solid ${isVoted('top') ? '#CCFF00' : 'rgba(255, 255, 255, 0.1)'}; color: #ffffff; padding: 9px 8px; border-radius: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.78rem; font-weight: 800; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);">
+                                            <span>👏</span>
+                                            <span style="color: #cbd5e1; font-size: 0.72rem;">Top</span>
+                                            <span id="blog-react-count-top" style="color: #CCFF00; font-weight: 950; font-size: 0.76rem;">${topCount}</span>
+                                        </button>
+
+                                        <button id="blog-react-btn-brutal"
+                                                style="background: ${isVoted('brutal') ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.04)'}; border: 1px solid ${isVoted('brutal') ? '#38bdf8' : 'rgba(255, 255, 255, 0.1)'}; color: #ffffff; padding: 9px 8px; border-radius: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.78rem; font-weight: 800; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);">
+                                            <span>💡</span>
+                                            <span style="color: #cbd5e1; font-size: 0.72rem;">Brutal</span>
+                                            <span id="blog-react-count-brutal" style="color: #38bdf8; font-weight: 950; font-size: 0.76rem;">${brutalCount}</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Bloque de Firma y Aval del Coach SomosPadel Academy -->
+                                <div style="margin: 22px 0 18px; padding: 16px; background: linear-gradient(135deg, rgba(204,255,0,0.06) 0%, rgba(15,23,42,0.85) 100%); border: 1px solid rgba(204,255,0,0.25); border-radius: 20px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; box-shadow: 0 8px 24px rgba(0,0,0,0.35);">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #CCFF00 0%, #10b981 100%); display: flex; align-items: center; justify-content: center; color: #000; font-size: 1.2rem; font-weight: 950; box-shadow: 0 4px 16px rgba(204,255,0,0.4); flex-shrink: 0;">
+                                            <i class="fas fa-medal"></i>
+                                        </div>
+                                        <div>
+                                            <div style="font-size: 0.86rem; font-weight: 950; color: #ffffff; letter-spacing: 0.2px;">Alex Coscolín</div>
+                                            <div style="font-size: 0.70rem; color: #CCFF00; font-weight: 800; letter-spacing: 0.5px;">HEAD COACH & DIRECCIÓN TÉCNICA</div>
+                                            <div style="font-size: 0.65rem; color: #94a3b8;">SomosPádel Barcelona Academy</div>
+                                        </div>
+                                    </div>
+                                    <button id="blog-modal-coach-wa-btn"
+                                            style="background: #25D366; color: #ffffff; border: none; font-weight: 950; font-size: 0.76rem; padding: 10px 16px; border-radius: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; box-shadow: 0 4px 14px rgba(37,211,102,0.35); transition: all 0.2s ease;"
+                                            onmouseover="this.style.transform='scale(1.05) translateY(-1px)';"
+                                            onmouseout="this.style.transform='scale(1) translateY(0)';"
+                                            title="Enviar por WhatsApp a mi pareja de pádel">
+                                        <i class="fab fa-whatsapp" style="font-size: 0.98rem;"></i> COMPARTIR CON MI PAREJA
+                                    </button>
+                                </div>
+
+                                <!-- Editorial Footer & Clean Signature -->
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 0.70rem; color: rgba(255,255,255,0.45); font-weight: 700;">
+                                    <span>Publicado: ${post.date || 'Recientemente'}</span>
+                                    <span style="color: #CCFF00; font-weight: 950; letter-spacing: 0.8px; display: flex; align-items: center; gap: 5px;">
+                                        <i class="fas fa-check-circle" style="color: #CCFF00; font-size: 0.75rem;"></i> SOMOSPADEL BCN JOURNAL
+                                    </span>
+                                </div>
                             </div>
                         </div>
-
-                        <!-- Floating Premium Control Buttons (Fixed on top of banner) -->
-                        <div style="position: absolute; top: 16px; left: 16px; z-index: 999999999 !important; display: flex; align-items: center; gap: 8px;">
-                            <button id="blog-modal-share-btn"
-                                    style="background: rgba(0,0,0,0.65); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.25); color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 4px 12px rgba(0,0,0,0.4);"
-                                    onmouseover="this.style.background='#3b82f6';this.style.borderColor='#3b82f6';this.style.transform='scale(1.12) translateY(-1px)';this.style.boxShadow='0 6px 18px rgba(59,130,246,0.5)';"
-                                    onmouseout="this.style.background='rgba(0,0,0,0.65)';this.style.borderColor='rgba(255,255,255,0.25)';this.style.transform='scale(1) translateY(0)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.4)';"
-                                    title="Compartir Noticia">
-                                <i class="fas fa-share-alt" style="font-size: 0.92rem;"></i>
-                            </button>
-
-                            <button id="blog-modal-whatsapp-btn"
-                                    style="background: rgba(0,0,0,0.65); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.25); color: #25D366; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 4px 12px rgba(0,0,0,0.4);"
-                                    onmouseover="this.style.background='#25D366';this.style.borderColor='#25D366';this.style.color='#ffffff';this.style.transform='scale(1.12) translateY(-1px)';this.style.boxShadow='0 6px 18px rgba(37,211,102,0.5)';"
-                                    onmouseout="this.style.background='rgba(0,0,0,0.65)';this.style.borderColor='rgba(255,255,255,0.25)';this.style.color='#25D366';this.style.transform='scale(1) translateY(0)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.4)';"
-                                    title="Enviar a mi pareja por WhatsApp">
-                                <i class="fab fa-whatsapp" style="font-size: 1.05rem;"></i>
-                            </button>
-
-                            <button id="blog-modal-save-btn"
-                                    style="background: rgba(0,0,0,0.65); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid ${this.isPostSaved(postId) ? '#CCFF00' : 'rgba(255,255,255,0.25)'}; color: ${this.isPostSaved(postId) ? '#CCFF00' : '#ffffff'}; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 4px 12px rgba(0,0,0,0.4);"
-                                    onmouseover="this.style.transform='scale(1.12) translateY(-1px)';"
-                                    onmouseout="this.style.transform='scale(1) translateY(0)';"
-                                    title="${this.isPostSaved(postId) ? 'Eliminar de guardados' : 'Guardar táctica'}">
-                                <i class="${this.isPostSaved(postId) ? 'fas' : 'far'} fa-bookmark" style="font-size: 0.95rem;"></i>
-                            </button>
-                        </div>
-                        
-                        <button id="blog-modal-close-btn"
-                                style="position: absolute; top: 16px; right: 16px; background: rgba(0,0,0,0.65); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.25); color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 999999999 !important; box-shadow: 0 4px 12px rgba(0,0,0,0.4);"
-                                onmouseover="this.style.background='#CCFF00';this.style.borderColor='#CCFF00';this.style.color='#000';this.style.transform='scale(1.12) translateY(-1px)';this.style.boxShadow='0 6px 18px rgba(204,255,0,0.5)';"
-                                onmouseout="this.style.background='rgba(0,0,0,0.65)';this.style.borderColor='rgba(255,255,255,0.25)';this.style.color='#fff';this.style.transform='scale(1) translateY(0)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.4)';"
-                                title="Cerrar Noticia">
-                            <i class="fas fa-times" style="font-size: 0.95rem;"></i>
-                        </button>
                     </div>
                     <style>
                         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-                        @keyframes slideUp { from { transform: translateY(28px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+                        @keyframes slideUp { from { transform: translateY(32px) scale(0.97); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
                         @keyframes badgePop {
-                            from { transform: scale(0) rotate(-15deg); opacity: 0; }
+                            from { transform: scale(0) rotate(-20deg); opacity: 0; }
                             to { transform: scale(1) rotate(0deg); opacity: 1; }
                         }
-                        #blog-post-content-area::-webkit-scrollbar { width: 6px; }
-                        #blog-post-content-area::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); border-radius: 10px; }
-                        #blog-post-content-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 10px; }
+                        .sp-editorial-body p { margin-bottom: 14px; }
+                        .sp-editorial-body strong { color: #ffffff; font-weight: 800; }
+                        .sp-editorial-body ul { margin: 10px 0 14px 20px; padding: 0; }
+                        .sp-editorial-body li { margin-bottom: 6px; }
+                        #blog-post-content-area::-webkit-scrollbar { width: 5px; }
+                        #blog-post-content-area::-webkit-scrollbar-track { background: transparent; }
+                        #blog-post-content-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
                         #blog-post-content-area::-webkit-scrollbar-thumb:hover { background: #CCFF00; }
                     </style>
                 `;
                 document.body.appendChild(modal);
 
-                // Asignamos manejadores de eventos directos sin inline onclicks propensos a fallos
+                // Sincronizar barra de progreso de lectura superior con el scroll del usuario
+                const contentArea = modal.querySelector('#blog-post-content-area');
+                const progressBar = modal.querySelector('#blog-modal-progress-bar');
+                if (contentArea && progressBar) {
+                    contentArea.addEventListener('scroll', () => {
+                        const scrollTop = contentArea.scrollTop;
+                        const scrollHeight = contentArea.scrollHeight - contentArea.clientHeight;
+                        const progress = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+                        progressBar.style.width = `${Math.min(100, Math.max(0, progress))}%`;
+                    });
+                }
+
+                // Asignar manejadores de eventos directos
                 const closeBtn = modal.querySelector('#blog-modal-close-btn');
                 if (closeBtn) {
                     closeBtn.addEventListener('click', (e) => {
@@ -3449,7 +3613,7 @@
                 if (shareBtn) {
                     shareBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        this.shareBlogPost(postId, post.title);
+                        this.shareBlogPost(postId, post.title, articleImg);
                     });
                 }
 
@@ -3457,7 +3621,15 @@
                 if (waBtn) {
                     waBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        this.shareToWhatsApp(postId, post.title, e);
+                        this.shareToWhatsApp(postId, post.title, e, articleImg);
+                    });
+                }
+
+                const coachWaBtn = modal.querySelector('#blog-modal-coach-wa-btn');
+                if (coachWaBtn) {
+                    coachWaBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.shareToWhatsApp(postId, post.title, e, articleImg);
                     });
                 }
 
@@ -3467,12 +3639,47 @@
                         e.stopPropagation();
                         this.toggleSaveBlogPost(postId, e);
                         const isNowSaved = this.isPostSaved(postId);
-                        saveBtn.style.color = isNowSaved ? '#CCFF00' : '#ffffff';
-                        saveBtn.style.borderColor = isNowSaved ? '#CCFF00' : 'rgba(255,255,255,0.25)';
+                        saveBtn.style.color = isNowSaved ? '#CCFF00' : '#cbd5e1';
                         const icon = saveBtn.querySelector('i');
                         if (icon) icon.className = isNowSaved ? 'fas fa-bookmark' : 'far fa-bookmark';
                     });
                 }
+
+                // Lógica de reacciones de la comunidad interactivas
+                const setupReaction = (btnId, countId, type, color, bgRgba) => {
+                    const btn = modal.querySelector(btnId);
+                    const countEl = modal.querySelector(countId);
+                    if (!btn || !countEl) return;
+
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const votedKey = `sp_blog_voted_${postId}_${type}`;
+                        const countKey = safeReactKey(type);
+                        let currentCount = parseInt(countEl.textContent, 10) || 0;
+                        const alreadyVoted = localStorage.getItem(votedKey) === 'true';
+
+                        if (!alreadyVoted) {
+                            currentCount += 1;
+                            localStorage.setItem(votedKey, 'true');
+                            localStorage.setItem(countKey, currentCount.toString());
+                            btn.style.background = bgRgba;
+                            btn.style.borderColor = color;
+                            btn.style.transform = 'scale(1.15)';
+                            setTimeout(() => { btn.style.transform = 'scale(1)'; }, 200);
+                        } else {
+                            currentCount = Math.max(0, currentCount - 1);
+                            localStorage.removeItem(votedKey);
+                            localStorage.setItem(countKey, currentCount.toString());
+                            btn.style.background = 'rgba(255, 255, 255, 0.04)';
+                            btn.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                        }
+                        countEl.textContent = currentCount;
+                    });
+                };
+
+                setupReaction('#blog-react-btn-fire', '#blog-react-count-fire', 'fire', '#ff6b00', 'rgba(255, 107, 0, 0.22)');
+                setupReaction('#blog-react-btn-top', '#blog-react-count-top', 'top', '#CCFF00', 'rgba(204, 255, 0, 0.22)');
+                setupReaction('#blog-react-btn-brutal', '#blog-react-count-brutal', 'brutal', '#38bdf8', 'rgba(56, 189, 248, 0.22)');
 
                 const modesBtn = modal.querySelector('#blog-modal-modes-action-btn');
                 if (modesBtn) {
@@ -3527,9 +3734,25 @@
                     weatherBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
                         modal.remove();
-                        const weatherCard = document.querySelector('.weather-card-container') || document.querySelector('.weather-intel-badge');
-                        if (weatherCard) {
-                            weatherCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                        // 1. Abrir de inmediato el Radar Meteorológico Táctico en Vivo
+                        if (window.EventWeatherModal && typeof window.EventWeatherModal.open === 'function') {
+                            window.EventWeatherModal.open({ court: 'El Prat', name: 'SomosPádel Club Barcelona' });
+                            return;
+                        }
+
+                        // 2. Navegar a la pestaña Clima & Radar de eventos
+                        if (window.Router && typeof window.Router.navigate === 'function') {
+                            window.Router.navigate('clima');
+                        } else if (window.EventsController && typeof window.EventsController.setTab === 'function') {
+                            window.EventsController.setTab('meteo');
+                        } else if (typeof window.showWeatherDetails === 'function') {
+                            window.showWeatherDetails();
+                        } else {
+                            const weatherCard = document.querySelector('.weather-card-container') || document.querySelector('.weather-intel-badge');
+                            if (weatherCard) {
+                                weatherCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
                         }
                     });
                 }
@@ -3934,7 +4157,10 @@
                 return;
             }
             window._ccActiveFilter = cat;
-            if (window.DashboardView && typeof window.DashboardView.renderLiveWidget === 'function') {
+            if (typeof window.filterPizarraTactics === 'function') {
+                const btn = document.querySelector(`.pizarra-filter-pill[data-filter="${cat}"]`);
+                window.filterPizarraTactics(cat, btn);
+            } else if (window.DashboardView && typeof window.DashboardView.renderLiveWidget === 'function') {
                 window.DashboardView.renderLiveWidget(window._lastDashboardContext || {}, true);
             }
         }
@@ -4031,77 +4257,290 @@
 
                 let stripHtml = '';
 
-                // Weather micro-pill HTML component
+                // Global Pizarra Táctica Helpers
+                if (!window.filterPizarraTactics) {
+                    window.filterPizarraTactics = function(cat, btn) {
+                        window._ccActiveFilter = cat;
+                        const track = document.getElementById('pizarra-cards-track');
+                        if (!track) return;
+                        const cards = track.querySelectorAll('.pizarra-card');
+                        const pills = document.querySelectorAll('.pizarra-filter-pill');
+                        
+                        pills.forEach(p => {
+                            const isPillBtn = (p === btn);
+                            const pFilter = p.getAttribute('data-filter');
+                            if (isPillBtn) {
+                                p.style.background = '#071629';
+                                p.style.color = (pFilter === 'mi_pista') ? '#fbbf24' : '#ccff00';
+                                p.style.borderColor = (pFilter === 'mi_pista') ? '#f59e0b' : '#071629';
+                                p.style.boxShadow = '0 2px 10px rgba(7, 22, 41, 0.35)';
+                            } else {
+                                p.style.background = 'rgba(7, 22, 41, 0.10)';
+                                p.style.color = '#071629';
+                                p.style.borderColor = 'rgba(7, 22, 41, 0.22)';
+                                p.style.boxShadow = 'none';
+                            }
+                        });
+
+                        let visibleCount = 0;
+                        cards.forEach(c => {
+                            const cardCat = c.getAttribute('data-category') || '';
+                            const cardType = c.getAttribute('data-type') || '';
+                            const isUser = c.getAttribute('data-is-user') === 'true';
+
+                            let show = false;
+                            if (cat === 'todos') {
+                                show = true;
+                            } else if (cat === 'mi_pista') {
+                                show = isUser;
+                            } else if (cat === 'entrenos') {
+                                show = (cardCat === 'entrenos' || cardType === 'entreno');
+                            } else if (cat === 'americanas') {
+                                show = (cardCat === 'americanas' || cardType === 'americana');
+                            }
+
+                            if (show) {
+                                c.style.display = 'flex';
+                                visibleCount++;
+                            } else {
+                                c.style.display = 'none';
+                            }
+                        });
+
+                        let emptyNotice = document.getElementById('pizarra-empty-filtered');
+                        if (visibleCount === 0) {
+                            if (!emptyNotice) {
+                                emptyNotice = document.createElement('div');
+                                emptyNotice.id = 'pizarra-empty-filtered';
+                                emptyNotice.style.cssText = 'padding: 16px; color: #071629; font-size: 0.68rem; text-align: center; width: 100%; font-weight: 800;';
+                                emptyNotice.innerHTML = '<i class="fas fa-info-circle" style="color: #071629; margin-right: 5px;"></i> No hay eventos en esta categoría';
+                                track.appendChild(emptyNotice);
+                            } else {
+                                emptyNotice.style.display = 'block';
+                            }
+                        } else if (emptyNotice) {
+                            emptyNotice.style.display = 'none';
+                        }
+
+                        track.scrollTo({ left: 0, behavior: 'smooth' });
+                    };
+                }
+
+                if (!window.scrollPizarraTrack) {
+                    window.scrollPizarraTrack = function(direction) {
+                        const track = document.getElementById('pizarra-cards-track');
+                        if (track) {
+                            track.scrollBy({ left: direction * 280, behavior: 'smooth' });
+                        }
+                    };
+                }
+
+                // Weather micro-pill HTML component con contraste adaptado al fondo lima
                 const weatherPillHtml = `
                     <div onclick="event.stopPropagation(); window.showWeatherDetails ? window.showWeatherDetails() : (window.Router && window.Router.navigate('clima'));" 
-                         style="cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-size: 0.58rem; font-weight: 800; color: #cbd5e1; background: rgba(0, 0, 0, 0.4); padding: 1.5px 6px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.35); user-select: none; -webkit-tap-highlight-color: transparent;" 
+                         style="cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-size: 0.58rem; font-weight: 800; color: #ffffff; background: #071629; padding: 2px 7px; border-radius: 6px; border: 1px solid rgba(7, 22, 41, 0.4); box-shadow: 0 2px 8px rgba(7, 22, 41, 0.2); user-select: none; -webkit-tap-highlight-color: transparent;" 
                          title="Meteo ${weatherCity}: ${weatherTemp} (¡Nuevo Radar Táctico de Pistas!)">
                         <span>${weatherIcon}</span> <span>${weatherTemp}</span>
-                        <span style="background: #38bdf8; color: #021327; font-size: 0.50rem; font-weight: 950; padding: 1px 4px; border-radius: 4px; margin-left: 2px; letter-spacing: 0.3px;">RADAR</span>
+                        <span style="background: #ccff00; color: #071629; font-size: 0.50rem; font-weight: 950; padding: 1px 4px; border-radius: 4px; margin-left: 2px; letter-spacing: 0.3px;">RADAR</span>
                     </div>
                 `;
 
-                // CASE 1: EL USUARIO TIENE PARTIDO HOY
-                if (context && (context.hasMatchToday || context.hasMatchThisWeek)) {
-                    const isMyEntreno = (context.matchType === 'entreno') || ((context.eventName || '').toLowerCase().includes('entreno')) || ((context.eventName || '').toLowerCase().includes('pozo'));
-                    const targetRoute = isMyEntreno ? 'entrenos' : 'agenda';
-                    const myMatchTitle = (context.eventName || (isMyEntreno ? 'Entreno Programado' : 'Tu Partido Hoy')).trim();
-                    const matchTime = context.matchTime || '19:30';
-                    const courtText = context.court ? `Pista ${context.court}` : 'Pista 3';
-                    const matchAccent = isMyEntreno ? '#ef4444' : '#38bdf8';
-                    const matchCta = isMyEntreno ? '#ff7a59' : '#0284c7';
+                // --- INTEGRACIÓN Y FUSIÓN DE EVENTOS DEL USUARIO ---
+                const hasUserMatch = !!(context && (context.hasMatchToday || context.hasMatchThisWeek));
+                const isMyEntreno = hasUserMatch && ((context.matchType === 'entreno') || ((context.eventName || '').toLowerCase().includes('entreno')) || ((context.eventName || '').toLowerCase().includes('pozo')));
+                const userTargetRoute = isMyEntreno ? 'entrenos' : 'agenda';
+                const myMatchTitle = hasUserMatch ? (context.eventName || (isMyEntreno ? 'Entreno Programado' : 'Tu Partido Hoy')).trim() : '';
+                const matchTime = hasUserMatch ? (context.matchTime || '19:30') : '';
+                const courtText = hasUserMatch ? (context.court ? (String(context.court).toLowerCase().includes('pista') ? context.court : `Pista ${context.court}`) : 'Pista 3') : '';
+                const partnerText = (context && context.partner && context.partner !== 'Asignando...') ? context.partner : '';
+                const opponentsText = (context && context.opponents && context.opponents !== 'Asignando...') ? context.opponents : '';
 
+                if (hasUserMatch) {
+                    const userMatchId = context.matchId || context.eventId;
+                    const userEventNameNorm = myMatchTitle.toLowerCase().trim();
+                    
+                    let matchedEvt = null;
+                    let matchedIdx = -1;
+
+                    for (let i = 0; i < openEvents.length; i++) {
+                        const evt = openEvents[i];
+                        const evtNameNorm = (evt.name || evt.title || '').toLowerCase().trim();
+                        if ((userMatchId && (evt.id === userMatchId || evt._id === userMatchId)) ||
+                            (userEventNameNorm && evtNameNorm === userEventNameNorm)) {
+                            matchedEvt = evt;
+                            matchedIdx = i;
+                            break;
+                        }
+                    }
+
+                    if (matchedEvt) {
+                        matchedEvt.isUserMatch = true;
+                        matchedEvt.courtText = courtText;
+                        matchedEvt.userMatchTime = matchTime;
+                        matchedEvt.partnerText = partnerText;
+                        matchedEvt.opponentsText = opponentsText;
+                        matchedEvt.userTargetRoute = userTargetRoute;
+                        matchedEvt.isMyEntreno = isMyEntreno;
+                        if (matchedIdx > 0) {
+                            openEvents.splice(matchedIdx, 1);
+                            openEvents.unshift(matchedEvt);
+                        }
+                    } else {
+                        const syntheticUserEvt = {
+                            id: userMatchId || 'user_match_assigned',
+                            name: myMatchTitle,
+                            title: myMatchTitle,
+                            date: context.eventDateRaw || new Date().toISOString().split('T')[0],
+                            time: matchTime,
+                            court: context.court,
+                            courtText: courtText,
+                            type: context.matchType || (isMyEntreno ? 'entreno' : 'americana'),
+                            isUserMatch: true,
+                            isMyEntreno: isMyEntreno,
+                            userTargetRoute: userTargetRoute,
+                            partnerText: partnerText,
+                            opponentsText: opponentsText,
+                            max_players: 16,
+                            players: []
+                        };
+                        openEvents.unshift(syntheticUserEvt);
+                    }
+                }
+
+                // Categorización para contadores y filtros tácticos
+                let entrenosCount = 0;
+                let americanasCount = 0;
+                openEvents.forEach(evt => {
+                    const t = (evt.type || evt.event_type || '').toLowerCase();
+                    const n = (evt.name || evt.title || '').toLowerCase();
+                    if (t.includes('entreno') || t.includes('pozo') || n.includes('entreno') || n.includes('pozo') || evt.isMyEntreno) {
+                        entrenosCount++;
+                    } else {
+                        americanasCount++;
+                    }
+                });
+                const totalActiveCount = openEvents.length;
+
+                if (totalActiveCount === 0) {
+                    // FALLBACK: PIZARRA TÁCTICA SIN EVENTOS ACTIVOS
                     stripHtml = `
-                    <div onclick="window.dashNavigate('${targetRoute}', 'strip_my_match')" 
-                         style="background: rgba(13, 20, 36, 0.88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.1); border-left: 3.5px solid ${matchAccent}; border-radius: 14px; padding: 7px 12px; min-height: 56px; max-height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 8px; position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
-                         onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
+                    <div class="pizarra-tactica-container" 
+                         style="width: 100%; box-sizing: border-box; background-color: #ccff00; background-image: radial-gradient(rgba(0, 0, 0, 0.08) 1px, transparent 1px), linear-gradient(145deg, #ccff00 0%, #b8e600 100%); background-size: 16px 16px, 100% 100%; border: 1.5px solid rgba(0, 0, 0, 0.15); border-radius: 18px; padding: 12px 14px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25), 0 0 25px rgba(204, 255, 0, 0.25); position: relative; overflow: hidden; cursor: pointer; user-select: none;"
+                         onclick="window.dashNavigate('entrenos', 'pizarra_empty')">
                         
-                        <!-- Ambient Cyber Halo Glow -->
-                        <div style="position: absolute; top: -15px; right: -15px; width: 65px; height: 65px; background: radial-gradient(circle, ${matchAccent} 0%, transparent 70%); filter: blur(25px); opacity: 0.35; border-radius: 50%; pointer-events: none;"></div>
-
-                        <!-- Left: Badge & Time -->
-                        <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; flex-shrink: 0; z-index: 2;">
-                            <span style="background: ${matchAccent}22; border: 1px solid ${matchAccent}66; color: ${matchAccent}; font-size: 0.54rem; font-weight: 950; padding: 1.5px 6px; border-radius: 5px; letter-spacing: 0.5px; text-transform: uppercase; display: inline-flex; align-items: center; gap: 2px; box-shadow: 0 0 10px ${matchAccent}33;">
-                                🎾 ${isMyEntreno ? 'ENTRENO' : 'PARTIDO'}
-                            </span>
-                            <span style="font-size: 0.58rem; color: #cbd5e1; font-weight: 850; display: inline-flex; align-items: center; gap: 3px;">
-                                <i class="far fa-clock" style="font-size: 0.52rem; color: ${matchAccent};"></i> ${matchTime}
-                            </span>
-                        </div>
-
-                        <!-- Center: Match Info -->
-                        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; z-index: 2; padding: 0 4px;">
-                            <div style="color: #ffffff; font-size: 0.78rem; font-weight: 850; letter-spacing: -0.2px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                ${myMatchTitle}
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                            <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
+                                <span style="font-size: 1.15rem; line-height: 1;">📋</span>
+                                <div style="min-width: 0;">
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        <span style="color: #071629; font-size: 0.74rem; font-weight: 950; letter-spacing: 0.4px; text-transform: uppercase;">
+                                            PIZARRA DE PISTAS & CLUB
+                                        </span>
+                                        <span style="background: #071629; color: #ccff00; border: 1px solid rgba(7, 22, 41, 0.4); font-size: 0.50rem; font-weight: 950; padding: 1.5px 6px; border-radius: 6px;">
+                                            PRÓXIMAMENTE
+                                        </span>
+                                    </div>
+                                    <div style="color: #0f2744; font-size: 0.58rem; font-weight: 800; margin-top: 2px;">
+                                        Nuevas convocatorias y torneos en preparación. ¡Consulta la agenda!
+                                    </div>
+                                </div>
                             </div>
-                            <div style="font-size: 0.58rem; color: #94a3b8; font-weight: 750; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;">
-                                <span style="color: ${matchAccent}; font-weight: 900;">🎾 ${courtText}</span> • Convocatoria confirmada
-                            </div>
-                        </div>
 
-                        <!-- Right: Micro-clima & Direct CTA -->
-                        <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 3px; flex-shrink: 0; z-index: 2;">
-                            ${weatherPillHtml}
-                            <button onclick="event.stopPropagation(); window.dashNavigate('${targetRoute}', 'strip_my_match')" 
-                                    style="background: linear-gradient(135deg, ${matchAccent} 0%, ${matchCta} 100%); color: #ffffff; font-size: 0.58rem; font-weight: 950; padding: 3.5px 9px; border-radius: 7px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; letter-spacing: 0.3px; box-shadow: 0 2px 10px ${matchAccent}55; white-space: nowrap; transition: transform 0.15s ease;"
-                                    onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
-                                <span>VER PISTA</span> <i class="fas fa-arrow-right" style="font-size: 0.48rem;"></i>
-                            </button>
+                            <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                                ${weatherPillHtml}
+                                <button onclick="event.stopPropagation(); window.dashNavigate('entrenos', 'pizarra_empty')" 
+                                        style="background: #071629; color: #ccff00; font-size: 0.58rem; font-weight: 950; padding: 4px 10px; border-radius: 7px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; letter-spacing: 0.3px; box-shadow: 0 2px 10px rgba(7, 22, 41, 0.3); white-space: nowrap;">
+                                    <span>VER CALENDARIO</span> <i class="fas fa-arrow-right" style="font-size: 0.48rem;"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                     `;
-                } else if (openEvents.length > 0) {
-                    // CASE 2: RESUMEN DE EVENTOS ACTIVOS (TODOS VISIBLES DIRECTAMENTE)
-                    const displayEvents = openEvents.slice(0, 6);
+                } else {
+                    // PIZARRA TÁCTICA ACTIVA CON EVENTOS Y CONVOCATORIAS
+                    const isSingleCard = openEvents.length === 1;
+                    const cardLayoutWidth = isSingleCard 
+                        ? 'width: 100%; flex: 1 1 100%; max-width: 100%;' 
+                        : 'flex: 0 0 310px; width: 310px; max-width: calc(100vw - 44px);';
 
-                    const cardsHtml = displayEvents.map((evt, idx) => {
+                    const cardsHtml = openEvents.map((evt, idx) => {
                         const theme = this.getEventCategoryTheme(evt);
-                        const eventNameText = (evt.name || evt.title || (theme.categoryName === 'entreno' ? 'Entreno Pistas' : 'Americana Oficial')).trim();
+                        const isUser = !!evt.isUserMatch;
+                        const isEntreno = (evt.type || '').toLowerCase().includes('entreno') ||
+                                          (evt.name || '').toLowerCase().includes('entreno') ||
+                                          (evt.name || '').toLowerCase().includes('pozo') ||
+                                          theme.categoryName === 'entreno' ||
+                                          !!evt.isMyEntreno;
+                        const catFilter = isEntreno ? 'entrenos' : 'americanas';
+                        
+                        const eventNameText = (evt.name || evt.title || (isEntreno ? 'Entreno Pistas' : 'Americana Oficial')).trim();
                         const dateText = this.formatDateShort ? this.formatDateShort(evt.date) : 'Hoy';
-                        const timeStr = evt.time ? (evt.time_end && !evt.time.includes('-') ? `${evt.time} - ${evt.time_end}` : evt.time) : '19:30';
+                        const timeStr = evt.time ? (evt.time_end && !evt.time.includes('-') ? `${evt.time} - ${evt.time_end}` : evt.time) : (evt.userMatchTime || '19:30');
                         const timeDisplay = `${dateText === 'HOY' ? 'Hoy' : dateText} ${timeStr}`;
 
-                        // Capacity & Urgency
+                        if (isUser) {
+                            // --- TARJETA VIP: TU PISTA ASIGNADA (PARTIDO / ENTRENO DEL USUARIO) ---
+                            const courtDisplay = evt.courtText || courtText || 'Pista 3';
+                            const route = evt.userTargetRoute || userTargetRoute || 'agenda';
+                            const ctaGradient = evt.isMyEntreno 
+                                ? 'linear-gradient(135deg, #ef4444 0%, #ff7a59 100%)' 
+                                : 'linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)';
+                            const subInfo = (evt.partnerText && evt.opponentsText)
+                                ? `Pareja: ${evt.partnerText} • Vs: ${evt.opponentsText}`
+                                : (evt.partnerText ? `Pareja: ${evt.partnerText}` : 'Convocatoria confirmada en pista');
+
+                            return `
+                            <div class="pizarra-card" data-category="${catFilter}" data-type="${isEntreno ? 'entreno' : 'americana'}" data-is-user="true"
+                                 onclick="window.dashNavigate('${route}', 'pizarra_my_match')" 
+                                 style="${cardLayoutWidth} box-sizing: border-box; background: linear-gradient(145deg, #071629 0%, #0d1e36 100%); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1.5px solid #38bdf8; border-radius: 14px; padding: 9px 12px; min-height: 72px; display: flex; flex-direction: column; justify-content: space-between; gap: 6px; position: relative; overflow: hidden; box-shadow: 0 6px 22px rgba(7, 22, 41, 0.4), 0 0 15px rgba(56, 189, 248, 0.2); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; scroll-snap-align: start; transition: transform 0.15s ease, box-shadow 0.15s ease;"
+                                 onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
+                                
+                                <!-- Ambient Glow -->
+                                <div style="position: absolute; top: -18px; right: -18px; width: 70px; height: 70px; background: radial-gradient(circle, #38bdf8 0%, transparent 70%); filter: blur(20px); opacity: 0.35; border-radius: 50%; pointer-events: none;"></div>
+
+                                <!-- Top Row: Badge & Horario -->
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; z-index: 2;">
+                                    <div style="display: flex; align-items: center; gap: 5px;">
+                                        <span style="background: linear-gradient(135deg, #f59e0b 0%, #eab308 100%); color: #030d17; font-size: 0.54rem; font-weight: 950; padding: 2px 7px; border-radius: 5px; letter-spacing: 0.4px; text-transform: uppercase; box-shadow: 0 0 10px rgba(245, 158, 11, 0.45); display: inline-flex; align-items: center; gap: 3px;">
+                                            ⭐ TU PISTA ASIGNADA
+                                        </span>
+                                    </div>
+                                    <span style="font-size: 0.62rem; color: #38bdf8; font-weight: 900; display: inline-flex; align-items: center; gap: 3px;">
+                                        <i class="far fa-clock" style="font-size: 0.54rem;"></i> ${timeStr}
+                                    </span>
+                                </div>
+
+                                <!-- Middle Row: Event Name & Court Info -->
+                                <div style="z-index: 2; min-width: 0;">
+                                    <div style="color: #ffffff; font-size: 0.80rem; font-weight: 900; letter-spacing: -0.2px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${eventNameText}">
+                                        ${eventNameText}
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 6px; margin-top: 3px;">
+                                        <span style="background: rgba(56, 189, 248, 0.22); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); font-size: 0.58rem; font-weight: 950; padding: 1.5px 6px; border-radius: 5px; letter-spacing: 0.2px;">
+                                            🎾 ${courtDisplay}
+                                        </span>
+                                        <span style="font-size: 0.58rem; color: #22c55e; font-weight: 850; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                            ✔ Convocatoria confirmada
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Bottom Row: Sub info & CTA Button -->
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: 1px; z-index: 2;">
+                                    <div style="font-size: 0.56rem; color: #94a3b8; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 190px;">
+                                        ${subInfo}
+                                    </div>
+                                    <button onclick="event.stopPropagation(); window.dashNavigate('${route}', 'pizarra_my_match')" 
+                                            style="background: ${ctaGradient}; color: #ffffff; font-size: 0.58rem; font-weight: 950; padding: 3.5px 9px; border-radius: 7px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; letter-spacing: 0.3px; box-shadow: 0 2px 10px rgba(56, 189, 248, 0.4); white-space: nowrap; transition: transform 0.15s ease;"
+                                            onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
+                                        <span>VER PISTA</span> <i class="fas fa-arrow-right" style="font-size: 0.48rem;"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            `;
+                        }
+
+                        // --- TARJETAS ESTÁNDAR: OTROS ENTRENOS Y AMERICANAS ACTIVOS ---
                         const maxCourts = parseInt(evt.max_courts || evt.courts || 0);
                         const max = maxCourts > 0 ? (maxCourts * 4) : parseInt(evt.max_players || evt.maxPlayers || 16);
                         const playersList = (evt.players && evt.players.length > 0) ? evt.players : (evt.registeredPlayers || []);
@@ -4115,43 +4554,43 @@
                         const ctaTextColor = (theme.accentColor === '#CCFF00' || theme.ctaColor === '#CCFF00') ? '#071629' : '#ffffff';
 
                         return `
-                        <div onclick="window.dashNavigate('${theme.targetRoute}', 'strip_card')" 
-                             style="width: 100%; box-sizing: border-box; background: rgba(13, 20, 36, 0.88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.1); border-left: 3.5px solid ${theme.accentColor}; border-radius: 14px; padding: 7px 12px; min-height: 56px; max-height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 8px; position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
+                        <div class="pizarra-card" data-category="${catFilter}" data-type="${isEntreno ? 'entreno' : 'americana'}" data-is-user="false"
+                             onclick="window.dashNavigate('${theme.targetRoute}', 'pizarra_card')" 
+                             style="${cardLayoutWidth} box-sizing: border-box; background: linear-gradient(145deg, #091122 0%, #101c34 100%); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.12); border-left: 3.5px solid ${theme.accentColor}; border-radius: 14px; padding: 9px 12px; min-height: 72px; display: flex; flex-direction: column; justify-content: space-between; gap: 6px; position: relative; overflow: hidden; box-shadow: 0 6px 20px rgba(7, 22, 41, 0.32); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; scroll-snap-align: start; transition: transform 0.15s ease;"
                              onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
                             
-                            <!-- Ambient Cyber Halo Glow -->
-                            <div style="position: absolute; top: -15px; right: -15px; width: 65px; height: 65px; background: radial-gradient(circle, ${theme.accentColor} 0%, transparent 70%); filter: blur(25px); opacity: 0.35; border-radius: 50%; pointer-events: none;"></div>
+                            <!-- Ambient Glow -->
+                            <div style="position: absolute; top: -18px; right: -18px; width: 65px; height: 65px; background: radial-gradient(circle, ${theme.accentColor} 0%, transparent 70%); filter: blur(25px); opacity: 0.35; border-radius: 50%; pointer-events: none;"></div>
 
-                            <!-- Left: Badge & Time -->
-                            <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; flex-shrink: 0; z-index: 2;">
-                                <span style="background: ${theme.accentColor}22; border: 1px solid ${theme.accentColor}66; color: ${theme.accentColor}; font-size: 0.54rem; font-weight: 950; padding: 1.5px 6px; border-radius: 5px; letter-spacing: 0.5px; text-transform: uppercase; display: inline-flex; align-items: center; gap: 2px; box-shadow: 0 0 10px ${theme.accentColor}33;">
+                            <!-- Top Row: Badge & Horario -->
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; z-index: 2;">
+                                <span style="background: ${theme.accentColor}22; border: 1px solid ${theme.accentColor}66; color: ${theme.accentColor}; font-size: 0.54rem; font-weight: 950; padding: 1.5px 6px; border-radius: 5px; letter-spacing: 0.4px; text-transform: uppercase; display: inline-flex; align-items: center; gap: 3px; box-shadow: 0 0 10px ${theme.accentColor}33;">
                                     ${theme.badgeText}
                                 </span>
-                                <span style="font-size: 0.58rem; color: #cbd5e1; font-weight: 850; display: inline-flex; align-items: center; gap: 3px;">
+                                <span style="font-size: 0.60rem; color: #cbd5e1; font-weight: 850; display: inline-flex; align-items: center; gap: 3px;">
                                     <i class="far fa-clock" style="font-size: 0.52rem; color: ${theme.accentColor};"></i> ${timeDisplay}
                                 </span>
                             </div>
 
-                            <!-- Center: Title, Progress Bar & Urgency -->
-                            <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; z-index: 2; padding: 0 4px;">
+                            <!-- Middle Row: Event Name -->
+                            <div style="z-index: 2; min-width: 0;">
                                 <div style="color: #ffffff; font-size: 0.78rem; font-weight: 850; letter-spacing: -0.2px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${eventNameText}">
                                     ${eventNameText}
                                 </div>
-                                <div style="display: flex; align-items: center; gap: 6px; margin-top: 3px;">
-                                    <!-- Mini Progress Bar de Ocupación -->
+                            </div>
+
+                            <!-- Bottom Row: Occupancy Bar & CTA Button -->
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: 1px; z-index: 2;">
+                                <div style="display: flex; align-items: center; gap: 6px; min-width: 0;">
                                     <div style="width: 38px; height: 4.5px; background: rgba(255, 255, 255, 0.12); border-radius: 3px; overflow: hidden; flex-shrink: 0;" title="${current}/${max} inscritos">
-                                        <div style="width: ${capacityPercent}%; height: 100%; background: ${urgencyColor}; border-radius: 3px; transition: width 0.3s ease;"></div>
+                                        <div style="width: ${capacityPercent}%; height: 100%; background: ${urgencyColor}; border-radius: 3px;"></div>
                                     </div>
-                                    <div style="font-size: 0.58rem; color: #94a3b8; font-weight: 750; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    <div style="font-size: 0.56rem; color: #94a3b8; font-weight: 750; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                         <span style="color: ${urgencyColor}; font-weight: 900;">${urgencyText}</span> • <span style="color: #cbd5e1;">Nv. ${minLevel}-${maxLevel}</span>
                                     </div>
                                 </div>
-                            </div>
 
-                            <!-- Right: Micro-clima & Neon CTA Button -->
-                            <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 3px; flex-shrink: 0; z-index: 2;">
-                                ${weatherPillHtml}
-                                <button onclick="event.stopPropagation(); window.dashNavigate('${theme.targetRoute}', 'strip_cta')" 
+                                <button onclick="event.stopPropagation(); window.dashNavigate('${theme.targetRoute}', 'pizarra_cta')" 
                                         style="background: linear-gradient(135deg, ${theme.accentColor} 0%, ${theme.ctaColor} 100%); color: ${ctaTextColor}; font-size: 0.58rem; font-weight: 950; padding: 3.5px 9px; border-radius: 7px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; letter-spacing: 0.3px; box-shadow: 0 2px 10px ${theme.accentColor}44; white-space: nowrap; transition: transform 0.15s ease;"
                                         onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
                                     <span>RESERVAR</span> <i class="fas fa-arrow-right" style="font-size: 0.48rem;"></i>
@@ -4161,52 +4600,100 @@
                         `;
                     }).join('');
 
-                    const headerHtml = displayEvents.length > 1 ? `
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; padding: 0 2px;">
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <span style="font-size: 0.62rem; font-weight: 950; color: #000000; letter-spacing: 0.5px; text-transform: uppercase;">
-                                🎾 ENTRENOS Y AMERICANAS ACTIVOS
-                            </span>
-                            <span style="background: rgba(0, 0, 0, 0.15); color: #000000; border: 1px solid rgba(0, 0, 0, 0.3); font-size: 0.52rem; font-weight: 950; padding: 1px 6px; border-radius: 10px;">
-                                ${displayEvents.length}
-                            </span>
-                        </div>
-                        <div onclick="window.dashNavigate('entrenos', 'strip_view_all')" style="font-size: 0.58rem; color: #38bdf8; font-weight: 850; cursor: pointer; display: flex; align-items: center; gap: 3px;">
-                            <span>Ver todos</span> <i class="fas fa-chevron-right" style="font-size: 0.5rem;"></i>
-                        </div>
-                    </div>
+                    // Filtro VIP para Mi Pista si el usuario tiene convocatoria
+                    const myPistaFilterBtn = hasUserMatch ? `
+                        <button class="pizarra-filter-pill" data-filter="mi_pista" onclick="event.stopPropagation(); window.filterPizarraTactics('mi_pista', this);"
+                                style="background: #071629; color: #fbbf24; border: 1.5px solid #f59e0b; box-shadow: 0 2px 8px rgba(7, 22, 41, 0.25); font-size: 0.56rem; font-weight: 950; padding: 3px 8px; border-radius: 7px; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; transition: all 0.2s ease;">
+                            <span>⭐ MI PISTA</span>
+                        </button>
                     ` : '';
 
-                    stripHtml = `
-                    <div style="display: flex; flex-direction: column; width: 100%; gap: 8px;">
-                        ${headerHtml}
-                        ${cardsHtml}
-                    </div>
-                    `;
-                } else {
-                    // CASE 3: SIN EVENTOS ABIERTOS (TIRA DELGADA ELEGANTE ~50px)
-                    stripHtml = `
-                    <div onclick="window.dashNavigate('entrenos', 'strip_empty')" 
-                         style="background: linear-gradient(135deg, #0b1528 0%, #13223f 100%); border: 1px solid rgba(56, 189, 248, 0.28); border-radius: 14px; padding: 6px 12px; min-height: 50px; max-height: 54px; display: flex; align-items: center; justify-content: space-between; gap: 8px; position: relative; overflow: hidden; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
-                         onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
-                        
-                        <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; z-index: 2;">
-                            <span style="background: rgba(2, 132, 199, 0.2); color: #38bdf8; font-size: 0.54rem; font-weight: 950; padding: 2px 6px; border-radius: 5px; border: 1px solid rgba(56, 189, 248, 0.35); letter-spacing: 0.4px; text-transform: uppercase; white-space: nowrap; flex-shrink: 0;">
-                                🎾 PRÓXIMOS EVENTOS
-                            </span>
-                            <div style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                <div style="color: #ffffff; font-size: 0.74rem; font-weight: 850; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Descubre próximos entrenos y americanas</div>
-                                <div style="color: #94a3b8; font-size: 0.54rem; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Consulta fechas disponibles y apúntate</div>
+                    // Cabecera interactiva estilo Pizarra Táctica sobre fondo amarillo lima
+                    const pizarraHeaderHtml = `
+                    <div style="display: flex; flex-direction: column; gap: 7px; margin-bottom: 9px;">
+                        <!-- Fila 1: Título de Pizarra, Contador Activo y Radar Meteo -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                            <div style="display: flex; align-items: center; gap: 6px; min-width: 0;">
+                                <span style="font-size: 0.90rem; line-height: 1;">📋</span>
+                                <span style="font-size: 0.68rem; font-weight: 950; color: #071629; letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap;">
+                                    PIZARRA DE PISTAS & CLUB
+                                </span>
+                                <span style="display: inline-flex; align-items: center; gap: 4px; background: #071629; color: #ccff00; border: 1px solid rgba(7, 22, 41, 0.6); font-size: 0.50rem; font-weight: 950; padding: 2px 7px; border-radius: 999px; letter-spacing: 0.3px; white-space: nowrap; box-shadow: 0 2px 6px rgba(7, 22, 41, 0.25);">
+                                    <span style="display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: #ccff00; box-shadow: 0 0 6px #ccff00;"></span>
+                                    <span>${totalActiveCount} ACTIVOS</span>
+                                </span>
+                            </div>
+
+                            <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                                ${weatherPillHtml}
                             </div>
                         </div>
 
-                        <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0; z-index: 2;">
-                            ${weatherPillHtml}
-                            <button onclick="event.stopPropagation(); window.dashNavigate('entrenos', 'strip_empty')" 
-                                    style="background: #38bdf8; color: #071629; font-size: 0.58rem; font-weight: 950; padding: 4px 9px; border-radius: 7px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; letter-spacing: 0.3px; box-shadow: 0 2px 8px rgba(56, 189, 248, 0.3); white-space: nowrap; transition: transform 0.15s ease;"
-                                    onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
-                                <span>VER</span> <i class="fas fa-arrow-right" style="font-size: 0.48rem;"></i>
-                            </button>
+                        <!-- Fila 2: Filtros Tácticos de Tiza y Flechas Deslizantes -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+                            <div style="display: flex; align-items: center; gap: 5px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 1px;">
+                                <button class="pizarra-filter-pill" data-filter="todos" onclick="event.stopPropagation(); window.filterPizarraTactics('todos', this);"
+                                        style="background: #071629; color: #ccff00; border: 1.5px solid #071629; box-shadow: 0 2px 10px rgba(7, 22, 41, 0.35); font-size: 0.56rem; font-weight: 950; padding: 3px 8px; border-radius: 7px; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; transition: all 0.2s ease;">
+                                    <span>TODOS</span> <span style="opacity: 0.85; font-size: 0.50rem;">(${totalActiveCount})</span>
+                                </button>
+                                <button class="pizarra-filter-pill" data-filter="entrenos" onclick="event.stopPropagation(); window.filterPizarraTactics('entrenos', this);"
+                                        style="background: rgba(7, 22, 41, 0.10); color: #071629; border: 1px solid rgba(7, 22, 41, 0.22); font-size: 0.56rem; font-weight: 900; padding: 3px 8px; border-radius: 7px; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; transition: all 0.2s ease;">
+                                    <span>🎾 ENTRENOS</span> <span style="opacity: 0.7; font-size: 0.50rem;">(${entrenosCount})</span>
+                                </button>
+                                <button class="pizarra-filter-pill" data-filter="americanas" onclick="event.stopPropagation(); window.filterPizarraTactics('americanas', this);"
+                                        style="background: rgba(7, 22, 41, 0.10); color: #071629; border: 1px solid rgba(7, 22, 41, 0.22); font-size: 0.56rem; font-weight: 900; padding: 3px 8px; border-radius: 7px; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; transition: all 0.2s ease;">
+                                    <span>🏆 AMERICANAS</span> <span style="opacity: 0.7; font-size: 0.50rem;">(${americanasCount})</span>
+                                </button>
+                                ${myPistaFilterBtn}
+                            </div>
+
+                            <!-- Botones de desplazamiento horizontal táctico -->
+                            ${openEvents.length > 1 ? `
+                            <div style="display: flex; align-items: center; gap: 3px; flex-shrink: 0;">
+                                <button onclick="event.stopPropagation(); window.scrollPizarraTrack(-1);" aria-label="Anterior"
+                                        style="background: rgba(7, 22, 41, 0.12); border: 1px solid rgba(7, 22, 41, 0.25); color: #071629; width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.52rem;">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <button onclick="event.stopPropagation(); window.scrollPizarraTrack(1);" aria-label="Siguiente"
+                                        style="background: rgba(7, 22, 41, 0.12); border: 1px solid rgba(7, 22, 41, 0.25); color: #071629; width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.52rem;">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    `;
+
+                    // Envoltorio completo de la Pizarra Táctica sobre fondo amarillo lima de SomosPadel Barcelona
+                    stripHtml = `
+                    <style>
+                    #pizarra-cards-track::-webkit-scrollbar {
+                        height: 4px;
+                    }
+                    #pizarra-cards-track::-webkit-scrollbar-track {
+                        background: rgba(0, 0, 0, 0.08);
+                        border-radius: 4px;
+                    }
+                    #pizarra-cards-track::-webkit-scrollbar-thumb {
+                        background: rgba(7, 22, 41, 0.35);
+                        border-radius: 4px;
+                    }
+                    #pizarra-cards-track::-webkit-scrollbar-thumb:hover {
+                        background: #071629;
+                    }
+                    </style>
+                    <div class="pizarra-tactica-container" 
+                         style="width: 100%; box-sizing: border-box; background-color: #ccff00; background-image: radial-gradient(rgba(0, 0, 0, 0.08) 1px, transparent 1px), linear-gradient(145deg, #ccff00 0%, #b8e600 100%); background-size: 16px 16px, 100% 100%; border: 1.5px solid rgba(0, 0, 0, 0.15); border-radius: 18px; padding: 11px 12px 12px 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25), 0 0 25px rgba(204, 255, 0, 0.25); position: relative; overflow: hidden;">
+                        
+                        <!-- Línea decorativa de pista superior -->
+                        <div style="position: absolute; top: 0; left: 24px; right: 24px; height: 1.5px; background: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.18) 50%, transparent 100%); pointer-events: none;"></div>
+
+                        ${pizarraHeaderHtml}
+
+                        <!-- Carril táctico deslizante -->
+                        <div id="pizarra-cards-track" 
+                             style="display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 2px 2px 6px 2px; -webkit-overflow-scrolling: touch; scroll-behavior: smooth;">
+                            ${cardsHtml}
                         </div>
                     </div>
                     `;
@@ -4909,89 +5396,10 @@
          */
         renderPushDiscoveryBanner() {
             try {
-                const noticeDismissed = localStorage.getItem('sp_push_banner_dismissed_v1') === 'true';
                 const bannerRoot = document.getElementById('push-notification-promo-banner-root');
-                if (!bannerRoot) return;
-
-                if (noticeDismissed) {
+                if (bannerRoot) {
                     bannerRoot.innerHTML = '';
-                    return;
-                }
-
-                const notificationSupported = 'Notification' in window;
-                const rawPermission = notificationSupported ? Notification.permission : 'default';
-                const pushStoredEnabled = typeof localStorage !== 'undefined' && localStorage.getItem('somospadel_push_enabled') === 'true';
-                const isGranted = rawPermission === 'granted' || (pushStoredEnabled && rawPermission !== 'denied');
-
-                if (isGranted) {
-                    bannerRoot.innerHTML = `
-                        <div id="sp-push-discovery-card" class="sp-push-discovery-banner active-mode">
-                            <div class="sp-push-banner-glow green"></div>
-                            <div class="sp-push-banner-content">
-                                <div style="display: flex; gap: 12px; align-items: flex-start;">
-                                    <div class="sp-push-banner-icon green">
-                                        <i class="fas fa-bell"></i>
-                                    </div>
-                                    <div>
-                                        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px; flex-wrap: wrap;">
-                                            <span style="background: #10b981; color: #021327; font-size: 0.58rem; font-weight: 950; padding: 2px 7px; border-radius: 5px; text-transform: uppercase; letter-spacing: 0.5px;">🟢 ONLINE</span>
-                                            <span style="color: #f8fafc; font-size: 0.88rem; font-weight: 900; font-family: 'Outfit', sans-serif;">Alertas Push Activas en tu Móvil</span>
-                                        </div>
-                                        <p style="margin: 0; font-size: 0.74rem; color: #cbd5e1; line-height: 1.4; font-weight: 500;">
-                                            Recibirás avisos en vivo cuando se publiquen americanas, entrenos de tu nivel o queden plazas libres.
-                                        </p>
-                                    </div>
-                                </div>
-                                <button type="button" class="sp-push-banner-close" onclick="window.dismissPushBanner(event)" title="Cerrar aviso">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                            <div class="sp-push-banner-actions">
-                                <button type="button" class="sp-push-btn-main" style="background:#10b981; color:#ffffff;" onclick="window.NotificationUi && window.NotificationUi.open()">
-                                    <i class="fas fa-inbox"></i>
-                                    <span>VER BANDEJA DE ALERTAS</span>
-                                </button>
-                                <button type="button" class="sp-push-btn-subtle" onclick="window.NotificationUi && window.NotificationUi.testPushAlert()">
-                                    <i class="fas fa-paper-plane"></i>
-                                    <span>Probar aviso</span>
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    bannerRoot.innerHTML = `
-                        <div id="sp-push-discovery-card" class="sp-push-discovery-banner">
-                            <div class="sp-push-banner-glow"></div>
-                            <div class="sp-push-banner-content">
-                                <div style="display: flex; gap: 12px; align-items: flex-start;">
-                                    <div class="sp-push-banner-icon">
-                                        <i class="fas fa-bell"></i>
-                                    </div>
-                                    <div>
-                                        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px; flex-wrap: wrap;">
-                                            <span style="background: #CCFF00; color: #021327; font-size: 0.58rem; font-weight: 950; padding: 2px 7px; border-radius: 5px; text-transform: uppercase; letter-spacing: 0.5px;">⚡ NUEVA FUNCIÓN</span>
-                                            <span style="color: #f8fafc; font-size: 0.88rem; font-weight: 900; font-family: 'Outfit', sans-serif;">Alertas Push en Vivo en tu Móvil</span>
-                                        </div>
-                                        <p style="margin: 0; font-size: 0.74rem; color: #cbd5e1; line-height: 1.4; font-weight: 500;">
-                                            Entérate al instante de <strong>nuevas americanas</strong>, <strong>entrenos de tu nivel</strong> y <strong>plazas libres de última hora</strong> directamente en tu pantalla.
-                                        </p>
-                                    </div>
-                                </div>
-                                <button type="button" class="sp-push-banner-close" onclick="window.dismissPushBanner(event)" title="Cerrar aviso">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                            <div class="sp-push-banner-actions">
-                                <button type="button" class="sp-push-btn-main" onclick="window.NotificationUi ? window.NotificationUi.requestPushActivation() : (window.NotificationService && window.NotificationService.requestPushPermission())">
-                                    <i class="fas fa-bell"></i>
-                                    <span>ACTIVAR NOTIFICACIONES PUSH AHORA</span>
-                                </button>
-                                <button type="button" class="sp-push-btn-subtle" onclick="window.dismissPushBanner(event)">
-                                    <span>Más tarde</span>
-                                </button>
-                            </div>
-                        </div>
-                    `;
+                    bannerRoot.style.display = 'none';
                 }
             } catch (err) {
                 console.warn("[DashboardView] Error renderPushDiscoveryBanner:", err);
@@ -4999,30 +5407,266 @@
         }
 
         /**
-         * Comprueba y muestra el popup de promoción de notificaciones Push si no está activado
+         * 📸 MODAL POPUP: Sé Protagonista • Redes Sociales SomosPadel BCN
+         */
+        showSocialModal() {
+            if (document.getElementById('sp-social-modal-overlay')) return;
+
+            const overlay = document.createElement('div');
+            overlay.id = 'sp-social-modal-overlay';
+            overlay.className = 'sp-push-popup-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                inset: 0;
+                background: rgba(5, 10, 20, 0.85);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                z-index: 100000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 18px;
+                animation: fadeIn 0.2s ease-out;
+            `;
+
+            overlay.innerHTML = `
+                <div class="sp-social-popup-modal" style="
+                    background: linear-gradient(145deg, #090e1a 0%, #0f172a 55%, #152238 100%);
+                    border: 1.5px solid rgba(204, 255, 0, 0.45);
+                    border-radius: 22px;
+                    padding: 22px 20px;
+                    max-width: 440px;
+                    width: 100%;
+                    color: #ffffff;
+                    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(204, 255, 0, 0.12);
+                    position: relative;
+                    overflow: hidden;
+                    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+                " role="dialog" aria-modal="true">
+                    <!-- Glow decorativo -->
+                    <div style="position: absolute; top: -40px; right: -40px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(225, 48, 108, 0.25) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+
+                    <!-- Encabezado con Badge y Botón Cerrar -->
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; position: relative; z-index: 2;">
+                        <div>
+                            <span style="
+                                background: rgba(204, 255, 0, 0.15);
+                                color: #CCFF00;
+                                border: 1px solid rgba(204, 255, 0, 0.45);
+                                padding: 3px 9px;
+                                border-radius: 7px;
+                                font-size: 0.68rem;
+                                font-weight: 950;
+                                letter-spacing: 0.4px;
+                                display: inline-block;
+                                margin-bottom: 6px;
+                            ">
+                                📸 SÉ PROTAGONISTA
+                            </span>
+                            <h3 style="margin: 0; font-size: 1.25rem; font-weight: 950; color: #ffffff; letter-spacing: -0.3px; line-height: 1.2;">
+                                ¡Etiquétanos y sal en la app!
+                            </h3>
+                        </div>
+                        <button type="button" id="btn-close-social-popup" style="
+                            background: rgba(255, 255, 255, 0.08);
+                            border: 1px solid rgba(255, 255, 255, 0.15);
+                            color: #94a3b8;
+                            width: 32px;
+                            height: 32px;
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 0.9rem;
+                            cursor: pointer;
+                        " title="Cerrar">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <!-- Texto descriptivo -->
+                    <p style="font-size: 0.82rem; color: #cbd5e1; line-height: 1.45; margin: 0 0 14px; position: relative; z-index: 2;">
+                        Fotos de tus partidos, podios y los mejores puntazos en <strong style="color: #CCFF00;">@somospadelbarcelona_</strong> con <strong style="color: #38bdf8;">#SomosPadelBCN</strong>.
+                    </p>
+
+                    <!-- Botón Copiar @ -->
+                    <div style="margin-bottom: 16px; position: relative; z-index: 2;">
+                        <button type="button" id="btn-copy-social-tag" class="haptic-feedback" style="
+                            width: 100%;
+                            background: rgba(255, 255, 255, 0.06);
+                            border: 1px solid rgba(204, 255, 0, 0.35);
+                            color: #ffffff;
+                            padding: 10px 14px;
+                            border-radius: 12px;
+                            font-size: 0.82rem;
+                            font-weight: 850;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 8px;
+                            transition: all 0.2s ease;
+                        ">
+                            <i class="fas fa-copy" style="color: #CCFF00;"></i>
+                            <span>Copiar mención: <strong style="color: #CCFF00;">@somospadelbarcelona_</strong></span>
+                        </button>
+                    </div>
+
+                    <!-- 2 Canales Sociales en Grid -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; position: relative; z-index: 2;">
+                        <!-- Instagram -->
+                        <div id="btn-modal-instagram" class="haptic-feedback" style="
+                            background: rgba(255, 255, 255, 0.05);
+                            border: 1px solid rgba(225, 48, 108, 0.4);
+                            border-radius: 14px;
+                            padding: 12px;
+                            cursor: pointer;
+                            display: flex;
+                            flex-direction: column;
+                            gap: 8px;
+                            transition: transform 0.15s, border-color 0.15s;
+                        ">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <div style="width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(45deg, #f09433, #dc2743, #bc1888); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.1rem; box-shadow: 0 2px 8px rgba(220,39,67,0.35);">
+                                    <i class="fab fa-instagram"></i>
+                                </div>
+                                <span style="color: #CCFF00; font-size: 0.85rem;">➔</span>
+                            </div>
+                            <div>
+                                <div style="font-weight: 950; font-size: 0.86rem; color: #fff;">Instagram</div>
+                                <div style="font-size: 0.68rem; color: #ff6492; font-weight: 700;">Fotos & Reels</div>
+                            </div>
+                        </div>
+
+                        <!-- Facebook -->
+                        <div id="btn-modal-facebook" class="haptic-feedback" style="
+                            background: rgba(255, 255, 255, 0.05);
+                            border: 1px solid rgba(24, 119, 242, 0.4);
+                            border-radius: 14px;
+                            padding: 12px;
+                            cursor: pointer;
+                            display: flex;
+                            flex-direction: column;
+                            gap: 8px;
+                            transition: transform 0.15s, border-color 0.15s;
+                        ">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <div style="width: 34px; height: 34px; border-radius: 10px; background: #1877f2; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.1rem; box-shadow: 0 2px 8px rgba(24,119,242,0.35);">
+                                    <i class="fab fa-facebook-f"></i>
+                                </div>
+                                <span style="color: #60a5fa; font-size: 0.85rem;">➔</span>
+                            </div>
+                            <div>
+                                <div style="font-weight: 950; font-size: 0.86rem; color: #fff;">Facebook</div>
+                                <div style="font-size: 0.68rem; color: #60a5fa; font-weight: 700;">Comunidad</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+
+            // Listeners para cerrar y acciones
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) window.closeSocialModal();
+            });
+            document.getElementById('btn-close-social-popup')?.addEventListener('click', () => window.closeSocialModal());
+            document.getElementById('btn-copy-social-tag')?.addEventListener('click', function() {
+                if (window.SocialChannelsService && typeof window.SocialChannelsService.copyTag === 'function') {
+                    window.SocialChannelsService.copyTag(this);
+                } else if (navigator.clipboard?.writeText) {
+                    navigator.clipboard.writeText('@somospadelbarcelona_');
+                    const span = this.querySelector('span');
+                    if (span) span.textContent = '¡Copiado al portapapeles! ✅';
+                    setTimeout(() => {
+                        if (span) span.innerHTML = 'Copiar mención: <strong style="color: #CCFF00;">@somospadelbarcelona_</strong>';
+                    }, 2000);
+                }
+            });
+            document.getElementById('btn-modal-instagram')?.addEventListener('click', () => {
+                window.closeSocialModal();
+                if (typeof window.openClubInstagram === 'function') window.openClubInstagram();
+                else window.open('https://www.instagram.com/somospadelbarcelona_/?hl=es', '_blank');
+            });
+            document.getElementById('btn-modal-facebook')?.addEventListener('click', () => {
+                window.closeSocialModal();
+                if (typeof window.openClubFacebook === 'function') window.openClubFacebook();
+                else window.open('https://www.facebook.com/?locale=es_ES', '_blank');
+            });
+
+            const onEsc = (e) => {
+                if (e.key === 'Escape') {
+                    try { localStorage.setItem('sp_last_intermittent_promo_at', String(Date.now())); } catch (_) {}
+                    window.closeSocialModal();
+                    document.removeEventListener('keydown', onEsc);
+                }
+            };
+            document.addEventListener('keydown', onEsc);
+        }
+
+        /**
+         * 🔄 POPUPS INTERMITENTES: Alertas Push & Redes Sociales
+         * Salen de forma sutil, espaciada y rotatoria ("cada cierto tiempo, pero no seguido").
+         * Cooldown: Mínimo 24 horas entre avisos para no saturar al usuario.
          */
         checkAndShowPushPopup() {
             try {
-                const notificationSupported = 'Notification' in window;
-                const rawPermission = notificationSupported ? Notification.permission : 'default';
-                const pushStoredEnabled = typeof localStorage !== 'undefined' && localStorage.getItem('somospadel_push_enabled') === 'true';
-                const isGranted = rawPermission === 'granted' || (pushStoredEnabled && rawPermission !== 'denied');
-
-                if (isGranted || rawPermission === 'denied') return;
-
-                const dismissedAt = localStorage.getItem('sp_push_popup_dismissed_at');
-                if (dismissedAt) {
-                    const elapsed = Date.now() - parseInt(dismissedAt, 10);
-                    if (elapsed < 3 * 24 * 60 * 60 * 1000) {
-                        return;
-                    }
+                // 1. Guard de ruta: Solo actuar si el usuario está en el Dashboard
+                if (window.Router && window.Router.currentRoute && window.Router.currentRoute !== 'dashboard') {
+                    return;
                 }
 
-                if (document.getElementById('sp-push-promo-modal-overlay')) return;
+                // 2. Guard de modales activos: Si ya hay un modal abierto, no molestar
+                if (document.getElementById('sp-push-promo-modal-overlay') || 
+                    document.getElementById('sp-social-modal-overlay') ||
+                    document.getElementById('sp-event-announcement-modal-overlay')) {
+                    return;
+                }
 
+                // 3. Control de frecuencia / cooldown (mínimo 24 horas entre popups)
+                const COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 horas
+                const lastShownAt = parseInt(localStorage.getItem('sp_last_intermittent_promo_at') || localStorage.getItem('sp_push_popup_dismissed_at') || '0', 10);
+                const now = Date.now();
+
+                if (now - lastShownAt < COOLDOWN_MS) {
+                    return; // Periodo de descanso activo, no mostrar
+                }
+
+                // 4. Determinar qué popup corresponde mostrar (alternancia inteligente)
+                const notificationSupported = 'Notification' in window;
+                const rawPermission = notificationSupported ? Notification.permission : 'default';
+                const isPushGranted = rawPermission === 'granted' || (localStorage.getItem('somospadel_push_enabled') === 'true');
+                const lastType = localStorage.getItem('sp_last_intermittent_promo_type') || 'social';
+
+                let nextType = 'social';
+                if (!isPushGranted && rawPermission !== 'denied') {
+                    // Si las alertas no están configuradas, alternar entre push y redes
+                    nextType = (lastType === 'push') ? 'social' : 'push';
+                } else {
+                    // Si push ya está activado o denegado, rotar redes de forma espaciada
+                    nextType = 'social';
+                }
+
+                // 5. Mostrar tras un delay amigable de 3.5 segundos para no interrumpir nada más entrar
                 setTimeout(() => {
-                    this.showPushNotificationPopup();
-                }, 1200);
+                    if (document.getElementById('sp-push-promo-modal-overlay') || 
+                        document.getElementById('sp-social-modal-overlay') ||
+                        document.getElementById('sp-event-announcement-modal-overlay')) {
+                        return;
+                    }
+
+                    try {
+                        localStorage.setItem('sp_last_intermittent_promo_at', String(Date.now()));
+                        localStorage.setItem('sp_last_intermittent_promo_type', nextType);
+                    } catch (_) {}
+
+                    if (nextType === 'push') {
+                        this.showPushNotificationPopup();
+                    } else {
+                        this.showSocialModal();
+                    }
+                }, 3500);
             } catch (err) {
                 console.warn("[DashboardView] Error in checkAndShowPushPopup:", err);
             }
@@ -5163,6 +5807,7 @@
             const closePopup = () => {
                 try {
                     localStorage.setItem('sp_push_popup_dismissed_at', String(Date.now()));
+                    localStorage.setItem('sp_last_intermittent_promo_at', String(Date.now()));
                 } catch (_) {}
                 overlay.classList.remove('show');
                 setTimeout(() => {
@@ -5928,7 +6573,7 @@
                                             <!-- HEADER STATUS -->
                                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; position: relative; z-index: 5;">
                                                 <span class="fut-badge-gold"><i class="fas fa-crown"></i> LÍDER ${modeLabelUpper}</span>
-                                                <span style="color: rgba(251, 191, 36, 0.7); font-size: 0.65rem; font-weight: 900; letter-spacing: 1px;">SOMOSPADEL ELITE</span>
+                                                <span style="color: rgba(251, 191, 36, 0.7); font-size: 0.65rem; font-weight: 900; letter-spacing: 1px;">CIRCUITO SOMOSPADEL</span>
                                             </div>
 
                                             <!-- CORE DATA ROW -->

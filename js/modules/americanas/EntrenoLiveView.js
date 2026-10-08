@@ -219,10 +219,16 @@
 
             const headerHtml = `
                 <div style="background:white; padding-top:20px; padding-bottom:10px; position:sticky; top:0; z-index:100; border-bottom:1px solid #f1f5f9;">
-                     <div style="display:flex; justify-content:space-between; align-items:center; padding:0 20px; margin-bottom:15px;">
+                     <div style="display:flex; justify-content:space-between; align-items:center; padding:0 20px; margin-bottom:15px; gap:10px;">
                         <button onclick="window.Router.navigate('entrenos')" style="background:none; border:none; color:#1e293b; font-size:1.2rem; cursor:pointer;"><i class="fas fa-arrow-left"></i></button>
-                        <h1 style="color:#000; margin:0; font-size:1.1rem; font-weight:950; text-transform:uppercase;">${this.eventData.name || 'Entreno'}</h1>
-                        <div style="width:30px;"></div>
+                        <h1 style="color:#000; margin:0; font-size:1.1rem; font-weight:950; text-transform:uppercase; text-align:center; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${this.eventData?.name || 'Entreno'}</h1>
+                        <button type="button" 
+                                onclick="window.ChatView?.openEventChat({ id: '${this.eventId}', name: '${(this.eventData?.name || '').replace(/'/g, "\\'")}', date: '${this.eventData?.date || ''}', category: '${this.eventData?.category || ''}', club: '${(this.eventData?.sede || this.eventData?.location || this.eventData?.club || '').replace(/'/g, "\\'")}', type: 'entreno' });"
+                                title="Abrir Chat de este entreno"
+                                style="background: #0f172a; border: 1.5px solid #CCFF00; color: #CCFF00; border-radius: 12px; padding: 6px 12px; font-weight: 950; font-size: 0.72rem; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+                            <i class="fas fa-comment-dots" style="color: #CCFF00; font-size: 0.8rem;"></i>
+                            <span>CHAT</span>
+                        </button>
                     </div>
                     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap:6px; padding:0 15px; margin-bottom:15px; overflow-x: auto;">
                         ${this._renderTabBtn('matches', 'PARTIDOS')}

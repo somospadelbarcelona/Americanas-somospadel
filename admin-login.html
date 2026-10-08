@@ -210,6 +210,12 @@
 
             <div class="error-message" id="errorMsg"></div>
             <div class="success-message" id="successMsg"></div>
+
+            <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.1); text-align: center;">
+                <a href="organizacion.html" style="display: block; padding: 12px; background: rgba(204, 255, 0, 0.1); border: 1.5px solid rgba(204, 255, 0, 0.35); border-radius: 12px; color: #ccff00; font-weight: 800; text-decoration: none; font-size: 0.85rem; letter-spacing: 0.5px;">
+                    🏢 ACCESO ORGANIZACIÓN SOMOSPADEL (PIN 210021)
+                </a>
+            </div>
         </form>
 
     </div>
@@ -235,7 +241,8 @@
             return [
                 'super_admin', 'superadmin',
                 'admin', 'admin_player',
-                'captain', 'capitan', 'capitanes'
+                'captain', 'capitan', 'capitanes',
+                'organizador_bcn', 'organizer_bcn', 'organizer', 'organizador'
             ].includes(r);
         }
 
@@ -329,9 +336,14 @@
                 successMsg.textContent = `✅ ¡Bienvenido ${user.name}! Redirigiendo...`;
                 successMsg.style.display = 'block';
 
-                // Redirigir al panel admin
+                // Redirigir al panel correspondiente
                 setTimeout(() => {
-                    window.location.href = 'admin.html';
+                    const r = (user.role || '').toLowerCase();
+                    if (r === 'organizador_bcn' || r === 'organizer_bcn') {
+                        window.location.href = 'organizacion.html';
+                    } else {
+                        window.location.href = 'admin.html';
+                    }
                 }, 1000);
 
             } catch (error) {

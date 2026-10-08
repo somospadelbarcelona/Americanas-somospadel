@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SomosPadel BCN | Organización y Control de Eventos (ERP)</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Estilos Especializados del ERP -->
+    <link rel="stylesheet" href="css/organizacion-erp.css?v=20261005">
+</head>
+
+<body class="erp-body">
+
+    <!-- SHELL PRINCIPAL DEL ERP -->
+    <div class="erp-shell">
+
+        <!-- ========================================================================== -->
+        <!-- 1. BARRA LATERAL (SIDEBAR DE CONTROL EMPRESARIAL)                           -->
+        <!-- ========================================================================== -->
+        <aside class="erp-sidebar" id="erp-sidebar">
+            <div class="erp-brand-header">
+                <div class="erp-brand-logo-wrap">
+                    <img src="img/logo_somospadel.png" class="erp-brand-logo" alt="Somos Padel Logo">
+                    <div class="erp-brand-titles">
+                        <h1>SOMOSPADEL BCN</h1>
+                        <p>CONTROL DE EVENTOS</p>
+                    </div>
+                </div>
+                <button class="erp-mobile-menu-btn" onclick="window.OrganizacionERP.toggleMobileSidebar()" aria-label="Cerrar Menú">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- NAVEGACIÓN PRINCIPAL: 5 MÓDULOS DIRECTIVOS PROFESIONALES -->
+            <nav class="erp-nav-scroll">
+                <div class="erp-nav-group-title">PLAN & SOCIOS</div>
+
+                <button class="erp-nav-item active" data-tab="pactometro" onclick="window.OrganizacionERP.navigateTo('pactometro')">
+                    <span class="erp-nav-icon"><i class="fas fa-handshake"></i></span>
+                    <span>Reparto de Socios & Simulador</span>
+                    <span class="erp-nav-badge badge-neon">5 PISTAS NPP</span>
+                </button>
+
+                <button class="erp-nav-item" data-tab="clubs" onclick="window.OrganizacionERP.navigateTo('clubs')">
+                    <span class="erp-nav-icon"><i class="fas fa-building"></i></span>
+                    <span>Sedes & Negociación</span>
+                    <span class="erp-nav-badge badge-amber">NEW PADEL PRO (5P)</span>
+                </button>
+
+                <div class="erp-nav-group-title">OPERATIVA & AGENDA</div>
+
+                <button class="erp-nav-item" data-tab="events" onclick="window.OrganizacionERP.navigateTo('events')">
+                    <span class="erp-nav-icon"><i class="fas fa-table-tennis-paddle-ball"></i></span>
+                    <span>Americanas & Pistas</span>
+                    <span class="erp-nav-badge badge-cyan">EN VIVO</span>
+                </button>
+
+                <button class="erp-nav-item" data-tab="calendar" onclick="window.OrganizacionERP.navigateTo('calendar')">
+                    <span class="erp-nav-icon"><i class="fas fa-calendar-days"></i></span>
+                    <span>Calendario & Agenda</span>
+                </button>
+
+                <div class="erp-nav-group-title">DIRECCIÓN & FINANZAS</div>
+
+                <button class="erp-nav-item" data-tab="dashboard" onclick="window.OrganizacionERP.navigateTo('dashboard')">
+                    <span class="erp-nav-icon"><i class="fas fa-chart-pie"></i></span>
+                    <span>Contabilidad & Informes</span>
+                    <span class="erp-nav-badge badge-green">EXCEL / SEMÁFORO</span>
+                </button>
+
+                <a href="tienda.html" class="erp-nav-item" style="text-decoration: none;">
+                    <span class="erp-nav-icon"><i class="fas fa-store" style="color: #10B981;"></i></span>
+                    <span>Tienda, Marcas & Patrocinios</span>
+                    <span class="erp-nav-badge badge-cyan">4ª SECCIÓN</span>
+                </a>
+            </nav>
+
+            <!-- FOOTER DE SESIÓN DEL USUARIO -->
+            <div class="erp-sidebar-footer">
+                <div class="erp-user-badge">
+                    <div class="erp-user-avatar" id="erp-sidebar-user-avatar">A</div>
+                    <div class="erp-user-info">
+                        <div class="erp-user-name" id="erp-sidebar-user-name">Organizador</div>
+                        <div class="erp-user-role" id="erp-sidebar-user-role">Dirección de Eventos</div>
+                    </div>
+                </div>
+
+                <div class="erp-footer-actions">
+                    <a href="index.html" class="erp-btn-micro" title="Ir a la App Jugador">
+                        <i class="fas fa-mobile-screen"></i> Jugador
+                    </a>
+                    <a href="admin.html" class="erp-btn-micro" title="Panel Admin Global">
+                        <i class="fas fa-shield"></i> Admin
+                    </a>
+                    <a href="tienda.html" class="erp-btn-micro" title="Tienda SomosPadel BCN">
+                        <i class="fas fa-store"></i> Tienda
+                    </a>
+                    <button class="erp-btn-micro logout" onclick="window.OrganizacionERP.logout()" title="Cerrar Sesión">
+                        <i class="fas fa-power-off"></i> Salir
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ========================================================================== -->
+        <!-- 2. ESPACIO PRINCIPAL DE TRABAJO (MAIN)                                     -->
+        <!-- ========================================================================== -->
+        <main class="erp-main">
+            <!-- TOP BAR -->
+            <header class="erp-topbar">
+                <div class="erp-topbar-left">
+                    <button class="erp-mobile-menu-btn" onclick="window.OrganizacionERP.toggleMobileSidebar()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="erp-view-title-wrap">
+                        <h2 id="erp-topbar-title">Dashboard Ejecutivo</h2>
+                        <p id="erp-topbar-desc">Control de rentabilidad, KPIs y visión estratégica</p>
+                    </div>
+                </div>
+
+                <div class="erp-topbar-right">
+                    <div class="erp-date-indicator">
+                        <span class="erp-live-dot"></span>
+                        <span id="erp-live-time">Cargando...</span>
+                    </div>
+                    <button class="btn-erp btn-erp-primary" onclick="window.OrganizacionERP.openNewEventModal()">
+                        <i class="fas fa-plus"></i> Nueva Americana
+                    </button>
+                </div>
+            </header>
+
+            <!-- WORKSPACE DINÁMICO -->
+            <div class="erp-workspace" id="erp-workspace-content">
+                <div style="text-align: center; padding: 4rem;">
+                    <i class="fas fa-circle-notch fa-spin" style="font-size: 2.5rem; color: var(--erp-primary);"></i>
+                    <p style="margin-top: 1rem; color: var(--erp-text-muted);">Cargando módulo de organización...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ========================================================================== -->
+    <!-- 3. MODAL DE AUTENTICACIÓN POR PIN DE 6 DÍGITOS (210021)                     -->
+    <!-- ========================================================================== -->
+    <div class="erp-auth-overlay" id="erp-auth-overlay" style="display: none;">
+        <div class="erp-auth-card">
+            <div class="erp-auth-badge">
+                <i class="fas fa-lock"></i> ÁREA RESTRINGIDA
+            </div>
+            <img src="img/logo_somospadel.png" alt="Somos Padel" style="height: 50px; margin-bottom: 12px; filter: drop-shadow(0 0 15px rgba(204,255,0,0.5));">
+            <h2 style="font-family: var(--erp-font-title); font-size: 1.35rem; font-weight: 900; color: #fff; margin-bottom: 4px;">
+                ORGANIZACIÓN SOMOSPADEL BCN
+            </h2>
+            <p style="font-size: 0.75rem; color: var(--erp-text-muted); margin-bottom: 1.5rem;">
+                Introduce tu PIN de 6 dígitos de Organizador o Dirección
+            </p>
+
+            <!-- Visualización de los 6 puntos de PIN -->
+            <div class="erp-auth-pin-display">
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+            </div>
+
+            <!-- Teclado Numérico -->
+            <div class="erp-keypad">
+                <button type="button" class="keypad-btn" onclick="window.OrganizacionERP.handleKeypadPress('1')">1</button>
+                <button type="button" class="keypad-btn" onclick="window.OrganizacionERP.handleKeypadPress('2')">2</button>
+                <button type="button" class="keypad-btn" onclick="window.OrganizacionERP.handleKeypadPress('3')">3</button>
+
+                <button type="button" class="keypad-btn" onclick="window.OrganizacionERP.handleKeypadPress('4')">4</button>
+                <button type="button" class="keypad-btn" onclick="window.OrganizacionERP.handleKeypadPress('5')">5</button>
+                <button type="button" class="keypad-btn" onclick="window.OrganizacionERP.handleKeypadPress('6')">6</button>
+
+                <button type="button" class="keypad-btn" onclick="window.OrganizacionERP.handleKeypadPress('7')">7</button>
+                <button type="button" class="keypad-btn" onclick="window.OrganizacionERP.handleKeypadPress('8')">8</button>
+                <button type="button" class="keypad-btn" onclick="window.OrganizacionERP.handleKeypadPress('9')">9</button>
+
+                <button type="button" class="keypad-btn action" onclick="window.OrganizacionERP.handleKeypadPress('clear')"><i class="fas fa-rotate-left"></i></button>
+                <button type="button" class="keypad-btn" onclick="window.OrganizacionERP.handleKeypadPress('0')">0</button>
+                <button type="button" class="keypad-btn action" onclick="window.OrganizacionERP.handleKeypadPress('back')"><i class="fas fa-delete-left"></i></button>
+            </div>
+
+            <div style="margin-top: 1.75rem; font-size: 0.72rem; color: var(--erp-text-dim);">
+                PIN Organizador: <strong style="color: var(--erp-primary);">210021</strong>
+            </div>
+
+            <div style="margin-top: 1.25rem;">
+                <a href="index.html" style="color: var(--erp-text-muted); font-size: 0.75rem; text-decoration: none;">
+                    <i class="fas fa-arrow-left"></i> Volver a la App Jugador
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================== -->
+    <!-- 4. MODAL DE FICHA ECONÓMICA DE EVENTO                                       -->
+    <!-- ========================================================================== -->
+    <div class="erp-modal-overlay" id="erp-financial-modal">
+        <div class="erp-modal-content">
+            <div class="erp-modal-header">
+                <div>
+                    <h3 class="erp-card-title" id="erp-fin-modal-title">Ficha Económica</h3>
+                    <p class="erp-card-subtitle">Auditoría contable y costes del evento deportivo</p>
+                </div>
+                <button class="erp-modal-close" onclick="window.OrganizacionERP.closeModal('erp-financial-modal')">&times;</button>
+            </div>
+            <div id="erp-fin-modal-body">
+                <!-- Inyectado dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================== -->
+    <!-- 5. MODAL DE ALTA DE NUEVA AMERICANA (IDÉNTICO A GESTOR DE ADMIN)           -->
+    <!-- ========================================================================== -->
+    <div class="erp-modal-overlay" id="erp-new-event-modal">
+        <div class="erp-modal-content" style="max-width: 650px; max-height: 90vh; overflow-y: auto; background: #ffffff; border-radius: 16px; box-shadow: 0 4px 25px rgba(0,0,0,0.08); padding: 2.2rem; border: 1px solid #cbd5e1;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem;">
+                <h3 style="color: #0f172a; margin: 0; display: flex; align-items: center; gap: 12px; font-weight: 900; font-size: 1.2rem; text-transform: uppercase;">
+                    <span style="display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; background:#0f172a; color:#fff; border-radius:50%; font-size:0.85rem;"><i class="fas fa-plus"></i></span>
+                    CREAR NUEVO EVENTO DE AMERICANA
+                </h3>
+                <button class="erp-modal-close" onclick="window.OrganizacionERP.closeModal('erp-new-event-modal')" style="background:none; border:none; font-size:1.5rem; color:#64748b; cursor:pointer;">&times;</button>
+            </div>
+
+            <!-- Botones de Preset Rápido (Idénticos a la Captura) -->
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;">
+                <button type="button" class="btn-micro" onclick="window.OrganizacionERP.applyAmericanaPreset('masc4')" style="background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; border-radius: 8px; padding: 7px 14px; font-weight: 800; font-size: 0.75rem; cursor: pointer; text-transform: uppercase;">🎾 MASC 4 PISTAS</button>
+                <button type="button" class="btn-micro" onclick="window.OrganizacionERP.applyAmericanaPreset('fem4')" style="background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; border-radius: 8px; padding: 7px 14px; font-weight: 800; font-size: 0.75rem; cursor: pointer; text-transform: uppercase;">🌸 FEM 4 PISTAS</button>
+                <button type="button" class="btn-micro" onclick="window.OrganizacionERP.applyAmericanaPreset('mixta4')" style="background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; border-radius: 8px; padding: 7px 14px; font-weight: 800; font-size: 0.75rem; cursor: pointer; text-transform: uppercase;">⚡ MIXTA 4 PISTAS</button>
+                <button type="button" class="btn-micro" onclick="window.OrganizacionERP.applyAmericanaPreset('twister')" style="background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; border-radius: 8px; padding: 7px 14px; font-weight: 800; font-size: 0.75rem; cursor: pointer; text-transform: uppercase;">🌪️ TWISTER INDIV.</button>
+                <button type="button" class="btn-micro" onclick="window.OrganizacionERP.applyAmericanaPreset('suiza')" style="background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; border-radius: 8px; padding: 7px 14px; font-weight: 800; font-size: 0.75rem; cursor: pointer; text-transform: uppercase;">🇨🇭 AMERICANA SUIZA (2H • 6 RONDAS)</button>
+                <button type="button" class="btn-micro" onclick="window.OrganizacionERP.applyAmericanaPreset('club')" style="background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; border-radius: 8px; padding: 7px 14px; font-weight: 800; font-size: 0.75rem; cursor: pointer; text-transform: uppercase;">🏛️ CLUB COLABORADOR</button>
+            </div>
+
+            <form id="create-americana-form" class="pro-form compact-admin-form" onsubmit="event.preventDefault(); window.OrganizacionERP.saveNewEventFromForm();" style="display:flex; flex-direction:column; gap:16px;">
+                <h3 style="color: #0f172a; font-size: 0.95rem; font-weight:900; margin: 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; text-transform: uppercase; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-sliders-h"></i> CONFIGURACIÓN GENERAL
+                </h3>
+
+                <div class="form-group" style="margin-bottom: 4px;">
+                    <label style="font-size: 0.75rem; font-weight: 800; color: #0f172a; text-transform: uppercase; display: block; margin-bottom: 6px;">NOMBRE DEL TORNEO / AMERICANA</label>
+                    <input type="text" name="name" id="new-evt-title" class="financial-input" placeholder="Ej: Americana Oro Barcelona" required style="font-weight: 800; font-size: 0.95rem; text-align:left; width:100%; height:42px; border: 1px solid #cbd5e1; border-radius: 8px;">
+                </div>
+
+                <!-- DESCRIPCIÓN & AVISOS PARA JUGADORES -->
+                <div class="form-group" style="margin-bottom: 4px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label style="font-size: 0.75rem; font-weight: 800; color: #0f172a; text-transform: uppercase; margin: 0;">
+                            <i class="fas fa-align-left" style="color: #0284c7;"></i> DESCRIPCIÓN & AVISOS PARA JUGADORES
+                        </label>
+                        <span style="font-size: 0.68rem; color: #64748b; font-weight: 500;">(Visible para todos los jugadores)</span>
+                    </div>
+                    <textarea name="description" id="new-evt-desc" class="financial-input" rows="3" 
+                        placeholder="Escribe aquí los detalles que quieras que lean los jugadores: vermut/tapa incluida, premios, sistema de puntuación, pistas, normas, etc."
+                        style="width: 100%; text-align:left; resize: vertical; min-height: 65px; font-size: 0.85rem; line-height: 1.4; border: 1px solid #cbd5e1; border-radius: 8px; font-family: var(--erp-font-body);"></textarea>
+                </div>
+
+                <!-- Tipo de Evento / Club Organizador -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label style="font-size: 0.75rem; font-weight: 800; color: #0f172a; text-transform: uppercase; display: block; margin-bottom: 6px;">
+                            <i class="fas fa-building-columns"></i> TIPO DE EVENTO
+                        </label>
+                        <select name="is_external" id="create-is-external" class="financial-input" style="text-align:left; width:100%; height:42px; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 700;" onchange="window.OrganizacionERP.toggleCreateClubInput(this.value)">
+                            <option value="false">🏆 OFICIAL SOMOSPADEL</option>
+                            <option value="true">🏛️ CLUB ASOCIADO / EXTERNA</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="create-club-group" style="display: none;">
+                        <label style="font-size: 0.75rem; font-weight: 800; color: #0f172a; text-transform: uppercase; display: block; margin-bottom: 6px;">
+                            <i class="fas fa-signature"></i> NOMBRE DEL CLUB
+                        </label>
+                        <input type="text" name="club" id="create-club-input" class="financial-input" placeholder="Ej: New Padel Pro" style="text-align:left; width:100%; height:42px; border: 1px solid #cbd5e1; border-radius: 8px;">
+                    </div>
+                </div>
+
+                <!-- Nombre del Organizador -->
+                <div class="form-group">
+                    <label style="font-size: 0.75rem; font-weight: 800; color: #0f172a; text-transform: uppercase; display: block; margin-bottom: 6px;">
+                        <i class="fas fa-user-tie" style="color: #16a34a;"></i> ORGANIZADOR DE LA AMERICANA
+                    </label>
+                    <input type="text" name="organizer" id="new-evt-organizer" class="financial-input" placeholder="Ej: Alex / SomosPadel / Club Pádel" value="Alex Coscolín" style="text-align:left; width:100%; height:42px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.85rem;">
+                </div>
+
+                <!-- PRIVACIDAD & ACCESO EXCLUSIVO -->
+                <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div>
+                            <label style="font-size: 0.75rem; font-weight: 800; color: #dc2626; text-transform: uppercase; display: block; margin-bottom: 6px;">
+                                <i class="fas fa-user-lock"></i> PRIVACIDAD
+                            </label>
+                            <select name="is_private" id="create-americana-is-private" class="financial-input" style="text-align:left; width:100%; height:40px; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 700;" onchange="const pg = document.getElementById('create-americana-pin-group'); if (pg) pg.style.display = (this.value === 'true' ? 'block' : 'none');">
+                                <option value="false" selected>🌐 PÚBLICA (Abierta a todos)</option>
+                                <option value="true">🔒 PRIVADA (Con contraseña)</option>
+                            </select>
+                        </div>
+                        <div id="create-americana-pin-group" style="display: none;">
+                            <label style="font-size: 0.75rem; font-weight: 800; color: #0284c7; text-transform: uppercase; display: block; margin-bottom: 6px;">
+                                <i class="fas fa-key"></i> CLAVE / PIN DE ACCESO
+                            </label>
+                            <input type="text" name="access_pin" id="create-americana-pin-input" class="financial-input" placeholder="Ej: 1234" style="text-align:left; width:100%; height:40px; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 800; letter-spacing:1px;">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label style="font-size: 0.75rem; font-weight: 800; color: #0f172a; text-transform: uppercase; display: block; margin-bottom: 6px;">FECHA</label>
+                        <input type="date" name="date" id="new-evt-date" class="financial-input" style="text-align:left; width:100%; height:42px; border: 1px solid #cbd5e1; border-radius: 8px;" required>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size: 0.75rem; font-weight: 800; color: #0f172a; text-transform: uppercase; display: block; margin-bottom: 6px;">INICIO</label>
+                        <input type="time" name="time" id="new-evt-time" class="financial-input" style="text-align:left; width:100%; height:42px; border: 1px solid #cbd5e1; border-radius: 8px;" value="18:00" required>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size: 0.75rem; font-weight: 800; color: #0f172a; text-transform: uppercase; display: block; margin-bottom: 6px;">FIN</label>
+                        <input type="time" name="time_end" id="new-evt-time-end" class="financial-input" style="text-align:left; width:100%; height:42px; border: 1px solid #cbd5e1; border-radius: 8px;" value="20:00">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label style="font-size: 0.75rem; font-weight: 800; color: #0f172a; text-transform: uppercase; display: block; margin-bottom: 6px;">CATEGORÍA</label>
+                        <select name="category" id="new-evt-category" class="financial-input" style="text-align:left; width:100%; height:42px; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 700;">
+                            <option value="male" selected>MASCULINO</option>
+                            <option value="female">FEMENINO</option>
+                            <option value="mixed">MIXTO</option>
+                            <option value="open">TODOS / OPEN</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size: 0.75rem; font-weight: 800; color: #0f172a; text-transform: uppercase; display: block; margin-bottom: 6px;">
+                            <i class="fas fa-map-marker-alt" style="color: #0284c7;"></i> SEDE / CLUB
+                        </label>
+                        <select name="location" id="new-evt-club" class="financial-input" style="text-align:left; width:100%; height:42px; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 700;">
+                            <option value="New Padel Pro" selected>New Padel Pro (5 Pistas)</option>
+                            <option value="Padel Indoor Hospitalet">Padel Indoor Hospitalet</option>
+                            <option value="Vall Parc Barcelona">Vall Parc Barcelona</option>
+                            <option value="Badalona Padel Club">Badalona Padel Club</option>
+                            <option value="Artós Sports Club">Artós Sports Club</option>
+                            <option value="Padel Blau Cornellà">Padel Blau Cornellà</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label style="font-size: 0.75rem; font-weight: 800; color: #0f172a; text-transform: uppercase; display: block; margin-bottom: 6px;">MODO DE JUEGO</label>
+                        <select name="pair_mode" id="create-americana-pair-mode" class="financial-input" style="text-align:left; width:100%; height:42px; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 700;" onchange="window.OrganizacionERP.updatePairModeHelper(this, 'create-americana-pair-mode-desc')">
+                            <option value="twister" selected>🌪️ TWISTER INDIVIDUAL (Pozo rotativo)</option>
+                            <option value="fixed">🔒 PAREJA FIJA (Dupla todo el torneo)</option>
+                            <option value="swiss">🇨🇭 SUIZO (Puntos acumulados)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size: 0.75rem; font-weight: 800; color: #0f172a; text-transform: uppercase; display: block; margin-bottom: 6px;">ESTADO</label>
+                        <select name="status" id="new-evt-status" class="financial-input" style="text-align:left; width:100%; height:42px; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 800;">
+                            <option value="open" selected>🟢 ABIERTA</option>
+                            <option value="pairing">🔀 EMPAREJAMIENTO</option>
+                            <option value="live">🎾 EN JUEGO</option>
+                            <option value="finished">🏁 FINALIZADA</option>
+                            <option value="cancelled">⛔ ANULADO</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- EXPLICACIÓN DINÁMICA DEL MODO DE JUEGO -->
+                <div id="create-americana-pair-mode-desc" style="background: rgba(2, 132, 199, 0.06); border-left: 3px solid #0284c7; padding: 10px 14px; border-radius: 8px; font-size: 0.74rem; color: #334155; line-height: 1.35;">
+                    <div style="display:flex; align-items:flex-start; gap:8px;">
+                        <span style="font-size: 1.15rem; line-height: 1;">🌪️</span>
+                        <div>
+                            <strong style="color: #0284c7; font-size: 0.76rem; text-transform: uppercase;">Modalidad Twister Individual:</strong>
+                            <div style="color: #475569; font-size: 0.72rem; margin-top: 2px;">
+                                Los jugadores compiten individualmente; ganadores suben de pista, perdedores bajan, rotando compañeros sin repetir pareja.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label style="font-size: 0.75rem; font-weight: 800; color: #0f172a; text-transform: uppercase; display: block; margin-bottom: 6px;">NIVEL MÍNIMO</label>
+                        <input type="text" name="level_min" id="new-evt-level-min" class="financial-input" value="3.5" style="text-align:left; width:100%; height:42px; border: 1px solid #cbd5e1; border-radius: 8px;">
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size: 0.75rem; font-weight: 800; color: #0f172a; text-transform: uppercase; display: block; margin-bottom: 6px;">NIVEL MÁXIMO</label>
+                        <input type="text" name="level_max" id="new-evt-level-max" class="financial-input" value="4.5" style="text-align:left; width:100%; height:42px; border: 1px solid #cbd5e1; border-radius: 8px;">
+                    </div>
+                </div>
+
+                <h3 style="color: #0f172a; font-size: 0.95rem; font-weight:900; margin: 8px 0 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; text-transform: uppercase; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-cogs"></i> LOGÍSTICA
+                </h3>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px;">
+                    <div class="form-group">
+                        <label style="font-size: 0.75rem; font-weight: 800; color: #0f172a; text-transform: uppercase; display: block; margin-bottom: 6px;">PISTAS</label>
+                        <input type="number" name="max_courts" id="new-evt-courts" class="financial-input" value="4" min="1" max="5" style="text-align:center; width:100%; height:42px; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 800;">
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size: 0.75rem; font-weight: 800; color: #0f172a; text-transform: uppercase; display: block; margin-bottom: 6px;">RONDAS</label>
+                        <input type="number" name="rounds_count" id="new-evt-rounds" class="financial-input" value="6" style="text-align:center; width:100%; height:42px; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 800;">
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size: 0.75rem; font-weight: 800; color: #0f172a; text-transform: uppercase; display: block; margin-bottom: 6px;">€ SOCIO</label>
+                        <input type="number" name="price_members" id="new-evt-price" step="0.5" class="financial-input" value="12" style="text-align:center; width:100%; height:42px; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 800;">
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size: 0.75rem; font-weight: 800; color: #0f172a; text-transform: uppercase; display: block; margin-bottom: 6px;">€ EXT.</label>
+                        <input type="number" name="price_external" id="new-evt-price-ext" step="0.5" class="financial-input" value="14" style="text-align:center; width:100%; height:42px; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 800;">
+                    </div>
+                </div>
+
+                <!-- Imagen de Portada / Cartel (Idéntico a Admin) -->
+                <div class="form-group" style="margin-top: 4px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label style="margin: 0; font-weight: 800; font-size: 0.75rem; color: #0f172a; text-transform: uppercase;">
+                            <i class="fas fa-camera" style="color: #0284c7;"></i> IMAGEN DE PORTADA / CARTEL
+                        </label>
+                        <span style="font-size: 0.68rem; color: #64748b; font-weight: 500;">(JPG, PNG o WebP)</span>
+                    </div>
+
+                    <!-- Banner Preview & Drop Zone -->
+                    <div id="erp-americana-img-dropzone" 
+                         onclick="document.getElementById('erp-americana-file-input').click()"
+                         style="position: relative; width: 100%; height: 105px; border-radius: 10px; border: 2px dashed #0284c7; background: #f8fafc; overflow: hidden; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.2s ease; margin-bottom: 10px;">
+                         
+                        <img id="erp-americana-img-preview" src="" alt="Portada" 
+                             style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.7; display: none;">
+                        
+                        <div style="position: relative; z-index: 2; text-align: center; pointer-events: none;">
+                            <div style="background: rgba(15, 23, 42, 0.88); color: #ffffff; font-size: 0.74rem; font-weight: 800; padding: 6px 14px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>SUBIR FOTO O CARTEL DE LA AMERICANA</span>
+                            </div>
+                            <p style="margin: 5px 0 0; font-size: 0.65rem; color: #64748b;">Haz clic para elegir foto desde tu ordenador o arrástrala aquí</p>
+                        </div>
+                    </div>
+
+                    <!-- Hidden File Input -->
+                    <input type="file" id="erp-americana-file-input" accept="image/*" style="display: none;" onchange="window.OrganizacionERP.handleAmericanaImageUpload(this, 'erp-americana-img-input', 'erp-americana-img-preview')">
+
+                    <!-- URL Input & Secondary Actions -->
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                        <input type="text" name="image_url" id="erp-americana-img-input" class="financial-input"
+                            placeholder="O escribe una URL directa..." style="text-align:left; width:100%; height:40px; font-size:0.85rem; border: 1px solid #cbd5e1; border-radius: 8px;" oninput="window.OrganizacionERP.updateAmericanaImagePreview(this.value, 'erp-americana-img-preview')">
+                        <button type="button" class="btn-erp btn-erp-secondary" onclick="document.getElementById('erp-americana-file-input').click()" 
+                                title="Subir archivo" style="padding: 0 16px; height: 40px; font-size:0.78rem; font-weight:800; white-space:nowrap; border-radius: 8px;">
+                            <i class="fas fa-folder-open"></i> SUBIR
+                        </button>
+                    </div>
+
+                    <!-- Quick Image Selectors -->
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                        <span style="font-size: 0.68rem; color: #64748b; font-weight: 800; margin-right: 4px;">PRESETS:</span>
+                        <button type="button" class="btn-micro" style="background: #22c55e; color: #ffffff; padding:4px 10px; font-size:0.72rem; font-weight:800; border-radius:6px; border:none; cursor:pointer;"
+                            onclick="window.OrganizacionERP.selectCreateAmericanaImage('img/americana masculina.jpg')">Masc</button>
+                        <button type="button" class="btn-micro" style="background: #ec4899; color: #ffffff; padding:4px 10px; font-size:0.72rem; font-weight:800; border-radius:6px; border:none; cursor:pointer;"
+                            onclick="window.OrganizacionERP.selectCreateAmericanaImage('img/americana femeninas.jpg')">Fem</button>
+                        <button type="button" class="btn-micro" style="background: #eab308; color: #000000; padding:4px 10px; font-size:0.72rem; font-weight:800; border-radius:6px; border:none; cursor:pointer;"
+                            onclick="window.OrganizacionERP.selectCreateAmericanaImage('img/americana mixta.jpg')">Mixta</button>
+                        <button type="button" class="btn-micro" style="background: #f1f5f9; color: #0f172a; padding:4px 10px; font-size:0.72rem; font-weight:800; border-radius:6px; border:1px solid #cbd5e1; cursor:pointer;"
+                            onclick="window.OrganizacionERP.selectCreateAmericanaImage('img/entreno todo prat.jpg')">Prat</button>
+                        <button type="button" class="btn-micro" style="background: #f1f5f9; color: #0f172a; padding:4px 10px; font-size:0.72rem; font-weight:800; border-radius:6px; border:1px solid #cbd5e1; cursor:pointer;"
+                            onclick="window.OrganizacionERP.selectCreateAmericanaImage('img/entreno todo delfos.jpg')">Delfos</button>
+                        <button type="button" class="btn-micro" style="background: #0284c7; color: #ffffff; padding:4px 10px; font-size:0.72rem; font-weight:800; border-radius:6px; border:none; cursor:pointer;"
+                            onclick="window.OrganizacionERP.selectCreateAmericanaImage('img/ball-mixta.png')">Pelota</button>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 14px; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0;">
+                    <button type="button" class="btn-erp btn-erp-secondary" onclick="window.OrganizacionERP.closeModal('erp-new-event-modal')" style="flex: 1; height: 48px; font-weight: 800; font-size: 0.9rem; text-transform: uppercase; border-radius: 8px;">
+                        CANCELAR
+                    </button>
+                    <button type="submit" class="btn-erp btn-erp-primary" style="flex: 2; height: 48px; font-weight: 900; font-size: 0.95rem; text-transform: uppercase; border-radius: 8px; background: #0f172a; color: #ffffff;">
+                        PUBLICAR AMERICANA 🚀
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================================== -->
+    <!-- 6. MODAL DE DETALLE DE CLUB COLABORADOR                                     -->
+    <!-- ========================================================================== -->
+    <div class="erp-modal-overlay" id="erp-club-modal">
+        <div class="erp-modal-content">
+            <div class="erp-modal-header">
+                <div>
+                    <h3 class="erp-card-title" id="erp-club-modal-title">Ficha de Club</h3>
+                    <p class="erp-card-subtitle">Análisis histórico de rentabilidad y eventos</p>
+                </div>
+                <button class="erp-modal-close" onclick="window.OrganizacionERP.closeModal('erp-club-modal')">&times;</button>
+            </div>
+            <div id="erp-club-modal-body">
+                <!-- Contenido dinámico -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================== -->
+    <!-- 7. MODAL PARA REGISTRAR NUEVO CLUB COLABORADOR                             -->
+    <!-- ========================================================================== -->
+    <div class="erp-modal-overlay" id="erp-new-club-modal">
+        <div class="erp-modal-content">
+            <div class="erp-modal-header">
+                <div>
+                    <h3 class="erp-card-title"><i class="fas fa-plus-circle" style="color:#16a34a;"></i> Registrar Nuevo Club Colaborador</h3>
+                    <p class="erp-card-subtitle">Añade una nueva sede deportiva para organizar americanas y analizar su rentabilidad</p>
+                </div>
+                <button class="erp-modal-close" onclick="window.OrganizacionERP.closeModal('erp-new-club-modal')">&times;</button>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:14px; margin-top:1rem;">
+                <div style="display:grid; grid-template-columns:2fr 1fr; gap:12px;">
+                    <div>
+                        <label style="font-size:0.75rem; font-weight:700; color:var(--erp-text-muted); display:block; margin-bottom:4px;">Nombre del Club *</label>
+                        <input type="text" id="new-club-name" class="financial-input" style="text-align:left; width:100%; height:40px;" placeholder="Ej. Bela Padel Center">
+                    </div>
+                    <div>
+                        <label style="font-size:0.75rem; font-weight:700; color:var(--erp-text-muted); display:block; margin-bottom:4px;">Pistas Totales</label>
+                        <input type="number" id="new-club-courts" class="financial-input" style="text-align:left; width:100%; height:40px;" value="6" min="1" max="30">
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div>
+                        <label style="font-size:0.75rem; font-weight:700; color:var(--erp-text-muted); display:block; margin-bottom:4px;">Ubicación / Ciudad</label>
+                        <input type="text" id="new-club-location" class="financial-input" style="text-align:left; width:100%; height:40px;" placeholder="Ej. Barcelona / Sant Cugat">
+                    </div>
+                    <div>
+                        <label style="font-size:0.75rem; font-weight:700; color:var(--erp-text-muted); display:block; margin-bottom:4px;">Persona de Contacto / Cargo</label>
+                        <input type="text" id="new-club-contact" class="financial-input" style="text-align:left; width:100%; height:40px;" placeholder="Ej. Carlos (Director Deportivo)">
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:10px; background:#f8fafc; padding:12px; border-radius:10px; border:1px solid var(--erp-border);">
+                    <div>
+                        <label style="font-size:0.7rem; font-weight:800; color:#0284c7; display:block; margin-bottom:4px;">Tarifa Mañanas (€/h)</label>
+                        <input type="number" id="new-club-tariff-morning" class="financial-input" style="width:100%;" value="12" step="0.5">
+                    </div>
+                    <div>
+                        <label style="font-size:0.7rem; font-weight:800; color:#ea580c; display:block; margin-bottom:4px;">Tarifa Tardes (€/h)</label>
+                        <input type="number" id="new-club-tariff-evening" class="financial-input" style="width:100%;" value="32" step="0.5">
+                    </div>
+                    <div>
+                        <label style="font-size:0.7rem; font-weight:800; color:#16a34a; display:block; margin-bottom:4px;">Tarifa Noches (€/h)</label>
+                        <input type="number" id="new-club-tariff-night" class="financial-input" style="width:100%;" value="12" step="0.5">
+                    </div>
+                    <div>
+                        <label style="font-size:0.7rem; font-weight:800; color:#9333ea; display:block; margin-bottom:4px;">Tarifa Fin de Sem. (€/h)</label>
+                        <input type="number" id="new-club-tariff-weekend" class="financial-input" style="width:100%;" value="20" step="0.5">
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div>
+                        <label style="font-size:0.75rem; font-weight:700; color:var(--erp-text-muted); display:block; margin-bottom:4px;">Precio Inscripción Recomendado (€)</label>
+                        <input type="number" id="new-club-price" class="financial-input" style="text-align:left; width:100%; height:40px;" value="14" step="1">
+                    </div>
+                    <div>
+                        <label style="font-size:0.75rem; font-weight:700; color:var(--erp-text-muted); display:block; margin-bottom:4px;">Duración Habitual (Minutos)</label>
+                        <select id="new-club-duration" class="financial-input" style="text-align:left; width:100%; height:40px;">
+                            <option value="90">90 minutos (1.5h)</option>
+                            <option value="120" selected>120 minutos (2h)</option>
+                            <option value="150">150 minutos (2.5h)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label style="font-size:0.75rem; font-weight:700; color:var(--erp-text-muted); display:block; margin-bottom:4px;">Notas de Negociación / Acuerdos</label>
+                    <textarea id="new-club-notes" class="financial-input" style="text-align:left; width:100%; height:60px; font-family:var(--erp-font-body); font-weight:500;" placeholder="Ej. El club incluye agua y bolas, nosotros nos llevamos el 100% de inscripciones y ellos el consumo en cafetería..."></textarea>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:0.5rem;">
+                    <button class="btn-erp btn-erp-secondary" onclick="window.OrganizacionERP.closeModal('erp-new-club-modal')">Cancelar</button>
+                    <button class="btn-erp btn-erp-primary" onclick="window.OrganizacionERP.saveNewClubFromForm()">
+                        <i class="fas fa-check"></i> Guardar y Abrir Pestaña del Club
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================== -->
+    <!-- 8. MODAL PARA EDITAR CLUB COLABORADOR, COSTES Y TARIFAS                     -->
+    <!-- ========================================================================== -->
+    <div class="erp-modal-overlay" id="erp-edit-club-modal">
+        <div class="erp-modal-content">
+            <div class="erp-modal-header">
+                <div>
+                    <h3 class="erp-card-title"><i class="fas fa-pen-to-square" style="color:#0284c7;"></i> Modificar Ficha de Club, Tarifas & Costes</h3>
+                    <p class="erp-card-subtitle" id="edit-club-subtitle">Edita cualquier dato, precio acordado u observación de esta sede deportiva</p>
+                </div>
+                <button class="erp-modal-close" onclick="window.OrganizacionERP.closeModal('erp-edit-club-modal')">&times;</button>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:14px; margin-top:1rem;">
+                <input type="hidden" id="edit-club-original-name">
+
+                <div style="display:grid; grid-template-columns:2fr 1fr; gap:12px;">
+                    <div>
+                        <label style="font-size:0.75rem; font-weight:700; color:var(--erp-text-muted); display:block; margin-bottom:4px;">Nombre del Club *</label>
+                        <input type="text" id="edit-club-name" class="financial-input" style="text-align:left; width:100%; height:40px;">
+                    </div>
+                    <div>
+                        <label style="font-size:0.75rem; font-weight:700; color:var(--erp-text-muted); display:block; margin-bottom:4px;">Pistas Totales</label>
+                        <input type="number" id="edit-club-courts" class="financial-input" style="text-align:left; width:100%; height:40px;" min="1" max="50">
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div>
+                        <label style="font-size:0.75rem; font-weight:700; color:var(--erp-text-muted); display:block; margin-bottom:4px;">Ubicación / Ciudad</label>
+                        <input type="text" id="edit-club-location" class="financial-input" style="text-align:left; width:100%; height:40px;">
+                    </div>
+                    <div>
+                        <label style="font-size:0.75rem; font-weight:700; color:var(--erp-text-muted); display:block; margin-bottom:4px;">Persona de Contacto / Teléfono</label>
+                        <input type="text" id="edit-club-contact" class="financial-input" style="text-align:left; width:100%; height:40px;">
+                    </div>
+                </div>
+
+                <!-- SECCIÓN DE TARIFAS Y COSTES PACTADOS -->
+                <div style="background:#f8fafc; padding:12px; border-radius:10px; border:1px solid var(--erp-border);">
+                    <div style="font-size:0.75rem; font-weight:800; color:#0f172a; margin-bottom:8px; text-transform:uppercase;">
+                        💰 Tarifas y Costes de Pistas Pactados con el Club
+                    </div>
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:10px;">
+                        <div>
+                            <label style="font-size:0.7rem; font-weight:800; color:#0284c7; display:block; margin-bottom:4px;">Tarifa Mañanas (€/h o pista)</label>
+                            <input type="number" id="edit-club-tariff-morning" class="financial-input" style="width:100%;" step="0.5">
+                        </div>
+                        <div>
+                            <label style="font-size:0.7rem; font-weight:800; color:#ea580c; display:block; margin-bottom:4px;">Tarifa Tardes (€/h)</label>
+                            <input type="number" id="edit-club-tariff-evening" class="financial-input" style="width:100%;" step="0.5">
+                        </div>
+                        <div>
+                            <label style="font-size:0.7rem; font-weight:800; color:#16a34a; display:block; margin-bottom:4px;">Tarifa Noches (€/h)</label>
+                            <input type="number" id="edit-club-tariff-night" class="financial-input" style="width:100%;" step="0.5">
+                        </div>
+                        <div>
+                            <label style="font-size:0.7rem; font-weight:800; color:#9333ea; display:block; margin-bottom:4px;">Tarifa Fin de Sem. (€/h)</label>
+                            <input type="number" id="edit-club-tariff-weekend" class="financial-input" style="width:100%;" step="0.5">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div>
+                        <label style="font-size:0.75rem; font-weight:700; color:var(--erp-text-muted); display:block; margin-bottom:4px;">Precio Inscripción Recomendado (€/jug.)</label>
+                        <input type="number" id="edit-club-price" class="financial-input" style="text-align:left; width:100%; height:40px;" step="1">
+                    </div>
+                    <div>
+                        <label style="font-size:0.75rem; font-weight:700; color:var(--erp-text-muted); display:block; margin-bottom:4px;">Duración Habitual de Americana</label>
+                        <select id="edit-club-duration" class="financial-input" style="text-align:left; width:100%; height:40px;">
+                            <option value="90">90 minutos (1.5 horas)</option>
+                            <option value="120">120 minutos (2.0 horas)</option>
+                            <option value="150">150 minutos (2.5 horas)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label style="font-size:0.75rem; font-weight:700; color:var(--erp-text-muted); display:block; margin-bottom:4px;">Notas de Negociación, Consumo en Bar & Acuerdos</label>
+                    <textarea id="edit-club-notes" class="financial-input" style="text-align:left; width:100%; height:75px; font-family:var(--erp-font-body); font-weight:500;" placeholder="Escribe aquí cualquier acuerdo de alquiler, condiciones del club o consumo de bar..."></textarea>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem; flex-wrap:wrap; gap:10px;">
+                    <button class="btn-erp btn-erp-danger" onclick="window.OrganizacionERP.deleteClub()">
+                        <i class="fas fa-trash"></i> Eliminar Club
+                    </button>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn-erp btn-erp-secondary" onclick="window.OrganizacionERP.closeModal('erp-edit-club-modal')">Cancelar</button>
+                        <button class="btn-erp btn-erp-primary" onclick="window.OrganizacionERP.saveClubEdits()">
+                            <i class="fas fa-floppy-disk"></i> Guardar Modificaciones
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK Compat -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/firebase-init.js"></script>
+
+    <!-- Core & Servicios Compartidos con Admin -->
+    <script src="js/modules/core/Constants.js"></script>
+    <script src="js/modules/common/EventService.js"></script>
+
+    <!-- Módulo ERP de Organización y Control de Eventos -->
+    <script src="js/modules/organizacion-erp.js?v=20261005"></script>
+
+</body>
+</html>
