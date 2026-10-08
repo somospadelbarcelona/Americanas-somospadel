@@ -2290,31 +2290,11 @@
                             z-index: 5;
                         }
                     </style>
-                    <div style="padding: 13px 16px; display: flex; justify-content: space-between; align-items: center; background: #ffffff; border-radius: 20px; margin: 10px 10px 8px 10px; box-shadow: 0 8px 24px -4px rgba(0,0,0,0.06), 0 2px 6px -1px rgba(0,0,0,0.04); border: 1.5px solid #e2e8f0; position: relative; overflow: hidden; gap: 10px;">
-                        <!-- Subtle accent line -->
-                        <div style="position:absolute; top:0; left:0; width:100%; height:3.5px; background: linear-gradient(90deg, #65a30d, #84cc16, #22c55e); border-radius:20px 20px 0 0;"></div>
-                        <div style="display: flex; align-items: center; gap: 10px; position: relative; z-index: 1; min-width: 0; flex: 1;">
-                            <div style="width: 44px; height: 44px; min-width: 44px; background: #f1f5f9; border: 1.5px solid #e2e8f0; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.35rem; flex-shrink: 0;">
-                                🎾
-                            </div>
-                            <div style="min-width: 0; overflow: hidden;">
-                                <h2 style="font-size: 1.05rem; font-weight: 950; margin: 0; color: #0f172a; letter-spacing: -0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                    ${this.state.activeTab === 'events' ? 'Americanas <span style="color: #65a30d;">Barcelona</span>' : 'Entrenos <span style="color: #65a30d;">SomosPadel BCN</span>'}
-                                </h2>
-                                <p style="color: #64748b; font-size: 0.64rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin: 2px 0 0; display: flex; align-items: center; gap: 5px;">
-                                    <span>${this.state.activeTab === 'events' ? 'SomosPadel & Externas' : 'Inscripción en tiempo real'}</span>
-                                    <span style="display:inline-block; width:4px; height:4px; border-radius:50%; background:#22c55e;"></span>
-                                    <span style="color:#16a34a; font-size:0.6rem; font-weight:900;">EN VIVO</span>
-                                </p>
-                            </div>
-                        </div>
-                        <div style="background: #f8fafc; padding: 6px 14px; border-radius: 14px; border: 1.5px solid #e2e8f0; color: #0f172a; font-weight: 950; display:flex; align-items:center; gap:6px; font-size:0.92rem; flex-shrink:0;">
-                            <span style="color:#65a30d; font-size:0.68rem; font-weight:900;">TOTAL</span> 
-                            <span id="events-total-badge" style="color:#0f172a;">${events.length}</span>
-                        </div>
-                    </div>
-                    <!-- LISTADO DE EVENTOS (ENTRENOS Y AMERICANAS DIRECTAMENTE A CONTINUACIÓN DE LA CABECERA) -->
-                    <div style="padding-left:10px; padding-right:10px; margin-top: 4px;">
+                    <!-- BARRA DE BÚSQUEDA Y FILTROS (ENCIMA DE LOS EVENTOS ACTIVOS) -->
+                    ${filterBarHtml}
+
+                    <!-- LISTADO DE EVENTOS (ENTRENOS Y AMERICANAS ACTIVOS) -->
+                    <div style="padding-left:10px; padding-right:10px; margin-top: 10px;">
                         ${events.length === 0 ? `
                             <div style="padding: 55px 20px; text-align: center; background: #ffffff; border: 1.5px dashed #cbd5e1; border-radius: 24px; margin: 15px 0; box-shadow: 0 4px 14px rgba(0,0,0,0.03);">
                                 <div style="width: 54px; height: 54px; border-radius: 50%; background: #f0fdf4; border: 1.5px solid #bbf7d0; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px;">
@@ -2331,166 +2311,14 @@
                         ` : eventsHtml}
                     </div>
 
-                    <!-- BARRA DE BÚSQUEDA Y FILTROS -->
-                    ${filterBarHtml}
-
                     <!-- ESPACIO CLUBES & ORGANIZADORES (SI APLICA) -->
                     <div style="padding-left:10px; padding-right:10px;">
                         ${organizerBannerHtml}
                     </div>
 
-                    <!-- SELECTOR VISUAL PREMIUM DE MODOS DE JUEGO (FONDO BLANCO, ALTO CONTRASTE Y 3 BLOQUES CLAROS) -->
-                    <div style="margin: 10px 10px 10px 10px; background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 20px; padding: 12px 14px; box-shadow: 0 8px 24px -4px rgba(0,0,0,0.06), 0 2px 6px -1px rgba(0,0,0,0.04);">
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                            <div style="display: flex; align-items: center; gap: 7px;">
-                                <span style="display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 8px; background: #0f172a; color: #CCFF00; font-size: 0.8rem; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
-                                    <i class="fas fa-layer-group"></i>
-                                </span>
-                                <span style="color: #0f172a; font-weight: 950; font-size: 0.8rem; letter-spacing: 0.3px; text-transform: uppercase;">
-                                    Modos de Juego
-                                </span>
-                                <span style="background: #0f172a; color: #CCFF00; font-size: 0.6rem; padding: 2px 8px; border-radius: 999px; font-weight: 900; letter-spacing: 0.5px;">
-                                    3 FORMATOS
-                                </span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <button onclick="window.showPointsPolicyModal ? window.showPointsPolicyModal() : null" 
-                                        title="Consultar Sistema Oficial de Puntos para el Ranking"
-                                        style="background: #0f172a; border: 1.5px solid rgba(204, 255, 0, 0.4); color: #CCFF00; font-size: 0.68rem; font-weight: 900; padding: 5px 10px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.12);"
-                                        onmouseover="this.style.background='#1e293b'; this.style.transform='scale(1.03)';"
-                                        onmouseout="this.style.background='#0f172a'; this.style.transform='scale(1)';">
-                                    <i class="fas fa-balance-scale"></i>
-                                    <span>Puntos Ranking</span>
-                                </button>
-                                <button onclick="window.showGameModesModal ? window.showGameModesModal('comparativa') : null" 
-                                        style="background: #f8fafc; border: 1.5px solid #cbd5e1; color: #0f172a; font-size: 0.68rem; font-weight: 850; padding: 5px 11px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.2s;"
-                                        onmouseover="this.style.background='#0f172a'; this.style.borderColor='#0f172a'; this.style.color='#CCFF00';"
-                                        onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#cbd5e1'; this.style.color='#0f172a';">
-                                    <span>Guía</span>
-                                    <i class="fas fa-chevron-right" style="font-size: 0.6rem; color: #65a30d;"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px;">
-                            <!-- CHIP 1: PAREJA FIJA -->
-                            <div onclick="window.showGameModesModal ? window.showGameModesModal('pareja') : null"
-                                 title="Ver reglas de Pareja Fija"
-                                 style="cursor: pointer; background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%); border: 1.5px solid #38bdf8; border-radius: 14px; padding: 10px 4px; text-align: center; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; box-shadow: 0 4px 12px rgba(56, 189, 248, 0.12);"
-                                 onmouseover="this.style.transform='translateY(-2px) scale(1.02)'; this.style.boxShadow='0 8px 18px rgba(56, 189, 248, 0.25)';"
-                                 onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 4px 12px rgba(56, 189, 248, 0.12)';"
-                                 onmousedown="this.style.transform='scale(0.96)';">
-                                <div style="font-size: 1.25rem; line-height: 1;">👥</div>
-                                <div style="color: #0f172a; font-weight: 950; font-size: 0.82rem; letter-spacing: -0.2px; line-height: 1.2;">Pareja Fija</div>
-                                <div style="color: #0284c7; font-size: 0.6rem; font-weight: 950; text-transform: uppercase; letter-spacing: 0.4px;">PAREJA FIJA</div>
-                            </div>
-                            <!-- CHIP 2: TWISTER INDIVIDUAL -->
-                            <div onclick="window.showGameModesModal ? window.showGameModesModal('twister') : null"
-                                 title="Ver reglas de Twister Individual"
-                                 style="cursor: pointer; background: linear-gradient(180deg, #fdf2f8 0%, #fce7f3 100%); border: 1.5px solid #ec4899; border-radius: 14px; padding: 10px 4px; text-align: center; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; box-shadow: 0 4px 12px rgba(236, 72, 153, 0.12);"
-                                 onmouseover="this.style.transform='translateY(-2px) scale(1.02)'; this.style.boxShadow='0 8px 18px rgba(236, 72, 153, 0.25)';"
-                                 onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 4px 12px rgba(236, 72, 153, 0.12)';"
-                                 onmousedown="this.style.transform='scale(0.96)';">
-                                <div style="font-size: 1.25rem; line-height: 1;">🌪️</div>
-                                <div style="color: #0f172a; font-weight: 950; font-size: 0.82rem; letter-spacing: -0.2px; line-height: 1.2;">Twister</div>
-                                <div style="color: #db2777; font-size: 0.6rem; font-weight: 950; text-transform: uppercase; letter-spacing: 0.4px;">INDIVIDUAL</div>
-                            </div>
-                            <!-- CHIP 3: SUIZO -->
-                            <div onclick="window.showGameModesModal ? window.showGameModesModal('suizo') : null"
-                                 title="Ver reglas de Americana / Entreno Suizo"
-                                 style="cursor: pointer; background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%); border: 1.5px solid #ef4444; border-radius: 14px; padding: 10px 4px; text-align: center; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.12);"
-                                 onmouseover="this.style.transform='translateY(-2px) scale(1.02)'; this.style.boxShadow='0 8px 18px rgba(239, 68, 68, 0.25)';"
-                                 onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 4px 12px rgba(239, 68, 68, 0.12)';"
-                                 onmousedown="this.style.transform='scale(0.96)';">
-                                <div style="font-size: 1.25rem; line-height: 1; display: flex; align-items: center; justify-content: center;">
-                                    <span style="display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; background:#dc2626; color:#ffffff; border-radius:6px; font-weight:950; font-size:0.9rem; line-height:1; box-shadow:0 2px 6px rgba(220,38,38,0.35);">✚</span>
-                                </div>
-                                <div style="color: #0f172a; font-weight: 950; font-size: 0.82rem; letter-spacing: -0.2px; line-height: 1.2;">Suizo</div>
-                                <div style="color: #dc2626; font-size: 0.6rem; font-weight: 950; text-transform: uppercase; letter-spacing: 0.4px;">POR JUEGOS</div>
-                            </div>
-                        </div>
-                    </div>
-
                     <div style="padding-bottom: 80px; padding-left:10px; padding-right:10px;">
                         <div style="margin-top: 25px; display: flex; flex-direction: column; align-items: center; padding-bottom: 20px; gap: 14px;">
                             
-
-                            <!-- BOTÓN DESTACADO INFERIOR MODOS DE JUEGO (FONDO BLANCO, ALTO CONTRASTE) -->
-                            <button onclick="window.showGameModesModal ? window.showGameModesModal('${this.state.activeTab}') : (window.EventsController && window.EventsController.renderEntrenoGuideModal && window.EventsController.renderEntrenoGuideModal())" 
-                                    style="background: #ffffff; color: #0f172a; border: 1.5px solid #cbd5e1; padding: 11px 20px; border-radius: 999px; font-size: 0.8rem; font-weight: 850; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.06); transition: all 0.22s ease;" 
-                                    onmouseover="this.style.transform='scale(1.03)'; this.style.borderColor='#0f172a'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.12)';" 
-                                    onmouseout="this.style.transform='scale(1)'; this.style.borderColor='#cbd5e1'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.06)';">
-                                <span style="background: #0f172a; color: #CCFF00; font-size: 0.65rem; font-weight: 950; padding: 3px 8px; border-radius: 6px;">🎮 REGLAS</span>
-                                <span style="background: #e0f2fe; color: #0284c7; border: 1px solid #38bdf8; padding: 3px 8px; border-radius: 8px; font-size: 0.68rem; font-weight: 950;">👥 Pareja Fija</span>
-                                <span style="background: #fce7f3; color: #db2777; border: 1px solid #ec4899; padding: 3px 8px; border-radius: 8px; font-size: 0.68rem; font-weight: 950;">🌪️ Twister</span>
-                                <span style="background: #fee2e2; color: #dc2626; border: 1px solid #ef4444; padding: 3px 8px; border-radius: 8px; font-size: 0.68rem; font-weight: 950; display: inline-flex; align-items: center; gap: 3px;"><span style="background:#dc2626; color:#fff; border-radius:3px; padding:0 3px; font-size:0.58rem; font-weight:950;">✚</span> Suizo</span>
-                            </button>
-
-                            <!-- ⚖️ TARJETA OFICIAL: SISTEMA DE PUNTOS Y PONDERACIÓN DEL RANKING -->
-                            <div id="points-policy-card-root" style="width: 100%; max-width: 500px; margin: 4px auto 0 !important; animation: floatUp 0.8s ease-out forwards; box-sizing: border-box;">
-                                <div style="
-                                    background: linear-gradient(135deg, rgba(8, 14, 28, 0.95) 0%, rgba(15, 23, 42, 0.92) 100%);
-                                    border: 1px solid rgba(56, 189, 248, 0.28);
-                                    border-radius: 18px;
-                                    padding: 12px 16px;
-                                    position: relative;
-                                    overflow: hidden;
-                                    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px rgba(56, 189, 248, 0.08);
-                                    color: #ffffff;
-                                    font-family: 'Outfit', sans-serif;
-                                    box-sizing: border-box;
-                                ">
-                                    <!-- Top laser accent line -->
-                                    <div style="position: absolute; top: 0; left: 0; right: 0; height: 2.5px; background: linear-gradient(90deg, #38bdf8, #CCFF00); border-radius: 18px 18px 0 0;"></div>
-
-                                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
-                                        <!-- Left: Info & Title -->
-                                        <div style="flex: 1; min-width: 180px;">
-                                            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
-                                                <span style="background: rgba(56, 189, 248, 0.14); color: #38bdf8; font-size: 0.60rem; font-weight: 950; padding: 2px 7px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.6px; border: 1px solid rgba(56, 189, 248, 0.3);">
-                                                    ⚖️ REGLAMENTO OFICIAL
-                                                </span>
-                                                <span style="font-size: 0.62rem; color: #94a3b8; font-weight: 700;">• Entrenos & Americanas 1:1</span>
-                                            </div>
-                                            <div style="font-size: 0.92rem; font-weight: 950; color: #ffffff; letter-spacing: -0.2px; line-height: 1.25;">
-                                                Sistema de Puntos & Baremo de Ranking
-                                            </div>
-                                            <div style="font-size: 0.72rem; color: #cbd5e1; font-weight: 500; margin-top: 1px;">
-                                                100 pts (1º) • 80 pts (2º) • 65 pts (3º)... +2 pts por victoria (PG).
-                                            </div>
-                                        </div>
-
-                                        <!-- Right: Compact Action Button -->
-                                        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                                            <button 
-                                                type="button" 
-                                                onclick="window.showPointsPolicyModal ? window.showPointsPolicyModal() : null;" 
-                                                style="
-                                                    background: #CCFF00;
-                                                    color: #000000;
-                                                    border: none;
-                                                    padding: 8px 14px;
-                                                    border-radius: 12px;
-                                                    font-weight: 1000;
-                                                    font-size: 0.76rem;
-                                                    letter-spacing: 0.2px;
-                                                    cursor: pointer;
-                                                    display: inline-flex;
-                                                    align-items: center;
-                                                    gap: 6px;
-                                                    box-shadow: 0 3px 12px rgba(204, 255, 0, 0.35);
-                                                    transition: all 0.2s ease;
-                                                    white-space: nowrap;
-                                                    font-family: 'Outfit', sans-serif;
-                                                "
-                                                onmouseover="this.style.transform='scale(1.04)';"
-                                                onmouseout="this.style.transform='scale(1)';">
-                                                <i class="fas fa-balance-scale" style="font-size: 0.85rem;"></i>
-                                                <span>Ver Baremo & Simulador</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
 
                             ${(this.state.activeTab === 'events') ? `
                             <button onclick="window.EventsController.renderClubBenefitsModal()" style="background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(10px); color: #CCFF00; border: 1px solid rgba(204,255,0,0.35); padding: 12px 25px; border-radius: 30px; font-size: 0.8rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.03)';" onmouseout="this.style.transform='scale(1)';">
@@ -2498,15 +2326,145 @@
                             </button>
                             ` : ''}
 
-                            ${(this.state.activeTab === 'entrenos') ? `
-                            <button onclick="window.EventsController.renderEntrenoGuideModal()" style="background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(10px); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.1); padding: 12px 25px; border-radius: 30px; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 10px;">
-                                <i class="fas fa-info-circle" style="color: #CCFF00;"></i> ¿CÓMO FUNCIONAN LOS FORMATOS?
-                            </button>
-                            ` : ''}
                         </div>
                     </div>
                 </div>
             `;
+        }
+
+        /**
+         * Widget conjunto "Modos de Juego & Reglamento".
+         * Agrupa: selector de formatos, accesos a reglas, tarjeta oficial de puntos
+         * y botón de guía de formatos. Se muestra al final del RANKING.
+         *
+         * Iconografía: ilustraciones SVG propias con degradado (no glifos planos ni emojis),
+         * dentro del mismo cuadro oscuro con borde de color y brillo del menú del Inicio:
+         *   - Pareja Fija → dos jugadores        (azul, como "Entrenos")
+         *   - Twister     → tornado + pelota     (rosa)
+         *   - Suizo       → escudo con cruz suiza (rojo)
+         *   - Puntos      → medalla con estrella (oro, como "Ranking")
+         *   - Guía        → birrete              (azul, como "Entrenos")
+         */
+        renderGameModesHubWidget() {
+            // Cuadro de icono con el mismo lenguaje visual que el menú del Inicio
+            const tile = (inner, rgb, size = 58) => `
+                <div style="width: ${size}px; height: ${size}px; border-radius: ${Math.round(size * 0.33)}px; background: linear-gradient(145deg, #090e1a 0%, #17243c 100%); display: flex; align-items: center; justify-content: center; border: 1.5px solid rgba(${rgb}, 0.6); box-shadow: 0 6px 16px rgba(9, 14, 26, 0.28), 0 0 14px rgba(${rgb}, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08); flex-shrink: 0; position: relative;">${inner}</div>`;
+
+            // Envoltorio SVG con degradado vertical propio (id único por icono)
+            const svg = (id, c1, c2, rgb, body, px) => `
+                <svg viewBox="0 0 48 48" width="${px}" height="${px}" aria-hidden="true" focusable="false" style="display: block; filter: drop-shadow(0 0 5px rgba(${rgb}, 0.5));">
+                    <defs><linearGradient id="gmh-${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs>
+                    ${body.replace(/GRAD/g, `url(#gmh-${id})`)}
+                </svg>`;
+
+            // 👥 Pareja Fija: dos jugadores (cabeza + hombros) separados por trazo oscuro
+            const iconPair = (px = 36) => svg('pair', '#bae6fd', '#0ea5e9', '56, 189, 248', `
+                <circle cx="17" cy="15" r="6.5" fill="GRAD"></circle>
+                <path d="M4 40c0-8.5 5.8-13 13-13s13 4.5 13 13z" fill="GRAD"></path>
+                <circle cx="32" cy="13" r="6.5" fill="GRAD" stroke="#0b1329" stroke-width="2"></circle>
+                <path d="M19 40c0-8.5 5.8-13 13-13s13 4.5 13 13z" fill="GRAD" stroke="#0b1329" stroke-width="2"></path>`, px);
+
+            // 🌪️ Twister: tornado en barras decrecientes + pelota de pádel
+            const iconTwister = (px = 36) => svg('twister', '#fbcfe8', '#db2777', '236, 72, 153', `
+                <rect x="5" y="7" width="38" height="6.5" rx="3.25" fill="GRAD"></rect>
+                <rect x="9" y="17" width="30" height="6.5" rx="3.25" fill="GRAD"></rect>
+                <rect x="14" y="27" width="20" height="6.5" rx="3.25" fill="GRAD"></rect>
+                <rect x="19" y="37" width="10" height="5.5" rx="2.75" fill="GRAD"></rect>
+                <circle cx="39" cy="38" r="5" fill="#CCFF00" stroke="#0b1329" stroke-width="1.5"></circle>
+                <path d="M35.2 36.2c2.2 .6 3.4 2.2 3.6 4.2" fill="none" stroke="#0b1329" stroke-width="1.2" stroke-linecap="round"></path>`, px);
+
+            // ✚ Suizo: escudo con cruz suiza
+            const iconSwiss = (px = 36) => svg('swiss', '#fca5a5', '#dc2626', '239, 68, 68', `
+                <path d="M24 3.5 40 9v13.5c0 10-6.8 17.6-16 22-9.2-4.4-16-12-16-22V9z" fill="GRAD"></path>
+                <path d="M21 13h6v8h8v6h-8v8h-6v-8h-8v-6h8z" fill="#ffffff"></path>`, px);
+
+            // 🏅 Medalla de oro con estrella y cintas (icono de Ranking)
+            const iconMedal = (px = 36) => svg('medal', '#fde68a', '#f59e0b', '251, 191, 36', `
+                <path d="M11 3h9l7 17h-9z" fill="#ef4444"></path>
+                <path d="M37 3h-9l-7 17h9z" fill="#2563eb"></path>
+                <circle cx="24" cy="31" r="13.5" fill="GRAD" stroke="#b45309" stroke-width="1.5"></circle>
+                <circle cx="24" cy="31" r="9.6" fill="none" stroke="#b45309" stroke-width="1.2" opacity="0.6"></circle>
+                <path d="M24 24.2l2 4.2 4.6.6-3.4 3.2.9 4.6-4.1-2.3-4.1 2.3.9-4.6-3.4-3.2 4.6-.6z" fill="#b45309"></path>`, px);
+
+            // 🎓 Birrete (icono de Entrenos)
+            const iconCap = (px = 22) => svg('cap', '#bae6fd', '#0ea5e9', '56, 189, 248', `
+                <path d="M24 7 2.5 17.5 24 28l21.5-10.5z" fill="GRAD"></path>
+                <path d="M11 24v9.5c0 3.4 6 6.5 13 6.5s13-3.1 13-6.5V24l-13 6.3z" fill="GRAD" opacity="0.88"></path>
+                <path d="M43 19.5V32" stroke="#bae6fd" stroke-width="2.4" stroke-linecap="round"></path>
+                <circle cx="43" cy="34.5" r="2.6" fill="#CCFF00"></circle>`, px);
+
+            const chip = (mode, title, iconHtml, rgb, sub, subColor, bg, border, shadow) => `
+                <div onclick="window.showGameModesModal ? window.showGameModesModal('${mode}') : null"
+                     title="Ver reglas de ${title}"
+                     style="cursor: pointer; background: ${bg}; border: 1.5px solid ${border}; border-radius: 18px; padding: 12px 4px 11px; text-align: center; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; box-shadow: 0 4px 12px ${shadow}; min-width: 0; -webkit-tap-highlight-color: transparent;"
+                     onmousedown="this.style.transform='scale(0.96)';" onmouseup="this.style.transform='scale(1)';">
+                    ${tile(iconHtml, rgb, 58)}
+                    <div style="color: #0f172a; font-weight: 950; font-size: 0.86rem; letter-spacing: -0.2px; line-height: 1.2; margin-top: 3px;">${title}</div>
+                    <div style="color: ${subColor}; font-size: 0.6rem; font-weight: 950; text-transform: uppercase; letter-spacing: 0.4px;">${sub}</div>
+                </div>`;
+
+            return `
+                <div id="game-modes-hub-widget" style="background: #ffffff; border: 1.5px solid #e2e8f0; border-top: 4px solid #CCFF00; border-radius: 22px; padding: 14px; box-shadow: 0 8px 24px -4px rgba(0,0,0,0.08), 0 2px 6px -1px rgba(0,0,0,0.04); font-family: 'Outfit', sans-serif; box-sizing: border-box;">
+
+                    <!-- CABECERA + ACCESOS RÁPIDOS -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            ${tile('<i class="fas fa-layer-group" style="font-size: 0.95rem; color: #CCFF00; filter: drop-shadow(0 0 6px rgba(204,255,0,0.5));"></i>', '204, 255, 0', 30)}
+                            <span style="color: #0f172a; font-weight: 950; font-size: 0.82rem; letter-spacing: 0.3px; text-transform: uppercase;">Modos de Juego</span>
+                            <span style="background: #0f172a; color: #CCFF00; font-size: 0.6rem; padding: 2px 8px; border-radius: 999px; font-weight: 900; letter-spacing: 0.5px;">3 FORMATOS</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <button onclick="window.showPointsPolicyModal ? window.showPointsPolicyModal() : null"
+                                    title="Consultar Sistema Oficial de Puntos para el Ranking"
+                                    style="background: #0f172a; border: 1.5px solid rgba(251, 191, 36, 0.5); color: #fbbf24; font-size: 0.68rem; font-weight: 900; padding: 4px 10px 4px 6px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.12);">
+                                ${iconMedal(18)}<span>Puntos Ranking</span>
+                            </button>
+                            <button onclick="window.showGameModesModal ? window.showGameModesModal('comparativa') : null"
+                                    style="background: #f8fafc; border: 1.5px solid #cbd5e1; color: #0f172a; font-size: 0.68rem; font-weight: 850; padding: 5px 11px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                                <span>Guía</span><i class="fas fa-chevron-right" style="font-size: 0.6rem; color: #65a30d;"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 3 FORMATOS -->
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px;">
+                        ${chip('pareja', 'Pareja Fija', iconPair(36), '56, 189, 248', 'PAREJA FIJA', '#0284c7', 'linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%)', '#38bdf8', 'rgba(56, 189, 248, 0.16)')}
+                        ${chip('twister', 'Twister', iconTwister(36), '236, 72, 153', 'INDIVIDUAL', '#db2777', 'linear-gradient(180deg, #fdf2f8 0%, #fce7f3 100%)', '#ec4899', 'rgba(236, 72, 153, 0.16)')}
+                        ${chip('suizo', 'Suizo', iconSwiss(36), '239, 68, 68', 'POR JUEGOS', '#dc2626', 'linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%)', '#ef4444', 'rgba(239, 68, 68, 0.16)')}
+                    </div>
+
+                    <!-- REGLAMENTO OFICIAL: SISTEMA DE PUNTOS -->
+                    <div id="points-policy-card-root" style="margin-top: 12px; background: linear-gradient(135deg, #080e1c 0%, #0f172a 100%); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 18px; padding: 13px 14px; position: relative; overflow: hidden; color: #ffffff; box-shadow: 0 8px 20px -6px rgba(0,0,0,0.45);">
+                        <div style="position: absolute; top: 0; left: 0; right: 0; height: 2.5px; background: linear-gradient(90deg, #fbbf24, #CCFF00);"></div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 200px;">
+                                ${tile(iconMedal(36), '251, 191, 36', 54)}
+                                <div style="min-width: 0;">
+                                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px; flex-wrap: wrap;">
+                                        <span style="background: rgba(251, 191, 36, 0.14); color: #fbbf24; font-size: 0.60rem; font-weight: 950; padding: 2px 7px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.6px; border: 1px solid rgba(251, 191, 36, 0.35); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-scale-balanced" style="font-size: 0.56rem;"></i> REGLAMENTO OFICIAL</span>
+                                        <span style="font-size: 0.62rem; color: #94a3b8; font-weight: 700;">• Entrenos &amp; Americanas 1:1</span>
+                                    </div>
+                                    <div style="font-size: 0.92rem; font-weight: 950; color: #ffffff; letter-spacing: -0.2px; line-height: 1.25;">Sistema de Puntos &amp; Baremo de Ranking</div>
+                                    <div style="font-size: 0.72rem; color: #cbd5e1; font-weight: 500; margin-top: 1px;">100 pts (1º) • 80 pts (2º) • 65 pts (3º)... +2 pts por victoria (PG).</div>
+                                </div>
+                            </div>
+                            <button type="button" onclick="window.showPointsPolicyModal ? window.showPointsPolicyModal() : null;"
+                                    style="background: #CCFF00; color: #000000; border: none; padding: 10px 14px; border-radius: 12px; font-weight: 1000; font-size: 0.78rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 7px; box-shadow: 0 3px 12px rgba(204, 255, 0, 0.35); white-space: nowrap; font-family: 'Outfit', sans-serif; width: 100%; box-sizing: border-box;">
+                                <i class="fas fa-calculator" style="font-size: 0.85rem;"></i><span>Ver Baremo &amp; Simulador</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- GUÍA DE FORMATOS -->
+                    <button onclick="window.EventsController && window.EventsController.renderEntrenoGuideModal ? window.EventsController.renderEntrenoGuideModal() : (window.showGameModesModal && window.showGameModesModal('comparativa'))"
+                            style="width: 100%; margin-top: 12px; background: #f8fafc; color: #0f172a; border: 1.5px solid #cbd5e1; padding: 9px 12px; border-radius: 16px; font-size: 0.8rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 10px; box-sizing: border-box; text-align: left;">
+                        <span style="display: flex; align-items: center; gap: 10px;">
+                            ${tile(iconCap(24), '56, 189, 248', 38)}
+                            <span>¿CÓMO FUNCIONAN LOS FORMATOS?</span>
+                        </span>
+                        <i class="fas fa-chevron-right" style="font-size: 0.7rem; color: #65a30d;"></i>
+                    </button>
+                </div>`;
         }
 
         renderAgendaView(typeFilter = null) {
