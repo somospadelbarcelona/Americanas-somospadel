@@ -78,7 +78,16 @@ window.NotificationServiceClass = class NotificationService {
             if (raw) {
                 const parsed = JSON.parse(raw);
                 if (Array.isArray(parsed)) {
-                    this.inboundNotifications = parsed;
+                    const now = Date.now();
+                    const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+                    this.inboundNotifications = parsed.filter(item => {
+                        if (!item) return false;
+                        const ts = this._getTimestampValue(item.timestamp);
+                        return ts === 0 || (now - ts) <= SEVEN_DAYS;
+                    });
+                    if (this.inboundNotifications.length !== parsed.length) {
+                        this._persistInboundNotifications();
+                    }
                 }
             }
         } catch (e) {
@@ -943,6 +952,10 @@ window.NotificationServiceClass = class NotificationService {
             const seen = new Set();
             const deduplicated = [];
 
+            const now = Date.now();
+            const MAX_EVENT_AGE_MS = 48 * 60 * 60 * 1000; // 48 horas tras la fecha del evento
+            const MAX_GENERAL_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 días para notificaciones generales
+
             for (const rawItem of sorted) {
                 if (!rawItem) continue;
                 if (this._isItemGloballyPurged(rawItem)) continue;
@@ -965,29 +978,60 @@ window.NotificationServiceClass = class NotificationService {
                     }
                 }
 
-                const eventId = rawItem.data?.eventId || rawItem.eventId;
-                const isCancelled = Boolean(rawItem.isCancelled || rawItem.data?.isCancelled || title.toLowerCase().includes('cancelad') || title.toLowerCase().includes('suspendid') || title.toLowerCase().includes('eliminad'));
-                const isSpot = Boolean(String(rawItem.id || '').startsWith('evt_spot_') || title.toLowerCase().includes('plaza libre'));
-                const isNew = Boolean(String(rawItem.id || '').startsWith('evt_new_') || title.toLowerCase().includes('nuevo') || title.toLowerCase().includes('nueva'));
+                // Extracción canónica profunda de eventId
+                let eventId = rawItem.data?.eventId || rawItem.eventId || rawItem.data?.entrenoId || rawItem.entrenoId || rawItem.data?.americanaId || rawItem.americanaId;
+                if (!eventId && rawItem.id) {
+                    const m = String(rawItem.id).match(/evt_(?:cancelled|new|spot)_(?:americana|entreno)_([a-zA-Z0-9_-]+)/);
+                    if (m) eventId = m[1];
+                }
+                if (!eventId && rawItem.data?.id) {
+                    const m = String(rawItem.data.id).match(/evt_(?:cancelled|new|spot)_(?:americana|entreno)_([a-zA-Z0-9_-]+)/);
+                    if (m) eventId = m[1];
+                }
+
+                const lowerTitle = title.toLowerCase();
+                const lowerBody = body.toLowerCase();
+                const isCancelled = Boolean(rawItem.isCancelled || rawItem.data?.isCancelled || lowerTitle.includes('cancelad') || lowerTitle.includes('suspendid') || lowerTitle.includes('eliminad') || lowerTitle.includes('anulad') || lowerBody.includes('cancelado') || lowerBody.includes('anulado'));
+                const isSpot = Boolean(String(rawItem.id || '').startsWith('evt_spot_') || lowerTitle.includes('plaza libre') || lowerBody.includes('plazas vacantes'));
+                const isNew = Boolean(String(rawItem.id || '').startsWith('evt_new_') || lowerTitle.includes('nuevo entreno') || lowerTitle.includes('nueva americana') || lowerTitle.includes('nueva convocatoria'));
+
+                // 1. Filtrar eventos pasados: Si el evento ya ocurrió hace más de 48h, descartar de la bandeja activa
+                const eventMs = this._getEventDateTimeMs(rawItem);
+                if (eventMs > 0 && (now - eventMs) > MAX_EVENT_AGE_MS) {
+                    continue;
+                }
+
+                // 2. Filtrar notificaciones generales muy antiguas (> 7 días), excepto del sistema
+                const notifTs = this._getTimestampValue(rawItem.timestamp || rawItem.createdAt);
+                const isSystemPinned = String(rawItem.id || '').startsWith('system_');
+                if (!isSystemPinned && notifTs > 0 && (now - notifTs) > MAX_GENERAL_AGE_MS) {
+                    continue;
+                }
 
                 // Firmas de deduplicación complementarias:
-                // 1. Clave por Evento + Acción
+                // 1. Clave por Evento + Acción Canónica (unifica Firestore, in-app y push)
                 const evtSignature = eventId ? `evt_${eventId}_${isCancelled ? 'cancelled' : (isSpot ? 'spot' : (isNew ? 'new' : 'action'))}` : null;
-                // 2. Clave por Contenido Textual Exacto
-                const textSignature = `txt_${title.toLowerCase().trim()}|${body.toLowerCase().trim()}`;
-                // 3. Clave por ID explícito
+                // 2. Clave Semántica por Fecha y Hora si no hay ID canónico
+                const semanticMatch = `${lowerTitle} ${lowerBody}`.match(/\b(\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{4})\b.*?(\d{1,2}:\d{2})/);
+                const semanticSignature = semanticMatch ? `sem_${isCancelled ? 'canc' : (isSpot ? 'spot' : 'info')}_${semanticMatch[1]}_${semanticMatch[2]}` : null;
+                // 3. Clave por Contenido Textual Exacto
+                const textSignature = `txt_${lowerTitle}|${lowerBody}`;
+                // 4. Clave por ID explícito
                 const idSignature = rawItem.id ? `id_${rawItem.id}` : null;
 
                 // Descartar si alguna de las firmas está en las purgas globales
                 if (evtSignature && this.globalPurgedIds && this.globalPurgedIds.has(evtSignature)) continue;
+                if (semanticSignature && this.globalPurgedIds && this.globalPurgedIds.has(semanticSignature)) continue;
                 if (textSignature && this.globalPurgedIds && this.globalPurgedIds.has(textSignature)) continue;
                 if (idSignature && this.globalPurgedIds && this.globalPurgedIds.has(idSignature)) continue;
 
                 if (evtSignature && seen.has(evtSignature)) continue;
+                if (semanticSignature && seen.has(semanticSignature)) continue;
                 if (seen.has(textSignature)) continue;
                 if (idSignature && seen.has(idSignature)) continue;
 
                 if (evtSignature) seen.add(evtSignature);
+                if (semanticSignature) seen.add(semanticSignature);
                 seen.add(textSignature);
                 if (idSignature) seen.add(idSignature);
 
@@ -1171,12 +1215,28 @@ window.NotificationServiceClass = class NotificationService {
     }
 
     /**
+     * Comprueba si la fecha/hora programada de un evento ya ha transcurrido en el calendario.
+     * Los eventos del pasado NUNCA deben disparar notificaciones push ni avisos como nuevos/plazas.
+     * @param {object} evt 
+     * @param {number} [gracePeriodMs=3600000] - Margen de cortesía (1 hora por defecto)
+     * @returns {boolean} true si el evento ya ocurrió
+     */
+    _isEventPast(evt, gracePeriodMs = 3600000) {
+        if (!evt) return false;
+        const eventMs = this._getEventDateTimeMs(evt);
+        if (eventMs > 0 && (Date.now() - eventMs) > gracePeriodMs) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Comprueba si un evento o notificación de evento está caducado por TTL (> 48h tras la fecha programada o creación).
      * @param {object} evt - Objeto de evento o notificación
-     * @param {number} [ttlMs=604800000] - Tiempo de vida en milisegundos (7 días por defecto)
+     * @param {number} [ttlMs=172800000] - Tiempo de vida en milisegundos (48 horas por defecto)
      * @returns {boolean} true si está caducado
      */
-    _isEventExpiredByTTL(evt, ttlMs = 7 * 24 * 60 * 60 * 1000) {
+    _isEventExpiredByTTL(evt, ttlMs = 48 * 60 * 60 * 1000) {
         if (!evt) return false;
         const now = Date.now();
         const eventMs = this._getEventDateTimeMs(evt);
@@ -1187,9 +1247,9 @@ window.NotificationServiceClass = class NotificationService {
     }
 
     /**
-     * Alias de caducidad para eventos cancelados (> 7 días)
+     * Alias de caducidad para eventos cancelados (> 48h)
      */
-    _isEventCancelledExpired(evt, maxAgeHours = 168) {
+    _isEventCancelledExpired(evt, maxAgeHours = 48) {
         return this._isEventExpiredByTTL(evt, maxAgeHours * 60 * 60 * 1000);
     }
 
@@ -1344,8 +1404,9 @@ window.NotificationServiceClass = class NotificationService {
         // Retirar notificaciones previas de nuevo evento o plazas libres
         this._removeEventActiveNotifs(normType, id);
 
-        // Si el evento está caducado (>48h) o ya fue purgado globalmente, no guardar ni notificar
-        if (this._isEventExpiredByTTL(eventData) || this._isItemGloballyPurged({ id: notifId, eventId: id, title: eventData.name })) {
+        // Si el evento es del pasado o está caducado (>48h) o ya fue purgado globalmente, no guardar ni notificar
+        const isPast = this._isEventPast(eventData);
+        if (this._isEventExpiredByTTL(eventData, 48 * 60 * 60 * 1000) || this._isItemGloballyPurged({ id: notifId, eventId: id, title: eventData.name })) {
             return;
         }
 
@@ -1371,10 +1432,9 @@ window.NotificationServiceClass = class NotificationService {
         // Guardar persistentemente en sp_cancelled_events_log
         this._saveCancelledEvent(notif);
 
-        // Disparar push nativo fuera de la app para alertar al móvil de inmediato
-        if (!isDeleted) {
+        // Disparar push nativo fuera de la app SOLO si no es un evento pasado y no está borrado
+        if (!isDeleted && !isPast) {
             this._checkAndTriggerPush(notif);
-            this.showNativeNotification(notif.title, notif.body, notif.data);
         }
 
         if (!this._isInsideSnapshotBatch && this._hasInitialEventsLoaded && !this._isProcessingEventsFeed) {
@@ -1398,8 +1458,13 @@ window.NotificationServiceClass = class NotificationService {
         // Retirar notificaciones previas de plazas libres o nuevo evento
         this._removeEventActiveNotifs(normType, id);
 
+        // Si el evento ya ocurrió en el pasado, NUNCA enviar push nativo
+        if (this._isEventPast(eventData)) {
+            skipPush = true;
+        }
+
         // Si el evento está caducado (>48h) o ya fue purgado globalmente, no guardar ni notificar
-        if (this._isEventExpiredByTTL(eventData) || this._isItemGloballyPurged({ id: notifId, eventId: id, title: eventData.name })) {
+        if (this._isEventExpiredByTTL(eventData, 48 * 60 * 60 * 1000) || this._isItemGloballyPurged({ id: notifId, eventId: id, title: eventData.name })) {
             return;
         }
 
@@ -1439,10 +1504,9 @@ window.NotificationServiceClass = class NotificationService {
         // Guardar persistentemente en sp_cancelled_events_log
         this._saveCancelledEvent(notif);
 
-        // Disparar push nativo fuera de la app
+        // Disparar push nativo fuera de la app mediante el gestor unificado y deduplicado
         if (!isDeleted && !skipPush) {
             this._checkAndTriggerPush(notif);
-            this.showNativeNotification(notif.title, notif.body, notif.data);
         }
 
         if (!this._isInsideSnapshotBatch && this._hasInitialEventsLoaded && !this._isProcessingEventsFeed) {
@@ -1520,14 +1584,22 @@ window.NotificationServiceClass = class NotificationService {
                                         }
                                         hasChanges = true;
                                     } else if (change.type === 'modified') {
+                                        const prev = this._eventsMap.get(evtId);
+                                        const prevStatus = prev && prev.event ? String(prev.event.status || '').toLowerCase().trim() : '';
+                                        const wasPrevCancelled = ['cancelled', 'cancelado', 'suspendido', 'anulado', 'suspended', 'postponed'].includes(prevStatus) || Boolean(prev?.event?.isCancelled);
+
                                         const status = String(evt.status || '').toLowerCase().trim();
-                                        const isCancelled = ['cancelled', 'cancelado', 'suspendido', 'anulado', 'suspended', 'postponed'].includes(status);
+                                        const isCancelled = ['cancelled', 'cancelado', 'suspendido', 'anulado', 'suspended', 'postponed'].includes(status) || Boolean(evt.isCancelled);
                                         this._eventsMap.set(evtId, { event: evt, type: normType });
 
-                                        // Si un evento cambia a estado cancelado o suspendido
+                                        // Si un evento pasa a estar cancelado o suspendido
                                         if (isCancelled) {
                                             if (!this._isEventExpiredByTTL(evt)) {
-                                                this.handleEventCancelled(normType, evtId, evt, status);
+                                                const isNewlyCancelled = !wasPrevCancelled;
+                                                const isPast = this._isEventPast(evt);
+                                                // Si ya estaba cancelado antes o ya ocurrió en el pasado, JAMÁS disparar push
+                                                const skipPush = !isNewlyCancelled || isPast;
+                                                this.handleEventCancelled(normType, evtId, evt, status, skipPush);
                                             } else {
                                                 this._removeEventActiveNotifs(normType, evtId);
                                             }
@@ -1536,12 +1608,14 @@ window.NotificationServiceClass = class NotificationService {
                                     } else {
                                         // 'added'
                                         const status = String(evt.status || '').toLowerCase().trim();
-                                        const isCancelled = ['cancelled', 'cancelado', 'suspendido', 'anulado', 'suspended', 'postponed'].includes(status);
+                                        const isCancelled = ['cancelled', 'cancelado', 'suspendido', 'anulado', 'suspended', 'postponed'].includes(status) || Boolean(evt.isCancelled);
                                         this._eventsMap.set(evtId, { event: evt, type: normType });
 
                                         if (isCancelled) {
                                             if (!this._isEventExpiredByTTL(evt)) {
-                                                this.handleEventCancelled(normType, evtId, evt, status, !this._hasInitialEventsLoaded);
+                                                const isPast = this._isEventPast(evt);
+                                                const skipPush = !this._hasInitialEventsLoaded || isPast;
+                                                this.handleEventCancelled(normType, evtId, evt, status, skipPush);
                                             } else {
                                                 this._removeEventActiveNotifs(normType, evtId);
                                             }
@@ -1645,8 +1719,14 @@ window.NotificationServiceClass = class NotificationService {
                     });
 
                     if (!alreadyLogged) {
-                        this.handleEventCancelled(normType, evt.id, evt, status, !this._hasInitialEventsLoaded);
+                        this.handleEventCancelled(normType, evt.id, evt, status, true);
                     }
+                    return;
+                }
+
+                // Descartar si el evento ya ocurrió en el pasado
+                const isPast = this._isEventPast(evt, 30 * 60 * 1000);
+                if (isPast) {
                     return;
                 }
 
@@ -1746,6 +1826,12 @@ window.NotificationServiceClass = class NotificationService {
         const id = notif.id;
 
         if (localStorage.getItem('sp_pushed_' + id) === 'true') {
+            return;
+        }
+
+        // Si es un evento cuya fecha ya ocurrió en el pasado, NUNCA disparar push nativo
+        if (this._isEventPast(notif)) {
+            try { localStorage.setItem('sp_pushed_' + id, 'true'); } catch (_) {}
             return;
         }
 
@@ -2693,6 +2779,7 @@ window.NotificationServiceClass = class NotificationService {
                 last_token_update: nowIso,
                 last_platform: platform
             };
+            // Compatibilidad legacy: fcm_token: token
             if (finalToken) {
                 rootUpdate.fcm_token = finalToken;
             }
