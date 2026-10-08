@@ -731,8 +731,25 @@ window.WhatsAppService = {
                 const upperName = name.toUpperCase();
                 const time = e.time || '10:00';
                 const location = (e.location || e.sede || e.club || 'SomosPadel BCN').trim();
-                const price = e.price_external || e.price_members || e.price || 10;
                 const isEntreno = e.type === 'entreno' || upperName.includes('ENTRENO');
+
+                // Tarifas: tanto socio como no socio
+                const pMember = (e.price_members !== undefined && e.price_members !== null && e.price_members !== '') 
+                    ? e.price_members 
+                    : (e.price_socio !== undefined && e.price_socio !== null ? e.price_socio : (e.price || 10));
+
+                const pExt = (e.price_external !== undefined && e.price_external !== null && e.price_external !== '') 
+                    ? e.price_external 
+                    : (e.price_no_socio !== undefined && e.price_no_socio !== null ? e.price_no_socio : (e.price_externo || e.price || 10));
+
+                let priceText = '';
+                if (pMember && pExt && String(pMember) !== String(pExt)) {
+                    priceText = `${pMember} € socios / ${pExt} € no socios`;
+                } else if (pMember) {
+                    priceText = `${pMember} € socios / ${pExt || pMember} € no socios`;
+                } else {
+                    priceText = `${e.price || 10} €`;
+                }
 
                 // Emoji dinámico por franja horaria / modalidad
                 let icon = '🎾';
@@ -754,7 +771,7 @@ window.WhatsAppService = {
                 const spotsLeft = Math.max(0, maxPlayers - playersCount);
 
                 msg += `${icon} *${time}* · *${name}*\n`;
-                msg += `📍 ${location} · ${price} €\n`;
+                msg += `📍 ${location} · ${priceText}\n`;
 
                 const link = this.getEventCanonicalUrl(e);
 
@@ -989,7 +1006,7 @@ window.WhatsAppService = {
                                                     ${e.date || ''} · ${e.time || ''} — ${e.name || 'Torneo'}
                                                 </div>
                                                 <div style="font-size: 0.72rem; color: #94a3b8;">
-                                                    📍 ${e.location || e.sede || 'SomosPadel BCN'} · ${e.price_external || e.price || 10}€
+                                                    📍 ${e.location || e.sede || 'SomosPadel BCN'} · ${e.price_members || e.price || 10}€ socios / ${e.price_external || e.price || 10}€ no socios
                                                 </div>
                                             </div>
                                             <div style="font-size: 0.72rem; font-weight: 800; background: ${badgeBg}; color: ${badgeColor}; padding: 3px 8px; border-radius: 6px; flex-shrink: 0;">
