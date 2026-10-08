@@ -911,98 +911,7 @@
                         </div>
                     </div>
 
-                    <!-- 💬 CHAT GENERAL SOMOSPADEL (ACCESO DESTACADO EN EL INICIO) -->
-                    <div onclick="window.PlayerView?.haptic?.(20); window.ChatView?.openGeneralCommunityChat();" 
-                         title="Abrir Chat General de SomosPadel"
-                         style="
-                            margin: 0 15px 16px;
-                            background: linear-gradient(135deg, #090e1a 0%, #15233c 100%);
-                            border-radius: 20px;
-                            border: 1.5px solid rgba(204, 255, 0, 0.45);
-                            padding: 13px 15px;
-                            display: flex;
-                            align-items: center;
-                            justify-content: space-between;
-                            gap: 12px;
-                            cursor: pointer;
-                            box-shadow: 0 8px 24px rgba(9, 14, 26, 0.45), 0 0 16px rgba(204, 255, 0, 0.16);
-                            transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
-                            position: relative;
-                            overflow: hidden;
-                         "
-                         onmouseover="this.style.transform='translateY(-2px) scale(1.01)'; this.style.borderColor='#CCFF00'; this.style.boxShadow='0 12px 30px rgba(9,14,26,0.5), 0 0 22px rgba(204,255,0,0.3)';"
-                         onmouseout="this.style.transform='none'; this.style.borderColor='rgba(204, 255, 0, 0.45)'; this.style.boxShadow='0 8px 24px rgba(9, 14, 26, 0.45), 0 0 16px rgba(204, 255, 0, 0.16)';"
-                         onmousedown="this.style.transform='scale(0.98)';">
-                        <!-- Efecto brillo de fondo -->
-                        <div style="position: absolute; right: -25px; top: -25px; width: 110px; height: 110px; background: radial-gradient(circle, rgba(204,255,0,0.18) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
-                        
-                        <!-- Columna Izquierda: Icono + Textos -->
-                        <div style="display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; position: relative; z-index: 2;">
-                            <div style="
-                                width: 46px;
-                                height: 46px;
-                                border-radius: 14px;
-                                background: linear-gradient(135deg, rgba(204, 255, 0, 0.2) 0%, rgba(204, 255, 0, 0.05) 100%);
-                                border: 1.5px solid #CCFF00;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                flex-shrink: 0;
-                                box-shadow: 0 0 14px rgba(204, 255, 0, 0.28);
-                                position: relative;
-                            ">
-                                <i class="fas fa-comments" style="color: #CCFF00; font-size: 1.3rem;"></i>
-                                <span style="position: absolute; top: -3px; right: -3px; width: 9px; height: 9px; background: #22c55e; border: 2px solid #090e1a; border-radius: 50%; box-shadow: 0 0 6px #22c55e;"></span>
-                            </div>
-                            <div style="min-width: 0; flex: 1; overflow: hidden;">
-                                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; overflow: hidden;">
-                                    <span style="color: #ffffff; font-weight: 950; font-size: 0.88rem; text-transform: uppercase; letter-spacing: 0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;">
-                                        CHAT GENERAL
-                                    </span>
-                                    <span style="
-                                        background: #CCFF00;
-                                        color: #090e1a;
-                                        font-size: 0.54rem;
-                                        font-weight: 950;
-                                        padding: 2.5px 7px;
-                                        border-radius: 6px;
-                                        letter-spacing: 0.4px;
-                                        white-space: nowrap;
-                                        flex-shrink: 0;
-                                        display: inline-flex;
-                                        align-items: center;
-                                        gap: 3.5px;
-                                        box-shadow: 0 1px 6px rgba(204, 255, 0, 0.3);
-                                    ">
-                                        <i class="fab fa-whatsapp" style="font-size: 0.62rem; color: #090e1a;"></i>
-                                        <span>CHAT APP</span>
-                                    </span>
-                                </div>
-                                <div style="color: #94a3b8; font-size: 0.70rem; font-weight: 600; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                    Comunidad en directo • Retos y partidos
-                                </div>
-                            </div>
-                        </div>
 
-                        <!-- Columna Derecha: Botón Neón Entrar -->
-                        <div style="
-                            background: linear-gradient(135deg, #CCFF00 0%, #a3e635 100%);
-                            color: #090e1a;
-                            padding: 6px 11px;
-                            border-radius: 11px;
-                            display: inline-flex;
-                            align-items: center;
-                            gap: 5px;
-                            flex-shrink: 0;
-                            position: relative;
-                            z-index: 2;
-                            box-shadow: 0 2px 10px rgba(204, 255, 0, 0.35);
-                            transition: transform 0.15s ease, box-shadow 0.15s ease;
-                        ">
-                            <span style="color: #090e1a !important; font-size: 0.70rem; font-weight: 950; text-transform: uppercase; letter-spacing: 0.4px; line-height: 1;">ENTRAR</span>
-                            <i class="fas fa-arrow-right" style="color: #090e1a !important; font-size: 0.65rem;"></i>
-                        </div>
-                    </div>
 
                     <!-- Contenedor de notificaciones push oculto (gestión 100% modal intermitente) -->
                     <div id="push-notification-promo-banner-root" style="display: none !important;"></div>
@@ -4270,15 +4179,15 @@
                             const isPillBtn = (p === btn);
                             const pFilter = p.getAttribute('data-filter');
                             if (isPillBtn) {
-                                p.style.background = '#071629';
-                                p.style.color = (pFilter === 'mi_pista') ? '#fbbf24' : '#ccff00';
-                                p.style.borderColor = (pFilter === 'mi_pista') ? '#f59e0b' : '#071629';
-                                p.style.boxShadow = '0 2px 10px rgba(7, 22, 41, 0.35)';
+                                p.style.background = '#0f172a';
+                                p.style.color = (pFilter === 'mi_pista') ? '#fbbf24' : '#ffffff';
+                                p.style.borderColor = (pFilter === 'mi_pista') ? '#f59e0b' : '#0f172a';
+                                p.style.boxShadow = '0 2px 10px rgba(15, 23, 42, 0.25)';
                             } else {
-                                p.style.background = 'rgba(7, 22, 41, 0.10)';
-                                p.style.color = '#071629';
-                                p.style.borderColor = 'rgba(7, 22, 41, 0.22)';
-                                p.style.boxShadow = 'none';
+                                p.style.background = '#ffffff';
+                                p.style.color = (pFilter === 'mi_pista') ? '#d97706' : '#334155';
+                                p.style.borderColor = (pFilter === 'mi_pista') ? '#f59e0b' : '#cbd5e1';
+                                p.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.05)';
                             }
                         });
 
@@ -4312,8 +4221,8 @@
                             if (!emptyNotice) {
                                 emptyNotice = document.createElement('div');
                                 emptyNotice.id = 'pizarra-empty-filtered';
-                                emptyNotice.style.cssText = 'padding: 16px; color: #071629; font-size: 0.68rem; text-align: center; width: 100%; font-weight: 800;';
-                                emptyNotice.innerHTML = '<i class="fas fa-info-circle" style="color: #071629; margin-right: 5px;"></i> No hay eventos en esta categoría';
+                                emptyNotice.style.cssText = 'padding: 16px; color: #0f172a; font-size: 0.68rem; text-align: center; width: 100%; font-weight: 800;';
+                                emptyNotice.innerHTML = '<i class="fas fa-info-circle" style="color: #0f172a; margin-right: 5px;"></i> No hay eventos en esta categoría';
                                 track.appendChild(emptyNotice);
                             } else {
                                 emptyNotice.style.display = 'block';
@@ -4335,13 +4244,13 @@
                     };
                 }
 
-                // Weather micro-pill HTML component con contraste adaptado al fondo lima
+                // Weather micro-pill HTML component con contraste adaptado al fondo gris mate
                 const weatherPillHtml = `
                     <div onclick="event.stopPropagation(); window.showWeatherDetails ? window.showWeatherDetails() : (window.Router && window.Router.navigate('clima'));" 
-                         style="cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-size: 0.58rem; font-weight: 800; color: #ffffff; background: #071629; padding: 2px 7px; border-radius: 6px; border: 1px solid rgba(7, 22, 41, 0.4); box-shadow: 0 2px 8px rgba(7, 22, 41, 0.2); user-select: none; -webkit-tap-highlight-color: transparent;" 
+                         style="cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-size: 0.58rem; font-weight: 800; color: #0f172a; background: #ffffff; padding: 2px 8px; border-radius: 6px; border: 1.5px solid #cbd5e1; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06); user-select: none; -webkit-tap-highlight-color: transparent;" 
                          title="Meteo ${weatherCity}: ${weatherTemp} (¡Nuevo Radar Táctico de Pistas!)">
                         <span>${weatherIcon}</span> <span>${weatherTemp}</span>
-                        <span style="background: #ccff00; color: #071629; font-size: 0.50rem; font-weight: 950; padding: 1px 4px; border-radius: 4px; margin-left: 2px; letter-spacing: 0.3px;">RADAR</span>
+                        <span style="background: #0f172a; color: #ffffff; font-size: 0.50rem; font-weight: 950; padding: 1px 5px; border-radius: 4px; margin-left: 2px; letter-spacing: 0.3px;">RADAR</span>
                     </div>
                 `;
 

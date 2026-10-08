@@ -4096,31 +4096,6 @@
                                 </div>
                             </div>
 
-                            <!-- 🛍️ INTEGRACIÓN CON TIENDA SOMOSPADEL BCN (Patrocinador & Material Oficial) -->
-                            ${(() => {
-                                const sponsorName = evt.sponsor || evt.patrocinador || 'Bullpadel & HEAD España';
-                                const ballOfficial = evt.official_ball || evt.pelota_oficial || 'HEAD Padel Pro S';
-                                return `
-                                    <div class="sp-event-sponsor-box" onclick="event.stopPropagation(); window.Router && window.Router.navigate('tienda');" style="cursor: pointer; margin: 10px 0 0 0;" title="Toca para ver ofertas y material oficial en la Tienda">
-                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 4px;">
-                                            <div class="sp-event-sponsor-header" style="margin: 0; font-size: 0.72rem; color: #CCFF00;">
-                                                <i class="fas fa-handshake"></i> Patrocinado por <strong>${sponsorName}</strong>
-                                            </div>
-                                            <span style="font-size: 0.62rem; color: #00F0FF; font-weight: 850; background: rgba(0,240,255,0.12); padding: 2px 7px; border-radius: 6px;">
-                                                🎾 PELOTA OFICIAL: ${ballOfficial}
-                                            </span>
-                                        </div>
-                                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                                            <span style="font-size: 0.7rem; color: #cbd5e1; font-weight: 600;">
-                                                <i class="fas fa-bag-shopping" style="color: #10B981;"></i> Productos recomendados para este evento (descuento exclusivo)
-                                            </span>
-                                            <span style="font-size: 0.68rem; color: #10B981; font-weight: 900; display: flex; align-items: center; gap: 4px;">
-                                                Ver en Tienda <i class="fas fa-arrow-right" style="font-size: 0.6rem;"></i>
-                                            </span>
-                                        </div>
-                                    </div>
-                                `;
-                            })()}
                         </div>
                     </div>
                 </div>

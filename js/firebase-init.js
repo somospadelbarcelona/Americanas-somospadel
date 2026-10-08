@@ -609,15 +609,18 @@ const FirebaseDB = {
         },
 
         async create(data) {
-            // Professional Validation
+            // Professional Validation & Normalization
             const name = (data.name || "").trim();
-            const phone = (data.phone || "").toString().replace(/\D/g, '');
+            let phone = (data.phone || "").toString().replace(/\D/g, '');
+            if (phone.startsWith('34') && phone.length === 11) {
+                phone = phone.slice(2);
+            }
 
-            if (name.split(' ').length < 2 && data.role !== 'admin') {
-                throw new Error("Por favor, introduce nombre y apellidos para un perfil profesional.");
+            if (!name) {
+                throw new Error("Por favor, introduce el nombre del jugador.");
             }
             if (phone.length !== 9 && data.phone !== 'NOA') {
-                throw new Error("El teléfono debe tener 9 dígitos.");
+                throw new Error("El teléfono debe tener 9 dígitos numéricos.");
             }
 
             const payload = {
@@ -640,8 +643,15 @@ const FirebaseDB = {
                 if (window.CacheService) window.CacheService.remove('players', 'all');
                 await _updatePlayersSyncToken();
 
-                const doc = await safeFirestoreGet(docRef);
-                return { ...doc.data(), id: doc.id };
+                try {
+                    const doc = await safeFirestoreGet(docRef, null, 4000);
+                    if (doc && doc.exists) {
+                        return { ...doc.data(), id: doc.id };
+                    }
+                } catch (getErr) {
+                    console.warn("⚠️ [players.create] No se pudo re-leer doc recién creado, usando payload:", getErr);
+                }
+                return { ...payload, id: docRef.id };
             };
 
             try {

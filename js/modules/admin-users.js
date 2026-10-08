@@ -1,6 +1,62 @@
 
 window.AdminViews = window.AdminViews || {};
 
+// Modal Global Triggers (Immediate Availability)
+window.closeAdminModal = window.closeAdminModal || function() {
+    const modal = document.getElementById('admin-user-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+};
+
+window.openCreateUserModal = window.openCreateUserModal || function() {
+    const modal = document.getElementById('admin-user-modal');
+    if (!modal) {
+        console.error("Modal admin-user-modal no encontrado en el DOM");
+        return;
+    }
+    const form = document.getElementById('admin-user-form');
+    if (form) {
+        form.reset();
+        if (form.elements['id']) form.elements['id'].value = '';
+        if (form.elements['level']) form.elements['level'].value = '3.5';
+        if (form.elements['gender']) form.elements['gender'].value = 'chico';
+        if (form.elements['membership']) form.elements['membership'].value = 'somospadel_bcn';
+        if (form.elements['role']) form.elements['role'].value = 'player_somospadel';
+        if (form.elements['status']) form.elements['status'].value = 'active';
+        if (form.elements['matches_played']) form.elements['matches_played'].value = '0';
+        if (form.elements['side_preference']) form.elements['side_preference'].value = 'INDIFF';
+        if (form.elements['play_style']) form.elements['play_style'].value = 'ESTRATEGIA';
+
+        const pwdInput = document.getElementById('admin-user-pwd-input');
+        if (pwdInput) {
+            pwdInput.value = '';
+            pwdInput.placeholder = "Introduce nueva contraseña (opcional)";
+            pwdInput.type = 'password';
+        }
+
+        const checkboxes = form.querySelectorAll('input[name="teams_somospadel_check"]');
+        checkboxes.forEach(cb => cb.checked = false);
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.textContent = 'REGISTRAR JUGADOR 🎾';
+            submitBtn.disabled = false;
+        }
+    }
+
+    const title = document.getElementById('modal-title');
+    if (title) title.textContent = "Registrar Nuevo Jugador";
+
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+    modal.style.zIndex = '999999';
+
+    const nameInput = form ? form.elements['name'] : null;
+    if (nameInput) setTimeout(() => nameInput.focus(), 100);
+};
+
 window.AdminViews.users = async function () {
     const navId = window._currentAdminNavId;
     const content = document.getElementById('content-area');
@@ -244,7 +300,7 @@ window.AdminViews.users = async function () {
                     </div>
 
                     <input type="text" id="global-search" placeholder="Buscar globalmente..." class="pro-input" style="width: 200px; padding: 0.5rem 1rem; font-weight: 600; color: #0f172a; background: white;" onkeyup="multiFilterUsers()">
-                    <button class="btn-primary-pro" style="padding: 0.5rem 1.5rem; background: #ccff00; color: black; font-weight: 900;" onclick="openCreateUserModal()">+ REGISTRAR</button>
+                    <button class="btn-primary-pro" style="padding: 0.5rem 1.5rem; background: #ccff00; color: black; font-weight: 900;" onclick="window.openCreateUserModal ? window.openCreateUserModal() : openCreateUserModal()">+ REGISTRAR</button>
                 </div>
             </div>
             <div class="filters-row" style="padding: 1rem 2rem; background: rgba(255,255,255,0.02); display: grid; grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr 1fr 1fr; gap: 1rem; border-bottom: var(--border-pro);">
@@ -1081,16 +1137,57 @@ window.AdminViews.users = async function () {
     // ==========================================
 
     window.openCreateUserModal = () => {
+        const modal = document.getElementById('admin-user-modal');
+        if (!modal) {
+            console.error("Modal admin-user-modal no encontrado en el DOM");
+            return;
+        }
         const form = document.getElementById('admin-user-form');
-        form.reset();
-        form.elements['id'].value = ''; // Clear ID for new creation
-        document.getElementById('modal-title').textContent = "Registrar Nuevo Jugador";
+        if (form) {
+            form.reset();
+            if (form.elements['id']) form.elements['id'].value = '';
+            if (form.elements['level']) form.elements['level'].value = '3.5';
+            if (form.elements['gender']) form.elements['gender'].value = 'chico';
+            if (form.elements['membership']) form.elements['membership'].value = 'somospadel_bcn';
+            if (form.elements['role']) form.elements['role'].value = 'player_somospadel';
+            if (form.elements['status']) form.elements['status'].value = 'active';
+            if (form.elements['matches_played']) form.elements['matches_played'].value = '0';
+            if (form.elements['side_preference']) form.elements['side_preference'].value = 'INDIFF';
+            if (form.elements['play_style']) form.elements['play_style'].value = 'ESTRATEGIA';
 
-        document.getElementById('admin-user-modal').classList.remove('hidden');
+            const pwdInput = document.getElementById('admin-user-pwd-input');
+            if (pwdInput) {
+                pwdInput.value = '';
+                pwdInput.placeholder = "Introduce nueva contraseña (opcional)";
+                pwdInput.type = 'password';
+            }
+
+            const checkboxes = form.querySelectorAll('input[name="teams_somospadel_check"]');
+            checkboxes.forEach(cb => cb.checked = false);
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.textContent = 'REGISTRAR JUGADOR 🎾';
+                submitBtn.disabled = false;
+            }
+        }
+
+        const title = document.getElementById('modal-title');
+        if (title) title.textContent = "Registrar Nuevo Jugador";
+
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+        modal.style.zIndex = '999999';
+
+        const nameInput = form ? form.elements['name'] : null;
+        if (nameInput) setTimeout(() => nameInput.focus(), 100);
     };
 
     window.openEditUserModal = (user) => {
+        const modal = document.getElementById('admin-user-modal');
+        if (!modal) return;
         const form = document.getElementById('admin-user-form');
+        if (!form) return;
         form.reset();
 
         // Populate fields
@@ -1100,7 +1197,7 @@ window.AdminViews.users = async function () {
         form.elements['level'].value = user.level || user.self_rate_level || 3.5;
         form.elements['gender'].value = user.gender || 'chico';
         form.elements['membership'].value = user.membership || 'externo';
-        form.elements['role'].value = user.role || 'player';
+        form.elements['role'].value = user.role || 'player_somospadel';
         form.elements['status'].value = user.status || 'active';
         form.elements['matches_played'].value = user.matches_played || 0;
 
@@ -1124,7 +1221,6 @@ window.AdminViews.users = async function () {
         }
 
         // Populate Team Checkboxes
-        // Limpiar todos primero
         const checkboxes = form.querySelectorAll('input[name="teams_somospadel_check"]');
         checkboxes.forEach(cb => cb.checked = false);
 
@@ -1141,12 +1237,26 @@ window.AdminViews.users = async function () {
             }
         }
 
-        document.getElementById('modal-title').textContent = `Editar: ${user.name}`;
-        document.getElementById('admin-user-modal').classList.remove('hidden');
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.textContent = 'GUARDAR CAMBIOS 💾';
+            submitBtn.disabled = false;
+        }
+
+        const title = document.getElementById('modal-title');
+        if (title) title.textContent = `Editar: ${user.name}`;
+
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+        modal.style.zIndex = '999999';
     };
 
     window.closeAdminModal = () => {
-        document.getElementById('admin-user-modal').classList.add('hidden');
+        const modal = document.getElementById('admin-user-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+        }
     };
 
     // ==========================================
@@ -1456,9 +1566,43 @@ window.AdminViews.users = async function () {
                 submittedLevel = autoLevel;
             }
 
+            const rawName = (formData.get('name') || '').trim();
+            let rawPhone = (formData.get('phone') || '').toString().trim().replace(/\D/g, '');
+            if (rawPhone.startsWith('34') && rawPhone.length === 11) {
+                rawPhone = rawPhone.slice(2);
+            }
+
+            if (!rawName) {
+                throw new Error("Por favor introduce el nombre del jugador.");
+            }
+            if (!rawPhone || (rawPhone.length !== 9 && rawPhone !== 'NOA')) {
+                throw new Error("El teléfono debe contener exactamente 9 dígitos numéricos.");
+            }
+
+            // Comprobación de teléfono duplicado al CREAR
+            if (!id && window.allUsersCache && Array.isArray(window.allUsersCache)) {
+                const existing = window.allUsersCache.find(u => {
+                    const p = (u.phone || '').toString().replace(/\D/g, '');
+                    return p && (p === rawPhone || (p.endsWith(rawPhone) && rawPhone.length === 9));
+                });
+                if (existing) {
+                    const proceed = await window.PremiumModal.confirm({
+                        title: "⚠️ TELÉFONO YA EXISTENTE",
+                        message: `El número ${rawPhone} ya está asignado al jugador "${existing.name}". ¿Deseas registrar este jugador con el mismo número de todos modos?`,
+                        confirmText: "SÍ, REGISTRAR",
+                        cancelText: "MODIFICAR TELÉFONO"
+                    });
+                    if (!proceed) {
+                        btn.textContent = originalText;
+                        btn.disabled = false;
+                        return;
+                    }
+                }
+            }
+
             const userData = {
-                name: formData.get('name'),
-                phone: formData.get('phone'),
+                name: rawName,
+                phone: rawPhone,
                 level: submittedLevel, // Use calculated or form
                 self_rate_level: submittedLevel, // Sync self rate too
                 gender: gender,
@@ -1481,13 +1625,13 @@ window.AdminViews.users = async function () {
                 if (id) {
                     // UPDATE
                     await FirebaseDB.players.update(id, userData);
+                    window.closeAdminModal();
                     window.PremiumModal.alert({ title: "✅ ACTUALIZADO", message: "Jugador actualizado correctamente." });
                 } else {
                     // CREATE
-                    // Validations for new user
-                    if (!userData.phone) throw new Error("El teléfono es obligatorio.");
                     await FirebaseDB.players.create(userData);
-                    window.PremiumModal.alert({ title: "✅ REGISTRADO", message: "Jugador registrado correctamente." });
+                    window.closeAdminModal();
+                    window.PremiumModal.alert({ title: "🎉 REGISTRADO", message: `¡"${rawName}" se ha registrado correctamente en la base de datos!` });
                 }
             };
 
@@ -1508,11 +1652,20 @@ window.AdminViews.users = async function () {
                 }
             }
 
-            // Refresh & Close
-            const users = await FirebaseDB.players.getAll();
-            window.allUsersCache = users;
-            window.multiFilterUsers();
-            window.closeAdminModal();
+            // Refresh en segundo plano sin bloquear la UI
+            try {
+                const users = await FirebaseDB.players.getAll(true);
+                window.allUsersCache = users;
+                window.filteredUsers = [...users];
+                window._allPlayersCache = users;
+                if (typeof window.multiFilterUsers === 'function') {
+                    window.multiFilterUsers();
+                } else if (typeof window.renderUserRows === 'function') {
+                    window.renderUserRows(window.filteredUsers);
+                }
+            } catch (refreshErr) {
+                console.warn("⚠️ [admin-users] Error refrescando tabla tras guardar:", refreshErr);
+            }
 
         } catch (err) {
             console.error(err);

@@ -2090,11 +2090,11 @@
     </div>
 
     <!-- Edit/Create User Modal -->
-    <div id="admin-user-modal" class="modal-overlay hidden">
-        <div class="modal-content">
+    <div id="admin-user-modal" class="modal-overlay hidden" style="z-index: 999999;" onclick="if(event.target===this) closeAdminModal();">
+        <div class="modal-content" style="max-width: 540px; width: 95%; max-height: 90vh; overflow-y: auto;">
             <div class="modal-header">
-                <h2 id="modal-title">Editar Usuario</h2>
-                <button class="close-modal-btn" onclick="closeAdminModal()">&times;</button>
+                <h2 id="modal-title">Registrar Nuevo Jugador</h2>
+                <button type="button" class="close-modal-btn" onclick="closeAdminModal()">&times;</button>
             </div>
             <form id="admin-user-form" class="pro-form compact-admin-form">
                 <input type="hidden" name="id">
@@ -2102,20 +2102,19 @@
                 <div class="form-row-compact">
                     <div class="form-group">
                         <label><i class="fas fa-user"></i> NOMBRE</label>
-                        <input type="text" name="name" class="pro-input" required>
+                        <input type="text" name="name" class="pro-input" placeholder="Nombre y apellidos" required>
                     </div>
                     <div class="form-group">
                         <label><i class="fas fa-phone"></i> TELÉFONO</label>
-                        <input type="tel" name="phone" class="pro-input" required>
+                        <input type="tel" name="phone" class="pro-input" placeholder="600 000 000" required>
                     </div>
                 </div>
 
                 <div class="form-group" style="position: relative;">
-                    <label style="color: var(--primary); font-weight: 800;"><i class="fas fa-lock"></i> CONTRASEÑA
-                        (PLAIN TEXT / HASH)</label>
+                    <label style="color: var(--primary); font-weight: 800;"><i class="fas fa-lock"></i> CONTRASEÑA</label>
                     <div style="position: relative;">
                         <input type="password" name="password" id="admin-user-pwd-input"
-                            placeholder="Escribir p. cambiar..." class="pro-input">
+                            placeholder="Contraseña (opcional para jugadores sin app)" class="pro-input">
                         <i class="fas fa-eye" id="toggle-admin-user-pwd"
                             onclick="const i = document.getElementById('admin-user-pwd-input'); i.type = i.type === 'password' ? 'text' : 'password'; this.classList.toggle('fa-eye'); this.classList.toggle('fa-eye-slash');"
                             style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #888; z-index: 10;"></i>
@@ -2125,7 +2124,7 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
                     <div class="form-group">
                         <label><i class="fas fa-chart-line"></i> NIVEL</label>
-                        <input type="text" name="level" class="pro-input" placeholder="Ej: 3,5" required>
+                        <input type="text" name="level" class="pro-input" placeholder="Ej: 3.5" value="3.5" required>
                     </div>
                     <div class="form-group">
                         <label><i class="fas fa-venus-mars"></i> GÉNERO</label>
@@ -2137,8 +2136,8 @@
                     <div class="form-group">
                         <label><i class="fas fa-users-rectangle"></i> COMUNIDAD</label>
                         <select name="membership" class="pro-input">
-                            <option value="externo">Externo</option>
                             <option value="somospadel_bcn">SOMOSPADEL</option>
+                            <option value="externo">Externo</option>
                         </select>
                     </div>
                 </div>
@@ -2167,13 +2166,13 @@
                 <div class="form-group">
                     <label><i class="fas fa-user-tag"></i> ROL DE SISTEMA</label>
                     <select name="role" class="pro-input">
-                        <option value="super_admin">SUPER ADMIN 👑</option>
-                        <option value="admin_player">ADMIN + JUGADOR 🎖️</option>
-                        <option value="admin">ADMIN (Solo Gestión) 🛡️</option>
-                        <option value="captain">CAPITÁN (Entrenos) 🧢</option>
-                        <option value="player_somospadel">JUGADOR SOMOSPADEL 🎾</option>
-                        <option value="player_americanas">JUGADOR AMERICANAS 🏆</option>
+                        <option value="player_somospadel" selected>JUGADOR SOMOSPADEL 🎾</option>
                         <option value="player">JUGADOR EXTERNO 👤</option>
+                        <option value="player_americanas">JUGADOR AMERICANAS 🏆</option>
+                        <option value="captain">CAPITÁN (Entrenos) 🧢</option>
+                        <option value="admin">ADMIN (Solo Gestión) 🛡️</option>
+                        <option value="admin_player">ADMIN + JUGADOR 🎖️</option>
+                        <option value="super_admin">SUPER ADMIN 👑</option>
                         <option value="collaborator">COLABORADOR 🤝</option>
                         <option value="organizer">ORGANIZADOR / CLUB 🏛️</option>
                     </select>
@@ -2217,8 +2216,8 @@
                         <input type="number" name="matches_played" value="0" class="pro-input">
                     </div>
                 </div>
-                <button type="submit" class="btn-primary-pro"
-                    style="width: 100%; margin-top: 5px; height: 44px; font-weight: 800;">GUARDAR CAMBIOS 💾</button>
+                <button type="submit" id="admin-user-submit-btn" class="btn-primary-pro"
+                    style="width: 100%; margin-top: 5px; height: 44px; font-weight: 800;">REGISTRAR JUGADOR 🎾</button>
             </form>
         </div>
     </div>
@@ -2999,7 +2998,7 @@
 
             <!-- App Config -->
             <script src="js/firebase-config.js"></script>
-            <script src="js/firebase-init.js?v=5007"></script>
+            <script src="js/firebase-init.js?v=5008"></script>
 
             <!-- CORE ARCHITECTURE (Absolute Priority) -->
             <script src="js/modules/core/Constants.js?v=5040_SEDE_COMBOBOX"></script>
@@ -3083,7 +3082,7 @@
             <script src="js/modules/admin/AdminNotifications.js?v=1.0"></script>
 
             <script src="js/utils/RoleService.js?v=PLAYER_AMERICANAS_v1"></script>
-            <script src="js/modules/admin-users.js?v=DUPLICATE_USER_v2"></script>
+            <script src="js/modules/admin-users.js?v=DUPLICATE_USER_v3_REGISTRAR_FIX"></script>
             <script src="js/modules/admin-americanas.js?v=5044_CARTELERA_PRO"></script>
             <script src="js/modules/admin-matches.js?v=20260926_EMERGENCY_V7"></script>
             <script src="js/modules/admin-results.js?v=20260926_EMERGENCY_V7"></script>
