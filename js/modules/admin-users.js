@@ -2168,7 +2168,7 @@ window.showPlayerLevelChart = async (userId, userName) => {
                         if (!blob) throw new Error("Blob creation failed");
 
                         const file = new File([blob], `evolucion-${userName}.png`, { type: 'image/png' });
-                        const shareText = `*ESTADÍSTICAS SOMOSPADEL BCN*\n\nJugador: *${userName.toUpperCase()}*\nNivel Actual: *${dataPoints[dataPoints.length - 1].y.toFixed(2)}*\nPartidos: ${dataPoints.length}\n\nProgreso: https://somospadelbarcelona.github.io/Americanas-somospadel/`;
+                        const shareText = `*ESTADÍSTICAS SOMOSPADEL BCN*\n\nJugador: *${userName.toUpperCase()}*\nNivel Actual: *${dataPoints[dataPoints.length - 1].y.toFixed(2)}*\nPartidos: ${dataPoints.length}\n\nProgreso: https://somospadel.eu/`;
 
                         if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
                             try {
@@ -2193,7 +2193,7 @@ window.showPlayerLevelChart = async (userId, userName) => {
                 } catch (e) {
                     console.error("Share Error:", e);
                     // CRITICAL FALLBACK: Share as text only
-                    const shareText = `*ESTADÍSTICAS SOMOSPADEL BCN*\n\nJugador: *${userName.toUpperCase()}*\nNivel Actual: *${dataPoints[dataPoints.length - 1].y.toFixed(2)}*\nPartidos: ${dataPoints.length}\n\nProgreso: https://somospadelbarcelona.github.io/Americanas-somospadel/`;
+                    const shareText = `*ESTADÍSTICAS SOMOSPADEL BCN*\n\nJugador: *${userName.toUpperCase()}*\nNivel Actual: *${dataPoints[dataPoints.length - 1].y.toFixed(2)}*\nPartidos: ${dataPoints.length}\n\nProgreso: https://somospadel.eu/`;
                     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, '_blank');
 
                     shareBtn.disabled = false;
