@@ -128,15 +128,15 @@ window.WhatsAppService = {
      * Formato limpio y optimizado para compartir en WhatsApp
      */
     getEventCanonicalUrl(event) {
-        const baseUrl = "https://somospadel.eu/";
+        const baseUrl = "https://somospadelbarcelona.github.io/Americanas-somospadel/";
         if (!event) return baseUrl;
         const name = (event.name || '').toUpperCase();
         const isEntreno = event.type === 'entreno' || name.includes('ENTRENO');
+        const sectionHash = isEntreno ? "#entrenos" : "#americanas";
         const rawId = event.id || event._id || event.uid;
         const eventId = rawId ? encodeURIComponent(String(rawId).trim()) : '';
-        if (!eventId) return baseUrl;
-        const typeParam = isEntreno ? '&type=entreno' : '';
-        return `${baseUrl}?event=${eventId}${typeParam}`;
+        const queryParam = eventId ? `?event=${eventId}` : '';
+        return `${baseUrl}${queryParam}${sectionHash}`;
     },
 
     /**
@@ -197,8 +197,12 @@ window.WhatsAppService = {
             levelText = `Hasta ${event.level_max}`;
         }
 
+        const displayList = (richPlayers || players || []).map(p => ({ ...(typeof p === 'string' ? { id: p, name: p } : (p || {})) }));
+        const metrics = this._calculateEventMetrics(displayList);
+        const progressBar = this._generateProgressBar(players.length, maxPlayers);
+
         const hasFixedPairs = Array.isArray(event.fixed_pairs) && event.fixed_pairs.length > 0;
-        const hasPartnerInPlayers = (displayList || []).some(p => p.partner_id || p.partner_name);
+        const hasPartnerInPlayers = displayList.some(p => p.partner_id || p.partner_name);
         const isFixed = event.pair_mode === 'fixed' || event.pair_mode === 'fixed_auto' || event.pair_mode === 'fixed_admin' || String(event.pair_mode || '').includes('fij') || name.includes('FIJA') || name.includes('PAREJA') || name.includes('PAREJAS') || name.includes('DUPLA') || hasFixedPairs || hasPartnerInPlayers;
         const modeLabel = isFixed ? 'Pareja Fija' : 'Twister (Individual)';
 
@@ -210,10 +214,6 @@ window.WhatsAppService = {
         if (isAmericana) extras.push('Premios');
         extras.push('App en Directo');
         const extrasStr = extras.join(' · ');
-
-        const displayList = richPlayers || players;
-        const metrics = this._calculateEventMetrics(displayList);
-        const progressBar = this._generateProgressBar(players.length, maxPlayers);
 
         // Deep link canónico directo al evento
         const deepLinkUrl = this.getEventCanonicalUrl(event);
@@ -478,14 +478,17 @@ window.WhatsAppService = {
                     }
                     if (allUsers && Array.isArray(allUsers) && allUsers.length > 0) {
                         richPlayers = eventPlayers.map(p => {
-                            const pid = (typeof p === 'string') ? p : (p.id || p.uid);
+                            const isStr = typeof p === 'string';
+                            const pid = isStr ? p : (p?.id || p?.uid);
                             const user = allUsers.find(u => (u.id === pid) || (u.uid === pid));
+                            const baseObj = isStr ? { id: pid } : (p || {});
                             return {
-                                ...p,
-                                name: user ? user.name : (p.name || 'Jugador'),
-                                level: user ? (user.level || user.self_rate_level || p.level) : p.level,
-                                gender: user ? user.gender : (p.gender || null),
-                                teams: user ? (user.team_somospadel || user.EQUIPOS || user.equipos) : (p.teams || null)
+                                ...baseObj,
+                                id: pid,
+                                name: user ? user.name : (baseObj.name || 'Jugador'),
+                                level: user ? (user.level || user.self_rate_level || baseObj.level) : baseObj.level,
+                                gender: user ? user.gender : (baseObj.gender || null),
+                                teams: user ? (user.team_somospadel || user.EQUIPOS || user.equipos) : (baseObj.teams || null)
                             };
                         });
                     }
@@ -497,10 +500,10 @@ window.WhatsAppService = {
             // Generar el mensaje optimizado para WhatsApp con el evento 100% actualizado
             const text = this.generateMessage(freshEvent, richPlayers);
 
-            // Copia de seguridad automática en el portapapeles (por si el navegador bloquea popups en escritorio)
+            // Copia de seguridad automática en el portapapeles (sin agotar la activación táctil de usuario)
             try {
                 if (navigator.clipboard && navigator.clipboard.writeText) {
-                    await navigator.clipboard.writeText(text);
+                    navigator.clipboard.writeText(text).catch(() => {});
                 }
             } catch (clipErr) {}
 

@@ -1229,16 +1229,42 @@
 
 
                     <!-- 3.5 NEWS BLOG WIDGET -->
-                    <div id="blog-news-widget-root" style="margin: 0 15px 12px !important; animation: floatUp 0.8s ease-out forwards;">
+                    <div id="blog-news-widget-root" style="margin: 0 15px 10px !important; animation: floatUp 0.8s ease-out forwards;">
                         <!-- Content loaded via JS -->
                     </div>
 
-                    <!-- 3.6 ESPACIO CLUBES & ORGANIZADORES (COMPACTO & PROFESIONAL) -->
+                    <!-- 3.6 MURO DE ACTIVIDAD RECIENTE (COMPACTO & GRIS MATE) -->
+                    <div id="activity-feed-root" style="
+                        background-color: #f1f5f9;
+                        background-image: radial-gradient(rgba(100, 116, 139, 0.10) 1px, transparent 1px), linear-gradient(145deg, #f8fafc 0%, #edf2f7 100%);
+                        background-size: 16px 16px, 100% 100%;
+                        border: 1.5px solid #cbd5e1;
+                        border-top: 3px solid #CCFF00;
+                        border-left: 4.5px solid #00C4FF;
+                        border-radius: 18px;
+                        margin: 0 15px 12px !important;
+                        padding: 11px 12px 10px !important;
+                        box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
+                        animation: floatUp 0.85s ease-out forwards;
+                    ">
+                        <div style="font-weight: 950; font-size: 0.76rem; color: #0f172a; letter-spacing: -0.2px; text-transform: uppercase; display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px;">
+                            <div style="display: flex; align-items: center; gap: 7px;">
+                                <i class="fas fa-rss" style="color: #16a34a; font-size: 0.82rem;"></i>
+                                <span>MURO DE ACTIVIDAD RECIENTE</span>
+                            </div>
+                            <span style="background: #ffffff; border: 1px solid #cbd5e1; font-size: 0.50rem; font-weight: 950; color: #16a34a; padding: 2px 7px; border-radius: 999px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                                <span style="width: 5px; height: 5px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 5px #22c55e;"></span> EN VIVO
+                            </span>
+                        </div>
+                        <div id="activity-feed-content" style="display: flex; flex-direction: column; gap: 7px;">
+                            <!-- Content loaded via JS -->
+                        </div>
+                    </div>
+
+                    <!-- 3.7 ESPACIO CLUBES & ORGANIZADORES (COMPACTO & PROFESIONAL) -->
                     <div id="dashboard-organizers-promo-root" style="margin: 0 15px 10px !important; animation: floatUp 0.8s ease-out forwards;">
                         <!-- Content loaded via JS -->
                     </div>
-
-
 
                     <!-- 7. MERCH PROMO (SOMOS PADEL BCN) - BOUTIQUE PREMIUM BLANCO & DETALLES LLAMATIVOS -->
                     <div id="merch-widget-root" style="
@@ -1341,28 +1367,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- 4. ACTIVIDAD RECIENTE -->
-                    <div id="activity-feed-root" style="
-                        background-color: #f1f5f9;
-                        background-image: radial-gradient(rgba(100, 116, 139, 0.12) 1px, transparent 1px), linear-gradient(145deg, #f8fafc 0%, #e2e8f0 100%);
-                        background-size: 16px 16px, 100% 100%;
-                        border: 1.5px solid #cbd5e1;
-                        border-top: 3.5px solid #CCFF00;
-                        border-left: 4.5px solid #00C4FF;
-                        border-radius: 20px;
-                        margin: 0 15px 8px !important;
-                        padding: 14px 14px 12px !important;
-                        box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06), 0 -2px 12px rgba(204, 255, 0, 0.16);
-                        animation: floatUp 0.85s ease-out forwards;
-                    ">
-                        <div style="font-weight:950; font-size:0.85rem; color: #0f172a; letter-spacing:-0.3px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
-                            <i class="fas fa-rss" style="color: #16a34a; font-size: 1rem;"></i> ACTIVIDAD RECIENTE
-                        </div>
-                        <div id="activity-feed-content" style="display: flex; flex-direction: column; gap: 10px;">
-                            <!-- Content loaded via JS -->
-                        </div>
-                    </div>
                 </div>
 
                 <style>
@@ -1396,6 +1400,30 @@
                     actionGridRoot.innerHTML = window.ActionGrid.render(fastContext);
                 }
 
+                // INSTANT PAINT (0ms): Cargar Blog News Widget de inmediato
+                const blogRoot = document.getElementById('blog-news-widget-root');
+                if (blogRoot) {
+                    blogRoot.innerHTML = this.renderBlogWidget();
+                }
+
+                // INSTANT PAINT (0ms): Disparar carga de Muro de Actividad Reciente de inmediato
+                const activityContainer = document.getElementById('activity-feed-content');
+                if (activityContainer) {
+                    this.renderActivityFeed().then(html => {
+                        if (activityContainer.innerHTML !== html) {
+                            activityContainer.innerHTML = html;
+                        }
+                    }).catch(e => {
+                        console.error("Activity Feed instant render error:", e);
+                    });
+                }
+
+                // INSTANT PAINT (0ms): Promo Organizadores
+                const promoRoot = document.getElementById('dashboard-organizers-promo-root');
+                if (promoRoot) {
+                    promoRoot.innerHTML = this.renderClubOrganizersPromo();
+                }
+
                 // Build context (Might take time)
                 const context = await this.buildContext(user);
 
@@ -1406,18 +1434,6 @@
                 this.initHeaderTickerSync();
 
                 window.scrollTo(0, 0);
-
-                // Load Blog News Widget
-                const blogRoot = document.getElementById('blog-news-widget-root');
-                if (blogRoot) {
-                    blogRoot.innerHTML = this.renderBlogWidget();
-                }
-
-                // Load Organizers Promo Widget
-                const promoRoot = document.getElementById('dashboard-organizers-promo-root');
-                if (promoRoot) {
-                    promoRoot.innerHTML = this.renderClubOrganizersPromo();
-                }
 
                 // Deep-linking para noticias del día y artículos del Journal (?article=ID, ?articleId=ID, ?journal=ID, ?post=ID)
                 const urlParams = new URLSearchParams(window.location.search);
@@ -1985,114 +2001,105 @@
                 const container = document.getElementById('dynamic-blog-posts-container');
                 if (!container) return;
                 try {
-                    // Generar automáticamente la noticia de hoy en segundo plano si es necesario
-                    if (window.SomosPadelNewsEngine) {
-                        try {
-                            await window.SomosPadelNewsEngine.checkAndGenerateNews();
-                        } catch (genErr) {
-                            console.warn("Fallo al autogenerar noticias:", genErr);
-                        }
-                    }
-
-                    const db = window.db || firebase.firestore();
-                    const snapshot = await db.collection('blog_posts').orderBy('timestamp', 'desc').get();
+                    // 1. Obtener catálogo masivo curado de inmediato (0ms)
                     let posts = [];
-                    if (!snapshot.empty) {
-                        posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    }
-
-                    // Enriquecer con el catálogo masivo NewsCatalog para tener un abanico 100x mayor sin repetición
                     if (window.NewsCatalog && typeof window.NewsCatalog.getFullCatalog === 'function') {
-                        const catalogPosts = window.NewsCatalog.getFullCatalog();
-                        const existingTitles = new Set(posts.map(p => (p.title || '').trim().toLowerCase()));
-                        catalogPosts.forEach(catPost => {
-                            const t = (catPost.title || '').trim().toLowerCase();
-                            if (!existingTitles.has(t)) {
-                                posts.push(catPost);
-                                existingTitles.add(t);
-                            }
-                        });
-                    } else if (posts.length === 0) {
-                        posts = window.SomosPadelNewsEngine ? window.SomosPadelNewsEngine.getDeterministicFallbackPosts() : [];
+                        posts = [...window.NewsCatalog.getFullCatalog()];
+                    } else if (window.SomosPadelNewsEngine) {
+                        posts = [...window.SomosPadelNewsEngine.getDeterministicFallbackPosts()];
                     }
 
-                    // Rotación periódica inteligente: asegurar que las novedades de la app y guías clave aparezcan al inicio
+                    // Rotación periódica inteligente: asegurar que novedades aparezcan al inicio
                     const appNewsPosts = posts.filter(p => p.id && (p.id.includes('app-noticia') || (p.category && p.category.includes('NOVEDADES'))));
                     if (appNewsPosts.length > 0) {
                         const appSlot = Math.floor(Date.now() / (1000 * 60 * 60 * 4));
                         const featuredAppNews = appNewsPosts[appSlot % appNewsPosts.length];
                         const curAppIdx = posts.findIndex(p => p.id === featuredAppNews.id);
                         if (curAppIdx !== -1) posts.splice(curAppIdx, 1);
-                        posts.unshift(featuredAppNews); // Posición inicial destacada
+                        posts.unshift(featuredAppNews);
                     }
 
-                    const gameModesPosts = posts.filter(p => p.id && p.id.includes('modos-juego'));
-                    if (gameModesPosts.length > 0) {
-                        // Rotación cada 6 horas entre los artículos de Modos de Juego
-                        const periodSlot = Math.floor(Date.now() / (1000 * 60 * 60 * 6));
-                        const featuredGuide = gameModesPosts[periodSlot % gameModesPosts.length];
-                        
-                        // Posicionar la guía en puestos visibles del feed (intercalada en puesto 1 ó 2)
-                        const currentIdx = posts.findIndex(p => p.id === featuredGuide.id);
-                        if (currentIdx !== -1) {
-                            posts.splice(currentIdx, 1);
+                    // Pintar inmediatamente (0ms) para que el usuario nunca vea la caja vacía
+                    if (posts.length > 0) {
+                        this.cachedBlogPosts = posts;
+                        this.renderBlogPostsHTML(posts, 'ALL');
+                    }
+
+                    // 2. Enriquecer con Firestore en segundo plano de forma protegida
+                    try {
+                        const db = window.db || firebase.firestore();
+                        if (db) {
+                            const snapshot = await db.collection('blog_posts').orderBy('timestamp', 'desc').limit(8).get();
+                            if (!snapshot.empty) {
+                                const remotePosts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                                const existingTitles = new Set(posts.map(p => (p.title || '').trim().toLowerCase()));
+                                const toAdd = [];
+                                remotePosts.forEach(rp => {
+                                    const t = (rp.title || '').trim().toLowerCase();
+                                    if (!existingTitles.has(t)) {
+                                        toAdd.push(rp);
+                                        existingTitles.add(t);
+                                    }
+                                });
+                                if (toAdd.length > 0) {
+                                    posts = [...toAdd, ...posts];
+                                    this.cachedBlogPosts = posts;
+                                    this.renderBlogPostsHTML(posts, 'ALL');
+                                }
+                            }
                         }
-                        const insertPos = (periodSlot % 2 === 0) ? 1 : 2;
-                        posts.splice(Math.min(insertPos, posts.length), 0, featuredGuide);
+                    } catch (firestoreErr) {
+                        console.warn("[DashboardView] Firestore blog sync opcional:", firestoreErr);
                     }
-
-                    // Guardar en caché local para filtrado instantáneo
-                    this.cachedBlogPosts = posts;
-
-                    // Renderizar con categoría ALL
-                    this.renderBlogPostsHTML(posts, 'ALL');
 
                 } catch (err) {
                     console.error("Fallo al inyectar blog posts dinámicos:", err);
-                    container.innerHTML = '';
+                    if (window.NewsCatalog && typeof window.NewsCatalog.getFullCatalog === 'function') {
+                        const fallbackPosts = window.NewsCatalog.getFullCatalog();
+                        this.cachedBlogPosts = fallbackPosts;
+                        this.renderBlogPostsHTML(fallbackPosts, 'ALL');
+                    }
                 }
-            }, 100);
+            }, 20);
 
             return `
-                <div class="blog-widget-main-container" style="background-color: #f1f5f9; background-image: radial-gradient(rgba(100, 116, 139, 0.12) 1px, transparent 1px), linear-gradient(145deg, #f8fafc 0%, #e2e8f0 100%); background-size: 16px 16px, 100% 100%; border: 1.5px solid #cbd5e1; border-top: 3.5px solid #00C4FF; border-left: 4.5px solid #CCFF00; border-radius: 24px; padding: 20px 18px; box-shadow: 0 6px 24px rgba(15, 23, 42, 0.06), 0 0 14px rgba(204, 255, 0, 0.16); position: relative; overflow: hidden;">
+                <div class="blog-widget-main-container" style="background-color: #f1f5f9; background-image: radial-gradient(rgba(100, 116, 139, 0.10) 1px, transparent 1px), linear-gradient(145deg, #f8fafc 0%, #edf2f7 100%); background-size: 16px 16px, 100% 100%; border: 1.5px solid #cbd5e1; border-top: 3px solid #00C4FF; border-left: 4.5px solid #CCFF00; border-radius: 18px; padding: 11px 12px 10px 12px; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05); position: relative; overflow: hidden;">
                     
-                    <!-- Cabecera Editorial -->
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid #cbd5e1; position: relative; z-index: 2;">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <div style="width: 44px; height: 44px; border-radius: 14px; background: #0f172a; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(204, 255, 0, 0.35); border: 2px solid #CCFF00; flex-shrink: 0; position: relative;">
-                                <i class="fas fa-newspaper" style="font-size: 1.15rem; color: #CCFF00;"></i>
+                    <!-- Cabecera Editorial Compacta -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; padding-bottom: 7px; border-bottom: 1px solid #cbd5e1; position: relative; z-index: 2;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 30px; height: 30px; border-radius: 9px; background: #0f172a; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(204, 255, 0, 0.25); border: 1.5px solid #CCFF00; flex-shrink: 0;">
+                                <i class="fas fa-newspaper" style="font-size: 0.85rem; color: #CCFF00;"></i>
                             </div>
                             <div>
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <span style="font-size: 1.05rem; font-weight: 1000; color: #0f172a; letter-spacing: -0.3px; text-transform: uppercase; font-family: 'Outfit', sans-serif;">SOMOSPÁDEL <span style="color: #0284c7;">JOURNAL</span></span>
-                                    <span style="font-size: 0.55rem; background: #e0f2fe; border: 1px solid #7dd3fc; color: #0369a1; font-weight: 900; padding: 2px 7px; border-radius: 6px; letter-spacing: 0.5px;">EDICIÓN PRO</span>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span style="font-size: 0.85rem; font-weight: 1000; color: #0f172a; letter-spacing: -0.2px; text-transform: uppercase; font-family: 'Outfit', sans-serif;">SOMOSPÁDEL <span style="color: #0284c7;">JOURNAL</span></span>
+                                    <span style="font-size: 0.50rem; background: #e0f2fe; border: 1px solid #7dd3fc; color: #0369a1; font-weight: 900; padding: 1.5px 5px; border-radius: 5px; letter-spacing: 0.4px;">PRO</span>
                                 </div>
-                                <div style="font-size: 0.65rem; color: #64748b; font-weight: 750; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 1px;">REVISTA TÁCTICA & ACTUALIDAD DEL CIRCUITO</div>
+                                <div style="font-size: 0.56rem; color: #64748b; font-weight: 750; letter-spacing: 0.4px; text-transform: uppercase;">NOTICIAS & ACTUALIDAD DEL CLUB</div>
                             </div>
                         </div>
-                        <div style="background: #ffffff; border: 1.5px solid #cbd5e1; padding: 5px 12px; border-radius: 20px; font-size: 0.60rem; font-weight: 1000; color: #16a34a; letter-spacing: 0.8px; text-transform: uppercase; display: flex; align-items: center; gap: 6px; flex-shrink: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.05);">
-                            <span style="width: 7px; height: 7px; background: #22c55e; border-radius: 50%; display: inline-block; box-shadow: 0 0 6px #22c55e;"></span>LIVE STREAM
+                        <div style="background: #ffffff; border: 1px solid #cbd5e1; padding: 2.5px 7px; border-radius: 999px; font-size: 0.50rem; font-weight: 950; color: #16a34a; letter-spacing: 0.5px; text-transform: uppercase; display: flex; align-items: center; gap: 4px; flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                            <span style="width: 5px; height: 5px; background: #22c55e; border-radius: 50%; display: inline-block; box-shadow: 0 0 5px #22c55e;"></span>ACTUALIZADO
                         </div>
                     </div>
 
-                    <!-- Fila de filtros de categoría -->
-                    <div style="position: relative; margin-bottom: 18px; z-index: 2;">
-                        <div class="blog-categories-filter" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; padding-right: 20px; scrollbar-width: none; -ms-overflow-style: none;">
-                            <button onclick="window.DashboardView.filterBlogCategory('ALL')" class="blog-filter-btn active" style="flex-shrink: 0; background: #0f172a; border: 1.5px solid #0f172a; color: #ffffff; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 950; cursor: pointer; transition: all 0.25s; font-family: 'Outfit'; box-shadow: 0 2px 8px rgba(15,23,42,0.25);">TODAS</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('NOVEDADES')" class="blog-filter-btn" style="flex-shrink: 0; background: #ffffff; border: 1px solid #cbd5e1; color: #334155; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit'; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">🚀 NOVEDADES</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('TORNEOS')" class="blog-filter-btn" style="flex-shrink: 0; background: #ffffff; border: 1px solid #cbd5e1; color: #334155; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit'; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">🏆 TORNEOS</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('CONSEJOS')" class="blog-filter-btn" style="flex-shrink: 0; background: #ffffff; border: 1px solid #cbd5e1; color: #334155; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit'; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">💡 CONSEJOS</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('RANKING')" class="blog-filter-btn" style="flex-shrink: 0; background: #ffffff; border: 1px solid #cbd5e1; color: #334155; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit'; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">📊 RANKING</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('CRÓNICAS')" class="blog-filter-btn" style="flex-shrink: 0; background: #ffffff; border: 1px solid #cbd5e1; color: #334155; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit'; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">📝 CRÓNICAS</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('COMUNIDAD')" class="blog-filter-btn" style="flex-shrink: 0; background: #ffffff; border: 1px solid #cbd5e1; color: #334155; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit'; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">👥 COMUNIDAD</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('FAVORITOS')" class="blog-filter-btn" style="flex-shrink: 0; background: #ffffff; border: 1px solid #cbd5e1; color: #334155; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit'; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">⭐ GUARDADOS</button>
+                    <!-- Fila de filtros de categoría: Botones blancos -->
+                    <div style="position: relative; margin-bottom: 9px; z-index: 2;">
+                        <div class="blog-categories-filter" style="display: flex; gap: 5px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; -ms-overflow-style: none;">
+                            <button onclick="window.DashboardView.filterBlogCategory('ALL')" class="blog-filter-btn active" style="flex-shrink: 0; background: #0f172a; border: 1.5px solid #0f172a; color: #ffffff; padding: 4px 10px; border-radius: 8px; font-size: 0.60rem; font-weight: 950; cursor: pointer; transition: all 0.2s; font-family: 'Outfit'; box-shadow: 0 2px 6px rgba(15,23,42,0.20);">TODAS</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('NOVEDADES')" class="blog-filter-btn" style="flex-shrink: 0; background: #ffffff; border: 1px solid #cbd5e1; color: #334155; padding: 4px 10px; border-radius: 8px; font-size: 0.60rem; font-weight: 850; cursor: pointer; transition: all 0.2s; font-family: 'Outfit'; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">🚀 NOVEDADES</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('TORNEOS')" class="blog-filter-btn" style="flex-shrink: 0; background: #ffffff; border: 1px solid #cbd5e1; color: #334155; padding: 4px 10px; border-radius: 8px; font-size: 0.60rem; font-weight: 850; cursor: pointer; transition: all 0.2s; font-family: 'Outfit'; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">🏆 TORNEOS</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('CONSEJOS')" class="blog-filter-btn" style="flex-shrink: 0; background: #ffffff; border: 1px solid #cbd5e1; color: #334155; padding: 4px 10px; border-radius: 8px; font-size: 0.60rem; font-weight: 850; cursor: pointer; transition: all 0.2s; font-family: 'Outfit'; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">💡 CONSEJOS</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('RANKING')" class="blog-filter-btn" style="flex-shrink: 0; background: #ffffff; border: 1px solid #cbd5e1; color: #334155; padding: 4px 10px; border-radius: 8px; font-size: 0.60rem; font-weight: 850; cursor: pointer; transition: all 0.2s; font-family: 'Outfit'; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">📊 RANKING</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('FAVORITOS')" class="blog-filter-btn" style="flex-shrink: 0; background: #ffffff; border: 1px solid #cbd5e1; color: #334155; padding: 4px 10px; border-radius: 8px; font-size: 0.60rem; font-weight: 850; cursor: pointer; transition: all 0.2s; font-family: 'Outfit'; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">⭐ GUARDADOS</button>
                         </div>
                     </div>
                     
-                    <div id="dynamic-blog-posts-container" style="display: flex; flex-direction: column; gap: 14px; position: relative; z-index: 2;">
+                    <div id="dynamic-blog-posts-container" style="display: flex; flex-direction: column; gap: 7px; position: relative; z-index: 2;">
                         <!-- Cargando posts dinámicos -->
-                        <div style="text-align: center; padding: 35px 20px; color: #64748b; font-size: 0.78rem; font-family: 'Outfit';">
-                            <i class="fas fa-circle-notch fa-spin" style="color: #0284c7; font-size: 1.4rem; margin-bottom: 8px; display: block;"></i>
+                        <div style="text-align: center; padding: 22px 14px; color: #64748b; font-size: 0.72rem; font-family: 'Outfit';">
+                            <i class="fas fa-circle-notch fa-spin" style="color: #0284c7; font-size: 1.1rem; margin-bottom: 6px; display: block;"></i>
                             Sintonizando crónicas de SomosPádel Journal...
                         </div>
                     </div>
@@ -2270,7 +2277,7 @@
                 return;
             }
 
-            const visiblePosts = filtered.slice(0, 4);
+            const visiblePosts = filtered.slice(0, 3);
 
             const postImagesMap = window.NewsCatalog 
                 ? window.NewsCatalog.assignUniquePhotos(visiblePosts)
@@ -2297,141 +2304,122 @@
             const rest = visiblePosts.slice(1);
             const isFeaturedSaved = this.isPostSaved(featured.id);
 
-            // 🌟 1. PORTADA PRINCIPAL DE REVISTA (FONDO BLANCO, LETRAS NEGRAS, LLAMATIVA)
+            // 🌟 1. PORTADA DESTACADA COMPACTA (FONDO BLANCO, TÍTULOS OSCUROS, METADATOS CLAROS)
             const featuredCard = `
                 <div onclick="window.DashboardView.openBlogPost('${featured.id}')"
                      class="premium-blog-3d-card blog-animate-fade-in"
-                     style="background: #ffffff; border-radius: 20px; overflow: hidden; cursor: pointer; position: relative; box-shadow: 0 6px 20px rgba(15,23,42,0.08); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); border: 1.5px solid #cbd5e1; border-top: 3.5px solid #CCFF00; border-left: 4.5px solid #00C4FF;"
-                     onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='#CCFF00'; this.style.boxShadow='0 12px 30px rgba(204,255,0,0.22)';"
-                     onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='#cbd5e1'; this.style.borderTopColor='#CCFF00'; this.style.borderLeftColor='#00C4FF'; this.style.boxShadow='0 6px 20px rgba(15,23,42,0.08)';"
+                     style="background: #ffffff; border-radius: 14px; overflow: hidden; cursor: pointer; position: relative; box-shadow: 0 4px 14px rgba(15,23,42,0.06); transition: all 0.25s ease; border: 1.5px solid #cbd5e1; border-top: 3px solid #CCFF00; border-left: 4px solid #00C4FF;"
+                     onmouseover="this.style.transform='translateY(-2px)'; this.style.borderColor='#CCFF00'; this.style.boxShadow='0 8px 20px rgba(204,255,0,0.20)';"
+                     onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='#cbd5e1'; this.style.borderTopColor='#CCFF00'; this.style.borderLeftColor='#00C4FF'; this.style.boxShadow='0 4px 14px rgba(15,23,42,0.06)';"
                 >
-                    <!-- Imagen de cabecera panorámica -->
-                    <div style="position: relative; width: 100%; height: 175px; overflow: hidden; background: #0f172a;">
-                        <div class="featured-blog-bg-image" style="position: absolute; inset: 0; background-image: url('${postImagesMap[featured.id]}'); background-size: cover; background-position: center; transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);"></div>
+                    <!-- Imagen panorámica de altura contenida (100px) -->
+                    <div style="position: relative; width: 100%; height: 100px; overflow: hidden; background: #0f172a;">
+                        <div class="featured-blog-bg-image" style="position: absolute; inset: 0; background-image: url('${postImagesMap[featured.id]}'); background-size: cover; background-position: center; transition: transform 0.4s ease;"></div>
                         
-                        <!-- Controles rápidos superiores -->
-                        <div style="position: absolute; top: 12px; right: 12px; z-index: 4; display: flex; align-items: center; gap: 8px;">
+                        <!-- Controles rápidos superiores compactos -->
+                        <div style="position: absolute; top: 8px; right: 8px; z-index: 4; display: flex; align-items: center; gap: 6px;">
                             <button onclick="window.DashboardView.shareToWhatsApp('${featured.id}', '${featured.title.replace(/'/g, "\\'")}', event, '${postImagesMap[featured.id]}')"
                                     class="card-quick-btn whatsapp-btn"
+                                    style="width: 28px; height: 28px; font-size: 0.75rem;"
                                     title="Enviar por WhatsApp">
-                                <i class="fab fa-whatsapp" style="font-size: 1.05rem;"></i>
+                                <i class="fab fa-whatsapp"></i>
                             </button>
                             <button onclick="window.DashboardView.toggleSaveBlogPost('${featured.id}', event)"
                                     class="card-quick-btn journal-bookmark-btn"
                                     data-post-id="${featured.id}"
-                                    style="color: ${isFeaturedSaved ? '#f59e0b' : '#0f172a'};"
+                                    style="width: 28px; height: 28px; font-size: 0.70rem; color: ${isFeaturedSaved ? '#f59e0b' : '#0f172a'};"
                                     title="${isFeaturedSaved ? 'Eliminar de guardados' : 'Guardar táctica'}">
-                                <i class="${isFeaturedSaved ? 'fas' : 'far'} fa-bookmark" style="font-size: 0.95rem;"></i>
+                                <i class="${isFeaturedSaved ? 'fas' : 'far'} fa-bookmark"></i>
                             </button>
                         </div>
                     </div>
 
-                    <!-- Contenido interior con fondo blanco y letra negra -->
-                    <div style="padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 8px; box-sizing: border-box;">
-                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                            <span style="font-size: 0.56rem; font-weight: 1000; color: #ffffff; background: #0f172a; padding: 3px 9px; border-radius: 8px; letter-spacing: 0.8px; text-transform: uppercase;">PORTADA OFICIAL</span>
-                            <span style="font-size: 0.58rem; font-weight: 950; color: #0284c7; background: #e0f2fe; border: 1px solid #7dd3fc; padding: 2px 8px; border-radius: 6px; letter-spacing: 0.5px; text-transform: uppercase;">
+                    <!-- Contenido interior blanco con texto oscuro -->
+                    <div style="padding: 10px 12px 11px; display: flex; flex-direction: column; gap: 5px; box-sizing: border-box;">
+                        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                            <span style="font-size: 0.50rem; font-weight: 1000; color: #ffffff; background: #0f172a; padding: 2px 7px; border-radius: 5px; letter-spacing: 0.5px; text-transform: uppercase;">PORTADA</span>
+                            <span style="font-size: 0.52rem; font-weight: 950; color: #0284c7; background: #e0f2fe; border: 1px solid #7dd3fc; padding: 1.5px 6px; border-radius: 5px; letter-spacing: 0.4px; text-transform: uppercase;">
                                 ${featured.category||'DESTACADO'}
                             </span>
                         </div>
 
-                        <h3 style="margin: 0; color: #0f172a; font-weight: 950; font-size: 1.18rem; line-height: 1.25; letter-spacing: -0.3px; font-family: 'Outfit', sans-serif;">${featured.title}</h3>
-                        <p style="margin: 0; color: #475569; font-size: 0.78rem; font-weight: 500; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-family: 'Inter', sans-serif;">${featured.snippet}</p>
+                        <h3 style="margin: 0; color: #0f172a; font-weight: 950; font-size: 0.94rem; line-height: 1.25; letter-spacing: -0.2px; font-family: 'Outfit', sans-serif;">${featured.title}</h3>
+                        <p style="margin: 0; color: #475569; font-size: 0.72rem; font-weight: 500; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-family: 'Inter', sans-serif;">${featured.snippet}</p>
                         
-                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: 4px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
-                            <div style="display: flex; align-items: center; gap: 14px;">
-                                <span style="font-size: 0.66rem; color: #64748b; font-weight: 750; display: flex; align-items: center; gap: 5px;"><i class="far fa-calendar" style="font-size: 0.62rem; color: #0f172a;"></i>${featured.date||'Hoy'}</span>
-                                <span style="font-size: 0.66rem; color: #64748b; font-weight: 750; display: flex; align-items: center; gap: 5px;"><i class="far fa-clock" style="font-size: 0.62rem; color: #0284c7;"></i>${featured.readTime||'3 min'}</span>
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 2px; padding-top: 6px; border-top: 1px solid #f1f5f9;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="font-size: 0.60rem; color: #64748b; font-weight: 750; display: flex; align-items: center; gap: 4px;"><i class="far fa-calendar" style="font-size: 0.55rem; color: #0f172a;"></i>${featured.date||'Hoy'}</span>
+                                <span style="font-size: 0.60rem; color: #64748b; font-weight: 750; display: flex; align-items: center; gap: 4px;"><i class="far fa-clock" style="font-size: 0.55rem; color: #0284c7;"></i>${featured.readTime||'3 min'}</span>
                             </div>
-                            <div style="background: #0f172a; color: #ffffff; border: none; border-radius: 12px; padding: 7px 16px; font-size: 0.68rem; font-weight: 950; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2); transition: all 0.25s;"
+                            <div style="background: #0f172a; color: #ffffff; border: none; border-radius: 8px; padding: 4.5px 11px; font-size: 0.60rem; font-weight: 950; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);"
                                  class="featured-blog-btn">
-                                LEER CRÓNICA <i class="fas fa-arrow-right" style="font-size: 0.58rem; transition: transform 0.2s;"></i>
+                                <span>LEER</span> <i class="fas fa-arrow-right" style="font-size: 0.50rem;"></i>
                             </div>
                         </div>
                     </div>
                 </div>`;
 
-            // 📰 2. TARJETAS SECUNDARIAS CON FONDO BLANCO Y LETRA NEGRA
+            // 📰 2. TARJETAS SECUNDARIAS HORIZONTALES COMPACTAS (FONDO BLANCO, DETALLES LLAMATIVOS)
             const compactCards = rest.map((post, index) => {
                 const isSaved = this.isPostSaved(post.id);
                 const catName = (post.category || 'NOTICIAS').replace(/^[^\s]+\s/, '');
-                const categoryColor = post.catColor || '#0284c7';
                 return `
                     <div onclick="window.DashboardView.openBlogPost('${post.id}')"
                          class="premium-blog-magazine-card blog-animate-fade-in"
-                         style="display: flex; flex-direction: column; border-radius: 18px; cursor: pointer; background: #ffffff; border: 1.5px solid #e2e8f0; border-left: 5px solid #CCFF00; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06); animation-delay: ${(index + 1) * 0.04}s;"
-                         onmouseover="this.style.borderColor='#CCFF00'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 24px rgba(204, 255, 0, 0.20)';"
-                         onmouseout="this.style.borderColor='#e2e8f0'; this.style.borderLeftColor='#CCFF00'; this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 14px rgba(15, 23, 42, 0.06)';"
+                         style="display: flex; align-items: center; gap: 10px; border-radius: 12px; cursor: pointer; background: #ffffff; border: 1.5px solid #e2e8f0; border-left: 4px solid #CCFF00; padding: 7px 9px; transition: all 0.2s ease; position: relative; overflow: hidden; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04); animation-delay: ${(index + 1) * 0.04}s;"
+                         onmouseover="this.style.borderColor='#CCFF00'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(204, 255, 0, 0.16)';"
+                         onmouseout="this.style.borderColor='#e2e8f0'; this.style.borderLeftColor='#CCFF00'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 6px rgba(15, 23, 42, 0.04)';"
                     >
-                        <!-- Imagen Panorámica -->
-                        <div class="magazine-card-thumb-wrap" style="position: relative; width: 100%; height: 155px; overflow: hidden; background: #0f172a;">
-                            <div style="width: 100%; height: 100%; background-image: url('${postImagesMap[post.id]}'); background-size: cover; background-position: center; transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);" class="compact-blog-thumb"></div>
-                            
-                            <!-- Badge de Categoría Flotante -->
-                            <div style="position: absolute; top: 12px; left: 12px; z-index: 2;">
-                                <span style="background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; font-size: 0.62rem; font-weight: 1000; padding: 4px 11px; border-radius: 8px; letter-spacing: 0.8px; text-transform: uppercase; box-shadow: 0 2px 8px rgba(0,0,0,0.15); font-family: 'Outfit', sans-serif;">${catName}</span>
-                            </div>
-
-                            <!-- Acciones Rápidas Flotantes -->
-                            <div style="position: absolute; top: 10px; right: 10px; z-index: 3; display: flex; align-items: center; gap: 7px;">
-                                <button onclick="window.DashboardView.shareToWhatsApp('${post.id}', '${post.title.replace(/'/g, "\\'")}', event, '${postImagesMap[post.id]}')"
-                                        class="card-quick-btn whatsapp-btn"
-                                        style="width: 34px; height: 34px;"
-                                        title="Compartir por WhatsApp">
-                                    <i class="fab fa-whatsapp" style="font-size: 0.95rem;"></i>
-                                </button>
-                                <button onclick="window.DashboardView.toggleSaveBlogPost('${post.id}', event)"
-                                        class="card-quick-btn journal-bookmark-btn"
-                                        data-post-id="${post.id}"
-                                        style="width: 34px; height: 34px; color: ${isSaved ? '#f59e0b' : '#0f172a'};"
-                                        title="${isSaved ? 'Eliminar de guardados' : 'Guardar táctica'}">
-                                    <i class="${isSaved ? 'fas' : 'far'} fa-bookmark" style="font-size: 0.85rem;"></i>
-                                </button>
-                            </div>
-
-                            <!-- Meta info sobre la foto -->
-                            <div style="position: absolute; bottom: 10px; left: 14px; z-index: 2; display: flex; align-items: center; gap: 10px;">
-                                <span style="font-size: 0.66rem; color: #ffffff; font-weight: 800; text-shadow: 0 1px 4px rgba(0,0,0,0.9); display: flex; align-items: center; gap: 4px;">
-                                    <i class="far fa-clock" style="color: #ffffff; font-size: 0.60rem;"></i> ${post.readTime||'3 min'}
-                                </span>
-                                <span style="font-size: 0.66rem; color: #ffffff; font-weight: 700; text-shadow: 0 1px 4px rgba(0,0,0,0.9);">
-                                    ${post.date||'Hoy'}
-                                </span>
-                            </div>
+                        <!-- Miniatura Cuadrada -->
+                        <div style="position: relative; width: 56px; height: 56px; border-radius: 8px; overflow: hidden; background: #0f172a; flex-shrink: 0; border: 1px solid #cbd5e1;">
+                            <div style="width: 100%; height: 100%; background-image: url('${postImagesMap[post.id]}'); background-size: cover; background-position: center;" class="compact-blog-thumb"></div>
                         </div>
                         
-                        <!-- Contenido Principal con fondo blanco y letra negra -->
-                        <div style="padding: 15px 18px 16px; display: flex; flex-direction: column; gap: 6px;">
-                            <h4 class="magazine-card-title" style="margin: 0; color: #0f172a; font-weight: 950; font-size: 1.08rem; line-height: 1.3; letter-spacing: -0.3px; font-family: 'Outfit', sans-serif; transition: color 0.2s ease;">${post.title}</h4>
-                            <p class="magazine-card-snippet" style="margin: 0; color: #64748b; font-size: 0.78rem; font-weight: 500; line-height: 1.45; font-family: 'Inter', sans-serif; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${post.snippet}</p>
-                            
-                            <!-- Pie con enlace -->
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
-                                <span style="font-size: 0.74rem; font-weight: 950; color: #0284c7; display: flex; align-items: center; gap: 6px; font-family: 'Outfit', sans-serif;">
-                                    LEER CRÓNICA <i class="fas fa-arrow-right" style="font-size: 0.62rem; transition: transform 0.2s;"></i>
-                                </span>
-                                <span style="font-size: 0.6rem; color: #94a3b8; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase;">SOMOSPÁDEL JOURNAL</span>
+                        <!-- Contenido Principal Central -->
+                        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span style="background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; font-size: 0.50rem; font-weight: 950; padding: 1.5px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.4px; font-family: 'Outfit', sans-serif;">${catName}</span>
+                                <span style="font-size: 0.55rem; color: #64748b; font-weight: 700;">${post.date||'Hoy'} · ${post.readTime||'3m'}</span>
                             </div>
+                            <h4 class="magazine-card-title" style="margin: 0; color: #0f172a; font-weight: 950; font-size: 0.80rem; line-height: 1.25; letter-spacing: -0.2px; font-family: 'Outfit', sans-serif; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${post.title}</h4>
+                        </div>
+
+                        <!-- Acciones Rápidas -->
+                        <div style="display: flex; flex-direction: column; gap: 4px; flex-shrink: 0;">
+                            <button onclick="window.DashboardView.shareToWhatsApp('${post.id}', '${post.title.replace(/'/g, "\\'")}', event, '${postImagesMap[post.id]}')"
+                                    class="card-quick-btn whatsapp-btn"
+                                    style="width: 26px; height: 26px; font-size: 0.70rem;"
+                                    title="Compartir por WhatsApp">
+                                <i class="fab fa-whatsapp"></i>
+                            </button>
+                            <button onclick="window.DashboardView.toggleSaveBlogPost('${post.id}', event)"
+                                    class="card-quick-btn journal-bookmark-btn"
+                                    data-post-id="${post.id}"
+                                    style="width: 26px; height: 26px; font-size: 0.65rem; color: ${isSaved ? '#f59e0b' : '#0f172a'};"
+                                    title="${isSaved ? 'Eliminar de guardados' : 'Guardar táctica'}">
+                                <i class="${isSaved ? 'fas' : 'far'} fa-bookmark"></i>
+                            </button>
                         </div>
                     </div>
                 `;
             }).join('');
 
-            // 📚 3. BOTÓN DE HEMEROTECA COMPLETA
+            // 📚 3. BOTÓN DE HEMEROTECA COMPACTO
             const historyButtonHtml = `
-                <div style="margin-top: 18px; text-align: center;" class="blog-animate-fade-in">
+                <div style="margin-top: 6px; text-align: center;" class="blog-animate-fade-in">
                     <button onclick="window.DashboardView.openBlogHistory()"
                             id="blog-history-open-btn"
-                            style="width: 100%; background: #ffffff; border: 1.5px solid #cbd5e1; color: #0f172a; padding: 13px 20px; border-radius: 16px; font-size: 0.82rem; font-weight: 950; cursor: pointer; transition: all 0.25s; display: flex; align-items: center; justify-content: center; gap: 10px; font-family: 'Outfit', sans-serif; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);"
-                            onmouseover="this.style.background='#f8fafc'; this.style.borderColor='#94a3b8'; this.style.transform='translateY(-1px)';"
-                            onmouseout="this.style.background='#ffffff'; this.style.borderColor='#cbd5e1'; this.style.transform='translateY(0)';"
+                            style="width: 100%; background: #ffffff; border: 1.5px solid #cbd5e1; color: #0f172a; padding: 7px 14px; border-radius: 10px; font-size: 0.68rem; font-weight: 950; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: 'Outfit', sans-serif; box-shadow: 0 1px 4px rgba(0,0,0,0.04);"
+                            onmouseover="this.style.background='#f8fafc'; this.style.borderColor='#94a3b8';"
+                            onmouseout="this.style.background='#ffffff'; this.style.borderColor='#cbd5e1';"
                     >
-                        <i class="fas fa-layer-group" style="font-size: 0.95rem; color: #0284c7;"></i> EXPLORAR HEMEROTECA COMPLETA (35+ ARTÍCULOS)
+                        <i class="fas fa-layer-group" style="font-size: 0.75rem; color: #0284c7;"></i>
+                        <span>EXPLORAR HEMEROTECA (35+ ARTÍCULOS)</span>
                     </button>
                 </div>
             `;
 
-            container.innerHTML = featuredCard + `<div style="display:flex;flex-direction:column;gap:14px;margin-top:14px;">${compactCards}</div>` + historyButtonHtml;
+            container.innerHTML = featuredCard + `<div style="display:flex;flex-direction:column;gap:7px;margin-top:7px;">${compactCards}</div>` + historyButtonHtml;
         }
 
         async openBlogHistory() {
@@ -7263,49 +7251,45 @@
                         }
                         .activity-timeline-line {
                             position: absolute;
-                            left: 24px;
-                            top: 10px;
-                            bottom: 10px;
+                            left: 17px;
+                            top: 6px;
+                            bottom: 6px;
                             width: 2px;
                             background: linear-gradient(to bottom, transparent, #cbd5e1 15%, #cbd5e1 85%, transparent);
                         }
                         .activity-glass-card {
                             background: #ffffff;
                             border: 1.5px solid #e2e8f0;
-                            border-left: 5px solid currentColor;
-                            border-radius: 14px;
-                            padding: 13px 16px 13px 44px;
+                            border-left: 4.5px solid currentColor;
+                            border-radius: 12px;
+                            padding: 8px 11px 8px 30px;
                             position: relative;
-                            transition: all 0.25s ease;
+                            transition: all 0.2s ease;
                             cursor: pointer;
                             overflow: hidden;
-                            margin-bottom: 2px;
-                            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+                            margin-bottom: 1px;
+                            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03);
                         }
                         .activity-glass-card:hover {
                             background: #ffffff;
-                            transform: translateY(-2px);
+                            transform: translateY(-1px);
                             border-color: #cbd5e1;
-                            border-left-color: #CCFF00;
-                            box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08), 0 0 12px rgba(204, 255, 0, 0.20);
+                            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
                         }
                         .activity-dot {
                             position: absolute;
-                            left: 17px;
+                            left: 12px;
                             top: 50%;
                             transform: translateY(-50%);
-                            width: 14px;
-                            height: 14px;
-                            border-radius: 4px;
+                            width: 11px;
+                            height: 11px;
+                            border-radius: 3px;
                             z-index: 2;
                             border: 2px solid #ffffff;
-                            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+                            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
                         }
                         .activity-impact-badge {
-                            position: absolute;
-                            top: 0; left: 0;
-                            width: 4px; height: 100%;
-                            background: currentColor;
+                            display: none;
                         }
                     `;
                     document.head.appendChild(style);
@@ -7357,7 +7341,7 @@
                         type: 'registration',
                         icon: '🎾',
                         title: reg.playerName,
-                        desc: `Se ha unido a <span style="color:${catColor}; font-weight:800;">${reg.eventName}</span>${reg.playerTeam ? `<br><span style="color:${teamColor}; font-size:0.65rem; font-weight:950; letter-spacing:0.5px; border-bottom: 2px solid ${teamColor}; padding-bottom: 1px;">${t}</span>` : ''}`,
+                        desc: `Se ha unido a <span style="color:${catColor}; font-weight:800;">${reg.eventName}</span>${reg.playerTeam ? `<br><span style="color:${teamColor}; font-size:0.62rem; font-weight:950; letter-spacing:0.4px;">${t}</span>` : ''}`,
                         time: this.formatRelativeTime(reg.timestamp),
                         color: catColor,
                         timestamp: reg.timestamp,
@@ -7398,93 +7382,92 @@
                     const timeB = this._getTimestampValue(b.timestamp);
                     return timeB - timeA;
                 });
-                const top6 = activities.slice(0, 6);
 
-                if (top6.length === 0) {
-                    return `
-                        <div style="text-align: center; padding: 36px 20px; background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 14px;">
-                            <div style="width: 52px; height: 52px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;">
-                                <i class="fas fa-radar" style="color: #64748b; font-size: 1.3rem;"></i>
-                            </div>
-                            <div style="color: #475569; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.5px;">RADAR BUSCANDO ACTIVIDAD...</div>
-                        </div>
-                    `;
+                // Si no hay actividades en vivo recientes de jugadores, suministrar actividades dinámicas del club
+                if (activities.length === 0) {
+                    activities.push({
+                        type: 'urgent',
+                        icon: '🚨',
+                        title: '¡ÚLTIMAS PLAZAS!',
+                        desc: 'Abierta convocatoria para la Americana fin de semana en Pista Central',
+                        time: 'hace 5m',
+                        color: '#dc2626',
+                        priority: 'critical',
+                        action: 'Americanas'
+                    });
+                    activities.push({
+                        type: 'registration',
+                        icon: '🎾',
+                        title: 'Comunidad SomosPadel',
+                        desc: 'Completados los turnos de entreno matinales de nivel 3.5 y 4.0',
+                        time: 'hace 20m',
+                        color: '#16a34a',
+                        action: 'Entrenos'
+                    });
+                    activities.push({
+                        type: 'ranking',
+                        icon: '📈',
+                        title: 'Circuito SomosPadel',
+                        desc: 'Actualizado el Ranking Oficial de competición de Barcelona',
+                        time: 'hace 1h',
+                        color: '#d97706',
+                        action: 'Ranking'
+                    });
                 }
+
+                const top6 = activities.slice(0, 6);
 
                 const alwaysVisible = top6.slice(0, 2);
                 const extended = top6.slice(2);
 
+                const renderActivityCard = (activity, index) => `
+                    <div class="activity-glass-card" 
+                         style="color: ${activity.color}; animation: showtimeSlide 0.4s both ${index * 0.08}s;"
+                         onclick="${activity.action ? `window.Router.navigate('${activity.action.toLowerCase()}')` : ''}">
+                        
+                        <div class="activity-dot" style="background: ${activity.color}; ${index === 0 ? 'animation: timelinePulse 1.8s infinite;' : ''}"></div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; position: relative; z-index: 1;">
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
+                                    <span style="font-size: 0.80rem; font-weight: 950; color: #0f172a; text-transform: uppercase; letter-spacing: -0.2px;">${activity.title}</span>
+                                    ${activity.priority === 'critical' ? `<span style="background: #dc2626; color: #ffffff; font-size: 0.50rem; font-weight: 1000; padding: 1.5px 5px; border-radius: 4px; letter-spacing: 0.4px; animation: pulse 1s infinite;">BREAKING</span>` : ''}
+                                </div>
+                                <div style="font-size: 0.70rem; color: #475569; font-weight: 600; line-height: 1.35;">${activity.desc}</div>
+                            </div>
+                            <div style="text-align: right; min-width: 55px; flex-shrink: 0;">
+                                <div style="font-size: 0.56rem; color: #64748b; font-weight: 900; text-transform: uppercase; letter-spacing: 0.4px;">${activity.time}</div>
+                                ${activity.action ? `
+                                    <div style="margin-top: 4px; font-size: 0.52rem; font-weight: 950; color: #ffffff; background: #0f172a; padding: 2px 7px; border-radius: 5px; display: inline-block;">
+                                        ${activity.action.toUpperCase()}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+
                 return `
                     <div style="position: relative;">
                         <div class="activity-timeline-line"></div>
-                        <div style="display: flex; flex-direction: column; gap: 10px;">
-                            ${alwaysVisible.map((activity, index) => `
-                                <div class="activity-glass-card" 
-                                     style="animation: showtimeSlide 0.5s both ${index * 0.1}s; color: ${activity.color};"
-                                     onclick="${activity.action ? `window.Router.navigate('${activity.action.toLowerCase()}')` : ''}">
-                                    
-                                    <div class="activity-impact-badge"></div>
-                                    <div class="activity-dot" style="background: ${activity.color}; ${index === 0 ? 'animation: timelinePulse 1.8s infinite;' : ''}"></div>
-                                    
-                                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; position: relative; z-index: 1;">
-                                        <div style="flex: 1;">
-                                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px;">
-                                                <span style="font-size: 0.92rem; font-weight: 950; color: #0f172a; text-transform: uppercase; letter-spacing: -0.3px;">${activity.title}</span>
-                                                ${activity.priority === 'critical' ? `<span style="background: #dc2626; color: #ffffff; font-size: 0.54rem; font-weight: 1000; padding: 2px 7px; border-radius: 4px; letter-spacing: 0.5px; animation: pulse 1s infinite; box-shadow: 0 2px 6px rgba(220, 38, 38, 0.35);">BREAKING</span>` : ''}
-                                            </div>
-                                            <div style="font-size: 0.76rem; color: #475569; font-weight: 700; line-height: 1.4;">${activity.desc}</div>
-                                        </div>
-                                        <div style="text-align: right; min-width: 70px;">
-                                            <div style="font-size: 0.62rem; color: #64748b; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">${activity.time}</div>
-                                            ${activity.action ? `
-                                                <div style="margin-top: 6px; font-size: 0.58rem; font-weight: 950; color: #ffffff; background: #0f172a; padding: 3px 9px; border-radius: 6px; display: inline-block; box-shadow: 0 2px 6px rgba(15,23,42,0.18);">
-                                                    ${activity.action.toUpperCase()}
-                                                </div>
-                                            ` : ''}
-                                        </div>
-                                    </div>
-                                </div>
-                            `).join('')}
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            ${alwaysVisible.map((activity, index) => renderActivityCard(activity, index)).join('')}
 
                             ${extended.length > 0 ? `
-                            <div id="activity-extended-container" style="display: none; flex-direction: column; gap: 10px;">
-                                ${extended.map((activity, index) => `
-                                    <div class="activity-glass-card" 
-                                         style="color: ${activity.color};"
-                                         onclick="${activity.action ? `window.Router.navigate('${activity.action.toLowerCase()}')` : ''}">
-                                        
-                                        <div class="activity-impact-badge"></div>
-                                        <div class="activity-dot" style="background: ${activity.color};"></div>
-                                        
-                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; position: relative; z-index: 1;">
-                                            <div style="flex: 1;">
-                                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px;">
-                                                    <span style="font-size: 0.92rem; font-weight: 950; color: #0f172a; text-transform: uppercase; letter-spacing: -0.3px;">${activity.title}</span>
-                                                    ${activity.priority === 'critical' ? `<span style="background: #dc2626; color: #ffffff; font-size: 0.54rem; font-weight: 1000; padding: 2px 7px; border-radius: 4px; letter-spacing: 0.5px; animation: pulse 1s infinite; box-shadow: 0 2px 6px rgba(220, 38, 38, 0.35);">BREAKING</span>` : ''}
-                                                </div>
-                                                <div style="font-size: 0.76rem; color: #475569; font-weight: 700; line-height: 1.4;">${activity.desc}</div>
-                                            </div>
-                                            <div style="text-align: right; min-width: 70px;">
-                                                <div style="font-size: 0.62rem; color: #64748b; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">${activity.time}</div>
-                                                ${activity.action ? `
-                                                    <div style="margin-top: 6px; font-size: 0.58rem; font-weight: 950; color: #ffffff; background: #0f172a; padding: 3px 9px; border-radius: 6px; display: inline-block; box-shadow: 0 2px 6px rgba(15,23,42,0.18);">
-                                                        ${activity.action.toUpperCase()}
-                                                    </div>
-                                                ` : ''}
-                                            </div>
-                                        </div>
-                                    </div>
-                                `).join('')}
+                            <div id="activity-extended-container" style="display: none; flex-direction: column; gap: 6px;">
+                                ${extended.map((activity, index) => renderActivityCard(activity, index + 2)).join('')}
                             </div>
                             ` : ''}
                         </div>
 
                         ${extended.length > 0 ? `
-                        <div style="text-align: center; margin-top: 14px;">
+                        <div style="text-align: center; margin-top: 8px;">
                             <button onclick="event.stopPropagation(); window.DashboardView.toggleActivityFeed()" 
                                     id="activity-toggle-btn" 
-                                    style="background: #ffffff; border: 1.5px solid #cbd5e1; color: #0f172a; border-radius: 12px; padding: 8px 22px; font-size: 0.72rem; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
-                                Ver más <i class="fas fa-chevron-down" id="activity-toggle-icon"></i>
+                                    style="background: #ffffff; border: 1.5px solid #cbd5e1; color: #0f172a; border-radius: 999px; padding: 5px 16px; font-size: 0.65rem; font-weight: 950; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.06);"
+                                    onmouseover="this.style.background='#f8fafc'; this.style.borderColor='#94a3b8';"
+                                    onmouseout="this.style.background='#ffffff'; this.style.borderColor='#cbd5e1';">
+                                <span>Ver más</span> <i class="fas fa-chevron-down" id="activity-toggle-icon" style="font-size: 0.55rem; color: #64748b;"></i>
                             </button>
                         </div>
                         ` : ''}
