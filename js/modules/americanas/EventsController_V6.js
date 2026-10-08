@@ -6030,7 +6030,8 @@
             // Evitar re-render y saltos de scroll si los datos de inscritos no han cambiado
             const currentSig = `${id}_${uniqueRawList.length}_${uniqueWaitlist.length}_` + 
                 uniqueRawList.map(p => (typeof p === 'string' ? p : `${p.uid || p.id}_${p.partner_id || ''}_${p.level || ''}`)).join('|') +
-                '_WL_' + uniqueWaitlist.map(p => (typeof p === 'string' ? p : `${p.uid || p.id}`)).join('|');
+                '_WL_' + uniqueWaitlist.map(p => (typeof p === 'string' ? p : `${p.uid || p.id}`)).join('|') +
+                '_FP_' + (evt.fixed_pairs || []).map(fp => `${fp.player1_id || fp.player1_name || ''}_${fp.player2_id || fp.player2_name || ''}`).join('|');
             if (silent && this._lastInscritosSignature === currentSig) {
                 return;
             }
@@ -6131,6 +6132,51 @@
                     dbPlayers.push(pData);
                 });
 
+                // ✅ Sincronización robusta con evt.fixed_pairs
+                const eventFixedPairs = Array.isArray(evt.fixed_pairs) ? evt.fixed_pairs : [];
+                if (eventFixedPairs.length > 0) {
+                    eventFixedPairs.forEach(fp => {
+                        const p1Id = String(fp.player1_id || (fp.player1 && (fp.player1.id || fp.player1.uid)) || (fp.p1 && (fp.p1.id || fp.p1.uid)) || '');
+                        const p2Id = String(fp.player2_id || (fp.player2 && (fp.player2.id || fp.player2.uid)) || (fp.p2 && (fp.p2.id || fp.p2.uid)) || '');
+                        const p1Name = String(fp.player1_name || (fp.player1 && fp.player1.name) || (fp.p1 && fp.p1.name) || '').trim().toUpperCase();
+                        const p2Name = String(fp.player2_name || (fp.player2 && fp.player2.name) || (fp.p2 && fp.p2.name) || '').trim().toUpperCase();
+
+                        const p1 = dbPlayers.find(p => {
+                            const pid = String(p.id || p.uid || '');
+                            if (p1Id && pid === p1Id) return true;
+                            if (p1Name && String(p.name || '').trim().toUpperCase() === p1Name) return true;
+                            return false;
+                        });
+
+                        const p2 = dbPlayers.find(p => {
+                            const pid = String(p.id || p.uid || '');
+                            if (p2Id && pid === p2Id) return true;
+                            if (p2Name && String(p.name || '').trim().toUpperCase() === p2Name) return true;
+                            return false;
+                        });
+
+                        if (p1 && p2 && p1 !== p2) {
+                            p1.partner_id = p2.id || p2.uid;
+                            p1.partner_name = p2.name;
+                            p2.partner_id = p1.id || p1.uid;
+                            p2.partner_name = p1.name;
+                        }
+                    });
+                }
+
+                // Sincronizar nombres mutuos si partner_name coincide con name de otro jugador
+                dbPlayers.forEach(p => {
+                    if (p.partner_name && !p.partner_id) {
+                        const targetName = String(p.partner_name).trim().toUpperCase();
+                        const other = dbPlayers.find(o => o !== p && String(o.name || '').trim().toUpperCase() === targetName);
+                        if (other) {
+                            p.partner_id = other.id || other.uid;
+                            if (!other.partner_name) other.partner_name = p.name;
+                            if (!other.partner_id) other.partner_id = p.id || p.uid;
+                        }
+                    }
+                });
+
                 // Ordenar titulares por hora de inscripción
                 dbPlayers.sort((a, b) => {
                     const timeA = a.joinedAt ? new Date(a.joinedAt).getTime() : 0;
@@ -6197,14 +6243,47 @@
             const processedIds = new Set();
             const finalGroups = [];
 
-            // Robust bidirectional matching
+            // 1. Agrupar primero las parejas explícitas de eventFixedPairs presentes en dbPlayers
+            const eventFixedPairsList = Array.isArray(evt.fixed_pairs) ? evt.fixed_pairs : [];
+            if (eventFixedPairsList.length > 0) {
+                eventFixedPairsList.forEach(fp => {
+                    const p1Id = String(fp.player1_id || (fp.player1 && (fp.player1.id || fp.player1.uid)) || (fp.p1 && (fp.p1.id || fp.p1.uid)) || '');
+                    const p2Id = String(fp.player2_id || (fp.player2 && (fp.player2.id || fp.player2.uid)) || (fp.p2 && (fp.p2.id || fp.p2.uid)) || '');
+                    const p1Name = String(fp.player1_name || (fp.player1 && fp.player1.name) || (fp.p1 && fp.p1.name) || '').trim().toUpperCase();
+                    const p2Name = String(fp.player2_name || (fp.player2 && fp.player2.name) || (fp.p2 && fp.p2.name) || '').trim().toUpperCase();
+
+                    const p1 = dbPlayers.find(p => {
+                        const pid = String(p.id || p.uid || '');
+                        if (processedIds.has(pid)) return false;
+                        if (p1Id && pid === p1Id) return true;
+                        if (p1Name && String(p.name || '').trim().toUpperCase() === p1Name) return true;
+                        return false;
+                    });
+
+                    const p2 = dbPlayers.find(p => {
+                        const pid = String(p.id || p.uid || '');
+                        if (processedIds.has(pid) || p === p1) return false;
+                        if (p2Id && pid === p2Id) return true;
+                        if (p2Name && String(p.name || '').trim().toUpperCase() === p2Name) return true;
+                        return false;
+                    });
+
+                    if (p1 && p2) {
+                        finalGroups.push({ type: 'pair', p1, p2 });
+                        processedIds.add(String(p1.id || p1.uid || ''));
+                        processedIds.add(String(p2.id || p2.uid || ''));
+                    }
+                });
+            }
+
+            // Robust bidirectional matching para el resto de jugadores
             const findPartner = (player, currentIdx) => {
-                const myId = (player.id || player.uid);
+                const myId = String(player.id || player.uid || '');
                 const myPartnerId = String(player.partner_id || '');
                 const myPartnerName = (player.partner_name || '').trim().toUpperCase();
 
                 return dbPlayers.find((other, otherIdx) => {
-                    const otherId = (other.id || other.uid);
+                    const otherId = String(other.id || other.uid || '');
                     if (otherIdx === currentIdx || processedIds.has(otherId)) return false;
 
                     const otherPartnerId = String(other.partner_id || '');
@@ -6217,15 +6296,15 @@
                     if (otherPartnerId && otherPartnerId === myId) return true;
 
                     // Option B: Name Match Fallback
-                    if (myPartnerName && myPartnerName === otherName) return true;
-                    if (otherPartnerName && otherPartnerName === myName) return true;
+                    if (myPartnerName && (myPartnerName === otherName || otherName.includes(myPartnerName) || myPartnerName.includes(otherName))) return true;
+                    if (otherPartnerName && (otherPartnerName === myName || myName.includes(otherPartnerName) || otherPartnerName.includes(myName))) return true;
 
                     return false;
                 });
             };
 
             dbPlayers.forEach((p, idx) => {
-                const pid = (p.id || p.uid);
+                const pid = String(p.id || p.uid || '');
                 if (processedIds.has(pid)) return;
 
                 const partner = findPartner(p, idx);
@@ -6233,7 +6312,7 @@
                 if (partner) {
                     finalGroups.push({ type: 'pair', p1: p, p2: partner });
                     processedIds.add(pid);
-                    processedIds.add(partner.id || partner.uid);
+                    processedIds.add(String(partner.id || partner.uid || ''));
                 } else {
                     finalGroups.push({ type: 'single', p1: p });
                     processedIds.add(pid);
@@ -6556,7 +6635,29 @@
             window.shareConvocatoriaBattleReady = function() {
                 const eventTitle = (evt.name || 'Torneo').toUpperCase();
                 const timeText = eventFormattedTime;
-                const playersList = dbPlayers.map((p, i) => `${i + 1}. ${p.name} (LVL ${parseFloat(p.level || 3.5).toFixed(2)})`).join('\n');
+                
+                let playersList = '';
+                const confirmedPairs = finalGroups.filter(g => g.type === 'pair');
+                const soloPlayers = finalGroups.filter(g => g.type !== 'pair');
+
+                if (confirmedPairs.length > 0) {
+                    playersList += `*👥 Parejas Confirmadas (${confirmedPairs.length}):*\n`;
+                    confirmedPairs.forEach((g, i) => {
+                        const l1 = parseFloat(g.p1.level || 3.5).toFixed(2);
+                        const l2 = parseFloat(g.p2.level || 3.5).toFixed(2);
+                        playersList += `${i + 1}. 🤝 *${g.p1.name}* (LVL ${l1}) & *${g.p2.name}* (LVL ${l2})\n`;
+                    });
+                    if (soloPlayers.length > 0) {
+                        playersList += `\n*🔍 Buscan Pareja / Individuales (${soloPlayers.length}):*\n`;
+                        soloPlayers.forEach((g, i) => {
+                            const l1 = parseFloat(g.p1.level || 3.5).toFixed(2);
+                            playersList += `${i + 1}. 🎾 *${g.p1.name}* (LVL ${l1}) · _(Busca Pareja)_\n`;
+                        });
+                    }
+                } else {
+                    playersList = `*Jugadores Confirmados:*\n` + dbPlayers.map((p, i) => `${i + 1}. ${p.name} (LVL ${parseFloat(p.level || 3.5).toFixed(2)})`).join('\n');
+                }
+
                 let waitlistText = '';
                 if (waitlistPlayers.length > 0) {
                     waitlistText = `\n\n*⏳ Lista de Espera / Reservas (${waitlistPlayers.length}):*\n` +
@@ -6567,7 +6668,7 @@
                     `🕒 Horario: ${timeText} | 📍 ${eventLocation}\n` +
                     `👥 Inscritos: ${totalPlayers}/${maxPlayers} ${slotsLeft > 0 ? `(¡Quedan ${slotsLeft} plazas!)` : '🔥 ¡COMPLETO!'}\n` +
                     `📊 Nivel Medio: ${avgLevel} LVL | ⚖️ Equilibrio: ${balanceScore}%\n\n` +
-                    `*Jugadores Confirmados:*\n${playersList}` +
+                    `${playersList}` +
                     waitlistText + `\n\n` +
                     `${slotsLeft > 0 ? `👉 ¡Entra a la App y reserva tu plaza antes de que se agoten!` : (waitlistPlayers.length > 0 ? `⏳ Plazas completas. Puedes apuntarte en lista de reserva desde la app.` : `🔥 ¡Nos vemos en la pista!`)}`;
 

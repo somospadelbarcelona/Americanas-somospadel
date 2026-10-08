@@ -909,6 +909,26 @@
                                 <span style="font-size: 0.60rem; color: #64748b; font-weight: 700; margin-top: 1px;">Liga Summa</span>
                             </div>
                         </div>
+
+                        <!-- Separador visual integrado -->
+                        <div style="height: 1px; background: #e2e8f0; margin: 16px 0 14px 0; position: relative; z-index: 2;"></div>
+
+                        <!-- 🎾 PIZARRA DE PISTAS & CLUB (UNIFICADA EN EL MISMO CUADRO) -->
+                        <div id="registration-widget-root" style="width: 100%; position: relative; z-index: 2;">
+                            <div id="live-scroller-inner">
+                                <!-- Skeleton compacto de carga -->
+                                <div style="height: 64px; border-radius: 14px; background: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%); background-size: 200% 100%; border: 1.5px solid #cbd5e1; animation: stripSkeletonShimmer 1.8s infinite; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; box-sizing: border-box;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="width: 32px; height: 32px; border-radius: 9px; background: rgba(0,0,0,0.06);"></div>
+                                        <div>
+                                            <div style="width: 90px; height: 10px; border-radius: 4px; background: rgba(0,0,0,0.08); margin-bottom: 4px;"></div>
+                                            <div style="width: 60px; height: 8px; border-radius: 4px; background: rgba(0,0,0,0.04);"></div>
+                                        </div>
+                                    </div>
+                                    <div style="width: 60px; height: 24px; border-radius: 6px; background: rgba(0,0,0,0.08);"></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
 
@@ -1206,27 +1226,7 @@
                                 align-items: stretch;
                             }
                         }
-                    </style>
-                    <div id="dashboard-hero-duo-container" class="dashboard-hero-duo-container">
-                        <!-- HeroCard eliminado -->
 
-                        <!-- Tarjeta Oscura: Partido Activo / Convocatoria Confirmada (Event Strip) -->
-                        <div id="registration-widget-root" style="width: 100%;">
-                            <div id="live-scroller-inner">
-                                <!-- Skeleton 58px compacto -->
-                                <div style="height: 58px; border-radius: 14px; background: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%); background-size: 200% 100%; border: 1.5px solid #cbd5e1; animation: stripSkeletonShimmer 1.8s infinite; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; box-sizing: border-box;">
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <div style="width: 32px; height: 32px; border-radius: 9px; background: rgba(0,0,0,0.06);"></div>
-                                        <div>
-                                            <div style="width: 90px; height: 10px; border-radius: 4px; background: rgba(0,0,0,0.08); margin-bottom: 4px;"></div>
-                                            <div style="width: 60px; height: 8px; border-radius: 4px; background: rgba(0,0,0,0.04);"></div>
-                                        </div>
-                                    </div>
-                                    <div style="width: 60px; height: 24px; border-radius: 6px; background: rgba(0,0,0,0.08);"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
                     <!-- 3.5 NEWS BLOG WIDGET -->
                     <div id="blog-news-widget-root" style="margin: 0 15px 12px !important; animation: floatUp 0.8s ease-out forwards;">
@@ -4068,83 +4068,107 @@
 
                 let stripHtml = '';
 
-                // Global Pizarra Táctica Helpers
-                if (!window.filterPizarraTactics) {
-                    window.filterPizarraTactics = function(cat, btn) {
-                        window._ccActiveFilter = cat;
-                        const track = document.getElementById('pizarra-cards-track');
-                        if (!track) return;
-                        const cards = track.querySelectorAll('.pizarra-card');
-                        const pills = document.querySelectorAll('.pizarra-filter-pill');
-                        
-                        pills.forEach(p => {
-                            const isPillBtn = (p === btn);
-                            const pFilter = p.getAttribute('data-filter');
-                            if (isPillBtn) {
-                                p.style.background = '#0f172a';
-                                p.style.color = (pFilter === 'mi_pista') ? '#fbbf24' : '#ffffff';
-                                p.style.borderColor = (pFilter === 'mi_pista') ? '#f59e0b' : '#0f172a';
-                                p.style.boxShadow = '0 2px 10px rgba(15, 23, 42, 0.25)';
-                            } else {
-                                p.style.background = '#ffffff';
-                                p.style.color = (pFilter === 'mi_pista') ? '#d97706' : '#334155';
-                                p.style.borderColor = (pFilter === 'mi_pista') ? '#f59e0b' : '#cbd5e1';
-                                p.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.05)';
-                            }
-                        });
+                // Global Pizarra Táctica Helpers (Vertical 3-Event Display & Filter)
+                window.togglePizarraAllEvents = function(btn) {
+                    window._pizarraExpanded = !window._pizarraExpanded;
+                    const extras = document.querySelectorAll('.pizarra-extra-card');
+                    const icon = document.getElementById('pizarra-expand-icon');
+                    const textSpan = document.getElementById('pizarra-expand-text');
+                    const activeCat = window._ccActiveFilter || 'todos';
 
-                        let visibleCount = 0;
-                        cards.forEach(c => {
-                            const cardCat = c.getAttribute('data-category') || '';
-                            const cardType = c.getAttribute('data-type') || '';
-                            const isUser = c.getAttribute('data-is-user') === 'true';
+                    extras.forEach(card => {
+                        const cardCat = card.getAttribute('data-category') || '';
+                        const cardType = card.getAttribute('data-type') || '';
+                        const isUser = card.getAttribute('data-is-user') === 'true';
 
-                            let show = false;
-                            if (cat === 'todos') {
-                                show = true;
-                            } else if (cat === 'mi_pista') {
-                                show = isUser;
-                            } else if (cat === 'entrenos') {
-                                show = (cardCat === 'entrenos' || cardType === 'entreno');
-                            } else if (cat === 'americanas') {
-                                show = (cardCat === 'americanas' || cardType === 'americana');
-                            }
+                        let matches = (activeCat === 'todos') ||
+                                      (activeCat === 'mi_pista' && isUser) ||
+                                      (activeCat === 'entrenos' && (cardCat === 'entrenos' || cardType === 'entreno')) ||
+                                      (activeCat === 'americanas' && (cardCat === 'americanas' || cardType === 'americana'));
 
-                            if (show) {
-                                c.style.display = 'flex';
-                                visibleCount++;
-                            } else {
+                        card.style.display = (window._pizarraExpanded && matches) ? 'flex' : 'none';
+                    });
+
+                    if (textSpan) {
+                        const total = btn?.getAttribute('data-total') || '';
+                        textSpan.textContent = window._pizarraExpanded ? 'Ver menos' : `Ver más pistas (${total})`;
+                    }
+                    if (icon) {
+                        icon.className = window._pizarraExpanded ? 'fas fa-chevron-up' : 'fas fa-chevron-down';
+                    }
+                };
+
+                window.filterPizarraTactics = function(cat, btn) {
+                    window._ccActiveFilter = cat;
+                    const track = document.getElementById('pizarra-cards-track');
+                    if (!track) return;
+                    const cards = track.querySelectorAll('.pizarra-card');
+                    const pills = document.querySelectorAll('.pizarra-filter-pill');
+                    
+                    pills.forEach(p => {
+                        const isPillBtn = (p === btn);
+                        const pFilter = p.getAttribute('data-filter');
+                        if (isPillBtn) {
+                            p.style.background = '#0f172a';
+                            p.style.color = (pFilter === 'mi_pista') ? '#fbbf24' : '#ffffff';
+                            p.style.borderColor = (pFilter === 'mi_pista') ? '#f59e0b' : '#0f172a';
+                            p.style.boxShadow = '0 2px 10px rgba(15, 23, 42, 0.25)';
+                        } else {
+                            p.style.background = '#ffffff';
+                            p.style.color = (pFilter === 'mi_pista') ? '#d97706' : '#334155';
+                            p.style.borderColor = (pFilter === 'mi_pista') ? '#f59e0b' : '#cbd5e1';
+                            p.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.05)';
+                        }
+                    });
+
+                    let matchCount = 0;
+                    cards.forEach(c => {
+                        const cardCat = c.getAttribute('data-category') || '';
+                        const cardType = c.getAttribute('data-type') || '';
+                        const isUser = c.getAttribute('data-is-user') === 'true';
+
+                        let matches = false;
+                        if (cat === 'todos') matches = true;
+                        else if (cat === 'mi_pista') matches = isUser;
+                        else if (cat === 'entrenos') matches = (cardCat === 'entrenos' || cardType === 'entreno');
+                        else if (cat === 'americanas') matches = (cardCat === 'americanas' || cardType === 'americana');
+
+                        if (matches) {
+                            matchCount++;
+                            if (!window._pizarraExpanded && matchCount > 3) {
                                 c.style.display = 'none';
-                            }
-                        });
-
-                        let emptyNotice = document.getElementById('pizarra-empty-filtered');
-                        if (visibleCount === 0) {
-                            if (!emptyNotice) {
-                                emptyNotice = document.createElement('div');
-                                emptyNotice.id = 'pizarra-empty-filtered';
-                                emptyNotice.style.cssText = 'padding: 16px; color: #0f172a; font-size: 0.68rem; text-align: center; width: 100%; font-weight: 800;';
-                                emptyNotice.innerHTML = '<i class="fas fa-info-circle" style="color: #0f172a; margin-right: 5px;"></i> No hay eventos en esta categoría';
-                                track.appendChild(emptyNotice);
+                                c.classList.add('pizarra-extra-card');
                             } else {
-                                emptyNotice.style.display = 'block';
+                                c.style.display = 'flex';
+                                if (matchCount <= 3) {
+                                    c.classList.remove('pizarra-extra-card');
+                                }
                             }
-                        } else if (emptyNotice) {
-                            emptyNotice.style.display = 'none';
+                        } else {
+                            c.style.display = 'none';
                         }
+                    });
 
-                        track.scrollTo({ left: 0, behavior: 'smooth' });
-                    };
-                }
+                    const expandContainer = document.getElementById('pizarra-expand-container');
+                    if (expandContainer) {
+                        expandContainer.style.display = (matchCount > 3) ? 'block' : 'none';
+                    }
 
-                if (!window.scrollPizarraTrack) {
-                    window.scrollPizarraTrack = function(direction) {
-                        const track = document.getElementById('pizarra-cards-track');
-                        if (track) {
-                            track.scrollBy({ left: direction * 280, behavior: 'smooth' });
+                    let emptyNotice = document.getElementById('pizarra-empty-filtered');
+                    if (matchCount === 0) {
+                        if (!emptyNotice) {
+                            emptyNotice = document.createElement('div');
+                            emptyNotice.id = 'pizarra-empty-filtered';
+                            emptyNotice.style.cssText = 'padding: 20px 14px; color: #475569; font-size: 0.74rem; text-align: center; width: 100%; font-weight: 800; background: #ffffff; border-radius: 14px; border: 1.5px dashed #cbd5e1;';
+                            emptyNotice.innerHTML = '<i class="fas fa-info-circle" style="color: #0284c7; margin-right: 5px;"></i> No hay eventos en esta categoría';
+                            track.appendChild(emptyNotice);
+                        } else {
+                            emptyNotice.style.display = 'block';
                         }
-                    };
-                }
+                    } else if (emptyNotice) {
+                        emptyNotice.style.display = 'none';
+                    }
+                };
 
                 // Weather micro-pill HTML component con contraste adaptado al fondo gris mate
                 const weatherPillHtml = `
@@ -4268,12 +4292,7 @@
                     </div>
                     `;
                 } else {
-                    // PIZARRA TÁCTICA ACTIVA CON EVENTOS Y CONVOCATORIAS
-                    const isSingleCard = openEvents.length === 1;
-                    const cardLayoutWidth = isSingleCard 
-                        ? 'width: 100%; flex: 1 1 100%; max-width: 100%;' 
-                        : 'flex: 0 0 310px; width: 310px; max-width: calc(100vw - 44px);';
-
+                    // PIZARRA TÁCTICA ACTIVA: VISUALIZACIÓN VERTICAL DE 3 EVENTOS PANORÁMICOS
                     const cardsHtml = openEvents.map((evt, idx) => {
                         const theme = this.getEventCategoryTheme(evt);
                         const isUser = !!evt.isUserMatch;
@@ -4288,9 +4307,12 @@
                         const dateText = this.formatDateShort ? this.formatDateShort(evt.date) : 'Hoy';
                         const timeStr = evt.time ? (evt.time_end && !evt.time.includes('-') ? `${evt.time} - ${evt.time_end}` : evt.time) : (evt.userMatchTime || '19:30');
                         const timeDisplay = `${dateText === 'HOY' ? 'Hoy' : dateText} ${timeStr}`;
+                        const isExtra = idx >= 3;
+                        const initialDisplay = isExtra ? 'display: none;' : 'display: flex;';
+                        const extraClass = isExtra ? 'pizarra-extra-card' : '';
 
                         if (isUser) {
-                            // --- TARJETA VIP: TU PISTA ASIGNADA (PARTIDO / ENTRENO DEL USUARIO) ---
+                            // --- TARJETA VIP VERTICAL: TU PISTA ASIGNADA (PARTIDO / ENTRENO DEL USUARIO) ---
                             const courtDisplay = evt.courtText || courtText || 'Pista 3';
                             const route = evt.userTargetRoute || userTargetRoute || 'agenda';
                             const ctaGradient = evt.isMyEntreno 
@@ -4301,54 +4323,54 @@
                                 : (evt.partnerText ? `Pareja: ${evt.partnerText}` : 'Convocatoria confirmada en pista');
 
                             return `
-                            <div class="pizarra-card" data-category="${catFilter}" data-type="${isEntreno ? 'entreno' : 'americana'}" data-is-user="true"
+                            <div class="pizarra-card ${extraClass}" data-category="${catFilter}" data-type="${isEntreno ? 'entreno' : 'americana'}" data-is-user="true"
                                  onclick="window.dashNavigate('${route}', 'pizarra_my_match')" 
-                                 style="${cardLayoutWidth} box-sizing: border-box; background: #ffffff; border: 2px solid #00C4FF; border-left: 5.5px solid #CCFF00; border-radius: 14px; padding: 9px 12px; min-height: 72px; display: flex; flex-direction: column; justify-content: space-between; gap: 6px; position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(0, 196, 255, 0.15), 0 0 12px rgba(204, 255, 0, 0.22); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; scroll-snap-align: start; transition: transform 0.15s ease, box-shadow 0.15s ease;"
-                                 onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
+                                 style="${initialDisplay} width: 100%; box-sizing: border-box; background: #ffffff; border: 1.5px solid #00C4FF; border-left: 6px solid #CCFF00; border-radius: 15px; padding: 11px 14px; min-height: 74px; flex-direction: column; justify-content: space-between; gap: 7px; position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(0, 196, 255, 0.12), 0 0 12px rgba(204, 255, 0, 0.18); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease, box-shadow 0.15s ease;"
+                                 onmousedown="this.style.transform='scale(0.99)'" onmouseup="this.style.transform='scale(1)'">
                                 
-                                <!-- Top Row: Badge & Horario -->
+                                <!-- Top Row: Badges & Horario -->
                                 <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; z-index: 2;">
                                     <div style="display: flex; align-items: center; gap: 5px;">
-                                        <span style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #ffffff; font-size: 0.54rem; font-weight: 950; padding: 2px 7px; border-radius: 5px; letter-spacing: 0.4px; text-transform: uppercase; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.35); display: inline-flex; align-items: center; gap: 3px;">
+                                        <span style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #ffffff; font-size: 0.56rem; font-weight: 950; padding: 2.5px 8px; border-radius: 6px; letter-spacing: 0.4px; text-transform: uppercase; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.35); display: inline-flex; align-items: center; gap: 3px;">
                                             ⭐ TU PISTA ASIGNADA
                                         </span>
+                                        <span style="background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc; font-size: 0.56rem; font-weight: 950; padding: 2px 7px; border-radius: 6px;">
+                                            🎾 ${courtDisplay}
+                                        </span>
                                     </div>
-                                    <span style="font-size: 0.62rem; color: #0284c7; font-weight: 900; display: inline-flex; align-items: center; gap: 3px;">
-                                        <i class="far fa-clock" style="font-size: 0.54rem;"></i> ${timeStr}
+                                    <span style="font-size: 0.65rem; color: #0284c7; font-weight: 950; display: inline-flex; align-items: center; gap: 3px;">
+                                        <i class="far fa-clock" style="font-size: 0.58rem;"></i> ${timeStr}
                                     </span>
                                 </div>
 
-                                <!-- Middle Row: Event Name & Court Info -->
+                                <!-- Middle Row: Event Name & Sub info -->
                                 <div style="z-index: 2; min-width: 0;">
-                                    <div style="color: #0f172a; font-size: 0.80rem; font-weight: 950; letter-spacing: -0.2px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${eventNameText}">
+                                    <div style="color: #0f172a; font-size: 0.90rem; font-weight: 950; letter-spacing: -0.2px; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${eventNameText}">
                                         ${eventNameText}
                                     </div>
-                                    <div style="display: flex; align-items: center; gap: 6px; margin-top: 3px;">
-                                        <span style="background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc; font-size: 0.58rem; font-weight: 950; padding: 1.5px 6px; border-radius: 5px; letter-spacing: 0.2px;">
-                                            🎾 ${courtDisplay}
-                                        </span>
-                                        <span style="font-size: 0.58rem; color: #16a34a; font-weight: 850; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                            ✔ Convocatoria confirmada
+                                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: 3px;">
+                                        <div style="font-size: 0.62rem; color: #64748b; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                            ${subInfo}
+                                        </div>
+                                        <span style="font-size: 0.58rem; color: #16a34a; font-weight: 950; white-space: nowrap; flex-shrink: 0;">
+                                            ✔ Convocado
                                         </span>
                                     </div>
                                 </div>
 
-                                <!-- Bottom Row: Sub info & CTA Button -->
-                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: 1px; z-index: 2;">
-                                    <div style="font-size: 0.56rem; color: #64748b; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 190px;">
-                                        ${subInfo}
-                                    </div>
+                                <!-- Bottom Row: CTA Button -->
+                                <div style="display: flex; align-items: center; justify-content: flex-end; margin-top: 1px; z-index: 2;">
                                     <button onclick="event.stopPropagation(); window.dashNavigate('${route}', 'pizarra_my_match')" 
-                                            style="background: ${ctaGradient}; color: #ffffff; font-size: 0.58rem; font-weight: 950; padding: 3.5px 9px; border-radius: 7px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; letter-spacing: 0.3px; box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3); white-space: nowrap; transition: transform 0.15s ease;"
-                                            onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
-                                        <span>VER PISTA</span> <i class="fas fa-arrow-right" style="font-size: 0.48rem;"></i>
+                                            style="background: ${ctaGradient}; color: #ffffff; font-size: 0.62rem; font-weight: 950; padding: 4.5px 12px; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; letter-spacing: 0.3px; box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3); white-space: nowrap; transition: transform 0.15s ease;"
+                                            onmousedown="this.style.transform='scale(0.96)'" onmouseup="this.style.transform='scale(1)'">
+                                        <span>VER PISTA</span> <i class="fas fa-arrow-right" style="font-size: 0.50rem;"></i>
                                     </button>
                                 </div>
                             </div>
                             `;
                         }
 
-                        // --- TARJETAS ESTÁNDAR: OTROS ENTRENOS Y AMERICANAS ACTIVOS ---
+                        // --- TARJETAS ESTÁNDAR VERTICALES: ENTRENOS Y AMERICANAS ACTIVOS ---
                         const maxCourts = parseInt(evt.max_courts || evt.courts || 0);
                         const max = maxCourts > 0 ? (maxCourts * 4) : parseInt(evt.max_players || evt.maxPlayers || 16);
                         const playersList = (evt.players && evt.players.length > 0) ? evt.players : (evt.registeredPlayers || []);
@@ -4363,43 +4385,43 @@
                         const badgeColor = (theme.accentColor === '#CCFF00') ? '#4d7c0f' : theme.accentColor;
 
                         return `
-                        <div class="pizarra-card" data-category="${catFilter}" data-type="${isEntreno ? 'entreno' : 'americana'}" data-is-user="false"
+                        <div class="pizarra-card ${extraClass}" data-category="${catFilter}" data-type="${isEntreno ? 'entreno' : 'americana'}" data-is-user="false"
                              onclick="window.dashNavigate('${theme.targetRoute}', 'pizarra_card')" 
-                             style="${cardLayoutWidth} box-sizing: border-box; background: #ffffff; border: 1.5px solid #e2e8f0; border-left: 4.5px solid ${theme.accentColor}; border-radius: 14px; padding: 9px 12px; min-height: 72px; display: flex; flex-direction: column; justify-content: space-between; gap: 6px; position: relative; overflow: hidden; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; scroll-snap-align: start; transition: transform 0.15s ease;"
-                             onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
+                             style="${initialDisplay} width: 100%; box-sizing: border-box; background: #ffffff; border: 1.5px solid #e2e8f0; border-left: 5.5px solid ${theme.accentColor}; border-radius: 15px; padding: 11px 14px; min-height: 74px; flex-direction: column; justify-content: space-between; gap: 7px; position: relative; overflow: hidden; box-shadow: 0 3px 12px rgba(15, 23, 42, 0.05); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease, border-color 0.15s ease;"
+                             onmousedown="this.style.transform='scale(0.99)'" onmouseup="this.style.transform='scale(1)'">
                             
                             <!-- Top Row: Badge & Horario -->
                             <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; z-index: 2;">
-                                <span style="background: ${theme.accentColor}18; border: 1px solid ${theme.accentColor}44; color: ${badgeColor}; font-size: 0.54rem; font-weight: 950; padding: 2px 7px; border-radius: 5px; letter-spacing: 0.4px; text-transform: uppercase; display: inline-flex; align-items: center; gap: 3px;">
+                                <span style="background: ${theme.accentColor}18; border: 1px solid ${theme.accentColor}44; color: ${badgeColor}; font-size: 0.56rem; font-weight: 950; padding: 2.5px 8px; border-radius: 6px; letter-spacing: 0.4px; text-transform: uppercase; display: inline-flex; align-items: center; gap: 3px;">
                                     ${theme.badgeText}
                                 </span>
-                                <span style="font-size: 0.60rem; color: #475569; font-weight: 850; display: inline-flex; align-items: center; gap: 3px;">
-                                    <i class="far fa-clock" style="font-size: 0.52rem; color: ${badgeColor};"></i> ${timeDisplay}
+                                <span style="font-size: 0.64rem; color: #475569; font-weight: 900; display: inline-flex; align-items: center; gap: 3px;">
+                                    <i class="far fa-clock" style="font-size: 0.56rem; color: ${badgeColor};"></i> ${timeDisplay}
                                 </span>
                             </div>
 
                             <!-- Middle Row: Event Name -->
                             <div style="z-index: 2; min-width: 0;">
-                                <div style="color: #0f172a; font-size: 0.80rem; font-weight: 950; letter-spacing: -0.2px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${eventNameText}">
+                                <div style="color: #0f172a; font-size: 0.90rem; font-weight: 950; letter-spacing: -0.2px; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${eventNameText}">
                                     ${eventNameText}
                                 </div>
                             </div>
 
                             <!-- Bottom Row: Occupancy Bar & CTA Button -->
-                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: 1px; z-index: 2;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 1px; z-index: 2;">
                                 <div style="display: flex; align-items: center; gap: 6px; min-width: 0;">
-                                    <div style="width: 38px; height: 5px; background: #e2e8f0; border-radius: 3px; overflow: hidden; flex-shrink: 0;" title="${current}/${max} inscritos">
+                                    <div style="width: 44px; height: 5px; background: #e2e8f0; border-radius: 3px; overflow: hidden; flex-shrink: 0;" title="${current}/${max} inscritos">
                                         <div style="width: ${capacityPercent}%; height: 100%; background: ${urgencyColor}; border-radius: 3px;"></div>
                                     </div>
-                                    <div style="font-size: 0.56rem; color: #64748b; font-weight: 750; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                        <span style="color: ${urgencyColor}; font-weight: 900;">${urgencyText}</span> • <span style="color: #475569; font-weight: 800;">Nv. ${minLevel}-${maxLevel}</span>
+                                    <div style="font-size: 0.60rem; color: #64748b; font-weight: 750; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        <span style="color: ${urgencyColor}; font-weight: 950;">${urgencyText}</span> • <span style="color: #475569; font-weight: 800;">Nv. ${minLevel}-${maxLevel}</span>
                                     </div>
                                 </div>
 
                                 <button onclick="event.stopPropagation(); window.dashNavigate('${theme.targetRoute}', 'pizarra_cta')" 
-                                        style="background: linear-gradient(135deg, ${theme.accentColor} 0%, ${theme.ctaColor} 100%); color: ${ctaTextColor}; font-size: 0.58rem; font-weight: 950; padding: 3.5px 9px; border-radius: 7px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; letter-spacing: 0.3px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12); white-space: nowrap; transition: transform 0.15s ease;"
-                                        onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
-                                    <span>RESERVAR</span> <i class="fas fa-arrow-right" style="font-size: 0.48rem;"></i>
+                                        style="background: linear-gradient(135deg, ${theme.accentColor} 0%, ${theme.ctaColor} 100%); color: ${ctaTextColor}; font-size: 0.62rem; font-weight: 950; padding: 4.5px 12px; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; letter-spacing: 0.3px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12); white-space: nowrap; transition: transform 0.15s ease;"
+                                        onmousedown="this.style.transform='scale(0.96)'" onmouseup="this.style.transform='scale(1)'">
+                                    <span>RESERVAR</span> <i class="fas fa-arrow-right" style="font-size: 0.50rem;"></i>
                                 </button>
                             </div>
                         </div>
@@ -4435,72 +4457,55 @@
                             </div>
                         </div>
 
-                        <!-- Fila 2: Filtros Tácticos y Flechas Deslizantes -->
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
-                            <div style="display: flex; align-items: center; gap: 5px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 1px;">
-                                <button class="pizarra-filter-pill" data-filter="todos" onclick="event.stopPropagation(); window.filterPizarraTactics('todos', this);"
-                                        style="background: #0f172a; color: #ffffff; border: 1.5px solid #0f172a; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.25); font-size: 0.56rem; font-weight: 950; padding: 3px 8px; border-radius: 7px; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; transition: all 0.2s ease;">
-                                    <span>TODOS</span> <span style="opacity: 0.85; font-size: 0.50rem;">(${totalActiveCount})</span>
-                                </button>
-                                <button class="pizarra-filter-pill" data-filter="entrenos" onclick="event.stopPropagation(); window.filterPizarraTactics('entrenos', this);"
-                                        style="background: #ffffff; color: #334155; border: 1px solid #cbd5e1; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04); font-size: 0.56rem; font-weight: 850; padding: 3px 8px; border-radius: 7px; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; transition: all 0.2s ease;">
-                                    <span>🎾 ENTRENOS</span> <span style="opacity: 0.7; font-size: 0.50rem;">(${entrenosCount})</span>
-                                </button>
-                                <button class="pizarra-filter-pill" data-filter="americanas" onclick="event.stopPropagation(); window.filterPizarraTactics('americanas', this);"
-                                        style="background: #ffffff; color: #334155; border: 1px solid #cbd5e1; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04); font-size: 0.56rem; font-weight: 850; padding: 3px 8px; border-radius: 7px; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; transition: all 0.2s ease;">
-                                    <span>🏆 AMERICANAS</span> <span style="opacity: 0.7; font-size: 0.50rem;">(${americanasCount})</span>
-                                </button>
-                                ${myPistaFilterBtn}
-                            </div>
-
-                            <!-- Botones de desplazamiento horizontal táctico -->
-                            ${openEvents.length > 1 ? `
-                            <div style="display: flex; align-items: center; gap: 3px; flex-shrink: 0;">
-                                <button onclick="event.stopPropagation(); window.scrollPizarraTrack(-1);" aria-label="Anterior"
-                                        style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.52rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                                    <i class="fas fa-chevron-left"></i>
-                                </button>
-                                <button onclick="event.stopPropagation(); window.scrollPizarraTrack(1);" aria-label="Siguiente"
-                                        style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.52rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                                    <i class="fas fa-chevron-right"></i>
-                                </button>
-                            </div>
-                            ` : ''}
+                        <!-- Fila 2: Filtros Tácticos (Todos, Entrenos, Americanas, Mi Pista) -->
+                        <div style="display: flex; align-items: center; justify-content: flex-start; gap: 5px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 1px;">
+                            <button class="pizarra-filter-pill" data-filter="todos" onclick="event.stopPropagation(); window.filterPizarraTactics('todos', this);"
+                                    style="background: #0f172a; color: #ffffff; border: 1.5px solid #0f172a; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.25); font-size: 0.56rem; font-weight: 950; padding: 3px 8px; border-radius: 7px; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; transition: all 0.2s ease;">
+                                <span>TODOS</span> <span style="opacity: 0.85; font-size: 0.50rem;">(${totalActiveCount})</span>
+                            </button>
+                            <button class="pizarra-filter-pill" data-filter="entrenos" onclick="event.stopPropagation(); window.filterPizarraTactics('entrenos', this);"
+                                    style="background: #ffffff; color: #334155; border: 1px solid #cbd5e1; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04); font-size: 0.56rem; font-weight: 850; padding: 3px 8px; border-radius: 7px; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; transition: all 0.2s ease;">
+                                <span>🎾 ENTRENOS</span> <span style="opacity: 0.7; font-size: 0.50rem;">(${entrenosCount})</span>
+                            </button>
+                            <button class="pizarra-filter-pill" data-filter="americanas" onclick="event.stopPropagation(); window.filterPizarraTactics('americanas', this);"
+                                    style="background: #ffffff; color: #334155; border: 1px solid #cbd5e1; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04); font-size: 0.56rem; font-weight: 850; padding: 3px 8px; border-radius: 7px; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; transition: all 0.2s ease;">
+                                <span>🏆 AMERICANAS</span> <span style="opacity: 0.7; font-size: 0.50rem;">(${americanasCount})</span>
+                            </button>
+                            ${myPistaFilterBtn}
                         </div>
                     </div>
                     `;
 
-                    // Envoltorio completo de la Pizarra Táctica sobre fondo gris mate
+                    // Botón de expansión cuando hay más de 3 eventos
+                    const expandButtonHtml = openEvents.length > 3 ? `
+                        <div id="pizarra-expand-container" style="display: flex; justify-content: center; margin-top: 8px;">
+                            <button id="pizarra-expand-btn" data-expanded="false" onclick="event.stopPropagation(); window.togglePizarraAllEvents(this);"
+                                    style="background: #ffffff; color: #0f172a; border: 1.5px solid #cbd5e1; border-radius: 999px; padding: 5px 14px; font-size: 0.60rem; font-weight: 950; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); transition: all 0.2s ease;"
+                                    onmouseover="this.style.borderColor='#94a3b8'; this.style.background='#f8fafc';"
+                                    onmouseout="this.style.borderColor='#cbd5e1'; this.style.background='#ffffff';">
+                                <span>VER MÁS PISTAS (+${openEvents.length - 3})</span>
+                                <i class="fas fa-chevron-down" style="font-size: 0.55rem; color: #64748b;"></i>
+                            </button>
+                        </div>
+                    ` : '';
+
+                    // Envoltorio unificado de la Pizarra Táctica sobre fondo gris mate mateado
                     stripHtml = `
-                    <style>
-                    #pizarra-cards-track::-webkit-scrollbar {
-                        height: 4px;
-                    }
-                    #pizarra-cards-track::-webkit-scrollbar-track {
-                        background: rgba(0, 0, 0, 0.04);
-                        border-radius: 4px;
-                    }
-                    #pizarra-cards-track::-webkit-scrollbar-thumb {
-                        background: #cbd5e1;
-                        border-radius: 4px;
-                    }
-                    #pizarra-cards-track::-webkit-scrollbar-thumb:hover {
-                        background: #94a3b8;
-                    }
-                    </style>
                     <div class="pizarra-tactica-container" 
-                         style="width: 100%; box-sizing: border-box; background-color: #f1f5f9; background-image: radial-gradient(rgba(100, 116, 139, 0.12) 1px, transparent 1px), linear-gradient(145deg, #f8fafc 0%, #e2e8f0 100%); background-size: 16px 16px, 100% 100%; border: 1.5px solid #cbd5e1; border-top: 3.5px solid #CCFF00; border-radius: 18px; padding: 11px 12px 12px 12px; box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06), 0 -2px 12px rgba(204, 255, 0, 0.20); position: relative; overflow: hidden;">
+                         style="width: 100%; box-sizing: border-box; background-color: #f1f5f9; background-image: radial-gradient(rgba(100, 116, 139, 0.10) 1px, transparent 1px), linear-gradient(145deg, #f8fafc 0%, #edf2f7 100%); background-size: 16px 16px, 100% 100%; border: 1.5px solid #cbd5e1; border-top: 3px solid #CCFF00; border-radius: 16px; padding: 11px 11px 12px 11px; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04); position: relative; overflow: hidden;">
                         
                         <!-- Línea decorativa de pista superior -->
                         <div style="position: absolute; top: 0; left: 20px; right: 20px; height: 2px; background: linear-gradient(90deg, transparent 0%, #CCFF00 50%, transparent 100%); box-shadow: 0 0 8px #CCFF00; pointer-events: none;"></div>
 
                         ${pizarraHeaderHtml}
 
-                        <!-- Carril táctico deslizante -->
+                        <!-- Carril vertical con 3 eventos visibles -->
                         <div id="pizarra-cards-track" 
-                             style="display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 2px 2px 6px 2px; -webkit-overflow-scrolling: touch; scroll-behavior: smooth;">
+                             style="display: flex; flex-direction: column; gap: 8px; width: 100%; box-sizing: border-box;">
                             ${cardsHtml}
                         </div>
+
+                        ${expandButtonHtml}
                     </div>
                     `;
                 }

@@ -197,7 +197,9 @@ window.WhatsAppService = {
             levelText = `Hasta ${event.level_max}`;
         }
 
-        const isFixed = event.pair_mode === 'fixed' || event.pair_mode === 'fixed_auto' || event.pair_mode === 'fixed_admin' || name.includes('FIJA');
+        const hasFixedPairs = Array.isArray(event.fixed_pairs) && event.fixed_pairs.length > 0;
+        const hasPartnerInPlayers = (displayList || []).some(p => p.partner_id || p.partner_name);
+        const isFixed = event.pair_mode === 'fixed' || event.pair_mode === 'fixed_auto' || event.pair_mode === 'fixed_admin' || String(event.pair_mode || '').includes('fij') || name.includes('FIJA') || name.includes('PAREJA') || name.includes('PAREJAS') || name.includes('DUPLA') || hasFixedPairs || hasPartnerInPlayers;
         const modeLabel = isFixed ? 'Pareja Fija' : 'Twister (Individual)';
 
         const isDelfos = location.toUpperCase().includes('DELFOS');
@@ -216,6 +218,35 @@ window.WhatsAppService = {
         // Deep link canónico directo al evento
         const deepLinkUrl = this.getEventCanonicalUrl(event);
 
+        // Pre-sincronizar parejas desde fixed_pairs si existen
+        if (hasFixedPairs) {
+            event.fixed_pairs.forEach(fp => {
+                const p1Id = String(fp.player1_id || (fp.player1 && (fp.player1.id || fp.player1.uid)) || (fp.p1 && (fp.p1.id || fp.p1.uid)) || '');
+                const p2Id = String(fp.player2_id || (fp.player2 && (fp.player2.id || fp.player2.uid)) || (fp.p2 && (fp.p2.id || fp.p2.uid)) || '');
+                const p1Name = String(fp.player1_name || (fp.player1 && fp.player1.name) || (fp.p1 && fp.p1.name) || '').trim().toUpperCase();
+                const p2Name = String(fp.player2_name || (fp.player2 && fp.player2.name) || (fp.p2 && fp.p2.name) || '').trim().toUpperCase();
+
+                const p1 = displayList.find(p => {
+                    const pid = String(p.id || p.uid || '');
+                    if (p1Id && pid === p1Id) return true;
+                    if (p1Name && String(p.name || '').trim().toUpperCase() === p1Name) return true;
+                    return false;
+                });
+                const p2 = displayList.find(p => {
+                    const pid = String(p.id || p.uid || '');
+                    if (p2Id && pid === p2Id) return true;
+                    if (p2Name && String(p.name || '').trim().toUpperCase() === p2Name) return true;
+                    return false;
+                });
+                if (p1 && p2 && p1 !== p2) {
+                    p1.partner_id = p2.id || p2.uid;
+                    p1.partner_name = p2.name;
+                    p2.partner_id = p1.id || p1.uid;
+                    p2.partner_name = p1.name;
+                }
+            });
+        }
+
         // === CONSTRUCCIÓN DE LISTA DE JUGADORES (Pro & Clean con 01., 02., 10., 11., 12.) ===
         const processedIds = new Set();
         let displayCount = 0;
@@ -223,39 +254,100 @@ window.WhatsAppService = {
         let playerListText = '';
 
         if (isFixed) {
-            displayList.forEach((p) => {
-                const pId = p.id || p.uid;
+            const pairsFound = [];
+            const singlesFound = [];
+
+            // 1. Agrupar primero parejas de fixed_pairs
+            if (hasFixedPairs) {
+                event.fixed_pairs.forEach(fp => {
+                    const p1Id = String(fp.player1_id || (fp.player1 && (fp.player1.id || fp.player1.uid)) || (fp.p1 && (fp.p1.id || fp.p1.uid)) || '');
+                    const p2Id = String(fp.player2_id || (fp.player2 && (fp.player2.id || fp.player2.uid)) || (fp.p2 && (fp.p2.id || fp.p2.uid)) || '');
+                    const p1Name = String(fp.player1_name || (fp.player1 && fp.player1.name) || (fp.p1 && fp.p1.name) || '').trim().toUpperCase();
+                    const p2Name = String(fp.player2_name || (fp.player2 && fp.player2.name) || (fp.p2 && fp.p2.name) || '').trim().toUpperCase();
+
+                    const p1 = displayList.find(p => {
+                        const pid = String(p.id || p.uid || '');
+                        if (processedIds.has(pid)) return false;
+                        if (p1Id && pid === p1Id) return true;
+                        if (p1Name && String(p.name || '').trim().toUpperCase() === p1Name) return true;
+                        return false;
+                    });
+
+                    const p2 = displayList.find(p => {
+                        const pid = String(p.id || p.uid || '');
+                        if (processedIds.has(pid) || p === p1) return false;
+                        if (p2Id && pid === p2Id) return true;
+                        if (p2Name && String(p.name || '').trim().toUpperCase() === p2Name) return true;
+                        return false;
+                    });
+
+                    if (p1 && p2) {
+                        pairsFound.push({ p1, p2 });
+                        processedIds.add(String(p1.id || p1.uid || ''));
+                        processedIds.add(String(p2.id || p2.uid || ''));
+                    }
+                });
+            }
+
+            // 2. Emparejar el resto mediante partner_id o partner_name
+            displayList.forEach(p => {
+                const pId = String(p.id || p.uid || '');
                 if (processedIds.has(pId)) return;
 
+                const pPartnerId = String(p.partner_id || '');
+                const pPartnerName = String(p.partner_name || '').trim().toUpperCase();
+
+                let partnerObj = null;
+                if (pPartnerId || pPartnerName) {
+                    partnerObj = displayList.find(other => {
+                        const oId = String(other.id || other.uid || '');
+                        if (oId === pId || processedIds.has(oId)) return false;
+                        if (pPartnerId && oId === pPartnerId) return true;
+                        if (String(other.partner_id || '') === pId) return true;
+                        const oName = String(other.name || '').trim().toUpperCase();
+                        if (pPartnerName && (oName === pPartnerName || oName.includes(pPartnerName) || pPartnerName.includes(oName))) return true;
+                        const oPartnerName = String(other.partner_name || '').trim().toUpperCase();
+                        const myName = String(p.name || '').trim().toUpperCase();
+                        if (oPartnerName && (myName === oPartnerName || myName.includes(oPartnerName) || oPartnerName.includes(myName))) return true;
+                        return false;
+                    });
+                }
+
+                if (partnerObj) {
+                    pairsFound.push({ p1: p, p2: partnerObj });
+                    processedIds.add(pId);
+                    processedIds.add(String(partnerObj.id || partnerObj.uid || ''));
+                } else {
+                    singlesFound.push(p);
+                    processedIds.add(pId);
+                }
+            });
+
+            // Formatear parejas confirmadas
+            pairsFound.forEach(pair => {
                 displayCount++;
                 const padNum = String(displayCount).padStart(2, '0');
-                const pName = p.name ? p.name.trim() : 'Jugador';
-                const lvl = p.level || p.playtomic_level || '';
-                const lvlStr = lvl ? ` _(N${lvl})_` : '';
-
-                if (p.partner_name && String(p.partner_name).trim().length > 0) {
-                    let partnerName = p.partner_name.trim();
-                    let partnerLvlStr = "";
-                    let partnerObj = null;
-
-                    if (p.partner_id) {
-                        partnerObj = displayList.find(x => (x.id || x.uid) === p.partner_id);
-                    } else {
-                        partnerObj = displayList.find(x => x.name && x.name.toLowerCase() === partnerName.toLowerCase() && (x.id || x.uid) !== pId);
-                    }
-
-                    if (partnerObj) {
-                        processedIds.add(partnerObj.id || partnerObj.uid);
-                        if (partnerObj.level || partnerObj.playtomic_level) {
-                            partnerLvlStr = ` _(N${partnerObj.level || partnerObj.playtomic_level})_`;
-                        }
-                    }
-                    playerListText += `${padNum}. 🎾 *${pName}*${lvlStr} & *${partnerName}*${partnerLvlStr}\n`;
-                } else {
-                    playerListText += `${padNum}. 🎾 *${pName}*${lvlStr} · _(Busca Pareja)_\n`;
-                }
-                processedIds.add(pId);
+                const p1Name = pair.p1.name ? pair.p1.name.trim() : 'Jugador 1';
+                const p2Name = pair.p2.name ? pair.p2.name.trim() : 'Jugador 2';
+                const l1 = pair.p1.level || pair.p1.playtomic_level || '';
+                const l2 = pair.p2.level || pair.p2.playtomic_level || '';
+                const l1Str = l1 ? ` _(N${parseFloat(l1).toFixed(2)})_` : '';
+                const l2Str = l2 ? ` _(N${parseFloat(l2).toFixed(2)})_` : '';
+                playerListText += `${padNum}. 🤝 *${p1Name}*${l1Str} & *${p2Name}*${l2Str}\n`;
             });
+
+            // Formatear jugadores que buscan pareja
+            if (singlesFound.length > 0) {
+                if (pairsFound.length > 0) playerListText += `   --- _Buscan Pareja_ ---\n`;
+                singlesFound.forEach(p => {
+                    displayCount++;
+                    const padNum = String(displayCount).padStart(2, '0');
+                    const pName = p.name ? p.name.trim() : 'Jugador';
+                    const lvl = p.level || p.playtomic_level || '';
+                    const lvlStr = lvl ? ` _(N${parseFloat(lvl).toFixed(2)})_` : '';
+                    playerListText += `${padNum}. 🔍 *${pName}*${lvlStr} · _(Busca Pareja)_\n`;
+                });
+            }
 
             for (let i = displayCount; i < totalRows; i++) {
                 const padNum = String(i + 1).padStart(2, '0');
