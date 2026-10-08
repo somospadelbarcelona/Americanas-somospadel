@@ -1214,15 +1214,15 @@
                         <div id="registration-widget-root" style="width: 100%;">
                             <div id="live-scroller-inner">
                                 <!-- Skeleton 58px compacto -->
-                                <div style="height: 58px; border-radius: 14px; background: linear-gradient(90deg, #131b2e 0%, #1e293b 50%, #131b2e 100%); background-size: 200% 100%; border: 1px solid rgba(255, 255, 255, 0.08); animation: stripSkeletonShimmer 1.8s infinite; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; box-sizing: border-box;">
+                                <div style="height: 58px; border-radius: 14px; background: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%); background-size: 200% 100%; border: 1.5px solid #cbd5e1; animation: stripSkeletonShimmer 1.8s infinite; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; box-sizing: border-box;">
                                     <div style="display: flex; align-items: center; gap: 8px;">
-                                        <div style="width: 32px; height: 32px; border-radius: 9px; background: rgba(255,255,255,0.06);"></div>
+                                        <div style="width: 32px; height: 32px; border-radius: 9px; background: rgba(0,0,0,0.06);"></div>
                                         <div>
-                                            <div style="width: 90px; height: 10px; border-radius: 4px; background: rgba(255,255,255,0.08); margin-bottom: 4px;"></div>
-                                            <div style="width: 60px; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.04);"></div>
+                                            <div style="width: 90px; height: 10px; border-radius: 4px; background: rgba(0,0,0,0.08); margin-bottom: 4px;"></div>
+                                            <div style="width: 60px; height: 8px; border-radius: 4px; background: rgba(0,0,0,0.04);"></div>
                                         </div>
                                     </div>
-                                    <div style="width: 60px; height: 24px; border-radius: 6px; background: rgba(255,255,255,0.08);"></div>
+                                    <div style="width: 60px; height: 24px; border-radius: 6px; background: rgba(0,0,0,0.08);"></div>
                                 </div>
                             </div>
                         </div>
@@ -1238,91 +1238,26 @@
                         <!-- Content loaded via JS -->
                     </div>
 
-                    <!-- ⚖️ TARJETA OFICIAL: SISTEMA DE PUNTOS Y PONDERACIÓN DEL RANKING (COMPACTO & PROFESIONAL) -->
-                    <div id="points-policy-card-root" style="margin: 0 15px 14px !important; animation: floatUp 0.8s ease-out forwards;">
-                        <div style="
-                            background: linear-gradient(135deg, rgba(8, 14, 28, 0.95) 0%, rgba(15, 23, 42, 0.92) 100%);
-                            border: 1px solid rgba(56, 189, 248, 0.28);
-                            border-radius: 18px;
-                            padding: 12px 16px;
-                            position: relative;
-                            overflow: hidden;
-                            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px rgba(56, 189, 248, 0.08);
-                            color: #ffffff;
-                            font-family: 'Outfit', sans-serif;
-                        ">
-                            <!-- Top laser accent line -->
-                            <div style="position: absolute; top: 0; left: 0; right: 0; height: 2.5px; background: linear-gradient(90deg, #38bdf8, #CCFF00); border-radius: 18px 18px 0 0;"></div>
 
-                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
-                                <!-- Left: Info & Title -->
-                                <div style="flex: 1; min-width: 200px;">
-                                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
-                                        <span style="background: rgba(56, 189, 248, 0.14); color: #38bdf8; font-size: 0.60rem; font-weight: 950; padding: 2px 7px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.6px; border: 1px solid rgba(56, 189, 248, 0.3);">
-                                            ⚖️ REGLAMENTO OFICIAL
-                                        </span>
-                                        <span style="font-size: 0.62rem; color: #94a3b8; font-weight: 700;">• Entrenos & Americanas 1:1</span>
-                                    </div>
-                                    <div style="font-size: 0.92rem; font-weight: 950; color: #ffffff; letter-spacing: -0.2px; line-height: 1.25;">
-                                        Sistema de Puntos & Baremo de Ranking
-                                    </div>
-                                    <div style="font-size: 0.72rem; color: #cbd5e1; font-weight: 500; margin-top: 1px;">
-                                        100 pts (1º) • 80 pts (2º) • 65 pts (3º)... +2 pts por victoria (PG).
-                                    </div>
-                                </div>
 
-                                <!-- Right: Compact Action Button -->
-                                <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                                    <button 
-                                        type="button" 
-                                        onclick="window.showPointsPolicyModal ? window.showPointsPolicyModal() : null;" 
-                                        style="
-                                            background: #CCFF00;
-                                            color: #000000;
-                                            border: none;
-                                            padding: 8px 14px;
-                                            border-radius: 12px;
-                                            font-weight: 1000;
-                                            font-size: 0.76rem;
-                                            letter-spacing: 0.2px;
-                                            cursor: pointer;
-                                            display: inline-flex;
-                                            align-items: center;
-                                            gap: 6px;
-                                            box-shadow: 0 3px 12px rgba(204, 255, 0, 0.35);
-                                            transition: all 0.2s ease;
-                                            white-space: nowrap;
-                                            font-family: 'Outfit', sans-serif;
-                                        "
-                                        onmouseover="this.style.transform='scale(1.04)';"
-                                        onmouseout="this.style.transform='scale(1)';">
-                                        <i class="fas fa-balance-scale" style="font-size: 0.85rem;"></i>
-                                        <span>Ver Baremo & Simulador</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 7. MERCH PROMO (SOMOS PADEL BCN) - BOUTIQUE PREMIUM CON SELECTOR INTERACTIVO -->
+                    <!-- 7. MERCH PROMO (SOMOS PADEL BCN) - BOUTIQUE PREMIUM BLANCO & DETALLES LLAMATIVOS -->
                     <div id="merch-widget-root" style="
                         margin: 0 15px 14px !important;
-                        background: linear-gradient(135deg, #0b172a 0%, #172554 50%, #1e3a8a 100%);
-                        border-radius: 24px;
+                        background: #ffffff;
+                        border-radius: 20px;
                         padding: 16px;
                         position: relative;
                         overflow: hidden;
-                        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
-                        border: 1px solid rgba(255, 255, 255, 0.15);
+                        box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06), 0 0 14px rgba(204, 255, 0, 0.16);
+                        border: 1.5px solid #cbd5e1;
+                        border-left: 6px solid #CCFF00;
+                        border-top: 2.5px solid #22c55e;
                         animation: floatUp 0.8s ease-out forwards;
                     ">
-                        <!-- BG Effect Pattern -->
-                        <div style="position: absolute; top:0; left:0; width:100%; height:100%; opacity: 0.08; background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 14px 14px; pointer-events: none;"></div>
-                        
                         <div style="display: flex; gap: 12px; align-items: center; position: relative; z-index: 5;">
                             <!-- Image Section (Left) -->
                             <div style="width: 36%; flex-shrink: 0; position: relative; display: flex; align-items: center; justify-content: center;">
-                                <div style="position: absolute; width: 90px; height: 90px; background: radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, transparent 70%); filter: blur(10px);"></div>
+                                <div style="position: absolute; width: 90px; height: 90px; background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%); filter: blur(10px);"></div>
                                 <img src="./img/sudadera.jpg" 
                                      onerror="this.style.display='none'" 
                                      alt="Sudadera Oficial SomosPadel BCN"
@@ -1331,7 +1266,7 @@
                                          max-height: 145px; 
                                          object-fit: contain; 
                                          transform: rotate(-3deg); 
-                                         filter: drop-shadow(0 15px 25px rgba(0,0,0,0.65)) brightness(1.05);
+                                         filter: drop-shadow(0 10px 18px rgba(0,0,0,0.18));
                                          transition: transform 0.3s ease;
                                      " onmouseover="this.style.transform='rotate(0deg) scale(1.06)'" onmouseout="this.style.transform='rotate(-3deg) scale(1)'">
                             </div>
@@ -1339,46 +1274,46 @@
                             <!-- Content Section (Right) -->
                             <div style="width: 64%; display: flex; flex-direction: column; gap: 5px;">
                                 <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
-                                    <span style="background: #CCFF00; color: #000; font-size: 0.55rem; font-weight: 1000; padding: 2px 7px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 2px 6px rgba(204,255,0,0.3);">
+                                    <span style="background: #0f172a; color: #ffffff; font-size: 0.55rem; font-weight: 1000; padding: 2.5px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px;">
                                         OFICIAL 2026
                                     </span>
-                                    <span style="font-size: 0.55rem; color: #94a3b8; font-weight: 800; display: flex; align-items: center; gap: 3px;">
-                                        <i class="fas fa-shield-halved" style="color: #38bdf8;"></i> CLUB PRO
+                                    <span style="background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc; font-size: 0.55rem; font-weight: 850; padding: 2px 7px; border-radius: 6px; display: flex; align-items: center; gap: 3px;">
+                                        <i class="fas fa-shield-halved" style="color: #0284c7;"></i> CLUB PRO
                                     </span>
                                 </div>
 
-                                <h3 style="margin: 0; font-size: 1.15rem; color: #ffffff; font-weight: 950; line-height: 1.1; text-shadow: 0 2px 8px rgba(0,0,0,0.6);">
+                                <h3 style="margin: 0; font-size: 1.15rem; color: #0f172a; font-weight: 950; line-height: 1.1;">
                                     SUDADERA OFICIAL
                                 </h3>
 
-                                <div style="font-size: 0.68rem; color: #cbd5e1; font-weight: 700; line-height: 1.2;">
+                                <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; line-height: 1.2;">
                                     100% Algodón Premium 320g · Barcelona
                                 </div>
 
                                 <!-- Price block -->
                                 <div style="display: flex; align-items: baseline; gap: 6px; margin: 1px 0;">
-                                    <div style="color:#CCFF00; font-weight:1000; font-size: 1.4rem; line-height: 1; text-shadow:0 0 12px rgba(204,255,0,0.3);">
+                                    <div style="color: #0f172a; font-weight: 1000; font-size: 1.4rem; line-height: 1;">
                                         24<span style="font-size:0.8rem; vertical-align:top;">,99€</span>
                                     </div>
-                                    <div style="text-decoration: line-through; color: #64748b; font-size: 0.75rem; font-weight: 700;">
+                                    <div style="text-decoration: line-through; color: #94a3b8; font-size: 0.75rem; font-weight: 700;">
                                         39,99€
                                     </div>
-                                    <div style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; font-size: 0.52rem; font-weight: 900; padding: 1px 5px; border-radius: 4px;">
+                                    <div style="background: #fee2e2; border: 1px solid #fca5a5; color: #dc2626; font-size: 0.52rem; font-weight: 900; padding: 1.5px 6px; border-radius: 4px;">
                                         -37% CLUB
                                     </div>
                                 </div>
 
                                 <!-- Size Selector -->
                                 <div>
-                                    <div style="font-size: 0.54rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.5px;">
+                                    <div style="font-size: 0.54rem; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.5px;">
                                         TALLA:
                                     </div>
                                     <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                                        <button type="button" class="merch-size-btn" data-size="S" onclick="window.selectMerchSize && window.selectMerchSize('S')" style="padding: 3px 7px; border-radius: 7px; font-size: 0.62rem; font-weight: 900; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer;">S</button>
-                                        <button type="button" class="merch-size-btn" data-size="M" onclick="window.selectMerchSize && window.selectMerchSize('M')" style="padding: 3px 7px; border-radius: 7px; font-size: 0.62rem; font-weight: 900; border: 1px solid #CCFF00; background: #CCFF00; color: #000; cursor: pointer; transform: scale(1.08);">M</button>
-                                        <button type="button" class="merch-size-btn" data-size="L" onclick="window.selectMerchSize && window.selectMerchSize('L')" style="padding: 3px 7px; border-radius: 7px; font-size: 0.62rem; font-weight: 900; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer;">L</button>
-                                        <button type="button" class="merch-size-btn" data-size="XL" onclick="window.selectMerchSize && window.selectMerchSize('XL')" style="padding: 3px 7px; border-radius: 7px; font-size: 0.62rem; font-weight: 900; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer;">XL</button>
-                                        <button type="button" class="merch-size-btn" data-size="XXL" onclick="window.selectMerchSize && window.selectMerchSize('XXL')" style="padding: 3px 7px; border-radius: 7px; font-size: 0.62rem; font-weight: 900; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer;">XXL</button>
+                                        <button type="button" class="merch-size-btn" data-size="S" onclick="window.selectMerchSize && window.selectMerchSize('S')" style="padding: 3px 7px; border-radius: 7px; font-size: 0.62rem; font-weight: 900; border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; cursor: pointer;">S</button>
+                                        <button type="button" class="merch-size-btn" data-size="M" onclick="window.selectMerchSize && window.selectMerchSize('M')" style="padding: 3px 7px; border-radius: 7px; font-size: 0.62rem; font-weight: 900; border: 1.5px solid #0f172a; background: #0f172a; color: #ffffff; cursor: pointer; transform: scale(1.08);">M</button>
+                                        <button type="button" class="merch-size-btn" data-size="L" onclick="window.selectMerchSize && window.selectMerchSize('L')" style="padding: 3px 7px; border-radius: 7px; font-size: 0.62rem; font-weight: 900; border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; cursor: pointer;">L</button>
+                                        <button type="button" class="merch-size-btn" data-size="XL" onclick="window.selectMerchSize && window.selectMerchSize('XL')" style="padding: 3px 7px; border-radius: 7px; font-size: 0.62rem; font-weight: 900; border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; cursor: pointer;">XL</button>
+                                        <button type="button" class="merch-size-btn" data-size="XXL" onclick="window.selectMerchSize && window.selectMerchSize('XXL')" style="padding: 3px 7px; border-radius: 7px; font-size: 0.62rem; font-weight: 900; border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; cursor: pointer;">XXL</button>
                                     </div>
                                 </div>
 
@@ -1407,28 +1342,26 @@
                         </div>
                     </div>
 
-
-                    <!-- (Old Partner Synergy root removed to favor the new Predictive AI Engine) -->
-
                     <!-- 4. ACTIVIDAD RECIENTE -->
                     <div id="activity-feed-root" style="
-                        background: rgba(10, 10, 20, 0.9);
-                        backdrop-filter: blur(20px);
-                        border: 1px solid rgba(0, 227, 109, 0.2);
+                        background-color: #f1f5f9;
+                        background-image: radial-gradient(rgba(100, 116, 139, 0.12) 1px, transparent 1px), linear-gradient(145deg, #f8fafc 0%, #e2e8f0 100%);
+                        background-size: 16px 16px, 100% 100%;
+                        border: 1.5px solid #cbd5e1;
+                        border-top: 3.5px solid #CCFF00;
+                        border-left: 4.5px solid #00C4FF;
                         border-radius: 20px;
                         margin: 0 15px 8px !important;
-                        padding: 12px !important;
-                        box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+                        padding: 14px 14px 12px !important;
+                        box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06), 0 -2px 12px rgba(204, 255, 0, 0.16);
                         animation: floatUp 0.85s ease-out forwards;
                     ">
-                        <div style="font-weight:950; font-size:0.85rem; color:white; letter-spacing:-0.5px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
-                            <i class="fas fa-rss" style="color: #00E36D; font-size: 1rem;"></i> ACTIVIDAD RECIENTE
+                        <div style="font-weight:950; font-size:0.85rem; color: #0f172a; letter-spacing:-0.3px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
+                            <i class="fas fa-rss" style="color: #16a34a; font-size: 1rem;"></i> ACTIVIDAD RECIENTE
                         </div>
                         <div id="activity-feed-content" style="display: flex; flex-direction: column; gap: 10px;">
                             <!-- Content loaded via JS -->
                         </div>
-
-
                     </div>
                 </div>
 
@@ -1965,31 +1898,30 @@
         renderClubOrganizersPromo() {
             return `
                 <div class="dashboard-organizer-card" style="
-                    background: linear-gradient(135deg, rgba(8, 14, 28, 0.95) 0%, rgba(15, 23, 42, 0.92) 100%);
-                    border: 1px solid rgba(204, 255, 0, 0.28);
+                    background: #ffffff;
+                    border: 1.5px solid #cbd5e1;
+                    border-left: 6px solid #CCFF00;
+                    border-top: 2.5px solid #00C4FF;
                     border-radius: 18px;
-                    padding: 12px 16px;
+                    padding: 13px 16px;
                     position: relative;
                     overflow: hidden;
-                    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px rgba(204, 255, 0, 0.08);
+                    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.06), 0 0 14px rgba(204, 255, 0, 0.18);
                     font-family: 'Outfit', sans-serif;
                 ">
-                    <!-- Top laser accent line -->
-                    <div style="position: absolute; top: 0; left: 0; right: 0; height: 2.5px; background: linear-gradient(90deg, #CCFF00, #38bdf8); border-radius: 18px 18px 0 0;"></div>
-
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
                         <!-- Left: Info & Title -->
                         <div style="flex: 1; min-width: 200px;">
                             <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
-                                <span style="background: rgba(204, 255, 0, 0.14); color: #CCFF00; font-size: 0.60rem; font-weight: 950; padding: 2px 7px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.6px; border: 1px solid rgba(204, 255, 0, 0.3);">
+                                <span style="background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc; font-size: 0.60rem; font-weight: 950; padding: 2px 7px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.6px;">
                                     👑 CLUBES & ORGANIZADORES
                                 </span>
-                                <span style="font-size: 0.62rem; color: #94a3b8; font-weight: 700;">• +1.500 Jugadores</span>
+                                <span style="font-size: 0.62rem; color: #64748b; font-weight: 700;">• +1.500 Jugadores</span>
                             </div>
-                            <div style="font-size: 0.92rem; font-weight: 950; color: #ffffff; letter-spacing: -0.2px; line-height: 1.25;">
+                            <div style="font-size: 0.94rem; font-weight: 950; color: #0f172a; letter-spacing: -0.2px; line-height: 1.25;">
                                 ¿Organizas Americanas en Barcelona?
                             </div>
-                            <div style="font-size: 0.72rem; color: #cbd5e1; font-weight: 500; margin-top: 1px;">
+                            <div style="font-size: 0.72rem; color: #475569; font-weight: 600; margin-top: 1px;">
                                 Publica torneos con Torre de Control y marcador en vivo.
                             </div>
                         </div>
@@ -1998,9 +1930,9 @@
                         <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
                             <button onclick="window.renderClubBenefitsModal ? window.renderClubBenefitsModal() : (window.EventsController && window.EventsController.renderClubBenefitsModal())"
                                     style="
-                                        background: rgba(56, 189, 248, 0.1);
-                                        border: 1px solid rgba(56, 189, 248, 0.35);
-                                        color: #38bdf8;
+                                        background: #f1f5f9;
+                                        border: 1px solid #cbd5e1;
+                                        color: #0f172a;
                                         padding: 8px 12px;
                                         border-radius: 12px;
                                         font-weight: 900;
@@ -2013,17 +1945,17 @@
                                         transition: all 0.2s ease;
                                         font-family: 'Outfit', sans-serif;
                                     "
-                                    onmouseover="this.style.background='rgba(56, 189, 248, 0.2)'; this.style.borderColor='#38bdf8';"
-                                    onmouseout="this.style.background='rgba(56, 189, 248, 0.1)'; this.style.borderColor='rgba(56, 189, 248, 0.35)';">
-                                <i class="fas fa-info-circle" style="font-size: 0.8rem;"></i>
+                                    onmouseover="this.style.background='#e2e8f0'; this.style.borderColor='#94a3b8';"
+                                    onmouseout="this.style.background='#f1f5f9'; this.style.borderColor='#cbd5e1';">
+                                <i class="fas fa-info-circle" style="font-size: 0.8rem; color: #0284c7;"></i>
                                 <span>Ventajas</span>
                             </button>
                             <a href="https://wa.me/34649219350?text=¡Hola%20Alex!%20Soy%20organizador/club%20de%20pádel%20y%20me%20gustaría%20publicar%20mis%20americanas%20en%20SomosPadel%20BCN." 
                                target="_blank" 
                                rel="noopener noreferrer" 
                                style="
-                                   background: #CCFF00;
-                                   color: #050b14;
+                                   background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+                                   color: #ffffff;
                                    padding: 8px 14px;
                                    border-radius: 12px;
                                    font-weight: 1000;
@@ -2032,7 +1964,7 @@
                                    display: inline-flex;
                                    align-items: center;
                                    gap: 6px;
-                                   box-shadow: 0 3px 12px rgba(204, 255, 0, 0.35);
+                                   box-shadow: 0 3px 12px rgba(34, 197, 94, 0.35);
                                    letter-spacing: 0.2px;
                                    transition: all 0.2s ease;
                                "
@@ -2122,77 +2054,66 @@
             }, 100);
 
             return `
-                <div class="blog-widget-main-container" style="background: linear-gradient(165deg, rgba(13, 22, 42, 0.96) 0%, rgba(7, 12, 23, 0.98) 100%); border: 1.5px solid rgba(56, 189, 248, 0.28); border-radius: 28px; padding: 22px 20px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 35px rgba(56, 189, 248, 0.12), inset 0 1px 0 rgba(255,255,255,0.12); position: relative; overflow: hidden; perspective: 1000px; transform-style: preserve-3d;">
-                    <!-- Efectos de brillo de fondo Cyber-Sport de alta fidelidad -->
-                    <div style="position: absolute; top: -80px; right: -50px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(204,255,0,0.18) 0%, transparent 70%); pointer-events: none; filter: blur(35px);"></div>
-                    <div style="position: absolute; bottom: -80px; left: -50px; width: 240px; height: 240px; background: radial-gradient(circle, rgba(56,189,248,0.16) 0%, transparent 70%); pointer-events: none; filter: blur(40px);"></div>
+                <div class="blog-widget-main-container" style="background-color: #f1f5f9; background-image: radial-gradient(rgba(100, 116, 139, 0.12) 1px, transparent 1px), linear-gradient(145deg, #f8fafc 0%, #e2e8f0 100%); background-size: 16px 16px, 100% 100%; border: 1.5px solid #cbd5e1; border-top: 3.5px solid #00C4FF; border-left: 4.5px solid #CCFF00; border-radius: 24px; padding: 20px 18px; box-shadow: 0 6px 24px rgba(15, 23, 42, 0.06), 0 0 14px rgba(204, 255, 0, 0.16); position: relative; overflow: hidden;">
                     
-                    <!-- Cabecera Editorial Espectacular -->
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); position: relative; z-index: 2;">
+                    <!-- Cabecera Editorial -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid #cbd5e1; position: relative; z-index: 2;">
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <div style="width: 44px; height: 44px; border-radius: 14px; background: linear-gradient(135deg, #091322 0%, #000000 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(204,255,0,0.35); border: 1.5px solid #CCFF00; flex-shrink: 0; position: relative;">
-                                <i class="fas fa-newspaper" style="font-size: 1.15rem; color: #CCFF00; filter: drop-shadow(0 0 8px rgba(204,255,0,0.6));"></i>
+                            <div style="width: 44px; height: 44px; border-radius: 14px; background: #0f172a; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(204, 255, 0, 0.35); border: 2px solid #CCFF00; flex-shrink: 0; position: relative;">
+                                <i class="fas fa-newspaper" style="font-size: 1.15rem; color: #CCFF00;"></i>
                             </div>
                             <div>
                                 <div style="display: flex; align-items: center; gap: 8px;">
-                                    <span style="font-size: 1.05rem; font-weight: 1000; color: #ffffff; letter-spacing: -0.3px; text-transform: uppercase; font-family: 'Outfit', sans-serif;">SOMOSPÁDEL <span style="color: #CCFF00; text-shadow: 0 0 15px rgba(204,255,0,0.45);">JOURNAL</span></span>
-                                    <span style="font-size: 0.55rem; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; font-weight: 900; padding: 2px 7px; border-radius: 6px; letter-spacing: 0.5px;">EDICIÓN PRO</span>
+                                    <span style="font-size: 1.05rem; font-weight: 1000; color: #0f172a; letter-spacing: -0.3px; text-transform: uppercase; font-family: 'Outfit', sans-serif;">SOMOSPÁDEL <span style="color: #0284c7;">JOURNAL</span></span>
+                                    <span style="font-size: 0.55rem; background: #e0f2fe; border: 1px solid #7dd3fc; color: #0369a1; font-weight: 900; padding: 2px 7px; border-radius: 6px; letter-spacing: 0.5px;">EDICIÓN PRO</span>
                                 </div>
-                                <div style="font-size: 0.65rem; color: #94a3b8; font-weight: 750; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 1px;">REVISTA TÁCTICA & ACTUALIDAD DEL CIRCUITO</div>
+                                <div style="font-size: 0.65rem; color: #64748b; font-weight: 750; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 1px;">REVISTA TÁCTICA & ACTUALIDAD DEL CIRCUITO</div>
                             </div>
                         </div>
-                        <div style="background: rgba(204,255,0,0.12); border: 1px solid rgba(204,255,0,0.4); padding: 6px 14px; border-radius: 20px; font-size: 0.62rem; font-weight: 1000; color: #CCFF00; letter-spacing: 0.8px; text-transform: uppercase; display: flex; align-items: center; gap: 6px; flex-shrink: 0; box-shadow: 0 0 16px rgba(204,255,0,0.2);">
-                            <span style="width: 7px; height: 7px; background: #CCFF00; border-radius: 50%; display: inline-block; animation: neonPulseGreen 1.5s infinite alternate; box-shadow: 0 0 8px #CCFF00;"></span>LIVE STREAM
+                        <div style="background: #ffffff; border: 1.5px solid #cbd5e1; padding: 5px 12px; border-radius: 20px; font-size: 0.60rem; font-weight: 1000; color: #16a34a; letter-spacing: 0.8px; text-transform: uppercase; display: flex; align-items: center; gap: 6px; flex-shrink: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.05);">
+                            <span style="width: 7px; height: 7px; background: #22c55e; border-radius: 50%; display: inline-block; box-shadow: 0 0 6px #22c55e;"></span>LIVE STREAM
                         </div>
                     </div>
 
-                    <!-- Fila de filtros de categoría premium con máscara degradada -->
+                    <!-- Fila de filtros de categoría -->
                     <div style="position: relative; margin-bottom: 18px; z-index: 2;">
                         <div class="blog-categories-filter" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; padding-right: 20px; scrollbar-width: none; -ms-overflow-style: none;">
-                            <button onclick="window.DashboardView.filterBlogCategory('ALL')" class="blog-filter-btn active" style="flex-shrink: 0; background: #CCFF00; border: 1px solid #CCFF00; color: #000; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 950; cursor: pointer; transition: all 0.25s; font-family: 'Outfit'; box-shadow: 0 4px 14px rgba(204,255,0,0.35);">TODAS</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('NOVEDADES')" class="blog-filter-btn" style="flex-shrink: 0; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">🚀 NOVEDADES</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('TORNEOS')" class="blog-filter-btn" style="flex-shrink: 0; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">🏆 TORNEOS</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('CONSEJOS')" class="blog-filter-btn" style="flex-shrink: 0; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">💡 CONSEJOS</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('RANKING')" class="blog-filter-btn" style="flex-shrink: 0; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">📊 RANKING</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('CRÓNICAS')" class="blog-filter-btn" style="flex-shrink: 0; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">📝 CRÓNICAS</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('COMUNIDAD')" class="blog-filter-btn" style="flex-shrink: 0; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">👥 COMUNIDAD</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('FAVORITOS')" class="blog-filter-btn" style="flex-shrink: 0; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">⭐ GUARDADOS</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('ALL')" class="blog-filter-btn active" style="flex-shrink: 0; background: #0f172a; border: 1.5px solid #0f172a; color: #ffffff; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 950; cursor: pointer; transition: all 0.25s; font-family: 'Outfit'; box-shadow: 0 2px 8px rgba(15,23,42,0.25);">TODAS</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('NOVEDADES')" class="blog-filter-btn" style="flex-shrink: 0; background: #ffffff; border: 1px solid #cbd5e1; color: #334155; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit'; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">🚀 NOVEDADES</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('TORNEOS')" class="blog-filter-btn" style="flex-shrink: 0; background: #ffffff; border: 1px solid #cbd5e1; color: #334155; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit'; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">🏆 TORNEOS</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('CONSEJOS')" class="blog-filter-btn" style="flex-shrink: 0; background: #ffffff; border: 1px solid #cbd5e1; color: #334155; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit'; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">💡 CONSEJOS</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('RANKING')" class="blog-filter-btn" style="flex-shrink: 0; background: #ffffff; border: 1px solid #cbd5e1; color: #334155; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit'; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">📊 RANKING</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('CRÓNICAS')" class="blog-filter-btn" style="flex-shrink: 0; background: #ffffff; border: 1px solid #cbd5e1; color: #334155; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit'; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">📝 CRÓNICAS</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('COMUNIDAD')" class="blog-filter-btn" style="flex-shrink: 0; background: #ffffff; border: 1px solid #cbd5e1; color: #334155; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit'; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">👥 COMUNIDAD</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('FAVORITOS')" class="blog-filter-btn" style="flex-shrink: 0; background: #ffffff; border: 1px solid #cbd5e1; color: #334155; padding: 8px 18px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit'; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">⭐ GUARDADOS</button>
                         </div>
                     </div>
                     
                     <div id="dynamic-blog-posts-container" style="display: flex; flex-direction: column; gap: 14px; position: relative; z-index: 2;">
                         <!-- Cargando posts dinámicos -->
-                        <div style="text-align: center; padding: 35px 20px; color: #94a3b8; font-size: 0.78rem; font-family: 'Outfit';">
-                            <i class="fas fa-circle-notch fa-spin" style="color: #CCFF00; font-size: 1.4rem; margin-bottom: 8px; display: block;"></i>
+                        <div style="text-align: center; padding: 35px 20px; color: #64748b; font-size: 0.78rem; font-family: 'Outfit';">
+                            <i class="fas fa-circle-notch fa-spin" style="color: #0284c7; font-size: 1.4rem; margin-bottom: 8px; display: block;"></i>
                             Sintonizando crónicas de SomosPádel Journal...
                         </div>
                     </div>
                 </div>
                 
                 <style>
-                    @keyframes neonPulseGreen {
-                        0% { opacity: 0.5; transform: scale(0.9); }
-                        100% { opacity: 1; transform: scale(1.1); }
-                    }
                     .blog-categories-filter::-webkit-scrollbar {
                         display: none;
                     }
                     .premium-blog-3d-card:hover .featured-blog-bg-image {
-                        transform: scale(1.05);
+                        transform: scale(1.04);
                     }
                     .premium-blog-3d-card:hover .featured-blog-btn {
-                        background: #CCFF00 !important;
-                        color: #000000 !important;
-                        box-shadow: 0 6px 20px rgba(204,255,0,0.5);
-                    }
-                    .premium-blog-3d-card:hover .featured-blog-btn i {
-                        transform: translateX(4px);
+                        background: #0284c7 !important;
+                        color: #ffffff !important;
                     }
                     .premium-blog-magazine-card:hover .compact-blog-thumb {
-                        transform: scale(1.06);
+                        transform: scale(1.05);
                     }
                     .premium-blog-magazine-card:hover .magazine-card-title {
-                        color: #CCFF00 !important;
+                        color: #0284c7 !important;
                     }
                     
                     /* Botones táctiles optimizados para móvil y escritorio */
@@ -2208,35 +2129,31 @@
                         display: inline-flex;
                         align-items: center;
                         justify-content: center;
-                        background: rgba(6, 11, 22, 0.75);
-                        backdrop-filter: blur(8px);
-                        -webkit-backdrop-filter: blur(8px);
-                        border: 1px solid rgba(255, 255, 255, 0.2);
-                        color: #94a3b8;
+                        background: #ffffff;
+                        border: 1px solid #cbd5e1;
+                        color: #0f172a;
                         cursor: pointer;
                         transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
                         font-size: 0.88rem;
+                        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
                         touch-action: manipulation;
                         -webkit-tap-highlight-color: transparent;
                         flex-shrink: 0;
                     }
                     .card-quick-btn:hover, .card-quick-btn:active {
                         transform: scale(1.1);
-                        background: #090f1e;
-                        color: #CCFF00;
-                        border-color: #CCFF00;
-                        box-shadow: 0 0 12px rgba(204,255,0,0.4);
+                        border-color: #0f172a;
                     }
                     .card-quick-btn.whatsapp-btn {
-                        background: rgba(37, 211, 102, 0.15);
-                        border-color: rgba(37, 211, 102, 0.35);
-                        color: #25D366;
+                        background: #ffffff;
+                        border-color: #86efac;
+                        color: #16a34a;
                     }
                     .card-quick-btn.whatsapp-btn:hover, .card-quick-btn.whatsapp-btn:active {
-                        background: #25D366 !important;
+                        background: #22c55e !important;
                         color: #ffffff !important;
-                        border-color: #25D366 !important;
-                        box-shadow: 0 0 14px rgba(37,211,102,0.45);
+                        border-color: #22c55e !important;
+                        box-shadow: 0 0 12px rgba(34,197,94,0.4);
                     }
                     
                     /* Responsive Móvil Exclusivo - Full-Width Experience */
@@ -2246,7 +2163,7 @@
                         }
                         .blog-widget-main-container {
                             padding: 16px 12px !important;
-                            border-radius: 24px !important;
+                            border-radius: 20px !important;
                         }
                         .blog-categories-filter {
                             gap: 7px !important;
@@ -2274,7 +2191,7 @@
                         }
                     }
 
-                    /* Animación premium de desvanecimiento para las tarjetas del blog */
+                    /* Animación de desvanecimiento para las tarjetas del blog */
                     .blog-animate-fade-in {
                         animation: postFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
                     }
@@ -2293,7 +2210,6 @@
         }
 
         filterBlogCategory(category) {
-            // Actualizar botones activos con estilo cyber-dark
             const filterContainer = document.querySelector('.blog-categories-filter');
             if (filterContainer) {
                 const buttons = filterContainer.querySelectorAll('.blog-filter-btn');
@@ -2301,17 +2217,17 @@
                     const btnOnclick = btn.getAttribute('onclick') || '';
                     if (btnOnclick.includes(`'${category}'`)) {
                         btn.classList.add('active');
-                        btn.style.background = '#CCFF00';
-                        btn.style.borderColor = '#CCFF00';
-                        btn.style.color = '#000000';
-                        btn.style.boxShadow = '0 4px 14px rgba(204,255,0,0.35)';
+                        btn.style.background = '#0f172a';
+                        btn.style.borderColor = '#0f172a';
+                        btn.style.color = '#ffffff';
+                        btn.style.boxShadow = '0 2px 8px rgba(15,23,42,0.25)';
                         btn.style.fontWeight = '950';
                     } else {
                         btn.classList.remove('active');
-                        btn.style.background = 'rgba(255, 255, 255, 0.06)';
-                        btn.style.borderColor = 'rgba(255, 255, 255, 0.12)';
-                        btn.style.color = '#cbd5e1';
-                        btn.style.boxShadow = 'none';
+                        btn.style.background = '#ffffff';
+                        btn.style.borderColor = '#cbd5e1';
+                        btn.style.color = '#334155';
+                        btn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)';
                         btn.style.fontWeight = '850';
                     }
                 });
@@ -2340,14 +2256,14 @@
 
             if (filtered.length === 0) {
                 const emptyMsg = categoryFilter === 'FAVORITOS' 
-                    ? `<span style="font-size: 0.82rem; font-weight: 850; display: block; color: #ffffff;">No tienes tácticas guardadas</span>
-                       <span style="font-size: 0.7rem; color: #94a3b8; display: block; margin-top: 4px; max-width: 280px; margin-left: auto; margin-right: auto;">Toca el marcador 🔖 en cualquier crónica para tenerla siempre a mano antes de tus partidos.</span>`
-                    : `<span style="font-size: 0.8rem; font-weight: 800; display: block; color: #ffffff;">No hay artículos en esta categoría</span>
-                       <span style="font-size: 0.68rem; color: #94a3b8; display: block; margin-top: 4px;">¡Pronto publicaremos nuevo contenido táctico exclusivo!</span>`;
+                    ? `<span style="font-size: 0.82rem; font-weight: 850; display: block; color: #0f172a;">No tienes tácticas guardadas</span>
+                       <span style="font-size: 0.7rem; color: #64748b; display: block; margin-top: 4px; max-width: 280px; margin-left: auto; margin-right: auto;">Toca el marcador 🔖 en cualquier crónica para tenerla siempre a mano antes de tus partidos.</span>`
+                    : `<span style="font-size: 0.8rem; font-weight: 800; display: block; color: #0f172a;">No hay artículos en esta categoría</span>
+                       <span style="font-size: 0.68rem; color: #64748b; display: block; margin-top: 4px;">¡Pronto publicaremos nuevo contenido táctico exclusivo!</span>`;
 
                 container.innerHTML = `
-                    <div class="blog-animate-fade-in" style="text-align: center; padding: 40px 16px; color: #94a3b8; font-family: 'Outfit'; background: rgba(255,255,255,0.02); border-radius: 20px; border: 1px dashed rgba(255,255,255,0.1);">
-                        <i class="${categoryFilter === 'FAVORITOS' ? 'far fa-bookmark' : 'far fa-folder-open'}" style="font-size: 2.2rem; color: rgba(204, 255, 0, 0.4); margin-bottom: 12px; display: block;"></i>
+                    <div class="blog-animate-fade-in" style="text-align: center; padding: 40px 16px; color: #64748b; font-family: 'Outfit'; background: #ffffff; border-radius: 18px; border: 1px dashed #cbd5e1;">
+                        <i class="${categoryFilter === 'FAVORITOS' ? 'far fa-bookmark' : 'far fa-folder-open'}" style="font-size: 2.2rem; color: #0284c7; margin-bottom: 12px; display: block;"></i>
                         ${emptyMsg}
                     </div>
                 `;
@@ -2356,7 +2272,6 @@
 
             const visiblePosts = filtered.slice(0, 4);
 
-            // Deduplicación inteligente de imágenes mediante la Fototeca Curada HD de NewsCatalog (sin repetir fotos)
             const postImagesMap = window.NewsCatalog 
                 ? window.NewsCatalog.assignUniquePhotos(visiblePosts)
                 : (() => {
@@ -2376,69 +2291,59 @@
                     return assigned;
                 })();
 
-            // Guardar mapeo de imágenes en la instancia para que openBlogPost pueda leerlo
             this.currentImagesMap = { ...this.currentImagesMap, ...postImagesMap };
 
             const featured = visiblePosts[0];
             const rest = visiblePosts.slice(1);
             const isFeaturedSaved = this.isPostSaved(featured.id);
 
-            // 🌟 1. PORTADA PRINCIPAL DE REVISTA (WORLD PADEL TOUR STYLE)
+            // 🌟 1. PORTADA PRINCIPAL DE REVISTA (FONDO BLANCO, LETRAS NEGRAS, LLAMATIVA)
             const featuredCard = `
                 <div onclick="window.DashboardView.openBlogPost('${featured.id}')"
                      class="premium-blog-3d-card blog-animate-fade-in"
-                     style="border-radius: 26px; overflow: hidden; cursor: pointer; position: relative; min-height: 255px; box-shadow: 0 20px 45px rgba(0,0,0,0.65), 0 0 30px rgba(204,255,0,0.15); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); border: 1.5px solid rgba(204, 255, 0, 0.45); transform-style: preserve-3d; perspective: 1000px;"
-                     onmouseover="this.style.transform='translateY(-4px) scale(1.008)'; this.style.borderColor='#CCFF00'; this.style.boxShadow='0 25px 55px rgba(0,0,0,0.75), 0 0 35px rgba(204,255,0,0.28)';"
-                     onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.borderColor='rgba(204, 255, 0, 0.45)'; this.style.boxShadow='0 20px 45px rgba(0,0,0,0.65), 0 0 30px rgba(204,255,0,0.15)';"
+                     style="background: #ffffff; border-radius: 20px; overflow: hidden; cursor: pointer; position: relative; box-shadow: 0 6px 20px rgba(15,23,42,0.08); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); border: 1.5px solid #cbd5e1; border-top: 3.5px solid #CCFF00; border-left: 4.5px solid #00C4FF;"
+                     onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='#CCFF00'; this.style.boxShadow='0 12px 30px rgba(204,255,0,0.22)';"
+                     onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='#cbd5e1'; this.style.borderTopColor='#CCFF00'; this.style.borderLeftColor='#00C4FF'; this.style.boxShadow='0 6px 20px rgba(15,23,42,0.08)';"
                 >
-                    <!-- Imagen de fondo de pádel cinematográfica con zoom fluido -->
-                    <div class="featured-blog-bg-image" style="position: absolute; inset: 0; background-image: url('${postImagesMap[featured.id]}'); background-size: cover; background-position: center; transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);"></div>
-                    
-                    <!-- Overlay degradado multicapa con profundidad extrema -->
-                    <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(6, 11, 22, 0.3) 0%, rgba(6, 11, 22, 0.65) 45%, rgba(6, 11, 22, 0.98) 100%); z-index: 2;"></div>
-                    
-                    <!-- Controles rápidos superiores (Compartir WhatsApp & Guardar Favorito) -->
-                    <div style="position: absolute; top: 14px; right: 14px; z-index: 4; display: flex; align-items: center; gap: 8px;">
-                        <button onclick="window.DashboardView.shareToWhatsApp('${featured.id}', '${featured.title.replace(/'/g, "\\'")}', event, '${postImagesMap[featured.id]}')"
-                                class="card-quick-btn whatsapp-btn"
-                                style="width: 36px; height: 36px; border-radius: 50%; background: rgba(6, 11, 22, 0.75); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.25); color: #25D366; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.25s;"
-                                onmouseover="this.style.background='#25D366'; this.style.color='#ffffff'; this.style.transform='scale(1.1)';"
-                                onmouseout="this.style.background='rgba(6, 11, 22, 0.75)'; this.style.color='#25D366'; this.style.transform='scale(1)';"
-                                title="Enviar a mi pareja por WhatsApp">
-                            <i class="fab fa-whatsapp" style="font-size: 1.05rem;"></i>
-                        </button>
-                        <button onclick="window.DashboardView.toggleSaveBlogPost('${featured.id}', event)"
-                                class="card-quick-btn journal-bookmark-btn"
-                                data-post-id="${featured.id}"
-                                style="width: 36px; height: 36px; border-radius: 50%; background: rgba(6, 11, 22, 0.75); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid ${isFeaturedSaved ? '#CCFF00' : 'rgba(255,255,255,0.25)'}; color: ${isFeaturedSaved ? '#CCFF00' : '#ffffff'}; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.25s;"
-                                onmouseover="this.style.transform='scale(1.1)'; this.style.borderColor='#CCFF00';"
-                                onmouseout="this.style.transform='scale(1)';"
-                                title="${isFeaturedSaved ? 'Eliminar de guardados' : 'Guardar táctica'}">
-                            <i class="${isFeaturedSaved ? 'fas' : 'far'} fa-bookmark" style="font-size: 0.95rem;"></i>
-                        </button>
+                    <!-- Imagen de cabecera panorámica -->
+                    <div style="position: relative; width: 100%; height: 175px; overflow: hidden; background: #0f172a;">
+                        <div class="featured-blog-bg-image" style="position: absolute; inset: 0; background-image: url('${postImagesMap[featured.id]}'); background-size: cover; background-position: center; transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);"></div>
+                        
+                        <!-- Controles rápidos superiores -->
+                        <div style="position: absolute; top: 12px; right: 12px; z-index: 4; display: flex; align-items: center; gap: 8px;">
+                            <button onclick="window.DashboardView.shareToWhatsApp('${featured.id}', '${featured.title.replace(/'/g, "\\'")}', event, '${postImagesMap[featured.id]}')"
+                                    class="card-quick-btn whatsapp-btn"
+                                    title="Enviar por WhatsApp">
+                                <i class="fab fa-whatsapp" style="font-size: 1.05rem;"></i>
+                            </button>
+                            <button onclick="window.DashboardView.toggleSaveBlogPost('${featured.id}', event)"
+                                    class="card-quick-btn journal-bookmark-btn"
+                                    data-post-id="${featured.id}"
+                                    style="color: ${isFeaturedSaved ? '#f59e0b' : '#0f172a'};"
+                                    title="${isFeaturedSaved ? 'Eliminar de guardados' : 'Guardar táctica'}">
+                                <i class="${isFeaturedSaved ? 'fas' : 'far'} fa-bookmark" style="font-size: 0.95rem;"></i>
+                            </button>
+                        </div>
                     </div>
 
-                    <!-- Contenido interior -->
-                    <div style="position: relative; z-index: 3; padding: 22px 22px 20px; display: flex; flex-direction: column; justify-content: flex-end; min-height: 255px; box-sizing: border-box;">
-                        <!-- Badge unificado con glassmorphism -->
-                        <div style="margin-bottom: 10px;">
-                            <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(6, 11, 22, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding: 4px 10px 4px 4px; border-radius: 20px; border: 1px solid rgba(204, 255, 0, 0.4);">
-                                <span style="font-size: 0.56rem; font-weight: 1000; color: #000000; background: #CCFF00; padding: 3px 9px; border-radius: 12px; letter-spacing: 0.8px; text-transform: uppercase;">PORTADA OFICIAL</span>
-                                <span style="font-size: 0.56rem; font-weight: 900; color: #ffffff; letter-spacing: 0.6px; text-transform: uppercase; display: flex; align-items: center; gap: 5px;">
-                                    <span style="width: 5px; height: 5px; background: #CCFF00; border-radius: 50%; display: inline-block; box-shadow: 0 0 8px #CCFF00;"></span>${featured.category||'DESTACADO'}
-                                </span>
-                            </div>
+                    <!-- Contenido interior con fondo blanco y letra negra -->
+                    <div style="padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 8px; box-sizing: border-box;">
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <span style="font-size: 0.56rem; font-weight: 1000; color: #ffffff; background: #0f172a; padding: 3px 9px; border-radius: 8px; letter-spacing: 0.8px; text-transform: uppercase;">PORTADA OFICIAL</span>
+                            <span style="font-size: 0.58rem; font-weight: 950; color: #0284c7; background: #e0f2fe; border: 1px solid #7dd3fc; padding: 2px 8px; border-radius: 6px; letter-spacing: 0.5px; text-transform: uppercase;">
+                                ${featured.category||'DESTACADO'}
+                            </span>
                         </div>
 
-                        <h3 style="margin: 0 0 8px 0; color: #ffffff; font-weight: 950; font-size: 1.25rem; line-height: 1.25; letter-spacing: -0.3px; font-family: 'Outfit', sans-serif; text-shadow: 0 2px 10px rgba(0,0,0,0.9);">${featured.title}</h3>
-                        <p style="margin: 0 0 14px 0; color: #cbd5e1; font-size: 0.78rem; font-weight: 500; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-family: 'Inter', sans-serif;">${featured.snippet}</p>
+                        <h3 style="margin: 0; color: #0f172a; font-weight: 950; font-size: 1.18rem; line-height: 1.25; letter-spacing: -0.3px; font-family: 'Outfit', sans-serif;">${featured.title}</h3>
+                        <p style="margin: 0; color: #475569; font-size: 0.78rem; font-weight: 500; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-family: 'Inter', sans-serif;">${featured.snippet}</p>
                         
-                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: 4px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
                             <div style="display: flex; align-items: center; gap: 14px;">
-                                <span style="font-size: 0.66rem; color: #94a3b8; font-weight: 750; display: flex; align-items: center; gap: 5px;"><i class="far fa-calendar" style="font-size: 0.62rem; color: #CCFF00;"></i>${featured.date||'Hoy'}</span>
-                                <span style="font-size: 0.66rem; color: #94a3b8; font-weight: 750; display: flex; align-items: center; gap: 5px;"><i class="far fa-clock" style="font-size: 0.62rem; color: #38bdf8;"></i>${featured.readTime||'3 min'}</span>
+                                <span style="font-size: 0.66rem; color: #64748b; font-weight: 750; display: flex; align-items: center; gap: 5px;"><i class="far fa-calendar" style="font-size: 0.62rem; color: #0f172a;"></i>${featured.date||'Hoy'}</span>
+                                <span style="font-size: 0.66rem; color: #64748b; font-weight: 750; display: flex; align-items: center; gap: 5px;"><i class="far fa-clock" style="font-size: 0.62rem; color: #0284c7;"></i>${featured.readTime||'3 min'}</span>
                             </div>
-                            <div style="background: linear-gradient(135deg, #CCFF00 0%, #a3e600 100%); color: #000000; border: none; border-radius: 14px; padding: 7px 18px; font-size: 0.68rem; font-weight: 950; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(204, 255, 0, 0.4); transition: all 0.25s;"
+                            <div style="background: #0f172a; color: #ffffff; border: none; border-radius: 12px; padding: 7px 16px; font-size: 0.68rem; font-weight: 950; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2); transition: all 0.25s;"
                                  class="featured-blog-btn">
                                 LEER CRÓNICA <i class="fas fa-arrow-right" style="font-size: 0.58rem; transition: transform 0.2s;"></i>
                             </div>
@@ -2446,42 +2351,39 @@
                     </div>
                 </div>`;
 
-            // 📰 2. TARJETAS SECUNDARIAS DEPORTIVAS DE ALTA GAMA
+            // 📰 2. TARJETAS SECUNDARIAS CON FONDO BLANCO Y LETRA NEGRA
             const compactCards = rest.map((post, index) => {
                 const isSaved = this.isPostSaved(post.id);
                 const catName = (post.category || 'NOTICIAS').replace(/^[^\s]+\s/, '');
-                const categoryColor = post.catColor || '#38bdf8';
+                const categoryColor = post.catColor || '#0284c7';
                 return `
                     <div onclick="window.DashboardView.openBlogPost('${post.id}')"
                          class="premium-blog-magazine-card blog-animate-fade-in"
-                         style="display: flex; flex-direction: column; border-radius: 22px; cursor: pointer; background: linear-gradient(145deg, rgba(17, 27, 49, 0.9) 0%, rgba(10, 16, 31, 0.96) 100%); border: 1.5px solid rgba(255, 255, 255, 0.08); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.45); animation-delay: ${(index + 1) * 0.04}s;"
-                         onmouseover="this.style.borderColor='${categoryColor}'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 14px 34px rgba(0,0,0,0.65), 0 0 20px ${categoryColor}25';"
-                         onmouseout="this.style.borderColor='rgba(255, 255, 255, 0.08)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.45)';"
+                         style="display: flex; flex-direction: column; border-radius: 18px; cursor: pointer; background: #ffffff; border: 1.5px solid #e2e8f0; border-left: 5px solid #CCFF00; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06); animation-delay: ${(index + 1) * 0.04}s;"
+                         onmouseover="this.style.borderColor='#CCFF00'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 24px rgba(204, 255, 0, 0.20)';"
+                         onmouseout="this.style.borderColor='#e2e8f0'; this.style.borderLeftColor='#CCFF00'; this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 14px rgba(15, 23, 42, 0.06)';"
                     >
-                        <!-- Imagen Panorámica Grande de Pádel -->
-                        <div class="magazine-card-thumb-wrap" style="position: relative; width: 100%; height: 165px; overflow: hidden; background: #070d19;">
+                        <!-- Imagen Panorámica -->
+                        <div class="magazine-card-thumb-wrap" style="position: relative; width: 100%; height: 155px; overflow: hidden; background: #0f172a;">
                             <div style="width: 100%; height: 100%; background-image: url('${postImagesMap[post.id]}'); background-size: cover; background-position: center; transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);" class="compact-blog-thumb"></div>
                             
-                            <!-- Degradado cinematográfico sobre la imagen -->
-                            <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(6, 11, 22, 0.45) 0%, transparent 40%, rgba(6, 11, 22, 0.9) 100%); pointer-events: none;"></div>
-
-                            <!-- Badge de Categoría Flotante con color temático -->
+                            <!-- Badge de Categoría Flotante -->
                             <div style="position: absolute; top: 12px; left: 12px; z-index: 2;">
-                                <span style="background: ${categoryColor}; color: #000000; font-size: 0.62rem; font-weight: 1000; padding: 4px 11px; border-radius: 8px; letter-spacing: 0.8px; text-transform: uppercase; box-shadow: 0 2px 10px rgba(0,0,0,0.5); font-family: 'Outfit', sans-serif;">${catName}</span>
+                                <span style="background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; font-size: 0.62rem; font-weight: 1000; padding: 4px 11px; border-radius: 8px; letter-spacing: 0.8px; text-transform: uppercase; box-shadow: 0 2px 8px rgba(0,0,0,0.15); font-family: 'Outfit', sans-serif;">${catName}</span>
                             </div>
 
-                            <!-- Acciones Rápidas Flotantes (WhatsApp + Favorito) -->
+                            <!-- Acciones Rápidas Flotantes -->
                             <div style="position: absolute; top: 10px; right: 10px; z-index: 3; display: flex; align-items: center; gap: 7px;">
                                 <button onclick="window.DashboardView.shareToWhatsApp('${post.id}', '${post.title.replace(/'/g, "\\'")}', event, '${postImagesMap[post.id]}')"
                                         class="card-quick-btn whatsapp-btn"
-                                        style="background: rgba(6, 11, 22, 0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.2); color: #25D366; width: 34px; height: 34px; border-radius: 50%;"
+                                        style="width: 34px; height: 34px;"
                                         title="Compartir por WhatsApp">
                                     <i class="fab fa-whatsapp" style="font-size: 0.95rem;"></i>
                                 </button>
                                 <button onclick="window.DashboardView.toggleSaveBlogPost('${post.id}', event)"
                                         class="card-quick-btn journal-bookmark-btn"
                                         data-post-id="${post.id}"
-                                        style="background: rgba(6, 11, 22, 0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid ${isSaved ? '#CCFF00' : 'rgba(255,255,255,0.2)'}; color: ${isSaved ? '#CCFF00' : '#ffffff'}; width: 34px; height: 34px; border-radius: 50%;"
+                                        style="width: 34px; height: 34px; color: ${isSaved ? '#f59e0b' : '#0f172a'};"
                                         title="${isSaved ? 'Eliminar de guardados' : 'Guardar táctica'}">
                                     <i class="${isSaved ? 'fas' : 'far'} fa-bookmark" style="font-size: 0.85rem;"></i>
                                 </button>
@@ -2489,26 +2391,26 @@
 
                             <!-- Meta info sobre la foto -->
                             <div style="position: absolute; bottom: 10px; left: 14px; z-index: 2; display: flex; align-items: center; gap: 10px;">
-                                <span style="font-size: 0.68rem; color: #ffffff; font-weight: 800; text-shadow: 0 1px 4px rgba(0,0,0,0.9); display: flex; align-items: center; gap: 4px;">
-                                    <i class="far fa-clock" style="color: ${categoryColor}; font-size: 0.62rem;"></i> ${post.readTime||'3 min'}
+                                <span style="font-size: 0.66rem; color: #ffffff; font-weight: 800; text-shadow: 0 1px 4px rgba(0,0,0,0.9); display: flex; align-items: center; gap: 4px;">
+                                    <i class="far fa-clock" style="color: #ffffff; font-size: 0.60rem;"></i> ${post.readTime||'3 min'}
                                 </span>
-                                <span style="font-size: 0.68rem; color: #cbd5e1; font-weight: 700; text-shadow: 0 1px 4px rgba(0,0,0,0.9);">
+                                <span style="font-size: 0.66rem; color: #ffffff; font-weight: 700; text-shadow: 0 1px 4px rgba(0,0,0,0.9);">
                                     ${post.date||'Hoy'}
                                 </span>
                             </div>
                         </div>
                         
-                        <!-- Contenido Principal -->
-                        <div style="padding: 16px 18px 16px; display: flex; flex-direction: column; gap: 6px;">
-                            <h4 class="magazine-card-title" style="margin: 0; color: #ffffff; font-weight: 950; font-size: 1.15rem; line-height: 1.3; letter-spacing: -0.3px; font-family: 'Outfit', sans-serif; transition: color 0.2s ease;">${post.title}</h4>
-                            <p class="magazine-card-snippet" style="margin: 0; color: #94a3b8; font-size: 0.8rem; font-weight: 500; line-height: 1.45; font-family: 'Inter', sans-serif; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${post.snippet}</p>
+                        <!-- Contenido Principal con fondo blanco y letra negra -->
+                        <div style="padding: 15px 18px 16px; display: flex; flex-direction: column; gap: 6px;">
+                            <h4 class="magazine-card-title" style="margin: 0; color: #0f172a; font-weight: 950; font-size: 1.08rem; line-height: 1.3; letter-spacing: -0.3px; font-family: 'Outfit', sans-serif; transition: color 0.2s ease;">${post.title}</h4>
+                            <p class="magazine-card-snippet" style="margin: 0; color: #64748b; font-size: 0.78rem; font-weight: 500; line-height: 1.45; font-family: 'Inter', sans-serif; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${post.snippet}</p>
                             
-                            <!-- Pie con enlace "Leer artículo completo" -->
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.08);">
-                                <span style="font-size: 0.74rem; font-weight: 900; color: #CCFF00; display: flex; align-items: center; gap: 6px; font-family: 'Outfit', sans-serif;">
+                            <!-- Pie con enlace -->
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
+                                <span style="font-size: 0.74rem; font-weight: 950; color: #0284c7; display: flex; align-items: center; gap: 6px; font-family: 'Outfit', sans-serif;">
                                     LEER CRÓNICA <i class="fas fa-arrow-right" style="font-size: 0.62rem; transition: transform 0.2s;"></i>
                                 </span>
-                                <span style="font-size: 0.6rem; color: #64748b; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase;">SOMOSPÁDEL JOURNAL</span>
+                                <span style="font-size: 0.6rem; color: #94a3b8; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase;">SOMOSPÁDEL JOURNAL</span>
                             </div>
                         </div>
                     </div>
@@ -2520,11 +2422,11 @@
                 <div style="margin-top: 18px; text-align: center;" class="blog-animate-fade-in">
                     <button onclick="window.DashboardView.openBlogHistory()"
                             id="blog-history-open-btn"
-                            style="width: 100%; background: rgba(255, 255, 255, 0.04); border: 1.5px solid rgba(56, 189, 248, 0.28); color: #f8fafc; padding: 14px 20px; border-radius: 18px; font-size: 0.84rem; font-weight: 900; cursor: pointer; transition: all 0.25s; display: flex; align-items: center; justify-content: center; gap: 10px; font-family: 'Outfit', sans-serif; box-shadow: 0 4px 18px rgba(0,0,0,0.3);"
-                            onmouseover="this.style.background='rgba(56, 189, 248, 0.14)'; this.style.borderColor='#38bdf8'; this.style.color='#38bdf8'; this.style.transform='translateY(-1px)';"
-                            onmouseout="this.style.background='rgba(255, 255, 255, 0.04)'; this.style.borderColor='rgba(56, 189, 248, 0.28)'; this.style.color='#f8fafc'; this.style.transform='translateY(0)';"
+                            style="width: 100%; background: #ffffff; border: 1.5px solid #cbd5e1; color: #0f172a; padding: 13px 20px; border-radius: 16px; font-size: 0.82rem; font-weight: 950; cursor: pointer; transition: all 0.25s; display: flex; align-items: center; justify-content: center; gap: 10px; font-family: 'Outfit', sans-serif; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);"
+                            onmouseover="this.style.background='#f8fafc'; this.style.borderColor='#94a3b8'; this.style.transform='translateY(-1px)';"
+                            onmouseout="this.style.background='#ffffff'; this.style.borderColor='#cbd5e1'; this.style.transform='translateY(0)';"
                     >
-                        <i class="fas fa-layer-group" style="font-size: 0.95rem; color: #38bdf8;"></i> EXPLORAR HEMEROTECA COMPLETA (35+ ARTÍCULOS)
+                        <i class="fas fa-layer-group" style="font-size: 0.95rem; color: #0284c7;"></i> EXPLORAR HEMEROTECA COMPLETA (35+ ARTÍCULOS)
                     </button>
                 </div>
             `;
@@ -4334,7 +4236,7 @@
                     // FALLBACK: PIZARRA TÁCTICA SIN EVENTOS ACTIVOS
                     stripHtml = `
                     <div class="pizarra-tactica-container" 
-                         style="width: 100%; box-sizing: border-box; background-color: #ccff00; background-image: radial-gradient(rgba(0, 0, 0, 0.08) 1px, transparent 1px), linear-gradient(145deg, #ccff00 0%, #b8e600 100%); background-size: 16px 16px, 100% 100%; border: 1.5px solid rgba(0, 0, 0, 0.15); border-radius: 18px; padding: 12px 14px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25), 0 0 25px rgba(204, 255, 0, 0.25); position: relative; overflow: hidden; cursor: pointer; user-select: none;"
+                         style="width: 100%; box-sizing: border-box; background-color: #f1f5f9; background-image: radial-gradient(rgba(100, 116, 139, 0.12) 1px, transparent 1px), linear-gradient(145deg, #f8fafc 0%, #e2e8f0 100%); background-size: 16px 16px, 100% 100%; border: 1.5px solid #cbd5e1; border-radius: 18px; padding: 12px 14px; box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06); position: relative; overflow: hidden; cursor: pointer; user-select: none;"
                          onclick="window.dashNavigate('entrenos', 'pizarra_empty')">
                         
                         <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
@@ -4342,14 +4244,14 @@
                                 <span style="font-size: 1.15rem; line-height: 1;">📋</span>
                                 <div style="min-width: 0;">
                                     <div style="display: flex; align-items: center; gap: 6px;">
-                                        <span style="color: #071629; font-size: 0.74rem; font-weight: 950; letter-spacing: 0.4px; text-transform: uppercase;">
+                                        <span style="color: #0f172a; font-size: 0.74rem; font-weight: 950; letter-spacing: 0.4px; text-transform: uppercase;">
                                             PIZARRA DE PISTAS & CLUB
                                         </span>
-                                        <span style="background: #071629; color: #ccff00; border: 1px solid rgba(7, 22, 41, 0.4); font-size: 0.50rem; font-weight: 950; padding: 1.5px 6px; border-radius: 6px;">
+                                        <span style="background: #0f172a; color: #ffffff; border: 1px solid #334155; font-size: 0.50rem; font-weight: 950; padding: 1.5px 6px; border-radius: 6px;">
                                             PRÓXIMAMENTE
                                         </span>
                                     </div>
-                                    <div style="color: #0f2744; font-size: 0.58rem; font-weight: 800; margin-top: 2px;">
+                                    <div style="color: #475569; font-size: 0.58rem; font-weight: 700; margin-top: 2px;">
                                         Nuevas convocatorias y torneos en preparación. ¡Consulta la agenda!
                                     </div>
                                 </div>
@@ -4358,7 +4260,7 @@
                             <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
                                 ${weatherPillHtml}
                                 <button onclick="event.stopPropagation(); window.dashNavigate('entrenos', 'pizarra_empty')" 
-                                        style="background: #071629; color: #ccff00; font-size: 0.58rem; font-weight: 950; padding: 4px 10px; border-radius: 7px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; letter-spacing: 0.3px; box-shadow: 0 2px 10px rgba(7, 22, 41, 0.3); white-space: nowrap;">
+                                        style="background: #0f172a; color: #ffffff; font-size: 0.58rem; font-weight: 950; padding: 4px 10px; border-radius: 7px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; letter-spacing: 0.3px; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2); white-space: nowrap;">
                                     <span>VER CALENDARIO</span> <i class="fas fa-arrow-right" style="font-size: 0.48rem;"></i>
                                 </button>
                             </div>
@@ -4392,8 +4294,8 @@
                             const courtDisplay = evt.courtText || courtText || 'Pista 3';
                             const route = evt.userTargetRoute || userTargetRoute || 'agenda';
                             const ctaGradient = evt.isMyEntreno 
-                                ? 'linear-gradient(135deg, #ef4444 0%, #ff7a59 100%)' 
-                                : 'linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)';
+                                ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' 
+                                : 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)';
                             const subInfo = (evt.partnerText && evt.opponentsText)
                                 ? `Pareja: ${evt.partnerText} • Vs: ${evt.opponentsText}`
                                 : (evt.partnerText ? `Pareja: ${evt.partnerText}` : 'Convocatoria confirmada en pista');
@@ -4401,34 +4303,31 @@
                             return `
                             <div class="pizarra-card" data-category="${catFilter}" data-type="${isEntreno ? 'entreno' : 'americana'}" data-is-user="true"
                                  onclick="window.dashNavigate('${route}', 'pizarra_my_match')" 
-                                 style="${cardLayoutWidth} box-sizing: border-box; background: linear-gradient(145deg, #071629 0%, #0d1e36 100%); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1.5px solid #38bdf8; border-radius: 14px; padding: 9px 12px; min-height: 72px; display: flex; flex-direction: column; justify-content: space-between; gap: 6px; position: relative; overflow: hidden; box-shadow: 0 6px 22px rgba(7, 22, 41, 0.4), 0 0 15px rgba(56, 189, 248, 0.2); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; scroll-snap-align: start; transition: transform 0.15s ease, box-shadow 0.15s ease;"
+                                 style="${cardLayoutWidth} box-sizing: border-box; background: #ffffff; border: 2px solid #00C4FF; border-left: 5.5px solid #CCFF00; border-radius: 14px; padding: 9px 12px; min-height: 72px; display: flex; flex-direction: column; justify-content: space-between; gap: 6px; position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(0, 196, 255, 0.15), 0 0 12px rgba(204, 255, 0, 0.22); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; scroll-snap-align: start; transition: transform 0.15s ease, box-shadow 0.15s ease;"
                                  onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
                                 
-                                <!-- Ambient Glow -->
-                                <div style="position: absolute; top: -18px; right: -18px; width: 70px; height: 70px; background: radial-gradient(circle, #38bdf8 0%, transparent 70%); filter: blur(20px); opacity: 0.35; border-radius: 50%; pointer-events: none;"></div>
-
                                 <!-- Top Row: Badge & Horario -->
                                 <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; z-index: 2;">
                                     <div style="display: flex; align-items: center; gap: 5px;">
-                                        <span style="background: linear-gradient(135deg, #f59e0b 0%, #eab308 100%); color: #030d17; font-size: 0.54rem; font-weight: 950; padding: 2px 7px; border-radius: 5px; letter-spacing: 0.4px; text-transform: uppercase; box-shadow: 0 0 10px rgba(245, 158, 11, 0.45); display: inline-flex; align-items: center; gap: 3px;">
+                                        <span style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #ffffff; font-size: 0.54rem; font-weight: 950; padding: 2px 7px; border-radius: 5px; letter-spacing: 0.4px; text-transform: uppercase; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.35); display: inline-flex; align-items: center; gap: 3px;">
                                             ⭐ TU PISTA ASIGNADA
                                         </span>
                                     </div>
-                                    <span style="font-size: 0.62rem; color: #38bdf8; font-weight: 900; display: inline-flex; align-items: center; gap: 3px;">
+                                    <span style="font-size: 0.62rem; color: #0284c7; font-weight: 900; display: inline-flex; align-items: center; gap: 3px;">
                                         <i class="far fa-clock" style="font-size: 0.54rem;"></i> ${timeStr}
                                     </span>
                                 </div>
 
                                 <!-- Middle Row: Event Name & Court Info -->
                                 <div style="z-index: 2; min-width: 0;">
-                                    <div style="color: #ffffff; font-size: 0.80rem; font-weight: 900; letter-spacing: -0.2px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${eventNameText}">
+                                    <div style="color: #0f172a; font-size: 0.80rem; font-weight: 950; letter-spacing: -0.2px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${eventNameText}">
                                         ${eventNameText}
                                     </div>
                                     <div style="display: flex; align-items: center; gap: 6px; margin-top: 3px;">
-                                        <span style="background: rgba(56, 189, 248, 0.22); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); font-size: 0.58rem; font-weight: 950; padding: 1.5px 6px; border-radius: 5px; letter-spacing: 0.2px;">
+                                        <span style="background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc; font-size: 0.58rem; font-weight: 950; padding: 1.5px 6px; border-radius: 5px; letter-spacing: 0.2px;">
                                             🎾 ${courtDisplay}
                                         </span>
-                                        <span style="font-size: 0.58rem; color: #22c55e; font-weight: 850; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        <span style="font-size: 0.58rem; color: #16a34a; font-weight: 850; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                             ✔ Convocatoria confirmada
                                         </span>
                                     </div>
@@ -4436,11 +4335,11 @@
 
                                 <!-- Bottom Row: Sub info & CTA Button -->
                                 <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: 1px; z-index: 2;">
-                                    <div style="font-size: 0.56rem; color: #94a3b8; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 190px;">
+                                    <div style="font-size: 0.56rem; color: #64748b; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 190px;">
                                         ${subInfo}
                                     </div>
                                     <button onclick="event.stopPropagation(); window.dashNavigate('${route}', 'pizarra_my_match')" 
-                                            style="background: ${ctaGradient}; color: #ffffff; font-size: 0.58rem; font-weight: 950; padding: 3.5px 9px; border-radius: 7px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; letter-spacing: 0.3px; box-shadow: 0 2px 10px rgba(56, 189, 248, 0.4); white-space: nowrap; transition: transform 0.15s ease;"
+                                            style="background: ${ctaGradient}; color: #ffffff; font-size: 0.58rem; font-weight: 950; padding: 3.5px 9px; border-radius: 7px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; letter-spacing: 0.3px; box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3); white-space: nowrap; transition: transform 0.15s ease;"
                                             onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
                                         <span>VER PISTA</span> <i class="fas fa-arrow-right" style="font-size: 0.48rem;"></i>
                                     </button>
@@ -4455,35 +4354,33 @@
                         const playersList = (evt.players && evt.players.length > 0) ? evt.players : (evt.registeredPlayers || []);
                         const current = playersList.length;
                         const spotsLeft = Math.max(0, max - current);
-                        const urgencyColor = spotsLeft <= 2 ? '#ef4444' : (spotsLeft <= 4 ? '#f59e0b' : '#10b981');
+                        const urgencyColor = spotsLeft <= 2 ? '#ef4444' : (spotsLeft <= 4 ? '#d97706' : '#16a34a');
                         const urgencyText = spotsLeft > 0 ? `⚡ ${spotsLeft} libres` : 'Completo';
                         const minLevel = evt.min_level || evt.minLevel || '2.5';
                         const maxLevel = evt.max_level || evt.maxLevel || '4.5';
                         const capacityPercent = max > 0 ? Math.min(100, Math.round((current / max) * 100)) : 0;
                         const ctaTextColor = (theme.accentColor === '#CCFF00' || theme.ctaColor === '#CCFF00') ? '#071629' : '#ffffff';
+                        const badgeColor = (theme.accentColor === '#CCFF00') ? '#4d7c0f' : theme.accentColor;
 
                         return `
                         <div class="pizarra-card" data-category="${catFilter}" data-type="${isEntreno ? 'entreno' : 'americana'}" data-is-user="false"
                              onclick="window.dashNavigate('${theme.targetRoute}', 'pizarra_card')" 
-                             style="${cardLayoutWidth} box-sizing: border-box; background: linear-gradient(145deg, #091122 0%, #101c34 100%); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.12); border-left: 3.5px solid ${theme.accentColor}; border-radius: 14px; padding: 9px 12px; min-height: 72px; display: flex; flex-direction: column; justify-content: space-between; gap: 6px; position: relative; overflow: hidden; box-shadow: 0 6px 20px rgba(7, 22, 41, 0.32); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; scroll-snap-align: start; transition: transform 0.15s ease;"
+                             style="${cardLayoutWidth} box-sizing: border-box; background: #ffffff; border: 1.5px solid #e2e8f0; border-left: 4.5px solid ${theme.accentColor}; border-radius: 14px; padding: 9px 12px; min-height: 72px; display: flex; flex-direction: column; justify-content: space-between; gap: 6px; position: relative; overflow: hidden; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; scroll-snap-align: start; transition: transform 0.15s ease;"
                              onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
                             
-                            <!-- Ambient Glow -->
-                            <div style="position: absolute; top: -18px; right: -18px; width: 65px; height: 65px; background: radial-gradient(circle, ${theme.accentColor} 0%, transparent 70%); filter: blur(25px); opacity: 0.35; border-radius: 50%; pointer-events: none;"></div>
-
                             <!-- Top Row: Badge & Horario -->
                             <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; z-index: 2;">
-                                <span style="background: ${theme.accentColor}22; border: 1px solid ${theme.accentColor}66; color: ${theme.accentColor}; font-size: 0.54rem; font-weight: 950; padding: 1.5px 6px; border-radius: 5px; letter-spacing: 0.4px; text-transform: uppercase; display: inline-flex; align-items: center; gap: 3px; box-shadow: 0 0 10px ${theme.accentColor}33;">
+                                <span style="background: ${theme.accentColor}18; border: 1px solid ${theme.accentColor}44; color: ${badgeColor}; font-size: 0.54rem; font-weight: 950; padding: 2px 7px; border-radius: 5px; letter-spacing: 0.4px; text-transform: uppercase; display: inline-flex; align-items: center; gap: 3px;">
                                     ${theme.badgeText}
                                 </span>
-                                <span style="font-size: 0.60rem; color: #cbd5e1; font-weight: 850; display: inline-flex; align-items: center; gap: 3px;">
-                                    <i class="far fa-clock" style="font-size: 0.52rem; color: ${theme.accentColor};"></i> ${timeDisplay}
+                                <span style="font-size: 0.60rem; color: #475569; font-weight: 850; display: inline-flex; align-items: center; gap: 3px;">
+                                    <i class="far fa-clock" style="font-size: 0.52rem; color: ${badgeColor};"></i> ${timeDisplay}
                                 </span>
                             </div>
 
                             <!-- Middle Row: Event Name -->
                             <div style="z-index: 2; min-width: 0;">
-                                <div style="color: #ffffff; font-size: 0.78rem; font-weight: 850; letter-spacing: -0.2px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${eventNameText}">
+                                <div style="color: #0f172a; font-size: 0.80rem; font-weight: 950; letter-spacing: -0.2px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${eventNameText}">
                                     ${eventNameText}
                                 </div>
                             </div>
@@ -4491,16 +4388,16 @@
                             <!-- Bottom Row: Occupancy Bar & CTA Button -->
                             <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: 1px; z-index: 2;">
                                 <div style="display: flex; align-items: center; gap: 6px; min-width: 0;">
-                                    <div style="width: 38px; height: 4.5px; background: rgba(255, 255, 255, 0.12); border-radius: 3px; overflow: hidden; flex-shrink: 0;" title="${current}/${max} inscritos">
+                                    <div style="width: 38px; height: 5px; background: #e2e8f0; border-radius: 3px; overflow: hidden; flex-shrink: 0;" title="${current}/${max} inscritos">
                                         <div style="width: ${capacityPercent}%; height: 100%; background: ${urgencyColor}; border-radius: 3px;"></div>
                                     </div>
-                                    <div style="font-size: 0.56rem; color: #94a3b8; font-weight: 750; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                        <span style="color: ${urgencyColor}; font-weight: 900;">${urgencyText}</span> • <span style="color: #cbd5e1;">Nv. ${minLevel}-${maxLevel}</span>
+                                    <div style="font-size: 0.56rem; color: #64748b; font-weight: 750; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        <span style="color: ${urgencyColor}; font-weight: 900;">${urgencyText}</span> • <span style="color: #475569; font-weight: 800;">Nv. ${minLevel}-${maxLevel}</span>
                                     </div>
                                 </div>
 
                                 <button onclick="event.stopPropagation(); window.dashNavigate('${theme.targetRoute}', 'pizarra_cta')" 
-                                        style="background: linear-gradient(135deg, ${theme.accentColor} 0%, ${theme.ctaColor} 100%); color: ${ctaTextColor}; font-size: 0.58rem; font-weight: 950; padding: 3.5px 9px; border-radius: 7px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; letter-spacing: 0.3px; box-shadow: 0 2px 10px ${theme.accentColor}44; white-space: nowrap; transition: transform 0.15s ease;"
+                                        style="background: linear-gradient(135deg, ${theme.accentColor} 0%, ${theme.ctaColor} 100%); color: ${ctaTextColor}; font-size: 0.58rem; font-weight: 950; padding: 3.5px 9px; border-radius: 7px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; letter-spacing: 0.3px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12); white-space: nowrap; transition: transform 0.15s ease;"
                                         onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
                                     <span>RESERVAR</span> <i class="fas fa-arrow-right" style="font-size: 0.48rem;"></i>
                                 </button>
@@ -4512,23 +4409,23 @@
                     // Filtro VIP para Mi Pista si el usuario tiene convocatoria
                     const myPistaFilterBtn = hasUserMatch ? `
                         <button class="pizarra-filter-pill" data-filter="mi_pista" onclick="event.stopPropagation(); window.filterPizarraTactics('mi_pista', this);"
-                                style="background: #071629; color: #fbbf24; border: 1.5px solid #f59e0b; box-shadow: 0 2px 8px rgba(7, 22, 41, 0.25); font-size: 0.56rem; font-weight: 950; padding: 3px 8px; border-radius: 7px; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; transition: all 0.2s ease;">
+                                style="background: #ffffff; color: #d97706; border: 1.5px solid #f59e0b; box-shadow: 0 1px 4px rgba(245, 158, 11, 0.15); font-size: 0.56rem; font-weight: 950; padding: 3px 8px; border-radius: 7px; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; transition: all 0.2s ease;">
                             <span>⭐ MI PISTA</span>
                         </button>
                     ` : '';
 
-                    // Cabecera interactiva estilo Pizarra Táctica sobre fondo amarillo lima
+                    // Cabecera interactiva estilo Pizarra Táctica sobre fondo gris mate
                     const pizarraHeaderHtml = `
                     <div style="display: flex; flex-direction: column; gap: 7px; margin-bottom: 9px;">
                         <!-- Fila 1: Título de Pizarra, Contador Activo y Radar Meteo -->
                         <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
                             <div style="display: flex; align-items: center; gap: 6px; min-width: 0;">
                                 <span style="font-size: 0.90rem; line-height: 1;">📋</span>
-                                <span style="font-size: 0.68rem; font-weight: 950; color: #071629; letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap;">
+                                <span style="font-size: 0.68rem; font-weight: 950; color: #0f172a; letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap;">
                                     PIZARRA DE PISTAS & CLUB
                                 </span>
-                                <span style="display: inline-flex; align-items: center; gap: 4px; background: #071629; color: #ccff00; border: 1px solid rgba(7, 22, 41, 0.6); font-size: 0.50rem; font-weight: 950; padding: 2px 7px; border-radius: 999px; letter-spacing: 0.3px; white-space: nowrap; box-shadow: 0 2px 6px rgba(7, 22, 41, 0.25);">
-                                    <span style="display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: #ccff00; box-shadow: 0 0 6px #ccff00;"></span>
+                                <span style="display: inline-flex; align-items: center; gap: 4px; background: #0f172a; color: #ffffff; border: 1px solid #1e293b; font-size: 0.50rem; font-weight: 950; padding: 2px 7px; border-radius: 999px; letter-spacing: 0.3px; white-space: nowrap; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.2);">
+                                    <span style="display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 6px #22c55e;"></span>
                                     <span>${totalActiveCount} ACTIVOS</span>
                                 </span>
                             </div>
@@ -4538,19 +4435,19 @@
                             </div>
                         </div>
 
-                        <!-- Fila 2: Filtros Tácticos de Tiza y Flechas Deslizantes -->
+                        <!-- Fila 2: Filtros Tácticos y Flechas Deslizantes -->
                         <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
                             <div style="display: flex; align-items: center; gap: 5px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 1px;">
                                 <button class="pizarra-filter-pill" data-filter="todos" onclick="event.stopPropagation(); window.filterPizarraTactics('todos', this);"
-                                        style="background: #071629; color: #ccff00; border: 1.5px solid #071629; box-shadow: 0 2px 10px rgba(7, 22, 41, 0.35); font-size: 0.56rem; font-weight: 950; padding: 3px 8px; border-radius: 7px; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; transition: all 0.2s ease;">
+                                        style="background: #0f172a; color: #ffffff; border: 1.5px solid #0f172a; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.25); font-size: 0.56rem; font-weight: 950; padding: 3px 8px; border-radius: 7px; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; transition: all 0.2s ease;">
                                     <span>TODOS</span> <span style="opacity: 0.85; font-size: 0.50rem;">(${totalActiveCount})</span>
                                 </button>
                                 <button class="pizarra-filter-pill" data-filter="entrenos" onclick="event.stopPropagation(); window.filterPizarraTactics('entrenos', this);"
-                                        style="background: rgba(7, 22, 41, 0.10); color: #071629; border: 1px solid rgba(7, 22, 41, 0.22); font-size: 0.56rem; font-weight: 900; padding: 3px 8px; border-radius: 7px; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; transition: all 0.2s ease;">
+                                        style="background: #ffffff; color: #334155; border: 1px solid #cbd5e1; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04); font-size: 0.56rem; font-weight: 850; padding: 3px 8px; border-radius: 7px; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; transition: all 0.2s ease;">
                                     <span>🎾 ENTRENOS</span> <span style="opacity: 0.7; font-size: 0.50rem;">(${entrenosCount})</span>
                                 </button>
                                 <button class="pizarra-filter-pill" data-filter="americanas" onclick="event.stopPropagation(); window.filterPizarraTactics('americanas', this);"
-                                        style="background: rgba(7, 22, 41, 0.10); color: #071629; border: 1px solid rgba(7, 22, 41, 0.22); font-size: 0.56rem; font-weight: 900; padding: 3px 8px; border-radius: 7px; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; transition: all 0.2s ease;">
+                                        style="background: #ffffff; color: #334155; border: 1px solid #cbd5e1; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04); font-size: 0.56rem; font-weight: 850; padding: 3px 8px; border-radius: 7px; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; transition: all 0.2s ease;">
                                     <span>🏆 AMERICANAS</span> <span style="opacity: 0.7; font-size: 0.50rem;">(${americanasCount})</span>
                                 </button>
                                 ${myPistaFilterBtn}
@@ -4560,11 +4457,11 @@
                             ${openEvents.length > 1 ? `
                             <div style="display: flex; align-items: center; gap: 3px; flex-shrink: 0;">
                                 <button onclick="event.stopPropagation(); window.scrollPizarraTrack(-1);" aria-label="Anterior"
-                                        style="background: rgba(7, 22, 41, 0.12); border: 1px solid rgba(7, 22, 41, 0.25); color: #071629; width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.52rem;">
+                                        style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.52rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                                     <i class="fas fa-chevron-left"></i>
                                 </button>
                                 <button onclick="event.stopPropagation(); window.scrollPizarraTrack(1);" aria-label="Siguiente"
-                                        style="background: rgba(7, 22, 41, 0.12); border: 1px solid rgba(7, 22, 41, 0.25); color: #071629; width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.52rem;">
+                                        style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.52rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                                     <i class="fas fa-chevron-right"></i>
                                 </button>
                             </div>
@@ -4573,29 +4470,29 @@
                     </div>
                     `;
 
-                    // Envoltorio completo de la Pizarra Táctica sobre fondo amarillo lima de SomosPadel Barcelona
+                    // Envoltorio completo de la Pizarra Táctica sobre fondo gris mate
                     stripHtml = `
                     <style>
                     #pizarra-cards-track::-webkit-scrollbar {
                         height: 4px;
                     }
                     #pizarra-cards-track::-webkit-scrollbar-track {
-                        background: rgba(0, 0, 0, 0.08);
+                        background: rgba(0, 0, 0, 0.04);
                         border-radius: 4px;
                     }
                     #pizarra-cards-track::-webkit-scrollbar-thumb {
-                        background: rgba(7, 22, 41, 0.35);
+                        background: #cbd5e1;
                         border-radius: 4px;
                     }
                     #pizarra-cards-track::-webkit-scrollbar-thumb:hover {
-                        background: #071629;
+                        background: #94a3b8;
                     }
                     </style>
                     <div class="pizarra-tactica-container" 
-                         style="width: 100%; box-sizing: border-box; background-color: #ccff00; background-image: radial-gradient(rgba(0, 0, 0, 0.08) 1px, transparent 1px), linear-gradient(145deg, #ccff00 0%, #b8e600 100%); background-size: 16px 16px, 100% 100%; border: 1.5px solid rgba(0, 0, 0, 0.15); border-radius: 18px; padding: 11px 12px 12px 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25), 0 0 25px rgba(204, 255, 0, 0.25); position: relative; overflow: hidden;">
+                         style="width: 100%; box-sizing: border-box; background-color: #f1f5f9; background-image: radial-gradient(rgba(100, 116, 139, 0.12) 1px, transparent 1px), linear-gradient(145deg, #f8fafc 0%, #e2e8f0 100%); background-size: 16px 16px, 100% 100%; border: 1.5px solid #cbd5e1; border-top: 3.5px solid #CCFF00; border-radius: 18px; padding: 11px 12px 12px 12px; box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06), 0 -2px 12px rgba(204, 255, 0, 0.20); position: relative; overflow: hidden;">
                         
                         <!-- Línea decorativa de pista superior -->
-                        <div style="position: absolute; top: 0; left: 24px; right: 24px; height: 1.5px; background: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.18) 50%, transparent 100%); pointer-events: none;"></div>
+                        <div style="position: absolute; top: 0; left: 20px; right: 20px; height: 2px; background: linear-gradient(90deg, transparent 0%, #CCFF00 50%, transparent 100%); box-shadow: 0 0 8px #CCFF00; pointer-events: none;"></div>
 
                         ${pizarraHeaderHtml}
 
@@ -7351,19 +7248,13 @@
                     style.id = 'activity-feed-styles';
                     style.textContent = `
                         @keyframes timelinePulse {
-                            0% { box-shadow: 0 0 0 0 rgba(0, 227, 109, 0.4); }
-                            70% { box-shadow: 0 0 0 10px rgba(0, 227, 109, 0); }
-                            100% { box-shadow: 0 0 0 0 rgba(0, 227, 109, 0); }
+                            0% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.4); }
+                            70% { box-shadow: 0 0 0 8px rgba(22, 163, 74, 0); }
+                            100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); }
                         }
                         @keyframes showtimeSlide {
-                            0% { opacity: 0; transform: translateX(-30px) skewX(-15deg) scale(0.8); filter: brightness(3) blur(10px); }
-                            70% { transform: translateX(5px) skewX(0deg) scale(1.05); filter: brightness(1.2) blur(0px); }
-                            100% { opacity: 1; transform: translateX(0) skewX(0deg) scale(1); filter: brightness(1) blur(0px); }
-                        }
-                        @keyframes glint {
-                            0% { left: -100%; }
-                            20% { left: 100%; }
-                            100% { left: 100%; }
+                            0% { opacity: 0; transform: translateX(-15px) scale(0.97); }
+                            100% { opacity: 1; transform: translateX(0) scale(1); }
                         }
                         .activity-timeline-line {
                             position: absolute;
@@ -7371,41 +7262,27 @@
                             top: 10px;
                             bottom: 10px;
                             width: 2px;
-                            background: linear-gradient(to bottom, transparent, rgba(0,227,109,0.3), transparent);
+                            background: linear-gradient(to bottom, transparent, #cbd5e1 15%, #cbd5e1 85%, transparent);
                         }
                         .activity-glass-card {
-                            background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.01) 100%);
-                            backdrop-filter: blur(20px);
-                            border: 1px solid rgba(255, 255, 255, 0.08);
-                            border-radius: 12px;
-                            padding: 16px 18px 16px 50px;
+                            background: #ffffff;
+                            border: 1.5px solid #e2e8f0;
+                            border-left: 5px solid currentColor;
+                            border-radius: 14px;
+                            padding: 13px 16px 13px 44px;
                             position: relative;
-                            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                            transition: all 0.25s ease;
                             cursor: pointer;
                             overflow: hidden;
                             margin-bottom: 2px;
-                        }
-                        .activity-glass-card::before {
-                            content: '';
-                            position: absolute;
-                            top: 0; left: -100%;
-                            width: 100%; height: 100%;
-                            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
-                            animation: glint 5s infinite linear;
-                        }
-                        /* Look "TV Show" Scanlines */
-                        .activity-glass-card::after {
-                            content: '';
-                            position: absolute;
-                            inset: 0;
-                            background: repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255,255,255,0.02) 2px);
-                            pointer-events: none;
+                            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
                         }
                         .activity-glass-card:hover {
-                            background: rgba(255, 255, 255, 0.12);
-                            transform: scale(1.03) translateX(10px) rotate(-0.5deg);
-                            border-color: rgba(204, 255, 0, 0.5);
-                            box-shadow: -10px 10px 30px rgba(0,0,0,0.5);
+                            background: #ffffff;
+                            transform: translateY(-2px);
+                            border-color: #cbd5e1;
+                            border-left-color: #CCFF00;
+                            box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08), 0 0 12px rgba(204, 255, 0, 0.20);
                         }
                         .activity-dot {
                             position: absolute;
@@ -7416,15 +7293,14 @@
                             height: 14px;
                             border-radius: 4px;
                             z-index: 2;
-                            border: 2px solid #000;
-                            box-shadow: 0 0 15px currentColor;
+                            border: 2px solid #ffffff;
+                            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
                         }
                         .activity-impact-badge {
                             position: absolute;
                             top: 0; left: 0;
                             width: 4px; height: 100%;
                             background: currentColor;
-                            box-shadow: 0 0 15px currentColor;
                         }
                     `;
                     document.head.appendChild(style);
@@ -7446,37 +7322,37 @@
                         title: notif.title || 'Notificación',
                         desc: notif.body || '',
                         time: this.formatRelativeTime(notif.timestamp),
-                        color: notif.isChat ? '#CCFF00' : '#38bdf8',
+                        color: notif.isChat ? '#16a34a' : '#0284c7',
                         timestamp: notif.timestamp,
                         score: 30 // Prioridad alta para notificaciones personales
                     });
                 });
 
                 registrations.forEach(reg => {
-                    let catColor = '#00E36D'; // Default Green (Entrenos/Other)
+                    let catColor = '#16a34a'; // Default Green accesible
                     const lowerName = reg.eventName.toLowerCase();
 
                     if (lowerName.includes('femenin') || lowerName.includes('chicas') || lowerName.includes('female')) {
-                        catColor = '#FF2D55'; // Pink
+                        catColor = '#e11d48'; // Rose
                     } else if (lowerName.includes('mixt') || lowerName.includes('mix')) {
-                        catColor = '#FFD700'; // Yellow
+                        catColor = '#d97706'; // Amber/Gold accesible
                     } else if (lowerName.includes('masculin') || lowerName.includes('chicos') || lowerName.includes('male')) {
-                        catColor = '#00C4FF'; // Blue
+                        catColor = '#0284c7'; // Blue accesible
                     }
 
                     // Lógica de colores de equipo idéntica a EventsController_V6
                     const t = reg.playerTeam ? reg.playerTeam.toUpperCase() : '';
-                    let teamColor = '#38bdf8'; // Default Cyan (3º)
-                    if (t.includes('4º')) teamColor = '#84cc16'; // Neon Green
-                    if (t.includes('3º')) teamColor = '#38bdf8'; // Cyan
-                    if (t.includes('2º')) teamColor = '#f59e0b'; // Gold/Orange
-                    if (t.includes('MIXTO')) teamColor = '#ef4444'; // Red
+                    let teamColor = '#0284c7'; // Default Cyan/Blue (3º)
+                    if (t.includes('4º')) teamColor = '#16a34a'; // Green
+                    if (t.includes('3º')) teamColor = '#0284c7'; // Cyan/Blue
+                    if (t.includes('2º')) teamColor = '#d97706'; // Gold/Orange
+                    if (t.includes('MIXTO')) teamColor = '#dc2626'; // Red
 
                     activities.push({
                         type: 'registration',
                         icon: '🎾',
                         title: reg.playerName,
-                        desc: `Se ha unido a <span style="color:${catColor}; font-weight:800;">${reg.eventName}</span>${reg.playerTeam ? `<br><span style="color:${teamColor}; font-size:0.65rem; font-weight:950; letter-spacing:1px; text-shadow: 0 0 8px ${teamColor}60; border-bottom: 2px solid ${teamColor}; padding-bottom: 1px;">${t}</span>` : ''}`,
+                        desc: `Se ha unido a <span style="color:${catColor}; font-weight:800;">${reg.eventName}</span>${reg.playerTeam ? `<br><span style="color:${teamColor}; font-size:0.65rem; font-weight:950; letter-spacing:0.5px; border-bottom: 2px solid ${teamColor}; padding-bottom: 1px;">${t}</span>` : ''}`,
                         time: this.formatRelativeTime(reg.timestamp),
                         color: catColor,
                         timestamp: reg.timestamp,
@@ -7491,7 +7367,7 @@
                         title: '¡ÚLTIMA HORA!',
                         desc: alert.title,
                         time: 'ahora',
-                        color: '#ef4444',
+                        color: '#dc2626',
                         timestamp: alert.timestamp,
                         priority: 'critical',
                         score: 0,
@@ -7506,7 +7382,7 @@
                         title: change.playerName,
                         desc: `${change.position === 1 ? '¡NUEVO LÍDER!' : `Entra en el TOP ${change.position}`} del ranking`,
                         time: this.formatRelativeTime(change.timestamp),
-                        color: '#f59e0b',
+                        color: '#d97706',
                         timestamp: change.timestamp,
                         score: 0
                     });
@@ -7521,11 +7397,11 @@
 
                 if (top6.length === 0) {
                     return `
-                        <div style="text-align: center; padding: 40px 20px;">
-                            <div style="width: 60px; height: 60px; background: rgba(255,255,255,0.03); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
-                                <i class="fas fa-radar" style="color:rgba(255,255,255,0.2); font-size: 1.5rem; animation: pulseGlow 2s infinite;"></i>
+                        <div style="text-align: center; padding: 36px 20px; background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 14px;">
+                            <div style="width: 52px; height: 52px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;">
+                                <i class="fas fa-radar" style="color: #64748b; font-size: 1.3rem;"></i>
                             </div>
-                            <div style="color: rgba(255,255,255,0.3); font-size: 0.8rem; font-weight: 700; letter-spacing: 1px;">RADAR BUSCANDO ACTIVIDAD...</div>
+                            <div style="color: #475569; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.5px;">RADAR BUSCANDO ACTIVIDAD...</div>
                         </div>
                     `;
                 }
@@ -7536,27 +7412,27 @@
                 return `
                     <div style="position: relative;">
                         <div class="activity-timeline-line"></div>
-                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
                             ${alwaysVisible.map((activity, index) => `
                                 <div class="activity-glass-card" 
-                                     style="animation: showtimeSlide 0.6s both ${index * 0.12}s; color: ${activity.color};"
+                                     style="animation: showtimeSlide 0.5s both ${index * 0.1}s; color: ${activity.color};"
                                      onclick="${activity.action ? `window.Router.navigate('${activity.action.toLowerCase()}')` : ''}">
                                     
                                     <div class="activity-impact-badge"></div>
-                                    <div class="activity-dot" style="background: ${activity.color}; ${index === 0 ? 'animation: timelinePulse 1.5s infinite;' : ''}"></div>
+                                    <div class="activity-dot" style="background: ${activity.color}; ${index === 0 ? 'animation: timelinePulse 1.8s infinite;' : ''}"></div>
                                     
                                     <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; position: relative; z-index: 1;">
                                         <div style="flex: 1;">
-                                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                                                <span style="font-size: 0.95rem; font-weight: 1000; color: white; text-transform: uppercase; letter-spacing: -0.5px; font-style: italic;">${activity.title}</span>
-                                                ${activity.priority === 'critical' ? `<span style="background: #ef4444; color: white; font-size: 0.55rem; font-weight: 1000; padding: 2px 8px; border-radius: 4px; letter-spacing: 1px; animation: pulse 1s infinite; box-shadow: 0 0 15px #ef4444;">BREAKING</span>` : ''}
+                                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px;">
+                                                <span style="font-size: 0.92rem; font-weight: 950; color: #0f172a; text-transform: uppercase; letter-spacing: -0.3px;">${activity.title}</span>
+                                                ${activity.priority === 'critical' ? `<span style="background: #dc2626; color: #ffffff; font-size: 0.54rem; font-weight: 1000; padding: 2px 7px; border-radius: 4px; letter-spacing: 0.5px; animation: pulse 1s infinite; box-shadow: 0 2px 6px rgba(220, 38, 38, 0.35);">BREAKING</span>` : ''}
                                             </div>
-                                            <div style="font-size: 0.75rem; color: rgba(255,255,255,0.7); font-weight: 700; line-height: 1.5; letter-spacing: 0.2px;">${activity.desc}</div>
+                                            <div style="font-size: 0.76rem; color: #475569; font-weight: 700; line-height: 1.4;">${activity.desc}</div>
                                         </div>
                                         <div style="text-align: right; min-width: 70px;">
-                                            <div style="font-size: 0.6rem; color: ${activity.color}; font-weight: 1000; text-transform: uppercase; opacity: 0.8; letter-spacing: 1px;">${activity.time}</div>
+                                            <div style="font-size: 0.62rem; color: #64748b; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">${activity.time}</div>
                                             ${activity.action ? `
-                                                <div style="margin-top: 8px; font-size: 0.55rem; font-weight: 1000; color: #000; background: ${activity.color}; padding: 3px 10px; border-radius: 4px; display: inline-block; box-shadow: 0 4px 10px ${activity.color}40; transform: skewX(-10deg);">
+                                                <div style="margin-top: 6px; font-size: 0.58rem; font-weight: 950; color: #ffffff; background: #0f172a; padding: 3px 9px; border-radius: 6px; display: inline-block; box-shadow: 0 2px 6px rgba(15,23,42,0.18);">
                                                     ${activity.action.toUpperCase()}
                                                 </div>
                                             ` : ''}
@@ -7566,7 +7442,7 @@
                             `).join('')}
 
                             ${extended.length > 0 ? `
-                            <div id="activity-extended-container" style="display: none; flex-direction: column; gap: 12px;">
+                            <div id="activity-extended-container" style="display: none; flex-direction: column; gap: 10px;">
                                 ${extended.map((activity, index) => `
                                     <div class="activity-glass-card" 
                                          style="color: ${activity.color};"
@@ -7577,16 +7453,16 @@
                                         
                                         <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; position: relative; z-index: 1;">
                                             <div style="flex: 1;">
-                                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                                                    <span style="font-size: 0.95rem; font-weight: 1000; color: white; text-transform: uppercase; letter-spacing: -0.5px; font-style: italic;">${activity.title}</span>
-                                                    ${activity.priority === 'critical' ? `<span style="background: #ef4444; color: white; font-size: 0.55rem; font-weight: 1000; padding: 2px 8px; border-radius: 4px; letter-spacing: 1px; animation: pulse 1s infinite; box-shadow: 0 0 15px #ef4444;">BREAKING</span>` : ''}
+                                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px;">
+                                                    <span style="font-size: 0.92rem; font-weight: 950; color: #0f172a; text-transform: uppercase; letter-spacing: -0.3px;">${activity.title}</span>
+                                                    ${activity.priority === 'critical' ? `<span style="background: #dc2626; color: #ffffff; font-size: 0.54rem; font-weight: 1000; padding: 2px 7px; border-radius: 4px; letter-spacing: 0.5px; animation: pulse 1s infinite; box-shadow: 0 2px 6px rgba(220, 38, 38, 0.35);">BREAKING</span>` : ''}
                                                 </div>
-                                                <div style="font-size: 0.75rem; color: rgba(255,255,255,0.7); font-weight: 700; line-height: 1.5; letter-spacing: 0.2px;">${activity.desc}</div>
+                                                <div style="font-size: 0.76rem; color: #475569; font-weight: 700; line-height: 1.4;">${activity.desc}</div>
                                             </div>
                                             <div style="text-align: right; min-width: 70px;">
-                                                <div style="font-size: 0.6rem; color: ${activity.color}; font-weight: 1000; text-transform: uppercase; opacity: 0.8; letter-spacing: 1px;">${activity.time}</div>
+                                                <div style="font-size: 0.62rem; color: #64748b; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">${activity.time}</div>
                                                 ${activity.action ? `
-                                                    <div style="margin-top: 8px; font-size: 0.55rem; font-weight: 1000; color: #000; background: ${activity.color}; padding: 3px 10px; border-radius: 4px; display: inline-block; box-shadow: 0 4px 10px ${activity.color}40; transform: skewX(-10deg);">
+                                                    <div style="margin-top: 6px; font-size: 0.58rem; font-weight: 950; color: #ffffff; background: #0f172a; padding: 3px 9px; border-radius: 6px; display: inline-block; box-shadow: 0 2px 6px rgba(15,23,42,0.18);">
                                                         ${activity.action.toUpperCase()}
                                                     </div>
                                                 ` : ''}
@@ -7599,10 +7475,10 @@
                         </div>
 
                         ${extended.length > 0 ? `
-                        <div style="text-align: center; margin-top: 15px;">
+                        <div style="text-align: center; margin-top: 14px;">
                             <button onclick="event.stopPropagation(); window.DashboardView.toggleActivityFeed()" 
                                     id="activity-toggle-btn" 
-                                    style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: white; border-radius: 14px; padding: 10px 24px; font-size: 0.75rem; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;">
+                                    style="background: #ffffff; border: 1.5px solid #cbd5e1; color: #0f172a; border-radius: 12px; padding: 8px 22px; font-size: 0.72rem; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
                                 Ver más <i class="fas fa-chevron-down" id="activity-toggle-icon"></i>
                             </button>
                         </div>

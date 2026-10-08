@@ -14,29 +14,63 @@ window.PairsUI = {
         const container = document.getElementById(containerId);
         if (!container) return;
 
-        const event = await EventService.getById(eventType, eventId);
-        if (event.pair_mode !== 'fixed' && event.pair_mode !== 'fixed_admin' && event.pair_mode !== 'fixed_auto') {
+        let event = null;
+        try {
+            event = await EventService.getById(eventType, eventId);
+        } catch (e) {
+            console.warn("[PairsUI] Error loading event:", e);
+            return;
+        }
+        if (!event) return;
+
+        // Check active mode from live modal select or event data
+        const selectId = eventType === 'entreno' ? 'edit-entreno-pair-mode' : 'edit-americana-pair-mode';
+        const selectEl = document.getElementById(selectId);
+        const currentMode = (selectEl && selectEl.value) ? selectEl.value : (event.pair_mode || 'twister');
+
+        const isFixed = currentMode === 'fixed' ||
+            currentMode === 'fixed_admin' ||
+            currentMode === 'fixed_auto' ||
+            String(currentMode).toLowerCase().includes('fij') ||
+            (event.fixed_pairs && event.fixed_pairs.length > 0) ||
+            (event.players && event.players.some(p => p.partner_id || p.partner_name)) ||
+            (window.PreFlightRoundVerifier && window.PreFlightRoundVerifier.normalizePairMode(currentMode, event) === 'fixed') ||
+            (event.name && (event.name.toUpperCase().includes('FIJA') || event.name.toUpperCase().includes('FIJO')));
+
+        if (!isFixed) {
             container.style.display = 'none';
             return;
         }
 
         container.style.display = 'block';
         container.innerHTML = `
-            <div style="background: rgba(255,255,255,0.5); padding: 15px; border-radius: 12px; margin-top: 15px; border: 1px dashed #000000;">
-                <h4 style="margin:0 0 10px 0; color: #000000; font-weight:900;">🔐 GESTIÓN DE PAREJAS FIJAS</h4>
+            <div style="background: rgba(255,255,255,0.04); padding: 15px; border-radius: 12px; margin-top: 15px; border: 1px dashed rgba(204,255,0,0.35);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <h4 style="margin:0; color: #CCFF00; font-size:0.85rem; font-weight:900; letter-spacing:0.5px;">
+                        <i class="fas fa-user-friends"></i> PAREJAS FIJAS CONFIRMADAS
+                    </h4>
+                    <span id="pairs-count-${eventId}" style="font-size:0.75rem; color:#94a3b8; font-weight:700;"></span>
+                </div>
                 
                 <div id="pairs-list-${eventId}" style="margin-bottom: 15px;"></div>
                 
-                <div style="display:flex; gap:10px;">
-                     <select id="p1-${eventId}" class="pro-input" style="color:#000 !important; border:1px solid #ccc !important;"></select>
-                     <select id="p2-${eventId}" class="pro-input" style="color:#000 !important; border:1px solid #ccc !important;"></select>
-                     <button id="btn-add-pair-${eventId}" class="btn-primary-pro" style="padding: 0 15px;">➕</button>
+                <div style="background:rgba(0,0,0,0.3); padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.08); margin-bottom:10px;">
+                    <div style="font-size:0.7rem; color:#cbd5e1; font-weight:700; margin-bottom:6px; text-transform:uppercase;">
+                        👥 Formar Pareja desde Jugadores Inscritos:
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                         <select id="p1-${eventId}" class="pro-input" style="flex:1; font-size:0.75rem; padding:6px; color:#000 !important; background:#fff !important;"></select>
+                         <select id="p2-${eventId}" class="pro-input" style="flex:1; font-size:0.75rem; padding:6px; color:#000 !important; background:#fff !important;"></select>
+                         <button id="btn-add-pair-${eventId}" class="btn-primary-pro" title="Vincular Pareja" style="padding: 0 14px; font-weight:900; font-size:0.85rem; background:#CCFF00; color:#000; border:none; border-radius:6px; cursor:pointer;">➕</button>
+                    </div>
                 </div>
                 
-                <button id="btn-auto-pair-${eventId}" class="btn-outline-pro" style="width:100%; margin-top:10px; color:#000; border-color:#000;">⚡ AUTO-EMPAREJAR RESTANTES</button>
+                <button id="btn-auto-pair-${eventId}" class="btn-outline-pro" style="width:100%; margin-top:5px; font-size:0.75rem; font-weight:800; padding:8px 12px; border:1px solid rgba(204,255,0,0.4); color:#CCFF00; background:rgba(204,255,0,0.05); border-radius:6px; cursor:pointer;">
+                    ⚡ AUTO-EMPAREJAR RESTANTES
+                </button>
                 
                 <!-- REGEN BUTTON -->
-                <button id="btn-regen-${eventId}" class="btn-primary-pro" style="width:100%; margin-top:15px; background: #e67e22; border-color: #e67e22; color:#000;">
+                <button id="btn-regen-${eventId}" class="btn-primary-pro" style="width:100%; margin-top:10px; background: #e67e22; border:none; color:#fff; font-size:0.75rem; font-weight:800; padding:8px 12px; border-radius:6px; cursor:pointer;">
                     🎲 GUARDAR Y REGENERAR CRUCES
                 </button>
             </div>
@@ -50,41 +84,88 @@ window.PairsUI = {
         const listDiv = document.getElementById(`pairs-list-${eventId}`);
         const s1 = document.getElementById(`p1-${eventId}`);
         const s2 = document.getElementById(`p2-${eventId}`);
+        const countSpan = document.getElementById(`pairs-count-${eventId}`);
 
         if (!listDiv) return;
 
         const event = await EventService.getById(eventType, eventId);
-        const pairs = event.fixed_pairs || [];
         const players = event.players || [];
+        const existingPairs = event.fixed_pairs || [];
+
+        // Build deduplicated set of pairs from both fixed_pairs and player partner linkages
+        const pairsMap = new Map();
+
+        existingPairs.forEach(p => {
+            const p1Id = String(p.player1_id || (p.player1 && (p.player1.id || p.player1.uid)) || '');
+            const p2Id = String(p.player2_id || (p.player2 && (p.player2.id || p.player2.uid)) || '');
+            if (p1Id && p2Id) {
+                const key = [p1Id, p2Id].sort().join('___');
+                pairsMap.set(key, {
+                    id: p.id || `pair_${p1Id}_${p2Id}`,
+                    player1_id: p1Id,
+                    player2_id: p2Id,
+                    player1_name: p.player1_name || (p.player1 ? p.player1.name : 'Jugador 1'),
+                    player2_name: p.player2_name || (p.player2 ? p.player2.name : 'Jugador 2'),
+                    current_court: p.current_court || null
+                });
+            }
+        });
+
+        // Also discover any pairs defined directly in event.players
+        players.forEach(p => {
+            const pid = String(p.id || p.uid || '');
+            if (!pid) return;
+            const partnerId = String(p.partner_id || '');
+            const partner = players.find(x => {
+                const xid = String(x.id || x.uid || '');
+                return (partnerId && xid === partnerId) ||
+                    (p.partner_name && x.name && x.name.trim().toLowerCase() === p.partner_name.trim().toLowerCase());
+            });
+
+            if (partner) {
+                const partnerPid = String(partner.id || partner.uid || '');
+                if (partnerPid && partnerPid !== pid) {
+                    const key = [pid, partnerPid].sort().join('___');
+                    if (!pairsMap.has(key)) {
+                        pairsMap.set(key, {
+                            id: `pair_${pid}_${partnerPid}`,
+                            player1_id: pid,
+                            player2_id: partnerPid,
+                            player1_name: p.name || 'Jugador 1',
+                            player2_name: partner.name || 'Jugador 2',
+                            current_court: null
+                        });
+                    }
+                }
+            }
+        });
+
+        const allPairs = Array.from(pairsMap.values());
+        if (countSpan) countSpan.textContent = `${allPairs.length} pareja${allPairs.length === 1 ? '' : 's'}`;
 
         // 1. Render Pairs
-        if (pairs.length === 0) {
-            listDiv.innerHTML = '<div style="color:#000000; font-style:italic; font-weight:600;">Sin parejas definidas</div>';
+        if (allPairs.length === 0) {
+            listDiv.innerHTML = '<div style="color:#94a3b8; font-size:0.75rem; font-style:italic; padding:6px 0;">Sin parejas definidas aún</div>';
         } else {
-            listDiv.innerHTML = pairs.map((p, i) => {
-                // FALLBACK for old schema: p.player1.name
-                const p1Name = p.player1_name || (p.player1 ? p.player1.name : 'Unknown');
-                const p2Name = p.player2_name || (p.player2 ? p.player2.name : 'Unknown');
-                const courtInfo = p.current_court ? `<span style="font-size:0.7em; color:#888; margin-left:5px;">(Pista ${p.current_court})</span>` : '';
-
+            listDiv.innerHTML = allPairs.map((p, i) => {
+                const courtInfo = p.current_court ? `<span style="font-size:0.68rem; color:#38bdf8; background:rgba(56,189,248,0.15); padding:2px 6px; border-radius:4px; font-weight:800; margin-left:6px;">Pista ${p.current_court}</span>` : '';
                 return `
-                <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.05); padding:8px; margin-bottom:5px; border-radius:6px; border:1px solid rgba(0,0,0,0.1);">
-                    <span style="color:#000000; font-weight:700;">${p1Name} 🤝 ${p2Name} ${courtInfo}</span>
-                    <button onclick="window.PairsUI.removePair('${eventId}', '${eventType}', ${i})" style="color:#ef4444; background:none; border:none; cursor:pointer; font-weight:bold;">×</button>
+                <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.06); padding:8px 10px; margin-bottom:5px; border-radius:6px; border:1px solid rgba(255,255,255,0.08);">
+                    <span style="color:#ffffff; font-weight:700; font-size:0.78rem;">
+                        <i class="fas fa-link" style="color:#38bdf8; margin-right:6px;"></i> ${p.player1_name} 🤝 ${p.player2_name} ${courtInfo}
+                    </span>
+                    <button onclick="window.PairsUI.removePair('${eventId}', '${eventType}', '${p.player1_id}', '${p.player2_id}')" title="Desvincular pareja" style="color:#ef4444; background:none; border:none; cursor:pointer; font-size:0.9rem; padding:2px 6px;">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
                 </div>
             `}).join('');
         }
 
         // 2. Populate Selects (Available players only)
         const pairedIds = new Set();
-        pairs.forEach(p => {
-            // New Schema: player1_id
+        allPairs.forEach(p => {
             if (p.player1_id) pairedIds.add(String(p.player1_id));
             if (p.player2_id) pairedIds.add(String(p.player2_id));
-
-            // Old Schema fallback: player1.id
-            if (p.player1) pairedIds.add(String(p.player1.id || p.player1.uid));
-            if (p.player2) pairedIds.add(String(p.player2.id || p.player2.uid));
         });
 
         const seenIds = new Set();
@@ -95,13 +176,11 @@ window.PairsUI = {
             return true;
         });
 
-        // Sort available alphabet
         available.sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
 
-        const opts = `<option value="">Seleccionar...</option>` + available.map(p => {
-            const partnerInfo = p.partner_name ? ` (🤝 con ${p.partner_name})` : '';
-            const statusIcon = p.partner_id ? '⭐ ' : '';
-            return `<option value="${p.id || p.uid}">${statusIcon}${p.name}${partnerInfo}</option>`;
+        const opts = `<option value="">Seleccionar jugador...</option>` + available.map(p => {
+            const partnerInfo = p.partner_name ? ` (busca a ${p.partner_name})` : '';
+            return `<option value="${p.id || p.uid}">${p.name}${partnerInfo}</option>`;
         }).join('');
 
         if (s1) {
@@ -109,7 +188,6 @@ window.PairsUI = {
             s1.onchange = () => {
                 const p = available.find(x => String(x.id || x.uid) === s1.value);
                 if (p && p.partner_id && s2) {
-                    // Try to find if the partner exists in s2 options
                     const exists = [...s2.options].some(opt => opt.value === String(p.partner_id));
                     if (exists) s2.value = String(p.partner_id);
                 }
@@ -131,6 +209,7 @@ window.PairsUI = {
     async addPair(eventId, eventType) {
         const s1 = document.getElementById(`p1-${eventId}`);
         const s2 = document.getElementById(`p2-${eventId}`);
+        if (!s1 || !s2) return;
 
         const id1 = s1.value;
         const id2 = s2.value;
@@ -139,23 +218,29 @@ window.PairsUI = {
 
         const event = await EventService.getById(eventType, eventId);
         const players = event.players || [];
-        const p1 = players.find(p => String(p.id || p.uid) === id1);
-        const p2 = players.find(p => String(p.id || p.uid) === id2);
+        const p1Index = players.findIndex(p => String(p.id || p.uid) === id1);
+        const p2Index = players.findIndex(p => String(p.id || p.uid) === id2);
 
-        if (!p1 || !p2) return alert("Error al encontrar jugadores");
+        if (p1Index === -1 || p2Index === -1) return alert("Error al encontrar jugadores en el torneo");
 
-        // --- NEW SCHEMA (Matches FixedPairsLogic.js) ---
-        // Calc initial court: append to end. 
-        // Need to know current max court or just assign 0 and let logic sort it? 
-        // FixedPairsLogic assigns courts sequentially.
+        const p1 = players[p1Index];
+        const p2 = players[p2Index];
+
+        // Link in players array
+        players[p1Index].partner_id = id2;
+        players[p1Index].partner_name = p2.name;
+        players[p2Index].partner_id = id1;
+        players[p2Index].partner_name = p1.name;
+
+        // Link in fixed_pairs
         const currentPairs = event.fixed_pairs || [];
         const nextIndex = currentPairs.length * 2;
         const initialCourt = Math.floor(nextIndex / 4) + 1;
 
         const newPair = {
             id: `pair_${Date.now()}_manual`,
-            player1_id: p1.id || p1.uid,
-            player2_id: p2.id || p2.uid,
+            player1_id: id1,
+            player2_id: id2,
             player1_name: p1.name,
             player2_name: p2.name,
             pair_name: `${p1.name} / ${p2.name}`,
@@ -167,17 +252,63 @@ window.PairsUI = {
             initial_court: initialCourt
         };
 
-        await EventService.updateEvent(eventType, eventId, { fixed_pairs: [...currentPairs, newPair] });
-        this.renderList(eventId, eventType);
+        await EventService.updateEvent(eventType, eventId, {
+            players: players,
+            fixed_pairs: [...currentPairs, newPair],
+            pair_mode: 'fixed'
+        });
+
+        if (window.NotificationService) {
+            window.NotificationService.showToast(`Pareja creada: ${p1.name} 🤝 ${p2.name}`, 'success');
+        }
+
+        await this.renderList(eventId, eventType);
+        if (eventType === 'entreno' && window.loadEntrenoParticipantsUI) {
+            window.loadEntrenoParticipantsUI(eventId);
+        } else if (eventType === 'americana' && window.loadAmericanaParticipantsUI) {
+            window.loadAmericanaParticipantsUI(eventId);
+        }
     },
 
-    async removePair(eventId, eventType, index) {
-        if (!confirm("Eliminar pareja?")) return;
+    async removePair(eventId, eventType, p1Id, p2Id) {
+        if (!confirm("¿Desvincular esta pareja?")) return;
         const event = await EventService.getById(eventType, eventId);
+        const players = event.players || [];
         const pairs = event.fixed_pairs || [];
-        pairs.splice(index, 1);
-        await EventService.updateEvent(eventType, eventId, { fixed_pairs: pairs });
-        this.renderList(eventId, eventType);
+
+        // Unlink in players array
+        players.forEach(p => {
+            const pid = String(p.id || p.uid);
+            if (pid === String(p1Id) || pid === String(p2Id)) {
+                delete p.partner_id;
+                delete p.partner_name;
+            }
+        });
+
+        // Remove from fixed_pairs
+        const updatedPairs = pairs.filter(p => {
+            const pairP1 = String(p.player1_id || (p.player1 && (p.player1.id || p.player1.uid)) || '');
+            const pairP2 = String(p.player2_id || (p.player2 && (p.player2.id || p.player2.uid)) || '');
+            const matches = (pairP1 === String(p1Id) && pairP2 === String(p2Id)) ||
+                            (pairP1 === String(p2Id) && pairP2 === String(p1Id));
+            return !matches;
+        });
+
+        await EventService.updateEvent(eventType, eventId, {
+            players: players,
+            fixed_pairs: updatedPairs
+        });
+
+        if (window.NotificationService) {
+            window.NotificationService.showToast("Pareja desvinculada", "info");
+        }
+
+        await this.renderList(eventId, eventType);
+        if (eventType === 'entreno' && window.loadEntrenoParticipantsUI) {
+            window.loadEntrenoParticipantsUI(eventId);
+        } else if (eventType === 'americana' && window.loadAmericanaParticipantsUI) {
+            window.loadAmericanaParticipantsUI(eventId);
+        }
     },
 
     async autoPair(eventId, eventType) {
@@ -204,7 +335,6 @@ window.PairsUI = {
 
         if (available.length < 2) return alert("No hay suficientes jugadores libres para emparejar.");
 
-        // USE CORE LOGIC
         if (typeof FixedPairsLogic === 'undefined') {
             return alert("Error: FixedPairsLogic no está cargado");
         }
@@ -212,19 +342,9 @@ window.PairsUI = {
         // Generate new pairs using SMART logic
         const newPairs = FixedPairsLogic.createSmartFixedPairs(available, event.category);
 
-        // Adjust courts for new pairs?
-        // createFixedPairs starts at court 1. We need to offset if there are existing pairs.
         if (pairs.length > 0) {
-            // Find max court of existing
-            const maxCourt = pairs.reduce((max, p) => Math.max(max, p.current_court || 0), 0);
-
-            // Re-map new pairs courts
-            // Logic: new pairs append to the end
-            // But FixedPairsLogic logic is: i=0 -> court 1. 
-            // We need to shift i by existing count * 2
             const offset = pairs.length * 2;
             newPairs.forEach((p, idx) => {
-                // Re-calc court
                 const globIndex = offset + (idx * 2);
                 const newCourt = Math.floor(globIndex / 4) + 1;
                 p.current_court = newCourt;
@@ -232,8 +352,32 @@ window.PairsUI = {
             });
         }
 
-        await EventService.updateEvent(eventType, eventId, { fixed_pairs: [...pairs, ...newPairs] });
-        this.renderList(eventId, eventType);
+        // Also link in players array!
+        newPairs.forEach(pair => {
+            const pid1 = String(pair.player1_id);
+            const pid2 = String(pair.player2_id);
+            const p1 = (event.players || []).find(x => String(x.id || x.uid) === pid1);
+            const p2 = (event.players || []).find(x => String(x.id || x.uid) === pid2);
+            if (p1 && p2) {
+                p1.partner_id = pid2;
+                p1.partner_name = p2.name;
+                p2.partner_id = pid1;
+                p2.partner_name = p1.name;
+            }
+        });
+
+        await EventService.updateEvent(eventType, eventId, {
+            players: event.players,
+            fixed_pairs: [...pairs, ...newPairs],
+            pair_mode: 'fixed'
+        });
+
+        await this.renderList(eventId, eventType);
+        if (eventType === 'entreno' && window.loadEntrenoParticipantsUI) {
+            window.loadEntrenoParticipantsUI(eventId);
+        } else if (eventType === 'americana' && window.loadAmericanaParticipantsUI) {
+            window.loadAmericanaParticipantsUI(eventId);
+        }
     },
 
     async regenerate(eventId, eventType) {

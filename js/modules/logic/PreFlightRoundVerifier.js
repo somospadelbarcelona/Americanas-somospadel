@@ -32,6 +32,22 @@
             const format = String(eventData.format || '').trim().toLowerCase();
             const tournamentType = String(eventData.tournament_type || '').trim().toLowerCase();
 
+            // 0. Detección explícita de PAREJA FIJA (Máxima precedencia si el usuario lo configuró)
+            const isExplicitFixed = [
+                'fixed',
+                'fixed_pairs',
+                'fixed_admin',
+                'fixed_auto',
+                'fija',
+                'fijo',
+                'pareja_fija',
+                'parejas_fijas'
+            ].includes(raw);
+
+            if (isExplicitFixed) {
+                return 'fixed';
+            }
+
             // 1. Detección estricta de SUIZO
             if (
                 raw === 'swiss' ||
@@ -68,19 +84,7 @@
                 return 'twister';
             }
 
-            // 3. Detección de PAREJAS FIJAS
-            // Solo si NO es Twister ni Suizo, y explícitamente se configuró fija o el nombre es fija
-            const isExplicitFixed = [
-                'fixed',
-                'fixed_pairs',
-                'fixed_admin',
-                'fixed_auto',
-                'fija',
-                'fijo',
-                'pareja_fija',
-                'parejas_fijas'
-            ].includes(raw);
-
+            // 3. Detección de PAREJAS FIJAS por metadata/nombre
             const hasFixedInMeta = format.includes('fij') ||
                 tournamentType.includes('fij') ||
                 name.includes('FIJA') ||
@@ -88,7 +92,7 @@
                 name.includes('PAREJA FIJA') ||
                 !!eventData.is_fija;
 
-            if (isExplicitFixed || hasFixedInMeta) {
+            if (hasFixedInMeta) {
                 return 'fixed';
             }
 

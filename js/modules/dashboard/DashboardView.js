@@ -525,71 +525,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
 
 
 
-                    <!-- ⚖️ TARJETA OFICIAL: SISTEMA DE PUNTOS Y PONDERACIÓN DEL RANKING (COMPACTO & PROFESIONAL) -->
-                    <div id="points-policy-card-root" style="margin: 0 15px 14px !important; animation: floatUp 0.8s ease-out forwards;">
-                        <div style="
-                            background: linear-gradient(135deg, rgba(8, 14, 28, 0.95) 0%, rgba(15, 23, 42, 0.92) 100%);
-                            border: 1px solid rgba(56, 189, 248, 0.28);
-                            border-radius: 18px;
-                            padding: 12px 16px;
-                            position: relative;
-                            overflow: hidden;
-                            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px rgba(56, 189, 248, 0.08);
-                            color: #ffffff;
-                            font-family: 'Outfit', sans-serif;
-                        ">
-                            <!-- Top laser accent line -->
-                            <div style="position: absolute; top: 0; left: 0; right: 0; height: 2.5px; background: linear-gradient(90deg, #38bdf8, #CCFF00); border-radius: 18px 18px 0 0;"></div>
 
-                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
-                                <!-- Left: Info & Title -->
-                                <div style="flex: 1; min-width: 200px;">
-                                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
-                                        <span style="background: rgba(56, 189, 248, 0.14); color: #38bdf8; font-size: 0.60rem; font-weight: 950; padding: 2px 7px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.6px; border: 1px solid rgba(56, 189, 248, 0.3);">
-                                            ⚖️ REGLAMENTO OFICIAL
-                                        </span>
-                                        <span style="font-size: 0.62rem; color: #94a3b8; font-weight: 700;">• Entrenos & Americanas 1:1</span>
-                                    </div>
-                                    <div style="font-size: 0.92rem; font-weight: 950; color: #ffffff; letter-spacing: -0.2px; line-height: 1.25;">
-                                        Sistema de Puntos & Baremo de Ranking
-                                    </div>
-                                    <div style="font-size: 0.72rem; color: #cbd5e1; font-weight: 500; margin-top: 1px;">
-                                        100 pts (1º) • 80 pts (2º) • 65 pts (3º)... +2 pts por victoria (PG).
-                                    </div>
-                                </div>
-
-                                <!-- Right: Compact Action Button -->
-                                <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                                    <button 
-                                        type="button" 
-                                        onclick="window.showPointsPolicyModal ? window.showPointsPolicyModal() : null;" 
-                                        style="
-                                            background: #CCFF00;
-                                            color: #000000;
-                                            border: none;
-                                            padding: 8px 14px;
-                                            border-radius: 12px;
-                                            font-weight: 1000;
-                                            font-size: 0.76rem;
-                                            letter-spacing: 0.2px;
-                                            cursor: pointer;
-                                            display: inline-flex;
-                                            align-items: center;
-                                            gap: 6px;
-                                            box-shadow: 0 3px 12px rgba(204, 255, 0, 0.35);
-                                            transition: all 0.2s ease;
-                                            white-space: nowrap;
-                                            font-family: 'Outfit', sans-serif;
-                                        "
-                                        onmouseover="this.style.transform='scale(1.04)';"
-                                        onmouseout="this.style.transform='scale(1)';">
-                                        <i class="fas fa-balance-scale" style="font-size: 0.85rem;"></i>
-                                        <span>Ver Baremo & Simulador</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
                     <!-- STORIES TRASLADADO AL HEADER (#header-story-rotator) -->
                     <div id="story-feed-root" style="display:none !important; margin:0 !important; animation:floatUp 0.8s ease-out forwards; padding-top:2px;"></div>

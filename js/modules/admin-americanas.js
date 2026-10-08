@@ -864,6 +864,29 @@ window.updatePairModeHelper = function(selectEl, descContainerId) {
         container.style.borderLeftColor = '#38bdf8';
         container.style.background = 'rgba(56, 189, 248, 0.08)';
     }
+
+    // Auto-sync UI if inside edit modals
+    if (descContainerId === 'edit-americana-pair-mode-desc') {
+        const form = document.getElementById('edit-americana-form');
+        const eventId = form ? form.querySelector('[name=id]')?.value : null;
+        if (eventId) {
+            const pairsArea = document.getElementById('americana-fixed-pairs-area');
+            const isFixed = mode === 'fixed';
+            if (pairsArea) pairsArea.style.display = isFixed ? 'block' : 'none';
+            if (window.loadAmericanaParticipantsUI) window.loadAmericanaParticipantsUI(eventId);
+            if (isFixed && window.PairsUI) window.PairsUI.load('americana-fixed-pairs-area', eventId, 'americana');
+        }
+    } else if (descContainerId === 'edit-entreno-pair-mode-desc') {
+        const form = document.getElementById('edit-entreno-form');
+        const eventId = form ? form.querySelector('[name=id]')?.value : null;
+        if (eventId) {
+            const pairsArea = document.getElementById('entreno-fixed-pairs-area');
+            const isFixed = mode === 'fixed';
+            if (pairsArea) pairsArea.style.display = isFixed ? 'block' : 'none';
+            if (window.loadEntrenoParticipantsUI) window.loadEntrenoParticipantsUI(eventId);
+            if (isFixed && window.PairsUI) window.PairsUI.load('entreno-fixed-pairs-area', eventId, 'entreno');
+        }
+    }
 };
 
 window.setupClubsDatalist = function() {
@@ -1198,17 +1221,20 @@ window.openEditAmericanaModal = async (americana) => {
         }
     }
 
-    const togglePairsArea = () => {
+    const togglePairsArea = async () => {
+        const val = pairModeSelect?.value;
+        const isFixed = val === 'fixed' || (val && String(val).includes('fij'));
         if (pairsArea) {
-            const val = pairModeSelect?.value;
-            if (val === 'fixed') {
-                pairsArea.style.display = 'block';
-            } else {
-                pairsArea.style.display = 'none';
-            }
+            pairsArea.style.display = isFixed ? 'block' : 'none';
         }
         if (window.updatePairModeHelper) {
             window.updatePairModeHelper(pairModeSelect, 'edit-americana-pair-mode-desc');
+        }
+        if (window.loadAmericanaParticipantsUI) {
+            await window.loadAmericanaParticipantsUI(americana.id);
+        }
+        if (isFixed && window.PairsUI) {
+            await window.PairsUI.load('americana-fixed-pairs-area', americana.id, 'americana');
         }
     };
 
@@ -1412,11 +1438,37 @@ window.openAddPairToAmericanaSelector = async (eventId) => {
             await new Promise(r => setTimeout(r, 200));
             await ParticipantService.addPlayer(eventId, 'americana', p2);
 
+            try {
+                const event = await EventService.getById('americana', eventId);
+                const currentPairs = event.fixed_pairs || [];
+                const nextIndex = currentPairs.length * 2;
+                const initialCourt = Math.floor(nextIndex / 4) + 1;
+                const newPair = {
+                    id: `pair_${Date.now()}_manual`,
+                    player1_id: selected1.id,
+                    player2_id: selected2.id,
+                    player1_name: selected1.name,
+                    player2_name: selected2.name,
+                    pair_name: `${selected1.name} / ${selected2.name}`,
+                    wins: 0,
+                    losses: 0,
+                    games_won: 0,
+                    games_lost: 0,
+                    current_court: initialCourt,
+                    initial_court: initialCourt
+                };
+                await EventService.updateEvent('americana', eventId, {
+                    fixed_pairs: [...currentPairs, newPair],
+                    pair_mode: 'fixed'
+                });
+            } catch (syncErr) { console.warn("[Americana] sync fixed_pairs error:", syncErr); }
+
             if (window.NotificationService) {
                 window.NotificationService.showToast(`Pareja Creada: ${selected1.name} & ${selected2.name}`, "success");
             }
 
             window.loadAmericanaParticipantsUI(eventId);
+            if (window.PairsUI) window.PairsUI.load('americana-fixed-pairs-area', eventId, 'americana');
         }
 
     } catch (e) {
@@ -1466,11 +1518,35 @@ window.linkManualPartnerAmericana = async (eventId, playerId, playerName) => {
             players[p2Index].partner_id = playerId;
             players[p2Index].partner_name = playerName;
 
-            await FirebaseDB.americanas.update(eventId, { players: players });
+            // Also add to fixed_pairs
+            const currentPairs = event.fixed_pairs || [];
+            const nextIndex = currentPairs.length * 2;
+            const initialCourt = Math.floor(nextIndex / 4) + 1;
+            const newPair = {
+                id: `pair_${Date.now()}_manual`,
+                player1_id: playerId,
+                player2_id: selected.id,
+                player1_name: playerName,
+                player2_name: selected.name,
+                pair_name: `${playerName} / ${selected.name}`,
+                wins: 0,
+                losses: 0,
+                games_won: 0,
+                games_lost: 0,
+                current_court: initialCourt,
+                initial_court: initialCourt
+            };
+
+            await EventService.updateEvent('americana', eventId, {
+                players: players,
+                fixed_pairs: [...currentPairs, newPair],
+                pair_mode: 'fixed'
+            });
 
             if (window.NotificationService) window.NotificationService.showToast("Pareja vinculada correctamente", "success");
 
             window.loadAmericanaParticipantsUI(eventId);
+            if (window.PairsUI) window.PairsUI.load('americana-fixed-pairs-area', eventId, 'americana');
         }
 
     } catch (e) {
@@ -1517,13 +1593,17 @@ window.loadAmericanaParticipantsUI = async (id) => {
                 return parse(a.joinedAt) - parse(b.joinedAt);
             });
 
-        let isFixedMode = false;
-        if (window.PreFlightRoundVerifier) {
-            isFixedMode = window.PreFlightRoundVerifier.normalizePairMode(event.pair_mode, event) === 'fixed';
-        } else {
-            isFixedMode = (event.pair_mode && event.pair_mode.includes('fixed')) ||
-                (event.fixed_pairs && event.fixed_pairs.length > 0) ||
-                (event.name && (event.name.toUpperCase().includes('FIJA') || event.name.toUpperCase().includes('FIJO')));
+        const liveSelect = document.getElementById('edit-americana-pair-mode');
+        const activeMode = (liveSelect && liveSelect.value) ? liveSelect.value : (event.pair_mode || 'twister');
+
+        let isFixedMode = (activeMode === 'fixed') ||
+            String(activeMode || '').includes('fij') ||
+            (event.pair_mode && (event.pair_mode.includes('fixed') || event.pair_mode.includes('fij'))) ||
+            (event.fixed_pairs && event.fixed_pairs.length > 0) ||
+            (event.players && event.players.some(p => p.partner_id || p.partner_name)) ||
+            (event.name && (event.name.toUpperCase().includes('FIJA') || event.name.toUpperCase().includes('FIJO')));
+        if (!isFixedMode && window.PreFlightRoundVerifier) {
+            isFixedMode = window.PreFlightRoundVerifier.normalizePairMode(activeMode, event) === 'fixed';
         }
 
         list.innerHTML = `
@@ -1684,7 +1764,7 @@ window.loadAmericanaParticipantsUI = async (id) => {
                             </div>
                         </div>
                         <div style="display:flex; gap:4px; align-items:center;">
-                            ${(event.pair_mode && event.pair_mode.includes('fixed') && !hasMissingPartner) ?
+                            ${(isFixedMode) ?
                                 `<button onclick="window.linkManualPartnerAmericana('${id}', '${pid}', '${playerName}')" title="Vincular pareja manual" style="background:rgba(59, 130, 246, 0.1); border:1px solid #3b82f6; color:#3b82f6; border-radius:6px; cursor:pointer; font-size:0.8rem; padding:6px 10px;"><i class="fas fa-handshake"></i></button>` : ''}
                             <button onclick="window.removeAmericanaPlayer('${id}', '${pid}')" title="BORRAR JUGADOR" style="background:rgba(239, 68, 68, 0.1); border:1px solid #ef4444; color:#ef4444; border-radius:10px; cursor:pointer; font-size:0.85rem; padding:8px 12px; font-weight: 800;"><i class="fas fa-trash-alt"></i> ELIMINAR</button>
                         </div>
