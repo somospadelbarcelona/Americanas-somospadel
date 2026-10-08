@@ -658,20 +658,31 @@ window.WhatsAppService = {
         const promo = (options.promo || '').trim();
         const footer = options.footer !== undefined ? options.footer : '⚡ ¡Elige tu turno y asegura tu plaza antes de que vuelen!';
 
-        // Agrupar eventos por fecha
+        const normalizeDate = (d) => {
+            if (!d) return '';
+            const s = String(d).trim();
+            if (s.includes('/')) {
+                const p = s.split('/');
+                if (p[0].length === 2 && p[2]?.length === 4) {
+                    return `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`;
+                }
+                if (p[0].length === 4) {
+                    return `${p[0]}-${p[1].padStart(2, '0')}-${p[2].padStart(2, '0')}`;
+                }
+            }
+            return s;
+        };
+
+        // Agrupar eventos por fecha normalizada
         const groups = {};
         events.forEach(evt => {
-            const d = evt.date || 'Sin fecha';
+            const d = normalizeDate(evt.date) || 'Sin fecha';
             if (!groups[d]) groups[d] = [];
             groups[d].push(evt);
         });
 
         // Ordenar fechas cronológicamente
-        const sortedDates = Object.keys(groups).sort((a, b) => {
-            const da = new Date(a.includes('/') ? a.split('/').reverse().join('-') : a);
-            const db = new Date(b.includes('/') ? b.split('/').reverse().join('-') : b);
-            return da - db;
-        });
+        const sortedDates = Object.keys(groups).sort((a, b) => a.localeCompare(b));
 
         const topHeader = `🎾 *SOMOSPADEL BCN | EVENTOS*\n\n📲 Inscripciones abiertas para próximas americanas. Consulta plazas y apúntate desde la App Oficial:\n`;
 
@@ -840,15 +851,43 @@ window.WhatsAppService = {
             }
         } catch (e) {}
 
-        events = events.filter(e => e && e.status !== 'finished' && e.status !== 'cancelado');
+        // 2. Normalización de fecha y filtrado estricto: SOLO HOY O DÍAS FUTUROS Y ABIERTOS
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-        events.sort((a, b) => {
-            const da = new Date(a.date ? (a.date.includes('/') ? a.date.split('/').reverse().join('-') : a.date) : 0);
-            const db = new Date(b.date ? (b.date.includes('/') ? b.date.split('/').reverse().join('-') : b.date) : 0);
-            return da - db;
+        const normalizeDate = (d) => {
+            if (!d) return '';
+            const s = String(d).trim();
+            if (s.includes('/')) {
+                const p = s.split('/');
+                if (p[0].length === 2 && p[2]?.length === 4) {
+                    return `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`;
+                }
+                if (p[0].length === 4) {
+                    return `${p[0]}-${p[1].padStart(2, '0')}-${p[2].padStart(2, '0')}`;
+                }
+            }
+            return s;
+        };
+
+        // EXCLUIR terminados, cancelados Y DÍAS ANTERIORES A HOY
+        events = events.filter(e => {
+            if (!e) return false;
+            if (e.status === 'finished' || e.status === 'cancelado' || e.status === 'closed') return false;
+            const evtDate = normalizeDate(e.date);
+            if (!evtDate) return false;
+            // Solo eventos desde HOY en adelante
+            return evtDate >= todayStr;
         });
 
-        // Eventos seleccionados por defecto (Set con IDs)
+        // Ordenar cronológicamente (los más próximos primero)
+        events.sort((a, b) => {
+            const da = normalizeDate(a.date) + ' ' + (a.time || '00:00');
+            const db = normalizeDate(b.date) + ' ' + (b.time || '00:00');
+            return da.localeCompare(db);
+        });
+
+        // Eventos seleccionados por defecto (SOLO los próximos activos)
         const selectedIds = new Set(events.map(e => String(e.id || e._id)));
 
         // Sugerencias IA
