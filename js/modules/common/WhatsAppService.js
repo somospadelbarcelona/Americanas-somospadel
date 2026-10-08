@@ -643,6 +643,346 @@ window.WhatsAppService = {
             console.error("❌ Error en envío automatizado:", e);
             return { success: false, error: e.message };
         }
+    },
+
+    /**
+     * =========================================================================
+     * 📢 CARTELERA MULTI-EVENTO / MENÚ DEL DÍA (WHATSAPP BROADCAST PRO)
+     * Genera mensajes agrupados por fecha con estado de plazas en directo y enlaces limpios
+     * =========================================================================
+     */
+    generateCarteleraBroadcast(events, options = {}) {
+        if (!events || events.length === 0) return '';
+
+        const header = options.header !== undefined ? options.header : '🚨🎾 ¡HOY TODO SOLD OUT… RESERVA TU TURNO DE MAÑANA! 🎾🚨';
+        const promo = options.promo !== undefined ? options.promo : '🎁 ¡ÚLTIMO DÍA DE SORTEO!\nApúntate antes de las 22:00 y entrarás en el sorteo de 1 americana gratis 🍀';
+        const footer = options.footer !== undefined ? options.footer : '⚡ ¡Elige tu turno y asegura tu plaza antes de que vuelen!';
+
+        // Agrupar eventos por fecha
+        const groups = {};
+        events.forEach(evt => {
+            const d = evt.date || 'Sin fecha';
+            if (!groups[d]) groups[d] = [];
+            groups[d].push(evt);
+        });
+
+        // Ordenar fechas cronológicamente
+        const sortedDates = Object.keys(groups).sort((a, b) => {
+            const da = new Date(a.includes('/') ? a.split('/').reverse().join('-') : a);
+            const db = new Date(b.includes('/') ? b.split('/').reverse().join('-') : b);
+            return da - db;
+        });
+
+        let msg = `${header}\n\n`;
+        if (promo && promo.trim()) {
+            msg += `${promo.trim()}\n\n`;
+        }
+
+        const now = new Date();
+        const todayStr = now.toISOString().split('T')[0];
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+        const daysOfWeek = ['DOMINGO', 'LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO'];
+
+        sortedDates.forEach((dateKey) => {
+            const evts = groups[dateKey];
+            evts.sort((a, b) => String(a.time || '00:00').localeCompare(String(b.time || '00:00')));
+
+            let dateLabel = dateKey;
+            try {
+                const normDate = dateKey.includes('/') ? dateKey.split('/').reverse().join('-') : dateKey;
+                const dObj = new Date(normDate + 'T00:00:00');
+                const dayName = daysOfWeek[dObj.getDay()];
+                if (normDate === todayStr) {
+                    dateLabel = `HOY ${dayName}`;
+                } else if (normDate === tomorrowStr) {
+                    dateLabel = `MAÑANA ${dayName}`;
+                } else {
+                    dateLabel = `${dayName} ${dObj.getDate()}/${dObj.getMonth() + 1}`;
+                }
+            } catch (e) {
+                dateLabel = dateKey;
+            }
+
+            msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
+            msg += `📅 *${dateLabel}*\n`;
+            msg += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+            evts.forEach(e => {
+                const name = (e.name || 'Torneo SomosPadel').trim();
+                const upperName = name.toUpperCase();
+                const time = e.time || '10:00';
+                const location = (e.location || e.sede || e.club || 'SomosPadel BCN').trim();
+                const price = e.price_external || e.price_members || e.price || 10;
+                const isEntreno = e.type === 'entreno' || upperName.includes('ENTRENO');
+
+                // Emoji dinámico por franja horaria / modalidad
+                let icon = '🎾';
+                if (upperName.includes('JAMON') || upperName.includes('JAMÓN')) icon = '🥓';
+                else if (upperName.includes('VERMUT') || upperName.includes('VERMÚ')) icon = '🍸';
+                else if (isEntreno) icon = '🏋️‍♂️';
+                else {
+                    const hour = parseInt((time.split(':')[0] || '10'), 10);
+                    if (hour < 12) icon = '🌅';
+                    else if (hour < 16) icon = '☀️';
+                    else if (hour < 20) icon = '🌆';
+                    else icon = '🌙';
+                }
+
+                // Cálculo de ocupación
+                const courts = parseInt(e.max_courts || e.courts || 4, 10);
+                const maxPlayers = courts * 4;
+                const playersCount = (e.players || e.registeredPlayers || []).length;
+                const spotsLeft = Math.max(0, maxPlayers - playersCount);
+
+                msg += `${icon} *${time}* · *${name}*\n`;
+                msg += `📍 ${location} · ${price} €\n`;
+
+                const link = this.getEventCanonicalUrl(e);
+
+                if (spotsLeft === 0) {
+                    msg += `⛔ *SOLD OUT*\n\n`;
+                } else if (spotsLeft === 1) {
+                    msg += `🔥 *¡ÚLTIMA PLAZA DISPONIBLE!*\n`;
+                    msg += `👉 ${link}\n\n`;
+                } else if (spotsLeft <= 3) {
+                    msg += `⚡ *¡Últimas ${spotsLeft} plazas!*\n`;
+                    msg += `👉 ${link}\n\n`;
+                } else {
+                    msg += `✅ *Plazas disponibles*\n`;
+                    msg += `👉 ${link}\n\n`;
+                }
+            });
+        });
+
+        if (footer && footer.trim()) {
+            msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
+            msg += `${footer.trim()}\n`;
+        }
+
+        return msg;
+    },
+
+    /**
+     * Abre el modal visual para configurar y enviar la cartelera multi-torneo
+     */
+    async openCarteleraModal() {
+        // Eliminar modal previo si existe
+        const oldModal = document.getElementById('sp-cartelera-modal-root');
+        if (oldModal) oldModal.remove();
+
+        // 1. Obtener eventos activos
+        let events = [];
+        try {
+            if (window._currentAmericanasCache && window._currentAmericanasCache.length > 0) {
+                events = [...window._currentAmericanasCache];
+            } else if (window.EventService && window.AppConstants) {
+                events = await window.EventService.getAll(window.AppConstants.EVENT_TYPES.AMERICANA);
+            } else if (window.FirebaseDB?.americanas) {
+                events = await window.FirebaseDB.americanas.getAll();
+            }
+        } catch (e) {
+            console.warn("Error cargando americanas para cartelera:", e);
+        }
+
+        // Cargar entrenos también si están disponibles
+        try {
+            if (window.FirebaseDB?.entrenos) {
+                const entrenos = await window.FirebaseDB.entrenos.getAll();
+                if (Array.isArray(entrenos)) {
+                    events = [...events, ...entrenos.map(x => ({ ...x, type: 'entreno' }))];
+                }
+            }
+        } catch (e) {}
+
+        // Filtrar solo eventos no finalizados
+        events = events.filter(e => e && e.status !== 'finished' && e.status !== 'cancelado');
+
+        // Ordenar cronológicamente
+        events.sort((a, b) => {
+            const da = new Date(a.date ? (a.date.includes('/') ? a.date.split('/').reverse().join('-') : a.date) : 0);
+            const db = new Date(b.date ? (b.date.includes('/') ? b.date.split('/').reverse().join('-') : b.date) : 0);
+            return da - db;
+        });
+
+        const modal = document.createElement('div');
+        modal.id = 'sp-cartelera-modal-root';
+        modal.style.cssText = `
+            position: fixed; inset: 0; background: rgba(3, 7, 18, 0.94);
+            backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+            z-index: 999999; display: flex; align-items: center; justify-content: center;
+            padding: 16px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            animation: fadeIn 0.2s ease-out;
+        `;
+
+        modal.innerHTML = `
+            <div style="background: #0b101b; width: 100%; max-width: 820px; max-height: 92vh; border-radius: 24px; border: 1.5px solid rgba(37, 211, 102, 0.35); box-shadow: 0 25px 60px rgba(0,0,0,0.8); display: flex; flex-direction: column; overflow: hidden; color: #fff;">
+                
+                <!-- HEADER -->
+                <div style="padding: 18px 24px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: space-between; background: linear-gradient(90deg, rgba(37, 211, 102, 0.15), rgba(204, 255, 0, 0.05));">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 40px; height: 40px; border-radius: 12px; background: #25D366; display: flex; align-items: center; justify-content: center; color: #000; font-size: 1.3rem;">
+                            <i class="fab fa-whatsapp"></i>
+                        </div>
+                        <div>
+                            <div style="font-weight: 900; font-size: 1.15rem; color: #fff;">CARTELERA DE TORNEOS (WHATSAPP)</div>
+                            <div style="font-size: 0.78rem; color: #94a3b8;">Genera y comparte el menú de convocatorias con enlaces a somospadel.eu</div>
+                        </div>
+                    </div>
+                    <button id="sp-cartelera-close-btn" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; width: 34px; height: 34px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem;">
+                        ✕
+                    </button>
+                </div>
+
+                <!-- BODY (Dos Columnas: Configuración & Preview) -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 20px; overflow-y: auto; flex: 1;">
+                    
+                    <!-- COLUMNA IZQUIERDA: CONFIGURACIÓN -->
+                    <div style="display: flex; flex-direction: column; gap: 14px;">
+                        <div>
+                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #25D366; margin-bottom: 6px;">
+                                🚨 TITULAR GANCHO:
+                            </label>
+                            <input id="sp-cart-header" type="text" value="🚨🎾 ¡HOY TODO SOLD OUT… RESERVA TU TURNO DE MAÑANA! 🎾🚨" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; color: #fff; padding: 10px; font-size: 0.85rem;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #CCFF00; margin-bottom: 6px;">
+                                🎁 SORTEO / ANUNCIO DESTACADO (Opcional):
+                            </label>
+                            <textarea id="sp-cart-promo" rows="3" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; color: #fff; padding: 10px; font-size: 0.82rem; resize: vertical;">🎁 ¡ÚLTIMO DÍA DE SORTEO!
+Apúntate antes de las 22:00 y entrarás en el sorteo de 1 americana gratis 🍀</textarea>
+                        </div>
+
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <label style="font-size: 0.8rem; font-weight: 700; color: #38bdf8;">
+                                    🎾 EVENTOS A INCLUIR (${events.length}):
+                                </label>
+                                <span style="font-size: 0.72rem; color: #94a3b8; cursor: pointer; text-decoration: underline;" id="sp-toggle-all-events">Seleccionar todos</span>
+                            </div>
+                            <div id="sp-cart-events-list" style="max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 8px;">
+                                ${events.length === 0 ? '<div style="color:#94a3b8; font-size:0.8rem; text-align:center; padding:15px;">No hay eventos activos programados.</div>' : ''}
+                                ${events.map((e, idx) => {
+                                    const courts = parseInt(e.max_courts || e.courts || 4, 10);
+                                    const maxP = courts * 4;
+                                    const pCount = (e.players || e.registeredPlayers || []).length;
+                                    const isSoldOut = pCount >= maxP;
+                                    const badge = isSoldOut ? '⛔ SOLD OUT' : `✅ ${pCount}/${maxP}`;
+                                    return `
+                                        <label style="display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.03); padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 0.8rem;">
+                                            <input type="checkbox" class="sp-cart-evt-cb" data-event-id="${e.id || e._id}" checked style="accent-color: #25D366; width: 16px; height: 16px;">
+                                            <div style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                                <strong style="color: #fff;">${e.date || ''} ${e.time || ''}</strong> · ${e.name || 'Torneo'}
+                                            </div>
+                                            <span style="font-size: 0.72rem; padding: 2px 6px; border-radius: 6px; background: ${isSoldOut ? 'rgba(239,68,68,0.2)' : 'rgba(37,211,102,0.2)'}; color: ${isSoldOut ? '#ef4444' : '#25D366'}; font-weight: 700;">
+                                                ${badge}
+                                            </span>
+                                        </label>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #94a3b8; margin-bottom: 6px;">
+                                ⚡ CIERRE / LLAMADA A LA ACCIÓN:
+                            </label>
+                            <input id="sp-cart-footer" type="text" value="⚡ ¡Elige tu turno y asegura tu plaza antes de que vuelen!" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; color: #fff; padding: 10px; font-size: 0.85rem;">
+                        </div>
+                    </div>
+
+                    <!-- COLUMNA DERECHA: PREVISUALIZACIÓN -->
+                    <div style="display: flex; flex-direction: column;">
+                        <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #a78bfa; margin-bottom: 6px;">
+                            📱 VISTA PREVIA (WHATSAPP):
+                        </label>
+                        <textarea id="sp-cart-preview" readonly style="flex: 1; min-height: 380px; width: 100%; box-sizing: border-box; background: #070d19; border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; color: #e2e8f0; font-family: monospace; font-size: 0.82rem; padding: 14px; line-height: 1.5; resize: none;"></textarea>
+                    </div>
+                </div>
+
+                <!-- FOOTER ACTIONS -->
+                <div style="padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.08); background: #070d19; display: flex; justify-content: flex-end; gap: 12px; align-items: center;">
+                    <button id="sp-cart-copy-btn" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-weight: 800; padding: 12px 20px; border-radius: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem;">
+                        <i class="far fa-copy"></i> COPIAR TEXTO
+                    </button>
+                    <button id="sp-cart-send-btn" style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); border: none; color: #fff; font-weight: 900; padding: 12px 26px; border-radius: 14px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 0.95rem; box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);">
+                        <i class="fab fa-whatsapp" style="font-size: 1.2rem;"></i> ABRIR EN WHATSAPP
+                    </button>
+                </div>
+
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Controladores de actualización
+        const updatePreview = () => {
+            const h = document.getElementById('sp-cart-header').value;
+            const p = document.getElementById('sp-cart-promo').value;
+            const f = document.getElementById('sp-cart-footer').value;
+
+            const checkedIds = new Set(
+                Array.from(document.querySelectorAll('.sp-cart-evt-cb:checked')).map(cb => cb.dataset.eventId)
+            );
+
+            const selectedEvents = events.filter(e => checkedIds.has(e.id || e._id));
+            const msg = window.WhatsAppService.generateCarteleraBroadcast(selectedEvents, {
+                header: h,
+                promo: p,
+                footer: f
+            });
+
+            document.getElementById('sp-cart-preview').value = msg;
+        };
+
+        // Event Listeners
+        document.getElementById('sp-cartelera-close-btn').onclick = () => modal.remove();
+        document.getElementById('sp-cart-header').oninput = updatePreview;
+        document.getElementById('sp-cart-promo').oninput = updatePreview;
+        document.getElementById('sp-cart-footer').oninput = updatePreview;
+        document.querySelectorAll('.sp-cart-evt-cb').forEach(cb => cb.onchange = updatePreview);
+
+        document.getElementById('sp-toggle-all-events').onclick = () => {
+            const cbs = document.querySelectorAll('.sp-cart-evt-cb');
+            const anyUnchecked = Array.from(cbs).some(c => !c.checked);
+            cbs.forEach(c => c.checked = anyUnchecked);
+            updatePreview();
+        };
+
+        // Botón Copiar
+        document.getElementById('sp-cart-copy-btn').onclick = async () => {
+            const text = document.getElementById('sp-cart-preview').value;
+            if (!text) return;
+            try {
+                if (navigator.clipboard?.writeText) {
+                    await navigator.clipboard.writeText(text);
+                } else {
+                    const el = document.getElementById('sp-cart-preview');
+                    el.select();
+                    document.execCommand('copy');
+                }
+                const btn = document.getElementById('sp-cart-copy-btn');
+                const orig = btn.innerHTML;
+                btn.innerHTML = '✅ ¡COPIADO!';
+                setTimeout(() => { btn.innerHTML = orig; }, 2000);
+            } catch (err) {
+                alert('Texto copiado al portapapeles');
+            }
+        };
+
+        // Botón Enviar WhatsApp
+        document.getElementById('sp-cart-send-btn').onclick = () => {
+            const text = document.getElementById('sp-cart-preview').value;
+            if (!text) return;
+            const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+            window.WhatsAppService._openUrlSafely(url);
+        };
+
+        // Render inicial
+        updatePreview();
     }
 };
 

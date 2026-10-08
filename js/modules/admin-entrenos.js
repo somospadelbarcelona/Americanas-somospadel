@@ -87,6 +87,16 @@ window.AdminViews.entrenos_mgmt = async function () {
         content.innerHTML = `
             <div class="planning-area" id="entrenos-planning-area" style="display: flex; flex-direction: column; height: calc(100vh - 140px);">
                 
+                <!-- ACTION HEADER BAR -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
+                    <div style="font-size: 1.1rem; font-weight: 900; color: #fff; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-dumbbell" style="color: var(--accent);"></i> ENTRENOS PROGRAMADOS
+                    </div>
+                    <button class="btn-primary-pro" onclick="window.WhatsAppService.openCarteleraModal()" style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); color: #fff; font-weight: 900; border: none; padding: 10px 18px; border-radius: 14px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4); font-size: 0.88rem;">
+                        <i class="fab fa-whatsapp" style="font-size: 1.15rem;"></i> 📢 CARTELERA MULTI-TORNEO (WHATSAPP)
+                    </button>
+                </div>
+
                 <!-- FILTER BAR -->
                 <div class="filter-bar-pro" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1.5rem; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); align-items: center;">
                     <div style="position:relative; grid-column: span 2;">
