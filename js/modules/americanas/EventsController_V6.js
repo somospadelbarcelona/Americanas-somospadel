@@ -259,8 +259,8 @@
                     searchQuery: ''
                 },
                 viewMode: (() => {
-                    try { localStorage.setItem('sp_events_view_mode', 'compact'); } catch(e) {}
-                    return 'compact';
+                    try { localStorage.setItem('sp_events_view_mode', 'detailed'); } catch(e) {}
+                    return 'detailed';
                 })(),
                 expandedCards: new Set(),
                 collapsedCards: new Set(),
@@ -3569,31 +3569,31 @@
                     background: ${cardBg};
                     border-radius: 20px;
                     overflow: hidden;
-                    margin-bottom: 12px;
+                    margin-bottom: 26px;
                     border: ${cardBorder};
-                    box-shadow: ${cardGlow};
+                    box-shadow: ${cardGlow}, 0 10px 28px rgba(15, 23, 42, 0.14), 0 2px 6px rgba(15, 23, 42, 0.08);
                     font-family: 'Outfit', sans-serif;
                     position: relative;
                     transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease;
                 ">
                     <!-- ACCENT STRIPE -->
-                    <div style="height: 3.5px; background: ${themeColor}; opacity: 0.95;"></div>
+                    <div style="height: 6px; background: ${themeColor}; opacity: 1;"></div>
 
                     <div style="display: flex; flex-direction: column;">
                         
                         <!-- IMAGE AREA -->
                         <div onclick="event.stopPropagation(); window.EventsController.openPosterModal('${(evt.image_url || 'img/padel-event.jpg').replace(/'/g, "\\'")}', '${(evt.name || '').replace(/'/g, "\\'")}', '${(evt.sede || evt.location || '').replace(/'/g, "\\'")}')" 
                              title="Toca para ver el Cartel Oficial"
-                             style="height: 136px; background: url('${(evt.image_url || 'img/padel-event.jpg').replace(/ /g, '%20')}') no-repeat center/cover; position: relative; cursor: pointer;">
+                             style="height: 160px; background: url('${(evt.image_url || 'img/padel-event.jpg').replace(/ /g, '%20')}') no-repeat center/cover; position: relative; cursor: pointer;">
                             <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(15,23,42,0.18) 0%, rgba(15,23,42,0.45) 60%, rgba(15,23,42,0.82) 100%);"></div>
                             
                             <!-- TOP BAR OVER IMAGE: DATE (LEFT) & DUAL PRICE (RIGHT) -->
                             <div style="position: absolute; top: 10px; left: 10px; right: 10px; display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; z-index: 10; pointer-events: none;">
                                 <!-- Left: Date & Status -->
                                 <div style="display: flex; align-items: center; gap: 6px; pointer-events: auto;">
-                                    <div style="background: rgba(255, 255, 255, 0.95); width: 44px; height: 46px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1.5px solid rgba(226,232,240,0.9); backdrop-filter: blur(12px); box-shadow: 0 4px 15px rgba(0,0,0,0.18);">
-                                        <span style="font-size: 0.52rem; font-weight: 900; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">${dayName}</span>
-                                        <span style="font-size: 1.25rem; font-weight: 950; color: #0f172a; line-height: 1;">${dayNum}</span>
+                                    <div style="background: rgba(255, 255, 255, 0.95); width: 50px; height: 54px; border-radius: 13px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1.5px solid rgba(226,232,240,0.9); backdrop-filter: blur(12px); box-shadow: 0 4px 15px rgba(0,0,0,0.18);">
+                                        <span style="font-size: 0.60rem; font-weight: 900; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">${dayName}</span>
+                                        <span style="font-size: 1.45rem; font-weight: 950; color: #0f172a; line-height: 1;">${dayNum}</span>
                                     </div>
                                     ${evt.normDate === this.getTodayStr() ? `
                                         <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #ffffff; padding: 4px 8px; border-radius: 8px; font-size: 0.6rem; font-weight: 950; display: inline-flex; align-items: center; gap: 3px; box-shadow: 0 3px 10px rgba(245, 158, 11, 0.35); animation: pulse 1.8s infinite;">
@@ -3608,36 +3608,36 @@
                                 </div>
 
                                 <!-- Right: Dual Price Badge -->
-                                <div style="background: rgba(255, 255, 255, 0.95); border-radius: 11px; padding: 4px 8px; border: 1.5px solid rgba(226,232,240,0.9); display: flex; align-items: center; gap: 6px; backdrop-filter: blur(12px); box-shadow: 0 4px 15px rgba(0,0,0,0.18); flex-shrink: 0; pointer-events: auto;">
+                                <div style="background: rgba(255, 255, 255, 0.95); border-radius: 12px; padding: 5px 10px; border: 1.5px solid rgba(226,232,240,0.9); display: flex; align-items: center; gap: 6px; backdrop-filter: blur(12px); box-shadow: 0 4px 15px rgba(0,0,0,0.18); flex-shrink: 0; pointer-events: auto;">
                                     <div style="display: flex; flex-direction: column; align-items: center; line-height: 1;">
-                                        <span style="font-size: 0.46rem; font-weight: 900; color: #15803d; text-transform: uppercase; letter-spacing: 0.3px;">SOCIO</span>
-                                        <span style="font-size: 0.78rem; font-weight: 950; color: #16a34a; margin-top: 2px;">${numSoc}€</span>
+                                        <span style="font-size: 0.52rem; font-weight: 900; color: #15803d; text-transform: uppercase; letter-spacing: 0.3px;">SOCIO</span>
+                                        <span style="font-size: 0.90rem; font-weight: 950; color: #16a34a; margin-top: 2px;">${numSoc}€</span>
                                     </div>
                                     <div style="width: 1px; height: 16px; background: #cbd5e1;"></div>
                                     <div style="display: flex; flex-direction: column; align-items: center; line-height: 1;">
-                                        <span style="font-size: 0.46rem; font-weight: 900; color: #64748b; text-transform: uppercase; letter-spacing: 0.3px;">NO SOCIO</span>
-                                        <span style="font-size: 0.78rem; font-weight: 950; color: #0f172a; margin-top: 2px;">${numExt}€</span>
+                                        <span style="font-size: 0.52rem; font-weight: 900; color: #64748b; text-transform: uppercase; letter-spacing: 0.3px;">NO SOCIO</span>
+                                        <span style="font-size: 0.90rem; font-weight: 950; color: #0f172a; margin-top: 2px;">${numExt}€</span>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- BOTTOM BAR OVER IMAGE: FORMAT & COURTS (LEFT) + QUICK ACTIONS (RIGHT) -->
-                            <div style="position: absolute; bottom: 8px; left: 10px; right: 10px; display: flex; align-items: center; justify-content: space-between; gap: 6px; z-index: 10; pointer-events: none;">
+                            <div style="position: absolute; bottom: 10px; left: 12px; right: 12px; display: flex; align-items: center; justify-content: space-between; gap: 6px; z-index: 10; pointer-events: none;">
                                 <!-- Left: Format & Courts -->
                                 <div style="display: flex; align-items: center; gap: 4px; flex-wrap: nowrap; overflow: hidden; pointer-events: auto; min-width: 0;">
                                     ${isEntreno ? 
                                         (isSwiss ? 
-                                            `<span style="background: linear-gradient(135deg, #a855f7 0%, #ef4444 100%); color: #fff; padding: 3px 6px; border-radius: 7px; font-size: 0.55rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 2px 6px rgba(168, 85, 247, 0.35); display: inline-flex; align-items: center; gap: 3px; white-space: nowrap;"><i class="fas fa-user-ninja"></i> SUIZO</span>` :
+                                            `<span style="background: linear-gradient(135deg, #a855f7 0%, #ef4444 100%); color: #fff; padding: 3.5px 7px; border-radius: 7px; font-size: 0.60rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 2px 6px rgba(168, 85, 247, 0.35); display: inline-flex; align-items: center; gap: 3px; white-space: nowrap;"><i class="fas fa-user-ninja"></i> SUIZO</span>` :
                                             (isTwister ? 
-                                                `<span style="background: linear-gradient(135deg, #a855f7 0%, #06b6d4 100%); color: #fff; padding: 3px 6px; border-radius: 7px; font-size: 0.55rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 2px 6px rgba(6, 182, 212, 0.35); display: inline-flex; align-items: center; gap: 3px; white-space: nowrap;"><i class="fas fa-user-ninja"></i> TWISTER</span>` :
-                                                `<span style="background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%); color: #fff; padding: 3px 6px; border-radius: 7px; font-size: 0.55rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 2px 6px rgba(139, 92, 246, 0.4); display: inline-flex; align-items: center; gap: 3px; white-space: nowrap;"><i class="fas fa-user-ninja"></i> ENTRENO</span>`
+                                                `<span style="background: linear-gradient(135deg, #a855f7 0%, #06b6d4 100%); color: #fff; padding: 3.5px 7px; border-radius: 7px; font-size: 0.60rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 2px 6px rgba(6, 182, 212, 0.35); display: inline-flex; align-items: center; gap: 3px; white-space: nowrap;"><i class="fas fa-user-ninja"></i> TWISTER</span>` :
+                                                `<span style="background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%); color: #fff; padding: 3.5px 7px; border-radius: 7px; font-size: 0.60rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 2px 6px rgba(139, 92, 246, 0.4); display: inline-flex; align-items: center; gap: 3px; white-space: nowrap;"><i class="fas fa-user-ninja"></i> ENTRENO</span>`
                                             )
                                         ) :
                                         (isSwiss ?
-                                            `<span style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #fff; padding: 3px 6px; border-radius: 7px; font-size: 0.55rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4); display: inline-flex; align-items: center; gap: 3px; white-space: nowrap;"><span style="font-size:0.65rem;">🇨🇭</span> SUIZA</span>` :
+                                            `<span style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #fff; padding: 3.5px 7px; border-radius: 7px; font-size: 0.60rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4); display: inline-flex; align-items: center; gap: 3px; white-space: nowrap;"><span style="font-size:0.65rem;">🇨🇭</span> SUIZA</span>` :
                                             (isTwister ? 
-                                                `<span style="background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%); color: #fff; padding: 3px 6px; border-radius: 7px; font-size: 0.55rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 2px 6px rgba(6, 182, 212, 0.3); display: inline-flex; align-items: center; gap: 3px; white-space: nowrap;"><i class="fas fa-wind"></i> TWISTER</span>` :
-                                                `<span style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: #fff; padding: 3px 6px; border-radius: 7px; font-size: 0.55rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 2px 6px rgba(236, 72, 153, 0.3); display: inline-flex; align-items: center; gap: 3px; white-space: nowrap;"><i class="fas fa-lock"></i> PAREJA FIJA</span>`
+                                                `<span style="background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%); color: #fff; padding: 3.5px 7px; border-radius: 7px; font-size: 0.60rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 2px 6px rgba(6, 182, 212, 0.3); display: inline-flex; align-items: center; gap: 3px; white-space: nowrap;"><i class="fas fa-wind"></i> TWISTER</span>` :
+                                                `<span style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: #fff; padding: 3.5px 7px; border-radius: 7px; font-size: 0.60rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 2px 6px rgba(236, 72, 153, 0.3); display: inline-flex; align-items: center; gap: 3px; white-space: nowrap;"><i class="fas fa-lock"></i> PAREJA FIJA</span>`
                                             )
                                         )
                                     }
@@ -3712,15 +3712,15 @@
                         </div>
 
                         <!-- CONTENT AREA -->
-                        <div style="padding: 12px 13px 13px; background: #ffffff;">
+                        <div style="padding: 15px 16px 16px; background: #ffffff;">
                             <!-- METADATA BADGES STRIP (Organized & Clean, Single Row Wrap) -->
-                            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-bottom: 7px;">
+                            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 9px;">
                                 ${(evt.is_external || evt.external || evt.organizer_type === 'external' || evt.origin === 'external' || evt.club) ? `
-                                    <span style="background: #f0f9ff; color: #0284c7; border: 1px solid #bae6fd; padding: 2.5px 7px; border-radius: 7px; font-size: 0.6rem; font-weight: 850; display: inline-flex; align-items: center; gap: 4px;">
+                                    <span style="background: #f0f9ff; color: #0284c7; border: 1px solid #bae6fd; padding: 3px 8px; border-radius: 7px; font-size: 0.66rem; font-weight: 850; display: inline-flex; align-items: center; gap: 4px;">
                                         <i class="fas fa-building-columns" style="font-size: 0.55rem;"></i> ${evt.club || 'CLUB ASOCIADO'} <i class="fas fa-check-circle" style="color: #0284c7; font-size: 0.58rem; margin-left: 1px;" title="Verificado"></i>
                                     </span>
                                 ` : `
-                                    <span style="background: #f7fee7; color: #3f6212; border: 1.5px solid #a3e635; padding: 2.5px 7px; border-radius: 7px; font-size: 0.6rem; font-weight: 900; text-transform: uppercase; display: inline-flex; align-items: center; gap: 4px;">
+                                    <span style="background: #f7fee7; color: #3f6212; border: 1.5px solid #a3e635; padding: 3px 8px; border-radius: 7px; font-size: 0.66rem; font-weight: 900; text-transform: uppercase; display: inline-flex; align-items: center; gap: 4px;">
                                         <i class="fas fa-certificate" style="font-size: 0.55rem; color: #65a30d;"></i> SOMOSPADEL BCN
                                     </span>
                                 `}
@@ -3728,7 +3728,7 @@
                                 ${levelFeedbackHtml}
                                 ${this.renderWeatherRadarTag(evt, true)}
                                 ${evt.organizer ? `
-                                    <span style="background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; padding: 2.5px 7px; border-radius: 7px; font-size: 0.6rem; font-weight: 850; display: inline-flex; align-items: center; gap: 4px;">
+                                    <span style="background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; padding: 3px 8px; border-radius: 7px; font-size: 0.66rem; font-weight: 850; display: inline-flex; align-items: center; gap: 4px;">
                                         <i class="fas fa-user-tie" style="font-size: 0.55rem;"></i> ${evt.organizer}
                                     </span>
                                 ` : ''}
@@ -3742,11 +3742,11 @@
                             <!-- EVENT TITLE (Clean, Elegant & Accessible) -->
                             <div onclick="event.stopPropagation(); window.EventsController.openLiveEvent('${evt.id}', '${evt.type || (isEntreno ? 'entreno' : 'americana')}');" 
                                  title="Toca para ver información y pistas en directo"
-                                 style="margin: 0 0 10px 0; cursor: pointer;"
+                                 style="margin: 0 0 12px 0; cursor: pointer;"
                                  onmouseover="const h = this.querySelector('h3'); if(h) h.style.color='${themeColor}';"
                                  onmouseout="const h = this.querySelector('h3'); if(h) h.style.color='#0f172a';"
                             >
-                                <h3 style="margin: 0; font-size: 1.16rem; font-weight: 950; color: #0f172a; line-height: 1.25; letter-spacing: -0.3px; text-transform: uppercase; word-break: break-word; transition: color 0.15s ease;">
+                                <h3 style="margin: 0; font-size: 1.28rem; font-weight: 950; color: #0f172a; line-height: 1.25; letter-spacing: -0.3px; text-transform: uppercase; word-break: break-word; transition: color 0.15s ease;">
                                     ${evt.name}
                                 </h3>
                             </div>
@@ -3773,7 +3773,7 @@
                                      onmouseout="this.style.background='#f0f9ff';">
                                     <div style="display: flex; align-items: center; gap: 7px; overflow: hidden; min-width: 0;">
                                         <i class="fas fa-bullhorn" style="color: #0284c7; font-size: 0.78rem; flex-shrink: 0;"></i>
-                                        <span style="font-size: 0.72rem; color: #334155; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        <span style="font-size: 0.78rem; color: #334155; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                             ${evt.description.replace(/\n/g, ' ')}
                                         </span>
                                     </div>
@@ -3784,20 +3784,20 @@
                             ` : ''}
 
                             <!-- 🕒 & 👥 CLEAN 2-COLUMN ESSENTIAL GRID (HORARIO Y PLAZAS) -->
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 12px;">
                                 <!-- Columna 1: Horario -->
-                                <div class="${tileClass}" style="background: #f8fafc; border-radius: 12px; padding: 8px 10px; display: flex; flex-direction: column; justify-content: center; gap: 3px; border: 1.5px solid #e2e8f0; box-shadow: 0 2px 6px rgba(0,0,0,0.03); min-width: 0;">
+                                <div class="${tileClass}" style="background: #f8fafc; border-radius: 13px; padding: 10px 12px; display: flex; flex-direction: column; justify-content: center; gap: 3px; border: 1.5px solid #e2e8f0; box-shadow: 0 2px 6px rgba(0,0,0,0.03); min-width: 0;">
                                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
-                                        <span style="font-size: 0.52rem; font-weight: 850; color: #64748b; text-transform: uppercase; letter-spacing: 0.4px; display: flex; align-items: center; gap: 3px;">
+                                        <span style="font-size: 0.58rem; font-weight: 850; color: #64748b; text-transform: uppercase; letter-spacing: 0.4px; display: flex; align-items: center; gap: 3px;">
                                             <i class="far fa-clock" style="color: ${timeIconColor}; font-size: 0.58rem;"></i> HORARIO
                                         </span>
                                         ${(!evt.name || !evt.name.toUpperCase().includes(categoryLabel)) && categoryLabel !== 'ABIERTO' ? `
                                             <span style="font-size: 0.52rem; font-weight: 900; color: ${categoryColor}; text-transform: uppercase;">
-                                                <i class="fas ${categoryIcon}" style="font-size: 0.48rem;"></i> ${categoryLabel}
+                                                <i class="fas ${categoryIcon}" style="font-size: 0.54rem;"></i> ${categoryLabel}
                                             </span>
                                         ` : ''}
                                     </div>
-                                    <span style="font-weight: 950; font-size: 0.85rem; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.2px;">
+                                    <span style="font-weight: 950; font-size: 0.96rem; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.2px;">
                                         ${timeLabel}
                                     </span>
                                 </div>
@@ -3806,32 +3806,32 @@
                                 <div class="${tileClass}" 
                                      onclick="event.stopPropagation(); ${(isEventPrivate && !isEventUnlocked) ? `window.EventsController.promptPrivatePassword('${evt.id}', '${evt.type || 'americana'}', 'inscritos')` : `window.EventsController.showInscritosModal('${evt.id}', '${evt.type || 'americana'}')`}" 
                                      title="Toca para ver la lista de jugadores inscritos"
-                                     style="background: #f8fafc; border-radius: 12px; padding: 8px 10px; display: flex; flex-direction: column; justify-content: center; gap: 3px; border: 1.5px solid #e2e8f0; box-shadow: 0 2px 6px rgba(0,0,0,0.03); cursor: pointer; min-width: 0; position: relative; overflow: hidden;"
+                                     style="background: #f8fafc; border-radius: 13px; padding: 10px 12px; display: flex; flex-direction: column; justify-content: center; gap: 3px; border: 1.5px solid #e2e8f0; box-shadow: 0 2px 6px rgba(0,0,0,0.03); cursor: pointer; min-width: 0; position: relative; overflow: hidden;"
                                      onmouseover="this.style.borderColor='${themeColor}';"
                                      onmouseout="this.style.borderColor='#e2e8f0';"
                                 >
                                     <!-- Línea 1 (Header): PLAZAS (izq) y COMPLETO/DISPONIBLE (der) -->
                                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
-                                        <span style="font-size: 0.52rem; font-weight: 850; color: #64748b; text-transform: uppercase; letter-spacing: 0.4px; display: flex; align-items: center; gap: 3px;">
+                                        <span style="font-size: 0.58rem; font-weight: 850; color: #64748b; text-transform: uppercase; letter-spacing: 0.4px; display: flex; align-items: center; gap: 3px;">
                                             <i id="event-players-icon-${evt.id}" class="fas fa-users" style="color: ${capacityIconColor}; font-size: 0.58rem; flex-shrink: 0;"></i> PLAZAS
                                         </span>
-                                        <span id="event-status-capacity-${evt.id}" style="font-size: 0.52rem; font-weight: 950; color: ${isFinished ? '#64748b' : (isFull ? '#dc2626' : '#16a34a')}; text-transform: uppercase; letter-spacing: 0.3px; flex-shrink: 0;">
+                                        <span id="event-status-capacity-${evt.id}" style="font-size: 0.58rem; font-weight: 950; color: ${isFinished ? '#64748b' : (isFull ? '#dc2626' : '#16a34a')}; text-transform: uppercase; letter-spacing: 0.3px; flex-shrink: 0;">
                                             ${isFinished ? 'FINAL' : (isFull ? 'COMPLETO' : 'DISPONIBLE')}
                                         </span>
                                     </div>
 
                                     <!-- Línea 2 (Valor principal): 12 / 12 Plazas y Espera si aplica -->
                                     <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 4px; min-width: 0;">
-                                        <span id="event-players-label-${evt.id}" style="font-weight: 950; font-size: 0.85rem; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.2px;">
+                                        <span id="event-players-label-${evt.id}" style="font-weight: 950; font-size: 0.96rem; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.2px;">
                                             ${playerCount} / ${maxPlayers} Plazas
                                         </span>
                                         <div id="event-waitlist-label-${evt.id}">
-                                            ${(!isFinished && waitlist.length > 0) ? `<span style="font-size: 0.52rem; font-weight: 900; color: #d97706; text-transform: uppercase; line-height: 1;">+${waitlist.length} esp.</span>` : ''}
+                                            ${(!isFinished && waitlist.length > 0) ? `<span style="font-size: 0.58rem; font-weight: 900; color: #d97706; text-transform: uppercase; line-height: 1;">+${waitlist.length} esp.</span>` : ''}
                                         </div>
                                     </div>
 
                                     <!-- Línea 3 (Progreso): Barra visual -->
-                                    <div style="width: 100%; height: 4px; background: #e2e8f0; border-radius: 6px; overflow: hidden; margin-top: 1px;">
+                                    <div style="width: 100%; height: 5px; background: #e2e8f0; border-radius: 6px; overflow: hidden; margin-top: 1px;">
                                         <div id="event-progress-bar-${evt.id}" style="width: ${progress}%; height: 100%; background: ${progressColor}; box-shadow: 0 0 6px ${progressColor}55; transition: width 0.3s ease;"></div>
                                     </div>
                                 </div>
@@ -3844,18 +3844,18 @@
                                     <!-- Sede Oficial Box con GPS / Indicaciones directas -->
                                     <div class="${tileClass}" onclick="event.stopPropagation(); window.EventsController.openDirections('${(evt.sede || evt.location || 'Barcelona Pádel el Prat').replace(/'/g, "\\'")}')" 
                                          title="Navegar por GPS al club (Google Maps / Apple Maps)"
-                                         style="display: flex; align-items: center; gap: 7px; background: #f8fafc; padding: 6px 9px; border-radius: 12px; border: 1.5px solid #e2e8f0; flex: 1; min-width: 0; cursor: pointer; height: 36px; box-sizing: border-box;"
+                                         style="display: flex; align-items: center; gap: 7px; background: #f8fafc; padding: 7px 10px; border-radius: 13px; border: 1.5px solid #e2e8f0; flex: 1; min-width: 0; cursor: pointer; height: 40px; box-sizing: border-box;"
                                          onmouseover="this.style.borderColor='#0284c7';"
                                          onmouseout="this.style.borderColor='#e2e8f0';">
-                                        <div style="width: 24px; height: 24px; background: ${locIconBg}; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <div style="width: 26px; height: 26px; background: ${locIconBg}; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                                             <i class="fas fa-location-arrow" style="color: ${locIconColor}; font-size: 0.72rem;"></i>
                                         </div>
                                         <div style="display: flex; flex-direction: column; min-width: 0; overflow: hidden; justify-content: center;">
                                             <div style="display: flex; align-items: center; gap: 3px; line-height: 1;">
-                                                <span style="font-size: 0.48rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.3px;">${(evt.is_external || evt.external || evt.organizer_type === 'external' || evt.origin === 'external') ? 'Club' : 'Sede'}</span>
-                                                <span style="font-size: 0.48rem; font-weight: 950; color: #0284c7; text-transform: uppercase;">GPS ↗</span>
+                                                <span style="font-size: 0.54rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.3px;">${(evt.is_external || evt.external || evt.organizer_type === 'external' || evt.origin === 'external') ? 'Club' : 'Sede'}</span>
+                                                <span style="font-size: 0.54rem; font-weight: 950; color: #0284c7; text-transform: uppercase;">GPS ↗</span>
                                             </div>
-                                            <span style="font-size: 0.74rem; font-weight: 900; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;">${evt.sede || evt.location || 'Bcn Pádel'}</span>
+                                            <span style="font-size: 0.82rem; font-weight: 900; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;">${evt.sede || evt.location || 'Bcn Pádel'}</span>
                                         </div>
                                     </div>
 
@@ -3863,7 +3863,7 @@
                                     <button type="button" 
                                             onclick="event.stopPropagation(); window.ChatView?.openEventChat({ id: '${evt.id}', name: '${(evt.name || '').replace(/'/g, "\\'")}', date: '${evt.date || ''}', category: '${evt.category || ''}', club: '${(evt.sede || evt.location || evt.club || '').replace(/'/g, "\\'")}', type: '${isEntreno ? 'entreno' : 'americana'}' });"
                                             title="Abrir Chat de este evento"
-                                            style="background: #f7fee7; border: 1.5px solid #84cc16; color: #3f6212; border-radius: 12px; padding: 0 12px; height: 36px; font-weight: 950; font-size: 0.72rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 5px; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; box-sizing: border-box;"
+                                            style="background: #f7fee7; border: 1.5px solid #84cc16; color: #3f6212; border-radius: 13px; padding: 0 14px; height: 40px; font-weight: 950; font-size: 0.78rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 5px; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; box-sizing: border-box;"
                                             onmouseover="this.style.background='#ecfccb';"
                                             onmouseout="this.style.background='#f7fee7';">
                                         <i class="fas fa-comment-dots" style="color: #65a30d; font-size: 0.78rem;"></i>
@@ -3888,12 +3888,12 @@
                                                             position: relative;
                                                             flex: 1 1 auto;
                                                             min-width: 0;
-                                                            height: 42px;
+                                                            height: 46px;
                                                             background: linear-gradient(135deg, #CCFF00 0%, #84cc16 100%) !important;
                                                             color: #0b1329 !important;
                                                             padding: 0 12px;
                                                             border-radius: 12px;
-                                                            font-size: 0.74rem;
+                                                            font-size: 0.82rem;
                                                             font-weight: 950;
                                                             font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
                                                             text-transform: uppercase;
@@ -3925,7 +3925,7 @@
                                                         style="
                                                             position: relative;
                                                             flex: 0 0 auto;
-                                                            height: 42px;
+                                                            height: 46px;
                                                             background: #dcfce7 !important;
                                                             color: #15803d !important;
                                                             border: 1.5px solid #86efac !important;
@@ -4002,7 +4002,7 @@
                                                         style="
                                                             position: relative;
                                                             width: 100%;
-                                                            height: 42px;
+                                                            height: 46px;
                                                             background: ${ctaBg} !important;
                                                             color: ${ctaTextColor} !important;
                                                             padding: 0 16px;
@@ -4043,7 +4043,7 @@
                                                         position: relative;
                                                         flex: 1 1 auto;
                                                         min-width: 0;
-                                                        height: 42px;
+                                                        height: 46px;
                                                         background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%) !important;
                                                         color: #ffffff !important;
                                                         padding: 0 12px;
@@ -4080,7 +4080,7 @@
                                                         position: relative;
                                                         flex: 1 1 auto;
                                                         min-width: 0;
-                                                        height: 42px;
+                                                        height: 46px;
                                                         background: ${ctaBg} !important;
                                                         color: ${ctaTextColor} !important;
                                                         padding: 0 12px;
