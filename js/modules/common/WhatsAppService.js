@@ -128,7 +128,7 @@ window.WhatsAppService = {
      * Formato limpio y optimizado para compartir en WhatsApp
      */
     getEventCanonicalUrl(event) {
-        const baseUrl = "https://somospadelbarcelona.github.io/Americanas-somospadel/";
+        const baseUrl = "https://somospadel.eu/";
         if (!event) return baseUrl;
         const name = (event.name || '').toUpperCase();
         const isEntreno = event.type === 'entreno' || name.includes('ENTRENO');
