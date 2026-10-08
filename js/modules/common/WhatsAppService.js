@@ -684,7 +684,7 @@ window.WhatsAppService = {
         // Ordenar fechas cronológicamente
         const sortedDates = Object.keys(groups).sort((a, b) => a.localeCompare(b));
 
-        const topHeader = `🎾 *SOMOSPADEL BCN | EVENTOS*\n\n📲 Inscripciones abiertas para próximas americanas. Consulta plazas y apúntate desde la App Oficial:\n`;
+        const topHeader = `🎾 *SOMOSPADEL BCN | EVENTOS*\n\n📲 Inscripciones abiertas para próximos entrenos y americanas. Consulta plazas y apúntate desde la App Oficial:\n`;
 
         let msg = `${topHeader}\n`;
         if (header && header.trim()) {
