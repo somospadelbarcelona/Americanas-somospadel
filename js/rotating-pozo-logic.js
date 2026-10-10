@@ -73,7 +73,23 @@ const RotatingPozoLogic = {
                     }
 
                     if (teamAWon === null) {
-                        throw new Error(`La Pista ${courtNum || m.court || ''} de la Ronda ${m.round || ''} no tiene un ganador válido (marcador ${sA}-${sB}). Corrige el resultado antes de generar la siguiente ronda.`);
+                        // Desempate automático limpio por balance de juegos acumulados o sorteo determinista
+                        const getTeamDiff = (teamIds) => {
+                            let diff = 0;
+                            teamIds.forEach(id => {
+                                const p = playerMap[id] || Object.values(playerMap).find(x => String(x.id) === String(id) || String(x.uid) === String(id));
+                                if (p) diff += ((p.games_won || p.swiss_games_won || 0) - (p.games_lost || p.swiss_games_lost || 0));
+                            });
+                            return diff;
+                        };
+                        const diffA = getTeamDiff(teamA);
+                        const diffB = getTeamDiff(teamB);
+                        if (diffA !== diffB) {
+                            teamAWon = diffA > diffB;
+                        } else {
+                            teamAWon = teamA.join(',').localeCompare(teamB.join(',')) <= 0;
+                        }
+                        console.log(`⚖️ [Desempate Twister] Empate ${sA}-${sB} en Pista ${courtNum || m.court} resuelto a favor de ${teamAWon ? 'Equipo A' : 'Equipo B'}.`);
                     }
                     const winners = teamAWon ? teamA : teamB;
 

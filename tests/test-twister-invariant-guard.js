@@ -141,9 +141,9 @@ runTest('TwisterInvariantGuard detecta y rechaza la ronda corrupta del pantallaz
 });
 
 // -----------------------------------------------------------------------------
-// TEST 3: Rechazo estricto de empates en ronda previa
+// TEST 3: Desempate automático limpio cuando un partido previo está empatado
 // -----------------------------------------------------------------------------
-runTest('Bloqueo estricto cuando un partido previo está empatado (score_a === score_b)', () => {
+runTest('Desempate automático limpio cuando un partido previo está empatado (score_a === score_b)', () => {
     const players = [
         { id: 'p1', name: 'P1', current_court: 1 },
         { id: 'p2', name: 'P2', current_court: 1 },
@@ -154,26 +154,24 @@ runTest('Bloqueo estricto cuando un partido previo está empatado (score_a === s
         { round: 1, court: 1, team_a_ids: ['p1', 'p2'], team_b_ids: ['p3', 'p4'], score_a: 3, score_b: 3, status: 'finished' }
     ];
 
-    let threwError = false;
-    try {
-        Engine.generateRound({
-            players,
-            courts: 1,
-            roundNum: 2,
-            mode: 'twister',
-            matchesHistory: tiedMatches
-        });
-    } catch (e) {
-        threwError = true;
-        assert(e.message.includes('ganador válido') || e.message.includes('3-3'), 'El error debe indicar la ausencia de ganador válido');
-    }
+    const r2Result = Engine.generateRound({
+        players,
+        courts: 1,
+        roundNum: 2,
+        mode: 'twister',
+        matchesHistory: tiedMatches
+    });
 
-    assert.strictEqual(threwError, true, 'Debe lanzar un error cuando hay empate en Twister');
+    assert(r2Result && r2Result.matches && r2Result.matches.length === 1, 'Debe generar la ronda sin bloquearse');
+    const m = r2Result.matches[0];
+    // Verificar que los compañeros de R1 se separaron
+    const teamA = m.team_a_ids;
+    assert.strictEqual(teamA.includes('p1') && teamA.includes('p2'), false, 'p1 y p2 no pueden estar juntos');
+    assert.strictEqual(teamA.includes('p3') && teamA.includes('p4'), false, 'p3 y p4 no pueden estar juntos');
 
-    // TwisterInvariantGuard también debe rechazarlo
-    const guardValidation = TwisterInvariantGuard.validate(tiedMatches, tiedMatches, 1);
-    assert.strictEqual(guardValidation.valid, false);
-    assert(guardValidation.errors.some(e => e.includes('ganador válido')));
+    // TwisterInvariantGuard también debe validar el desempate limpio
+    const guardValidation = TwisterInvariantGuard.validate(tiedMatches, r2Result.matches, 1);
+    assert.strictEqual(guardValidation.valid, true, 'Guard debe validar el desempate automático sin errores');
 });
 
 // -----------------------------------------------------------------------------

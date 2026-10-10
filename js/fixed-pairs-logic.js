@@ -1,161 +1,345 @@
 /**
- * 🔒 FIXED PAIRS LOGIC - Sistema Pozo
- * Lógica para manejar parejas fijas que suben y bajan juntas según resultados
+ * 🔒 FIXED PAIRS LOGIC - Sistema Pozo (Parejas Fijas)
+ * Lógica para manejar parejas fijas que juegan todo el torneo juntas
+ * y suben o bajan de pista según resultados (Sistema Pozo).
+ *
+ * Reglas Sagradas:
+ * 1. La dupla se mantiene 100% FIJA a lo largo de todas las rondas.
+ * 2. Dinámica Pozo:
+ *    - Pareja ganadora sube junta a la pista superior (P1 es la máxima, ganador P1 se mantiene en P1).
+ *    - Pareja perdedora baja junta a la pista inferior (PN es la más baja, perdedor PN se mantiene en PN).
+ *    - Cruces siguiente ronda:
+ *      * Pista 1: Ganador P1 vs Ganador P2.
+ *      * Pista k: Perdedor P(k-1) vs Ganador P(k+1).
+ *      * Pista N: Perdedor P(N-1) vs Perdedor PN.
+ * 3. Emparejamiento inicial (Ronda 1):
+ *    - Prioridad 1: Parejas explícitas por partner_id o partner_name (insensible a mayúsculas/tildes).
+ *    - Prioridad 2: En categoría mixta, duplas chico + chica equilibradas por nivel.
+ * 4. Desempate automático en empates (e.g. 5-5):
+ *    - Por balance de juegos previos (games_won - games_lost) o sorteo determinista.
+ * 5. Si hay número impar de parejas: rotación equitativa del descanso (BYE), sin descansos consecutivos.
  */
 
-const FixedPairsLogic = {
+(function () {
+    'use strict';
+
+    const normalizePartnerString = (str) => String(str || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
 
     /**
-     * Crear parejas fijas al inicio del torneo
-     * @param {Array} players - Lista de jugadores
-     * @returns {Array} - Lista de parejas fijas
+     * Extrae de forma blindada las parejas explícitas solicitadas al apuntarse
+     * (por partner_id o por partner_name insensible a mayúsculas/espacios/tildes).
      */
-    createFixedPairs(players, category = 'open', preserveOrder = false) {
-        console.log(`🔒 Creando parejas fijas para ${players.length} jugadores (Modo: ${category}, Ordenado: ${preserveOrder})...`);
+    function extractExplicitPairs(players) {
+        const available = players.map(p => ({
+            ...p,
+            _uid: String(p.id || p.uid || ''),
+            _name: String(p.name || '').trim(),
+            _normName: normalizePartnerString(p.name),
+            _partnerId: p.partner_id ? String(p.partner_id).trim() : '',
+            _partnerName: p.partner_name ? normalizePartnerString(p.partner_name) : (p.partner ? normalizePartnerString(p.partner) : ''),
+            _gender: String(p.gender || 'chico').toLowerCase().trim(),
+            _level: parseFloat(p.level || p.self_rate_level || 3.5),
+            _teams: Array.isArray(p.team_somospadel) ? p.team_somospadel : (p.team_somospadel ? [p.team_somospadel] : (Array.isArray(p.team) ? p.team : (p.team ? [p.team] : [])))
+        }));
 
-        let shuffled;
-        if (category === 'mixed' || preserveOrder) {
-            // Si es mixto o se pide preservar orden (Entrenos por nivel)
-            // No barajamos
-            shuffled = [...players];
-        } else {
-            // Mezclar jugadores aleatoriamente
-            shuffled = [...players].sort(() => 0.5 - Math.random());
-        }
+        const explicitPairs = [];
+        let pairCount = 0;
 
-        const pairs = [];
+        for (let i = 0; i < available.length; i++) {
+            const p1 = available[i];
+            if (!p1) continue;
 
-        // Emparejar de 2 en 2
-        for (let i = 0; i < shuffled.length; i += 2) {
-            if (i + 1 < shuffled.length) {
+            let partnerIdx = -1;
+
+            // 1. Coincidencia por partner_id
+            if (p1._partnerId) {
+                partnerIdx = available.findIndex((x, idx) => idx !== i && x && (x._uid === p1._partnerId || String(x.id) === p1._partnerId));
+            }
+
+            // 2. Coincidencia por partner_name si no hubo ID
+            if (partnerIdx === -1 && p1._partnerName) {
+                partnerIdx = available.findIndex((x, idx) => {
+                    if (idx === i || !x) return false;
+                    if (x._normName === p1._partnerName) return true;
+                    if (p1._partnerName.length >= 3 && x._normName.includes(p1._partnerName)) return true;
+                    if (x._normName.length >= 3 && p1._partnerName.includes(x._normName)) return true;
+                    return false;
+                });
+            }
+
+            // 3. Coincidencia inversa: otro jugador declaró a p1
+            if (partnerIdx === -1) {
+                partnerIdx = available.findIndex((x, idx) => {
+                    if (idx === i || !x) return false;
+                    if (x._partnerId && (x._partnerId === p1._uid || x._partnerId === String(p1.id))) return true;
+                    if (x._partnerName && (x._partnerName === p1._normName || (x._partnerName.length >= 3 && p1._normName.includes(x._partnerName)))) return true;
+                    return false;
+                });
+            }
+
+            if (partnerIdx !== -1) {
+                const p2 = available[partnerIdx];
                 const pair = {
-                    id: `pair_${Date.now()}_${i / 2}`,
-                    player1_id: shuffled[i].id || shuffled[i].uid,
-                    player2_id: shuffled[i + 1].id || shuffled[i + 1].uid,
-                    player1_name: shuffled[i].name,
-                    player2_name: shuffled[i + 1].name,
-                    pair_name: `${shuffled[i].name} / ${shuffled[i + 1].name}`,
+                    id: `pair_explicit_${Date.now()}_${pairCount++}`,
+                    player1_id: p1._uid || p1.id,
+                    player2_id: p2._uid || p2.id,
+                    player1_name: p1.name,
+                    player2_name: p2.name,
+                    pair_name: `${p1.name} / ${p2.name}`,
                     wins: 0,
                     losses: 0,
                     games_won: 0,
                     games_lost: 0,
-                    current_court: Math.floor(i / 4) + 1, // Asignar pista inicial (1, 1, 2, 2, 3, 3, etc.)
-                    initial_court: Math.floor(i / 4) + 1
+                    current_court: 1,
+                    initial_court: 1,
+                    is_explicit: true,
+                    _avgLevel: (p1._level + p2._level) / 2
                 };
-                pairs.push(pair);
+                explicitPairs.push(pair);
+
+                // Eliminar ambos de available de mayor a menor índice
+                const high = Math.max(i, partnerIdx);
+                const low = Math.min(i, partnerIdx);
+                available.splice(high, 1);
+                available.splice(low, 1);
+                i--;
             }
         }
 
-        console.log(`✅ ${pairs.length} parejas creadas`);
-        return pairs;
-    },
+        return { explicitPairs, remainingPlayers: available };
+    }
 
-    /**
-     * 🤖 Lógica de Emparejamiento Inteligente (Smart Auto-Pairing)
-     * Empareja a los jugadores según su equipo Somospadel, afinidad de nivel y género.
-     * Prioriza parejas que ya se eligieron al apuntarse (partner_id).
-     */
-    createSmartFixedPairs(players, category = 'open') {
-        console.log(`🤖 Iniciando Smart Auto-Pairing para ${players.length} jugadores...`);
+    const FixedPairsLogic = {
 
-        const available = [...players];
-        const pairs = [];
-        let pairCount = 0;
+        /**
+         * Crear parejas fijas al inicio del torneo o entreno
+         * @param {Array} players - Lista de jugadores
+         * @param {String} category - Categoría ('open', 'mixed', 'male', 'female')
+         * @param {Boolean} preserveOrder - Si se preserva orden por nivel (ej. entrenos)
+         * @returns {Array} - Parejas fijas con pista inicial asignada
+         */
+        createFixedPairs(players, category = 'open', preserveOrder = false) {
+            console.log(`🔒 Creando parejas fijas para ${players.length} jugadores (Modo: ${category}, Ordenado: ${preserveOrder})...`);
 
-        // Limpiar géneros (normalizar) e IDs
-        available.forEach(p => {
-            p._uid = String(p.id || p.uid || '');
-            p._gender = (p.gender || 'chico').toLowerCase();
-            p._level = parseFloat(p.level || p.self_rate_level || 3.5);
-            p._teams = Array.isArray(p.team_somospadel) ? p.team_somospadel : (p.team_somospadel ? [p.team_somospadel] : []);
-        });
+            const isMixed = category === 'mixed' || category === 'mixto' || category === 'mixta' || String(category || '').toLowerCase().includes('mixt');
 
-        // --- PASO 0: PAREJAS EXPLÍCITAS (partner_id) ---
-        // Buscamos jugadores que ya eligieron pareja al apuntarse
-        for (let i = 0; i < available.length; i++) {
-            const p = available[i];
-            if (p.partner_id) {
-                const partnerTargetId = String(p.partner_id);
-                const partnerIdx = available.findIndex((x, idx) => idx !== i && x._uid === partnerTargetId);
+            // 1. Extraer parejas explícitas primero (Prioridad Absoluta)
+            const { explicitPairs, remainingPlayers } = extractExplicitPairs(players);
+            const pairs = [...explicitPairs];
+            let pairCount = explicitPairs.length;
 
-                if (partnerIdx !== -1) {
-                    const partner = available[partnerIdx];
+            const isFemale = p => ['chica', 'mujer', 'f', 'female'].includes(p._gender);
 
-                    const pair = {
-                        id: `pair_explicit_${Date.now()}_${pairCount++}`,
-                        player1_id: p._uid,
-                        player2_id: partner._uid,
-                        player1_name: p.name,
-                        player2_name: partner.name,
-                        pair_name: `${p.name} / ${partner.name}`,
+            if (isMixed) {
+                // Prioridad 2: En categoría mixta, duplas chico + chica equilibradas por nivel
+                const females = remainingPlayers.filter(isFemale).sort((a, b) => b._level - a._level);
+                const males = remainingPlayers.filter(p => !isFemale(p)).sort((a, b) => b._level - a._level);
+
+                while (females.length > 0 && males.length > 0) {
+                    const f = females.shift();
+                    // Buscar el chico más cercano en nivel para equilibrar
+                    let bestIdx = 0;
+                    let minDiff = Infinity;
+                    males.forEach((m, idx) => {
+                        const diff = Math.abs(f._level - m._level);
+                        if (diff < minDiff) {
+                            minDiff = diff;
+                            bestIdx = idx;
+                        }
+                    });
+                    const m = males.splice(bestIdx, 1)[0];
+
+                    pairs.push({
+                        id: `pair_mixed_${Date.now()}_${pairCount++}`,
+                        player1_id: f._uid || f.id,
+                        player2_id: m._uid || m.id,
+                        player1_name: f.name,
+                        player2_name: m.name,
+                        pair_name: `${f.name} / ${m.name}`,
                         wins: 0,
                         losses: 0,
                         games_won: 0,
                         games_lost: 0,
                         current_court: 1,
                         initial_court: 1,
-                        is_explicit: true
-                    };
-                    pairs.push(pair);
+                        is_explicit: false,
+                        _avgLevel: (f._level + m._level) / 2
+                    });
+                }
 
-                    // Eliminar de disponibles (orden inverso para no romper índices)
-                    const high = Math.max(i, partnerIdx);
-                    const low = Math.min(i, partnerIdx);
-                    available.splice(high, 1);
-                    available.splice(low, 1);
-                    i--; // Ajustar índice principal
+                // Si sobran jugadores del mismo género, emparejar entre ellos
+                const leftovers = [...females, ...males].sort((a, b) => b._level - a._level);
+                for (let i = 0; i < leftovers.length; i += 2) {
+                    if (i + 1 < leftovers.length) {
+                        const p1 = leftovers[i];
+                        const p2 = leftovers[i + 1];
+                        pairs.push({
+                            id: `pair_auto_${Date.now()}_${pairCount++}`,
+                            player1_id: p1._uid || p1.id,
+                            player2_id: p2._uid || p2.id,
+                            player1_name: p1.name,
+                            player2_name: p2.name,
+                            pair_name: `${p1.name} / ${p2.name}`,
+                            wins: 0,
+                            losses: 0,
+                            games_won: 0,
+                            games_lost: 0,
+                            current_court: 1,
+                            initial_court: 1,
+                            is_explicit: false,
+                            _avgLevel: (p1._level + p2._level) / 2
+                        });
+                    }
+                }
+            } else {
+                // Categoría Open / Masculina / Femenina
+                let pool = [...remainingPlayers];
+                if (preserveOrder) {
+                    // Mantener orden estricto de nivel (Entrenos por nivel)
+                    pool.sort((a, b) => b._level - a._level);
+                } else {
+                    // Ordenar por nivel para emparejar jugadores de nivel similar
+                    pool.sort((a, b) => b._level - a._level);
+                }
+
+                for (let i = 0; i < pool.length; i += 2) {
+                    if (i + 1 < pool.length) {
+                        const p1 = pool[i];
+                        const p2 = pool[i + 1];
+                        pairs.push({
+                            id: `pair_auto_${Date.now()}_${pairCount++}`,
+                            player1_id: p1._uid || p1.id,
+                            player2_id: p2._uid || p2.id,
+                            player1_name: p1.name,
+                            player2_name: p2.name,
+                            pair_name: `${p1.name} / ${p2.name}`,
+                            wins: 0,
+                            losses: 0,
+                            games_won: 0,
+                            games_lost: 0,
+                            current_court: 1,
+                            initial_court: 1,
+                            is_explicit: false,
+                            _avgLevel: (p1._level + p2._level) / 2
+                        });
+                    }
                 }
             }
-        }
 
-        const findBestMatch = (player, others) => {
-            let bestScore = -1;
-            let bestIndex = -1;
+            // Ordenar parejas por nivel medio para asignación de pistas iniciales
+            pairs.sort((a, b) => b._avgLevel - a._avgLevel);
 
-            others.forEach((candidate, idx) => {
-                let score = 0;
-
-                // 1. GÉNERO (Filtro Crítico para MIXTO)
-                if (category === 'mixed') {
-                    // En mixto buscamos chico + chica
-                    if (player._gender !== candidate._gender) score += 100;
-                    else score -= 50; // Penalizar mismo género en mixto
-                }
-
-                // 2. EQUIPO (Afinidad Máxima)
-                const commonTeams = player._teams.filter(t => candidate._teams.includes(t));
-                if (commonTeams.length > 0) {
-                    score += 200; // Prioridad absoluta: juegan en el mismo equipo
-                }
-
-                // 3. NIVEL (Equilibrio)
-                const levelDiff = Math.abs(player._level - candidate._level);
-                if (levelDiff === 0) score += 50;
-                else if (levelDiff <= 0.25) score += 40;
-                else if (levelDiff <= 0.5) score += 20;
-                else score -= levelDiff * 25; // Penalizar diferencias de nivel
-
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestIndex = idx;
-                }
+            // Asignar pistas iniciales (2 parejas por pista)
+            pairs.forEach((p, idx) => {
+                p.current_court = Math.floor(idx / 2) + 1;
+                p.initial_court = p.current_court;
             });
 
-            return bestIndex;
-        };
+            console.log(`✅ ${pairs.length} parejas fijas creadas (${explicitPairs.length} explícitas, ${pairs.length - explicitPairs.length} automáticas).`);
+            return pairs;
+        },
 
-        // Algoritmo Greedy para emparejar el resto
-        while (available.length >= 2) {
-            const player = available.shift();
-            const matchIdx = findBestMatch(player, available);
+        /**
+         * 🤖 Smart Auto-Pairing para Parejas Fijas
+         * Respeta parejas explícitas, afinidad de club y balance de nivel y género.
+         */
+        createSmartFixedPairs(players, category = 'open') {
+            console.log(`🤖 Iniciando Smart Auto-Pairing para ${players.length} jugadores (Categoría: ${category})...`);
 
-            if (matchIdx !== -1) {
-                const partner = available.splice(matchIdx, 1)[0];
+            const isMixed = category === 'mixed' || category === 'mixto' || category === 'mixta' || String(category || '').toLowerCase().includes('mixt');
 
-                const pair = {
-                    id: `pair_auto_${Date.now()}_${pairCount++}`,
-                    player1_id: player._uid,
-                    player2_id: partner._uid,
+            // 1. Extraer parejas explícitas (Prioridad Absoluta)
+            const { explicitPairs, remainingPlayers } = extractExplicitPairs(players);
+            const pairs = [...explicitPairs];
+            let pairCount = explicitPairs.length;
+
+            const isFemale = p => ['chica', 'mujer', 'f', 'female'].includes(p._gender);
+
+            const findBestMatch = (player, others, forceOppositeGender = false) => {
+                let bestScore = -Infinity;
+                let bestIndex = -1;
+
+                others.forEach((candidate, idx) => {
+                    let score = 0;
+
+                    // 1. Filtro Género
+                    if (forceOppositeGender) {
+                        if (player._gender === candidate._gender) return;
+                        score += 100;
+                    }
+
+                    // 2. Afinidad de Equipo de Club
+                    const commonTeams = (player._teams || []).filter(t => (candidate._teams || []).includes(t));
+                    if (commonTeams.length > 0) {
+                        score += 200;
+                    }
+
+                    // 3. Equilibrio de Nivel
+                    const levelDiff = Math.abs(player._level - candidate._level);
+                    if (levelDiff === 0) score += 50;
+                    else if (levelDiff <= 0.25) score += 40;
+                    else if (levelDiff <= 0.5) score += 20;
+                    else score -= levelDiff * 25;
+
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestIndex = idx;
+                    }
+                });
+
+                return bestIndex;
+            };
+
+            const available = [...remainingPlayers];
+
+            if (isMixed) {
+                // En mixto, emparejar chicas con chicos
+                while (available.length >= 2) {
+                    const femaleIdx = available.findIndex(isFemale);
+                    if (femaleIdx === -1) break; // Ya no hay chicas
+                    const f = available.splice(femaleIdx, 1)[0];
+
+                    const matchIdx = findBestMatch(f, available, true);
+                    if (matchIdx !== -1) {
+                        const m = available.splice(matchIdx, 1)[0];
+                        pairs.push({
+                            id: `pair_smart_mixed_${Date.now()}_${pairCount++}`,
+                            player1_id: f._uid || f.id,
+                            player2_id: m._uid || m.id,
+                            player1_name: f.name,
+                            player2_name: m.name,
+                            pair_name: `${f.name} / ${m.name}`,
+                            wins: 0,
+                            losses: 0,
+                            games_won: 0,
+                            games_lost: 0,
+                            current_court: 1,
+                            initial_court: 1,
+                            is_smart: true,
+                            _avgLevel: (f._level + m._level) / 2
+                        });
+                    } else {
+                        // No queda chico disponible
+                        available.unshift(f);
+                        break;
+                    }
+                }
+            }
+
+            // Emparejar los restantes disponibles
+            while (available.length >= 2) {
+                const player = available.shift();
+                const matchIdx = findBestMatch(player, available, false);
+                const partner = matchIdx !== -1 ? available.splice(matchIdx, 1)[0] : available.shift();
+
+                pairs.push({
+                    id: `pair_smart_${Date.now()}_${pairCount++}`,
+                    player1_id: player._uid || player.id,
+                    player2_id: partner._uid || partner.id,
                     player1_name: player.name,
                     player2_name: partner.name,
                     pair_name: `${player.name} / ${partner.name}`,
@@ -165,187 +349,194 @@ const FixedPairsLogic = {
                     games_lost: 0,
                     current_court: 1,
                     initial_court: 1,
-                    is_auto: true
-                };
-                pairs.push(pair);
-            }
-        }
-
-        // Ordenar las parejas finales por nivel medio para asignar pistas iniciales
-        pairs.forEach(p => {
-            const p1 = players.find(x => String(x.id || x.uid) === p.player1_id);
-            const p2 = players.find(x => String(x.id || x.uid) === p.player2_id);
-            p._avgLevel = (((p1 ? parseFloat(p1.level || p1.self_rate_level || 3.5) : 3.5) + (p2 ? parseFloat(p2.level || p2.self_rate_level || 3.5) : 3.5)) / 2);
-        });
-
-        pairs.sort((a, b) => b._avgLevel - a._avgLevel);
-
-        // Asignar pistas
-        pairs.forEach((p, i) => {
-            p.current_court = Math.floor(i / 2) + 1;
-            p.initial_court = p.current_court;
-        });
-
-        console.log(`✅ Smart Auto-Pairing finalizado: ${pairs.length} parejas creadas.`);
-        return pairs;
-    },
-
-    /**
-     * Generar ronda con sistema Pozo (parejas fijas)
-     * @param {Array} pairs - Parejas fijas
-     * @param {Number} roundNumber - Número de ronda
-     * @param {Number} maxCourts - Número máximo de pistas
-     * @returns {Array} - Partidos generados
-     */
-    generatePozoRound(pairs, roundNumber, maxCourts) {
-
-
-        // Separate explicit and non‑explicit pairs
-        const explicitPairs = pairs.filter(p => p.is_explicit);
-        const nonExplicit = pairs.filter(p => !p.is_explicit);
-
-        // Prepare slot array: two slots per court
-        const totalSlots = maxCourts * 2;
-        const slots = new Array(totalSlots).fill(null);
-
-        // Helper to place a pair into its court slots, preserving existing court if possible
-        const placeInCourt = (pair) => {
-            const court = pair.current_court || pair.initial_court || 1;
-            const baseIdx = (court - 1) * 2;
-            if (!slots[baseIdx]) {
-                slots[baseIdx] = pair;
-            } else if (!slots[baseIdx + 1]) {
-                slots[baseIdx + 1] = pair;
-            } else {
-                // Court already full; fallback to first free slot later
-                // No action here
-            }
-        };
-
-        // First, place explicit pairs (they keep their courts)
-        explicitPairs.forEach(placeInCourt);
-
-        // Fill remaining empty slots with non‑explicit pairs sequentially
-        let nextIdx = 0;
-        nonExplicit.forEach(p => {
-            while (nextIdx < totalSlots && slots[nextIdx]) nextIdx++;
-            if (nextIdx < totalSlots) {
-                const courtNum = Math.floor(nextIdx / 2) + 1;
-                p.current_court = courtNum;
-                slots[nextIdx] = p;
-                nextIdx++;
-            }
-        });
-
-        // Build matches from slots (pairs of two per court)
-        const matches = [];
-        for (let i = 0; i < totalSlots; i += 2) {
-            const pairA = slots[i];
-            const pairB = slots[i + 1];
-            const courtNum = Math.floor(i / 2) + 1;
-            if (pairA && pairB) {
-                matches.push({
-                    round: roundNumber,
-                    court: courtNum,
-                    pair_a_id: pairA.id,
-                    pair_b_id: pairB.id,
-                    team_a_ids: [pairA.player1_id, pairA.player2_id],
-                    team_b_ids: [pairB.player1_id, pairB.player2_id],
-                    team_a_names: [pairA.player1_name, pairA.player2_name],
-                    team_b_names: [pairB.player1_name, pairB.player2_name],
-                    teamA: pairA.pair_name,
-                    teamB: pairB.pair_name,
-                    status: 'scheduled',
-                    score_a: 0,
-                    score_b: 0
-                });
-            } else if (pairA && !pairB) {
-                // Bye for lone pair
-                matches.push({
-                    round: roundNumber,
-                    court: courtNum,
-                    pair_a_id: pairA.id,
-                    pair_b_id: 'bye',
-                    team_a_ids: [pairA.player1_id, pairA.player2_id],
-                    team_b_ids: [],
-                    team_a_names: [pairA.player1_name, pairA.player2_name],
-                    team_b_names: ['BYE', ''],
-                    teamA: pairA.pair_name,
-                    teamB: 'BYE (Descansa)',
-                    status: 'finished',
-                    score_a: 6,
-                    score_b: 0,
-                    is_bye: true
+                    is_smart: true,
+                    _avgLevel: (player._level + partner._level) / 2
                 });
             }
-        }
 
-        console.log(`✅ ${matches.length} partidos generados para ronda ${roundNumber}`);
-        return matches;
-    },
+            // Ordenar parejas por nivel medio para asignación de pistas
+            pairs.sort((a, b) => b._avgLevel - a._avgLevel);
 
+            pairs.forEach((p, idx) => {
+                p.current_court = Math.floor(idx / 2) + 1;
+                p.initial_court = p.current_court;
+            });
 
-    /**
- * Actualizar rankings de parejas después de una ronda (lógica Pozo)
- * @param {Array} pairs - Parejas actuales
- * @param {Array} lastRoundMatches - Partidos de la última ronda
- * @param {Number} maxCourts - Número máximo de pistas
- * @returns {Array} - Parejas actualizadas
- */
-    updatePozoRankings(pairs, lastRoundMatches, maxCourts) {
-        console.log(`📊 Actualizando rankings Pozo (Parejas Fijas)...`);
+            console.log(`✅ Smart Auto-Pairing finalizado: ${pairs.length} parejas creadas (${explicitPairs.length} explícitas).`);
+            return pairs;
+        },
 
-        // Crear un mapa para acceso rápido
-        const pairMap = {};
-        pairs.forEach(p => {
-            pairMap[p.id] = p;
-            // Marcar como no jugado en esta ronda
-            p.won_last_match = false;
-        });
+        /**
+         * Generar ronda con sistema Pozo (parejas fijas)
+         * Asigna slots directamente por current_court de cada pareja.
+         *
+         * @param {Array} pairs - Parejas fijas
+         * @param {Number} roundNumber - Número de ronda
+         * @param {Number} maxCourts - Número máximo de pistas
+         * @returns {Array} - Partidos generados
+         */
+        generatePozoRound(pairs, roundNumber, maxCourts) {
+            console.log(`🔒 Generando Ronda ${roundNumber} Pozo Parejas Fijas (${pairs.length} parejas, ${maxCourts} pistas)...`);
 
-        // Initialize/Reset deduplication guard for this ranking cycle
-        const _env = typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : {});
-        _env._processedCourtsInRanking = new Set();
+            // Asegurar que todas las parejas tienen current_court válido
+            pairs.forEach((p, idx) => {
+                if (!p.current_court || p.current_court < 1) {
+                    p.current_court = Math.floor(idx / 2) + 1;
+                }
+            });
 
-        // Identify explicit pairs (manual or partner-defined)
-        const explicitPairs = pairs.filter(p => p.is_explicit);
+            const matches = [];
 
+            // Agrupar parejas por current_court
+            const courtPairsMap = new Map();
+            for (let c = 1; c <= maxCourts; c++) {
+                courtPairsMap.set(c, []);
+            }
 
-        // Procesar resultados de la última ronda (solo sobre pares no explícitos)
-        lastRoundMatches.forEach(match => {
-            if (match.status === 'finished') {
+            pairs.forEach(p => {
+                const c = p.current_court;
+                if (!courtPairsMap.has(c)) {
+                    courtPairsMap.set(c, []);
+                }
+                courtPairsMap.get(c).push(p);
+            });
+
+            // Generar partidos para las pistas activas (1 a maxCourts)
+            for (let c = 1; c <= maxCourts; c++) {
+                const list = courtPairsMap.get(c) || [];
+
+                if (list.length >= 2) {
+                    const pairA = list[0];
+                    const pairB = list[1];
+                    matches.push({
+                        round: roundNumber,
+                        court: c,
+                        pair_a_id: pairA.id,
+                        pair_b_id: pairB.id,
+                        team_a_ids: [pairA.player1_id, pairA.player2_id],
+                        team_b_ids: [pairB.player1_id, pairB.player2_id],
+                        team_a_names: [pairA.player1_name, pairA.player2_name],
+                        team_b_names: [pairB.player1_name, pairB.player2_name],
+                        teamA: pairA.pair_name,
+                        teamB: pairB.pair_name,
+                        status: 'scheduled',
+                        score_a: 0,
+                        score_b: 0
+                    });
+                } else if (list.length === 1) {
+                    // Pareja solitaria en pista activa (BYE / Descanso)
+                    const pairA = list[0];
+                    matches.push({
+                        round: roundNumber,
+                        court: c,
+                        pair_a_id: pairA.id,
+                        pair_b_id: 'bye',
+                        team_a_ids: [pairA.player1_id, pairA.player2_id],
+                        team_b_ids: [],
+                        team_a_names: [pairA.player1_name, pairA.player2_name],
+                        team_b_names: ['BYE', ''],
+                        teamA: pairA.pair_name,
+                        teamB: 'BYE (Descansa)',
+                        status: 'finished',
+                        score_a: 6,
+                        score_b: 0,
+                        is_bye: true
+                    });
+                }
+            }
+
+            // Manejar parejas asignadas a pistas superiores a maxCourts (BYE)
+            for (const [c, list] of courtPairsMap.entries()) {
+                if (c > maxCourts) {
+                    list.forEach(pairA => {
+                        matches.push({
+                            round: roundNumber,
+                            court: c,
+                            pair_a_id: pairA.id,
+                            pair_b_id: 'bye',
+                            team_a_ids: [pairA.player1_id, pairA.player2_id],
+                            team_b_ids: [],
+                            team_a_names: [pairA.player1_name, pairA.player2_name],
+                            team_b_names: ['BYE', ''],
+                            teamA: pairA.pair_name,
+                            teamB: 'BYE (Descansa)',
+                            status: 'finished',
+                            score_a: 6,
+                            score_b: 0,
+                            is_bye: true
+                        });
+                    });
+                }
+            }
+
+            console.log(`✅ ${matches.length} partidos generados para ronda ${roundNumber}`);
+            return matches;
+        },
+
+        /**
+         * Actualizar rankings de parejas después de una ronda (Lógica Pozo Parejas Fijas).
+         *
+         * Dinámica Pozo:
+         * - Si la pareja gana: sube junta a la pista superior (P1 se queda en P1).
+         * - Si la pareja pierde: baja junta a la pista inferior (PN se queda en PN).
+         * - Cruces de siguiente ronda:
+         *   * Pista 1: Ganador de P1 vs Ganador de P2.
+         *   * Pista k: Perdedor de P(k-1) vs Ganador de P(k+1).
+         *   * Pista N: Perdedor de P(N-1) vs Perdedor de PN.
+         * - Empates a juegos (e.g. 5-5): desempate automático limpio por balance de juegos o sorteo determinista.
+         * - Número impar de parejas (BYE): rotación equitativa, la pareja que descansó entra a jugar y rota otra sin repetir descanso consecutivo.
+         *
+         * @param {Array} pairs - Parejas actuales
+         * @param {Array} lastRoundMatches - Partidos de la última ronda
+         * @param {Number} maxCourts - Número máximo de pistas
+         * @returns {Array} - Parejas actualizadas con su nueva current_court
+         */
+        updatePozoRankings(pairs, lastRoundMatches, maxCourts) {
+            console.log(`📊 Actualizando rankings Pozo (Parejas Fijas)...`);
+
+            const pairMap = {};
+            pairs.forEach(p => {
+                pairMap[p.id] = p;
+                p.won_last_match = false;
+            });
+
+            const _env = typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : {});
+            _env._processedCourtsInRanking = new Set();
+
+            const finishedMatches = (lastRoundMatches || []).filter(m => m.status === 'finished');
+
+            // 1. Procesar resultados de los partidos finalizados
+            const courtResultsMap = new Map();
+            let lastRoundNumber = 1;
+
+            finishedMatches.forEach(match => {
+                const courtNum = parseInt(match.court || 0);
+                lastRoundNumber = parseInt(match.round || lastRoundNumber);
+                const dedupKey = `R${match.round}_C${courtNum}`;
+                if (_env._processedCourtsInRanking?.has(dedupKey)) {
+                    return;
+                }
+                _env._processedCourtsInRanking.add(dedupKey);
+
                 const teamAIds = Array.isArray(match.team_a_ids) ? match.team_a_ids.map(String) : [];
                 const teamBIds = Array.isArray(match.team_b_ids) ? match.team_b_ids.map(String) : [];
 
-                // --- 🛡️ BYE MATCH HANDLING ---
+                let pairA = pairMap[match.pair_a_id] || pairs.find(p => teamAIds.includes(String(p.player1_id)) || teamAIds.includes(String(p.player2_id)));
+                let pairB = pairMap[match.pair_b_id] || pairs.find(p => teamBIds.includes(String(p.player1_id)) || teamBIds.includes(String(p.player2_id)));
+
+                // Manejo de BYE
                 if (match.pair_b_id === 'bye' || match.is_bye) {
-                    let pairA = pairMap[match.pair_a_id];
-                    if (!pairA) pairA = pairs.find(p => teamAIds.includes(String(p.player1_id)) || teamAIds.includes(String(p.player2_id)));
-                    
                     if (pairA) {
                         pairA.games_won = (pairA.games_won || 0) + 6;
                         pairA.games_lost = (pairA.games_lost || 0) + 0;
                         pairA.wins = (pairA.wins || 0) + 1;
                         pairA.won_last_match = true;
                         pairA.last_played_round = match.round;
-                        if (pairA.current_court > 1) {
-                            pairA.current_court--;
-                        }
-                        console.log(`🎁 [BYE SUCCESS] Default win (+6 games, +1 win) granted to ${pairA.pair_name || pairA.id}`);
+                        pairA.last_bye_round = match.round;
+                        pairA.byes_count = (pairA.byes_count || 0) + 1;
+                        console.log(`🎁 [BYE] Victoria por descanso otorgada a ${pairA.pair_name || pairA.id}`);
                     }
                     return;
-                }
-
-                // Fallback: search pairs containing players if IDs missing (Robustness)
-                let pairA = pairMap[match.pair_a_id];
-                let pairB = pairMap[match.pair_b_id];
-
-                if (!pairA) {
-                    // Try finding by player composition
-                    pairA = pairs.find(p => teamAIds.includes(String(p.player1_id)) || teamAIds.includes(String(p.player2_id)));
-                }
-                if (!pairB) {
-                    pairB = pairs.find(p => teamBIds.includes(String(p.player1_id)) || teamBIds.includes(String(p.player2_id)));
                 }
 
                 if (!pairA || !pairB) {
@@ -353,103 +544,16 @@ const FixedPairsLogic = {
                     return;
                 }
 
-                // --- 🛡️ DEDUPLICATION GUARD ---
-                // If we already processed this court in this round, ignore extra copies
-                const courtNum = parseInt(match.court || 0);
-                const dedupKey = `R${match.round}_C${courtNum}`;
-                if (_env._processedCourtsInRanking?.has(dedupKey)) {
-                    console.warn(`🛑 Skipping duplicate result for ${dedupKey} to prevent jump glitches.`);
-                    return;
-                }
-                _env._processedCourtsInRanking = _env._processedCourtsInRanking || new Set();
-                _env._processedCourtsInRanking.add(dedupKey);
-
                 const scoreA = parseInt(match.score_a || 0);
                 const scoreB = parseInt(match.score_b || 0);
 
-                // Actualizar estadísticas generales
                 pairA.games_won = (pairA.games_won || 0) + scoreA;
                 pairA.games_lost = (pairA.games_lost || 0) + scoreB;
                 pairB.games_won = (pairB.games_won || 0) + scoreB;
                 pairB.games_lost = (pairB.games_lost || 0) + scoreA;
 
-                // Determinar ganador y perdedor
+                // Determinar Ganador y Perdedor con DESEMPATE AUTOMÁTICO LIMPIO
                 let winner, loser;
-                if (scoreA > scoreB) {
-                    winner = pairA;
-                    loser = pairB;
-                    pairA.wins = (pairA.wins || 0) + 1;
-                    pairB.losses = (pairB.losses || 0) + 1;
-                } else if (scoreB > scoreA) {
-                    winner = pairB;
-                    loser = pairA;
-                    pairB.wins = (pairB.wins || 0) + 1;
-                    pairA.losses = (pairA.losses || 0) + 1;
-                } else {
-                    // EMPATE / TIE
-                    pairA.won_last_match = true; // Neutral
-                    pairB.won_last_match = true;
-                }
-
-                // Aplicar lógica POZO: Ganador sube, Perdedor baja
-                if (winner && loser) {
-                    winner.won_last_match = true;
-                    loser.won_last_match = false;
-
-                    // GANADOR: Sube de pista (número menor) si no está en pista 1
-                    if (winner.current_court > 1) {
-                        winner.current_court--;
-                    }
-
-                    // PERDEDOR: Baja de pista (número mayor)
-                    if (loser.current_court < maxCourts) {
-                        loser.current_court++;
-                    }
-                }
-
-                // Marcar como jugado en esta ronda
-                pairA.last_played_round = match.round;
-                pairB.last_played_round = match.round;
-            }
-        });
-
-        // --- CONSOLIDAR PISTAS: Lógica Pozo Correcta ---
-        // Preserve explicit pairs courts after ranking update
-        explicitPairs.forEach(p => {
-            // Ensure explicit pairs keep their original court
-            p.current_court = p.current_court || p.initial_court || 1;
-        });
-
-        // For non-explicit pairs, continue with existing logic
-        // Rebuild court assignments based on match results
-        const matchesByCourtSorted = [...lastRoundMatches]
-            .filter(m => m.status === 'finished')
-            .sort((a, b) => parseInt(a.court) - parseInt(b.court));
-
-        if (matchesByCourtSorted.length > 0) {
-            // Rebuild court assignments top-down based on Pozo bracket
-            // For each court c (1..N):
-            //   winner of court c → target court c-1 (minimum 1)
-            //   loser of court c → target court c+1 (maximum maxCourts)
-            // Then: next round Court 1 has [winner of c1, winner of c2]
-            //        Court 2 has [loser of c1, winner of c3], etc.
-
-            // Step 1: Build winner/loser arrays sorted by original court
-            const courtResults = matchesByCourtSorted.map(match => {
-                const teamAIds = Array.isArray(match.team_a_ids) ? match.team_a_ids.map(String) : [];
-                const teamBIds = Array.isArray(match.team_b_ids) ? match.team_b_ids.map(String) : [];
-
-                let pairA = pairMap[match.pair_a_id];
-                let pairB = pairMap[match.pair_b_id];
-                if (!pairA) pairA = pairs.find(p => teamAIds.includes(String(p.player1_id)) || teamAIds.includes(String(p.player2_id)));
-                if (!pairB) pairB = pairs.find(p => teamBIds.includes(String(p.player1_id)) || teamBIds.includes(String(p.player2_id)));
-
-                if (!pairA || !pairB) return null;
-
-                const scoreA = parseInt(match.score_a || 0);
-                const scoreB = parseInt(match.score_b || 0);
-                let winner = null;
-                let loser = null;
                 const w = String(match.winner || '').toLowerCase().trim();
                 if (w === 'team_a' || w === 'a' || w === 'teama' || w === '1') {
                     winner = pairA; loser = pairB;
@@ -460,97 +564,172 @@ const FixedPairsLogic = {
                 } else if (scoreB > scoreA) {
                     winner = pairB; loser = pairA;
                 } else {
-                    // Desempate por diferencia de juegos / victorias acumuladas
+                    // EMPATE A JUEGOS (e.g. 5-5):
+                    // Criterio 1: Balance acumulado de juegos previos (games_won - games_lost)
                     const diffA = (pairA.games_won || 0) - (pairA.games_lost || 0);
                     const diffB = (pairB.games_won || 0) - (pairB.games_lost || 0);
-                    if (diffA > diffB || (diffA === diffB && (pairA.wins || 0) >= (pairB.wins || 0))) {
-                        winner = pairA; loser = pairB;
+                    if (diffA !== diffB) {
+                        winner = diffA > diffB ? pairA : pairB;
+                        loser = diffA > diffB ? pairB : pairA;
+                    } else if ((pairA.wins || 0) !== (pairB.wins || 0)) {
+                        // Criterio 2: Total de victorias
+                        winner = (pairA.wins || 0) > (pairB.wins || 0) ? pairA : pairB;
+                        loser = (pairA.wins || 0) > (pairB.wins || 0) ? pairB : pairA;
                     } else {
-                        winner = pairB; loser = pairA;
+                        // Criterio 3: Sorteo determinista por ID de pareja
+                        const cmp = String(pairA.id).localeCompare(String(pairB.id));
+                        winner = cmp <= 0 ? pairA : pairB;
+                        loser = cmp <= 0 ? pairB : pairA;
+                    }
+                    console.log(`⚖️ [Desempate Fijo] Empate ${scoreA}-${scoreB} en Pista ${courtNum} resuelto a favor de ${winner.pair_name}`);
+                }
+
+                winner.wins = (winner.wins || 0) + 1;
+                winner.won_last_match = true;
+                loser.losses = (loser.losses || 0) + 1;
+                loser.won_last_match = false;
+
+                pairA.last_played_round = match.round;
+                pairB.last_played_round = match.round;
+
+                courtResultsMap.set(courtNum, { court: courtNum, winner, loser });
+            });
+
+            // 2. Si se disputaron partidos normales, reconstruir las pistas según la escalera canónica Pozo
+            if (courtResultsMap.size > 0) {
+                const totalCourts = Math.max(maxCourts, ...Array.from(courtResultsMap.keys()));
+                const courtSlots = new Map();
+                for (let c = 1; c <= totalCourts; c++) courtSlots.set(c, []);
+
+                // Identificar si alguna pareja tuvo descanso en la ronda anterior
+                const activePairsInMatches = new Set();
+                courtResultsMap.forEach(r => {
+                    if (r.winner) activePairsInMatches.add(r.winner.id);
+                    if (r.loser) activePairsInMatches.add(r.loser.id);
+                });
+
+                const previouslyRestingPairs = pairs.filter(p => !activePairsInMatches.has(p.id));
+
+                if (totalCourts === 1) {
+                    const r1 = courtResultsMap.get(1);
+                    if (r1) {
+                        courtSlots.get(1).push(r1.winner);
+                        courtSlots.get(1).push(r1.loser);
+                    }
+                } else {
+                    // Pista 1: Ganador P1 vs Ganador P2
+                    const r1 = courtResultsMap.get(1);
+                    const r2 = courtResultsMap.get(2);
+                    if (r1?.winner) courtSlots.get(1).push(r1.winner);
+                    if (r2?.winner) courtSlots.get(1).push(r2.winner);
+
+                    // Pistas intermedias (2 a totalCourts - 1): Perdedor P(k-1) vs Ganador P(k+1)
+                    for (let k = 2; k < totalCourts; k++) {
+                        const rPrev = courtResultsMap.get(k - 1);
+                        const rNext = courtResultsMap.get(k + 1);
+                        if (rPrev?.loser) courtSlots.get(k).push(rPrev.loser);
+                        if (rNext?.winner) courtSlots.get(k).push(rNext.winner);
+                    }
+
+                    // Pista N (última pista):
+                    const rPenult = courtResultsMap.get(totalCourts - 1);
+                    const rLast = courtResultsMap.get(totalCourts);
+                    const loserPenult = rPenult?.loser;
+                    const loserLast = rLast?.loser;
+
+                    if (previouslyRestingPairs.length > 0) {
+                        // --- GESTIÓN DE DESCANSO ROTATIVO (BYE) ---
+                        // La pareja que descansó vuelve a entrar obligatoriamente en la última pista
+                        const returningPair = previouslyRestingPairs[0];
+
+                        // De los dos perdedores de abajo, seleccionamos al que descansará en la siguiente ronda
+                        // Criterio: el que tenga menos descansos acumulados y NO haya descansado en la ronda anterior
+                        const candidates = [loserLast, loserPenult].filter(Boolean);
+                        candidates.sort((a, b) => {
+                            const byesA = a.byes_count || 0;
+                            const byesB = b.byes_count || 0;
+                            if (byesA !== byesB) return byesA - byesB;
+                            return (a.games_won || 0) - (b.games_won || 0);
+                        });
+
+                        const pairToRest = candidates[0];
+                        const pairToPlay = candidates[1];
+
+                        if (pairToPlay) courtSlots.get(totalCourts).push(pairToPlay);
+                        courtSlots.get(totalCourts).push(returningPair);
+
+                        // La pareja que descansa pasa a pista totalCourts + 1 (BYE)
+                        if (pairToRest) {
+                            pairToRest.current_court = totalCourts + 1;
+                        }
+                    } else {
+                        // Sin descansos: Perdedor P(N-1) vs Perdedor PN
+                        if (loserPenult) courtSlots.get(totalCourts).push(loserPenult);
+                        if (loserLast) courtSlots.get(totalCourts).push(loserLast);
                     }
                 }
-                return { court: parseInt(match.court), winner, loser };
-            }).filter(Boolean);
 
-            // Step 2: Assign courts for next round using the standard Pozo bracket:
-            //   Sort order for Court N next round:
-            //     - winners climb, losers fall
-            //     - Court k will have: winner from court k PLUS loser from court k-1
-            //     - (for k=1: only the winner of court 1 stays, joined by winner of court 2)
-            //     - (for k=maxCourts: loser of court maxCourts stays, joined by loser of court maxCourts-1)
-
-            // Build the ordered list for next round:
-            //   [winner_c1, winner_c2, loser_c1, winner_c3, loser_c2, winner_c4, loser_c3, loser_c4-1..., loser_cN]
-            // Simpler canonical form: interleave winners (descending court) and losers (ascending court)
-            // winners sorted ascending by court (best court first), losers sorted ascending by court
-            const winners = courtResults.map(r => r.winner);   // winner of court 1, 2, 3...
-            const losers  = courtResults.map(r => r.loser);    // loser of court 1, 2, 3...
-
-            // Next round bracket order (canonical Pozo):
-            // Pos 0,1 → Court 1: [winner_c1,  winner_c2]  ← the two best pairs
-            // Pos 2,3 → Court 2: [loser_c1, winner_c3]
-            // Pos 4,5 → Court 3: [loser_c2, loser_c3]
-            // General pattern for N courts:
-            //   Court k (1-indexed) contains: winner[k-1] and loser[k-2] (if they exist)
-            // Build sequence: winners[0], winners[1], losers[0], winners[2], losers[1], winners[3], losers[2]...
-            // = interleave: for each court position k, take winners[k] then losers[k-1]
-            const nextRoundOrder = [];
-            for (let k = 0; k < maxCourts; k++) {
-                if (winners[k]) nextRoundOrder.push(winners[k]);
-                if (losers[k - 1] !== undefined && losers[k - 1] !== null) nextRoundOrder.push(losers[k - 1]);
-            }
-            // Add last loser if not already in
-            const lastLoser = losers[losers.length - 1];
-            if (lastLoser && !nextRoundOrder.includes(lastLoser)) {
-                nextRoundOrder.push(lastLoser);
-            }
-
-            // Assign courts: every 2 pairs share a court
-            nextRoundOrder.forEach((pair, index) => {
-                if (pair) pair.current_court = Math.floor(index / 2) + 1;
-            });
-
-            // Assign any pairs that didn't play (BYE) to the last court
-            pairs.forEach(p => {
-                if (!nextRoundOrder.includes(p)) {
-                    p.current_court = maxCourts;
+                // Asignar current_court según la posición final
+                for (let c = 1; c <= totalCourts; c++) {
+                    const list = courtSlots.get(c) || [];
+                    list.forEach(p => {
+                        if (p) p.current_court = c;
+                    });
                 }
+
+                // Asegurar que cualquier pareja huérfana tenga pista
+                pairs.forEach(p => {
+                    if (!p.current_court || p.current_court < 1) {
+                        p.current_court = totalCourts;
+                    }
+                });
+
+                console.log(`✅ Pistas Pozo actualizadas:`, pairs.map(p => `${p.pair_name || p.id} → Pista ${p.current_court}`).join(', '));
+            } else {
+                // Si no hubo partidos finalizados, mantener orden estable
+                pairs.sort((a, b) => a.current_court - b.current_court || (b.wins || 0) - (a.wins || 0));
+                pairs.forEach((p, index) => { p.current_court = Math.floor(index / 2) + 1; });
+            }
+
+            return [...pairs].sort((a, b) => a.current_court - b.current_court);
+        },
+
+        /**
+         * Calcular clasificación para parejas fijas
+         */
+        calculateStandings(pairs) {
+            const sorted = [...pairs].sort((a, b) => {
+                if ((b.wins || 0) !== (a.wins || 0)) return (b.wins || 0) - (a.wins || 0);
+                const diffA = (a.games_won || 0) - (a.games_lost || 0);
+                const diffB = (b.games_won || 0) - (b.games_lost || 0);
+                if (diffB !== diffA) return diffB - diffA;
+                return (b.games_won || 0) - (a.games_won || 0);
             });
 
-            console.log(`✅ Pistas Pozo actualizadas:`, pairs.map(p => `${p.pair_name || p.id} → Pista ${p.current_court}`).join(', '));
-        } else {
-            // Fallback: stable sort if no finished matches
-            pairs.sort((a, b) => a.current_court - b.current_court || (b.wins || 0) - (a.wins || 0));
-            pairs.forEach((p, index) => { p.current_court = Math.floor(index / 2) + 1; });
+            return sorted.map((p, index) => ({
+                position: index + 1,
+                name: p.pair_name,
+                court: p.current_court,
+                games: p.games_won || 0,
+                won: p.wins || 0,
+                lost: p.losses || 0,
+                played: (p.wins || 0) + (p.losses || 0),
+                trend: p.current_court < (p.initial_court || 1) ? '↑' :
+                    p.current_court > (p.initial_court || 1) ? '↓' : '='
+            }));
         }
+    };
 
-        // Devolver ordenado por pista (para que generatePozoRound empareje correctamente)
-        return [...pairs].sort((a, b) => a.current_court - b.current_court);
-    },
-
-    /**
-     * Calcular clasificación para parejas fijas
-     */
-    calculateStandings(pairs) {
-        return pairs.map((p, index) => ({
-            position: index + 1,
-            name: p.pair_name,
-            court: p.current_court,
-            games: p.games_won,
-            won: p.wins,
-            lost: p.losses,
-            played: (p.wins || 0) + (p.losses || 0),
-            trend: p.current_court < (p.initial_court || 1) ? '↑' :
-                p.current_court > (p.initial_court || 1) ? '↓' : '='
-        }));
+    // Exportación global (Browser y Node.js)
+    if (typeof window !== 'undefined') {
+        window.FixedPairsLogic = FixedPairsLogic;
     }
-};
+    if (typeof globalThis !== 'undefined') {
+        globalThis.FixedPairsLogic = FixedPairsLogic;
+    }
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = { FixedPairsLogic };
+    }
+    console.log("🔒 FixedPairsLogic cargado");
 
-// Exportar globalmente (Browser y Node.js)
-if (typeof window !== 'undefined') {
-    window.FixedPairsLogic = FixedPairsLogic;
-}
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { FixedPairsLogic };
-}
-console.log("🔒 FixedPairsLogic cargado");
+})();

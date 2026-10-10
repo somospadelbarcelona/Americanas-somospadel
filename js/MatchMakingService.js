@@ -582,10 +582,11 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5004...");
              */
             _fallbackNormalizePairMode(rawMode, eventData = {}) {
                 const raw = String(rawMode || eventData.pair_mode || '').toLowerCase();
-                const name = String(eventData.name || '').toUpperCase();
+                const name = String(eventData.title || eventData.name || '').toUpperCase();
                 if (raw.includes('suiz') || raw === 'swiss' || name.includes('SUIZ')) return 'swiss';
                 if (raw.includes('twister') || raw.includes('rotat') || raw.includes('indiv') || name.includes('TWISTER')) return 'twister';
-                if (raw.includes('fij') || raw.includes('fixed') || name.includes('FIJA') || name.includes('FIJO')) return 'fixed';
+                if (raw.includes('fij') || raw.includes('fixed') || raw.includes('pareja') || raw.includes('dupla') || raw.includes('duo') ||
+                    name.includes('FIJA') || name.includes('FIJO') || name.includes('PAREJA') || name.includes('DUPLA')) return 'fixed';
                 return 'twister';
             },
 

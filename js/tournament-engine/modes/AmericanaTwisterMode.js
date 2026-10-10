@@ -273,8 +273,9 @@
                 }
 
                 if (teamAWon === null) {
-                    const r = match.round ? ` de la Ronda ${match.round}` : '';
-                    throw new Error(`La Pista ${c}${r} no tiene un ganador válido (marcador ${scoreA}-${scoreB}). Por favor introduce o corrige el resultado antes de generar la siguiente ronda.`);
+                    // Desempate automático limpio por sorteo determinista
+                    const cmp = teamAIds.join(',').localeCompare(teamBIds.join(','));
+                    teamAWon = cmp <= 0;
                 }
 
                 const winningIds = teamAWon ? teamAIds : teamBIds;

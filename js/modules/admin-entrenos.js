@@ -442,6 +442,13 @@ function renderEntrenoCard(e) {
 
                 <!-- Action Group -->
                 <div style="display: flex; gap: 8px; flex-shrink: 0; justify-content: flex-end; flex: 1;">
+                    <button class="btn-micro" 
+                            style="background: #10B981 !important; color: #fff !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
+                            onclick='window.checkScheduledEventHealthPrompt(${JSON.stringify(e).replace(/'/g, "&#39;")}, "entreno")' 
+                            title="🛡️ Comprobar si va a funcionar al 100% (Chequeo Pre-Flight)">
+                        <i class="fas fa-shield-halved" style="font-size: 0.95rem; color: #fff !important;"></i>
+                    </button>
+
                     ${(e.status === 'open' || e.status === 'live') ? `
                     <button class="btn-micro" 
                             style="background: #FFD700 !important; color: #000 !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
@@ -714,27 +721,169 @@ window.api.runAutomation = () => {
 // --- GLOBAL EXPORTS (KEEPING EXISTING APIs) --- //
 
 window.duplicateEntreno = async (e) => {
-    if (!confirm(`¿Duplicar "${e.name}" ?`)) return;
+    if (!e) return;
+    if (typeof e === 'string') {
+        if (window._currentEntrenosCache) {
+            e = window._currentEntrenosCache.find(x => x.id === e) || { id: e };
+        }
+    }
+    if (!confirm(`¿Duplicar "${e.name || 'este entreno'}"?`)) return;
+
     const copy = { ...e };
-    delete copy.id;
+
+    // 1. Cálculo robusto de fecha (+7 días) sin desfases horarios
+    const rawDate = copy.date || copy.eventDate || copy.fecha || '';
+    let normDate = '';
+    if (window.EventService && typeof window.EventService.normalizeDate === 'function') {
+        normDate = window.EventService.normalizeDate(rawDate);
+    }
+    if (!normDate && typeof rawDate === 'string') {
+        const clean = rawDate.trim();
+        if (clean.includes('/')) {
+            const parts = clean.split('/').map(p => p.trim());
+            if (parts.length >= 2) {
+                const day = parts[0].padStart(2, '0');
+                const month = parts[1].padStart(2, '0');
+                const year = parts[2] ? (parts[2].length === 2 ? '20' + parts[2] : parts[2]) : String(new Date().getFullYear());
+                normDate = `${year}-${month}-${day}`;
+            }
+        } else if (clean.includes('-')) {
+            const parts = clean.split('-').map(p => p.trim());
+            if (parts.length === 3) {
+                if (parts[0].length === 4) {
+                    normDate = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+                } else {
+                    const year = parts[2].length === 2 ? '20' + parts[2] : parts[2];
+                    normDate = `${year}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                }
+            }
+        }
+    }
+
+    let nextDate = '';
+    if (normDate && normDate.includes('-')) {
+        const [yStr, mStr, dStr] = normDate.split('-');
+        const y = parseInt(yStr, 10);
+        const m = parseInt(mStr, 10) - 1;
+        const d = parseInt(dStr, 10);
+        if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+            const dt = new Date(y, m, d, 12, 0, 0);
+            dt.setDate(dt.getDate() + 7);
+            const nextY = dt.getFullYear();
+            const nextM = String(dt.getMonth() + 1).padStart(2, '0');
+            const nextD = String(dt.getDate()).padStart(2, '0');
+            nextDate = `${nextY}-${nextM}-${nextD}`;
+        }
+    }
+
+    if (!nextDate) {
+        const fallbackDt = new Date();
+        fallbackDt.setHours(12, 0, 0, 0);
+        fallbackDt.setDate(fallbackDt.getDate() + 7);
+        const fY = fallbackDt.getFullYear();
+        const fM = String(fallbackDt.getMonth() + 1).padStart(2, '0');
+        const fD = String(fallbackDt.getDate()).padStart(2, '0');
+        nextDate = `${fY}-${fM}-${fD}`;
+    }
+
+    copy.date = nextDate;
+
+    // 2. Actualización inteligente del nombre del evento si incluye fechas
+    if (copy.name) {
+        let updatedName = copy.name.trim();
+        const [nY, nM, nD] = nextDate.split('-');
+        let dateReplaced = false;
+
+        // DD/MM/YYYY o DD-MM-YYYY (o YY de 2 dígitos)
+        const fullDateRegex = /\b(\d{1,2})([\/\-])(\d{1,2})\2(\d{2,4})\b/;
+        if (fullDateRegex.test(updatedName)) {
+            updatedName = updatedName.replace(fullDateRegex, (match, d, sep, m, y) => {
+                dateReplaced = true;
+                const targetY = y.length === 2 ? nY.slice(-2) : nY;
+                const targetD = d.length === 1 ? String(parseInt(nD, 10)) : nD;
+                const targetM = m.length === 1 ? String(parseInt(nM, 10)) : nM;
+                return `${targetD}${sep}${targetM}${sep}${targetY}`;
+            });
+        }
+
+        // YYYY-MM-DD o YYYY/MM/DD
+        if (!dateReplaced) {
+            const isoDateRegex = /\b(\d{4})([\/\-])(\d{1,2})\2(\d{1,2})\b/;
+            if (isoDateRegex.test(updatedName)) {
+                updatedName = updatedName.replace(isoDateRegex, (match, y, sep, m, d) => {
+                    dateReplaced = true;
+                    const targetD = d.length === 1 ? String(parseInt(nD, 10)) : nD;
+                    const targetM = m.length === 1 ? String(parseInt(nM, 10)) : nM;
+                    return `${nY}${sep}${targetM}${sep}${targetD}`;
+                });
+            }
+        }
+
+        // DD/MM o DD-MM (Validar rango: día 1-31, mes 1-12)
+        if (!dateReplaced) {
+            const shortDateRegex = /\b(0[1-9]|[12]\d|3[01]|[1-9])([\/\-])(0[1-9]|1[0-2]|[1-9])\b/;
+            if (shortDateRegex.test(updatedName)) {
+                updatedName = updatedName.replace(shortDateRegex, (match, d, sep, m) => {
+                    dateReplaced = true;
+                    const targetD = d.length === 1 ? String(parseInt(nD, 10)) : nD;
+                    const targetM = m.length === 1 ? String(parseInt(nM, 10)) : nM;
+                    return `${targetD}${sep}${targetM}`;
+                });
+            }
+        }
+
+        // Si no se reemplazó ninguna fecha, añadir (Copia) si no lo tiene ya
+        if (!dateReplaced) {
+            if (!/\(Copia\)$/i.test(updatedName)) {
+                updatedName = `${updatedName} (Copia)`;
+            }
+        }
+
+        copy.name = updatedName;
+    }
+
+    // 3. Limpieza profunda del payload para Firestore
+    const forbiddenKeys = [
+        'id', '_id',
+        'created_at', 'createdAt', 'updatedAt',
+        'chat_id', 'chatId',
+        'matches', 'rounds', 'liveMatches',
+        'classification', 'results',
+        'current_round', 'active_round', 'currentRound', 'round'
+    ];
+    forbiddenKeys.forEach(k => delete copy[k]);
+
     copy.status = 'open';
     copy.players = [];
+    copy.registeredPlayers = [];
     copy.waitlist = [];
     copy.fixed_pairs = [];
 
-    // Attempt to set next week
-    try {
-        if (copy.date) {
-            const d = new Date(copy.date);
-            d.setDate(d.getDate() + 7);
-            copy.date = d.toISOString().split('T')[0];
+    // Limpiar claves undefined para evitar error de Firestore
+    Object.keys(copy).forEach(k => {
+        if (copy[k] === undefined) {
+            delete copy[k];
         }
-    } catch (err) { }
+    });
 
+    // 4. Guardado, feedback y recarga
     try {
         await EventService.createEvent('entreno', copy);
-        window.loadAdminView('entrenos_mgmt');
-    } catch (err) { alert(err.message); }
+        const successMsg = `Entreno duplicado con éxito para el ${copy.date} 📅`;
+        if (window.NotificationService && typeof window.NotificationService.showToast === 'function') {
+            window.NotificationService.showToast(successMsg, 'success');
+        }
+        if (typeof window.loadAdminView === 'function') {
+            window.loadAdminView('entrenos_mgmt');
+        }
+    } catch (err) {
+        console.error("❌ Error al duplicar entreno:", err);
+        const errMsg = `Error al duplicar el entreno: ${err.message || 'Fallo desconocido'}`;
+        if (window.NotificationService && typeof window.NotificationService.showToast === 'function') {
+            window.NotificationService.showToast(errMsg, 'error');
+        }
+        alert(errMsg);
+    }
 };
 
 window.updateEntrenoStatus = async (id, newStatus) => {
