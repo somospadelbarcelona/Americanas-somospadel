@@ -646,7 +646,7 @@
                                    class="filter-search-input"
                                    placeholder="Buscar por sede, formato o nivel..." 
                                    value="${currentSearch.replace(/"/g, '&quot;')}"
-                                   oninput="window.EventsController.setFilter('searchQuery', this.value)"
+                                   oninput="window.EventsController.onSearchInput(this.value)"
                                    style="width: 100%; box-sizing: border-box; background: #f8fafc; border: 1.5px solid ${currentSearch ? '#84cc16' : '#e2e8f0'}; border-radius: 12px; padding: 8px 34px 8px 34px; color: #0f172a; font-size: 0.74rem; font-weight: 800; font-family: 'Outfit', sans-serif; outline: none; transition: border-color 0.2s, box-shadow 0.2s;"
                                    onfocus="this.style.borderColor='#84cc16'; this.style.boxShadow='0 0 10px rgba(132, 204, 22, 0.25)';"
                                    onblur="if(!this.value) { this.style.borderColor='#e2e8f0'; this.style.boxShadow='none'; }">
@@ -786,11 +786,40 @@
 
         setViewMode(mode) {
             try { window.PlayerView?.haptic?.(20); } catch (e) {}
+            if (this.state.viewMode === mode) return;
             this.state.viewMode = mode;
             try { localStorage.setItem('sp_events_view_mode', mode); } catch (e) {}
             if (this.state.expandedCards) this.state.expandedCards.clear();
             if (this.state.collapsedCards) this.state.collapsedCards.clear();
+            // Forzar re-render completo: el "smart patching" solo actualiza datos y no cambia Card <-> Lista
+            this._forceFullRender = true;
             this.render();
+        }
+
+        // Búsqueda en vivo con debounce: evita re-render por cada tecla y conserva foco/cursor
+        onSearchInput(value) {
+            this.state.filters = this.state.filters || { month: 'all', category: 'all', status: 'all', searchQuery: '' };
+            this.state.filters.searchQuery = value || '';
+            clearTimeout(this._searchDebounce);
+            this._searchDebounce = setTimeout(async () => {
+                this._forceFullRender = true;
+                await this.render();
+                const restore = () => {
+                    const input = document.getElementById('events-live-search-input');
+                    if (input) {
+                        input.focus();
+                        const len = input.value.length;
+                        try { input.setSelectionRange(len, len); } catch (e) {}
+                    }
+                };
+                restore();
+                setTimeout(restore, 60);
+            }, 220);
+        }
+
+        // Normaliza texto: minúsculas y sin acentos
+        normalizeSearchText(str) {
+            return (str || '').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
         }
 
         toggleCardExpansion(evtId, event) {
@@ -2052,22 +2081,22 @@
                 events = events.filter(e => e.status === 'open' || !e.status);
             }
 
-            // Filtrado dinámico por búsqueda de texto
-            if (this.state.filters.searchQuery) {
-                const q = this.state.filters.searchQuery.trim().toLowerCase();
+            // Filtrado dinámico por búsqueda de texto (sin acentos, multi-palabra, todos los campos relevantes)
+            if (this.state.filters.searchQuery && this.state.filters.searchQuery.trim()) {
+                const tokens = this.normalizeSearchText(this.state.filters.searchQuery).split(/\s+/).filter(Boolean);
+                const catLabels = { male: 'masculino masculina chicos hombres', female: 'femenino femenina chicas mujeres', mixed: 'mixto mixta mixtos', open: 'open abierta abierto' };
                 events = events.filter(e => {
-                    const name = (e.name || '').toLowerCase();
-                    const sede = (e.sede || e.location || '').toLowerCase();
-                    const format = (e.pair_mode || e.format || '').toLowerCase();
-                    const cat = (e.category || '').toLowerCase();
-                    const club = (e.club || e.organizer || (e.is_external ? 'externa' : 'somospadel')).toLowerCase();
-                    // Nivel: buscar en todos los campos posibles de nivel
-                    const level = (e.level || '').toString().toLowerCase();
-                    const levelMin = (e.level_min || e.min_level || '').toString().toLowerCase();
-                    const levelMax = (e.level_max || e.max_level || '').toString().toLowerCase();
-                    const levelRange = (levelMin && levelMax) ? `${levelMin} - ${levelMax}` : (levelMin || levelMax);
-                    return name.includes(q) || sede.includes(q) || format.includes(q) || cat.includes(q) || club.includes(q)
-                        || level.includes(q) || levelMin.includes(q) || levelMax.includes(q) || levelRange.includes(q);
+                    const levelMin = (e.level_min || e.min_level || '').toString();
+                    const levelMax = (e.level_max || e.max_level || '').toString();
+                    const haystack = this.normalizeSearchText([
+                        e.name, e.title, e.sede, e.location, e.address, e.city,
+                        e.pair_mode, e.format, e.mode, e.category, e.gender,
+                        catLabels[this.getNormalizedCategory(e)] || '',
+                        e.club, e.organizer, (e.is_external ? 'externa' : 'somospadel'),
+                        e.level, levelMin, levelMax, (levelMin && levelMax) ? levelMin + ' - ' + levelMax : '',
+                        e.date, e.normDate, e.time, e.status
+                    ].filter(v => v !== undefined && v !== null && v !== '').join(' '));
+                    return tokens.every(t => haystack.includes(t));
                 });
             }
 

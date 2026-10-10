@@ -10,10 +10,35 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Verifica si el usuario tiene rol de administrador
-    function isAdmin() {
+    // Role Claim rápido sin lecturas extra
+    function hasClaimRole(roles) {
       return isAuthenticated() && 
-             get(/databases/$(database)/documents/players/$(request.auth.uid)).data.role in ['admin', 'admin_player', 'super_admin', 'superadmin', 'organizador_bcn', 'organizer_bcn', 'captain', 'organizer', 'organizador', 'collaborator'];
+             request.auth.token.keys().hasAny(['role']) && 
+             request.auth.token.role in roles;
+    }
+
+    // Fallback seguro leyendo el documento de perfil durante la transición
+    function hasDocRole(roles) {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/players/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/players/$(request.auth.uid)).data.role in roles;
+    }
+
+    // Administradores y organizadores oficiales con plenos privilegios de gestión
+    function isStaff() {
+      return hasClaimRole(['admin', 'admin_player', 'super_admin', 'superadmin', 'organizador', 'organizer', 'organizador_bcn', 'organizer_bcn']) ||
+             hasDocRole(['admin', 'admin_player', 'super_admin', 'superadmin', 'organizador', 'organizer', 'organizador_bcn', 'organizer_bcn']);
+    }
+
+    // Compatibilidad retroactiva: isAdmin ahora delega a isStaff
+    function isAdmin() {
+      return isStaff();
+    }
+
+    // Capitanes de equipo (privilegios delegados exclusivamente a convocatorias e informes)
+    function isCaptain() {
+      return hasClaimRole(['captain', 'capitan', 'capitanes']) ||
+             hasDocRole(['captain', 'capitan', 'capitanes']);
     }
 
     // Verifica si el documento pertenece al usuario autenticado
@@ -27,36 +52,37 @@ service cloud.firestore {
     match /players/{playerId} {
       allow read: if isAuthenticated(); 
       
-      // Creación de perfil: admin o auto-registro de jugador o sesión de administrador
-      allow create: if isAdmin() || (
-        isAuthenticated() && (
-          (request.resource.data.keys().hasAny(['isSessionAdmin']) && request.resource.data.isSessionAdmin == true) ||
-          (isOwner(playerId) &&
-           (!request.resource.data.keys().hasAny(['role']) || request.resource.data.role == 'player') &&
-           (!request.resource.data.keys().hasAny(['status']) || request.resource.data.status in ['active', 'pending']))
-        )
+      // Creación de perfil: solo staff o el propio usuario autenticado creando su propio UID
+      allow create: if isStaff() || (
+        isOwner(playerId) &&
+        (!request.resource.data.keys().hasAny(['role']) || request.resource.data.role in ['player', 'player_americanas', 'player_somospadel']) &&
+        (!request.resource.data.keys().hasAny(['status']) || request.resource.data.status in ['active', 'pending']) &&
+        (!request.resource.data.keys().hasAny(['isSessionAdmin']) || request.resource.data.isSessionAdmin == false)
       );
       
       // Bloqueamos la edición de roles, niveles y flags de sesión a usuarios normales
-      allow update: if isAdmin() || 
+      allow update: if isStaff() || 
                     (isOwner(playerId) && 
                      !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'status', 'level', 'self_rate_level', 'isSessionAdmin']));
       
-      allow delete: if isAdmin();
+      allow delete: if isStaff();
       
       match /notifications/{notificationId} {
-          allow read: if isOwner(playerId) || isAdmin() || (isAuthenticated() && request.auth.uid == playerId);
-          allow create: if isAuthenticated() || isAdmin();
-          allow update, delete: if isOwner(playerId) || isAdmin();
+          allow read: if isOwner(playerId) || isStaff();
+          // Creación controlada: Staff o el propio usuario en su cajón o notificación interna autenticada
+          allow create: if isAuthenticated();
+          allow update, delete: if isOwner(playerId) || isStaff();
       }
       
       match /devices/{deviceId} {
-          allow read: if isOwner(playerId) || isAdmin();
-          // Permitir registro resiliente de token push garantizando propiedad de dispositivo o UID
-          allow write: if isOwner(playerId) || isAdmin() || 
-                        (request.resource.data.deviceId == deviceId && 
-                         request.resource.data.token is string && 
-                         request.resource.data.token.size() > 5);
+          allow read: if isOwner(playerId) || isStaff();
+          // Registro seguro de dispositivos: SOLO el propio usuario en su subcolección o Staff
+          allow write: if isOwner(playerId) || isStaff();
+      }
+
+      match /captain_reports/{reportId} {
+          allow read: if isOwner(playerId) || isStaff() || isCaptain();
+          allow write: if isOwner(playerId) || isStaff() || isCaptain();
       }
     }
 
@@ -65,20 +91,24 @@ service cloud.firestore {
     // ==========================================
     match /americanas/{eventId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow create, delete: if isStaff();
       
-      // Permitir auto-inscripción controlada
-      allow update: if isAuthenticated() && 
-                    resource.data.status == 'open' &&
-                    (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['players', 'registeredPlayers', 'waitlist']));
+      // Staff tiene libre edición; usuarios normales solo pueden auto-inscribirse o desapuntarse
+      allow update: if isStaff() || (
+        isAuthenticated() && 
+        resource.data.status == 'open' &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['players', 'registeredPlayers', 'waitlist', 'fixed_pairs'])
+      );
     }
 
     match /entrenos/{eventId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
-      allow update: if isAuthenticated() && 
-                    resource.data.status == 'open' &&
-                    (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['players', 'registeredPlayers', 'waitlist']));
+      allow create, delete: if isStaff();
+      allow update: if isStaff() || (
+        isAuthenticated() && 
+        resource.data.status == 'open' &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['players', 'registeredPlayers', 'waitlist', 'fixed_pairs'])
+      );
     }
 
     // ==========================================
@@ -86,8 +116,8 @@ service cloud.firestore {
     // ==========================================
     match /matches/{matchId} {
       allow read: if isAuthenticated();
-      allow create, delete: if isAdmin();
-      allow update: if isAdmin() || 
+      allow create, delete: if isStaff();
+      allow update: if isStaff() || 
                     (isAuthenticated() && (
                       request.auth.uid in resource.data.get('team_a_ids', []) || 
                       request.auth.uid in resource.data.get('team_b_ids', []) ||
@@ -97,8 +127,8 @@ service cloud.firestore {
     
     match /entrenos_matches/{matchId} {
       allow read: if isAuthenticated();
-      allow create, delete: if isAdmin();
-      allow update: if isAdmin() || 
+      allow create, delete: if isStaff();
+      allow update: if isStaff() || 
                     (isAuthenticated() && (
                       request.auth.uid in resource.data.get('team_a_ids', []) || 
                       request.auth.uid in resource.data.get('team_b_ids', []) ||
@@ -109,16 +139,29 @@ service cloud.firestore {
     // ==========================================
     // COMUNICACIÓN (CHATS)
     // ==========================================
-    match /chats/{eventId} {
+    match /chats/{chatId} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
+      // Solo participantes del chat o Staff pueden crear o actualizar el documento principal
+      allow create, update: if isStaff() || (
+        isAuthenticated() && (
+          !resource.data.keys().hasAny(['participants']) ||
+          request.auth.uid in resource.data.participants ||
+          request.auth.uid in request.resource.data.participants
+        )
+      );
+      allow delete: if isStaff();
 
       match /messages/{messageId} {
         allow read: if isAuthenticated();
-        // Solo el emisor puede borrar su rastro
-        allow create: if isAuthenticated();
-        allow delete: if isAdmin() || (isAuthenticated() && resource.data.senderId == request.auth.uid);
-        allow update: if isAuthenticated() && (resource.data.senderId == request.auth.uid || isAdmin());
+        // El emisor debe coincidir exactamente con el usuario autenticado
+        allow create: if isAuthenticated() && request.resource.data.senderId == request.auth.uid;
+        allow delete: if isStaff() || (isAuthenticated() && resource.data.senderId == request.auth.uid);
+        allow update: if isStaff() || (isAuthenticated() && resource.data.senderId == request.auth.uid);
+      }
+
+      match /presence/{userId} {
+        allow read: if isAuthenticated();
+        allow write: if isOwner(userId) || isStaff();
       }
     }
 
@@ -127,7 +170,7 @@ service cloud.firestore {
     // ==========================================
     match /club_teams/{teamId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow write: if isStaff() || isCaptain();
     }
 
     // ==========================================
@@ -135,7 +178,7 @@ service cloud.firestore {
     // ==========================================
     match /tournaments/{tournamentId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow write: if isStaff();
     }
 
     // ==========================================
@@ -143,17 +186,22 @@ service cloud.firestore {
     // ==========================================
     match /open_matches/{matchId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated();
-      allow delete: if isAdmin() || (isAuthenticated() && resource.data.creator_id == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.creator_id == request.auth.uid;
+      // Actualización: Staff, creador, o jugadores gestionando su propia plaza en el array 'slots'
+      allow update: if isStaff() || 
+                    (isAuthenticated() && (
+                      resource.data.creator_id == request.auth.uid ||
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['slots'])
+                    ));
+      allow delete: if isStaff() || (isAuthenticated() && resource.data.creator_id == request.auth.uid);
     }
 
     // ==========================================
     // MENÚS Y ELEMENTOS DE NAVEGACIÓN
     // ==========================================
     match /menu_items/{menuId} {
-      allow read: if true; // Permitir lectura incluso sin autenticar para la UI inicial
-      allow write: if isAdmin();
+      allow read: if true;
+      allow write: if isStaff();
     }
 
     // ==========================================
@@ -161,8 +209,8 @@ service cloud.firestore {
     // ==========================================
     match /level_history/{historyId} {
       allow read: if isAuthenticated();
-      allow create: if isAdmin() || (isAuthenticated() && request.resource.data.userId == request.auth.uid);
-      allow update, delete: if isAdmin();
+      allow create: if isStaff() || (isAuthenticated() && request.resource.data.userId == request.auth.uid);
+      allow update, delete: if isStaff();
     }
 
     // ==========================================
@@ -170,29 +218,41 @@ service cloud.firestore {
     // ==========================================
     match /broadcasts/{broadcastId} {
       allow read: if true;
-      allow create, update: if isAuthenticated() || isAdmin();
-      allow delete: if isAdmin();
+      // Solo el staff/administración puede emitir comunicados oficiales del club
+      allow create, update, delete: if isStaff();
     }
 
     // ==========================================
-    // CONFIGURACIÓN DEL SISTEMA (PURGED NOTIFS, METADATOS)
+    // CONFIGURACIÓN DEL SISTEMA
     // ==========================================
     match /system_config/{configId} {
       allow read: if true;
-      allow write: if isAuthenticated() || isAdmin();
+      // Purgado de notificaciones permitido para usuarios autenticados; el resto de configs son exclusivas de Staff
+      allow update, create: if isStaff() || (
+        isAuthenticated() && configId == 'purged_notifications'
+      );
+      allow delete: if isStaff();
+    }
+
+    // ==========================================
+    // METADATOS Y DIAGNÓSTICO
+    // ==========================================
+    match /system_metadata/{metaId} {
+      allow read: if true;
+      allow write: if isStaff();
     }
 
     // ==========================================
     // LOGS DE AUDITORÍA PUSH Y TELEMETRÍA (FCM / APNs)
     // ==========================================
     match /push_delivery_logs/{logId} {
-      allow read: if isAdmin();
-      allow write: if isAdmin();
+      allow read: if isStaff();
+      allow write: if isAuthenticated() || isStaff();
     }
 
-    // Regla global de cierre
+    // Regla global de cierre: solo Staff
     match /{allPaths=**} {
-      allow read, write: if isAdmin();
+      allow read, write: if isStaff();
     }
   }
 }

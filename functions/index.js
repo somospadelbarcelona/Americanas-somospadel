@@ -11,6 +11,33 @@ admin.initializeApp();
 const db = admin.firestore();
 const { JOURNAL_CATALOG, JOURNAL_DAILY_ARTICLES } = require('./journalCatalog');
 
+// Roles oficiales con facultades de gestión y administración (Staff)
+const STAFF_ROLES = [
+    'admin',
+    'super_admin',
+    'superadmin',
+    'admin_player',
+    'organizador',
+    'organizer',
+    'organizador_bcn',
+    'organizer_bcn'
+];
+
+/**
+ * Helper para verificar si un caller tiene privilegios de Staff vía Claims o Documento
+ */
+async function checkCallerIsStaff(context) {
+    if (!context || !context.auth) return false;
+    const tokenRole = context.auth.token ? context.auth.token.role : null;
+    if (tokenRole && STAFF_ROLES.includes(tokenRole)) return true;
+
+    // Fallback a Firestore
+    const callerDoc = await db.collection('players').doc(context.auth.uid).get();
+    if (!callerDoc.exists) return false;
+    const role = callerDoc.data()?.role;
+    return Boolean(role && STAFF_ROLES.includes(role));
+}
+
 // ==========================================
 // 1. CORE MATCHMAKING & ROUND GENERATION (BÚNKER ANTI-COPIA)
 // ==========================================
@@ -34,10 +61,7 @@ exports.secureGenerateRound = functions.https.onCall(async (data, context) => {
     const matchCollection = eventType === 'americana' ? 'matches' : 'entrenos_matches';
 
     // Verificar permisos de admin u organizador
-    const callerDoc = await db.collection('players').doc(context.auth.uid).get();
-    const callerRole = callerDoc.exists ? callerDoc.data().role : null;
-    const isAuthorized = ['admin', 'super_admin', 'admin_player', 'captain', 'organizador'].includes(callerRole);
-    
+    const isAuthorized = await checkCallerIsStaff(context);
     if (!isAuthorized) {
         throw new functions.https.HttpsError('permission-denied', 'No tienes permisos de administrador u organizador.');
     }
@@ -1414,6 +1438,272 @@ exports.diagnosePushSystem = functions.https.onCall(async (data, context) => {
         throw new functions.https.HttpsError('internal', diagErr.message);
     }
 });
+
+// ==========================================
+// 13. CUSTOM CLAIMS MANAGEMENT (ZERO-COST RULES)
+// ==========================================
+
+/**
+ * Callable: setUserRole
+ * Permite a un administrador asignar un rol oficial a un usuario tanto en Firestore como en Custom Claims de Firebase Auth.
+ */
+exports.setUserRole = functions.https.onCall(async (data, context) => {
+    const isAuthorized = await checkCallerIsStaff(context);
+    if (!isAuthorized) {
+        throw new functions.https.HttpsError('permission-denied', 'Solo personal autorizado puede modificar roles de usuario.');
+    }
+
+    const { targetUid, role } = data || {};
+    if (!targetUid || !role) {
+        throw new functions.https.HttpsError('invalid-argument', 'targetUid y role son obligatorios.');
+    }
+
+    const validRoles = [
+        ...STAFF_ROLES,
+        'captain',
+        'player',
+        'player_somospadel',
+        'player_americanas',
+        'collaborator'
+    ];
+
+    if (!validRoles.includes(role)) {
+        throw new functions.https.HttpsError('invalid-argument', `Rol inválido: ${role}`);
+    }
+
+    // 1. Asignar custom claim en Firebase Auth
+    await admin.auth().setCustomUserClaims(targetUid, { role });
+
+    // 2. Persistir en Firestore
+    await db.collection('players').doc(targetUid).set({
+        role: role,
+        role_updated_at: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    console.log(`🛡️ [setUserRole] Rol '${role}' asignado a ${targetUid} por ${context.auth.uid}`);
+    return { success: true, targetUid, role };
+});
+
+/**
+ * Trigger Firestore: syncUserRoleClaimsOnWrite
+ * Sincroniza automáticamente los Custom Claims cada vez que un documento de jugador cambia su campo 'role'.
+ */
+exports.syncUserRoleClaimsOnWrite = functions.firestore
+    .document('players/{userId}')
+    .onWrite(async (change, context) => {
+        const { userId } = context.params;
+        if (!change.after.exists) return null;
+
+        const beforeRole = change.before.exists ? change.before.data()?.role : null;
+        const afterRole = change.after.data()?.role;
+
+        if (afterRole && beforeRole !== afterRole) {
+            try {
+                await admin.auth().setCustomUserClaims(userId, { role: afterRole });
+                console.log(`✅ [syncUserRoleClaimsOnWrite] Sincronizado claim role='${afterRole}' para ${userId}`);
+            } catch (err) {
+                console.warn(`⚠️ [syncUserRoleClaimsOnWrite] Fallo al asignar claim a ${userId}:`, err.message);
+            }
+        }
+        return null;
+    });
+
+/**
+ * Callable: backfillRoleClaims
+ * Migración en lote: sincroniza los claims de todos los usuarios existentes en base a su perfil de Firestore.
+ */
+exports.backfillRoleClaims = functions.https.onCall(async (data, context) => {
+    const isAuthorized = await checkCallerIsStaff(context);
+    if (!isAuthorized) {
+        throw new functions.https.HttpsError('permission-denied', 'Solo personal autorizado puede realizar la migración.');
+    }
+
+    const snapshot = await db.collection('players').get();
+    let updatedCount = 0;
+    let errorsCount = 0;
+
+    for (const doc of snapshot.docs) {
+        const p = doc.data();
+        const role = p.role || 'player';
+        try {
+            await admin.auth().setCustomUserClaims(doc.id, { role });
+            updatedCount++;
+        } catch (e) {
+            errorsCount++;
+            console.warn(`⚠️ [backfillRoleClaims] Error en ${doc.id}:`, e.message);
+        }
+    }
+
+    console.log(`✅ [backfillRoleClaims] Migración completada: ${updatedCount} actualizados, ${errorsCount} fallos.`);
+    return { success: true, total: snapshot.size, updated: updatedCount, errors: errorsCount };
+});
+
+// ==========================================
+// 14. GESTIÓN TRANSACCIONAL SEGURA DE INSCRIPCIONES
+// ==========================================
+
+/**
+ * Callable: registerToEvent
+ * Inscripción atómica con control de aforo estricto para prevenir overbooking bajo concurrencia.
+ */
+exports.registerToEvent = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'Debes iniciar sesión para inscribirte.');
+    }
+
+    const { eventId, eventType = 'americana' } = data || {};
+    if (!eventId) {
+        throw new functions.https.HttpsError('invalid-argument', 'eventId es obligatorio.');
+    }
+
+    const collectionName = eventType === 'americana' ? 'americanas' : 'entrenos';
+    const eventRef = db.collection(collectionName).doc(eventId);
+    const userId = context.auth.uid;
+
+    // Obtener datos del jugador
+    const playerDoc = await db.collection('players').doc(userId).get();
+    if (!playerDoc.exists) {
+        throw new functions.https.HttpsError('not-found', 'Perfil de jugador no encontrado.');
+    }
+    const pData = playerDoc.data();
+
+    return await db.runTransaction(async (transaction) => {
+        const eventDoc = await transaction.get(eventRef);
+        if (!eventDoc.exists) {
+            throw new functions.https.HttpsError('not-found', 'El evento no existe.');
+        }
+
+        const event = eventDoc.data();
+        if (event.status !== 'open') {
+            throw new functions.https.HttpsError('failed-precondition', 'Las inscripciones para este evento están cerradas.');
+        }
+
+        const players = Array.isArray(event.players) ? [...event.players] : [];
+        const waitlist = Array.isArray(event.waitlist) ? [...event.waitlist] : [];
+        const maxCourts = parseInt(event.max_courts) || 4;
+        const maxPlayers = maxCourts * 4;
+
+        // Comprobar si ya está inscrito
+        const isEnrolled = players.some(p => String(p?.id || p?.uid) === userId);
+        const isWaitlisted = waitlist.some(p => String(p?.id || p?.uid) === userId);
+
+        if (isEnrolled) {
+            return { success: true, status: 'already_enrolled', message: 'Ya estás inscrito en la lista principal.' };
+        }
+        if (isWaitlisted) {
+            return { success: true, status: 'already_in_waitlist', message: 'Ya estás en la lista de espera.' };
+        }
+
+        const participantObject = {
+            id: userId,
+            uid: userId,
+            name: pData.name || pData.displayName || 'Jugador',
+            level: parseFloat(pData.level || pData.self_rate_level || 3.5),
+            gender: pData.gender || '?',
+            photoURL: pData.photoURL || pData.photo_url || null,
+            joinedAt: new Date().toISOString()
+        };
+
+        if (players.length < maxPlayers) {
+            players.push(participantObject);
+            transaction.update(eventRef, {
+                players: players,
+                registeredPlayers: players,
+                updated_at: admin.firestore.FieldValue.serverTimestamp()
+            });
+            return { success: true, status: 'enrolled', count: players.length, maxPlayers };
+        } else {
+            waitlist.push(participantObject);
+            transaction.update(eventRef, {
+                waitlist: waitlist,
+                updated_at: admin.firestore.FieldValue.serverTimestamp()
+            });
+            return { success: true, status: 'waitlist', position: waitlist.length, maxPlayers };
+        }
+    });
+});
+
+/**
+ * Callable: unregisterFromEvent
+ * Baja atómica con promoción automática y justa del primero en lista de espera.
+ */
+exports.unregisterFromEvent = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'Debes iniciar sesión.');
+    }
+
+    const { eventId, eventType = 'americana', targetPlayerId } = data || {};
+    if (!eventId) {
+        throw new functions.https.HttpsError('invalid-argument', 'eventId es obligatorio.');
+    }
+
+    // Permitir desapuntarse a sí mismo, o si es Staff, desapuntar a otro
+    const isStaffCaller = await checkCallerIsStaff(context);
+    const playerIdToRemove = (isStaffCaller && targetPlayerId) ? targetPlayerId : context.auth.uid;
+
+    const collectionName = eventType === 'americana' ? 'americanas' : 'entrenos';
+    const eventRef = db.collection(collectionName).doc(eventId);
+
+    return await db.runTransaction(async (transaction) => {
+        const eventDoc = await transaction.get(eventRef);
+        if (!eventDoc.exists) {
+            throw new functions.https.HttpsError('not-found', 'El evento no existe.');
+        }
+
+        const event = eventDoc.data();
+        let players = Array.isArray(event.players) ? [...event.players] : [];
+        let waitlist = Array.isArray(event.waitlist) ? [...event.waitlist] : [];
+        let fixedPairs = Array.isArray(event.fixed_pairs) ? [...event.fixed_pairs] : [];
+
+        const mainIndex = players.findIndex(p => String(p?.id || p?.uid) === playerIdToRemove);
+        const waitIndex = waitlist.findIndex(p => String(p?.id || p?.uid) === playerIdToRemove);
+
+        if (mainIndex === -1 && waitIndex === -1) {
+            return { success: false, message: 'El jugador no figuraba inscrito en el evento.' };
+        }
+
+        let promotedPlayer = null;
+
+        if (waitIndex !== -1) {
+            // Estaba en lista de espera: solo se elimina
+            waitlist.splice(waitIndex, 1);
+        } else if (mainIndex !== -1) {
+            // Estaba en lista principal: se elimina y se promociona al primero de waitlist si procede
+            players.splice(mainIndex, 1);
+
+            // Limpieza de parejas fijas
+            fixedPairs = fixedPairs.filter(pair => {
+                const p1 = String(pair?.player1_id || pair?.player1?.id || pair?.p1?.id || '');
+                const p2 = String(pair?.player2_id || pair?.player2?.id || pair?.p2?.id || '');
+                return p1 !== playerIdToRemove && p2 !== playerIdToRemove;
+            });
+
+            const maxCourts = parseInt(event.max_courts) || 4;
+            const maxPlayers = maxCourts * 4;
+
+            if (players.length < maxPlayers && waitlist.length > 0) {
+                promotedPlayer = waitlist.shift();
+                if (promotedPlayer && !promotedPlayer.level) promotedPlayer.level = 3.5;
+                players.push(promotedPlayer);
+            }
+        }
+
+        transaction.update(eventRef, {
+            players: players,
+            registeredPlayers: players,
+            waitlist: waitlist,
+            fixed_pairs: fixedPairs,
+            updated_at: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        return {
+            success: true,
+            status: 'removed',
+            promoted: promotedPlayer ? { id: promotedPlayer.id, name: promotedPlayer.name } : null
+        };
+    });
+});
+
 
 
 
