@@ -237,13 +237,33 @@
     window.generateConvocatoriaStory = () => {};
     window.toggleBattleReadyFullscreen = () => {};
     window.updateBattleCountdown = () => {};
+    window.openInscritosModal = (id, type) => {
+        if (window.EventsController && window.EventsController.showInscritosModal) {
+            window.EventsController.showInscritosModal(id, type);
+        } else if (window.Router) {
+            window.Router.navigate(type === 'entreno' ? 'entrenos' : 'americanas');
+        }
+    };
 
     class EventsController {
         constructor() {
+            let initialAmericanas = [];
+            let initialEntrenos = [];
+            try {
+                const cached = localStorage.getItem('sp_cached_active_events_v2');
+                if (cached) {
+                    const parsed = JSON.parse(cached);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        initialAmericanas = parsed.filter(e => e.type !== 'entreno' && !(e.name || e.title || '').toLowerCase().includes('entreno'));
+                        initialEntrenos = parsed.filter(e => e.type === 'entreno' || (e.name || e.title || '').toLowerCase().includes('entreno'));
+                    }
+                }
+            } catch (_) {}
+
             this.state = {
                 activeTab: 'events',
-                americanas: [],
-                entrenos: [],
+                americanas: initialAmericanas,
+                entrenos: initialEntrenos,
                 users: [],
                 personalMatches: [],
                 loading: false,
@@ -372,12 +392,18 @@
                 this.unsubscribeEvents = window.db.collection('americanas')
                     .onSnapshot(snap => {
                         this.state.americanas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                        try {
+                            const comb = [...(this.state.americanas || []), ...(this.state.entrenos || [])];
+                            if (comb.length > 0) localStorage.setItem('sp_cached_active_events_v2', JSON.stringify(comb));
+                        } catch (_) {}
                         console.log(`📡 [EventsController] Real-time Americanas update: ${this.state.americanas.length} events`);
+                        window.dispatchEvent(new CustomEvent('americanasUpdated', { detail: { events: this.state.americanas } }));
                         this.onDataUpdate();
                     }, err => {
                         console.error("Error loading americanas snapshot, attempting direct get:", err);
                         window.db.collection('americanas').get().then(snap => {
                             this.state.americanas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                            window.dispatchEvent(new CustomEvent('americanasUpdated', { detail: { events: this.state.americanas } }));
                             this.onDataUpdate();
                         }).catch(e => {
                             this.state.americanas = this.state.americanas || [];
@@ -389,11 +415,13 @@
                     .onSnapshot(snap => {
                         this.state.entrenos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                         console.log(`📡 [EventsController] Real-time Entrenos update: ${this.state.entrenos.length} events`);
+                        window.dispatchEvent(new CustomEvent('entrenosUpdated', { detail: { events: this.state.entrenos } }));
                         this.onDataUpdate();
                     }, err => {
                         console.error("Error loading entrenos snapshot, attempting direct get:", err);
                         window.db.collection('entrenos').get().then(snap => {
                             this.state.entrenos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                            window.dispatchEvent(new CustomEvent('entrenosUpdated', { detail: { events: this.state.entrenos } }));
                             this.onDataUpdate();
                         }).catch(e => {
                             this.state.entrenos = this.state.entrenos || [];
@@ -5900,6 +5928,10 @@
             } catch (err) {
                 console.error("Error leaving waitlist:", err);
             }
+        }
+
+        openInscritosModal(id, type, silent = false) {
+            return this.showInscritosModal(id, type, silent);
         }
 
         async showInscritosModal(id, type, silent = false) {

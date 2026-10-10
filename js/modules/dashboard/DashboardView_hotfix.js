@@ -606,9 +606,40 @@
                             } else {
                                 this.renderLiveWidget(window._lastDashboardContext || {}, true);
                             }
+                            // Sincronizar carruseles de americanas con sus carteles en tiempo real
+                            if (window.AmericanaService && typeof window.AmericanaService.getAllActiveEvents === 'function') {
+                                window.AmericanaService.getAllActiveEvents({ forceRefresh: true }).then(evs => {
+                                    if (evs && evs.length > 0) this.updateDynamicCarousels(evs);
+                                }).catch(() => {});
+                            } else if (window.EventsController?.state?.americanas?.length > 0) {
+                                this.updateDynamicCarousels([
+                                    ...(window.EventsController.state.americanas || []),
+                                    ...(window.EventsController.state.entrenos || [])
+                                ]);
+                            }
                         }
                     }, 400);
                 });
+            }
+
+            if (!this._americanasSyncAttached) {
+                this._americanasSyncAttached = true;
+                const onEventsUpdated = () => {
+                    if (window.Router && window.Router.currentRoute === 'dashboard') {
+                        if (window.AmericanaService && typeof window.AmericanaService.getAllActiveEvents === 'function') {
+                            window.AmericanaService.getAllActiveEvents({ forceRefresh: true }).then(evs => {
+                                if (evs && evs.length > 0) this.updateDynamicCarousels(evs);
+                            }).catch(() => {});
+                        } else if (window.EventsController?.state?.americanas?.length > 0) {
+                            this.updateDynamicCarousels([
+                                ...(window.EventsController.state.americanas || []),
+                                ...(window.EventsController.state.entrenos || [])
+                            ]);
+                        }
+                    }
+                };
+                window.addEventListener('americanasUpdated', onEventsUpdated);
+                window.addEventListener('entrenosUpdated', onEventsUpdated);
             }
 
             if (window.Store) {
@@ -683,7 +714,7 @@
                 const userFirstName = user ? ((user.name || user.displayName || 'Jugador').split(' ')[0]) : 'Jugador';
 
                 // Soft Refresh if elements already exist in the DOM (prevents flickering and keeps WebGL/Three.js context alive)
-                const isAlreadyRendered = document.getElementById('hero-card-root') !== null;
+                const isAlreadyRendered = document.getElementById('sp-playtomic-user-name') !== null;
             if (isAlreadyRendered) {
                 console.log("⚡ [DashboardView] Already rendered, performing soft refresh...");
                 try {
@@ -725,6 +756,9 @@
                     if (window.OpenMatchesWidget) {
                         window.OpenMatchesWidget.render('open-matches-widget-root');
                     }
+
+                    // Refresh Real Events Tracks (Americanas & Entrenos)
+                    this.hydrateRealEventsTracks();
                 } catch (err) {
                     console.error("❌ Soft Refresh error:", err);
                 }
@@ -738,641 +772,480 @@
             container.innerHTML = `
                 <!-- MAIN DASHBOARD SCROLL CONTENT -->
                 <div class="dashboard-v2-container fade-in full-width-mobile" style="
-                    background: radial-gradient(circle at 50% 0%, rgba(15, 23, 42, 0.08) 0%, transparent 70%);
+                    background: #ffffff !important;
                     min-height: 100vh;
-                    padding-top: 6px;
+                    padding: 14px 16px 48px !important;
+                    color: #111827;
+                    font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
                 ">
 
-                    <!-- ⭐ SOMOSPADEL ARENA: PRO ATHLETE QUICK ACCESS HUB ⭐ -->
-                    <div class="sp-playtomic-hub" style="
-                        margin: 8px 15px 16px !important;
+                    <!-- ════════ BLOQUE 1: SALUDO LIMPIO PLAYTOMIC ════════ -->
+                    <div class="sp-greeting-clean" style="
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        padding: 4px 0 16px;
                         background: #ffffff;
-                        border-radius: 26px;
-                        border: 1px solid #e2e8f0;
-                        padding: 18px 16px 16px;
-                        box-shadow: 0 8px 30px rgba(10, 25, 47, 0.05);
-                        animation: floatUp 0.35s ease-out forwards;
-                        position: relative;
-                        overflow: hidden;
                     ">
-                        <!-- Línea decorativa superior estilo pista SomosPadel -->
-                        <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #CCFF00 0%, #38bdf8 50%, #CCFF00 100%);"></div>
-
-                        <!-- Header SomosPadel: Saludo Directo -->
-                        <div style="margin-bottom: 16px; padding: 4px 2px 0; position: relative; z-index: 2;">
-                            <h2 style="
-                                margin: 0;
-                                font-size: 1.30rem;
-                                font-weight: 950;
-                                color: #0a192f;
-                                letter-spacing: -0.5px;
-                                line-height: 1.2;
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <!-- Avatar circular vibrante SomosPadel Barcelona -->
+                            <div style="
+                                width: 52px;
+                                height: 52px;
+                                border-radius: 50%;
+                                background: linear-gradient(135deg, #CCFF00 0%, #00e5ff 100%);
+                                border: 2.5px solid #ffffff;
                                 display: flex;
                                 align-items: center;
-                                gap: 6px;
+                                justify-content: center;
+                                color: #000000;
+                                font-size: 1.35rem;
+                                font-weight: 900;
+                                box-shadow: 0 4px 14px rgba(0, 229, 255, 0.35), 0 2px 8px rgba(204, 255, 0, 0.4);
+                                flex-shrink: 0;
+                                text-shadow: 0 1px 1px rgba(255,255,255,0.6);
                             ">
-                                <span>¡A la pista, <span id="sp-playtomic-user-name">${userFirstName}</span>!</span>
-                                <span style="font-size: 1.25rem;">🔥</span>
-                            </h2>
-                            <div style="font-size: 0.78rem; color: #64748b; font-weight: 600; margin-top: 3px;">
-                                Elige tu juego y suma victorias esta semana:
+                                ${userFirstName.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                                <h1 style="
+                                    margin: 0;
+                                    font-size: 1.45rem;
+                                    font-weight: 900;
+                                    color: #111827;
+                                    letter-spacing: -0.5px;
+                                    line-height: 1.2;
+                                ">
+                                    ¡Hola, <span id="sp-playtomic-user-name">${userFirstName}</span>! 👋
+                                </h1>
+                                <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                                    <span style="
+                                        background: #f7fee7;
+                                        color: #111827;
+                                        font-size: 0.72rem;
+                                        font-weight: 850;
+                                        padding: 3px 9px;
+                                        border-radius: 12px;
+                                        border: 1.5px solid #CCFF00;
+                                        box-shadow: 0 2px 8px rgba(204, 255, 0, 0.25);
+                                        display: inline-flex;
+                                        align-items: center;
+                                        gap: 4px;
+                                    ">
+                                        <i class="fas fa-bolt" style="color: #65a30d; font-size: 0.65rem;"></i> Nivel <span id="user-level-val">${userLevel}</span>
+                                    </span>
+                                    <span style="font-size: 0.75rem; color: #64748b; font-weight: 600;">
+                                        <i class="fas fa-map-marker-alt" style="color: #94a3b8; margin-right: 3px;"></i>SomosPadel BCN
+                                    </span>
+                                </div>
                             </div>
                         </div>
-
-                        <!-- 4 Botones de Acción con Estilo SomosPadel Pro (Athletic Pods) -->
-                        <div style="
-                            display: grid;
-                            grid-template-columns: repeat(4, 1fr);
-                            gap: 8px;
-                            align-items: start;
-                            text-align: center;
-                            position: relative;
-                            z-index: 2;
-                        ">
-                            <!-- 1. Americanas -->
-                            <div class="sp-playtomic-pill haptic-feedback" 
-                                onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('americanas');"
-                                style="display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative;">
-                                <div style="
-                                    width: 58px;
-                                    height: 58px;
-                                    border-radius: 19px;
-                                    background: linear-gradient(145deg, #090e1a 0%, #17243c 100%);
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                    box-shadow: 0 6px 18px rgba(9, 14, 26, 0.25), 0 0 12px rgba(204, 255, 0, 0.15);
-                                    border: 1.5px solid rgba(204, 255, 0, 0.45);
-                                    transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.16s;
-                                    position: relative;
-                                "
-                                onmouseover="this.style.transform='scale(1.08)'; this.style.borderColor='#CCFF00';"
-                                onmouseout="this.style.transform='none'; this.style.borderColor='rgba(204, 255, 0, 0.45)';"
-                                onmousedown="this.style.transform='scale(0.92)';"
-                                onmouseup="this.style.transform='scale(1.08)';">
-                                    <i class="fas fa-trophy" style="font-size: 1.25rem; color: #CCFF00; filter: drop-shadow(0 0 6px rgba(204,255,0,0.4));"></i>
-                                    <span style="position: absolute; top: -5px; right: -5px; background: #ef4444; color: #fff; font-size: 0.50rem; font-weight: 950; padding: 1px 4px; border-radius: 5px; border: 1.5px solid #ffffff; letter-spacing: 0.4px;">TOP</span>
-                                </div>
-                                <span style="margin-top: 7px; font-size: 0.72rem; font-weight: 900; color: #0a192f; line-height: 1.1;">
-                                    Americanas
-                                </span>
-                                <span style="font-size: 0.60rem; color: #64748b; font-weight: 700; margin-top: 1px;">Torneos</span>
-                            </div>
-
-                            <!-- 2. Entrenos -->
-                            <div class="sp-playtomic-pill haptic-feedback" 
-                                onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('entrenos');"
-                                style="display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative;">
-                                <div style="
-                                    width: 58px;
-                                    height: 58px;
-                                    border-radius: 19px;
-                                    background: linear-gradient(145deg, #090e1a 0%, #17243c 100%);
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                    box-shadow: 0 6px 18px rgba(9, 14, 26, 0.25), 0 0 12px rgba(56, 189, 248, 0.15);
-                                    border: 1.5px solid rgba(56, 189, 248, 0.45);
-                                    transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.16s;
-                                    position: relative;
-                                "
-                                onmouseover="this.style.transform='scale(1.08)'; this.style.borderColor='#38bdf8';"
-                                onmouseout="this.style.transform='none'; this.style.borderColor='rgba(56, 189, 248, 0.45)';"
-                                onmousedown="this.style.transform='scale(0.92)';"
-                                onmouseup="this.style.transform='scale(1.08)';">
-                                    <i class="fas fa-graduation-cap" style="font-size: 1.25rem; color: #38bdf8; filter: drop-shadow(0 0 6px rgba(56,189,248,0.4));"></i>
-                                    <span style="position: absolute; top: -5px; right: -5px; background: #38bdf8; color: #000; font-size: 0.50rem; font-weight: 950; padding: 1px 4px; border-radius: 5px; border: 1.5px solid #ffffff; letter-spacing: 0.4px;">PISTAS</span>
-                                </div>
-                                <span style="margin-top: 7px; font-size: 0.72rem; font-weight: 900; color: #0a192f; line-height: 1.1;">
-                                    Entrenos
-                                </span>
-                                <span style="font-size: 0.60rem; color: #64748b; font-weight: 700; margin-top: 1px;">Partidos</span>
-                            </div>
-
-                            <!-- 3. Ranking -->
-                            <div class="sp-playtomic-pill haptic-feedback" 
-                                onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('ranking');"
-                                style="display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative;">
-                                <div style="
-                                    width: 58px;
-                                    height: 58px;
-                                    border-radius: 19px;
-                                    background: linear-gradient(145deg, #090e1a 0%, #17243c 100%);
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                    box-shadow: 0 6px 18px rgba(9, 14, 26, 0.25), 0 0 12px rgba(251, 191, 36, 0.15);
-                                    border: 1.5px solid rgba(251, 191, 36, 0.45);
-                                    transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.16s;
-                                    position: relative;
-                                "
-                                onmouseover="this.style.transform='scale(1.08)'; this.style.borderColor='#fbbf24';"
-                                onmouseout="this.style.transform='none'; this.style.borderColor='rgba(251, 191, 36, 0.45)';"
-                                onmousedown="this.style.transform='scale(0.92)';"
-                                onmouseup="this.style.transform='scale(1.08)';">
-                                    <i class="fas fa-medal" style="font-size: 1.25rem; color: #fbbf24; filter: drop-shadow(0 0 6px rgba(251,191,36,0.4));"></i>
-                                    <span style="position: absolute; top: -5px; right: -5px; background: #fbbf24; color: #000; font-size: 0.50rem; font-weight: 950; padding: 1px 4px; border-radius: 5px; border: 1.5px solid #ffffff; letter-spacing: 0.4px;">FIP</span>
-                                </div>
-                                <span style="margin-top: 7px; font-size: 0.72rem; font-weight: 900; color: #0a192f; line-height: 1.1;">
-                                    Ranking
-                                </span>
-                                <span style="font-size: 0.60rem; color: #64748b; font-weight: 700; margin-top: 1px;">Puntos</span>
-                            </div>
-
-                            <!-- 4. Mi Equipo -->
-                            <div class="sp-playtomic-pill haptic-feedback" 
-                                onclick="window.PlayerView?.haptic?.(20); window.openMyTeam ? window.openMyTeam() : (window.Router && window.Router.navigate('my_team'));"
-                                style="display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative;">
-                                <div style="
-                                    width: 58px;
-                                    height: 58px;
-                                    border-radius: 19px;
-                                    background: linear-gradient(145deg, #090e1a 0%, #17243c 100%);
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                    box-shadow: 0 6px 18px rgba(9, 14, 26, 0.25), 0 0 12px rgba(192, 132, 252, 0.15);
-                                    border: 1.5px solid rgba(192, 132, 252, 0.45);
-                                    transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.16s;
-                                    position: relative;
-                                "
-                                onmouseover="this.style.transform='scale(1.08)'; this.style.borderColor='#c084fc';"
-                                onmouseout="this.style.transform='none'; this.style.borderColor='rgba(192, 132, 252, 0.45)';"
-                                onmousedown="this.style.transform='scale(0.92)';"
-                                onmouseup="this.style.transform='scale(1.08)';">
-                                    <i class="fas fa-users" style="font-size: 1.25rem; color: #c084fc; filter: drop-shadow(0 0 6px rgba(192,132,252,0.4));"></i>
-                                    <span style="position: absolute; top: -5px; right: -5px; background: #CCFF00; color: #000; font-size: 0.50rem; font-weight: 950; padding: 1px 4px; border-radius: 5px; border: 1.5px solid #ffffff; letter-spacing: 0.4px;">2027</span>
-                                </div>
-                                <span style="margin-top: 7px; font-size: 0.72rem; font-weight: 900; color: #0a192f; line-height: 1.1;">
-                                    Mi Equipo
-                                </span>
-                                <span style="font-size: 0.60rem; color: #64748b; font-weight: 700; margin-top: 1px;">Liga Summa</span>
-                            </div>
-                        </div>
-
-                        <!-- Separador visual integrado -->
-                        <div style="height: 1px; background: #e2e8f0; margin: 16px 0 14px 0; position: relative; z-index: 2;"></div>
-
-                        <!-- 🎾 PIZARRA DE PISTAS & CLUB (UNIFICADA EN EL MISMO CUADRO) -->
-                        <div id="registration-widget-root" style="width: 100%; position: relative; z-index: 2;">
-                            <div id="live-scroller-inner">
-                                <!-- Skeleton compacto de carga -->
-                                <div style="height: 64px; border-radius: 14px; background: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%); background-size: 200% 100%; border: 1.5px solid #cbd5e1; animation: stripSkeletonShimmer 1.8s infinite; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; box-sizing: border-box;">
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <div style="width: 32px; height: 32px; border-radius: 9px; background: rgba(0,0,0,0.06);"></div>
-                                        <div>
-                                            <div style="width: 90px; height: 10px; border-radius: 4px; background: rgba(0,0,0,0.08); margin-bottom: 4px;"></div>
-                                            <div style="width: 60px; height: 8px; border-radius: 4px; background: rgba(0,0,0,0.04);"></div>
-                                        </div>
-                                    </div>
-                                    <div style="width: 60px; height: 24px; border-radius: 6px; background: rgba(0,0,0,0.08);"></div>
-                                </div>
-                            </div>
+                        <!-- Botón perfil / avatar con acento SomosPadel -->
+                        <div onclick="window.Router && window.Router.navigate('profile')" style="
+                            width: 42px;
+                            height: 42px;
+                            border-radius: 12px;
+                            background: #ffffff;
+                            border: 1.5px solid #e2e8f0;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            cursor: pointer;
+                            color: #111827;
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+                            transition: all 0.18s ease;
+                        "
+                        onmouseover="this.style.background='#f0fdf4'; this.style.borderColor='#CCFF00'; this.style.transform='scale(1.06)';"
+                        onmouseout="this.style.background='#ffffff'; this.style.borderColor='#e2e8f0'; this.style.transform='none';">
+                            <i class="far fa-user" style="font-size: 1.05rem; color: #111827;"></i>
                         </div>
                     </div>
 
+                    <!-- ════════ BLOQUE 2: ACCESOS RÁPIDOS CIRCULARES PLAYTOMIC CON MARCA SOMOSPADEL ════════ -->
+                    <div class="sp-playtomic-quick-actions" style="
+                        display: grid;
+                        grid-template-columns: repeat(4, 1fr);
+                        gap: 8px;
+                        align-items: start;
+                        text-align: center;
+                        margin-bottom: 24px;
+                        padding: 6px 0;
+                        background: #ffffff;
+                    ">
+                        <!-- 1. Americanas (Torneos / Competición: Amarillo Lima Eléctrico SomosPadel) -->
+                        <div class="sp-action-pod haptic-feedback"
+                            onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('americanas');"
+                            style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
+                            <div style="
+                                width: 56px;
+                                height: 56px;
+                                border-radius: 50%;
+                                background: linear-gradient(135deg, #f7fee7 0%, #e4fc8c 50%, #CCFF00 100%);
+                                border: 2.5px solid #a3e635;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                box-shadow: 0 6px 18px rgba(163, 230, 53, 0.42), 0 2px 6px rgba(0,0,0,0.04);
+                                position: relative;
+                                transition: transform 0.18s ease, box-shadow 0.18s ease;
+                            "
+                            onmouseover="this.style.transform='scale(1.10)'; this.style.boxShadow='0 8px 22px rgba(163, 230, 53, 0.6)';"
+                            onmouseout="this.style.transform='none'; this.style.boxShadow='0 6px 18px rgba(163, 230, 53, 0.42), 0 2px 6px rgba(0,0,0,0.04)';">
+                                <i class="fas fa-trophy" style="font-size: 1.30rem; color: #0f172a; filter: drop-shadow(0 1px 1px rgba(255,255,255,0.4));"></i>
+                                <span style="position: absolute; top: -3px; right: -3px; background: #ef4444; color: #ffffff; font-size: 0.50rem; font-weight: 900; padding: 2px 5px; border-radius: 7px; border: 1.5px solid #ffffff; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.45); letter-spacing: 0.3px;">TOP</span>
+                            </div>
+                            <span style="margin-top: 8px; font-size: 0.76rem; font-weight: 800; color: #111827; line-height: 1.1;">
+                                Americanas
+                            </span>
+                            <span style="font-size: 0.62rem; color: #64748b; font-weight: 600; margin-top: 2px;">Torneos</span>
+                        </div>
 
+                        <!-- 2. Entrenos (Pistas / Clases: Azul Cian Eléctrico Pista Indoor) -->
+                        <div class="sp-action-pod haptic-feedback"
+                            onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('entrenos');"
+                            style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
+                            <div style="
+                                width: 56px;
+                                height: 56px;
+                                border-radius: 50%;
+                                background: linear-gradient(135deg, #f0f9ff 0%, #bae6fd 50%, #38bdf8 100%);
+                                border: 2.5px solid #0284c7;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                box-shadow: 0 6px 18px rgba(56, 189, 248, 0.45), 0 2px 6px rgba(0,0,0,0.04);
+                                position: relative;
+                                transition: transform 0.18s ease, box-shadow 0.18s ease;
+                            "
+                            onmouseover="this.style.transform='scale(1.10)'; this.style.boxShadow='0 8px 22px rgba(56, 189, 248, 0.65)';"
+                            onmouseout="this.style.transform='none'; this.style.boxShadow='0 6px 18px rgba(56, 189, 248, 0.45), 0 2px 6px rgba(0,0,0,0.04)';">
+                                <i class="fas fa-baseball" style="font-size: 1.30rem; color: #0284c7; filter: drop-shadow(0 1px 1px rgba(255,255,255,0.5));"></i>
+                                <span style="position: absolute; top: -3px; right: -3px; background: #0284c7; color: #ffffff; font-size: 0.48rem; font-weight: 900; padding: 2px 5px; border-radius: 7px; border: 1.5px solid #ffffff; box-shadow: 0 2px 6px rgba(2, 132, 199, 0.45); letter-spacing: 0.3px;">PISTAS</span>
+                            </div>
+                            <span style="margin-top: 8px; font-size: 0.76rem; font-weight: 800; color: #111827; line-height: 1.1;">
+                                Entrenos
+                            </span>
+                            <span style="font-size: 0.62rem; color: #64748b; font-weight: 600; margin-top: 2px;">Partidos</span>
+                        </div>
 
-                    <!-- Contenedor de notificaciones push oculto (gestión 100% modal intermitente) -->
+                        <!-- 3. Ranking (Puntos / FIP / Podio: Oro Trofeo / Ámbar Vibrante) -->
+                        <div class="sp-action-pod haptic-feedback"
+                            onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('ranking');"
+                            style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
+                            <div style="
+                                width: 56px;
+                                height: 56px;
+                                border-radius: 50%;
+                                background: linear-gradient(135deg, #fefce8 0%, #fde68a 50%, #fbbf24 100%);
+                                border: 2.5px solid #f59e0b;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                box-shadow: 0 6px 18px rgba(245, 158, 11, 0.42), 0 2px 6px rgba(0,0,0,0.04);
+                                position: relative;
+                                transition: transform 0.18s ease, box-shadow 0.18s ease;
+                            "
+                            onmouseover="this.style.transform='scale(1.10)'; this.style.boxShadow='0 8px 22px rgba(245, 158, 11, 0.65)';"
+                            onmouseout="this.style.transform='none'; this.style.boxShadow='0 6px 18px rgba(245, 158, 11, 0.42), 0 2px 6px rgba(0,0,0,0.04)';">
+                                <i class="fas fa-medal" style="font-size: 1.30rem; color: #b45309; filter: drop-shadow(0 1px 1px rgba(255,255,255,0.5));"></i>
+                                <span style="position: absolute; top: -3px; right: -3px; background: #f59e0b; color: #ffffff; font-size: 0.48rem; font-weight: 900; padding: 2px 5px; border-radius: 7px; border: 1.5px solid #ffffff; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.45); letter-spacing: 0.3px;">ORO</span>
+                            </div>
+                            <span style="margin-top: 8px; font-size: 0.76rem; font-weight: 800; color: #111827; line-height: 1.1;">
+                                Ranking
+                            </span>
+                            <span style="font-size: 0.62rem; color: #64748b; font-weight: 600; margin-top: 2px;">Puntos</span>
+                        </div>
+
+                        <!-- 4. Mi Equipo (Liga Summa / Comunidad: Violeta / Púrpura Deportivo) -->
+                        <div class="sp-action-pod haptic-feedback"
+                            onclick="window.PlayerView?.haptic?.(20); window.openMyTeam ? window.openMyTeam() : (window.Router && window.Router.navigate('my_team'));"
+                            style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
+                            <div style="
+                                width: 56px;
+                                height: 56px;
+                                border-radius: 50%;
+                                background: linear-gradient(135deg, #faf5ff 0%, #ddd6fe 50%, #c084fc 100%);
+                                border: 2.5px solid #8b5cf6;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                box-shadow: 0 6px 18px rgba(168, 85, 247, 0.42), 0 2px 6px rgba(0,0,0,0.04);
+                                position: relative;
+                                transition: transform 0.18s ease, box-shadow 0.18s ease;
+                            "
+                            onmouseover="this.style.transform='scale(1.10)'; this.style.boxShadow='0 8px 22px rgba(168, 85, 247, 0.65)';"
+                            onmouseout="this.style.transform='none'; this.style.boxShadow='0 6px 18px rgba(168, 85, 247, 0.42), 0 2px 6px rgba(0,0,0,0.04)';">
+                                <i class="fas fa-users" style="font-size: 1.30rem; color: #581c87; filter: drop-shadow(0 1px 1px rgba(255,255,255,0.5));"></i>
+                                <span style="position: absolute; top: -3px; right: -3px; background: #CCFF00; color: #000000; font-size: 0.48rem; font-weight: 900; padding: 2px 5px; border-radius: 7px; border: 1.5px solid #ffffff; box-shadow: 0 2px 6px rgba(204, 255, 0, 0.5); letter-spacing: 0.3px;">2027</span>
+                            </div>
+                            <span style="margin-top: 8px; font-size: 0.76rem; font-weight: 800; color: #111827; line-height: 1.1;">
+                                Mi Equipo
+                            </span>
+                            <span style="font-size: 0.62rem; color: #64748b; font-weight: 600; margin-top: 2px;">Liga Summa</span>
+                        </div>
+                    </div>
+
+                    <!-- Contenedor oculto de notificaciones push (gestión modal) -->
                     <div id="push-notification-promo-banner-root" style="display: none !important;"></div>
 
-                    <!-- 🌦️ BANNER SPOTLIGHT: NUEVO RADAR Y CLIMA DE PISTAS -->
-                    <div id="radar-clima-notification-banner-root"></div>
-
-                    <!-- 🔥 HERO CARD PREMIUM: TEMPORADA 2027 | EQUIPOS SOMOSPADEL -->
-                    <div id="season-campaign-banner-root" style="margin: 0 15px 20px !important; animation: floatUp 0.5s ease-out forwards;">
+                    <!-- ════════ BLOQUE 3: HERO BANNER VISUAL (FOTOS REALES CLUB) ════════ -->
+                    <div id="season-campaign-banner-root" style="margin-bottom: 26px; animation: floatUp 0.4s ease-out forwards;">
                         <div style="
-                            background: linear-gradient(145deg, #090e1a 0%, #0f172a 45%, #152238 100%);
-                            border: 1.5px solid rgba(204, 255, 0, 0.45);
-                            border-radius: 26px;
-                            padding: 22px 20px;
                             position: relative;
+                            border-radius: 20px;
                             overflow: hidden;
-                            box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.65), 0 0 35px rgba(204, 255, 0, 0.15);
-                            color: #ffffff;
-                            font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-                        ">
-                            <!-- Glows y Auras Neón de Alta Competición -->
-                            <div style="position: absolute; top: -50px; right: -50px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(204, 255, 0, 0.25) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
-                            <div style="position: absolute; bottom: -50px; left: -50px; width: 160px; height: 160px; background: radial-gradient(circle, rgba(56, 189, 248, 0.16) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
-
-                            <!-- Header: Badges Oficiales -->
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; position: relative; z-index: 2;">
-                                <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
-                                    <span style="background: #CCFF00; color: #000000; font-size: 0.68rem; font-weight: 950; padding: 4px 10px; border-radius: 8px; letter-spacing: 0.6px; text-transform: uppercase; box-shadow: 0 2px 10px rgba(204,255,0,0.35);">
-                                        🔥 LIGA SUMMAPADEL 2027
-                                    </span>
-                                    <span style="background: rgba(239, 68, 68, 0.18); color: #fca5a5; font-size: 0.65rem; font-weight: 850; padding: 4px 9px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.35);">
-                                        ⚡ PLAZAS LIMITADAS
-                                    </span>
-                                    <span style="background: rgba(56, 189, 248, 0.16); color: #7dd3fc; font-size: 0.65rem; font-weight: 850; padding: 4px 9px; border-radius: 8px; border: 1px solid rgba(56, 189, 248, 0.35);">
-                                        🎯 PRUEBA DE NIVEL
-                                    </span>
-                                </div>
-                                <span style="font-size: 0.70rem; color: #94a3b8; font-weight: 700; display: flex; align-items: center; gap: 4px;">
-                                    <span>📍</span> SomosPadel BCN • Bcn & Baix Llobregat
-                                </span>
-                            </div>
-
-                            <!-- Título y Claim de Temporada -->
-                            <div style="position: relative; z-index: 2; margin-bottom: 14px;">
-                                <h3 style="margin: 0 0 6px; font-size: 1.35rem; font-weight: 950; color: #ffffff; line-height: 1.25; letter-spacing: -0.3px;">
-                                    🏆 ÚNETE AL EQUIPO | <span style="color: #CCFF00; text-shadow: 0 0 16px rgba(204,255,0,0.4);">TEMPORADA 2027</span>
-                                </h3>
-                                <p style="margin: 0; font-size: 0.82rem; color: #cbd5e1; font-weight: 500; line-height: 1.45;">
-                                    Todo el pádel, en una sola app. Compite defendiendo nuestros colores en la Liga Summapadel y vive una experiencia de club única.
-                                </p>
-                            </div>
-
-                            <!-- Grid Central: Mini-Preview interactivo del Cartel + 4 Beneficios Clave -->
-                            <div style="position: relative; z-index: 2; display: grid; grid-template-columns: 105px 1fr; gap: 14px; align-items: stretch; margin-bottom: 16px;">
-                                
-                                <!-- Mini Preview del Cartel Oficial (Abre Lightbox HD al pulsar) -->
-                                <div 
-                                    onclick="window.openSeasonFlyerModal();"
-                                    title="Toca para ver el Cartel Oficial completo"
-                                    style="
-                                        position: relative;
-                                        border-radius: 14px;
-                                        overflow: hidden;
-                                        border: 1.5px solid rgba(204, 255, 0, 0.55);
-                                        cursor: pointer;
-                                        box-shadow: 0 8px 22px rgba(0,0,0,0.55);
-                                        background: #000000;
-                                        display: flex;
-                                        flex-direction: column;
-                                        transition: transform 0.2s, box-shadow 0.2s;
-                                    "
-                                    onmouseover="this.style.transform='scale(1.03)'; this.style.boxShadow='0 10px 25px rgba(204,255,0,0.4)';"
-                                    onmouseout="this.style.transform='none'; this.style.boxShadow='0 8px 22px rgba(0,0,0,0.55)';">
-                                    <img 
-                                        src="img/flyer_temporada_2027.jpg" 
-                                        alt="Cartel Oficial Temporada 2027 SomosPadel" 
-                                        style="width: 100%; height: 100%; object-fit: cover; display: block;"
-                                    />
-                                    <div style="
-                                        position: absolute;
-                                        bottom: 0;
-                                        left: 0;
-                                        right: 0;
-                                        background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.4) 70%, transparent 100%);
-                                        padding: 18px 4px 6px;
-                                        text-align: center;
-                                    ">
-                                        <span style="
-                                            background: #CCFF00;
-                                            color: #000000;
-                                            font-size: 0.60rem;
-                                            font-weight: 950;
-                                            padding: 3px 6px;
-                                            border-radius: 6px;
-                                            display: inline-flex;
-                                            align-items: center;
-                                            gap: 3px;
-                                            letter-spacing: 0.4px;
-                                        ">
-                                            🔍 VER CARTEL
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <!-- 4 Beneficios Exclusivos del Equipo -->
-                                <div style="display: flex; flex-direction: column; justify-content: space-between; gap: 7px;">
-                                    <div style="display: flex; align-items: flex-start; gap: 8px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.07); padding: 7px 10px; border-radius: 10px;">
-                                        <span style="font-size: 1rem; line-height: 1;">👕</span>
-                                        <div style="font-size: 0.73rem; color: #f1f5f9; line-height: 1.3;">
-                                            <strong style="color: #CCFF00; font-weight: 800;">Camiseta técnica oficial:</strong> con tu nombre personalizado.
-                                        </div>
-                                    </div>
-                                    <div style="display: flex; align-items: flex-start; gap: 8px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.07); padding: 7px 10px; border-radius: 10px;">
-                                        <span style="font-size: 1rem; line-height: 1;">📱</span>
-                                        <div style="font-size: 0.73rem; color: #f1f5f9; line-height: 1.3;">
-                                            <strong style="color: #38bdf8; font-weight: 800;">Gestión en App oficial:</strong> convocatorias, actas, ranking y chat.
-                                        </div>
-                                    </div>
-                                    <div style="display: flex; align-items: flex-start; gap: 8px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.07); padding: 7px 10px; border-radius: 10px;">
-                                        <span style="font-size: 1rem; line-height: 1;">🎯</span>
-                                        <div style="font-size: 0.73rem; color: #f1f5f9; line-height: 1.3;">
-                                            <strong style="color: #fbbf24; font-weight: 800;">Clases de tecnificación:</strong> oferta exclusiva con Rubén Rosende.
-                                        </div>
-                                    </div>
-                                    <div style="display: flex; align-items: flex-start; gap: 8px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.07); padding: 7px 10px; border-radius: 10px;">
-                                        <span style="font-size: 1rem; line-height: 1;">🤝</span>
-                                        <div style="font-size: 0.73rem; color: #f1f5f9; line-height: 1.3;">
-                                            <strong style="color: #c084fc; font-weight: 800;">Americanas & Teambuilding:</strong> eventos y dinamización todo el año.
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Barra de Categorías y Precios Oficiales -->
-                            <div style="
-                                position: relative;
-                                z-index: 2;
-                                background: rgba(15, 23, 42, 0.75);
-                                border: 1px solid rgba(255, 255, 255, 0.08);
-                                border-radius: 14px;
-                                padding: 10px 12px;
-                                margin-bottom: 14px;
-                                display: flex;
-                                flex-direction: column;
-                                gap: 8px;
-                            ">
-                                <!-- Categorías oficiales -->
-                                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
-                                    <span style="font-size: 0.66rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
-                                        CATEGORÍAS:
-                                    </span>
-                                    <div style="display: flex; flex-wrap: wrap; gap: 5px;">
-                                        <span style="background: rgba(236, 72, 153, 0.15); border: 1px solid rgba(236, 72, 153, 0.3); color: #f472b6; font-size: 0.67rem; font-weight: 800; padding: 2px 8px; border-radius: 6px;">
-                                            🚺 Fem (2ª, 3ª, 4ª)
-                                        </span>
-                                        <span style="background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); color: #60a5fa; font-size: 0.67rem; font-weight: 800; padding: 2px 8px; border-radius: 6px;">
-                                            🚹 Masc (2ª, 3ª, 4ª)
-                                        </span>
-                                        <span style="background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.3); color: #c084fc; font-size: 0.67rem; font-weight: 800; padding: 2px 8px; border-radius: 6px;">
-                                            🚻 Mixto (3ª, 4ª)
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <!-- Precios oficiales -->
-                                <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 6px; border-top: 1px dashed rgba(255,255,255,0.08); flex-wrap: wrap; gap: 6px;">
-                                    <span style="font-size: 0.68rem; color: #94a3b8; font-weight: 700;">
-                                        Cuota de inscripción:
-                                    </span>
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <span style="background: rgba(204, 255, 0, 0.12); border: 1px solid rgba(204, 255, 0, 0.35); color: #CCFF00; font-size: 0.75rem; font-weight: 950; padding: 3px 9px; border-radius: 7px;">
-                                            1 EQUIPO: 55€
-                                        </span>
-                                        <span style="background: rgba(204, 255, 0, 0.18); border: 1px solid rgba(204, 255, 0, 0.55); color: #CCFF00; font-size: 0.75rem; font-weight: 950; padding: 3px 9px; border-radius: 7px; box-shadow: 0 0 10px rgba(204,255,0,0.2);">
-                                            2 EQUIPOS: 95€
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- CTA Principal Brillante #CCFF00 -->
-                            <button 
-                                type="button" 
-                                onclick="window.SeasonCampaignView && window.SeasonCampaignView.openModal('equipos');" 
-                                style="
-                                    width: 100%;
-                                    padding: 14px 18px;
-                                    background: #CCFF00;
-                                    color: #000000;
-                                    border: none;
-                                    border-radius: 14px;
-                                    font-weight: 950;
-                                    font-size: 0.90rem;
-                                    letter-spacing: 0.5px;
-                                    cursor: pointer;
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                    gap: 8px;
-                                    box-shadow: 0 4px 20px rgba(204, 255, 0, 0.4);
-                                    transition: transform 0.2s, box-shadow 0.2s;
-                                    margin-bottom: 10px;
-                                "
-                                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 24px rgba(204, 255, 0, 0.55)';"
-                                onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 20px rgba(204, 255, 0, 0.4)';">
-                                <i class="fas fa-rocket" style="font-size: 1rem;"></i>
-                                <span>🚀 PRE-INSCRIBIRME EN UN EQUIPO</span>
-                            </button>
-
-                            <!-- CTAs Secundarios: Ver Cartel Oficial y WhatsApp Directo -->
-                            <div style="display: flex; gap: 8px; position: relative; z-index: 2;">
-                                <button 
-                                    type="button" 
-                                    onclick="window.openSeasonFlyerModal();" 
-                                    style="
-                                        flex: 1;
-                                        padding: 10px 12px;
-                                        background: rgba(255, 255, 255, 0.08);
-                                        border: 1px solid rgba(255, 255, 255, 0.18);
-                                        border-radius: 11px;
-                                        color: #ffffff;
-                                        font-size: 0.74rem;
-                                        font-weight: 850;
-                                        cursor: pointer;
-                                        transition: background 0.2s, transform 0.2s;
-                                        display: flex;
-                                        align-items: center;
-                                        justify-content: center;
-                                        gap: 6px;
-                                    "
-                                    onmouseover="this.style.background='rgba(255, 255, 255, 0.14)';"
-                                    onmouseout="this.style.background='rgba(255, 255, 255, 0.08)';">
-                                    <span>🖼️</span> Ver Cartel Oficial
-                                </button>
-                                <a 
-                                    href="https://wa.me/34649219350?text=¡Hola%20SomosPadel!%20Quiero%20más%20información%20sobre%20los%20Equipos%20de%20la%20Temporada%202027." 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    style="
-                                        flex: 1;
-                                        padding: 10px 12px;
-                                        background: rgba(37, 211, 102, 0.14);
-                                        border: 1px solid rgba(37, 211, 102, 0.35);
-                                        border-radius: 11px;
-                                        color: #25D366;
-                                        font-size: 0.74rem;
-                                        font-weight: 850;
-                                        cursor: pointer;
-                                        text-decoration: none;
-                                        transition: background 0.2s, transform 0.2s;
-                                        display: flex;
-                                        align-items: center;
-                                        justify-content: center;
-                                        gap: 6px;
-                                    "
-                                    onmouseover="this.style.background='rgba(37, 211, 102, 0.22)';"
-                                    onmouseout="this.style.background='rgba(37, 211, 102, 0.14)';">
-                                    <span>💬</span> Dudas por WhatsApp
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
-
-
-                    <!-- 4. PULSE STORIES TRASLADADO AL HEADER (#header-story-rotator) -->
-                    <div id="story-feed-root" style="display: none !important; margin: 0 !important; padding: 0;">
-                        <!-- Trasladado al header superior: #header-story-rotator -->
-                    </div>
-
-                    <!-- 4.1 MIS EVENTOS & PARTIDOS COMPACTOS (SIEMPRE DEBAJO DE DESTACADOS & EN VIVO) -->
-                    <style>
-                        @keyframes stripSkeletonShimmer {
-                            0% { background-position: 200% 0; }
-                            100% { background-position: -200% 0; }
-                        }
-                        .dashboard-hero-duo-container {
-                            margin: 4px 15px 12px !important;
+                            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+                            border: 1px solid #e5e7eb;
+                            background: #111827;
+                            min-height: 190px;
                             display: flex;
                             flex-direction: column;
-                            gap: 6px;
-                            animation: floatUp 0.6s ease-out forwards;
-                        }
-                        .dashboard-hero-duo-container #registration-widget-root:empty {
-                            display: none !important;
-                        }
-                        @media (min-width: 680px) {
-                            .dashboard-hero-duo-container {
-                                display: grid !important;
-                                grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)) !important;
-                                gap: 10px !important;
-                                align-items: stretch;
-                            }
-                        }
+                            justify-content: flex-end;
+                            padding: 20px;
+                        ">
+                            <!-- Imagen real de las pistas del club -->
+                            <img src="img/cem_tennis_hospitalet.png" alt="Pistas SomosPadel" style="
+                                position: absolute;
+                                inset: 0;
+                                width: 100%;
+                                height: 100%;
+                                object-fit: cover;
+                                filter: brightness(0.80);
+                            " onerror="this.src='img/americana-pro.png';">
 
+                            <!-- Scrim sutil para máxima legibilidad -->
+                            <div style="
+                                position: absolute;
+                                inset: 0;
+                                background: linear-gradient(180deg, rgba(15,23,42,0.12) 0%, rgba(15,23,42,0.65) 55%, rgba(15,23,42,0.92) 100%);
+                            "></div>
 
-                    <!-- 3.5 NEWS BLOG WIDGET -->
-                    <div id="blog-news-widget-root" style="margin: 0 15px 10px !important; animation: floatUp 0.8s ease-out forwards;">
-                        <!-- Content loaded via JS -->
+                            <!-- Contenido del Banner -->
+                            <div style="position: relative; z-index: 2; color: #ffffff;">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
+                                    <span style="
+                                        background: #CCFF00;
+                                        color: #000000;
+                                        font-size: 0.68rem;
+                                        font-weight: 900;
+                                        padding: 3px 8px;
+                                        border-radius: 6px;
+                                        letter-spacing: 0.5px;
+                                        text-transform: uppercase;
+                                    ">
+                                        🏆 LIGA SUMMAPADEL 2027
+                                    </span>
+                                    <span style="
+                                        background: rgba(255,255,255,0.2);
+                                        color: #ffffff;
+                                        font-size: 0.65rem;
+                                        font-weight: 700;
+                                        padding: 3px 8px;
+                                        border-radius: 6px;
+                                        backdrop-filter: blur(4px);
+                                    ">
+                                        PLAZAS LIMITADAS
+                                    </span>
+                                </div>
+                                <h2 style="
+                                    margin: 0 0 4px;
+                                    font-size: 1.30rem;
+                                    font-weight: 900;
+                                    color: #ffffff;
+                                    letter-spacing: -0.3px;
+                                    line-height: 1.25;
+                                ">
+                                    Únete a los Equipos Oficiales
+                                </h2>
+                                <p style="
+                                    margin: 0 0 14px;
+                                    font-size: 0.80rem;
+                                    color: rgba(255,255,255,0.92);
+                                    font-weight: 500;
+                                    line-height: 1.4;
+                                ">
+                                    Compite defendiendo nuestros colores en el mejor ambiente de club.
+                                </p>
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    <button type="button"
+                                        onclick="window.SeasonCampaignView && window.SeasonCampaignView.openModal('equipos');"
+                                        style="
+                                            background: #CCFF00;
+                                            color: #111827;
+                                            border: none;
+                                            border-radius: 10px;
+                                            padding: 9px 16px;
+                                            font-size: 0.82rem;
+                                            font-weight: 900;
+                                            cursor: pointer;
+                                            display: inline-flex;
+                                            align-items: center;
+                                            gap: 6px;
+                                            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                                        ">
+                                        <i class="fas fa-rocket"></i> Pre-inscribirme
+                                    </button>
+                                    <button type="button"
+                                        onclick="window.openSeasonFlyerModal();"
+                                        style="
+                                            background: rgba(255,255,255,0.18);
+                                            color: #ffffff;
+                                            border: 1px solid rgba(255,255,255,0.35);
+                                            border-radius: 10px;
+                                            padding: 9px 14px;
+                                            font-size: 0.82rem;
+                                            font-weight: 800;
+                                            cursor: pointer;
+                                            backdrop-filter: blur(6px);
+                                        ">
+                                        Ver Cartel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- 3.6 MURO DE ACTIVIDAD RECIENTE (COMPACTO & GRIS MATE) -->
-                    <div id="activity-feed-root" style="
-                        background-color: #f1f5f9;
-                        background-image: radial-gradient(rgba(100, 116, 139, 0.10) 1px, transparent 1px), linear-gradient(145deg, #f8fafc 0%, #edf2f7 100%);
-                        background-size: 16px 16px, 100% 100%;
-                        border: 1.5px solid #cbd5e1;
-                        border-top: 3px solid #CCFF00;
-                        border-left: 4.5px solid #00C4FF;
-                        border-radius: 18px;
-                        margin: 0 15px 12px !important;
-                        padding: 11px 12px 10px !important;
-                        box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
-                        animation: floatUp 0.85s ease-out forwards;
-                    ">
-                        <div style="font-weight: 950; font-size: 0.76rem; color: #0f172a; letter-spacing: -0.2px; text-transform: uppercase; display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px;">
-                            <div style="display: flex; align-items: center; gap: 7px;">
-                                <i class="fas fa-rss" style="color: #16a34a; font-size: 0.82rem;"></i>
-                                <span>MURO DE ACTIVIDAD RECIENTE</span>
+                    <!-- ════════ BLOQUE 4: SECCIÓN AMERICANAS + CARRUSEL HORIZONTAL ════════ -->
+                    <div class="sp-home-section" style="margin-bottom: 28px;">
+                        <div style="
+                            display: flex;
+                            align-items: baseline;
+                            justify-content: space-between;
+                            margin-bottom: 12px;
+                        ">
+                            <div>
+                                <h3 style="
+                                    margin: 0;
+                                    font-size: 1.20rem;
+                                    font-weight: 900;
+                                    color: #111827;
+                                    letter-spacing: -0.4px;
+                                ">
+                                    Americanas
+                                </h3>
+                                <div style="font-size: 0.74rem; color: #64748b; font-weight: 600; margin-top: 2px;">
+                                    Torneos non-stop de 2 horas con cambio de pista y puntos
+                                </div>
                             </div>
-                            <span style="background: #ffffff; border: 1px solid #cbd5e1; font-size: 0.50rem; font-weight: 950; color: #16a34a; padding: 2px 7px; border-radius: 999px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
-                                <span style="width: 5px; height: 5px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 5px #22c55e;"></span> EN VIVO
+                            <span onclick="window.Router && window.Router.navigate('americanas')" style="
+                                font-size: 0.80rem;
+                                font-weight: 800;
+                                color: #111827;
+                                cursor: pointer;
+                                white-space: nowrap;
+                            ">
+                                Ver todas →
                             </span>
                         </div>
-                        <div id="activity-feed-content" style="display: flex; flex-direction: column; gap: 7px;">
-                            <!-- Content loaded via JS -->
+
+                        <!-- Carrusel swipe horizontal de Americanas -->
+                        <div id="americanas-horizontal-track" style="
+                            display: flex;
+                            gap: 14px;
+                            overflow-x: auto;
+                            scroll-snap-type: x mandatory;
+                            padding: 4px 2px 14px;
+                            margin: 0 -4px;
+                            -webkit-overflow-scrolling: touch;
+                            scrollbar-width: none;
+                        ">
+                            ${this.getTrackInitialHtml('americana')}
                         </div>
                     </div>
 
-                    <!-- 3.7 ESPACIO CLUBES & ORGANIZADORES (COMPACTO & PROFESIONAL) -->
-                    <div id="dashboard-organizers-promo-root" style="margin: 0 15px 10px !important; animation: floatUp 0.8s ease-out forwards;">
-                        <!-- Content loaded via JS -->
-                    </div>
-
-                    <!-- 7. MERCH PROMO (SOMOS PADEL BCN) - BOUTIQUE PREMIUM BLANCO & DETALLES LLAMATIVOS -->
-                    <div id="merch-widget-root" style="
-                        margin: 0 15px 14px !important;
-                        background: #ffffff;
-                        border-radius: 20px;
-                        padding: 16px;
-                        position: relative;
-                        overflow: hidden;
-                        box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06), 0 0 14px rgba(204, 255, 0, 0.16);
-                        border: 1.5px solid #cbd5e1;
-                        border-left: 6px solid #CCFF00;
-                        border-top: 2.5px solid #22c55e;
-                        animation: floatUp 0.8s ease-out forwards;
-                    ">
-                        <div style="display: flex; gap: 12px; align-items: center; position: relative; z-index: 5;">
-                            <!-- Image Section (Left) -->
-                            <div style="width: 36%; flex-shrink: 0; position: relative; display: flex; align-items: center; justify-content: center;">
-                                <div style="position: absolute; width: 90px; height: 90px; background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%); filter: blur(10px);"></div>
-                                <img src="./img/sudadera.jpg" 
-                                     onerror="this.style.display='none'" 
-                                     alt="Sudadera Oficial SomosPadel BCN"
-                                     style="
-                                         width: 110%; 
-                                         max-height: 145px; 
-                                         object-fit: contain; 
-                                         transform: rotate(-3deg); 
-                                         filter: drop-shadow(0 10px 18px rgba(0,0,0,0.18));
-                                         transition: transform 0.3s ease;
-                                     " onmouseover="this.style.transform='rotate(0deg) scale(1.06)'" onmouseout="this.style.transform='rotate(-3deg) scale(1)'">
-                            </div>
-
-                            <!-- Content Section (Right) -->
-                            <div style="width: 64%; display: flex; flex-direction: column; gap: 5px;">
-                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
-                                    <span style="background: #0f172a; color: #ffffff; font-size: 0.55rem; font-weight: 1000; padding: 2.5px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px;">
-                                        OFICIAL 2026
-                                    </span>
-                                    <span style="background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc; font-size: 0.55rem; font-weight: 850; padding: 2px 7px; border-radius: 6px; display: flex; align-items: center; gap: 3px;">
-                                        <i class="fas fa-shield-halved" style="color: #0284c7;"></i> CLUB PRO
-                                    </span>
-                                </div>
-
-                                <h3 style="margin: 0; font-size: 1.15rem; color: #0f172a; font-weight: 950; line-height: 1.1;">
-                                    SUDADERA OFICIAL
+                    <!-- ════════ BLOQUE 5: ENTRENOS ════════ -->
+                    <div class="sp-home-section" style="margin-bottom: 28px;">
+                        <div style="
+                            display: flex;
+                            align-items: baseline;
+                            justify-content: space-between;
+                            margin-bottom: 12px;
+                        ">
+                            <div>
+                                <h3 style="
+                                    margin: 0;
+                                    font-size: 1.20rem;
+                                    font-weight: 900;
+                                    color: #111827;
+                                    letter-spacing: -0.4px;
+                                ">
+                                    Entrenos
                                 </h3>
-
-                                <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; line-height: 1.2;">
-                                    100% Algodón Premium 320g · Barcelona
+                                <div style="font-size: 0.74rem; color: #64748b; font-weight: 600; margin-top: 2px;">
+                                    Reserva tu plaza en entrenos de la comunidad
                                 </div>
-
-                                <!-- Price block -->
-                                <div style="display: flex; align-items: baseline; gap: 6px; margin: 1px 0;">
-                                    <div style="color: #0f172a; font-weight: 1000; font-size: 1.4rem; line-height: 1;">
-                                        24<span style="font-size:0.8rem; vertical-align:top;">,99€</span>
-                                    </div>
-                                    <div style="text-decoration: line-through; color: #94a3b8; font-size: 0.75rem; font-weight: 700;">
-                                        39,99€
-                                    </div>
-                                    <div style="background: #fee2e2; border: 1px solid #fca5a5; color: #dc2626; font-size: 0.52rem; font-weight: 900; padding: 1.5px 6px; border-radius: 4px;">
-                                        -37% CLUB
-                                    </div>
-                                </div>
-
-                                <!-- Size Selector -->
-                                <div>
-                                    <div style="font-size: 0.54rem; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.5px;">
-                                        TALLA:
-                                    </div>
-                                    <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                                        <button type="button" class="merch-size-btn" data-size="S" onclick="window.selectMerchSize && window.selectMerchSize('S')" style="padding: 3px 7px; border-radius: 7px; font-size: 0.62rem; font-weight: 900; border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; cursor: pointer;">S</button>
-                                        <button type="button" class="merch-size-btn" data-size="M" onclick="window.selectMerchSize && window.selectMerchSize('M')" style="padding: 3px 7px; border-radius: 7px; font-size: 0.62rem; font-weight: 900; border: 1.5px solid #0f172a; background: #0f172a; color: #ffffff; cursor: pointer; transform: scale(1.08);">M</button>
-                                        <button type="button" class="merch-size-btn" data-size="L" onclick="window.selectMerchSize && window.selectMerchSize('L')" style="padding: 3px 7px; border-radius: 7px; font-size: 0.62rem; font-weight: 900; border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; cursor: pointer;">L</button>
-                                        <button type="button" class="merch-size-btn" data-size="XL" onclick="window.selectMerchSize && window.selectMerchSize('XL')" style="padding: 3px 7px; border-radius: 7px; font-size: 0.62rem; font-weight: 900; border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; cursor: pointer;">XL</button>
-                                        <button type="button" class="merch-size-btn" data-size="XXL" onclick="window.selectMerchSize && window.selectMerchSize('XXL')" style="padding: 3px 7px; border-radius: 7px; font-size: 0.62rem; font-weight: 900; border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; cursor: pointer;">XXL</button>
-                                    </div>
-                                </div>
-
-                                <!-- CTA Order Button -->
-                                <button type="button" id="merch-order-btn" onclick="window.open('https://wa.me/34649219350?text=Hola%20SomosPadel!%20Quiero%20pedir%20la%20sudadera%20oficial%20SomosPadel%20BCN%20(24,99%E2%82%AC)%20en%20talla%20M.', '_blank')" style="
-                                    margin-top: 3px;
-                                    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-                                    border: none;
-                                    border-radius: 10px;
-                                    padding: 7px 12px;
-                                    color: #ffffff;
-                                    font-size: 0.7rem;
-                                    font-weight: 1000;
-                                    letter-spacing: 0.5px;
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                    gap: 6px;
-                                    cursor: pointer;
-                                    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.35);
-                                    transition: all 0.2s ease;
-                                " onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 6px 18px rgba(34, 197, 94, 0.5)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(34, 197, 94, 0.35)'">
-                                    <span>PEDIR TALLA M</span> <i class="fab fa-whatsapp" style="font-size: 0.9rem;"></i>
-                                </button>
                             </div>
+                            <span onclick="window.Router && window.Router.navigate('entrenos')" style="
+                                font-size: 0.80rem;
+                                font-weight: 800;
+                                color: #111827;
+                                cursor: pointer;
+                                white-space: nowrap;
+                            ">
+                                Ver todos →
+                            </span>
+                        </div>
+
+                        <!-- Carrusel swipe horizontal de Entrenos -->
+                        <div id="entrenos-horizontal-track" style="
+                            display: flex;
+                            gap: 14px;
+                            overflow-x: auto;
+                            scroll-snap-type: x mandatory;
+                            padding: 4px 2px 14px;
+                            margin: 0 -4px;
+                            -webkit-overflow-scrolling: touch;
+                            scrollbar-width: none;
+                        ">
+                            ${this.getTrackInitialHtml('entreno')}
                         </div>
                     </div>
-                </div>
 
-                <style>
-                    .dashboard-v2-container ::-webkit-scrollbar { display: none; }
-                </style>
-    `;
+                    <!-- ⑤ ACTIVIDAD RECIENTE -->
+                    <div id="activity-feed-root" style="
+                        background: #ffffff;
+                        border: 1px solid #e5e7eb;
+                        border-radius: 20px;
+                        margin-bottom: 24px;
+                        padding: 18px;
+                        box-shadow: 0 4px 14px rgba(0,0,0,0.03);
+                        animation: floatUp 0.6s ease-out forwards;
+                    ">
+                        <div style="
+                            font-weight: 900;
+                            font-size: 0.85rem;
+                            color: #111827;
+                            letter-spacing: -0.2px;
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                            margin-bottom: 14px;
+                        ">
+                            <i class="fas fa-rss" style="color: #16a34a; font-size: 0.95rem;"></i> Actividad de Jugadores
+                        </div>
+                        <div id="activity-feed-content" style="display: flex; flex-direction: column; gap: 10px;"></div>
+                    </div>
+
+                    <!-- STORIES TRASLADADO AL HEADER -->
+                    <div id="story-feed-root" style="display: none !important;"></div>
+
+                    <!-- ⑨ POWER LEVEL -->
+                    <div id="power-level-root" style="margin-bottom: 24px; animation: floatUp 0.7s ease-out forwards;"></div>
+
+                    <!-- 3.5 NEWS BLOG WIDGET -->
+                    <div id="blog-news-widget-root" style="margin-bottom: 24px; animation: floatUp 0.8s ease-out forwards;"></div>
+
+                    </div>
+
+            <style>
+                @keyframes slowTicker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+                .ticker-container { width: 100%; overflow: hidden; position: relative; }
+                .ticker-content { display: flex; gap: 12px; animation: slowTicker 25s linear infinite; width: max-content; padding: 10px 0; }
+                .ticker-content:hover { animation-play-state: paused; }
+                .dashboard-v2-container ::-webkit-scrollbar { display: none; }
+                .sp-action-pod:active { transform: scale(0.92); }
+            </style>
+        `;
 
             // Control de Visibilidad de la Campaña de Temporada (Activación desde Admin)
             try {
@@ -1423,6 +1296,9 @@
                 if (promoRoot) {
                     promoRoot.innerHTML = this.renderClubOrganizersPromo();
                 }
+
+                // INSTANT PAINT (0ms): Hidratar tracks de Americanas y Entrenos con eventos reales de Firestore
+                this.hydrateRealEventsTracks();
 
                 // Build context (Might take time)
                 const context = await this.buildContext(user);
@@ -3966,6 +3842,7 @@
 
         async renderLiveWidget(context = {}, force = false) {
             try {
+                if (!document.getElementById('live-scroller-inner')) return '';
                 // Ensure global helpers exist
                 window._lastDashboardContext = context || {};
                 window.getEventCategoryTheme = (evt) => this.getEventCategoryTheme(evt);
@@ -5056,6 +4933,9 @@
                     // 4. Load Trending Players (MVP + Elite list)
                     this.renderTrendingPlayers();
 
+                // 5. Dynamic Track Hydration (Americanas & Entrenos con datos 100% reales de Firestore)
+                this.hydrateRealEventsTracks();
+
 
                 } catch (e) {
                     console.error('❌ [DashboardView] Error in core widget loading:', e);
@@ -5072,9 +4952,676 @@
         }
 
         /**
-         * 🌦️ BANNER SPOTLIGHT — Descubrimiento del nuevo Radar Táctico y Clima de Pistas
-         * Muestra una tarjeta elegante informativa en INICIO hasta que el usuario la acepte o cierre.
+         * 🖼️ Obtiene el cartel oficial 100% correspondiente a la americana
          */
+        getAmericanaPoster(ev) {
+            if (!ev) return 'img/americana mixta.jpg';
+            // 1. Prioridad: Cartel o imagen personalizada asignada al torneo
+            const customImg = (ev.image_url || ev.imageUrl || ev.poster || ev.posterUrl || ev.cover || ev.flyer || '').trim();
+            if (customImg) return customImg;
+
+            // 2. Sincronización oficial por categoría y nombre
+            const name = (ev.name || ev.title || '').toLowerCase();
+            const cat = (ev.category || '').toLowerCase();
+
+            if (cat === 'female' || cat === 'femenina' || cat === 'femenino' || name.includes('femenin') || name.includes('chicas')) {
+                return 'img/americana femeninas.jpg';
+            }
+            if (cat === 'male' || cat === 'masculina' || cat === 'masculino' || name.includes('masculin') || name.includes('chicos') || name.includes('pro')) {
+                return 'img/americana masculina.jpg';
+            }
+            if (cat === 'mixed' || cat === 'mixta' || cat === 'mixto' || name.includes('mixt') || name.includes('oro') || name.includes('twister')) {
+                return 'img/americana mixta.jpg';
+            }
+            return 'img/padel-event.jpg';
+        }
+
+        /**
+         * 🏷️ Obtiene el nivel real formateado del evento (Americanas y Entrenos)
+         */
+        getEventLevelDisplay(ev) {
+            if (!ev) return 'Todos los niveles';
+
+            // 1. Si ev.level está definido y es específico
+            const lvl = ev.level || ev.nivel;
+            if (lvl !== undefined && lvl !== null) {
+                const s = String(lvl).trim();
+                if (s && s.toLowerCase() !== 'undefined' && s.toLowerCase() !== 'null' && s.toLowerCase() !== 'todos los niveles') {
+                    if (/^nivel\b/i.test(s)) return s;
+                    return `Nivel ${s}`;
+                }
+            }
+
+            // 2. Si tiene rango level_min y/o level_max (ej. 3.5 y 4.5 o 3,5 y 5)
+            const min = ev.level_min ?? ev.min_level ?? ev.levelMin;
+            const max = ev.level_max ?? ev.max_level ?? ev.levelMax;
+            const hasMin = min !== undefined && min !== null && String(min).trim() !== '' && String(min).trim().toLowerCase() !== 'undefined';
+            const hasMax = max !== undefined && max !== null && String(max).trim() !== '' && String(max).trim().toLowerCase() !== 'undefined';
+
+            if (hasMin && hasMax) {
+                const cleanMin = String(min).trim().replace(',', '.');
+                const cleanMax = String(max).trim().replace(',', '.');
+                if (cleanMin === cleanMax) {
+                    return `Nivel ${cleanMin}`;
+                }
+                return `Nivel ${cleanMin} - ${cleanMax}`;
+            } else if (hasMin) {
+                const cleanMin = String(min).trim().replace(',', '.');
+                return `Nivel ${cleanMin}+`;
+            } else if (hasMax) {
+                const cleanMax = String(max).trim().replace(',', '.');
+                return `Hasta Nivel ${cleanMax}`;
+            }
+
+            // 3. Si tiene level_range o levelRange
+            const range = ev.level_range || ev.levelRange;
+            if (range && String(range).trim()) {
+                const rStr = String(range).trim();
+                return /^nivel\b/i.test(rStr) ? rStr : `Nivel ${rStr}`;
+            }
+
+            // 4. Intentar extraer del título o nombre si contiene patrón de nivel (ej. "Nivel 3.5 - 4.5", "Niv 3.5")
+            const title = ev.name || ev.title || '';
+            if (title) {
+                const rangeMatch = title.match(/niv(?:el)?\.?\s*([1-7](?:[.,]\d+)?\s*(?:-|a)\s*[1-7](?:[.,]\d+)?)/i);
+                if (rangeMatch) return `Nivel ${rangeMatch[1].replace(',', '.')}`;
+
+                const singleMatch = title.match(/niv(?:el)?\.?\s*([1-7](?:[.,]\d+)?)/i);
+                if (singleMatch) return `Nivel ${singleMatch[1].replace(',', '.')}`;
+
+                const decimalMatch = title.match(/\b([1-7][.,]\d+)\b/);
+                if (decimalMatch) return `Nivel ${decimalMatch[1].replace(',', '.')}`;
+            }
+
+            // 5. Si ev.level era explícitamente "Todos los niveles"
+            if (lvl && String(lvl).trim().toLowerCase() === 'todos los niveles') {
+                return 'Todos los niveles';
+            }
+
+            // Fallback según tipo de evento
+            const isEntreno = ev.type === 'entreno' || (title && title.toLowerCase().includes('entreno'));
+            return isEntreno ? 'Todos los niveles' : 'Abierto';
+        }
+
+        /**
+         * 🏷️ Devuelve el HTML inicial del track: eventos reales si ya están en memoria,
+         * o un skeleton loader suave si se están descargando. NUNCA datos ficticios ni mocks.
+         */
+                /**
+         * ⚡ Retorna los eventos activos de inmediato (0ms sincrónico):
+         * Memoria RAM -> EventsController -> LocalStorage instantáneo.
+         */
+        getInstantActiveEvents() {
+            if (Array.isArray(this._cachedEvents) && this._cachedEvents.length > 0) {
+                return this._cachedEvents;
+            }
+            if (window.AmericanaService && Array.isArray(window.AmericanaService._cachedActiveEvents) && window.AmericanaService._cachedActiveEvents.length > 0) {
+                this._cachedEvents = window.AmericanaService._cachedActiveEvents;
+                return this._cachedEvents;
+            }
+            if (window.EventsController?.state) {
+                const ams = window.EventsController.state.americanas || [];
+                const ents = window.EventsController.state.entrenos || [];
+                if (ams.length > 0 || ents.length > 0) {
+                    this._cachedEvents = [...ams, ...ents];
+                    return this._cachedEvents;
+                }
+            }
+            try {
+                const cached = localStorage.getItem('sp_cached_active_events_v2');
+                if (cached) {
+                    const parsed = JSON.parse(cached);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        this._cachedEvents = parsed;
+                        return parsed;
+                    }
+                }
+            } catch (_) {}
+            return [];
+        }
+
+        getTrackInitialHtml(type) {
+            const events = this.getInstantActiveEvents();
+
+            if (type === 'americana') {
+                const amEvents = events.filter(e => {
+                    const name = (e.name || e.title || '').toLowerCase();
+                    const eType = (e.type || '').toLowerCase();
+                    const status = (e.status || '').toLowerCase();
+                    return eType !== 'entreno' && !name.includes('entreno') && !['finished', 'finalizado', 'cancelled', 'suspendido', 'anulado'].includes(status);
+                });
+                if (amEvents.length > 0) {
+                    return amEvents.slice(0, 8).map(ev => this.renderAmericanaTrackCard(ev)).join('');
+                }
+            } else {
+                const entEvents = events.filter(e => {
+                    const name = (e.name || e.title || '').toLowerCase();
+                    const eType = (e.type || '').toLowerCase();
+                    const status = (e.status || '').toLowerCase();
+                    return (eType === 'entreno' || name.includes('entreno')) && !['finished', 'finalizado', 'cancelled', 'suspendido', 'anulado'].includes(status);
+                });
+                if (entEvents.length > 0) {
+                    return entEvents.slice(0, 6).map((ev, idx) => this.renderEntrenoTrackCard(ev, idx)).join('');
+                }
+            }
+
+            // Skeleton loader suave de carga (NUNCA tarjetas ficticias ni con datos falsos)
+            return `
+                <div style="min-width: 260px; max-width: 270px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 18px; padding: 14px; flex-shrink: 0; box-shadow: 0 4px 14px rgba(0,0,0,0.04); display: flex; flex-direction: column; gap: 10px;">
+                    <div style="height: 110px; background: #f1f5f9; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-circle-notch fa-spin" style="color: #94a3b8; font-size: 1.2rem;"></i>
+                    </div>
+                    <div style="height: 14px; background: #f1f5f9; border-radius: 6px; width: 60%;"></div>
+                    <div style="height: 18px; background: #e2e8f0; border-radius: 6px; width: 85%;"></div>
+                    <div style="height: 34px; background: #f1f5f9; border-radius: 10px; width: 100%; margin-top: 6px;"></div>
+                </div>
+                <div style="min-width: 260px; max-width: 270px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 18px; padding: 14px; flex-shrink: 0; box-shadow: 0 4px 14px rgba(0,0,0,0.04); display: flex; flex-direction: column; gap: 10px; opacity: 0.6;">
+                    <div style="height: 110px; background: #f1f5f9; border-radius: 12px;"></div>
+                    <div style="height: 14px; background: #f1f5f9; border-radius: 6px; width: 50%;"></div>
+                    <div style="height: 18px; background: #e2e8f0; border-radius: 6px; width: 75%;"></div>
+                    <div style="height: 34px; background: #f1f5f9; border-radius: 10px; width: 100%; margin-top: 6px;"></div>
+                </div>
+            `;
+        }
+
+        /**
+         * 👤 Comprueba de manera infalible si el usuario actual está inscrito en el evento
+         */
+        isUserRegisteredInEvent(ev) {
+            if (!ev) return false;
+            const user = (window.Store && typeof window.Store.getState === 'function' ? window.Store.getState('currentUser') : null) ||
+                         (window.EventsController?.state?.currentUser) ||
+                         window.currentUser ||
+                         null;
+            const authUser = window.firebase?.auth && typeof window.firebase.auth === 'function' ? window.firebase.auth().currentUser : null;
+            
+            const uid = user ? (user.uid || user.id) : (authUser ? authUser.uid : null);
+            const email = (user?.email || authUser?.email || '').toLowerCase().trim();
+            const rawName = (user?.name || user?.displayName || authUser?.displayName || '').trim();
+            const cleanName = rawName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+            if (!uid && !email && !cleanName) return false;
+
+            const players = ev.players || ev.registeredPlayers || [];
+            return players.some(p => {
+                if (!p) return false;
+                if (typeof p === 'string') {
+                    const pNorm = p.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+                    return (uid && p === uid) || (cleanName && pNorm === cleanName);
+                }
+                const pId = p.uid || p.id || p.userId;
+                if (uid && pId && String(pId) === String(uid)) return true;
+                if (email && p.email && p.email.toLowerCase().trim() === email) return true;
+                
+                const pName = (p.name || p.displayName || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+                if (cleanName && pName && (pName === cleanName || pName.includes(cleanName) || cleanName.includes(pName))) return true;
+
+                // Pareja fija por partner_id o partner_name
+                if (uid && p.partner_id && String(p.partner_id) === String(uid)) return true;
+                if (cleanName && p.partner_name) {
+                    const partnerNorm = p.partner_name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+                    if (partnerNorm === cleanName) return true;
+                }
+                return false;
+            });
+        }
+
+        /**
+         * 🎾 Renderiza una tarjeta real individual de Americana (100% sincronizada con estado de inscripción)
+         */
+        renderAmericanaTrackCard(ev) {
+            if (!ev) return '';
+            const photo = this.getAmericanaPoster(ev);
+            const dateStr = this.formatDateShort ? this.formatDateShort(ev.date) : (ev.date || 'Próximamente');
+            const timeStr = ev.time || ev.hora || '19:30';
+            const playersCount = (ev.players || ev.registeredPlayers || []).length;
+            const maxP = ev.max_players || ev.maxPlayers || ((ev.max_courts || 4) * 4);
+            const spotsLeft = Math.max(0, maxP - playersCount);
+            const pct = Math.min(100, Math.round((playersCount / Math.max(1, maxP)) * 100));
+            const isAlmostFull = spotsLeft <= 3 && spotsLeft > 0;
+            const cleanName = (ev.name || ev.title || 'Americana').replace(/'/g, "\\'");
+            const cleanSede = (ev.sede || ev.location || 'SomosPadel BCN').replace(/'/g, "\\'");
+            const safePhoto = photo.replace(/'/g, "\\'");
+            const levelDisplay = this.getEventLevelDisplay(ev);
+            const isJoined = this.isUserRegisteredInEvent(ev);
+
+            // Botón de acción inteligente
+            let actionBtnHtml = '';
+            if (isJoined) {
+                actionBtnHtml = `
+                    <button onclick="event.stopPropagation(); window.EventsController && (window.EventsController.showInscritosModal || window.EventsController.openInscritosModal) ? (window.EventsController.showInscritosModal ? window.EventsController.showInscritosModal('${ev.id}', 'americana') : window.EventsController.openInscritosModal('${ev.id}', 'americana')) : (window.Router && window.Router.navigate('entrenos'))" style="
+                        width: 100%;
+                        background: #dcfce7;
+                        color: #14532d;
+                        border: 2px solid #22c55e;
+                        border-radius: 10px;
+                        padding: 10px;
+                        font-size: 0.82rem;
+                        font-weight: 950;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 6px;
+                        box-shadow: 0 4px 14px rgba(34, 197, 94, 0.25);
+                        transition: transform 0.15s, background 0.15s;
+                    " onmouseover="this.style.transform='scale(1.02)'; this.style.background='#bbf7d0';" onmouseout="this.style.transform='scale(1)'; this.style.background='#dcfce7';">
+                        <i class="fas fa-check-circle" style="color: #16a34a; font-size: 0.95rem;"></i> ¡Estás inscrito! Ver mi plaza
+                    </button>
+                `;
+            } else if (spotsLeft <= 0) {
+                actionBtnHtml = `
+                    <button onclick="event.stopPropagation(); window.EventsController && window.EventsController.joinWaitlist ? window.EventsController.joinWaitlist('${ev.id}', 'americana') : (window.Router && window.Router.navigate('americanas'))" style="
+                        width: 100%;
+                        background: #fef08a;
+                        color: #854d0e;
+                        border: 1px solid #facc15;
+                        border-radius: 10px;
+                        padding: 9px;
+                        font-size: 0.80rem;
+                        font-weight: 850;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 6px;
+                    ">
+                        <i class="fas fa-bell"></i> Lista de espera
+                    </button>
+                `;
+            } else {
+                actionBtnHtml = `
+                    <button onclick="event.stopPropagation(); window.EventsController && window.EventsController.joinEvent ? window.EventsController.joinEvent('${ev.id}', 'americana') : (window.Router && window.Router.navigate('americanas'))" style="
+                        width: 100%;
+                        background: #111827;
+                        color: #ffffff;
+                        border: none;
+                        border-radius: 10px;
+                        padding: 9px;
+                        font-size: 0.80rem;
+                        font-weight: 800;
+                        cursor: pointer;
+                    ">
+                        Inscribirme
+                    </button>
+                `;
+            }
+
+            return `
+                <div onclick="window.EventsController && window.EventsController.openInscritosModal ? window.EventsController.openInscritosModal('${ev.id}', 'americana') : (window.Router && window.Router.navigate('americanas'))" style="
+                    min-width: 260px;
+                    max-width: 270px;
+                    background: ${isJoined ? 'linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%)' : '#ffffff'};
+                    border: ${isJoined ? '2.5px solid #16a34a' : '1px solid #e5e7eb'};
+                    border-radius: 18px;
+                    overflow: hidden;
+                    box-shadow: ${isJoined ? '0 10px 25px rgba(22, 163, 74, 0.22), 0 0 0 1px #86efac' : '0 4px 14px rgba(0,0,0,0.04)'};
+                    flex-shrink: 0;
+                    scroll-snap-align: start;
+                    cursor: pointer;
+                    transition: transform 0.2s, box-shadow 0.2s;
+                    position: relative;
+                "
+                onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.08)';"
+                onmouseout="this.style.transform='none'; this.style.boxShadow='${isJoined ? '0 6px 18px rgba(34, 197, 94, 0.18)' : '0 4px 14px rgba(0,0,0,0.04)'}';">
+                    <div style="position: relative; height: 125px; overflow: hidden; background: #0f172a;">
+                        <img src="${photo}" alt="${ev.name || 'Americana'}" 
+                             onerror="this.onerror=null; this.src='img/americana mixta.jpg';"
+                             style="width: 100%; height: 100%; object-fit: cover;">
+                        <div style="position: absolute; top: 10px; left: 10px; background: #111827; color: #CCFF00; font-size: 0.65rem; font-weight: 900; padding: 3px 8px; border-radius: 6px;">
+                            🎾 ${dateStr} ${timeStr ? timeStr + 'H' : ''}
+                        </div>
+                        <div style="position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.95); color: #111827; font-size: 0.62rem; font-weight: 800; padding: 3px 7px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
+                            ${levelDisplay}
+                        </div>
+                        ${isJoined ? `
+                            <div style="position: absolute; bottom: 8px; left: 10px; background: #CCFF00; color: #090f1e; font-size: 0.68rem; font-weight: 950; padding: 4px 10px; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.4); display: flex; align-items: center; gap: 5px; z-index: 5; border: 1.5px solid #ffffff; letter-spacing: 0.3px;">
+                                <i class="fas fa-check-circle" style="color: #16a34a; font-size: 0.85rem;"></i> ¡ESTÁS INSCRITO!
+                            </div>
+                        ` : ''}
+                        <div onclick="event.stopPropagation(); window.openPosterModal('${safePhoto}', '${cleanName}', '${cleanSede}');"
+                             title="Ver Cartel Oficial"
+                             style="position: absolute; bottom: 8px; right: 10px; background: rgba(15, 23, 42, 0.88); color: #CCFF00; border: 1px solid rgba(204, 255, 0, 0.45); font-size: 0.60rem; font-weight: 900; padding: 2px 7px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px; backdrop-filter: blur(6px); z-index: 5;">
+                            <i class="fas fa-file-image"></i> CARTEL
+                        </div>
+                    </div>
+                    <div style="padding: 14px;">
+                        ${isJoined ? `<div style="display: inline-flex; align-items: center; gap: 5px; background: #dcfce7; color: #15803d; border: 1px solid #86efac; padding: 3px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 900; margin-bottom: 6px;"><i class="fas fa-user-check"></i> PLAZA CONFIRMADA</div>` : ''}
+                        <div style="font-size: 0.65rem; font-weight: 800; color: #2563eb; text-transform: uppercase; margin-bottom: 3px;">
+                            ${ev.format ? ev.format.toUpperCase() : 'TORNEO OFICIAL'}
+                        </div>
+                        <h4 style="margin: 0 0 6px; font-size: 0.95rem; font-weight: 900; color: #111827; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            ${ev.name || ev.title || 'Americana Express'}
+                        </h4>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                            <span style="font-size: 0.72rem; color: #64748b; font-weight: 600;">
+                                <i class="fas fa-users" style="color: #94a3b8; margin-right: 4px;"></i> ${playersCount}/${maxP} inscritos
+                            </span>
+                            <span style="font-size: 0.72rem; font-weight: 800; color: ${isJoined ? '#16a34a' : (isAlmostFull ? '#dc2626' : (spotsLeft === 0 ? '#64748b' : '#16a34a'))};">
+                                ${isJoined ? '¡Tienes plaza!' : (spotsLeft > 0 ? (isAlmostFull ? `¡Últimas ${spotsLeft}!` : `${spotsLeft} libres`) : 'Completo')}
+                            </span>
+                        </div>
+                        <div style="height: 4px; background: #f3f4f6; border-radius: 4px; overflow: hidden; margin-bottom: 14px;">
+                            <div style="width: ${pct}%; height: 100%; background: ${isJoined ? '#22c55e' : '#CCFF00'}; border-radius: 4px;"></div>
+                        </div>
+                        ${actionBtnHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        /**
+         * ⚡ Renderiza una tarjeta real individual de Entreno (100% sincronizada con estado de inscripción)
+         */
+        renderEntrenoTrackCard(ev, idx = 0) {
+            if (!ev) return '';
+            const defaultEntrenoPhotos = ['img/entreno masculino prat.jpg', 'img/cem_tennis_hospitalet.png', 'img/entreno mixto prat.jpg', 'img/entreno femenino prat.jpg'];
+            const customImg = (ev.image_url || ev.imageUrl || ev.poster || ev.posterUrl || '').trim();
+            const photo = customImg || defaultEntrenoPhotos[idx % defaultEntrenoPhotos.length];
+            const dateStr = this.formatDateShort ? this.formatDateShort(ev.date) : (ev.date || 'Próximamente');
+            const timeStr = ev.time || ev.hora || '18:00';
+            const players = ev.players || ev.registeredPlayers || [];
+            const maxP = ev.max_players || ev.maxPlayers || 4;
+            const spotsLeft = Math.max(0, maxP - players.length);
+            const cleanName = (ev.name || ev.title || 'Entreno').replace(/'/g, "\\'");
+            const cleanSede = (ev.sede || ev.location || 'SomosPadel BCN').replace(/'/g, "\\'");
+            const safePhoto = photo.replace(/'/g, "\'");
+            const levelDisplay = this.getEventLevelDisplay(ev);
+            const isJoined = this.isUserRegisteredInEvent(ev);
+
+            // Reorganizar jugadores para que el usuario actual aparezca el primero en los avatares
+            let displayPlayers = [...players];
+            if (isJoined) {
+                const user = (window.Store && typeof window.Store.getState === 'function' ? window.Store.getState('currentUser') : null) || window.EventsController?.state?.currentUser;
+                const uid = user ? (user.uid || user.id) : null;
+                const cleanName = (user?.name || user?.displayName || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+
+                const myIdx = displayPlayers.findIndex(p => {
+                    const pId = typeof p === 'object' ? (p.uid || p.id) : p;
+                    const pName = typeof p === 'object' ? (p.name || p.displayName || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() : '';
+                    return (uid && pId && String(pId) === String(uid)) || (cleanName && pName && pName === cleanName);
+                });
+                if (myIdx > 0) {
+                    const [me] = displayPlayers.splice(myIdx, 1);
+                    displayPlayers.unshift(me);
+                }
+            }
+
+            // Botón de acción inteligente
+            let actionBtnHtml = '';
+            if (isJoined) {
+                actionBtnHtml = `
+                    <button onclick="event.stopPropagation(); window.EventsController && (window.EventsController.showInscritosModal || window.EventsController.openInscritosModal) ? (window.EventsController.showInscritosModal ? window.EventsController.showInscritosModal('${ev.id}', 'entreno') : window.EventsController.openInscritosModal('${ev.id}', 'entreno')) : (window.Router && window.Router.navigate('entrenos'))" style="
+                        width: 100%;
+                        background: #dcfce7;
+                        color: #14532d;
+                        border: 2px solid #22c55e;
+                        border-radius: 10px;
+                        padding: 10px;
+                        font-size: 0.82rem;
+                        font-weight: 950;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 6px;
+                        box-shadow: 0 4px 14px rgba(34, 197, 94, 0.25);
+                        transition: transform 0.15s, background 0.15s;
+                    " onmouseover="this.style.transform='scale(1.02)'; this.style.background='#bbf7d0';" onmouseout="this.style.transform='scale(1)'; this.style.background='#dcfce7';">
+                        <i class="fas fa-check-circle" style="color: #16a34a; font-size: 0.95rem;"></i> ¡Estás inscrito! Ver mi plaza
+                    </button>
+                `;
+            } else if (spotsLeft <= 0) {
+                actionBtnHtml = `
+                    <button onclick="event.stopPropagation(); window.EventsController && window.EventsController.joinWaitlist ? window.EventsController.joinWaitlist('${ev.id}', 'entreno') : (window.Router && window.Router.navigate('entrenos'))" style="
+                        width: 100%;
+                        background: #fef08a;
+                        color: #854d0e;
+                        border: 1px solid #facc15;
+                        border-radius: 10px;
+                        padding: 9px;
+                        font-size: 0.80rem;
+                        font-weight: 850;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 6px;
+                    ">
+                        <i class="fas fa-bell"></i> Lista de espera
+                    </button>
+                `;
+            } else {
+                actionBtnHtml = `
+                    <button onclick="event.stopPropagation(); window.EventsController && window.EventsController.joinEvent ? window.EventsController.joinEvent('${ev.id}', 'entreno') : (window.Router && window.Router.navigate('entrenos'))" style="
+                        width: 100%;
+                        background: #CCFF00;
+                        color: #111827;
+                        border: none;
+                        border-radius: 10px;
+                        padding: 9px;
+                        font-size: 0.80rem;
+                        font-weight: 900;
+                        cursor: pointer;
+                    ">
+                        Reservar plaza
+                    </button>
+                `;
+            }
+
+            return `
+                <div onclick="window.EventsController && window.EventsController.openInscritosModal ? window.EventsController.openInscritosModal('${ev.id}', 'entreno') : (window.Router && window.Router.navigate('entrenos'))" style="
+                    min-width: 260px;
+                    max-width: 270px;
+                    background: ${isJoined ? 'linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%)' : '#ffffff'};
+                    border: ${isJoined ? '2.5px solid #16a34a' : '1px solid #e5e7eb'};
+                    border-radius: 18px;
+                    overflow: hidden;
+                    box-shadow: ${isJoined ? '0 10px 25px rgba(22, 163, 74, 0.22), 0 0 0 1px #86efac' : '0 4px 14px rgba(0,0,0,0.04)'};
+                    flex-shrink: 0;
+                    scroll-snap-align: start;
+                    cursor: pointer;
+                    transition: transform 0.2s, box-shadow 0.2s;
+                    position: relative;
+                "
+                onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.08)';"
+                onmouseout="this.style.transform='none'; this.style.boxShadow='${isJoined ? '0 6px 18px rgba(34, 197, 94, 0.18)' : '0 4px 14px rgba(0,0,0,0.04)'}';">
+                    <div style="position: relative; height: 125px; overflow: hidden; background: #0f172a;">
+                        <img src="${photo}" alt="${ev.name || 'Entreno'}" 
+                             onerror="this.onerror=null; this.src='img/entreno mixto prat.jpg';"
+                             style="width: 100%; height: 100%; object-fit: cover;">
+                        <div style="position: absolute; top: 10px; left: 10px; background: #111827; color: #CCFF00; font-size: 0.65rem; font-weight: 900; padding: 3px 8px; border-radius: 6px;">
+                            ⚡ ${dateStr} ${timeStr ? timeStr + 'H' : ''}
+                        </div>
+                        <div style="position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.95); color: #111827; font-size: 0.62rem; font-weight: 800; padding: 3px 7px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
+                            ${levelDisplay}
+                        </div>
+                        ${isJoined ? `
+                            <div style="position: absolute; bottom: 8px; left: 10px; background: #CCFF00; color: #090f1e; font-size: 0.68rem; font-weight: 950; padding: 4px 10px; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.4); display: flex; align-items: center; gap: 5px; z-index: 5; border: 1.5px solid #ffffff; letter-spacing: 0.3px;">
+                                <i class="fas fa-check-circle" style="color: #16a34a; font-size: 0.85rem;"></i> ¡ESTÁS INSCRITO!
+                            </div>
+                        ` : ''}
+                        <div onclick="event.stopPropagation(); window.openPosterModal('${safePhoto}', '${cleanName}', '${cleanSede}');"
+                             title="Ver Cartel Oficial"
+                             style="position: absolute; bottom: 8px; right: 10px; background: rgba(15, 23, 42, 0.88); color: #CCFF00; border: 1px solid rgba(204, 255, 0, 0.45); font-size: 0.60rem; font-weight: 900; padding: 2px 7px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px; backdrop-filter: blur(6px); z-index: 5;">
+                            <i class="fas fa-file-image"></i> CARTEL
+                        </div>
+                    </div>
+                    <div style="padding: 14px;">
+                        ${isJoined ? `<div style="display: inline-flex; align-items: center; gap: 5px; background: #dcfce7; color: #15803d; border: 1px solid #86efac; padding: 3px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 900; margin-bottom: 6px;"><i class="fas fa-user-check"></i> PLAZA CONFIRMADA</div>` : ''}
+                        <div style="font-size: 0.65rem; font-weight: 800; color: #16a34a; text-transform: uppercase; margin-bottom: 3px;">
+                            ENTRENO
+                        </div>
+                        <h4 style="margin: 0 0 6px; font-size: 0.95rem; font-weight: 900; color: #111827; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            ${ev.name || ev.title || 'Entreno Táctico'}
+                        </h4>
+                        <div style="margin: 10px 0 14px;">
+                            <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; margin-bottom: 6px;">
+                                ${players.length} jugador${players.length === 1 ? '' : 'es'} (${isJoined ? '¡Tú incluido!' : (spotsLeft > 0 ? `${spotsLeft} huecos` : 'Completo')}):
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                ${displayPlayers.slice(0, 3).map((p, pIdx) => {
+                                    const pName = typeof p === 'object' ? (p.name || p.displayName || 'J') : 'J';
+                                    const isMe = isJoined && pIdx === 0;
+                                    if (isMe) {
+                                        return `
+                                            <div title="Tú (${pName})" style="width: 32px; height: 32px; border-radius: 50%; background: #dcfce7; color: #15803d; font-size: 0.70rem; font-weight: 900; display: flex; align-items: center; justify-content: center; border: 2px solid #16a34a; box-shadow: 0 0 8px rgba(22,163,74,0.35);">
+                                                <i class="fas fa-check" style="font-size: 0.65rem;"></i>
+                                            </div>
+                                        `;
+                                    }
+                                    const bgColors = ['#e0f2fe', '#fef3c7', '#dcfce7'];
+                                    const txtColors = ['#0369a1', '#b45309', '#15803d'];
+                                    return `
+                                        <div title="${pName}" style="width: 32px; height: 32px; border-radius: 50%; background: ${bgColors[pIdx % 3]}; color: ${txtColors[pIdx % 3]}; font-size: 0.70rem; font-weight: 900; display: flex; align-items: center; justify-content: center; border: 1.5px solid #ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.06);">
+                                            ${pName.charAt(0).toUpperCase()}
+                                        </div>
+                                    `;
+                                }).join('')}
+                                ${Array(Math.min(3, spotsLeft)).fill(0).map(() => `
+                                    <div title="Hueco libre" style="width: 32px; height: 32px; border-radius: 50%; border: 1.5px dashed #cbd5e1; background: #f8fafc; color: #64748b; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; justify-content: center;">
+                                        +
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        ${actionBtnHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        /**
+         * 🔄 Actualización dinámica de carruseles swipe en Inicio (Americanas y Entrenos con datos 100% reales)
+         */
+        updateDynamicCarousels(events) {
+            if (!Array.isArray(events) || events.length === 0) return;
+            this._cachedEvents = events;
+            try {
+                localStorage.setItem('sp_cached_active_events_v2', JSON.stringify(events));
+            } catch (_) {}
+
+            // 1. Carrusel de Americanas sincronizado 100% con datos reales de Firestore
+            const amTrack = document.getElementById('americanas-horizontal-track');
+            const amEvents = events.filter(e => {
+                const name = (e.name || e.title || '').toLowerCase();
+                const type = (e.type || '').toLowerCase();
+                const status = (e.status || '').toLowerCase();
+                return type !== 'entreno' && !name.includes('entreno') && !['finished', 'finalizado', 'cancelled', 'suspendido', 'anulado'].includes(status);
+            });
+
+            if (amTrack) {
+                if (amEvents.length > 0) {
+                    amTrack.innerHTML = amEvents.slice(0, 8).map(ev => this.renderAmericanaTrackCard(ev)).join('');
+                } else {
+                    amTrack.innerHTML = `
+                        <div style="min-width: 100%; padding: 24px 16px; text-align: center; background: #ffffff; border: 1px dashed #cbd5e1; border-radius: 16px; color: #64748b; font-size: 0.85rem; font-weight: 700;">
+                            <i class="fas fa-calendar-times" style="font-size: 1.5rem; color: #94a3b8; display: block; margin-bottom: 8px;"></i>
+                            No hay torneos o americanas programadas en este momento
+                        </div>
+                    `;
+                }
+            }
+
+            // 2. Carrusel de Entrenos sincronizado 100% con datos reales de Firestore
+            const entTrack = document.getElementById('entrenos-horizontal-track');
+            const entEvents = events.filter(e => {
+                const name = (e.name || e.title || '').toLowerCase();
+                const type = (e.type || '').toLowerCase();
+                const status = (e.status || '').toLowerCase();
+                return (type === 'entreno' || name.includes('entreno')) && !['finished', 'finalizado', 'cancelled', 'suspendido', 'anulado'].includes(status);
+            });
+
+            if (entTrack) {
+                if (entEvents.length > 0) {
+                    entTrack.innerHTML = entEvents.slice(0, 6).map((ev, idx) => this.renderEntrenoTrackCard(ev, idx)).join('');
+                } else {
+                    entTrack.innerHTML = `
+                        <div style="min-width: 100%; padding: 24px 16px; text-align: center; background: #ffffff; border: 1px dashed #cbd5e1; border-radius: 16px; color: #64748b; font-size: 0.85rem; font-weight: 700;">
+                            <i class="fas fa-dumbbell" style="font-size: 1.5rem; color: #94a3b8; display: block; margin-bottom: 8px;"></i>
+                            No hay entrenos programados en este momento
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        /**
+         * ⚡ Sincronización en tiempo real (Realtime Firestore onSnapshot & Events)
+         */
+        initRealtimeEventsSync() {
+            if (this._realtimeEventsSyncActive) return;
+            this._realtimeEventsSyncActive = true;
+
+            // Escuchar eventos globales del sistema
+            window.addEventListener('americanasUpdated', () => this.hydrateRealEventsTracks());
+            window.addEventListener('entrenosUpdated', () => this.hydrateRealEventsTracks());
+            window.addEventListener('eventModified', () => this.hydrateRealEventsTracks(true));
+            window.addEventListener('userChanged', () => this.hydrateRealEventsTracks(true));
+
+            // Conectar direct onSnapshot a Firestore para el Dashboard
+            const db = window.db || (window.firebase?.firestore ? window.firebase.firestore() : null);
+            if (db && typeof db.collection === 'function') {
+                try {
+                    if (this._unsubAmDash) this._unsubAmDash();
+                    this._unsubAmDash = db.collection('americanas').onSnapshot(snap => {
+                        const ams = snap.docs.map(d => ({ id: d.id, ...d.data(), type: 'americana' }));
+                        this._cachedAms = ams;
+                        if (window.AmericanaService) window.AmericanaService.invalidateActiveEventsCache?.();
+                        const ents = this._cachedEnts || (window.EventsController?.state?.entrenos || []);
+                        this.updateDynamicCarousels([...ams, ...ents]);
+                    }, err => console.warn("[DashboardView] onSnapshot americanas warning:", err));
+
+                    if (this._unsubEntDash) this._unsubEntDash();
+                    this._unsubEntDash = db.collection('entrenos').onSnapshot(snap => {
+                        const ents = snap.docs.map(d => ({ id: d.id, ...d.data(), type: 'entreno' }));
+                        this._cachedEnts = ents;
+                        if (window.AmericanaService) window.AmericanaService.invalidateActiveEventsCache?.();
+                        const ams = this._cachedAms || (window.EventsController?.state?.americanas || []);
+                        this.updateDynamicCarousels([...ams, ...ents]);
+                    }, err => console.warn("[DashboardView] onSnapshot entrenos warning:", err));
+                } catch (e) {
+                    console.warn("[DashboardView] Error configurando onSnapshot en Dashboard:", e);
+                }
+            }
+        }
+
+        /**
+         * 📥 Hidrata en tiempo real los tracks con eventos 100% reales de Firestore
+         */
+        async hydrateRealEventsTracks(forceRefresh = false) {
+            this.initRealtimeEventsSync();
+
+            // ⚡ PINTURA INSTANTÁNEA (0ms): Si hay eventos en caché, actualizar tracks de inmediato sin esperar la red
+            if (!forceRefresh) {
+                const instantEvents = this.getInstantActiveEvents();
+                if (instantEvents.length > 0) {
+                    this.updateDynamicCarousels(instantEvents);
+                }
+            }
+
+            try {
+                if (window.AmericanaService && typeof window.AmericanaService.getAllActiveEvents === 'function') {
+                    const events = await window.AmericanaService.getAllActiveEvents({ forceRefresh });
+                    if (Array.isArray(events) && events.length > 0) {
+                        this.updateDynamicCarousels(events);
+                        return;
+                    }
+                }
+
+                if (window.EventsController?.state) {
+                    const ams = window.EventsController.state.americanas || [];
+                    const ents = window.EventsController.state.entrenos || [];
+                    if (ams.length > 0 || ents.length > 0) {
+                        this.updateDynamicCarousels([...ams, ...ents]);
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.warn("[DashboardView] Error hidratando eventos reales:", e);
+            }
+        }
+
         renderRadarDiscoveryBanner() {
             try {
                 const noticeDismissed = localStorage.getItem('sp_radar_relocated_notice_v1') === 'true';
@@ -7959,6 +8506,129 @@
             }, 220);
         }
     };
+
+    /**
+     * 🖼️ Lightbox Oficial de Cartel de Americanas y Torneos
+     */
+    if (typeof window.openPosterModal !== 'function') {
+        window.openPosterModal = function(imageUrl, eventName, clubName) {
+            if (window.EventsController && typeof window.EventsController.openPosterModal === 'function') {
+                return window.EventsController.openPosterModal(imageUrl, eventName, clubName);
+            }
+            const finalImg = (imageUrl && imageUrl.trim()) ? imageUrl.trim() : 'img/padel-event.jpg';
+            const finalName = (eventName && eventName.trim()) ? eventName.trim() : 'Cartel Oficial SomosPadel';
+            const finalClub = (clubName && clubName.trim()) ? clubName.trim() : 'SomosPadel BCN';
+
+            let overlay = document.getElementById('sp-americana-poster-modal');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'sp-americana-poster-modal';
+                overlay.style.cssText = `
+                    position: fixed;
+                    inset: 0;
+                    background: rgba(4, 7, 15, 0.92);
+                    backdrop-filter: blur(14px);
+                    -webkit-backdrop-filter: blur(14px);
+                    z-index: 9999999;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 16px;
+                    box-sizing: border-box;
+                    opacity: 0;
+                    transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+                    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+                `;
+                document.body.appendChild(overlay);
+
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) window.closePosterModal();
+                });
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && overlay.style.display !== 'none') {
+                        window.closePosterModal();
+                    }
+                });
+            }
+
+            overlay.innerHTML = `
+                <div style="
+                    position: relative;
+                    width: 100%;
+                    max-width: 480px;
+                    max-height: 92vh;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    background: #090e18;
+                    border: 1.5px solid rgba(204, 255, 0, 0.45);
+                    border-radius: 22px;
+                    padding: 14px 14px 16px;
+                    box-shadow: 0 25px 60px rgba(0,0,0,0.9), 0 0 35px rgba(204,255,0,0.2);
+                    box-sizing: border-box;
+                ">
+                    <button type="button" onclick="window.closePosterModal()"
+                            aria-label="Cerrar cartel"
+                            style="
+                                position: absolute;
+                                top: -14px;
+                                right: -14px;
+                                width: 38px;
+                                height: 38px;
+                                border-radius: 50%;
+                                background: #0f172a;
+                                color: #CCFF00;
+                                border: 2px solid #CCFF00;
+                                font-size: 1.15rem;
+                                font-weight: 900;
+                                cursor: pointer;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+                                z-index: 20;
+                            ">
+                        ✕
+                    </button>
+                    <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 4px;">
+                        <span style="background: #CCFF00; color: #000; font-size: 0.65rem; font-weight: 950; padding: 3px 8px; border-radius: 6px;">
+                            🏆 CARTEL OFICIAL
+                        </span>
+                        <span style="font-size: 0.70rem; color: #94a3b8; font-weight: 700; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            ${finalName}
+                        </span>
+                    </div>
+                    <div style="width: 100%; overflow: hidden; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1); background: #000; display: flex; align-items: center; justify-content: center;">
+                        <img src="${finalImg}" alt="${finalName}" style="width: 100%; height: auto; max-height: 65vh; object-fit: contain; display: block;" onerror="this.src='img/padel-event.jpg';" />
+                    </div>
+                    <div style="display: flex; gap: 8px; width: 100%; margin-top: 14px;">
+                        <a href="${finalImg}" download="cartel-americana.jpg" target="_blank"
+                           style="flex: 1; padding: 11px 12px; background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; font-weight: 800; font-size: 0.8rem; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                            <i class="fas fa-download"></i> Descargar Cartel
+                        </a>
+                        <button type="button" onclick="window.closePosterModal(); window.Router && window.Router.navigate('americanas');"
+                                style="flex: 1; padding: 11px 12px; background: #CCFF00; color: #000; border: none; border-radius: 12px; font-weight: 900; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                            Ver en Torneos 🚀
+                        </button>
+                    </div>
+                </div>
+            `;
+            overlay.style.display = 'flex';
+            requestAnimationFrame(() => {
+                overlay.style.opacity = '1';
+            });
+        };
+    }
+    if (typeof window.closePosterModal !== 'function') {
+        window.closePosterModal = function() {
+            const overlay = document.getElementById('sp-americana-poster-modal');
+            if (overlay) {
+                overlay.style.opacity = '0';
+                setTimeout(() => { overlay.style.display = 'none'; }, 250);
+            }
+        };
+    }
 
     // 🎴 HELPER GLOBAL: Abrir carta FUT interactiva desde cualquier elemento del ranking
     window.openFutCardFromPlayer = function(playerData) {
