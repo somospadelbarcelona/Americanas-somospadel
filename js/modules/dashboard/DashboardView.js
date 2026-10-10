@@ -82,24 +82,24 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         display: flex;
                         align-items: center;
                         justify-content: space-between;
-                        padding: 4px 0 16px;
+                        padding: 4px 0 14px;
                         background: #ffffff;
                     ">
-                        <div style="display: flex; align-items: center; gap: 14px;">
-                            <!-- Avatar circular vibrante SomosPadel Barcelona -->
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <!-- Avatar circular estilizado SomosPadel Barcelona -->
                             <div style="
-                                width: 52px;
-                                height: 52px;
+                                width: 44px;
+                                height: 44px;
                                 border-radius: 50%;
                                 background: linear-gradient(135deg, #CCFF00 0%, #00e5ff 100%);
-                                border: 2.5px solid #ffffff;
+                                border: 2px solid #ffffff;
                                 display: flex;
                                 align-items: center;
                                 justify-content: center;
                                 color: #000000;
-                                font-size: 1.35rem;
-                                font-weight: 900;
-                                box-shadow: 0 4px 14px rgba(0, 229, 255, 0.35), 0 2px 8px rgba(204, 255, 0, 0.4);
+                                font-size: 1.15rem;
+                                font-weight: 950;
+                                box-shadow: 0 3px 10px rgba(0, 229, 255, 0.30), 0 2px 6px rgba(204, 255, 0, 0.35);
                                 flex-shrink: 0;
                                 text-shadow: 0 1px 1px rgba(255,255,255,0.6);
                             ">
@@ -108,41 +108,22 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                             <div>
                                 <h1 style="
                                     margin: 0;
-                                    font-size: 1.45rem;
-                                    font-weight: 900;
+                                    font-size: 1.30rem;
+                                    font-weight: 950;
                                     color: #111827;
-                                    letter-spacing: -0.5px;
-                                    line-height: 1.2;
+                                    letter-spacing: -0.4px;
+                                    line-height: 1.15;
                                 ">
                                     ¡Hola, <span id="sp-playtomic-user-name">${userFirstName}</span>! 👋
                                 </h1>
-                                <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
-                                    <span style="
-                                        background: #f7fee7;
-                                        color: #111827;
-                                        font-size: 0.72rem;
-                                        font-weight: 850;
-                                        padding: 3px 9px;
-                                        border-radius: 12px;
-                                        border: 1.5px solid #CCFF00;
-                                        box-shadow: 0 2px 8px rgba(204, 255, 0, 0.25);
-                                        display: inline-flex;
-                                        align-items: center;
-                                        gap: 4px;
-                                    ">
-                                        <i class="fas fa-bolt" style="color: #65a30d; font-size: 0.65rem;"></i> Nivel <span id="user-level-val">${userLevel}</span>
-                                    </span>
-                                    <span style="font-size: 0.75rem; color: #64748b; font-weight: 600;">
-                                        <i class="fas fa-map-marker-alt" style="color: #94a3b8; margin-right: 3px;"></i>SomosPadel BCN
-                                    </span>
-                                </div>
+                                <span id="user-level-val" style="display: none;">${userLevel}</span>
                             </div>
                         </div>
-                        <!-- Botón perfil / avatar con acento SomosPadel -->
+                        <!-- Botón perfil / avatar compacto -->
                         <div onclick="window.Router && window.Router.navigate('profile')" style="
-                            width: 42px;
-                            height: 42px;
-                            border-radius: 12px;
+                            width: 38px;
+                            height: 38px;
+                            border-radius: 11px;
                             background: #ffffff;
                             border: 1.5px solid #e2e8f0;
                             display: flex;
@@ -150,12 +131,12 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                             justify-content: center;
                             cursor: pointer;
                             color: #111827;
-                            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+                            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
                             transition: all 0.18s ease;
                         "
-                        onmouseover="this.style.background='#f0fdf4'; this.style.borderColor='#CCFF00'; this.style.transform='scale(1.06)';"
+                        onmouseover="this.style.background='#f0fdf4'; this.style.borderColor='#CCFF00'; this.style.transform='scale(1.05)';"
                         onmouseout="this.style.background='#ffffff'; this.style.borderColor='#e2e8f0'; this.style.transform='none';">
-                            <i class="far fa-user" style="font-size: 1.05rem; color: #111827;"></i>
+                            <i class="far fa-user" style="font-size: 0.95rem; color: #111827;"></i>
                         </div>
                     </div>
 
@@ -163,123 +144,123 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     <div class="sp-playtomic-quick-actions" style="
                         display: grid;
                         grid-template-columns: repeat(4, 1fr);
-                        gap: 8px;
+                        gap: 6px;
                         align-items: start;
                         text-align: center;
-                        margin-bottom: 24px;
-                        padding: 6px 0;
+                        margin-bottom: 20px;
+                        padding: 4px 0;
                         background: #ffffff;
                     ">
-                        <!-- 1. Americanas (Torneos / Competición: Amarillo Lima Eléctrico SomosPadel) -->
+                        <!-- 1. Americanas -->
                         <div class="sp-action-pod haptic-feedback"
                             onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('americanas');"
                             style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
                             <div style="
-                                width: 56px;
-                                height: 56px;
+                                width: 46px;
+                                height: 46px;
                                 border-radius: 50%;
                                 background: linear-gradient(135deg, #f7fee7 0%, #e4fc8c 50%, #CCFF00 100%);
-                                border: 2.5px solid #a3e635;
+                                border: 2px solid #a3e635;
                                 display: flex;
                                 align-items: center;
                                 justify-content: center;
-                                box-shadow: 0 6px 18px rgba(163, 230, 53, 0.42), 0 2px 6px rgba(0,0,0,0.04);
+                                box-shadow: 0 4px 12px rgba(163, 230, 53, 0.38), 0 2px 4px rgba(0,0,0,0.04);
                                 position: relative;
                                 transition: transform 0.18s ease, box-shadow 0.18s ease;
                             "
-                            onmouseover="this.style.transform='scale(1.10)'; this.style.boxShadow='0 8px 22px rgba(163, 230, 53, 0.6)';"
-                            onmouseout="this.style.transform='none'; this.style.boxShadow='0 6px 18px rgba(163, 230, 53, 0.42), 0 2px 6px rgba(0,0,0,0.04)';">
-                                <i class="fas fa-trophy" style="font-size: 1.30rem; color: #0f172a; filter: drop-shadow(0 1px 1px rgba(255,255,255,0.4));"></i>
-                                <span style="position: absolute; top: -3px; right: -3px; background: #ef4444; color: #ffffff; font-size: 0.50rem; font-weight: 900; padding: 2px 5px; border-radius: 7px; border: 1.5px solid #ffffff; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.45); letter-spacing: 0.3px;">TOP</span>
+                            onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 6px 16px rgba(163, 230, 53, 0.5)';"
+                            onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 12px rgba(163, 230, 53, 0.38), 0 2px 4px rgba(0,0,0,0.04)';">
+                                <i class="fas fa-trophy" style="font-size: 1.05rem; color: #0f172a;"></i>
+                                <span style="position: absolute; top: -2px; right: -2px; background: #ef4444; color: #ffffff; font-size: 0.44rem; font-weight: 900; padding: 1.5px 4px; border-radius: 6px; border: 1px solid #ffffff; box-shadow: 0 1px 4px rgba(239, 68, 68, 0.4); letter-spacing: 0.2px;">TOP</span>
                             </div>
-                            <span style="margin-top: 8px; font-size: 0.76rem; font-weight: 800; color: #111827; line-height: 1.1;">
+                            <span style="margin-top: 6px; font-size: 0.72rem; font-weight: 850; color: #111827; line-height: 1.1;">
                                 Americanas
                             </span>
-                            <span style="font-size: 0.62rem; color: #64748b; font-weight: 600; margin-top: 2px;">Torneos</span>
+                            <span style="font-size: 0.58rem; color: #64748b; font-weight: 600; margin-top: 1px;">Torneos</span>
                         </div>
 
-                        <!-- 2. Entrenos (Pistas / Clases: Azul Cian Eléctrico Pista Indoor) -->
+                        <!-- 2. Entrenos -->
                         <div class="sp-action-pod haptic-feedback"
                             onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('entrenos');"
                             style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
                             <div style="
-                                width: 56px;
-                                height: 56px;
+                                width: 46px;
+                                height: 46px;
                                 border-radius: 50%;
                                 background: linear-gradient(135deg, #f0f9ff 0%, #bae6fd 50%, #38bdf8 100%);
-                                border: 2.5px solid #0284c7;
+                                border: 2px solid #0284c7;
                                 display: flex;
                                 align-items: center;
                                 justify-content: center;
-                                box-shadow: 0 6px 18px rgba(56, 189, 248, 0.45), 0 2px 6px rgba(0,0,0,0.04);
+                                box-shadow: 0 4px 12px rgba(56, 189, 248, 0.38), 0 2px 4px rgba(0,0,0,0.04);
                                 position: relative;
                                 transition: transform 0.18s ease, box-shadow 0.18s ease;
                             "
-                            onmouseover="this.style.transform='scale(1.10)'; this.style.boxShadow='0 8px 22px rgba(56, 189, 248, 0.65)';"
-                            onmouseout="this.style.transform='none'; this.style.boxShadow='0 6px 18px rgba(56, 189, 248, 0.45), 0 2px 6px rgba(0,0,0,0.04)';">
-                                <i class="fas fa-baseball" style="font-size: 1.30rem; color: #0284c7; filter: drop-shadow(0 1px 1px rgba(255,255,255,0.5));"></i>
-                                <span style="position: absolute; top: -3px; right: -3px; background: #0284c7; color: #ffffff; font-size: 0.48rem; font-weight: 900; padding: 2px 5px; border-radius: 7px; border: 1.5px solid #ffffff; box-shadow: 0 2px 6px rgba(2, 132, 199, 0.45); letter-spacing: 0.3px;">PISTAS</span>
+                            onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 6px 16px rgba(56, 189, 248, 0.5)';"
+                            onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 12px rgba(56, 189, 248, 0.38), 0 2px 4px rgba(0,0,0,0.04)';">
+                                <i class="fas fa-baseball" style="font-size: 1.05rem; color: #0284c7;"></i>
+                                <span style="position: absolute; top: -2px; right: -2px; background: #0284c7; color: #ffffff; font-size: 0.42rem; font-weight: 900; padding: 1.5px 4px; border-radius: 6px; border: 1px solid #ffffff; box-shadow: 0 1px 4px rgba(2, 132, 199, 0.4); letter-spacing: 0.2px;">PISTAS</span>
                             </div>
-                            <span style="margin-top: 8px; font-size: 0.76rem; font-weight: 800; color: #111827; line-height: 1.1;">
+                            <span style="margin-top: 6px; font-size: 0.72rem; font-weight: 850; color: #111827; line-height: 1.1;">
                                 Entrenos
                             </span>
-                            <span style="font-size: 0.62rem; color: #64748b; font-weight: 600; margin-top: 2px;">Partidos</span>
+                            <span style="font-size: 0.58rem; color: #64748b; font-weight: 600; margin-top: 1px;">Partidos</span>
                         </div>
 
-                        <!-- 3. Ranking (Puntos / FIP / Podio: Oro Trofeo / Ámbar Vibrante) -->
+                        <!-- 3. Ranking -->
                         <div class="sp-action-pod haptic-feedback"
                             onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('ranking');"
                             style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
                             <div style="
-                                width: 56px;
-                                height: 56px;
+                                width: 46px;
+                                height: 46px;
                                 border-radius: 50%;
                                 background: linear-gradient(135deg, #fefce8 0%, #fde68a 50%, #fbbf24 100%);
-                                border: 2.5px solid #f59e0b;
+                                border: 2px solid #f59e0b;
                                 display: flex;
                                 align-items: center;
                                 justify-content: center;
-                                box-shadow: 0 6px 18px rgba(245, 158, 11, 0.42), 0 2px 6px rgba(0,0,0,0.04);
+                                box-shadow: 0 4px 12px rgba(245, 158, 11, 0.38), 0 2px 4px rgba(0,0,0,0.04);
                                 position: relative;
                                 transition: transform 0.18s ease, box-shadow 0.18s ease;
                             "
-                            onmouseover="this.style.transform='scale(1.10)'; this.style.boxShadow='0 8px 22px rgba(245, 158, 11, 0.65)';"
-                            onmouseout="this.style.transform='none'; this.style.boxShadow='0 6px 18px rgba(245, 158, 11, 0.42), 0 2px 6px rgba(0,0,0,0.04)';">
-                                <i class="fas fa-medal" style="font-size: 1.30rem; color: #b45309; filter: drop-shadow(0 1px 1px rgba(255,255,255,0.5));"></i>
-                                <span style="position: absolute; top: -3px; right: -3px; background: #f59e0b; color: #ffffff; font-size: 0.48rem; font-weight: 900; padding: 2px 5px; border-radius: 7px; border: 1.5px solid #ffffff; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.45); letter-spacing: 0.3px;">ORO</span>
+                            onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 6px 16px rgba(245, 158, 11, 0.5)';"
+                            onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 12px rgba(245, 158, 11, 0.38), 0 2px 4px rgba(0,0,0,0.04)';">
+                                <i class="fas fa-medal" style="font-size: 1.05rem; color: #b45309;"></i>
+                                <span style="position: absolute; top: -2px; right: -2px; background: #f59e0b; color: #ffffff; font-size: 0.42rem; font-weight: 900; padding: 1.5px 4px; border-radius: 6px; border: 1px solid #ffffff; box-shadow: 0 1px 4px rgba(245, 158, 11, 0.4); letter-spacing: 0.2px;">ORO</span>
                             </div>
-                            <span style="margin-top: 8px; font-size: 0.76rem; font-weight: 800; color: #111827; line-height: 1.1;">
+                            <span style="margin-top: 6px; font-size: 0.72rem; font-weight: 850; color: #111827; line-height: 1.1;">
                                 Ranking
                             </span>
-                            <span style="font-size: 0.62rem; color: #64748b; font-weight: 600; margin-top: 2px;">Puntos</span>
+                            <span style="font-size: 0.58rem; color: #64748b; font-weight: 600; margin-top: 1px;">Puntos</span>
                         </div>
 
-                        <!-- 4. Mi Equipo (Liga Summa / Comunidad: Violeta / Púrpura Deportivo) -->
+                        <!-- 4. Mi Equipo -->
                         <div class="sp-action-pod haptic-feedback"
                             onclick="window.PlayerView?.haptic?.(20); window.openMyTeam ? window.openMyTeam() : (window.Router && window.Router.navigate('my_team'));"
                             style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
                             <div style="
-                                width: 56px;
-                                height: 56px;
+                                width: 46px;
+                                height: 46px;
                                 border-radius: 50%;
                                 background: linear-gradient(135deg, #faf5ff 0%, #ddd6fe 50%, #c084fc 100%);
-                                border: 2.5px solid #8b5cf6;
+                                border: 2px solid #8b5cf6;
                                 display: flex;
                                 align-items: center;
                                 justify-content: center;
-                                box-shadow: 0 6px 18px rgba(168, 85, 247, 0.42), 0 2px 6px rgba(0,0,0,0.04);
+                                box-shadow: 0 4px 12px rgba(168, 85, 247, 0.38), 0 2px 4px rgba(0,0,0,0.04);
                                 position: relative;
                                 transition: transform 0.18s ease, box-shadow 0.18s ease;
                             "
-                            onmouseover="this.style.transform='scale(1.10)'; this.style.boxShadow='0 8px 22px rgba(168, 85, 247, 0.65)';"
-                            onmouseout="this.style.transform='none'; this.style.boxShadow='0 6px 18px rgba(168, 85, 247, 0.42), 0 2px 6px rgba(0,0,0,0.04)';">
-                                <i class="fas fa-users" style="font-size: 1.30rem; color: #581c87; filter: drop-shadow(0 1px 1px rgba(255,255,255,0.5));"></i>
-                                <span style="position: absolute; top: -3px; right: -3px; background: #CCFF00; color: #000000; font-size: 0.48rem; font-weight: 900; padding: 2px 5px; border-radius: 7px; border: 1.5px solid #ffffff; box-shadow: 0 2px 6px rgba(204, 255, 0, 0.5); letter-spacing: 0.3px;">2027</span>
+                            onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 6px 16px rgba(168, 85, 247, 0.5)';"
+                            onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 12px rgba(168, 85, 247, 0.38), 0 2px 4px rgba(0,0,0,0.04)';">
+                                <i class="fas fa-users" style="font-size: 1.05rem; color: #581c87;"></i>
+                                <span style="position: absolute; top: -2px; right: -2px; background: #CCFF00; color: #000000; font-size: 0.42rem; font-weight: 900; padding: 1.5px 4px; border-radius: 6px; border: 1px solid #ffffff; box-shadow: 0 1px 4px rgba(204, 255, 0, 0.5); letter-spacing: 0.2px;">2027</span>
                             </div>
-                            <span style="margin-top: 8px; font-size: 0.76rem; font-weight: 800; color: #111827; line-height: 1.1;">
+                            <span style="margin-top: 6px; font-size: 0.72rem; font-weight: 850; color: #111827; line-height: 1.1;">
                                 Mi Equipo
                             </span>
-                            <span style="font-size: 0.62rem; color: #64748b; font-weight: 600; margin-top: 2px;">Liga Summa</span>
+                            <span style="font-size: 0.58rem; color: #64748b; font-weight: 600; margin-top: 1px;">Liga Summa</span>
                         </div>
                     </div>
 
