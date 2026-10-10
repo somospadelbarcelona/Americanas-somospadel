@@ -2936,17 +2936,17 @@
                 let interactiveActionHtml = '';
                 if (isGameModesPost) {
                     interactiveActionHtml = `
-                        <div style="margin: 24px 0 20px; background: linear-gradient(135deg, rgba(204, 255, 0, 0.12) 0%, rgba(56, 189, 248, 0.08) 100%); border: 1.5px solid rgba(204, 255, 0, 0.45); border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 25px rgba(204, 255, 0, 0.1);">
-                            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(204, 255, 0, 0.15); border: 1px solid rgba(204, 255, 0, 0.35); padding: 3px 10px; border-radius: 999px; font-size: 0.62rem; font-weight: 900; color: #CCFF00; letter-spacing: 0.6px; margin-bottom: 10px;">
+                        <div style="margin: 24px 0 20px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 4px 14px rgba(0,0,0,0.04);">
+                            <div style="display: inline-flex; align-items: center; gap: 6px; background: #f7fee7; border: 1px solid #d9f99d; padding: 3px 10px; border-radius: 999px; font-size: 0.62rem; font-weight: 900; color: #4d7c0f; letter-spacing: 0.6px; margin-bottom: 10px;">
                                 <i class="fas fa-sparkles"></i> GUÍA & COMPARADOR OFICIAL
                             </div>
                             <div style="font-size: 1.8rem; margin-bottom: 6px;">🎮 👥 🌪️ 🇨🇭</div>
-                            <div style="font-size: 1.05rem; font-weight: 950; color: #ffffff; margin-bottom: 6px;">Modos de Competición Interactivos</div>
-                            <div style="font-size: 0.82rem; color: #cbd5e1; margin-bottom: 16px; line-height: 1.5;">
+                            <div style="font-size: 1.05rem; font-weight: 950; color: #0f172a; margin-bottom: 6px;">Modos de Competición Interactivos</div>
+                            <div style="font-size: 0.82rem; color: #64748b; margin-bottom: 16px; line-height: 1.5;">
                                 Consulta las reglas oficiales, rotación por pistas, sistema de puntuación y desempates en nuestra guía interactiva.
                             </div>
                             <button id="blog-modal-modes-action-btn" 
-                                    style="background: #CCFF00; color: #000000; font-weight: 950; font-size: 0.84rem; border: none; padding: 12px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 18px rgba(204, 255, 0, 0.4); transition: all 0.2s ease;"
+                                    style="background: #CCFF00; color: #0f172a; border: 1px solid #bbf400; font-weight: 950; font-size: 0.84rem; padding: 12px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 18px rgba(204, 255, 0, 0.4); transition: all 0.2s ease;"
                                     onmouseover="this.style.transform='scale(1.05) translateY(-1px)';"
                                     onmouseout="this.style.transform='scale(1) translateY(0)';"
                                     onmousedown="this.style.transform='scale(0.97)';">
@@ -2956,17 +2956,17 @@
                     `;
                 } else if (isTeamsPost) {
                     interactiveActionHtml = `
-                        <div style="margin: 24px 0 20px; background: linear-gradient(135deg, rgba(204, 255, 0, 0.14) 0%, rgba(15, 23, 42, 0.85) 100%); border: 1.5px solid rgba(204, 255, 0, 0.5); border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 25px rgba(204, 255, 0, 0.1);">
-                            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(204, 255, 0, 0.15); border: 1px solid rgba(204, 255, 0, 0.35); padding: 3px 10px; border-radius: 999px; font-size: 0.62rem; font-weight: 900; color: #CCFF00; letter-spacing: 0.6px; margin-bottom: 10px;">
+                        <div style="margin: 24px 0 20px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 4px 14px rgba(0,0,0,0.04);">
+                            <div style="display: inline-flex; align-items: center; gap: 6px; background: #f7fee7; border: 1px solid #d9f99d; padding: 3px 10px; border-radius: 999px; font-size: 0.62rem; font-weight: 900; color: #4d7c0f; letter-spacing: 0.6px; margin-bottom: 10px;">
                                 <i class="fas fa-shield-halved"></i> EQUIPOS DE CLUB 2027
                             </div>
                             <div style="font-size: 1.8rem; margin-bottom: 6px;">🏆 🛡️ 🇪🇸</div>
-                            <div style="font-size: 1.05rem; font-weight: 950; color: #ffffff; margin-bottom: 6px;">Pre-Inscripción Liga Catalana 2027</div>
-                            <div style="font-size: 0.82rem; color: #cbd5e1; margin-bottom: 16px; line-height: 1.5;">
+                            <div style="font-size: 1.05rem; font-weight: 950; color: #0f172a; margin-bottom: 6px;">Pre-Inscripción Liga Catalana 2027</div>
+                            <div style="font-size: 0.82rem; color: #64748b; margin-bottom: 16px; line-height: 1.5;">
                                 Consulta las convocatorias de nuestros 8 equipos oficiales y reserva tu prueba de nivel para la próxima temporada.
                             </div>
                             <button id="blog-modal-teams-action-btn" 
-                                    style="background: #CCFF00; color: #000000; font-weight: 950; font-size: 0.84rem; border: none; padding: 12px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 18px rgba(204, 255, 0, 0.4); transition: all 0.2s ease;"
+                                    style="background: #CCFF00; color: #0f172a; border: 1px solid #bbf400; font-weight: 950; font-size: 0.84rem; padding: 12px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 18px rgba(204, 255, 0, 0.4); transition: all 0.2s ease;"
                                     onmouseover="this.style.transform='scale(1.05) translateY(-1px)';"
                                     onmouseout="this.style.transform='scale(1) translateY(0)';"
                                     onmousedown="this.style.transform='scale(0.97)';">
@@ -2976,17 +2976,17 @@
                     `;
                 } else if (isRankingPost) {
                     interactiveActionHtml = `
-                        <div style="margin: 24px 0 20px; background: linear-gradient(135deg, rgba(56, 189, 248, 0.16) 0%, rgba(15, 23, 42, 0.85) 100%); border: 1.5px solid rgba(56, 189, 248, 0.5); border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 25px rgba(56, 189, 248, 0.12);">
-                            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.35); padding: 3px 10px; border-radius: 999px; font-size: 0.62rem; font-weight: 900; color: #38bdf8; letter-spacing: 0.6px; margin-bottom: 10px;">
+                        <div style="margin: 24px 0 20px; background: #f0f9ff; border: 1.5px solid #bae6fd; border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 4px 14px rgba(0,0,0,0.04);">
+                            <div style="display: inline-flex; align-items: center; gap: 6px; background: #e0f2fe; border: 1px solid #bae6fd; padding: 3px 10px; border-radius: 999px; font-size: 0.62rem; font-weight: 900; color: #0284c7; letter-spacing: 0.6px; margin-bottom: 10px;">
                                 <i class="fas fa-ranking-star"></i> CLASIFICACIÓN EN TIEMPO REAL
                             </div>
                             <div style="font-size: 1.8rem; margin-bottom: 6px;">📊 🥇 🥈 🥉</div>
-                            <div style="font-size: 1.05rem; font-weight: 950; color: #ffffff; margin-bottom: 6px;">Doble Ranking Élite en Inicio</div>
-                            <div style="font-size: 0.82rem; color: #cbd5e1; margin-bottom: 16px; line-height: 1.5;">
+                            <div style="font-size: 1.05rem; font-weight: 950; color: #0f172a; margin-bottom: 6px;">Doble Ranking Élite en Inicio</div>
+                            <div style="font-size: 0.82rem; color: #64748b; margin-bottom: 16px; line-height: 1.5;">
                                 Alterna al instante entre el ranking de Entrenamientos y Americanas para revisar el Top 10 del circuito.
                             </div>
                             <button id="blog-modal-ranking-action-btn" 
-                                    style="background: #38bdf8; color: #000000; font-weight: 950; font-size: 0.84rem; border: none; padding: 12px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 18px rgba(56, 189, 248, 0.4); transition: all 0.2s ease;"
+                                    style="background: #38bdf8; color: #0f172a; border: 1px solid #0284c7; font-weight: 950; font-size: 0.84rem; padding: 12px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 18px rgba(56, 189, 248, 0.4); transition: all 0.2s ease;"
                                     onmouseover="this.style.transform='scale(1.05) translateY(-1px)';"
                                     onmouseout="this.style.transform='scale(1) translateY(0)';"
                                     onmousedown="this.style.transform='scale(0.97)';">
@@ -2996,17 +2996,17 @@
                     `;
                 } else if (isFutPost) {
                     interactiveActionHtml = `
-                        <div style="margin: 24px 0 20px; background: linear-gradient(135deg, rgba(250, 204, 21, 0.16) 0%, rgba(15, 23, 42, 0.85) 100%); border: 1.5px solid rgba(250, 204, 21, 0.5); border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 25px rgba(250, 204, 21, 0.12);">
-                            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(250, 204, 21, 0.15); border: 1px solid rgba(250, 204, 21, 0.35); padding: 3px 10px; border-radius: 999px; font-size: 0.62rem; font-weight: 900; color: #facc15; letter-spacing: 0.6px; margin-bottom: 10px;">
+                        <div style="margin: 24px 0 20px; background: #fefce8; border: 1.5px solid #fef08a; border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 4px 14px rgba(0,0,0,0.04);">
+                            <div style="display: inline-flex; align-items: center; gap: 6px; background: #fef9c3; border: 1px solid #fde047; padding: 3px 10px; border-radius: 999px; font-size: 0.62rem; font-weight: 900; color: #a16207; letter-spacing: 0.6px; margin-bottom: 10px;">
                                 <i class="fas fa-id-card-clip"></i> CARTA DIGITAL EXCLUSIVA
                             </div>
                             <div style="font-size: 1.8rem; margin-bottom: 6px;">🃏 ⚡ 💎</div>
-                            <div style="font-size: 1.05rem; font-weight: 950; color: #ffffff; margin-bottom: 6px;">Tu Carta FUT Holográfica 3D</div>
-                            <div style="font-size: 0.82rem; color: #cbd5e1; margin-bottom: 16px; line-height: 1.5;">
+                            <div style="font-size: 1.05rem; font-weight: 950; color: #0f172a; margin-bottom: 6px;">Tu Carta FUT Holográfica 3D</div>
+                            <div style="font-size: 0.82rem; color: #64748b; margin-bottom: 16px; line-height: 1.5;">
                                 Consulta tu valoración global OVR, atributos de ataque y defensa, y compártela directamente con tu grupo.
                             </div>
                             <button id="blog-modal-fut-action-btn" 
-                                    style="background: #facc15; color: #000000; font-weight: 950; font-size: 0.84rem; border: none; padding: 12px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 18px rgba(250, 204, 21, 0.4); transition: all 0.2s ease;"
+                                    style="background: #facc15; color: #0f172a; border: 1px solid #eab308; font-weight: 950; font-size: 0.84rem; padding: 12px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 18px rgba(250, 204, 21, 0.4); transition: all 0.2s ease;"
                                     onmouseover="this.style.transform='scale(1.05) translateY(-1px)';"
                                     onmouseout="this.style.transform='scale(1) translateY(0)';"
                                     onmousedown="this.style.transform='scale(0.97)';">
@@ -3016,17 +3016,17 @@
                     `;
                 } else if (isWeatherPost) {
                     interactiveActionHtml = `
-                        <div style="margin: 24px 0 20px; background: linear-gradient(135deg, rgba(56, 189, 248, 0.18) 0%, rgba(15, 23, 42, 0.9) 100%); border: 1.5px solid rgba(56, 189, 248, 0.55); border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 25px rgba(56, 189, 248, 0.15);">
-                            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.35); padding: 3px 10px; border-radius: 999px; font-size: 0.62rem; font-weight: 900; color: #38bdf8; letter-spacing: 0.6px; margin-bottom: 10px;">
+                        <div style="margin: 24px 0 20px; background: #f0f9ff; border: 1.5px solid #bae6fd; border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 4px 14px rgba(0,0,0,0.04);">
+                            <div style="display: inline-flex; align-items: center; gap: 6px; background: #e0f2fe; border: 1px solid #bae6fd; padding: 3px 10px; border-radius: 999px; font-size: 0.62rem; font-weight: 900; color: #0284c7; letter-spacing: 0.6px; margin-bottom: 10px;">
                                 <i class="fas fa-satellite-dish"></i> RADAR METEOROLÓGICO TÁCTICO
                             </div>
                             <div style="font-size: 1.8rem; margin-bottom: 6px;">🌦️ 💨 🎾</div>
-                            <div style="font-size: 1.05rem; font-weight: 950; color: #ffffff; margin-bottom: 6px;">Predicción de Pista en Vivo</div>
-                            <div style="font-size: 0.82rem; color: #cbd5e1; margin-bottom: 16px; line-height: 1.5;">
+                            <div style="font-size: 1.05rem; font-weight: 950; color: #0f172a; margin-bottom: 6px;">Predicción de Pista en Vivo</div>
+                            <div style="font-size: 0.82rem; color: #64748b; margin-bottom: 16px; line-height: 1.5;">
                                 Consulta en tiempo real el radar Doppler, viento, probabilidad de lluvia y velocidad de bola para adaptar tu táctica.
                             </div>
                             <button id="blog-modal-weather-action-btn" 
-                                    style="background: #38bdf8; color: #000000; font-weight: 950; font-size: 0.84rem; border: none; padding: 12px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 18px rgba(56, 189, 248, 0.4); transition: all 0.2s ease;"
+                                    style="background: #38bdf8; color: #0f172a; border: 1px solid #0284c7; font-weight: 950; font-size: 0.84rem; padding: 12px 24px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 18px rgba(56, 189, 248, 0.4); transition: all 0.2s ease;"
                                     onmouseover="this.style.transform='scale(1.05) translateY(-1px)';"
                                     onmouseout="this.style.transform='scale(1) translateY(0)';"
                                     onmousedown="this.style.transform='scale(0.97)';">
@@ -3054,45 +3054,41 @@
                 modal.id = 'blog-post-modal';
                 modal.style = `
                     position: fixed; inset: 0; z-index: 999999999 !important;
-                    background: rgba(4, 8, 16, 0.88); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+                    background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
                     display: flex; align-items: center; justify-content: center;
                     padding: 16px; font-family: 'Outfit', sans-serif;
                     animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
                 `;
                 
                 modal.innerHTML = `
-                    <div style="background: #060b17; border: 1px solid rgba(204,255,0,0.22); border-radius: 28px; width: 100%; max-width: 530px; max-height: 92vh; display: flex; flex-direction: column; box-shadow: 0 30px 90px rgba(0,0,0,0.92), 0 0 50px rgba(204,255,0,0.08), inset 0 1px 0 rgba(255,255,255,0.15); position: relative; overflow: hidden; animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);">
+                    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 28px; width: 100%; max-width: 530px; max-height: 92vh; display: flex; flex-direction: column; box-shadow: 0 25px 70px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.8); position: relative; overflow: hidden; animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);">
                         
                         <!-- Reading Progress Bar at the top edge -->
                         <div id="blog-modal-progress-bar" style="position: absolute; top: 0; left: 0; width: 0%; height: 3.5px; background: linear-gradient(90deg, ${catColor}, #38bdf8); z-index: 1000; box-shadow: 0 0 12px ${catColor}; transition: width 0.08s ease-out; border-radius: 0 2px 2px 0;"></div>
 
-                        <!-- Ambient Glows -->
-                        <div style="position: absolute; top: 120px; right: -40px; width: 200px; height: 200px; background: radial-gradient(circle, ${catColor}18 0%, transparent 70%); pointer-events: none; filter: blur(40px); z-index: 1;"></div>
-                        <div style="position: absolute; bottom: 80px; left: -60px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, transparent 70%); pointer-events: none; filter: blur(50px); z-index: 1;"></div>
-
                         <!-- Sticky Frosted Glass Top Navigation Bar -->
                         <div style="position: absolute; top: 14px; left: 14px; right: 14px; z-index: 999; display: flex; align-items: center; justify-content: space-between; pointer-events: none;">
                             <!-- Left Controls Pill -->
-                            <div style="display: flex; align-items: center; gap: 4px; background: rgba(6, 11, 23, 0.76); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); padding: 5px 8px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.18); box-shadow: 0 8px 24px rgba(0,0,0,0.5); pointer-events: auto;">
+                            <div style="display: flex; align-items: center; gap: 4px; background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); padding: 5px 8px; border-radius: 999px; border: 1px solid #e2e8f0; box-shadow: 0 4px 14px rgba(0,0,0,0.1); pointer-events: auto;">
                                 <button id="blog-modal-share-btn"
-                                        style="background: transparent; border: none; color: #cbd5e1; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);"
-                                        onmouseover="this.style.background='rgba(56, 189, 248, 0.25)';this.style.color='#38bdf8';this.style.transform='scale(1.15)';"
-                                        onmouseout="this.style.background='transparent';this.style.color='#cbd5e1';this.style.transform='scale(1)';"
+                                        style="background: transparent; border: none; color: #475569; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);"
+                                        onmouseover="this.style.background='rgba(56, 189, 248, 0.15)';this.style.color='#0284c7';this.style.transform='scale(1.15)';"
+                                        onmouseout="this.style.background='transparent';this.style.color='#475569';this.style.transform='scale(1)';"
                                         title="Compartir Noticia">
                                     <i class="fas fa-share-nodes" style="font-size: 0.95rem;"></i>
                                 </button>
 
                                 <button id="blog-modal-whatsapp-btn"
-                                        style="background: transparent; border: none; color: #25D366; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);"
-                                        onmouseover="this.style.background='rgba(37, 211, 102, 0.25)';this.style.transform='scale(1.15)';"
+                                        style="background: transparent; border: none; color: #16a34a; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);"
+                                        onmouseover="this.style.background='rgba(37, 211, 102, 0.18)';this.style.transform='scale(1.15)';"
                                         onmouseout="this.style.background='transparent';this.style.transform='scale(1)';"
                                         title="Compartir por WhatsApp">
                                     <i class="fab fa-whatsapp" style="font-size: 1.05rem;"></i>
                                 </button>
 
                                 <button id="blog-modal-save-btn"
-                                        style="background: transparent; border: none; color: ${this.isPostSaved(postId) ? '#CCFF00' : '#cbd5e1'}; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);"
-                                        onmouseover="this.style.background='rgba(204, 255, 0, 0.2)';this.style.transform='scale(1.15)';"
+                                        style="background: transparent; border: none; color: ${this.isPostSaved(postId) ? '#65a30d' : '#64748b'}; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);"
+                                        onmouseover="this.style.background='#f1f5f9';this.style.transform='scale(1.15)';"
                                         onmouseout="this.style.background='transparent';this.style.transform='scale(1)';"
                                         title="${this.isPostSaved(postId) ? 'Guardado en favoritas' : 'Guardar en favoritas'}">
                                     <i class="${this.isPostSaved(postId) ? 'fas' : 'far'} fa-bookmark" style="font-size: 0.95rem;"></i>
@@ -3101,45 +3097,45 @@
 
                             <!-- Right Close Button -->
                             <button id="blog-modal-close-btn"
-                                    style="background: rgba(6, 11, 23, 0.76); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.18); color: #ffffff; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 8px 24px rgba(0,0,0,0.5); pointer-events: auto;"
-                                    onmouseover="this.style.background='#CCFF00';this.style.borderColor='#CCFF00';this.style.color='#000000';this.style.transform='scale(1.1) rotate(90deg)';"
-                                    onmouseout="this.style.background='rgba(6, 11, 23, 0.76)';this.style.borderColor='rgba(255, 255, 255, 0.18)';this.style.color='#ffffff';this.style.transform='scale(1) rotate(0deg)';"
+                                    style="background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid #e2e8f0; color: #0f172a; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 4px 14px rgba(0,0,0,0.1); pointer-events: auto;"
+                                    onmouseover="this.style.background='#f1f5f9';this.style.borderColor='#cbd5e1';this.style.color='#0f172a';this.style.transform='scale(1.1) rotate(90deg)';"
+                                    onmouseout="this.style.background='rgba(255, 255, 255, 0.92)';this.style.borderColor='#e2e8f0';this.style.color='#0f172a';this.style.transform='scale(1) rotate(0deg)';"
                                     title="Cerrar Noticia">
                                 <i class="fas fa-times" style="font-size: 1rem; font-weight: 900;"></i>
                             </button>
                         </div>
 
                         <!-- Content Scrollable Body -->
-                        <div id="blog-post-content-area" style="position: relative; z-index: 2; overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1; scroll-behavior: smooth;">
+                        <div id="blog-post-content-area" style="position: relative; z-index: 2; overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1; scroll-behavior: smooth; background: #ffffff;">
                             
                             <!-- Cinematic Hero Image Header -->
                             <div style="background-image: url('${articleImg}'); background-size: cover; background-position: center; height: 235px; position: relative; overflow: hidden; flex-shrink: 0;">
-                                <!-- Smooth gradient overlay -->
-                                <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(6, 11, 23, 0.3) 0%, rgba(6, 11, 23, 0.65) 55%, #060b17 100%);"></div>
+                                <!-- Smooth gradient overlay a blanco -->
+                                <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15, 23, 42, 0.15) 0%, rgba(255, 255, 255, 0.5) 70%, #ffffff 100%);"></div>
 
                                 <!-- Live Category & Read Time Pills -->
                                 <div style="position: absolute; bottom: 18px; left: 20px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                                    <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.62rem; font-weight: 900; letter-spacing: 0.8px; color: #000000; background: ${catColor}; padding: 4px 10px; border-radius: 999px; text-transform: uppercase; box-shadow: 0 2px 12px ${catColor}70;">
+                                    <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.62rem; font-weight: 900; letter-spacing: 0.8px; color: #000000; background: ${catColor}; padding: 4px 10px; border-radius: 999px; text-transform: uppercase; box-shadow: 0 2px 10px ${catColor}50;">
                                         <i class="fas fa-bolt" style="font-size: 0.6rem;"></i>
                                         ${post.category || 'REVISTA SOMOSPADEL'}
                                     </span>
-                                    <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.65rem; color: #ffffff; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); padding: 4px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.15); font-weight: 700;">
-                                        <i class="far fa-clock" style="color: #38bdf8;"></i> ${post.readTime || '3 MIN'} LECTURA
+                                    <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.65rem; color: #0f172a; background: rgba(255,255,255,0.92); backdrop-filter: blur(8px); padding: 4px 10px; border-radius: 999px; border: 1px solid #e2e8f0; font-weight: 700;">
+                                        <i class="far fa-clock" style="color: #0284c7;"></i> ${post.readTime || '3 MIN'} LECTURA
                                     </span>
                                 </div>
 
                                 <!-- 3D Holographic Emoji Floating Badge -->
-                                <div class="blog-modal-emoji-badge" style="position: absolute; bottom: 14px; right: 20px; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.7rem; background: rgba(15, 23, 42, 0.7); border: 2px solid rgba(255, 255, 255, 0.3); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 10px 25px rgba(0,0,0,0.5), 0 0 20px ${catColor}40; z-index: 2; animation: badgePop 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) both 0.15s;">
+                                <div class="blog-modal-emoji-badge" style="position: absolute; bottom: 14px; right: 20px; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.7rem; background: #ffffff; border: 2px solid #e2e8f0; box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 2; animation: badgePop 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) both 0.15s;">
                                     ${post.emoji || '🎾'}
                                 </div>
                             </div>
 
                             <!-- Editorial Article Container -->
-                            <div style="padding: 20px 24px 28px;">
+                            <div style="padding: 20px 24px 28px; background: #ffffff;">
                                 <!-- Editorial Meta Subheader -->
-                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; font-size: 0.72rem; color: #94a3b8; font-weight: 600;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; font-size: 0.72rem; color: #64748b; font-weight: 600;">
                                     <span style="display: flex; align-items: center; gap: 6px;">
-                                        <i class="fas fa-feather-pointed" style="color: ${catColor};"></i>
+                                        <i class="fas fa-feather-pointed" style="color: #65a30d;"></i>
                                         <span>SomosPádel Editorial • BCN</span>
                                     </span>
                                     <span style="display: flex; align-items: center; gap: 6px;">
@@ -3149,15 +3145,15 @@
                                 </div>
 
                                 <!-- Article Headline -->
-                                <h2 style="color: #ffffff; font-weight: 950; font-size: 1.45rem; line-height: 1.28; margin: 0 0 16px 0; letter-spacing: -0.4px; text-shadow: 0 2px 14px rgba(0,0,0,0.5);">
+                                <h2 style="color: #0f172a; font-weight: 950; font-size: 1.45rem; line-height: 1.28; margin: 0 0 16px 0; letter-spacing: -0.4px;">
                                     ${post.title}
                                 </h2>
 
-                                <!-- Neon Visual Accent Divider -->
-                                <div style="height: 2px; width: 60px; background: linear-gradient(90deg, ${catColor}, transparent); margin-bottom: 20px; border-radius: 2px;"></div>
+                                <!-- Visual Accent Divider -->
+                                <div style="height: 2.5px; width: 60px; background: linear-gradient(90deg, ${catColor}, #cbd5e1); margin-bottom: 20px; border-radius: 2px;"></div>
 
                                 <!-- Formatted Editorial Content -->
-                                <div class="sp-editorial-body" style="color: #e2e8f0; font-size: 0.94rem; font-weight: 400; line-height: 1.78; margin: 0 0 24px 0; word-break: break-word;">
+                                <div class="sp-editorial-body" style="color: #1e293b; font-size: 0.94rem; font-weight: 400; line-height: 1.78; margin: 0 0 24px 0; word-break: break-word;">
                                     ${formattedContent}
                                 </div>
 
@@ -3165,49 +3161,49 @@
                                 ${interactiveActionHtml}
 
                                 <!-- Community Reactions Interactive Bar -->
-                                <div style="margin: 24px 0 20px; padding: 16px 18px; background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; backdrop-filter: blur(10px);">
-                                    <div style="font-size: 0.70rem; font-weight: 900; color: #94a3b8; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+                                <div style="margin: 24px 0 20px; padding: 16px 18px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 20px;">
+                                    <div style="font-size: 0.70rem; font-weight: 900; color: #64748b; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
                                         <span>¿QUÉ TE HA PARECIDO ESTA CRÓNICA?</span>
-                                        <span style="color: #CCFF00; font-size: 0.65rem; font-weight: 950;">SOMOSPADEL FEEDBACK</span>
+                                        <span style="color: #65a30d; font-size: 0.65rem; font-weight: 950;">SOMOSPADEL FEEDBACK</span>
                                     </div>
                                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
                                         <button id="blog-react-btn-fire"
-                                                style="background: ${isVoted('fire') ? 'rgba(255, 107, 0, 0.2)' : 'rgba(255, 255, 255, 0.04)'}; border: 1px solid ${isVoted('fire') ? '#ff6b00' : 'rgba(255, 255, 255, 0.1)'}; color: #ffffff; padding: 9px 8px; border-radius: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.78rem; font-weight: 800; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);">
+                                                style="background: ${isVoted('fire') ? '#fff7ed' : '#ffffff'}; border: 1px solid ${isVoted('fire') ? '#ea580c' : '#e2e8f0'}; color: #0f172a; padding: 9px 8px; border-radius: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.78rem; font-weight: 800; box-shadow: 0 1px 3px rgba(0,0,0,0.03); transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);">
                                             <span>🔥</span>
-                                            <span style="color: #cbd5e1; font-size: 0.72rem;">Me sirve</span>
-                                            <span id="blog-react-count-fire" style="color: #ff6b00; font-weight: 950; font-size: 0.76rem;">${fireCount}</span>
+                                            <span style="color: #334155; font-size: 0.72rem;">Me sirve</span>
+                                            <span id="blog-react-count-fire" style="color: #ea580c; font-weight: 950; font-size: 0.76rem;">${fireCount}</span>
                                         </button>
 
                                         <button id="blog-react-btn-top"
-                                                style="background: ${isVoted('top') ? 'rgba(204, 255, 0, 0.2)' : 'rgba(255, 255, 255, 0.04)'}; border: 1px solid ${isVoted('top') ? '#CCFF00' : 'rgba(255, 255, 255, 0.1)'}; color: #ffffff; padding: 9px 8px; border-radius: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.78rem; font-weight: 800; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);">
+                                                style="background: ${isVoted('top') ? '#f7fee7' : '#ffffff'}; border: 1px solid ${isVoted('top') ? '#84cc16' : '#e2e8f0'}; color: #0f172a; padding: 9px 8px; border-radius: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.78rem; font-weight: 800; box-shadow: 0 1px 3px rgba(0,0,0,0.03); transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);">
                                             <span>👏</span>
-                                            <span style="color: #cbd5e1; font-size: 0.72rem;">Top</span>
-                                            <span id="blog-react-count-top" style="color: #CCFF00; font-weight: 950; font-size: 0.76rem;">${topCount}</span>
+                                            <span style="color: #334155; font-size: 0.72rem;">Top</span>
+                                            <span id="blog-react-count-top" style="color: #65a30d; font-weight: 950; font-size: 0.76rem;">${topCount}</span>
                                         </button>
 
                                         <button id="blog-react-btn-brutal"
-                                                style="background: ${isVoted('brutal') ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.04)'}; border: 1px solid ${isVoted('brutal') ? '#38bdf8' : 'rgba(255, 255, 255, 0.1)'}; color: #ffffff; padding: 9px 8px; border-radius: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.78rem; font-weight: 800; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);">
+                                                style="background: ${isVoted('brutal') ? '#f0f9ff' : '#ffffff'}; border: 1px solid ${isVoted('brutal') ? '#0284c7' : '#e2e8f0'}; color: #0f172a; padding: 9px 8px; border-radius: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.78rem; font-weight: 800; box-shadow: 0 1px 3px rgba(0,0,0,0.03); transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);">
                                             <span>💡</span>
-                                            <span style="color: #cbd5e1; font-size: 0.72rem;">Brutal</span>
-                                            <span id="blog-react-count-brutal" style="color: #38bdf8; font-weight: 950; font-size: 0.76rem;">${brutalCount}</span>
+                                            <span style="color: #334155; font-size: 0.72rem;">Brutal</span>
+                                            <span id="blog-react-count-brutal" style="color: #0284c7; font-weight: 950; font-size: 0.76rem;">${brutalCount}</span>
                                         </button>
                                     </div>
                                 </div>
 
                                 <!-- Bloque de Firma y Aval del Coach SomosPadel Academy -->
-                                <div style="margin: 22px 0 18px; padding: 16px; background: linear-gradient(135deg, rgba(204,255,0,0.06) 0%, rgba(15,23,42,0.85) 100%); border: 1px solid rgba(204,255,0,0.25); border-radius: 20px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; box-shadow: 0 8px 24px rgba(0,0,0,0.35);">
+                                <div style="margin: 22px 0 18px; padding: 16px; background: linear-gradient(135deg, #f7fee7 0%, #f8fafc 100%); border: 1px solid #d9f99d; border-radius: 20px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; box-shadow: 0 4px 16px rgba(0,0,0,0.04);">
                                     <div style="display: flex; align-items: center; gap: 12px;">
-                                        <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #CCFF00 0%, #10b981 100%); display: flex; align-items: center; justify-content: center; color: #000; font-size: 1.2rem; font-weight: 950; box-shadow: 0 4px 16px rgba(204,255,0,0.4); flex-shrink: 0;">
+                                        <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #CCFF00 0%, #10b981 100%); display: flex; align-items: center; justify-content: center; color: #0f172a; font-size: 1.2rem; font-weight: 950; box-shadow: 0 4px 16px rgba(132,204,22,0.3); flex-shrink: 0;">
                                             <i class="fas fa-medal"></i>
                                         </div>
                                         <div>
-                                            <div style="font-size: 0.86rem; font-weight: 950; color: #ffffff; letter-spacing: 0.2px;">Alex Coscolín</div>
-                                            <div style="font-size: 0.70rem; color: #CCFF00; font-weight: 800; letter-spacing: 0.5px;">HEAD COACH & DIRECCIÓN TÉCNICA</div>
-                                            <div style="font-size: 0.65rem; color: #94a3b8;">SomosPádel Barcelona Academy</div>
+                                            <div style="font-size: 0.86rem; font-weight: 950; color: #0f172a; letter-spacing: 0.2px;">Alex Coscolín</div>
+                                            <div style="font-size: 0.70rem; color: #4d7c0f; font-weight: 800; letter-spacing: 0.5px;">HEAD COACH & DIRECCIÓN TÉCNICA</div>
+                                            <div style="font-size: 0.65rem; color: #64748b;">SomosPádel Barcelona Academy</div>
                                         </div>
                                     </div>
                                     <button id="blog-modal-coach-wa-btn"
-                                            style="background: #25D366; color: #ffffff; border: none; font-weight: 950; font-size: 0.76rem; padding: 10px 16px; border-radius: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; box-shadow: 0 4px 14px rgba(37,211,102,0.35); transition: all 0.2s ease;"
+                                            style="background: #25D366; color: #ffffff; border: none; font-weight: 950; font-size: 0.76rem; padding: 10px 16px; border-radius: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; box-shadow: 0 4px 14px rgba(37,211,102,0.25); transition: all 0.2s ease;"
                                             onmouseover="this.style.transform='scale(1.05) translateY(-1px)';"
                                             onmouseout="this.style.transform='scale(1) translateY(0)';"
                                             title="Enviar por WhatsApp a mi pareja de pádel">
@@ -3216,10 +3212,10 @@
                                 </div>
 
                                 <!-- Editorial Footer & Clean Signature -->
-                                <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 0.70rem; color: rgba(255,255,255,0.45); font-weight: 700;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 18px; border-top: 1px solid #e2e8f0; font-size: 0.70rem; color: #94a3b8; font-weight: 700;">
                                     <span>Publicado: ${post.date || 'Recientemente'}</span>
-                                    <span style="color: #CCFF00; font-weight: 950; letter-spacing: 0.8px; display: flex; align-items: center; gap: 5px;">
-                                        <i class="fas fa-check-circle" style="color: #CCFF00; font-size: 0.75rem;"></i> SOMOSPADEL BCN JOURNAL
+                                    <span style="color: #4d7c0f; font-weight: 950; letter-spacing: 0.8px; display: flex; align-items: center; gap: 5px;">
+                                        <i class="fas fa-check-circle" style="color: #65a30d; font-size: 0.75rem;"></i> SOMOSPADEL BCN JOURNAL
                                     </span>
                                 </div>
                             </div>
@@ -3233,13 +3229,13 @@
                             to { transform: scale(1) rotate(0deg); opacity: 1; }
                         }
                         .sp-editorial-body p { margin-bottom: 14px; }
-                        .sp-editorial-body strong { color: #ffffff; font-weight: 800; }
+                        .sp-editorial-body strong { color: #0f172a; font-weight: 800; }
                         .sp-editorial-body ul { margin: 10px 0 14px 20px; padding: 0; }
                         .sp-editorial-body li { margin-bottom: 6px; }
                         #blog-post-content-area::-webkit-scrollbar { width: 5px; }
-                        #blog-post-content-area::-webkit-scrollbar-track { background: transparent; }
-                        #blog-post-content-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
-                        #blog-post-content-area::-webkit-scrollbar-thumb:hover { background: #CCFF00; }
+                        #blog-post-content-area::-webkit-scrollbar-track { background: #f8fafc; }
+                        #blog-post-content-area::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+                        #blog-post-content-area::-webkit-scrollbar-thumb:hover { background: #84cc16; }
                     </style>
                 `;
                 document.body.appendChild(modal);
