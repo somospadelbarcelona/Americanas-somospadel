@@ -250,6 +250,45 @@ service cloud.firestore {
       allow write: if isAuthenticated() || isStaff();
     }
 
+    // ==========================================
+    // MULTI-TENANT ORGANIZACIONES (CLUBES Y SEDES)
+    // ==========================================
+    match /organizations/{orgId} {
+      allow read: if true;
+      allow write: if isStaff();
+
+      match /members/{memberId} {
+        allow read: if isAuthenticated();
+        allow write: if isStaff();
+      }
+    }
+
+    // ==========================================
+    // LEADERBOARDS & RANKINGS PRECALCULADOS (0-COST READS)
+    // ==========================================
+    match /leaderboards/{boardId} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+
+    // ==========================================
+    // RED DE LIGAS Y CIRCUITOS INTERCLUBES (FASE 3)
+    // ==========================================
+    match /leagues/{leagueId} {
+      allow read: if true;
+      allow write: if isStaff();
+
+      match /fixtures/{fixtureId} {
+        allow read: if true;
+        allow write: if isStaff() || isCaptain();
+      }
+
+      match /standings/{standingId} {
+        allow read: if true;
+        allow write: if isStaff();
+      }
+    }
+
     // Regla global de cierre: solo Staff
     match /{allPaths=**} {
       allow read, write: if isStaff();

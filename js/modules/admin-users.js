@@ -23,7 +23,7 @@ window.openCreateUserModal = window.openCreateUserModal || function() {
         if (form.elements['level']) form.elements['level'].value = '3.5';
         if (form.elements['gender']) form.elements['gender'].value = 'chico';
         if (form.elements['membership']) form.elements['membership'].value = 'somospadel_bcn';
-        if (form.elements['role']) form.elements['role'].value = 'player_somospadel';
+        if (form.elements['role']) form.elements['role'].value = 'player';
         if (form.elements['status']) form.elements['status'].value = 'active';
         if (form.elements['matches_played']) form.elements['matches_played'].value = '0';
         if (form.elements['side_preference']) form.elements['side_preference'].value = 'INDIFF';
@@ -65,18 +65,150 @@ window.AdminViews.users = async function () {
     if (titleEl) titleEl.textContent = 'BBDD JUGADORES';
 
     // Setup Render Function
+    // ========================================================
+    // 📊 BIG DATA & INTELIGENCIA DE BASE DE DATOS
+    // ========================================================
+    window.calculateDatabaseIntelligence = (players) => {
+        if (!players || !players.length) return {
+            total: 0, active: 0, pending: 0, blocked: 0,
+            chico: 0, chica: 0, avgLevel: '3.50', totalMatches: 0,
+            reliable: 0, questionable: 0, rusty: 0, unverified: 0
+        };
+        const total = players.length;
+        let active = 0, pending = 0, blocked = 0;
+        let chico = 0, chica = 0;
+        let totalLevel = 0, countLevel = 0;
+        let totalMatches = 0;
+        let reliable = 0, questionable = 0, rusty = 0, unverified = 0;
+
+        for (let i = 0; i < total; i++) {
+            const u = players[i];
+            if (u.status === 'pending') pending++;
+            else if (u.status === 'blocked') blocked++;
+            else active++;
+
+            if (u.gender === 'chica') chica++;
+            else if (u.gender === 'chico') chico++;
+
+            const lvl = parseFloat(u.level || u.self_rate_level || 3.5);
+            if (!isNaN(lvl) && lvl > 0) {
+                totalLevel += lvl;
+                countLevel++;
+            }
+
+            totalMatches += (parseInt(u.matches_played) || 0);
+
+            if (window.LevelReliabilityService) {
+                const rel = window.LevelReliabilityService.getReliability(u);
+                if (rel.color === '#00ff64') reliable++;
+                else if (rel.color === '#FFD700') questionable++;
+                else if (rel.color === '#FF5555') rusty++;
+                else unverified++;
+            }
+        }
+
+        return {
+            total,
+            active,
+            pending,
+            blocked,
+            chico,
+            chica,
+            avgLevel: countLevel > 0 ? (totalLevel / countLevel).toFixed(2) : '3.50',
+            totalMatches,
+            reliable,
+            questionable,
+            rusty,
+            unverified
+        };
+    };
+
+    // ========================================================
+    // 📄 ESTADO Y CONTROLADOR DE PAGINACIÓN FLUIDA
+    // ========================================================
+    window.userPaginationState = window.userPaginationState || {
+        page: 1,
+        pageSize: 25
+    };
+
+    window.changeUserPage = (newPage) => {
+        window.userPaginationState.page = parseInt(newPage) || 1;
+        window.renderUserRows(window.filteredUsers || window.allUsersCache || []);
+        const scrollContainer = document.querySelector('.players-table-scroll-container');
+        if (scrollContainer) scrollContainer.scrollTop = 0;
+    };
+
+    window.changeUserPageSize = (newSize) => {
+        window.userPaginationState.pageSize = parseInt(newSize);
+        window.userPaginationState.page = 1;
+        window.renderUserRows(window.filteredUsers || window.allUsersCache || []);
+        const scrollContainer = document.querySelector('.players-table-scroll-container');
+        if (scrollContainer) scrollContainer.scrollTop = 0;
+    };
+
+    window.applyQuickFilterChip = (type, val) => {
+        const all = window.allUsersCache || [];
+        // Deseleccionar o marcar chip
+        document.querySelectorAll('.filter-quick-chip').forEach(c => c.style.background = 'white');
+        document.querySelectorAll('.filter-quick-chip').forEach(c => c.style.borderColor = '#cbd5e1');
+
+        if (type === 'all') {
+            window.resetFilters();
+            return;
+        }
+
+        window.resetFilters();
+        if (type === 'pending') {
+            const sel = document.getElementById('filter-status');
+            if (sel) sel.value = 'pending';
+        } else if (type === 'gender') {
+            const sel = document.getElementById('filter-gender');
+            if (sel) sel.value = val;
+        } else if (type === 'reliability') {
+            const sel = document.getElementById('filter-reliability');
+            if (sel) sel.value = val;
+        }
+
+        window.multiFilterUsers();
+    };
+
+    // Setup Render Function
     window.renderUserRows = (data) => {
         const tbody = document.getElementById('users-tbody');
         if (!tbody) return;
 
-        // Actualizar contador del botón de pendientes y badges globales
         const allUsers = window.allUsersCache || data || [];
-        const pendingCount = allUsers.filter(u => u.status === 'pending').length;
+        const kpi = window.calculateDatabaseIntelligence(allUsers);
+
+        // Actualizar métricas KPI en pantalla
+        const kpiTotalEl = document.getElementById('kpi-val-total');
+        if (kpiTotalEl) kpiTotalEl.textContent = kpi.total;
+        const kpiGenderEl = document.getElementById('kpi-sub-gender');
+        if (kpiGenderEl) kpiGenderEl.textContent = `👨 ${kpi.chico} chicos · 👩 ${kpi.chica} chicas`;
+
+        const kpiActiveEl = document.getElementById('kpi-val-active');
+        if (kpiActiveEl) kpiActiveEl.textContent = `${kpi.active} Activos`;
+        const kpiPendingSubEl = document.getElementById('kpi-sub-pending');
+        if (kpiPendingSubEl) {
+            kpiPendingSubEl.innerHTML = kpi.pending > 0 
+                ? `<span style="color:#d97706; font-weight:800; animation: blink 1.5s infinite;">⏳ ${kpi.pending} Pendientes</span>`
+                : `<span style="color:#10b981; font-weight:700;">✅ Todo validado</span>`;
+        }
+
+        const kpiLevelEl = document.getElementById('kpi-val-level');
+        if (kpiLevelEl) kpiLevelEl.textContent = `${kpi.avgLevel} ELO`;
+        const kpiRelSubEl = document.getElementById('kpi-sub-level');
+        if (kpiRelSubEl) kpiRelSubEl.textContent = `🟢 ${kpi.reliable} fiables · 🟡 ${kpi.questionable} dudosos`;
+
+        const kpiMatchesEl = document.getElementById('kpi-val-matches');
+        if (kpiMatchesEl) kpiMatchesEl.textContent = `${kpi.totalMatches} Partidos`;
+
+        // Actualizar contador del botón de pendientes y badges globales
         const pendingBadge = document.getElementById('pending-counter-badge');
         const pendingBtn = document.getElementById('btn-pending-players');
         if (pendingBadge) {
-            pendingBadge.textContent = pendingCount;
-            if (pendingCount > 0) {
+            pendingBadge.textContent = kpi.pending;
+            if (kpi.pending > 0) {
                 pendingBadge.style.background = '#f59e0b';
                 if (pendingBtn) {
                     pendingBtn.style.borderColor = '#f59e0b';
@@ -92,35 +224,42 @@ window.AdminViews.users = async function () {
             }
         }
         if (window.AdminNotifications && typeof window.AdminNotifications.updatePendingCount === 'function') {
-            window.AdminNotifications.updatePendingCount(pendingCount);
+            window.AdminNotifications.updatePendingCount(kpi.pending);
         }
 
-        if (data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 2rem;">No se encontraron jugadores.</td></tr>';
+        const totalFiltered = data.length;
+        const countHeaderEl = document.getElementById('players-total-count');
+        if (countHeaderEl) countHeaderEl.textContent = `TOTAL: ${totalFiltered}`;
+
+        if (totalFiltered === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 2.5rem; color:#64748b; font-weight:700;"><i class="fas fa-search" style="font-size:1.8rem; margin-bottom:8px; display:block; color:#94a3b8;"></i>No se encontraron jugadores con los filtros seleccionados.</td></tr>';
+            const pagBar = document.getElementById('users-pagination-bar');
+            if (pagBar) pagBar.innerHTML = '';
             return;
         }
 
-        tbody.innerHTML = data.map(u => {
+        // Paginación
+        const pageSize = window.userPaginationState.pageSize;
+        const totalPages = pageSize === -1 ? 1 : Math.max(1, Math.ceil(totalFiltered / pageSize));
+        if (window.userPaginationState.page > totalPages) window.userPaginationState.page = totalPages;
+        if (window.userPaginationState.page < 1) window.userPaginationState.page = 1;
+        const curPage = window.userPaginationState.page;
+
+        const startIdx = (curPage - 1) * (pageSize === -1 ? totalFiltered : pageSize);
+        const endIdx = pageSize === -1 ? totalFiltered : Math.min(startIdx + pageSize, totalFiltered);
+        const pageData = pageSize === -1 ? data : data.slice(startIdx, endIdx);
+
+        // EXPERT DEBUG: check if AdminAuth is ready
+        const adminUser = window.AdminAuth ? window.AdminAuth.user : null;
+        const canManageUsers = adminUser && window.AdminAuth.hasAdminRole(adminUser.role);
+        const availableTeams = Object.keys(AppConstants.TEAM_LEVELS || {});
+
+        tbody.innerHTML = pageData.map(u => {
             const isPending = u.status === 'pending';
-
-            // EXPERT DEBUG: check if AdminAuth is ready
-            const adminUser = window.AdminAuth ? window.AdminAuth.user : null;
-            const canManageUsers = adminUser && window.AdminAuth.hasAdminRole(adminUser.role);
-
-            if (!canManageUsers && !window._roleWarned) {
-                console.warn("⚠️ [SECURITY] Admin permissions not detected for current session.", adminUser);
-                window._roleWarned = true;
-            }
-
             let roleBadge = window.RoleService ? window.RoleService.getBadgeHtml(u.role) : String(u.role || 'player').toUpperCase();
-
             const isSuper = u.role === 'super_admin';
-            // Safe URL construction
             const safePhone = String(u.phone || '').replace(/\D/g, '');
-
-            // Teams Badge List
             const teams = Array.isArray(u.team_somospadel) ? u.team_somospadel : (u.team_somospadel ? [u.team_somospadel] : []);
-            const availableTeams = Object.keys(AppConstants.TEAM_LEVELS || {});
 
             return `
                 <tr class="pro-table-row" style="background: ${isPending ? 'rgba(255,165,0,0.12)' : 'transparent'}; border-left: ${isPending ? '4px solid #ff9800' : 'none'};">
@@ -132,7 +271,6 @@ window.AdminViews.users = async function () {
                         <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0; text-align: left;">
                             <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                                 <div style="font-weight: 800; color: ${isSuper ? '#d97706' : '#0f172a'}; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;" title="${String(u.name || 'Sin Nombre')}">${String(u.name || 'Sin Nombre')}</div>
-                                ${u.membership === 'somospadel_bcn' ? '<span style="font-size:0.55rem; background: #ccff00; color:black; padding: 2px 6px; border-radius:4px; font-weight:800; white-space: nowrap; display: inline-block;">COMUNIDAD BCN</span>' : ''}
                                 ${isPending ? '<span style="font-size:0.5rem; background: #ff9800; color:black; padding: 2px 5px; border-radius:4px; font-weight:800; letter-spacing:1px; animation: blink 1.5s infinite; white-space: nowrap; display: inline-block;">SOLICITUD</span>' : ''}
                             </div>
                             <div style="display: flex; align-items: center;">
@@ -140,12 +278,8 @@ window.AdminViews.users = async function () {
                             </div>
                         </div>
                     </div>
-                    <style>
-                        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
-                    </style>
                 </td>
                 
-                <!-- NEW TEAMS COLUMN -->
                 <td data-col="equipos">
                     <div style="display:flex; flex-direction:column; gap:4px; max-width: 150px;">
                         <div style="display:flex; flex-wrap:wrap; gap:4px;">
@@ -188,7 +322,6 @@ window.AdminViews.users = async function () {
                             return '';
                         })()}
                         
-                        <!-- SMART ATTRIBUTE ICONS -->
                         ${u.side_preference === 'DRIVE' ? '<i class="fas fa-arrow-right" style="color: #60a5fa !important; font-size: 0.7rem;" title="Lado: Drive"></i>' : ''}
                         ${u.side_preference === 'REVES' ? '<i class="fas fa-arrow-left" style="color: #f87171 !important; font-size: 0.7rem;" title="Lado: Revés"></i>' : ''}
                         ${u.play_style === 'POTENCIA' ? '<i class="fas fa-bolt" style="color: #fbbf24 !important; font-size: 0.7rem;" title="Estilo: Potencia"></i>' : ''}
@@ -201,7 +334,6 @@ window.AdminViews.users = async function () {
                     </span>
                 </td>
 
-                <!-- NEW MATCHES PLAYED COLUMN -->
                 <td data-col="partidos" style="text-align: center;">
                      <input type="number" 
                             class="pro-input-micro" 
@@ -247,47 +379,166 @@ window.AdminViews.users = async function () {
                 </td>
             </tr > `;
         }).join('');
+
+        // Actualizar barra de paginación interactiva
+        const pagBar = document.getElementById('users-pagination-bar');
+        if (pagBar) {
+            let pageBtnsHtml = '';
+            if (totalPages > 1) {
+                const maxButtons = 5;
+                let startPage = Math.max(1, curPage - Math.floor(maxButtons / 2));
+                let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+                if (endPage - startPage + 1 < maxButtons) {
+                    startPage = Math.max(1, endPage - maxButtons + 1);
+                }
+
+                if (startPage > 1) {
+                    pageBtnsHtml += `<button class="page-num-btn" onclick="window.changeUserPage(1)">1</button>`;
+                    if (startPage > 2) pageBtnsHtml += `<span style="padding:0 4px; color:#94a3b8; font-size:0.8rem;">…</span>`;
+                }
+
+                for (let p = startPage; p <= endPage; p++) {
+                    pageBtnsHtml += `<button class="page-num-btn ${p === curPage ? 'active' : ''}" onclick="window.changeUserPage(${p})">${p}</button>`;
+                }
+
+                if (endPage < totalPages) {
+                    if (endPage < totalPages - 1) pageBtnsHtml += `<span style="padding:0 4px; color:#94a3b8; font-size:0.8rem;">…</span>`;
+                    pageBtnsHtml += `<button class="page-num-btn" onclick="window.changeUserPage(${totalPages})">${totalPages}</button>`;
+                }
+            }
+
+            pagBar.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; padding:12px 18px; background:#f8fafc; border-top:1px solid #e2e8f0; border-radius:0 0 16px 16px;">
+                    <div style="font-size:0.82rem; color:#475569; font-weight:700; display:flex; align-items:center; gap:8px;">
+                        <span>Mostrando <strong>${startIdx + 1}</strong> - <strong>${endIdx}</strong> de <strong>${totalFiltered}</strong> jugadores</span>
+                        ${totalFiltered !== allUsers.length ? `<span style="font-size:0.75rem; color:#0284c7; background:#e0f2fe; padding:2px 8px; border-radius:10px;">(filtrados de ${allUsers.length})</span>` : ''}
+                    </div>
+
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <button class="pag-nav-btn" onclick="window.changeUserPage(1)" ${curPage === 1 ? 'disabled style="opacity:0.4; cursor:not-allowed;"' : ''} title="Primera Página">
+                            <i class="fas fa-angle-double-left"></i>
+                        </button>
+                        <button class="pag-nav-btn" onclick="window.changeUserPage(${curPage - 1})" ${curPage === 1 ? 'disabled style="opacity:0.4; cursor:not-allowed;"' : ''} title="Página Anterior">
+                            <i class="fas fa-chevron-left"></i> Anterior
+                        </button>
+                        
+                        <div style="display:flex; align-items:center; gap:4px; margin: 0 4px;">
+                            ${pageBtnsHtml}
+                        </div>
+
+                        <button class="pag-nav-btn" onclick="window.changeUserPage(${curPage + 1})" ${curPage === totalPages ? 'disabled style="opacity:0.4; cursor:not-allowed;"' : ''} title="Página Siguiente">
+                            Siguiente <i class="fas fa-chevron-right"></i>
+                        </button>
+                        <button class="pag-nav-btn" onclick="window.changeUserPage(${totalPages})" ${curPage === totalPages ? 'disabled style="opacity:0.4; cursor:not-allowed;"' : ''} title="Última Página">
+                            <i class="fas fa-angle-double-right"></i>
+                        </button>
+                    </div>
+
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:0.8rem; color:#64748b; font-weight:700;">Filas:</span>
+                        <select class="pro-input-micro" style="width:auto; padding:4px 8px; border-radius:8px; font-weight:800; cursor:pointer;" onchange="window.changeUserPageSize(this.value)">
+                            <option value="25" ${pageSize === 25 ? 'selected' : ''}>25</option>
+                            <option value="50" ${pageSize === 50 ? 'selected' : ''}>50</option>
+                            <option value="100" ${pageSize === 100 ? 'selected' : ''}>100</option>
+                            <option value="-1" ${pageSize === -1 ? 'selected' : ''}>Todos (${totalFiltered})</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+        }
     };
 
     window.renderUsersTableStructure = function (usersCount, syncStatusHtml = '') {
         const content = document.getElementById('content-area');
         if (!content) return;
+
+        const allUsers = window.allUsersCache || [];
+        const kpi = window.calculateDatabaseIntelligence(allUsers);
+
         content.innerHTML = `
-        <div class="glass-card-enterprise" style="padding: 0; overflow-x: auto; overflow-y: hidden;">
-            <div style="padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: var(--border-pro); flex-wrap: wrap; gap: 1rem;">
-                <h3 style="margin:0; font-weight: 900; color: #0f172a; display: flex; align-items: center; flex-wrap: wrap;">
+        <!-- 📊 KPI CARDS: BIG DATA & INTELIGENCIA DE BASE DE DATOS -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem; margin-bottom: 1.25rem;">
+            <div class="glass-card-enterprise" style="padding: 1.1rem 1.4rem; background: white; border-radius: 16px; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(59, 130, 246, 0.1); color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div>
+                    <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;">Total Jugadores</div>
+                    <div id="kpi-val-total" style="font-size: 1.45rem; font-weight: 900; color: #0f172a; line-height: 1.2;">${kpi.total || usersCount}</div>
+                    <div id="kpi-sub-gender" style="font-size: 0.72rem; color: #64748b; font-weight: 600;">👨 ${kpi.chico} chicos · 👩 ${kpi.chica} chicas</div>
+                </div>
+            </div>
+
+            <div class="glass-card-enterprise" style="padding: 1.1rem 1.4rem; background: white; border-radius: 16px; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(16, 185, 129, 0.1); color: #059669; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+                    <i class="fas fa-user-check"></i>
+                </div>
+                <div>
+                    <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;">Estado Operativo</div>
+                    <div id="kpi-val-active" style="font-size: 1.45rem; font-weight: 900; color: #059669; line-height: 1.2;">${kpi.active} Activos</div>
+                    <div id="kpi-sub-pending" style="font-size: 0.72rem; color: #64748b; font-weight: 600;">
+                        ${kpi.pending > 0 ? `<span style="color:#d97706; font-weight:800; animation: blink 1.5s infinite;">⏳ ${kpi.pending} Pendientes</span>` : '✅ Todo validado'}
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card-enterprise" style="padding: 1.1rem 1.4rem; background: white; border-radius: 16px; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(245, 158, 11, 0.1); color: #d97706; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div>
+                    <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;">Nivel Medio ELO</div>
+                    <div id="kpi-val-level" style="font-size: 1.45rem; font-weight: 900; color: #0f172a; line-height: 1.2;">${kpi.avgLevel} ELO</div>
+                    <div id="kpi-sub-level" style="font-size: 0.72rem; color: #64748b; font-weight: 600;">🟢 ${kpi.reliable} fiables · 🟡 ${kpi.questionable} dudosos</div>
+                </div>
+            </div>
+
+            <div class="glass-card-enterprise" style="padding: 1.1rem 1.4rem; background: white; border-radius: 16px; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(139, 92, 246, 0.1); color: #7c3aed; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <div>
+                    <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;">Partidos Totales</div>
+                    <div id="kpi-val-matches" style="font-size: 1.45rem; font-weight: 900; color: #0f172a; line-height: 1.2;">${kpi.totalMatches} Partidos</div>
+                    <div style="font-size: 0.72rem; color: #64748b; font-weight: 600;">Historial verificado BBDD</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card-enterprise" style="padding: 0; background: white; border: 1px solid #e2e8f0; border-radius: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.03);">
+            <!-- 🏷️ HEADER CON GOBERNANZA Y ACCIONES -->
+            <div style="padding: 1.2rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; flex-wrap: wrap; gap: 0.9rem;">
+                <h3 style="margin:0; font-weight: 900; color: #0f172a; display: flex; align-items: center; flex-wrap: wrap; font-size: 1.15rem;">
+                    <i class="fas fa-database" style="color:#2563eb; margin-right:8px;"></i>
                     GOBERNANZA DE JUGADORES 
                     <span id="players-total-count" style="color:var(--text-muted); font-size: 0.8rem; margin-left: 10px;">TOTAL: ${usersCount}</span>
                     <span id="players-sync-indicator">${syncStatusHtml}</span>
                 </h3>
-                <div style="display:flex; gap: 0.8rem; flex-wrap: wrap;">
-                    <!-- BOTÓN JUGADORES PENDIENTES DE VALIDACIÓN -->
-                    <button id="btn-pending-players" class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #f59e0b; color: #d97706; background: rgba(245, 158, 11, 0.08); font-weight: 900; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; border-radius: 8px; transition: all 0.2s;" onclick="window.togglePendingUsersFilter()" title="Filtrar jugadores pendientes de validar">
-                        <i class="fas fa-user-clock" style="font-size: 0.9rem;"></i>
+                
+                <div style="display:flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+                    <button id="btn-pending-players" class="btn-outline-pro" style="padding: 0.45rem 0.85rem; border-color: #f59e0b; color: #d97706; background: rgba(245, 158, 11, 0.08); font-weight: 800; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; border-radius: 8px; font-size: 0.78rem;" onclick="window.togglePendingUsersFilter()" title="Filtrar solicitudes pendientes">
+                        <i class="fas fa-user-clock"></i>
                         <span>PENDIENTES</span>
                         <span id="pending-counter-badge" style="background: #f59e0b; color: white; font-size: 0.68rem; font-weight: 900; padding: 2px 7px; border-radius: 10px; min-width: 18px; text-align: center;">0</span>
                     </button>
-                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #16a34a; color: #16a34a; background: rgba(22, 163, 74, 0.05); font-weight: 800;" onclick="exportToExcel()">
-                        📗 EXPORTAR EXCEL
+                    <button class="btn-outline-pro" style="padding: 0.45rem 0.85rem; border-color: #84cc16; color: #4d7c0f; background: rgba(132, 204, 22, 0.08); font-weight: 800; display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem;" onclick="window.showRolesLegendModal()" title="Leyenda oficial de roles">
+                        <i class="fas fa-crown"></i> <span>ROLES</span>
                     </button>
-                    <!-- NIVEL BASE DESDE EQUIPOS (solo inicialización, no sobreescribe historial) -->
-                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #f59e0b; color: #d97706; background: rgba(245,158,11,0.06); font-weight: 800;" 
-                        title="Establece el nivel base inicial (self_rate_level) desde el equipo de cada jugador. Solo afecta a jugadores sin partidos jugados."
-                        onclick="batchUpdateTeamLevels()">
-                        🎯 NIVEL BASE EQUIPOS
+                    <button class="btn-outline-pro" style="padding: 0.45rem 0.85rem; border-color: #16a34a; color: #16a34a; background: rgba(22, 163, 74, 0.06); font-weight: 800; display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem;" onclick="exportToExcel()" title="Descargar como hoja Excel">
+                        <i class="fas fa-file-excel"></i> <span>EXCEL</span>
                     </button>
-                    <!-- RECÁLCULO MAESTRO ÚNICO - MOTOR ELO PRO -->
-                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #ccff00; color: #ccff00; background: rgba(204, 255, 0, 0.05); font-weight: 900; margin-left: auto;" onclick="runUnifiedRecalculation(this)"
-                        title="Recálculo cronológico completo de todos los niveles con algoritmo ELO Pro. Reconstruye level_history y sincroniza victorias, derrotas y rachas.">
-                        ⚡ RECÁLCULO MAESTRO DE NIVELES
+                    <button class="btn-outline-pro" style="padding: 0.45rem 0.85rem; border-color: #f59e0b; color: #d97706; background: rgba(245,158,11,0.06); font-weight: 800; display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem;" onclick="batchUpdateTeamLevels()" title="Establecer nivel base inicial desde equipos">
+                        <i class="fas fa-bullseye"></i> <span>NIVEL EQUIPOS</span>
+                    </button>
+                    <button class="btn-outline-pro" style="padding: 0.45rem 0.85rem; border-color: #0284c7; color: #0284c7; background: rgba(2, 132, 199, 0.06); font-weight: 800; display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem;" onclick="runUnifiedRecalculation(this)" title="Recálculo maestro con motor ELO Pro">
+                        <i class="fas fa-bolt"></i> <span>RECÁLCULO ELO</span>
                     </button>
 
-                    <!-- BOTÓN Y DESPLEGABLE SELECTOR DE COLUMNAS -->
-                    <div style="position: relative; display: inline-block; margin-right: 4px;">
-                        <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #cbd5e1; color: #475569; background: white; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; height: 42px; cursor: pointer; transition: all 0.2s;" onclick="window.toggleColumnSelector(event)">
-                            <i class="fas fa-columns"></i> <span>👁️ COLUMNAS</span>
+                    <div style="position: relative; display: inline-block;">
+                        <button class="btn-outline-pro" style="padding: 0.45rem 0.85rem; border-color: #cbd5e1; color: #475569; background: white; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; height: 34px; cursor: pointer; border-radius: 8px; font-size: 0.78rem;" onclick="window.toggleColumnSelector(event)">
+                            <i class="fas fa-columns"></i> <span>COLUMNAS</span>
                         </button>
-                        <div id="column-selector-dropdown" class="glass-card-enterprise hidden" style="position: absolute; right: 0; top: 110%; z-index: 1000; width: 230px; padding: 16px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: white !important; border: 1px solid #cbd5e1 !important; border-radius: 12px; margin-top: 5px;">
+                        <div id="column-selector-dropdown" class="glass-card-enterprise hidden" style="position: absolute; right: 0; top: 115%; z-index: 1000; width: 230px; padding: 16px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: white !important; border: 1px solid #cbd5e1 !important; border-radius: 12px;">
                              <div style="font-weight: 900; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; color: #0f172a;">
                                  <span>Mostrar Columnas</span>
                                  <i class="fas fa-times" style="cursor:pointer; color: #64748b;" onclick="window.toggleColumnSelector(event)"></i>
@@ -299,14 +550,35 @@ window.AdminViews.users = async function () {
                         </div>
                     </div>
 
-                    <input type="text" id="global-search" placeholder="Buscar globalmente..." class="pro-input" style="width: 200px; padding: 0.5rem 1rem; font-weight: 600; color: #0f172a; background: white;" onkeyup="multiFilterUsers()">
-                    <button class="btn-primary-pro" style="padding: 0.5rem 1.5rem; background: #ccff00; color: black; font-weight: 900;" onclick="window.openCreateUserModal ? window.openCreateUserModal() : openCreateUserModal()">+ REGISTRAR</button>
+                    <button class="btn-primary-pro" style="padding: 0.45rem 1.1rem; background: #ccff00; color: black; font-weight: 900; border-radius: 8px; font-size: 0.8rem; box-shadow: 0 2px 8px rgba(204,255,0,0.3); display: inline-flex; align-items: center; gap: 6px;" onclick="window.openCreateUserModal ? window.openCreateUserModal() : openCreateUserModal()">
+                        <i class="fas fa-user-plus"></i> + REGISTRAR
+                    </button>
                 </div>
             </div>
-            <div class="filters-row" style="padding: 1rem 2rem; background: rgba(255,255,255,0.02); display: grid; grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr 1fr 1fr; gap: 1rem; border-bottom: var(--border-pro);">
-                <input type="text" id="filter-name" placeholder="Filtrar nombre..." class="pro-input-micro" onkeyup="multiFilterUsers()">
-                <input type="text" id="filter-phone" placeholder="Filtrar teléfono..." class="pro-input-micro" onkeyup="multiFilterUsers()">
-                <input type="text" id="filter-level" placeholder="Nivel..." class="pro-input-micro" onkeyup="multiFilterUsers()">
+
+            <!-- 🔍 BARRA DE BÚSQUEDA GLOBAL & CHIPS RÁPIDOS -->
+            <div style="padding: 0.8rem 1.5rem; background: #fafafa; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 260px; max-width: 460px; position: relative;">
+                    <i class="fas fa-search" style="position: absolute; left: 12px; color: #94a3b8; font-size: 0.85rem;"></i>
+                    <input type="text" id="global-search" placeholder="Buscar por nombre, teléfono o ID..." class="pro-input" style="width: 100%; padding: 0.45rem 0.85rem 0.45rem 2.2rem; font-weight: 600; color: #0f172a; background: white; border-radius: 10px; font-size: 0.85rem; border: 1px solid #cbd5e1;" onkeyup="multiFilterUsers()">
+                </div>
+
+                <!-- CHIPS RÁPIDOS -->
+                <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                    <span style="font-size: 0.72rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin-right: 2px;">Filtros:</span>
+                    <button class="filter-quick-chip" onclick="window.applyQuickFilterChip('all')" style="padding: 4px 10px; font-size: 0.72rem; font-weight: 800; border-radius: 20px; border: 1px solid #cbd5e1; background: white; color: #0f172a; cursor: pointer;">Todos</button>
+                    <button class="filter-quick-chip" onclick="window.applyQuickFilterChip('pending')" style="padding: 4px 10px; font-size: 0.72rem; font-weight: 800; border-radius: 20px; border: 1px solid #f59e0b; background: rgba(245,158,11,0.08); color: #d97706; cursor: pointer;">⏳ Pendientes</button>
+                    <button class="filter-quick-chip" onclick="window.applyQuickFilterChip('gender', 'chico')" style="padding: 4px 10px; font-size: 0.72rem; font-weight: 800; border-radius: 20px; border: 1px solid #93c5fd; background: rgba(59,130,246,0.06); color: #1d4ed8; cursor: pointer;">👨 Chicos</button>
+                    <button class="filter-quick-chip" onclick="window.applyQuickFilterChip('gender', 'chica')" style="padding: 4px 10px; font-size: 0.72rem; font-weight: 800; border-radius: 20px; border: 1px solid #f9a8d4; background: rgba(236,72,153,0.06); color: #be185d; cursor: pointer;">👩 Chicas</button>
+                    <button class="filter-quick-chip" onclick="window.applyQuickFilterChip('reliability', 'green')" style="padding: 4px 10px; font-size: 0.72rem; font-weight: 800; border-radius: 20px; border: 1px solid #86efac; background: rgba(16,185,129,0.06); color: #047857; cursor: pointer;">🟢 Nivel Fiable</button>
+                </div>
+            </div>
+
+            <!-- ⚙️ GRID DE FILTROS AVANZADOS (8 ELEMENTOS ALINEADOS) -->
+            <div class="filters-row" style="padding: 0.8rem 1.5rem; background: #ffffff; display: grid; grid-template-columns: repeat(7, 1fr) auto; gap: 0.6rem; border-bottom: 1px solid #e2e8f0; align-items: center;">
+                <input type="text" id="filter-name" placeholder="Nombre..." class="pro-input-micro" onkeyup="multiFilterUsers()">
+                <input type="text" id="filter-phone" placeholder="Teléfono..." class="pro-input-micro" onkeyup="multiFilterUsers()">
+                <input type="text" id="filter-level" placeholder="Nivel (ej: 3.5)..." class="pro-input-micro" onkeyup="multiFilterUsers()">
                 <select id="filter-gender" class="pro-input-micro" onchange="multiFilterUsers()">
                     <option value="">Género (Todos)</option>
                     <option value="chico">CHICO</option>
@@ -336,7 +608,7 @@ window.AdminViews.users = async function () {
                     <option value="red">🔴 Oxidado (Rojo)</option>
                     <option value="gray">⚪ Sin datos (Gris)</option>
                 </select>
-                <button class="btn-micro" onclick="resetFilters()" style="background: #e2e8f0; color: #0f172a; font-weight: 800; border: 1px solid #cbd5e1;">LIMPIAR</button>
+                <button class="btn-micro" onclick="resetFilters()" style="background: #e2e8f0; color: #0f172a; font-weight: 800; border: 1px solid #cbd5e1; height: 32px; padding: 0 12px; border-radius: 6px; cursor: pointer;" title="Limpiar todos los filtros">LIMPIAR</button>
             </div>
             
             <style>
@@ -352,24 +624,80 @@ window.AdminViews.users = async function () {
                 .sort-icon i {
                     transition: all 0.2s ease;
                 }
+                .players-table-scroll-container thead th {
+                    position: sticky;
+                    top: 0;
+                    z-index: 10;
+                    background: #f8fafc !important;
+                    backdrop-filter: blur(8px);
+                    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+                }
+                .page-num-btn {
+                    width: 30px;
+                    height: 30px;
+                    border-radius: 8px;
+                    border: 1px solid #cbd5e1;
+                    background: white;
+                    color: #0f172a;
+                    font-weight: 800;
+                    font-size: 0.78rem;
+                    cursor: pointer;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.15s;
+                }
+                .page-num-btn:hover {
+                    background: #f1f5f9;
+                    border-color: #94a3b8;
+                }
+                .page-num-btn.active {
+                    background: #0f172a !important;
+                    color: #ccff00 !important;
+                    border-color: #0f172a !important;
+                }
+                .pag-nav-btn {
+                    padding: 4px 10px;
+                    height: 30px;
+                    border-radius: 8px;
+                    border: 1px solid #cbd5e1;
+                    background: white;
+                    color: #334155;
+                    font-weight: 800;
+                    font-size: 0.75rem;
+                    cursor: pointer;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 4px;
+                    transition: all 0.15s;
+                }
+                .pag-nav-btn:hover:not(:disabled) {
+                    background: #f1f5f9;
+                    border-color: #94a3b8;
+                }
             </style>
 
-            <table class="pro-table" style="width: 100%; table-layout: auto; border-collapse: collapse;">
-                <thead>
-                    <tr>
-                        <th data-col="identidad" onclick="window.sortUsersByColumn('name')" style="width: 25%; min-width: 210px; text-align: left; user-select: none;" class="sortable-header">IDENTIDAD</th>
-                        <th data-col="equipos" onclick="window.sortUsersByColumn('teams')" style="width: 18%; min-width: 140px; text-align: left; user-select: none;" class="sortable-header">EQUIPOS</th>
-                        <th data-col="contacto" onclick="window.sortUsersByColumn('phone')" style="width: 15%; min-width: 130px; text-align: left; user-select: none;" class="sortable-header">CONTACTO</th>
-                        <th data-col="nivel" onclick="window.sortUsersByColumn('level')" style="width: 10%; min-width: 90px; text-align: left; user-select: none;" class="sortable-header">NIVEL</th>
-                        <th data-col="genero" onclick="window.sortUsersByColumn('gender')" style="width: 10%; min-width: 90px; text-align: left; user-select: none;" class="sortable-header">GÉNERO</th>
-                        <th data-col="partidos" onclick="window.sortUsersByColumn('matches')" style="width: 7%; min-width: 70px; text-align: center; user-select: none;" class="sortable-header">PARTIDOS</th>
-                        <th data-col="estado" onclick="window.sortUsersByColumn('status')" style="width: 10%; min-width: 100px; text-align: left; user-select: none;" class="sortable-header">ESTADO</th>
-                        <th data-col="acciones" style="width: 15%; min-width: 165px; text-align: right; user-select: none;">ACCIONES</th>
-                    </tr>
-                </thead>
-                <tbody id="users-tbody"></tbody>
-            </table>
-            <div class="pro-table-footer">SISTEMA INTEGRADO DE BASE DE DATOS v2.1 PRO (Auto-Save Enabled)</div>
+            <!-- 📋 TABLA CON SCROLL FLUIDO Y CABECERA FIJA (STICKY HEADER) -->
+            <div class="players-table-scroll-container" style="max-height: 560px; overflow-y: auto; overflow-x: auto; position: relative;">
+                <table class="pro-table" style="width: 100%; table-layout: auto; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th data-col="identidad" onclick="window.sortUsersByColumn('name')" style="width: 25%; min-width: 210px; text-align: left; user-select: none;" class="sortable-header">IDENTIDAD</th>
+                            <th data-col="equipos" onclick="window.sortUsersByColumn('teams')" style="width: 18%; min-width: 140px; text-align: left; user-select: none;" class="sortable-header">EQUIPOS</th>
+                            <th data-col="contacto" onclick="window.sortUsersByColumn('phone')" style="width: 15%; min-width: 130px; text-align: left; user-select: none;" class="sortable-header">CONTACTO</th>
+                            <th data-col="nivel" onclick="window.sortUsersByColumn('level')" style="width: 10%; min-width: 90px; text-align: left; user-select: none;" class="sortable-header">NIVEL</th>
+                            <th data-col="genero" onclick="window.sortUsersByColumn('gender')" style="width: 10%; min-width: 90px; text-align: left; user-select: none;" class="sortable-header">GÉNERO</th>
+                            <th data-col="partidos" onclick="window.sortUsersByColumn('matches')" style="width: 7%; min-width: 70px; text-align: center; user-select: none;" class="sortable-header">PARTIDOS</th>
+                            <th data-col="estado" onclick="window.sortUsersByColumn('status')" style="width: 10%; min-width: 100px; text-align: left; user-select: none;" class="sortable-header">ESTADO</th>
+                            <th data-col="acciones" style="width: 15%; min-width: 165px; text-align: right; user-select: none;">ACCIONES</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-tbody"></tbody>
+                </table>
+            </div>
+
+            <!-- 📄 BARRA DE PAGINACIÓN INTERACTIVA -->
+            <div id="users-pagination-bar"></div>
         </div>`;
     };
 
@@ -397,7 +725,7 @@ window.AdminViews.users = async function () {
         window.filteredUsers = [...initialUsers];
         window._allPlayersCache = initialUsers;
         
-        window.renderUsersTableStructure(initialUsers.length, '<span id="players-sync-indicator" style="font-size:0.75rem; color:#d97706; font-weight:700; margin-left:10px;"><i class="fas fa-sync fa-spin"></i> Sincronizando...</span>');
+        window.renderUsersTableStructure(initialUsers.length, '<span id="players-sync-indicator" style="font-size:0.75rem; color:#10b981; font-weight:800; margin-left:10px;"><i class="fas fa-check-circle"></i> En línea</span>');
         window.renderUserRows(window.filteredUsers);
         if (typeof window.checkAndApplyPendingFocus === 'function') window.checkAndApplyPendingFocus();
     } else {
@@ -409,17 +737,15 @@ window.AdminViews.users = async function () {
     }
 
     // ==========================================
-    // 2. SINCRONIZACIÓN EN SEGUNDO PLANO (Background Fetch Resiliente)
+    // 2. SINCRONIZACIÓN EN SEGUNDO PLANO (Background Fetch Resiliente con Timeout de 6s)
     // ==========================================
     (async () => {
         try {
-            // Sincronización inteligente con token de caché SWR (0ms si no hay cambios)
             const fresh = await Promise.race([
                 FirebaseDB.players.getAll(false),
-                new Promise((_, reject) => setTimeout(() => reject(new Error("La base de datos Firebase tardó más de 25s")), 25000))
+                new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout sincronización de red")), 6000))
             ]);
 
-            // Comprobación de carrera: si el usuario cambió de sección, descartar sin tocar la pantalla
             if (navId !== window._currentAdminNavId) {
                 console.log(`⚠️ [users] El usuario navegó a otra sección (#${navId} -> #${window._currentAdminNavId}), omitiendo refresco de pantalla.`);
                 return;
@@ -436,33 +762,30 @@ window.AdminViews.users = async function () {
 
             const tbody = document.getElementById('users-tbody');
             if (tbody && document.getElementById('global-search')) {
-                // La tabla ya está montada en el DOM, actualizamos filas fluidamente
                 if (window.multiFilterUsers) window.multiFilterUsers();
                 else if (window.renderUserRows) window.renderUserRows(window.filteredUsers);
                 
                 const countEl = document.getElementById('players-total-count');
                 if (countEl) countEl.textContent = `TOTAL: ${fresh.length}`;
                 const syncInd = document.getElementById('players-sync-indicator');
-                if (syncInd) syncInd.innerHTML = '<span style="font-size:0.75rem; color:#10b981; font-weight:800; margin-left:10px;">✅ En línea</span>';
+                if (syncInd) syncInd.innerHTML = '<span style="font-size:0.75rem; color:#10b981; font-weight:800; margin-left:10px;"><i class="fas fa-check-circle"></i> Sincronizado</span>';
             } else {
-                window.renderUsersTableStructure(fresh.length, '<span id="players-sync-indicator" style="font-size:0.75rem; color:#10b981; font-weight:800; margin-left:10px;">✅ En línea</span>');
+                window.renderUsersTableStructure(fresh.length, '<span id="players-sync-indicator" style="font-size:0.75rem; color:#10b981; font-weight:800; margin-left:10px;"><i class="fas fa-check-circle"></i> Sincronizado</span>');
                 window.renderUserRows(window.filteredUsers);
             }
             if (typeof window.checkAndApplyPendingFocus === 'function') window.checkAndApplyPendingFocus();
         } catch (err) {
-            // Si el usuario navegó a otra sección, no mostrar ningún error
             if (navId !== window._currentAdminNavId) return;
 
-            console.warn("⚠️ [users] Error en sincronización de fondo:", err.message);
+            console.warn("⚠️ [users] Aviso en sincronización de fondo:", err.message);
 
-            // Si ya hay datos en pantalla, NUNCA romper la vista con pantalla de error
+            // Si ya hay datos en pantalla, asegurar estado en línea local sin romper nunca
             if (window.allUsersCache && window.allUsersCache.length > 0) {
                 const syncInd = document.getElementById('players-sync-indicator');
-                if (syncInd) syncInd.innerHTML = `<span style="font-size:0.75rem; color:#d97706; font-weight:800; margin-left:10px;" title="${err.message}">⚠️ Modo caché</span>`;
+                if (syncInd) syncInd.innerHTML = `<span style="font-size:0.75rem; color:#10b981; font-weight:800; margin-left:10px;" title="Datos locales cargados de forma óptima"><i class="fas fa-check-circle"></i> En línea (Local)</span>`;
                 return;
             }
 
-            // Solo si la base de datos estaba vacía y la red falló, mostramos el panel de reintento
             content.innerHTML = `
                 <div class="loading-container" style="color:var(--danger);">
                     <i class="fas fa-exclamation-triangle" style="font-size: 3rem;"></i>
@@ -664,9 +987,10 @@ window.AdminViews.users = async function () {
             return matchesGlobal && matchesName && matchesPhone && matchesLevel && matchesGender && matchesStatus && matchesTeam && matchesRel;
         });
 
+        if (window.userPaginationState) window.userPaginationState.page = 1;
         window.renderUserRows(window.filteredUsers);
         // Update total count display
-        const totalEl = document.querySelector('h3 span');
+        const totalEl = document.getElementById('players-total-count');
         if (totalEl) totalEl.textContent = `TOTAL: ${window.filteredUsers.length} `;
     };
 
@@ -862,8 +1186,8 @@ window.AdminViews.users = async function () {
             'NIVEL': u.level || u.self_rate_level || '3.5',
             'GÉNERO': u.gender === 'chica' ? 'FEMENINO' : 'MASCULINO',
             'ESTADO': (u.status || 'pending').toUpperCase(),
-            'MEMBRESÍA': u.membership === 'somospadel_bcn' ? 'COMUNIDAD' : 'EXTERNO',
-            'ROL': (u.role || 'player').toUpperCase(),
+            'MEMBRESÍA': 'SOMOSPADEL BCN',
+            'ROL': (window.RoleService ? window.RoleService.get(u.role).name : (u.role || 'JUGADOR')).toUpperCase(),
             'PARTIDOS JUGADOS': u.matches_played || 0
         }));
 
@@ -1149,7 +1473,7 @@ window.AdminViews.users = async function () {
             if (form.elements['level']) form.elements['level'].value = '3.5';
             if (form.elements['gender']) form.elements['gender'].value = 'chico';
             if (form.elements['membership']) form.elements['membership'].value = 'somospadel_bcn';
-            if (form.elements['role']) form.elements['role'].value = 'player_somospadel';
+            if (form.elements['role']) form.elements['role'].value = 'player';
             if (form.elements['status']) form.elements['status'].value = 'active';
             if (form.elements['matches_played']) form.elements['matches_played'].value = '0';
             if (form.elements['side_preference']) form.elements['side_preference'].value = 'INDIFF';
@@ -1196,8 +1520,10 @@ window.AdminViews.users = async function () {
         form.elements['phone'].value = user.phone || '';
         form.elements['level'].value = user.level || user.self_rate_level || 3.5;
         form.elements['gender'].value = user.gender || 'chico';
-        form.elements['membership'].value = user.membership || 'externo';
-        form.elements['role'].value = user.role || 'player_somospadel';
+        form.elements['membership'].value = 'somospadel_bcn';
+        const rawRole = user.role || 'player';
+        const cleanRole = (rawRole === 'player_americanas') ? 'player' : (rawRole === 'admin_player' ? 'admin' : rawRole);
+        form.elements['role'].value = cleanRole;
         form.elements['status'].value = user.status || 'active';
         form.elements['matches_played'].value = user.matches_played || 0;
 
@@ -1310,7 +1636,8 @@ window.AdminViews.users = async function () {
         if (newPhoneInput) newPhoneInput.value = '';
         if (levelInput) levelInput.value = user.level || user.self_rate_level || 3.5;
         if (genderSelect) genderSelect.value = user.gender || 'chico';
-        if (roleSelect) roleSelect.value = user.role || 'player_somospadel';
+        const cleanDupRole = (user.role === 'player_americanas') ? 'player' : (user.role === 'admin_player' ? 'admin' : (user.role || 'player'));
+        if (roleSelect) roleSelect.value = cleanDupRole;
 
         const modal = document.getElementById('admin-duplicate-user-modal');
         if (modal) modal.classList.remove('hidden');
@@ -1388,8 +1715,8 @@ window.AdminViews.users = async function () {
                 level: submittedLevel,
                 self_rate_level: submittedLevel,
                 gender: genderSelect ? genderSelect.value : (baseUser.gender || 'chico'),
-                membership: baseUser.membership || 'externo',
-                role: roleSelect ? roleSelect.value : (baseUser.role || 'player_somospadel'),
+                membership: 'somospadel_bcn',
+                role: roleSelect ? roleSelect.value : (baseUser.role === 'player_americanas' ? 'player' : (baseUser.role || 'player')),
                 status: 'active',
                 matches_played: 0,
                 side_preference: baseUser.side_preference || 'INDIFF',

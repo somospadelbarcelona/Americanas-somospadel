@@ -242,13 +242,11 @@
                         </div>
                     </div>
 
-                    <!-- 🏆 BANNER INSCRIPCIÓN — Solo jugadores del club (no player_americanas) -->
+                    <!-- 🏆 BANNER INSCRIPCIÓN — Torneo abierto de la comunidad SomosPadel -->
                     ${(() => {
                         try {
                             const ctx = window._lastDashboardContext;
                             if (!ctx || !ctx.hasOpenTournament) return '';
-                            const isExternalPlayer = (user?.role === 'player_americanas');
-                            if (isExternalPlayer) return ''; // El externo lo ve en INICIO
 
                             const spotsLeft = Math.max(0, (ctx.maxPlayers || 16) - (ctx.currentPlayers || 0));
                             const isUrgent = spotsLeft <= 4 && spotsLeft > 0;

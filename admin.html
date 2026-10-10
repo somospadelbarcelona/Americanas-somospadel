@@ -2121,7 +2121,8 @@
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                <input type="hidden" name="membership" value="somospadel_bcn">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     <div class="form-group">
                         <label><i class="fas fa-chart-line"></i> NIVEL</label>
                         <input type="text" name="level" class="pro-input" placeholder="Ej: 3.5" value="3.5" required>
@@ -2131,13 +2132,6 @@
                         <select name="gender" class="pro-input">
                             <option value="chico">CHICO</option>
                             <option value="chica">CHICA</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label><i class="fas fa-users-rectangle"></i> COMUNIDAD</label>
-                        <select name="membership" class="pro-input">
-                            <option value="somospadel_bcn">SOMOSPADEL</option>
-                            <option value="externo">Externo</option>
                         </select>
                     </div>
                 </div>
@@ -2166,15 +2160,11 @@
                 <div class="form-group">
                     <label><i class="fas fa-user-tag"></i> ROL DE SISTEMA</label>
                     <select name="role" class="pro-input">
-                        <option value="player_somospadel" selected>JUGADOR SOMOSPADEL 🎾</option>
-                        <option value="player">JUGADOR EXTERNO 👤</option>
-                        <option value="player_americanas">JUGADOR AMERICANAS 🏆</option>
-                        <option value="captain">CAPITÁN (Entrenos) 🧢</option>
-                        <option value="admin">ADMIN (Solo Gestión) 🛡️</option>
-                        <option value="admin_player">ADMIN + JUGADOR 🎖️</option>
+                        <option value="player" selected>JUGADOR SOMOSPADEL (Americanas / Raso) 👤</option>
+                        <option value="player_somospadel">JUGADOR EQUIPO SOMOSPADEL 🎾</option>
+                        <option value="captain">CAPITÁN (Equipos) 🧢</option>
+                        <option value="admin">ADMINISTRADOR 🛡️</option>
                         <option value="super_admin">SUPER ADMIN 👑</option>
-                        <option value="collaborator">COLABORADOR 🤝</option>
-                        <option value="organizer">ORGANIZADOR / CLUB 🏛️</option>
                     </select>
                 </div>
 
@@ -2289,11 +2279,11 @@
                         <div>
                             <label style="font-size: 0.68rem; font-weight: 700; color: #64748b; display: block; margin-bottom: 4px;">ROL</label>
                             <select id="dup-user-role" class="pro-input" style="padding: 6px 8px; font-size: 0.85rem; border-radius: 6px;">
-                                <option value="player_somospadel">SOMOSPADEL 🎾</option>
-                                <option value="player_americanas">AMERICANAS 🏆</option>
-                                <option value="player">EXTERNO 👤</option>
+                                <option value="player" selected>JUGADOR RASO 👤</option>
+                                <option value="player_somospadel">EQUIPO 🎾</option>
                                 <option value="captain">CAPITÁN 🧢</option>
-                                <option value="admin_player">ADMIN+JUG 🎖️</option>
+                                <option value="admin">ADMIN 🛡️</option>
+                                <option value="super_admin">SUPER ADMIN 👑</option>
                             </select>
                         </div>
                     </div>
@@ -3081,7 +3071,8 @@
             <script src="js/modules/ai/TournamentChronicleModal.js?v=1.0"></script>
             <script src="js/modules/admin/AdminNotifications.js?v=1.0"></script>
 
-            <script src="js/utils/RoleService.js?v=PLAYER_AMERICANAS_v1"></script>
+            <script src="js/utils/RoleService.js?v=ROLES_V2"></script>
+            <script src="js/utils/RoleMigrationUtil.js?v=ROLES_V2"></script>
             <script src="js/modules/admin-users.js?v=DUPLICATE_USER_v3_REGISTRAR_FIX"></script>
             <script src="js/modules/admin-americanas.js?v=FIXED_PAIRS_SELECTION_v1"></script>
             <script src="js/modules/admin-matches.js?v=20260926_EMERGENCY_V7"></script>

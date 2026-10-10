@@ -41,7 +41,7 @@
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap;">
                             <div>
                                 <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(204,255,0,0.12); border: 1px solid rgba(204,255,0,0.35); color: #CCFF00; padding: 4px 10px; border-radius: 20px; font-size: 0.62rem; font-weight: 1000; letter-spacing: 0.8px; text-transform: uppercase;">
-                                    <span>🎾</span> ${isTeamMember ? 'EQUIPO & COMUNIDAD' : 'JUGADOR EXTERNO'}
+                                    <span>🎾</span> ${isTeamMember ? 'EQUIPO SOMOSPADEL' : 'JUGADOR SOMOSPADEL'}
                                 </div>
                                 <h1 style="font-weight: 1000; font-size: 1.8rem; margin: 8px 0 2px; color: #ffffff; letter-spacing: -0.5px;">
                                     Mi <span style="color: #CCFF00;">Agenda</span>

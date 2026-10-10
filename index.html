@@ -4323,34 +4323,7 @@
                 background: rgba(255, 255, 255, 0.08) !important;
             }
 
-            /* 🏆 ADAPTACIÓN EXCLUSIVA PARA JUGADOR AMERICANAS (ACCESO A COMUNIDAD BLOQUEADO) */
-            body.role-americanas-only #nav-community {
-                position: relative;
-                opacity: 0.8;
-            }
-            body.role-americanas-only #nav-community::after {
-                content: "\f023"; /* FontAwesome lock icon */
-                font-family: "Font Awesome 6 Free", "Font Awesome 5 Free", sans-serif;
-                font-weight: 900;
-                position: absolute;
-                top: 4px;
-                right: calc(50% - 15px);
-                font-size: 0.52rem;
-                color: #f59e0b;
-                background: rgba(15, 23, 42, 0.95);
-                border-radius: 50%;
-                width: 14px;
-                height: 14px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                border: 1px solid rgba(245, 158, 11, 0.6);
-                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-                pointer-events: none;
-            }
-            body.role-americanas-only #nav-community:active {
-                transform: scale(0.95);
-            }
+            /* 🏆 COMUNIDAD SOMOSPADEL ABIERTA PARA TODOS LOS JUGADORES */
 
             /* 🌟 POPUP DESPLEGABLE COMUNIDAD (5 PESTAÑAS) */
             .community-popup-backdrop {
@@ -6354,7 +6327,7 @@
     <script src="js/modules/dashboard/NewsCatalog.js?v=1.2" defer></script>
     <script src="js/modules/dashboard/DashboardView_hotfix.js?v=SOMOSPADEL_LIGHT_THEME_v25" defer></script>
     <script src="js/modules/dashboard/DashboardController.js" defer></script>
-    <script src="js/utils/RoleService.js?v=PLAYER_AMERICANAS_v1" defer></script>
+    <script src="js/utils/RoleService.js?v=ROLES_V2" defer></script>
     <script src="js/modules/stats/AchievementsService.js?v=1.0" defer></script>
     <script src="js/modules/players/PlayerView.js?v=402_PADELPULSE" defer></script>
     <script src="js/modules/players/PlayerController.js?v=400" defer></script>

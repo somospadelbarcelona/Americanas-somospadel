@@ -14,18 +14,7 @@
                 border: "1px solid rgba(255, 215, 0, 0.4)",
                 shadow: "0 0 15px rgba(255, 215, 0, 0.15)",
                 text: "#d97706",
-                desc: "Creador y desarrollador de la plataforma. Acceso total a base de datos, administración y configuraciones de seguridad."
-            },
-            admin_player: {
-                name: "ADMIN + JUGADOR",
-                emoji: "🎖️",
-                icon: "fa-award",
-                color: "#3b82f6",
-                bg: "linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.15) 100%)",
-                border: "1px solid rgba(59, 130, 246, 0.4)",
-                shadow: "0 0 15px rgba(59, 130, 246, 0.15)",
-                text: "#2563eb",
-                desc: "Administrador con privilegios de gobernanza que también participa activamente en partidos y torneos puntuables del club."
+                desc: "Creador y desarrollador de la plataforma. Acceso total a base de datos, administración global y configuraciones de seguridad."
             },
             admin: {
                 name: "ADMINISTRADOR",
@@ -36,7 +25,7 @@
                 border: "1px solid rgba(168, 85, 247, 0.4)",
                 shadow: "0 0 15px rgba(168, 85, 247, 0.15)",
                 text: "#7c3aed",
-                desc: "Encargado de la gobernanza general, gestión de equipos, validación de nuevos jugadores y creación de eventos."
+                desc: "Administración integral del club: gestión de usuarios, organización de eventos, asignación de roles y control operativo de la plataforma."
             },
             captain: {
                 name: "CAPITÁN",
@@ -47,10 +36,10 @@
                 border: "1px solid rgba(16, 185, 129, 0.4)",
                 shadow: "0 0 15px rgba(16, 185, 129, 0.15)",
                 text: "#059669",
-                desc: "Líder asignado de un equipo que coordina convocatorias semanales, actas de partidos oficiales y alineaciones."
+                desc: "Líder de equipo oficial de competición. Coordina convocatorias semanales, actas de partidos oficiales y alineaciones de liga."
             },
             player_somospadel: {
-                name: "JUGADOR SOMOSPADEL",
+                name: "JUGADOR EQUIPO SOMOSPADEL",
                 emoji: "🎾",
                 icon: "fa-tennis-ball",
                 color: "#CCFF00",
@@ -58,21 +47,10 @@
                 border: "1px solid rgba(204, 255, 0, 0.4)",
                 shadow: "0 0 15px rgba(204, 255, 0, 0.15)",
                 text: "#72a800",
-                desc: "Jugador oficial miembro de la comunidad SomosPadel BCN, con acceso a torneos cerrados y ranking oficial."
-            },
-            player_americanas: {
-                name: "JUGADOR AMERICANAS",
-                emoji: "🏆",
-                icon: "fa-trophy",
-                color: "#CCFF00",
-                bg: "linear-gradient(135deg, rgba(204, 255, 0, 0.15) 0%, rgba(14, 165, 233, 0.15) 100%)",
-                border: "1px solid rgba(204, 255, 0, 0.4)",
-                shadow: "0 0 15px rgba(204, 255, 0, 0.15)",
-                text: "#72a800",
-                desc: "Jugador registrado para americanas (oficiales y clubes asociados) y torneos. Acceso a Inicio, Americanas, Torneos, Perfil y Ranking de Americanas."
+                desc: "Jugador federado o fichado en un equipo oficial de competición de SomosPadel BCN en ligas interclubes."
             },
             player: {
-                name: "JUGADOR EXTERNO",
+                name: "JUGADOR SOMOSPADEL",
                 emoji: "👤",
                 icon: "fa-user",
                 color: "#64748b",
@@ -80,34 +58,26 @@
                 border: "1px solid rgba(148, 163, 184, 0.25)",
                 shadow: "none",
                 text: "#475569",
-                desc: "Jugador invitado o externo registrado para disputar americanas individuales, entrenamientos o ligas abiertas."
-            },
-            collaborator: {
-                name: "COLABORADOR",
-                emoji: "🤝",
-                icon: "fa-handshake",
-                color: "#f59e0b",
-                bg: "linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.15) 100%)",
-                border: "1px solid rgba(245, 158, 11, 0.4)",
-                shadow: "0 0 15px rgba(245, 158, 11, 0.15)",
-                text: "#d97706",
-                desc: "Socio comercial o patrocinador del club que colabora activamente en la gestión de premios y patrocinio de eventos."
-            },
-            organizer: {
-                name: "ORGANIZADOR",
-                emoji: "🏛️",
-                icon: "fa-building-columns",
-                color: "#0ea5e9",
-                bg: "linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(37, 99, 235, 0.15) 100%)",
-                border: "1px solid rgba(14, 165, 233, 0.4)",
-                shadow: "0 0 15px rgba(14, 165, 233, 0.2)",
-                text: "#0284c7",
-                desc: "Organizador oficial o club asociado. Acceso exclusivo en el panel de control para crear y gestionar sus torneos y americanas."
+                desc: "Perfil raso de la comunidad SomosPadel. Juega americanas, entrenamientos y torneos abiertos del club, sin equipo de liga."
             }
         },
 
+        // Alias retrocompatibles para mapear roles anteriores
+        ALIASES: {
+            admin_player: 'admin',
+            player_americanas: 'player',
+            superadmin: 'super_admin',
+            organizer: 'admin',
+            organizador: 'admin',
+            organizer_bcn: 'admin',
+            organizador_bcn: 'admin',
+            collaborator: 'admin'
+        },
+
         get(roleCode) {
-            return this.ROLES[roleCode] || this.ROLES.player;
+            if (!roleCode) return this.ROLES.player;
+            const normalized = this.ALIASES[roleCode] || roleCode;
+            return this.ROLES[normalized] || this.ROLES.player;
         },
 
         getBadgeHtml(roleCode, compact = false) {

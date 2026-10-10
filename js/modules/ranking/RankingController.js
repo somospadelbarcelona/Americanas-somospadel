@@ -236,7 +236,23 @@
             }
 
             try {
-                // 1. Fetch All Data
+                // ⚡ OPTIMIZACIÓN ESCALA: Intentar leer leaderboard precalculado en Firestore (1 sola lectura vs N miles)
+                try {
+                    const boardDoc = await this.rawDb.collection('leaderboards').doc('global_top').get();
+                    if (boardDoc.exists) {
+                        const boardData = boardDoc.data();
+                        if (boardData && Array.isArray(boardData.rankings) && boardData.rankings.length > 0) {
+                            console.log(`⚡ [RankingController] Cargado Top Ranking precalculado desde Firestore (${boardData.rankings.length} jugadores en 1 lectura).`);
+                            this._cachedRanking = boardData.rankings;
+                            this._lastCacheTime = Date.now();
+                            return boardData.rankings;
+                        }
+                    }
+                } catch (boardErr) {
+                    console.log("ℹ️ [RankingController] Fallback a cálculo dinámico:", boardErr.message);
+                }
+
+                // 1. Fetch All Data (Fallback dinámico para torneos en curso)
                 console.log("📡 [RankingController] Fetching players, americanas, and entrenos...");
                 const [players, allAmericanas, allEntrenos] = await this._withTimeout(
                     Promise.all([

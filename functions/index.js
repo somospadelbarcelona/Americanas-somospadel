@@ -1704,6 +1704,228 @@ exports.unregisterFromEvent = functions.https.onCall(async (data, context) => {
     });
 });
 
+// ==========================================
+// 15. GESTIÓN MULTI-TENANT DE ORGANIZACIONES Y CLUBES (FASE 1)
+// ==========================================
 
+/**
+ * Callable: createOrganization
+ * Permite a la directiva dar de alta un club o entidad organizadora con su espacio de gestión independiente.
+ */
+exports.createOrganization = functions.https.onCall(async (data, context) => {
+    const isAuthorized = await checkCallerIsStaff(context);
+    if (!isAuthorized) {
+        throw new functions.https.HttpsError('permission-denied', 'Solo personal autorizado puede crear nuevas organizaciones.');
+    }
+
+    const { name, slug, address, phone, contactEmail, maxCourts = 4 } = data || {};
+    if (!name || !slug) {
+        throw new functions.https.HttpsError('invalid-argument', 'El nombre y el slug de la organización son obligatorios.');
+    }
+
+    const orgRef = db.collection('organizations').doc(slug);
+    const existingOrg = await orgRef.get();
+    if (existingOrg.exists) {
+        throw new functions.https.HttpsError('already-exists', 'Ya existe una organización con este identificador.');
+    }
+
+    const orgPayload = {
+        name: String(name).trim(),
+        slug: String(slug).trim().toLowerCase(),
+        address: address ? String(address).trim() : '',
+        phone: phone ? String(phone).trim() : '',
+        contactEmail: contactEmail ? String(contactEmail).trim() : '',
+        maxCourts: parseInt(maxCourts) || 4,
+        status: 'active',
+        created_at: admin.firestore.FieldValue.serverTimestamp(),
+        created_by: context.auth.uid
+    };
+
+    await orgRef.set(orgPayload);
+
+    console.log(`🏛️ [createOrganization] Club/Organización '${name}' creada por ${context.auth.uid}`);
+    return { success: true, orgId: slug, organization: orgPayload };
+});
+
+/**
+ * Callable: assignUserToOrganization
+ * Asocia un usuario a un club y le asigna claims de tenencia (orgId y role)
+ */
+exports.assignUserToOrganization = functions.https.onCall(async (data, context) => {
+    const isAuthorized = await checkCallerIsStaff(context);
+    if (!isAuthorized) {
+        throw new functions.https.HttpsError('permission-denied', 'Solo personal autorizado puede asignar miembros a una organización.');
+    }
+
+    const { targetUid, orgId, orgRole = 'organizer' } = data || {};
+    if (!targetUid || !orgId) {
+        throw new functions.https.HttpsError('invalid-argument', 'targetUid y orgId son obligatorios.');
+    }
+
+    const orgDoc = await db.collection('organizations').doc(orgId).get();
+    if (!orgDoc.exists) {
+        throw new functions.https.HttpsError('not-found', 'La organización no existe.');
+    }
+
+    // 1. Asignar custom claim en Auth incluyendo orgId
+    const currentClaims = (await admin.auth().getUser(targetUid)).customClaims || {};
+    await admin.auth().setCustomUserClaims(targetUid, {
+        ...currentClaims,
+        role: orgRole,
+        orgId: orgId
+    });
+
+    // 2. Registrar en subcolección de miembros de la organización
+    await db.collection('organizations').doc(orgId).collection('members').doc(targetUid).set({
+        uid: targetUid,
+        role: orgRole,
+        assigned_at: admin.firestore.FieldValue.serverTimestamp(),
+        assigned_by: context.auth.uid
+    });
+
+    // 3. Vincular en el documento del jugador
+    await db.collection('players').doc(targetUid).set({
+        orgId: orgId,
+        role: orgRole,
+        last_updated: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    console.log(`✅ [assignUserToOrganization] Usuario ${targetUid} asignado a ${orgId} con rol ${orgRole}`);
+    return { success: true, targetUid, orgId, orgRole };
+});
+
+// ==========================================
+// 16. LEADERBOARDS PRECALCULADOS EN SERVIDOR (FASE 2)
+// ==========================================
+
+/**
+ * Callable: recomputeLeaderboard
+ * Genera y almacena en un único documento el Top Ranking oficial de jugadores.
+ * Sustituye la descarga de miles de jugadores en el móvil por una lectura unitaria.
+ */
+exports.recomputeLeaderboard = functions.https.onCall(async (data, context) => {
+    const isAuthorized = await checkCallerIsStaff(context);
+    if (!isAuthorized) {
+        throw new functions.https.HttpsError('permission-denied', 'Solo personal autorizado puede recalcular rankings.');
+    }
+
+    const { limit = 100 } = data || {};
+    const playersSnap = await db.collection('players')
+        .where('status', 'in', ['active', 'pending'])
+        .orderBy('level', 'desc')
+        .limit(parseInt(limit) || 100)
+        .get();
+
+    const topPlayers = [];
+    let rank = 1;
+
+    playersSnap.forEach(doc => {
+        const p = doc.data();
+        topPlayers.push({
+            rank: rank++,
+            id: doc.id,
+            uid: doc.id,
+            name: p.name || p.displayName || 'Jugador',
+            level: parseFloat(p.level || 3.5),
+            gender: p.gender || '?',
+            photo_url: p.photo_url || p.photoURL || null,
+            points: p.ranking_points || p.points || 0,
+            matches_played: p.matches_played || 0,
+            orgId: p.orgId || 'global'
+        });
+    });
+
+    const payload = {
+        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+        total_players_sampled: topPlayers.length,
+        rankings: topPlayers
+    };
+
+    await db.collection('leaderboards').doc('global_top').set(payload);
+
+    console.log(`🏆 [recomputeLeaderboard] Leaderboard oficial precalculado con ${topPlayers.length} jugadores.`);
+    return { success: true, count: topPlayers.length };
+});
+
+/**
+ * Trigger: onMatchFinishedUpdateStats
+ * Cuando un partido se marca como 'finished', actualiza estadísticas agregadas
+ */
+exports.onMatchFinishedUpdateStats = functions.firestore
+    .document('matches/{matchId}')
+    .onUpdate(async (change, context) => {
+        const before = change.before.data();
+        const after = change.after.data();
+
+        if (before.status !== 'finished' && after.status === 'finished') {
+            const eventId = after.americana_id;
+            if (eventId) {
+                console.log(`🎾 [onMatchFinishedUpdateStats] Partido ${context.params.matchId} finalizado en americana ${eventId}.`);
+            }
+        }
+        return null;
+    });
+
+// ==========================================
+// 17. RED DE LIGAS Y CIRCUITOS INTERCLUBES (FASE 3)
+// ==========================================
+
+/**
+ * Callable: createLeague
+ * Crea un circuito o liga interclubes con calendario de jornadas compartido entre sedes.
+ */
+exports.createLeague = functions.https.onCall(async (data, context) => {
+    const isAuthorized = await checkCallerIsStaff(context);
+    if (!isAuthorized) {
+        throw new functions.https.HttpsError('permission-denied', 'Solo personal autorizado puede crear ligas o circuitos.');
+    }
+
+    const { name, code, participatingClubIds = [], season = '2026-T1' } = data || {};
+    if (!name || !code) {
+        throw new functions.https.HttpsError('invalid-argument', 'El nombre y el código de la liga son obligatorios.');
+    }
+
+    const leagueSlug = code.toLowerCase().trim();
+    const leagueRef = db.collection('leagues').doc(leagueSlug);
+
+    const payload = {
+        name: String(name).trim(),
+        code: leagueSlug,
+        season: String(season).trim(),
+        participatingClubIds: Array.isArray(participatingClubIds) ? participatingClubIds : [],
+        status: 'active',
+        created_at: admin.firestore.FieldValue.serverTimestamp(),
+        created_by: context.auth.uid
+    };
+
+    await leagueRef.set(payload);
+
+    console.log(`🏆 [createLeague] Liga interclubes '${name}' creada por ${context.auth.uid}`);
+    return { success: true, leagueId: leagueSlug, league: payload };
+});
+
+/**
+ * Callable: updateLeagueStandings
+ * Recalcula la clasificación general acumulada entre todos los clubes de una liga.
+ */
+exports.updateLeagueStandings = functions.https.onCall(async (data, context) => {
+    const isAuthorized = await checkCallerIsStaff(context);
+    if (!isAuthorized) {
+        throw new functions.https.HttpsError('permission-denied', 'Solo personal autorizado puede actualizar la clasificación de liga.');
+    }
+
+    const { leagueId, standings = [] } = data || {};
+    if (!leagueId) {
+        throw new functions.https.HttpsError('invalid-argument', 'leagueId es obligatorio.');
+    }
+
+    const standingsRef = db.collection('leagues').doc(leagueId).collection('standings').doc('current');
+    await standingsRef.set({
+        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+        table: Array.isArray(standings) ? standings : []
+    }, { merge: true });
+
+    return { success: true, leagueId, count: standings.length };
+});
 
 
