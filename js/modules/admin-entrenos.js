@@ -483,7 +483,7 @@ function renderEntrenoCard(e) {
                     
                     <button class="btn-micro" 
                             style="background: #475569 !important; color: #fff !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
-                            onclick='window.duplicateEntreno(${JSON.stringify(e).replace(/'/g, "&#39;")})' 
+                            onclick="window.duplicateEntreno('${e.id}')" 
                             title="Duplicar">
                         <i class="fas fa-clone" style="font-size: 0.8rem; color: #fff !important;"></i>
                     </button>
@@ -720,13 +720,32 @@ window.api.runAutomation = () => {
 
 // --- GLOBAL EXPORTS (KEEPING EXISTING APIs) --- //
 
-window.duplicateEntreno = async (e) => {
-    if (!e) return;
-    if (typeof e === 'string') {
-        if (window._currentEntrenosCache) {
-            e = window._currentEntrenosCache.find(x => x.id === e) || { id: e };
+window.duplicateEntreno = async (eOrId) => {
+    if (!eOrId) return;
+    let e = eOrId;
+    if (typeof eOrId === 'string') {
+        if (window._currentEntrenosCache && Array.isArray(window._currentEntrenosCache)) {
+            e = window._currentEntrenosCache.find(x => x.id === eOrId);
+        }
+        if (!e && window.EventService && typeof window.EventService.getById === 'function') {
+            try {
+                e = await window.EventService.getById('entreno', eOrId);
+            } catch (err) {
+                console.error("❌ [duplicateEntreno] Error al recuperar entreno por ID:", err);
+            }
         }
     }
+
+    if (!e || typeof e !== 'object' || (!e.id && !e.name)) {
+        const errorMsg = "No se ha encontrado el entrenamiento seleccionado para duplicar.";
+        if (window.NotificationService && typeof window.NotificationService.showToast === 'function') {
+            window.NotificationService.showToast(errorMsg, 'error');
+        } else {
+            alert(errorMsg);
+        }
+        return;
+    }
+
     if (!confirm(`¿Duplicar "${e.name || 'este entreno'}"?`)) return;
 
     const copy = { ...e };

@@ -679,7 +679,7 @@ function renderAmericanaCard(e) {
                     
                     <button class="btn-micro" 
                             style="background: #475569 !important; color: #fff !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
-                            onclick='window.duplicateAmericana(${JSON.stringify(e).replace(/'/g, "&#39;")})' 
+                            onclick="window.duplicateAmericana('${e.id}')" 
                             title="Duplicar">
                         <i class="fas fa-clone" style="font-size: 0.8rem; color: #fff !important;"></i>
                     </button>
@@ -1090,13 +1090,32 @@ function formatDate(dateStr) {
 
 // --- GLOBAL EXPORTS & CRUD --- //
 
-window.duplicateAmericana = async (e) => {
-    if (!e) return;
-    if (typeof e === 'string') {
-        if (window._currentAmericanasCache) {
-            e = window._currentAmericanasCache.find(x => x.id === e) || { id: e };
+window.duplicateAmericana = async (eOrId) => {
+    if (!eOrId) return;
+    let e = eOrId;
+    if (typeof eOrId === 'string') {
+        if (window._currentAmericanasCache && Array.isArray(window._currentAmericanasCache)) {
+            e = window._currentAmericanasCache.find(x => x.id === eOrId);
+        }
+        if (!e && window.EventService && typeof window.EventService.getById === 'function') {
+            try {
+                e = await window.EventService.getById('americana', eOrId);
+            } catch (err) {
+                console.error("❌ [duplicateAmericana] Error al recuperar americana por ID:", err);
+            }
         }
     }
+
+    if (!e || typeof e !== 'object' || (!e.id && !e.name)) {
+        const errorMsg = "No se ha encontrado la americana seleccionada para duplicar.";
+        if (window.NotificationService && typeof window.NotificationService.showToast === 'function') {
+            window.NotificationService.showToast(errorMsg, 'error');
+        } else {
+            alert(errorMsg);
+        }
+        return;
+    }
+
     if (!confirm(`¿Duplicar "${e.name || 'esta americana'}"?`)) return;
 
     const copy = { ...e };
