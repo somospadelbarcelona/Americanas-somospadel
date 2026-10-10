@@ -683,8 +683,16 @@ const FirebaseDB = {
                 if (window.CacheService) window.CacheService.remove('players', 'all');
                 await _updatePlayersSyncToken();
 
-                const doc = await safeFirestoreGet(targetDb.collection('players').doc(cleanId));
-                return { id: doc.id, ...doc.data() };
+                let docData = { id: cleanId, ...data };
+                try {
+                    const doc = await safeFirestoreGet(targetDb.collection('players').doc(cleanId));
+                    if (doc && doc.exists) {
+                        docData = { id: doc.id, ...doc.data() };
+                    }
+                } catch (getErr) {
+                    console.warn("⚠️ [players.update] safeFirestoreGet tras update falló benignamente:", getErr.message);
+                }
+                return docData;
             };
 
             try {

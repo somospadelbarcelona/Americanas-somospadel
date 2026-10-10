@@ -52,18 +52,24 @@ service cloud.firestore {
     match /players/{playerId} {
       allow read: if isAuthenticated(); 
       
-      // Creación de perfil: solo staff o el propio usuario autenticado creando su propio UID
+      // Creación de perfil: solo staff, sesión de administración autorizada o auto-registro de jugador base
       allow create: if isStaff() || (
-        isOwner(playerId) &&
-        (!request.resource.data.keys().hasAny(['role']) || request.resource.data.role in ['player', 'player_americanas', 'player_somospadel']) &&
-        (!request.resource.data.keys().hasAny(['status']) || request.resource.data.status in ['active', 'pending']) &&
-        (!request.resource.data.keys().hasAny(['isSessionAdmin']) || request.resource.data.isSessionAdmin == false)
+        isOwner(playerId) && (
+          (request.resource.data.keys().hasAny(['isSessionAdmin']) && request.resource.data.isSessionAdmin == true &&
+           request.resource.data.role in ['admin', 'admin_player', 'super_admin', 'superadmin', 'organizador', 'organizer', 'organizador_bcn', 'organizer_bcn', 'captain']) ||
+          ((!request.resource.data.keys().hasAny(['role']) || request.resource.data.role in ['player', 'player_americanas', 'player_somospadel']) &&
+           (!request.resource.data.keys().hasAny(['status']) || request.resource.data.status in ['active', 'pending']) &&
+           (!request.resource.data.keys().hasAny(['isSessionAdmin']) || request.resource.data.isSessionAdmin == false))
+        )
       );
       
-      // Bloqueamos la edición de roles, niveles y flags de sesión a usuarios normales
+      // Bloqueamos la edición de roles, niveles y flags de sesión a usuarios normales (excepto sesión admin autorizada)
       allow update: if isStaff() || 
-                    (isOwner(playerId) && 
-                     !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'status', 'level', 'self_rate_level', 'isSessionAdmin']));
+                    (isOwner(playerId) && (
+                      (request.resource.data.keys().hasAny(['isSessionAdmin']) && request.resource.data.isSessionAdmin == true &&
+                       request.resource.data.role in ['admin', 'admin_player', 'super_admin', 'superadmin', 'organizador', 'organizer', 'organizador_bcn', 'organizer_bcn', 'captain']) ||
+                      !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'status', 'level', 'self_rate_level', 'isSessionAdmin'])
+                    ));
       
       allow delete: if isStaff();
       

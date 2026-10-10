@@ -1123,21 +1123,64 @@ window.AdminViews.users = async function () {
     };
 
     window.approveUser = async (id) => {
+        const cleanId = (id || '').toString().trim();
+        if (!cleanId) return;
+
         const confirmed = await window.PremiumModal.confirm({
             title: "🚀 VALIDAR JUGADOR",
             message: "¿Quieres confirmar el acceso para este jugador? Pasará a estado ACTIVO inmediatamente.",
             confirmText: "VALIDAR"
         });
         if (!confirmed) return;
-        try {
-            await FirebaseDB.players.update(id, { status: 'active' });
 
-            // Refresh data
-            const users = await FirebaseDB.players.getAll();
-            window.allUsersCache = users;
-            window.multiFilterUsers(); // Re-apply filters
+        try {
+            // 1. Advertencia si se está ejecutando desde file:///
+            if (window.location.protocol === 'file:') {
+                throw new Error("Estás ejecutando la app directamente como archivo (file:///)." +
+                    "\nPara validar jugadores en local, debes abrirla mediante un servidor HTTP local (ej: ejecuta 'ABRIR_APP.bat' o usa Live Server en http://localhost:8000), ya que Firebase requiere origen web para autenticar permisos.");
+            }
+
+            // 2. Garantizar sesión administrativa activa en Firebase Auth y Firestore
+            if (window.AdminAuth && typeof window.AdminAuth.ensureFirebaseAdminSession === 'function') {
+                await window.AdminAuth.ensureFirebaseAdminSession();
+            }
+
+            // 3. Actualizar estado del jugador a 'active'
+            let updateResult = null;
+            try {
+                updateResult = await FirebaseDB.players.update(cleanId, { status: 'active' });
+            } catch (firstErr) {
+                // Reintento resiliente si hubo pérdida momentánea de claim/sesión
+                if (window.AdminAuth && typeof window.AdminAuth.ensureFirebaseAdminSession === 'function') {
+                    console.warn("⚠️ Reintentando elevación de sesión admin y actualización...");
+                    await window.AdminAuth.ensureFirebaseAdminSession();
+                    updateResult = await FirebaseDB.players.update(cleanId, { status: 'active' });
+                } else {
+                    throw firstErr;
+                }
+            }
+
+            // 4. Actualizar inmediatamente la caché local para respuesta instantánea en la UI
+            if (Array.isArray(window.allUsersCache)) {
+                const target = window.allUsersCache.find(u => u.id === cleanId || u.uid === cleanId);
+                if (target) target.status = 'active';
+            }
+
+            // 5. Refrescar datos y filtros
+            try {
+                const users = await FirebaseDB.players.getAll(true);
+                if (Array.isArray(users) && users.length > 0) {
+                    window.allUsersCache = users;
+                }
+            } catch (fetchErr) {
+                console.warn("⚠️ Advertencia al refrescar jugadores tras validar:", fetchErr.message);
+            }
+
+            if (typeof window.multiFilterUsers === 'function') {
+                window.multiFilterUsers();
+            }
             if (window.AdminNotifications && typeof window.AdminNotifications.fetchNotifications === 'function') {
-                window.AdminNotifications.fetchNotifications();
+                try { window.AdminNotifications.fetchNotifications(); } catch (_) {}
             }
 
             window.PremiumModal.alert({
@@ -1147,9 +1190,13 @@ window.AdminViews.users = async function () {
             });
         } catch (e) {
             console.error("Error validando usuario:", e);
+            let displayMsg = e.message || 'Error desconocido';
+            if (displayMsg.includes('permission-denied') || displayMsg.includes('permisos de escritura')) {
+                displayMsg = "No tienes permisos de administrador en Firestore. Asegúrate de haber iniciado sesión con el PIN de Admin o Super Admin.";
+            }
             window.PremiumModal.alert({
                 title: "❌ ERROR",
-                message: "Error al validar: " + e.message,
+                message: "Error al validar: " + displayMsg,
                 type: 'error'
             });
         }

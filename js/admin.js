@@ -115,6 +115,57 @@ window.AdminAuth = {
         }
     },
 
+    async ensureFirebaseAdminSession(explicitUser = null) {
+        const adminData = explicitUser || this.user;
+        if (!adminData) return false;
+
+        // Comprobación de protocolo: si es file://, avisar que se requiere servidor HTTP
+        if (window.location.protocol === 'file:') {
+            console.warn("⚠️ [AdminAuth] Ejecución en protocolo 'file:'. Firebase Auth requiere un servidor local (http://localhost:8000) para emitir tokens de seguridad.");
+            return false;
+        }
+
+        if (!window.firebase || !firebase.auth) {
+            console.warn("⚠️ [AdminAuth] Firebase Auth SDK no está listo.");
+            return false;
+        }
+
+        try {
+            let currentFirebaseUser = firebase.auth().currentUser;
+            if (!currentFirebaseUser) {
+                console.log("🔐 [AdminAuth] Conectando infraestructura Firebase Auth (anónimo)...");
+                const creds = await firebase.auth().signInAnonymously();
+                currentFirebaseUser = creds.user;
+            }
+
+            if (currentFirebaseUser && window.db) {
+                const uid = currentFirebaseUser.uid;
+                const adminRole = adminData.role || 'super_admin';
+                const adminName = adminData.name || 'Admin';
+
+                try {
+                    await window.db.collection('players').doc(uid).set({
+                        id: uid,
+                        uid: uid,
+                        name: `[Session] ${adminName}`,
+                        role: adminRole,
+                        status: 'active',
+                        isSessionAdmin: true,
+                        createdAt: new Date().toISOString()
+                    }, { merge: true });
+                    console.log(`🛡️ [AdminAuth] Privilegios elevados en Firestore para sesión UID ${uid} con rol ${adminRole}`);
+                    return true;
+                } catch (elevErr) {
+                    console.warn("⚠️ [AdminAuth] Registro de sesión en Firestore:", elevErr.message);
+                }
+            }
+            return Boolean(currentFirebaseUser);
+        } catch (authErr) {
+            console.error("🛑 [AdminAuth] Error asegurando sesión Firebase:", authErr.message);
+            return false;
+        }
+    },
+
     async init() {
         console.log("🛠️ AdminAuth Init");
         const modal = document.getElementById('admin-auth-modal');
@@ -129,42 +180,8 @@ window.AdminAuth = {
             this.updateProfileUI();
             this.applyRoleRestrictions();
 
-            // 🔐 FIX: Siempre establecer sesión Firebase Auth ANTES de cargar cualquier vista
-            // Sin esto, Firestore devuelve permission-denied porque request.auth == null
-            try {
-                console.log("🔐 [AdminAuth.init] Re-estableciendo sesión Firebase Auth (anonymous)...");
-                const currentFirebaseUser = firebase.auth().currentUser;
-                
-                if (!currentFirebaseUser) {
-                    // No hay sesión Firebase activa - necesitamos crear una
-                    const creds = await firebase.auth().signInAnonymously();
-                    const uid = creds.user.uid;
-                    console.log("✅ [AdminAuth.init] Sesión anónima establecida. UID:", uid);
-                    
-                    // Elevar privilegios en Firestore para que las reglas reconozcan al admin
-                    if (window.db) {
-                        try {
-                            await window.db.collection('players').doc(uid).set({
-                                id: uid,
-                                uid: uid,
-                                name: `[Session] ${this.user.name}`,
-                                role: this.user.role,
-                                status: 'active',
-                                isSessionAdmin: true,
-                                createdAt: new Date().toISOString()
-                            }, { merge: true });
-                            console.log("🛡️ [AdminAuth.init] Privilegios elevados OK para sesión restaurada.");
-                        } catch (elevErr) {
-                            console.warn("⚠️ [AdminAuth.init] Elevación falló (puede que ya exista):", elevErr.message);
-                        }
-                    }
-                } else {
-                    console.log("✅ [AdminAuth.init] Sesión Firebase ya activa. UID:", currentFirebaseUser.uid);
-                }
-            } catch (authErr) {
-                console.error("🛑 [AdminAuth.init] Firebase Auth falló:", authErr.message);
-                // Continuamos igualmente - puede que las reglas de Firestore permitan el acceso
-            }
+            // 🔐 FIX: Siempre asegurar sesión Firebase Auth y elevación en Firestore
+            await this.ensureFirebaseAdminSession();
 
             // Cargar la vista inicial: respetar hash de URL, última vista guardada o 'dashboard_home' por defecto
             const role = (this.user.role || '').toString().toLowerCase().trim();
@@ -220,44 +237,8 @@ window.AdminAuth = {
                 const sessionData = ACCESS_CODES[pin];
                 const user = { ...sessionData, status: 'active', lastLogin: new Date().toISOString() };
 
-                // NEW: Ensure Firebase Auth baseline even for PIN login
-                if (window.firebase && firebase.auth) {
-                    try {
-                        console.log("🔐 [Mission Control] Authenticating Infrastructure (Anonymous)...");
-                        const creds = await firebase.auth().signInAnonymously();
-                        const uid = creds.user.uid;
-                        console.log("✅ [Telemetry] Infrastructure link established. Session UID:", uid);
-
-                        // ELEVATION OF PRIVILEGES: Register this session UID as an Admin in the DB
-                        // This allows firestore.rules to recognize this session as authorized.
-                        if (window.db) {
-                            console.log(`🛡️ [Mission Control] Elevating privileges for ${sessionData.name}...`);
-                            try {
-                                await window.db.collection('players').doc(uid).set({
-                                    id: uid,
-                                    uid: uid,
-                                    name: `[Session] ${sessionData.name}`,
-                                    role: sessionData.role,
-                                    status: 'active',
-                                    isSessionAdmin: true,
-                                    createdAt: new Date().toISOString()
-                                });
-                                console.log(`🚀 [Mission Control] Session elevated to ${sessionData.role.toUpperCase()} successfully.`);
-                            } catch (elevErr) {
-                                console.warn("⚠️ Local elevation failed (it might already have it or rules blocked it):", elevErr.message);
-                            }
-                        }
-                    } catch (authErr) {
-                        console.error("🛑 [CRITICAL] Firebase Infra Auth failed:", authErr);
-                        if (window.PremiumModal) {
-                            window.PremiumModal.alert({
-                                title: "⚠️ FALLO DE TELEMETRÍA",
-                                message: "El enlace con Firebase falló o los permisos están bloqueados. No podrás realizar cambios en la base de datos.",
-                                type: 'warning'
-                            });
-                        }
-                    }
-                }
+                // Asegurar sesión Firebase Auth y elevación en Firestore
+                await this.ensureFirebaseAdminSession(user);
 
                 this.setUser(user);
                 if (!isAuto && window.PremiumModal) {
