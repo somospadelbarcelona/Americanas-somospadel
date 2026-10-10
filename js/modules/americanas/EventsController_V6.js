@@ -254,8 +254,12 @@
                 if (cached) {
                     const parsed = JSON.parse(cached);
                     if (Array.isArray(parsed) && parsed.length > 0) {
-                        initialAmericanas = parsed.filter(e => e.type !== 'entreno' && !(e.name || e.title || '').toLowerCase().includes('entreno'));
-                        initialEntrenos = parsed.filter(e => e.type === 'entreno' || (e.name || e.title || '').toLowerCase().includes('entreno'));
+                        initialAmericanas = parsed
+                            .filter(e => e.type !== 'entreno' && !(e.name || e.title || '').toLowerCase().includes('entreno'))
+                            .map(e => ({ ...e, type: 'americana' }));
+                        initialEntrenos = parsed
+                            .filter(e => e.type === 'entreno' || (e.name || e.title || '').toLowerCase().includes('entreno'))
+                            .map(e => ({ ...e, type: 'entreno' }));
                     }
                 }
             } catch (_) {}
@@ -413,14 +417,22 @@
 
                 this.unsubscribeEntrenos = window.db.collection('entrenos')
                     .onSnapshot(snap => {
-                        this.state.entrenos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                        this.state.entrenos = snap.docs.map(d => ({ id: d.id, ...d.data(), type: 'entreno' }));
+                        try {
+                            const comb = [...(this.state.americanas || []), ...(this.state.entrenos || [])];
+                            if (comb.length > 0) localStorage.setItem('sp_cached_active_events_v2', JSON.stringify(comb));
+                        } catch (_) {}
                         console.log(`📡 [EventsController] Real-time Entrenos update: ${this.state.entrenos.length} events`);
                         window.dispatchEvent(new CustomEvent('entrenosUpdated', { detail: { events: this.state.entrenos } }));
                         this.onDataUpdate();
                     }, err => {
                         console.error("Error loading entrenos snapshot, attempting direct get:", err);
                         window.db.collection('entrenos').get().then(snap => {
-                            this.state.entrenos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                            this.state.entrenos = snap.docs.map(d => ({ id: d.id, ...d.data(), type: 'entreno' }));
+                            try {
+                                const comb = [...(this.state.americanas || []), ...(this.state.entrenos || [])];
+                                if (comb.length > 0) localStorage.setItem('sp_cached_active_events_v2', JSON.stringify(comb));
+                            } catch (_) {}
                             window.dispatchEvent(new CustomEvent('entrenosUpdated', { detail: { events: this.state.entrenos } }));
                             this.onDataUpdate();
                         }).catch(e => {
@@ -986,10 +998,38 @@
                 return d;
             };
 
-            const all = [
-                ...(this.state.americanas || []).map(e => ({ ...e, type: 'americana', normDate: normalize(e.date) })),
-                ...(this.state.entrenos || []).map(e => ({ ...e, type: 'entreno', normDate: normalize(e.date) }))
-            ];
+            const isEntrenoDoc = (e) => {
+                if (!e) return false;
+                const t = (e.type || '').toLowerCase().trim();
+                if (t === 'entreno') return true;
+                const name = (e.name || e.title || e.eventName || '').toLowerCase();
+                const format = (e.pair_mode || e.format || e.mode || '').toLowerCase();
+                return name.includes('entreno') || name.includes('entrenamiento') || name.includes('pozo') || name.includes('clase') || format.includes('entreno') || format.includes('pozo');
+            };
+
+            const allAms = (this.state.americanas || []).map(e => ({
+                ...e,
+                type: isEntrenoDoc(e) ? 'entreno' : 'americana',
+                normDate: normalize(e.date)
+            }));
+
+            const allEnts = (this.state.entrenos || []).map(e => ({
+                ...e,
+                type: 'entreno',
+                normDate: normalize(e.date)
+            }));
+
+            // Deduplicación resiliente por ID para evitar colisiones entre colecciones
+            const seenIds = new Set();
+            const all = [];
+            for (const ev of [...allEnts, ...allAms]) {
+                const uid = ev.id || ev._id;
+                if (uid) {
+                    if (seenIds.has(uid)) continue;
+                    seenIds.add(uid);
+                }
+                all.push(ev);
+            }
 
             return all.sort((a, b) => {
                 if (a.normDate === b.normDate) return (a.time || '').localeCompare(b.time || '');
@@ -1969,7 +2009,8 @@
 
             if (!onlyMine) {
                 events = events.filter(e => {
-                    const isCorrectType = showBothTypes ? true : (onlyEntrenos ? e.type === 'entreno' : e.type === 'americana');
+                    const isEnt = e.type === 'entreno' || (e.name || e.title || '').toLowerCase().includes('entreno');
+                    const isCorrectType = showBothTypes ? true : (onlyEntrenos ? isEnt : !isEnt);
 
                     // Si el evento está finalizado o vencido por fecha/horario, no va en eventos activos
                     if (this.isEventFinished(e)) return false;
@@ -2204,7 +2245,8 @@
 
             // Filtrar eventos activos específicamente para la pestaña actual (Entrenos vs Americanas)
             const activeTypeEvents = this.getAllSortedEvents().filter(e => {
-                const isCorrectType = showBothTypes ? true : (onlyEntrenos ? e.type === 'entreno' : e.type === 'americana');
+                const isEnt = e.type === 'entreno' || (e.name || e.title || '').toLowerCase().includes('entreno');
+                const isCorrectType = showBothTypes ? true : (onlyEntrenos ? isEnt : !isEnt);
                 if (this.isEventFinished(e)) return false;
                 return isCorrectType;
             });
@@ -2918,10 +2960,9 @@
             
             // ✅ Logic: Archive includes explicitly finished/cancelled events OR events that have passed date/time
             let finishedEvents = this.getAllSortedEvents().filter(e => {
+                const isEnt = e.type === 'entreno' || (e.name || e.title || '').toLowerCase().includes('entreno');
                 if (typeFilter) {
-                    const isType = isAmericana 
-                        ? (e.type === 'americana' || (!e.type && !e.name?.toUpperCase().includes('ENTRENO')))
-                        : (e.type === 'entreno' || e.name?.toUpperCase().includes('ENTRENO'));
+                    const isType = isAmericana ? !isEnt : isEnt;
                     if (!isType) return false;
                 }
                 return this.isEventFinished(e);
@@ -3051,8 +3092,14 @@
                                 </div>
                                 <h3 style="color: white; font-weight: 800; margin: 0;">SIN REGISTROS</h3>
                                 <p style="color: #64748b; font-size: 0.9rem; margin-top: 10px;">No se encontraron eventos para los filtros seleccionados.</p>
-                                <button onclick="window.EventsController.setFilter('month', 'all'); window.EventsController.setFilter('category', 'all');" 
-                                        style="margin-top: 25px; background: transparent; border: 1.5px solid #CCFF00; color: #CCFF00; padding: 12px 25px; border-radius: 12px; font-weight: 800; cursor: pointer;">REINICIAR FILTROS</button>
+                                <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 25px;">
+                                    <button onclick="window.EventsController.setFilter('month', 'all'); window.EventsController.setFilter('category', 'all');" 
+                                            style="background: transparent; border: 1.5px solid #CCFF00; color: #CCFF00; padding: 12px 22px; border-radius: 12px; font-weight: 800; font-size: 0.78rem; cursor: pointer;">REINICIAR FILTROS</button>
+                                    <button onclick="window.PlayerView?.haptic?.(15); window.EventsController.setTab('${isAmericana ? 'events' : 'entrenos'}');" 
+                                            style="background: #CCFF00; color: #000; border: none; padding: 12px 22px; border-radius: 12px; font-weight: 950; font-size: 0.78rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(204,255,0,0.35);">
+                                        <i class="fas ${isAmericana ? 'fa-trophy' : 'fa-table-tennis'}"></i> VER ${isAmericana ? 'AMERICANAS' : 'ENTRENOS'} ACTIVOS
+                                    </button>
+                                </div>
                             </div>
                             `
                         }
@@ -7789,38 +7836,276 @@
                         0%, 100% { transform: scale(1); opacity: 1; }
                         50% { transform: scale(1.06); opacity: 0.85; }
                     }
-                </style>
 
-                <!-- STICKY TOP NAVIGATION BAR (COMPACT BROADCAST BAR) -->
-                <div id="battle-top-bar" style="position: sticky; top: 0; z-index: 30010; background: #ffffff !important; border-bottom: 1px solid #e2e8f0; padding: 8px 14px; display: flex; justify-content: space-between; align-items: center; gap: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.04);">
-                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                        <span style="background: #0f172a; color: #38bdf8; padding: 3px 8px; border-radius: 6px; font-weight: 950; font-size: 0.64rem; letter-spacing: 1px;">BROADCAST</span>
-                        <div style="display: flex; align-items: center; gap: 5px;">
-                            <div style="width: 7px; height: 7px; background: #dc2626; border-radius: 50%; animation: pulseBadge 1.2s infinite;"></div>
-                            <span style="font-size: 0.62rem; font-weight: 950; color: #dc2626; letter-spacing: 0.5px;">LIVE</span>
-                        </div>
-                        <div id="battle-countdown-badge" style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 3px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 900; color: #0f172a; display: flex; align-items: center; gap: 5px;">
-                            <i class="far fa-clock" style="color:#0284c7;"></i> CALCULANDO...
-                        </div>
-                    </div>
+                    /* 📡 STICKY TOP NAVIGATION BAR (COMPACT & RESPONSIVE BROADCAST BAR) */
+                    .battle-top-bar {
+                        position: sticky;
+                        top: 0;
+                        z-index: 30010;
+                        background: #ffffff !important;
+                        border-bottom: 1px solid #e2e8f0;
+                        box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+                        box-sizing: border-box;
+                        width: 100%;
+                    }
 
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                        <!-- 📢 SPEAKER OFICIAL DE ESTADIO -->
-                        <button id="battle-voice-btn" onclick="window.toggleBattleVoiceBroadcast()" title="Megafonía Oficial de Pista" style="
-                            background: #0f172a;
-                            border: 1px solid #0f172a;
-                            color: #ffffff;
-                            padding: 6px 12px;
-                            border-radius: 12px;
-                            font-size: 0.7rem;
-                            font-weight: 950;
-                            cursor: pointer;
+                    .battle-top-header-row {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 8px;
+                        min-width: 0;
+                    }
+
+                    .battle-top-status {
+                        display: flex;
+                        align-items: center;
+                        gap: 6px;
+                        flex-wrap: wrap;
+                        min-width: 0;
+                    }
+
+                    .battle-badge-broadcast {
+                        background: #0f172a;
+                        color: #38bdf8;
+                        padding: 3px 8px;
+                        border-radius: 6px;
+                        font-weight: 950;
+                        font-size: 0.64rem;
+                        letter-spacing: 1px;
+                        flex-shrink: 0;
+                    }
+
+                    .battle-badge-live {
+                        display: flex;
+                        align-items: center;
+                        gap: 5px;
+                        flex-shrink: 0;
+                    }
+
+                    .battle-live-dot {
+                        width: 7px;
+                        height: 7px;
+                        background: #dc2626;
+                        border-radius: 50%;
+                        animation: pulseBadge 1.2s infinite;
+                    }
+
+                    .battle-live-text {
+                        font-size: 0.62rem;
+                        font-weight: 950;
+                        color: #dc2626;
+                        letter-spacing: 0.5px;
+                    }
+
+                    .battle-countdown-badge {
+                        background: #f8fafc;
+                        border: 1px solid #cbd5e1;
+                        padding: 3px 8px;
+                        border-radius: 6px;
+                        font-size: 0.65rem;
+                        font-weight: 900;
+                        color: #0f172a;
+                        display: flex;
+                        align-items: center;
+                        gap: 5px;
+                        white-space: nowrap;
+                    }
+
+                    .battle-top-actions {
+                        display: flex;
+                        align-items: center;
+                        gap: 6px;
+                        flex-shrink: 0;
+                    }
+
+                    .battle-action-btn {
+                        border-radius: 12px;
+                        font-size: 0.7rem;
+                        font-weight: 950;
+                        cursor: pointer;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 6px;
+                        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+                        white-space: nowrap;
+                        box-sizing: border-box;
+                    }
+
+                    .battle-btn-speaker {
+                        background: #0f172a;
+                        border: 1px solid #0f172a;
+                        color: #ffffff;
+                        padding: 6px 12px;
+                        box-shadow: 0 2px 8px rgba(15,23,42,0.15);
+                    }
+
+                    .battle-btn-chat {
+                        background: #0f172a;
+                        border: 1.5px solid #CCFF00;
+                        color: #CCFF00;
+                        padding: 6px 12px;
+                        box-shadow: 0 0 10px rgba(204,255,0,0.25);
+                    }
+
+                    .battle-btn-chat:hover {
+                        background: #1e293b;
+                        box-shadow: 0 0 14px rgba(204,255,0,0.45);
+                    }
+
+                    .battle-btn-fullscreen {
+                        background: #ffffff;
+                        border: 1px solid #cbd5e1;
+                        color: #0f172a;
+                        width: 34px;
+                        height: 34px;
+                        border-radius: 10px;
+                        font-size: 0.85rem;
+                        flex-shrink: 0;
+                    }
+
+                    .battle-btn-fullscreen:hover {
+                        background: #f1f5f9;
+                        border-color: #94a3b8;
+                    }
+
+                    /* ❌ BOTÓN CERRAR CON MÁXIMA ACCESIBILIDAD Y PRIORIDAD */
+                    .battle-close-btn {
+                        background: #fee2e2;
+                        border: 1px solid #fca5a5;
+                        color: #dc2626;
+                        width: 36px;
+                        height: 36px;
+                        border-radius: 10px;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        cursor: pointer;
+                        font-size: 0.95rem;
+                        font-weight: 900;
+                        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+                        flex-shrink: 0;
+                        box-shadow: 0 2px 6px rgba(220, 38, 38, 0.12);
+                    }
+
+                    .battle-close-btn:hover,
+                    .battle-close-btn:active {
+                        background: #dc2626;
+                        color: #ffffff;
+                        border-color: #dc2626;
+                        transform: scale(1.05);
+                        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.28);
+                    }
+
+                    /* 🖥️ ESCRITORIO / TABLET ANCHA (> 768px): 1 FILA INTEGRADA */
+                    @media (min-width: 769px) {
+                        .battle-top-bar {
+                            padding: 8px 16px;
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            gap: 12px;
+                        }
+                        .battle-top-header-row {
+                            flex: 1;
+                            justify-content: flex-start;
+                        }
+                        .battle-close-btn-mobile {
+                            display: none !important;
+                        }
+                        .battle-close-btn-desktop {
+                            display: inline-flex !important;
+                        }
+                    }
+
+                    /* 📱 MÓVIL (<= 768px): ESTRUCTURA EN 2 NIVELES CON "X" SIEMPRE VISIBLE Y ACCESIBLE */
+                    @media (max-width: 768px) {
+                        .battle-top-bar {
+                            padding: 8px 10px;
+                            display: flex;
+                            flex-direction: column;
+                            gap: 7px;
+                        }
+                        .battle-top-header-row {
+                            width: 100%;
+                            justify-content: space-between;
+                            align-items: center;
+                        }
+                        .battle-close-btn-mobile {
+                            display: inline-flex !important;
+                            width: 38px;
+                            height: 38px;
+                            font-size: 1.05rem;
+                        }
+                        .battle-close-btn-desktop {
+                            display: none !important;
+                        }
+                        .battle-top-actions {
+                            width: 100%;
                             display: flex;
                             align-items: center;
                             gap: 6px;
-                            transition: all 0.2s;
-                            box-shadow: 0 2px 8px rgba(15,23,42,0.15);
-                        ">
+                        }
+                        .battle-btn-speaker {
+                            flex: 1;
+                            min-width: 0;
+                            padding: 8px 10px;
+                            font-size: 0.68rem;
+                        }
+                        .battle-btn-chat {
+                            flex: 1.4;
+                            min-width: 0;
+                            padding: 8px 10px;
+                            font-size: 0.68rem;
+                        }
+                        .battle-btn-fullscreen {
+                            width: 38px;
+                            height: 38px;
+                            flex-shrink: 0;
+                        }
+                    }
+
+                    @media (max-width: 420px) {
+                        .battle-badge-broadcast {
+                            font-size: 0.58rem;
+                            padding: 2px 6px;
+                        }
+                        .battle-countdown-badge {
+                            font-size: 0.62rem;
+                            padding: 2px 6px;
+                        }
+                        .chat-text-long {
+                            display: none !important;
+                        }
+                    }
+                </style>
+
+                <!-- STICKY TOP NAVIGATION BAR (COMPACT BROADCAST BAR) -->
+                <div id="battle-top-bar" class="battle-top-bar">
+                    <!-- FILA 1 (MÓVIL) / IZQUIERDA (DESKTOP): IDENTIDAD EN VIVO Y CERRAR RÁPIDO EN MÓVIL -->
+                    <div class="battle-top-header-row">
+                        <div class="battle-top-status">
+                            <span class="battle-badge-broadcast">BROADCAST</span>
+                            <div class="battle-badge-live">
+                                <div class="battle-live-dot"></div>
+                                <span class="battle-live-text">LIVE</span>
+                            </div>
+                            <div id="battle-countdown-badge" class="battle-countdown-badge">
+                                <i class="far fa-clock" style="color:#0284c7;"></i> CALCULANDO...
+                            </div>
+                        </div>
+
+                        <!-- ❌ BOTÓN CERRAR MÓVIL: Siempre visible y fijado en la esquina superior derecha -->
+                        <button class="battle-close-btn battle-close-btn-mobile" onclick="window.closeBattleReadyModal()" title="Cerrar ventana" aria-label="Cerrar">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <!-- FILA 2 (MÓVIL) / DERECHA (DESKTOP): ACCIONES Y CERRAR EN DESKTOP -->
+                    <div class="battle-top-actions">
+                        <!-- 📢 SPEAKER OFICIAL DE ESTADIO -->
+                        <button id="battle-voice-btn" class="battle-action-btn battle-btn-speaker" onclick="window.toggleBattleVoiceBroadcast()" title="Megafonía Oficial de Pista">
                             <i class="fas fa-bullhorn" id="battle-voice-icon" style="color: #38bdf8; font-size: 0.75rem;"></i>
                             <span id="battle-voice-text">SPEAKER</span>
                             <div id="battle-voice-eq" style="display: none; align-items: flex-end; gap: 2px; height: 12px;">
@@ -7831,19 +8116,20 @@
                             </div>
                         </button>
 
-                        <button onclick="window.ChatView?.openEventChat({ id: '${evt.id}', name: '${(evt.name || '').replace(/'/g, "\\'")}', date: '${evt.date || ''}', category: '${evt.category || ''}', club: '${(eventLocation || '').replace(/'/g, "\\'")}', type: '${isEntrenoModal ? 'entreno' : 'americana'}' });" 
-                                title="Chat oficial de los participantes" 
-                                style="background: #0f172a; border: 1.5px solid #CCFF00; color: #CCFF00; padding: 6px 12px; border-radius: 12px; font-size: 0.7rem; font-weight: 950; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s; box-shadow: 0 0 10px rgba(204,255,0,0.25);">
+                        <!-- 💬 CHAT DEL EVENTO -->
+                        <button class="battle-action-btn battle-btn-chat" onclick="window.ChatView?.openEventChat({ id: '${evt.id}', name: '${(evt.name || '').replace(/'/g, "\\'")}', date: '${evt.date || ''}', category: '${evt.category || ''}', club: '${(eventLocation || '').replace(/'/g, "\\'")}', type: '${isEntrenoModal ? 'entreno' : 'americana'}' });" 
+                                title="Chat oficial de los participantes">
                             <i class="fas fa-comment-dots" style="color: #CCFF00; font-size: 0.75rem;"></i>
-                            <span>CHAT DEL EVENTO</span>
+                            <span>CHAT<span class="chat-text-long"> DEL EVENTO</span></span>
                         </button>
 
-                        <button onclick="window.toggleBattleReadyFullscreen()" title="Pantalla Completa TV" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">
+                        <!-- ⛶ PANTALLA COMPLETA TV -->
+                        <button class="battle-action-btn battle-btn-fullscreen" onclick="window.toggleBattleReadyFullscreen()" title="Pantalla Completa TV" aria-label="Pantalla Completa">
                             <i class="fas fa-expand"></i>
                         </button>
-                        <button onclick="window.closeBattleReadyModal()" title="Cerrar" style="background: #fee2e2; border: 1px solid #fca5a5; color: #dc2626; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.95rem; transition: all 0.2s;"
-                                onmouseover="this.style.background='#dc2626'; this.style.color='#fff';"
-                                onmouseout="this.style.background='#fee2e2'; this.style.color='#dc2626';">
+
+                        <!-- ❌ BOTÓN CERRAR DESKTOP -->
+                        <button class="battle-close-btn battle-close-btn-desktop" onclick="window.closeBattleReadyModal()" title="Cerrar ventana" aria-label="Cerrar">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
@@ -8546,7 +8832,11 @@
 
                 if (snapA && snapE) {
                     this.state.americanas = snapA.docs.map(d => ({ id: d.id, ...d.data() }));
-                    this.state.entrenos = snapE.docs.map(d => ({ id: d.id, ...d.data() }));
+                    this.state.entrenos = snapE.docs.map(d => ({ id: d.id, ...d.data(), type: 'entreno' }));
+                    try {
+                        const comb = [...(this.state.americanas || []), ...(this.state.entrenos || [])];
+                        if (comb.length > 0) localStorage.setItem('sp_cached_active_events_v2', JSON.stringify(comb));
+                    } catch (_) {}
                     this.state.loading = false;
                 }
 
@@ -8554,7 +8844,8 @@
                 if (currentTab === 'events' || currentTab === 'entrenos') {
                     const todayStr = this.getTodayStr();
                     const events = this.getAllSortedEvents().filter(e => {
-                        const isCorrectType = (currentTab === 'entrenos' ? e.type === 'entreno' : e.type === 'americana');
+                        const isEnt = e.type === 'entreno' || (e.name || e.title || '').toLowerCase().includes('entreno');
+                        const isCorrectType = (currentTab === 'entrenos' ? isEnt : !isEnt);
                         if (e.status === 'finished' || e.status === 'cancelled') return false;
                         return isCorrectType && (e.status === 'live' || e.normDate >= todayStr);
                     });

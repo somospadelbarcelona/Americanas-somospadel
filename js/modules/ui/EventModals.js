@@ -89,18 +89,18 @@
                 <div style="position: relative; flex-shrink: 0;">
                     <div style="
                         width: 44px; height: 44px; border-radius: 50%;
-                        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-                        border: 2px solid ${ringColor};
+                        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+                        border: 2.5px solid ${ringColor};
                         display: flex; align-items: center; justify-content: center;
-                        font-weight: 900; font-size: 0.95rem; color: #ffffff;
-                        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+                        font-weight: 950; font-size: 0.95rem; color: #0f172a;
+                        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
                     ">${init1}</div>
                     <span style="
                         position: absolute; bottom: -4px; right: -4px;
                         width: 20px; height: 20px; border-radius: 50%;
-                        background: ${medalBg}; border: 1px solid ${medalBorder};
+                        background: ${medalBg}; border: 1.5px solid ${medalBorder};
                         display: flex; align-items: center; justify-content: center;
-                        font-size: 0.72rem; line-height: 1;
+                        font-size: 0.72rem; line-height: 1; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
                     ">${medalIcon}</span>
                 </div>
             `;
@@ -110,21 +110,21 @@
             <div style="position: relative; flex-shrink: 0; width: 62px; height: 44px; display: flex; align-items: center;">
                 <div style="
                     width: 38px; height: 38px; border-radius: 50%;
-                    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-                    border: 2px solid ${ringColor};
+                    background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
+                    border: 2.5px solid ${ringColor};
                     display: flex; align-items: center; justify-content: center;
-                    font-weight: 900; font-size: 0.8rem; color: #ffffff;
-                    box-shadow: 0 4px 10px rgba(0,0,0,0.45); z-index: 2; position: relative;
+                    font-weight: 950; font-size: 0.8rem; color: #0f172a;
+                    box-shadow: 0 3px 8px rgba(0,0,0,0.12); z-index: 2; position: relative;
                 " title="${p1}">
                     ${init1}
                 </div>
                 <div style="
                     width: 38px; height: 38px; border-radius: 50%;
-                    background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
-                    border: 2px solid ${ringColor};
+                    background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%);
+                    border: 2.5px solid ${ringColor};
                     display: flex; align-items: center; justify-content: center;
-                    font-weight: 900; font-size: 0.8rem; color: #ffffff;
-                    box-shadow: 0 4px 10px rgba(0,0,0,0.45);
+                    font-weight: 950; font-size: 0.8rem; color: #0f172a;
+                    box-shadow: 0 3px 8px rgba(0,0,0,0.12);
                     margin-left: -14px; z-index: 1; position: relative;
                 " title="${p2}">
                     ${init2}
@@ -132,9 +132,9 @@
                 <span style="
                     position: absolute; bottom: -2px; right: 0;
                     width: 20px; height: 20px; border-radius: 50%;
-                    background: ${medalBg}; border: 1px solid ${medalBorder};
+                    background: ${medalBg}; border: 1.5px solid ${medalBorder};
                     display: flex; align-items: center; justify-content: center;
-                    font-size: 0.72rem; line-height: 1; z-index: 3;
+                    font-size: 0.72rem; line-height: 1; z-index: 3; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
                 ">${medalIcon}</span>
             </div>
         `;
@@ -204,7 +204,7 @@
                     </button>
 
                     <!-- Top Pill -->
-                    <div style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; background: rgba(204, 255, 0, 0.12); border: 1px solid rgba(204, 255, 0, 0.3); color: #CCFF00; font-size: 0.68rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 20px;">
+                    <div style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; background: #dcfce7; border: 1.5px solid #86efac; color: #15803d; font-size: 0.68rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 20px;">
                         <span style="width: 6px; height: 6px; border-radius: 50%; background: #CCFF00; box-shadow: 0 0 8px #CCFF00;"></span>
                         SOMOSPADEL BCN
                     </div>
@@ -419,8 +419,7 @@
                 const winnerScoreBadge = (winningPair.score !== null && winningPair.rivalScore !== null)
                     ? `<span style="
                         display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px;
-                        border-radius: 6px; background: rgba(204, 255, 0, 0.16); color: #CCFF00;
-                        border: 1px solid rgba(204, 255, 0, 0.4); font-size: 0.68rem; font-weight: 950;
+                        border-radius: 6px; background: #ecfccb; color: #365314; border: 1.5px solid #84cc16; font-size: 0.68rem; font-weight: 950;
                     ">
                         ${winningPair.score} - ${winningPair.rivalScore}
                     </span>`
@@ -436,31 +435,31 @@
 
                 const winningCardHTML = `
                     <div class="sp-final-pair-card" style="
-                        padding: 13px 15px; border-radius: 18px; margin-bottom: 9px;
-                        background: linear-gradient(135deg, rgba(204, 255, 0, 0.13) 0%, rgba(15, 23, 42, 0.8) 100%);
-                        border: 1px solid rgba(204, 255, 0, 0.5);
-                        box-shadow: 0 0 20px rgba(204, 255, 0, 0.2);
-                        backdrop-filter: blur(8px);
+                        padding: 14px 16px; border-radius: 18px; margin-bottom: 10px;
+                        background: linear-gradient(135deg, #f7fee7 0%, #ffffff 100%);
+                        border: 2px solid #84cc16;
+                        box-shadow: 0 4px 16px rgba(132, 204, 22, 0.18);
                         animation: spSlideInRow 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
                     ">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                             <span style="
                                 display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px;
-                                border-radius: 6px; background: #CCFF00; color: #000000;
-                                font-size: 0.62rem; font-weight: 950; letter-spacing: 0.8px; text-transform: uppercase;
+                                border-radius: 6px; background: #CCFF00; color: #0f172a;
+                                border: 1.5px solid #84cc16;
+                                font-size: 0.64rem; font-weight: 950; letter-spacing: 0.8px; text-transform: uppercase;
                             ">
                                 ${winnerBadgeTitle}
                             </span>
                             ${winnerScoreBadge}
                         </div>
-                        <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
                             ${doubleAvatarWinner}
                             <div style="flex: 1; min-width: 0;">
                                 <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px;">
-                                    ${renderPairNamesWithBadges(winningPair.names, allPlayers, '#ffffff')}
+                                    ${renderPairNamesWithBadges(winningPair.names, allPlayers, '#0f172a')}
                                 </div>
-                                <div style="font-size: 0.68rem; color: #CCFF00; font-weight: 700; margin-top: 4px; display: flex; align-items: center; gap: 5px;">
-                                    <i class="fas fa-trophy" style="font-size: 0.7rem;"></i>
+                                <div style="font-size: 0.70rem; color: #15803d; font-weight: 850; margin-top: 5px; display: flex; align-items: center; gap: 6px;">
+                                    <i class="fas fa-trophy" style="font-size: 0.75rem; color: #16a34a;"></i>
                                     <span>${winnerScoreText}</span>
                                 </div>
                             </div>
@@ -481,8 +480,7 @@
                     const finalistScoreBadge = (finalistPair.score !== null && finalistPair.rivalScore !== null)
                         ? `<span style="
                             display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px;
-                            border-radius: 6px; background: rgba(148, 163, 184, 0.14); color: #cbd5e1;
-                            border: 1px solid rgba(148, 163, 184, 0.3); font-size: 0.68rem; font-weight: 900;
+                            border-radius: 6px; background: #f1f5f9; color: #334155; border: 1.5px solid #cbd5e1; font-size: 0.68rem; font-weight: 900;
                         ">
                             ${finalistPair.score} - ${finalistPair.rivalScore}
                         </span>`
@@ -498,30 +496,31 @@
 
                     finalistCardHTML = `
                         <div class="sp-final-pair-card" style="
-                            padding: 12px 15px; border-radius: 18px; margin-bottom: 12px;
-                            background: linear-gradient(135deg, rgba(148, 163, 184, 0.08) 0%, rgba(15, 23, 42, 0.75) 100%);
-                            border: 1px solid rgba(148, 163, 184, 0.35);
-                            backdrop-filter: blur(8px);
+                            padding: 13px 16px; border-radius: 18px; margin-bottom: 12px;
+                            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+                            border: 1.5px solid #cbd5e1;
+                            box-shadow: 0 3px 12px rgba(0,0,0,0.04);
                             animation: spSlideInRow 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.08s both;
                         ">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                                 <span style="
                                     display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px;
-                                    border-radius: 6px; background: #94a3b8; color: #0f172a;
-                                    font-size: 0.62rem; font-weight: 950; letter-spacing: 0.8px; text-transform: uppercase;
+                                    border-radius: 6px; background: #e2e8f0; color: #1e293b;
+                                    border: 1px solid #cbd5e1;
+                                    font-size: 0.64rem; font-weight: 950; letter-spacing: 0.8px; text-transform: uppercase;
                                 ">
                                     ${finalistBadgeTitle}
                                 </span>
                                 ${finalistScoreBadge}
                             </div>
-                            <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
                                 ${doubleAvatarFinalist}
                                 <div style="flex: 1; min-width: 0;">
                                     <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px;">
-                                        ${renderPairNamesWithBadges(finalistPair.names, allPlayers, '#e2e8f0')}
+                                        ${renderPairNamesWithBadges(finalistPair.names, allPlayers, '#0f172a')}
                                     </div>
-                                    <div style="font-size: 0.68rem; color: #94a3b8; font-weight: 600; margin-top: 4px; display: flex; align-items: center; gap: 5px;">
-                                        <i class="fas fa-medal" style="font-size: 0.7rem; color: #94a3b8;"></i>
+                                    <div style="font-size: 0.70rem; color: #64748b; font-weight: 750; margin-top: 5px; display: flex; align-items: center; gap: 6px;">
+                                        <i class="fas fa-medal" style="font-size: 0.75rem; color: #94a3b8;"></i>
                                         <span>${finalistSubText}</span>
                                     </div>
                                 </div>
@@ -539,9 +538,9 @@
                             display: flex; justify-content: space-between; align-items: center;
                             margin-bottom: 10px; padding: 0 4px;
                         ">
-                            <div style="font-size: 0.68rem; color: #CCFF00; font-weight: 900; letter-spacing: 1.8px; text-transform: uppercase; display: flex; align-items: center; gap: 6px;">
+                            <div style="font-size: 0.72rem; color: #0f172a; font-weight: 950; letter-spacing: 1.2px; text-transform: uppercase; display: flex; align-items: center; gap: 6px;">
                                 <span>${court1SectionTitle}</span>
-                                <span style="font-size: 0.58rem; background: rgba(204,255,0,0.15); color: #CCFF00; padding: 1px 6px; border-radius: 4px; border: 1px solid rgba(204,255,0,0.3);">RONDA ${maxRound}</span>
+                                <span style="font-size: 0.60rem; background: #f1f5f9; color: #0f172a; padding: 1px 6px; border-radius: 5px; border: 1px solid #cbd5e1; font-weight: 900;">RONDA ${maxRound}</span>
                             </div>
                             <div style="font-size: 0.62rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
                                 ${court1SectionSubtitle}
@@ -556,42 +555,51 @@
             const podiumTierStyles = [
                 {
                     rankBadge: '1º PUESTO',
-                    badgeBg: '#CCFF00',
-                    badgeText: '#000000',
-                    cardBg: 'linear-gradient(135deg, rgba(204, 255, 0, 0.12) 0%, rgba(15, 23, 42, 0.6) 100%)',
-                    border: 'rgba(204, 255, 0, 0.5)',
-                    nameColor: '#ffffff',
-                    accentGlow: '0 0 20px rgba(204, 255, 0, 0.25)',
-                    ringColor: '#CCFF00',
-                    ptsColor: '#CCFF00',
+                    badgeBg: '#fef08a',
+                    badgeText: '#854d0e',
+                    cardBg: 'linear-gradient(135deg, #fefce8 0%, #ffffff 100%)',
+                    border: '#facc15',
+                    nameColor: '#0f172a',
+                    accentGlow: '0 4px 16px rgba(250, 204, 21, 0.20)',
+                    ringColor: '#eab308',
+                    avatarBg: '#fef08a',
+                    avatarColor: '#854d0e',
+                    ptsColor: '#854d0e',
                     medalIcon: '🥇',
-                    medalBg: 'rgba(204, 255, 0, 0.2)'
+                    medalBg: '#fef9c3',
+                    medalBorder: '#facc15'
                 },
                 {
                     rankBadge: '2º PUESTO',
-                    badgeBg: '#94a3b8',
-                    badgeText: '#0f172a',
-                    cardBg: 'linear-gradient(135deg, rgba(148, 163, 184, 0.09) 0%, rgba(15, 23, 42, 0.6) 100%)',
-                    border: 'rgba(148, 163, 184, 0.35)',
-                    nameColor: '#ffffff',
-                    accentGlow: 'none',
+                    badgeBg: '#e2e8f0',
+                    badgeText: '#334155',
+                    cardBg: 'linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)',
+                    border: '#cbd5e1',
+                    nameColor: '#0f172a',
+                    accentGlow: '0 3px 10px rgba(0,0,0,0.04)',
                     ringColor: '#94a3b8',
-                    ptsColor: '#e2e8f0',
+                    avatarBg: '#f1f5f9',
+                    avatarColor: '#334155',
+                    ptsColor: '#334155',
                     medalIcon: '🥈',
-                    medalBg: 'rgba(148, 163, 184, 0.15)'
+                    medalBg: '#f1f5f9',
+                    medalBorder: '#cbd5e1'
                 },
                 {
                     rankBadge: '3º PUESTO',
-                    badgeBg: '#d97706',
-                    badgeText: '#ffffff',
-                    cardBg: 'linear-gradient(135deg, rgba(217, 119, 6, 0.09) 0%, rgba(15, 23, 42, 0.6) 100%)',
-                    border: 'rgba(217, 119, 6, 0.35)',
-                    nameColor: '#ffffff',
-                    accentGlow: 'none',
-                    ringColor: '#d97706',
-                    ptsColor: '#f59e0b',
+                    badgeBg: '#ffedd5',
+                    badgeText: '#9a3412',
+                    cardBg: 'linear-gradient(135deg, #fff7ed 0%, #ffffff 100%)',
+                    border: '#fdba74',
+                    nameColor: '#0f172a',
+                    accentGlow: '0 3px 10px rgba(249, 115, 22, 0.12)',
+                    ringColor: '#f97316',
+                    avatarBg: '#ffedd5',
+                    avatarColor: '#9a3412',
+                    ptsColor: '#9a3412',
                     medalIcon: '🥉',
-                    medalBg: 'rgba(217, 119, 6, 0.15)'
+                    medalBg: '#fff7ed',
+                    medalBorder: '#fdba74'
                 }
             ];
 
@@ -665,18 +673,18 @@
                         <div style="position: relative; flex-shrink: 0;">
                             <div style="
                                 width: 44px; height: 44px; border-radius: 50%;
-                                background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-                                border: 2px solid ${tier.ringColor};
+                                background: ${tier.avatarBg || '#f1f5f9'};
+                                border: 2.5px solid ${tier.ringColor};
                                 display: flex; align-items: center; justify-content: center;
-                                font-weight: 900; font-size: 0.95rem; color: #ffffff;
-                                box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+                                font-weight: 950; font-size: 0.95rem; color: ${tier.avatarColor || '#0f172a'};
+                                box-shadow: 0 3px 8px rgba(0,0,0,0.08);
                             ">
                                 ${initials}
                             </div>
                             <span style="
                                 position: absolute; bottom: -4px; right: -4px;
                                 width: 20px; height: 20px; border-radius: 50%;
-                                background: ${tier.medalBg}; border: 1px solid ${tier.border};
+                                background: ${tier.medalBg}; border: 1.5px solid ${tier.medalBorder || tier.border}; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
                                 display: flex; align-items: center; justify-content: center;
                                 font-size: 0.72rem; line-height: 1;
                             ">${tier.medalIcon}</span>
@@ -721,8 +729,8 @@
 
                         <div style="flex: 1; min-width: 0;">
                             ${nameBlockHTML}
-                            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.7rem; color: #94a3b8; font-weight: 600; margin-top: 2px;">
-                                <span style="color: #CCFF00; font-weight: 800;">${p.won || 0}V</span>
+                            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.72rem; color: #64748b; font-weight: 700; margin-top: 3px;">
+                                <span style="color: #16a34a; font-weight: 950;">${p.won || 0}V</span>
                                 <span>·</span>
                                 <span>${p.played || 0}PJ</span>
                                 <span>·</span>
@@ -751,9 +759,9 @@
                 <div style="
                     display: flex; justify-content: space-between; align-items: center;
                     margin-bottom: 11px; padding: ${finalPairsSectionHTML ? '10px 4px 0' : '0 4px'};
-                    ${finalPairsSectionHTML ? 'border-top: 1px solid rgba(255, 255, 255, 0.08);' : ''}
+                    ${finalPairsSectionHTML ? 'border-top: 1.5px solid #e2e8f0; margin-top: 8px;' : ''}
                 ">
-                    <div style="font-size: 0.68rem; color: #CCFF00; font-weight: 900; letter-spacing: 1.8px; text-transform: uppercase; display: flex; align-items: center; gap: 6px;">
+                    <div style="font-size: 0.72rem; color: #0f172a; font-weight: 950; letter-spacing: 1.2px; text-transform: uppercase; display: flex; align-items: center; gap: 6px;">
                         <span>${podiumTitleText}</span>
                     </div>
                     <div style="font-size: 0.62rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
@@ -801,7 +809,7 @@
             overlay.style.cssText = `
                 position: fixed; inset: 0; z-index: 14000;
                 display: flex; align-items: center; justify-content: center;
-                background: rgba(7, 10, 19, 0.88); backdrop-filter: blur(12px);
+                background: rgba(15, 23, 42, 0.60); backdrop-filter: blur(10px);
                 animation: spModalFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1); padding: 12px;
                 box-sizing: border-box; overflow-y: auto;
             `;
@@ -845,9 +853,9 @@
                         transform: scale(0.98);
                     }
                     .sp-tf-tab-btn {
-                        background: rgba(255, 255, 255, 0.04);
-                        color: #cbd5e1;
-                        border: 1px solid rgba(255, 255, 255, 0.1);
+                        background: #f8fafc;
+                        color: #1e293b;
+                        border: 1.5px solid #e2e8f0;
                         padding: 9px 4px;
                         border-radius: 12px;
                         font-weight: 800;
@@ -868,7 +876,7 @@
                     }
                     .sp-tf-tab-btn i {
                         font-size: 0.95rem;
-                        color: #CCFF00;
+                        color: #16a34a;
                     }
                     .sp-tf-menu-btn:hover {
                         background: rgba(255, 255, 255, 0.08) !important;
@@ -894,18 +902,17 @@
 
                 <!-- Modal Container Card -->
                 <div style="
-                    background: #080d19;
+                    background: #ffffff; color: #0f172a;
                     width: 100%; max-width: 440px; border-radius: 26px;
-                    border: 1px solid rgba(204, 255, 0, 0.35);
-                    box-shadow: 0 25px 60px rgba(0,0,0,0.7), 0 0 35px rgba(204, 255, 0, 0.15);
+                    border: 1.5px solid #e2e8f0;
+                    box-shadow: 0 25px 60px rgba(0,0,0,0.22), 0 0 35px rgba(22, 163, 74, 0.12);
                     overflow: hidden; position: relative; font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
                     max-height: calc(100vh - 28px); display: flex; flex-direction: column;
                 ">
                     <!-- Close button in top right -->
                     <button id="btn-close-training-modal" class="sp-close-icon-btn" style="
                         position: absolute; top: 16px; right: 16px; width: 34px; height: 34px;
-                        border-radius: 50%; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
-                        color: #94a3b8; display: flex; align-items: center; justify-content: center;
+                        border-radius: 50%; background: #f1f5f9; border: 1.5px solid #cbd5e1; color: #475569; display: flex; align-items: center; justify-content: center;
                         font-size: 1rem; cursor: pointer; transition: all 0.2s ease; z-index: 30;
                     ">
                         <i class="fas fa-times"></i>
@@ -915,22 +922,21 @@
                     <div style="overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1; min-height: 0; padding-bottom: 8px;">
                         <!-- Capturable Container for Flyer Export -->
                         <div id="sp-flyer-capture-card" style="
-                            background: linear-gradient(155deg, #0f172a 0%, #080d19 100%);
-                            margin: 12px; border-radius: 22px; border: 1px solid rgba(204, 255, 0, 0.3);
-                            overflow: hidden; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                            background: #ffffff;
+                            margin: 12px; border-radius: 22px; border: 2px solid #e2e8f0;
+                            overflow: hidden; position: relative; box-shadow: 0 8px 30px rgba(0,0,0,0.06);
                         ">
                             <!-- Olympic Header -->
                             <div style="
                                 padding: 24px 20px 16px; text-align: center;
-                                background: radial-gradient(circle at 50% 10%, rgba(204, 255, 0, 0.14) 0%, rgba(15, 23, 42, 0) 75%);
-                                border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+                                background: radial-gradient(circle at 50% 10%, rgba(204, 255, 0, 0.22) 0%, rgba(255, 255, 255, 0) 75%);
+                                border-bottom: 1.5px solid #e2e8f0;
                                 position: relative;
                             ">
                                 <!-- Status Badge -->
                                 <div style="
                                     display: inline-flex; align-items: center; gap: 7px; padding: 4px 12px;
-                                    border-radius: 999px; background: rgba(204, 255, 0, 0.12);
-                                    border: 1px solid rgba(204, 255, 0, 0.3); color: #CCFF00;
+                                    border-radius: 999px; background: #dcfce7; border: 1.5px solid #86efac; color: #15803d;
                                     font-size: 0.63rem; font-weight: 900; letter-spacing: 1.3px;
                                     text-transform: uppercase; margin-bottom: 12px;
                                 ">
@@ -946,14 +952,12 @@
 
                                 <!-- Title & Event Info -->
                                 <h1 style="
-                                    font-size: 1.5rem; font-weight: 950; color: #ffffff;
-                                    letter-spacing: 1px; margin: 0 0 4px 0; text-transform: uppercase;
+                                    font-size: 1.55rem; font-weight: 950; color: #0f172a; letter-spacing: 0.5px; margin: 0 0 4px 0; text-transform: uppercase;
                                 ">
                                     ${modalTitle}
                                 </h1>
                                 <div style="
-                                    font-size: 0.74rem; font-weight: 700; color: #94a3b8;
-                                    text-transform: uppercase; letter-spacing: 0.8px;
+                                    font-size: 0.76rem; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.6px;
                                     display: flex; align-items: center; justify-content: center; gap: 8px;
                                 ">
                                     <span>${modalSubtitle}</span>
@@ -969,12 +973,12 @@
 
                             <!-- Watermark / Footer Inside Captured Flyer -->
                             <div style="
-                                padding: 9px 14px 10px; display: flex; justify-content: space-between; align-items: center;
-                                border-top: 1px solid rgba(255, 255, 255, 0.06); background: rgba(8, 13, 25, 0.75);
+                                padding: 10px 16px; display: flex; justify-content: space-between; align-items: center;
+                                border-top: 1.5px solid #e2e8f0; background: #f8fafc;
                             ">
                                 <div style="display: flex; align-items: center; gap: 6px;">
                                     <img src="img/logo_somospadel.png" style="width: 17px; height: 17px; border-radius: 50%; object-fit: cover;" onerror="this.style.display='none'">
-                                    <span style="font-size: 0.62rem; color: #CCFF00; font-weight: 900; letter-spacing: 0.8px;">SOMOSPADEL BCN</span>
+                                    <span style="font-size: 0.62rem; color: #0f172a; font-weight: 950; letter-spacing: 0.8px;">SOMOSPADEL BCN</span>
                                 </div>
                                 <span style="font-size: 0.58rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
                                     PÁDEL SOCIAL & COMPETITIVO
@@ -985,12 +989,12 @@
                         <!-- Fair Play & Level Compute Info Capsule -->
                         <div style="padding: 0 16px; margin-top: 2px; margin-bottom: 8px;">
                             <div style="
-                                background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.07);
+                                background: #f8fafc; border: 1.5px solid #e2e8f0;
                                 border-radius: 12px; padding: 9px 12px; display: flex; align-items: center; gap: 8px;
                             ">
                                 <span style="font-size: 1rem; color: #CCFF00; flex-shrink: 0;">🎯</span>
-                                <span style="font-size: 0.65rem; color: #94a3b8; line-height: 1.35; font-weight: 600;">
-                                    <strong style="color: #ffffff;">Objetivo: Superación & Fair Play.</strong> Los partidos de este evento computan para tu Nivel Oficial SomosPadel.
+                                <span style="font-size: 0.68rem; color: #475569; line-height: 1.35; font-weight: 650;">
+                                    <strong style="color: #0f172a;">Objetivo: Superación & Fair Play.</strong> Los partidos de este evento computan para tu Nivel Oficial SomosPadel.
                                 </span>
                             </div>
                         </div>
@@ -998,9 +1002,9 @@
 
                     <!-- Interactive Action Buttons (Fixed at bottom) -->
                     <div style="
-                        padding: 12px 14px 16px; display: flex; flex-direction: column; gap: 8px;
-                        background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, #080d19 100%);
-                        border-top: 1px solid rgba(255, 255, 255, 0.08); flex-shrink: 0; z-index: 10;
+                        padding: 14px 16px; display: flex; flex-direction: column; gap: 9px;
+                        background: #ffffff;
+                        border-top: 1.5px solid #e2e8f0; flex-shrink: 0; z-index: 10;
                     ">
                         <!-- Row 0: Crónica Épica IA Post-Torneo -->
                         <button id="btn-tf-chronicle-ai" class="sp-tf-btn-social" style="
@@ -1045,9 +1049,9 @@
 
                         <!-- Row 2: Guardar Flyer HD -->
                         <button id="btn-tf-download-flyer" class="sp-tf-btn-social" style="
-                            background: rgba(204, 255, 0, 0.08); color: #CCFF00;
-                            border: 1px solid rgba(204, 255, 0, 0.4); padding: 9px 14px; border-radius: 12px;
-                            font-weight: 900; font-size: 0.76rem; cursor: pointer;
+                            background: #f0fdf4; color: #15803d;
+                            border: 2px solid #22c55e; padding: 11px 14px; border-radius: 12px;
+                            font-weight: 950; font-size: 0.80rem; box-shadow: 0 3px 12px rgba(34, 197, 94, 0.18); cursor: pointer;
                             display: flex; align-items: center; justify-content: center; gap: 7px;
                             transition: all 0.2s ease;
                         ">
@@ -1073,9 +1077,9 @@
 
                         <!-- Row 4: Return Button -->
                         <button id="btn-tf-menu" class="sp-tf-menu-btn" style="
-                            width: 100%; background: transparent; color: #94a3b8;
-                            border: 1px solid rgba(255, 255, 255, 0.12); padding: 8px;
-                            border-radius: 12px; font-weight: 800; font-size: 0.74rem;
+                            width: 100%; background: #ffffff; color: #475569;
+                            border: 1.5px solid #cbd5e1; padding: 9px;
+                            border-radius: 12px; font-weight: 850; font-size: 0.76rem;
                             cursor: pointer; transition: all 0.2s ease; display: flex;
                             align-items: center; justify-content: center; gap: 6px;
                         ">
@@ -1116,7 +1120,7 @@
                     scale: 2,
                     useCORS: true,
                     allowTaint: true,
-                    backgroundColor: '#080d19',
+                    backgroundColor: '#ffffff',
                     logging: false,
                     scrollX: 0,
                     scrollY: 0
