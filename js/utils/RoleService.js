@@ -47,7 +47,7 @@
                 border: "1px solid rgba(204, 255, 0, 0.4)",
                 shadow: "0 0 15px rgba(204, 255, 0, 0.15)",
                 text: "#72a800",
-                desc: "Jugador federado o fichado en un equipo oficial de competición de SomosPadel BCN en ligas interclubes."
+                desc: "Jugador federado o fichado en un equipo oficial de competición de SomosPadel BCN en ligas interclubes. Acceso exclusivo a entrenamientos oficiales de equipo y partidos de liga."
             },
             player: {
                 name: "JUGADOR SOMOSPADEL",
@@ -58,7 +58,7 @@
                 border: "1px solid rgba(148, 163, 184, 0.25)",
                 shadow: "none",
                 text: "#475569",
-                desc: "Perfil raso de la comunidad SomosPadel. Juega americanas, entrenamientos y torneos abiertos del club, sin equipo de liga."
+                desc: "Perfil raso de la comunidad SomosPadel. Juega americanas y torneos abiertos del club, sin equipo de liga. No puede apuntarse a entrenamientos oficiales de los equipos (requiere realizar una petición previa para optar a posibles plazas vacantes)."
             }
         },
 

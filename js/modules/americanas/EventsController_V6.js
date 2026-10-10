@@ -3310,7 +3310,13 @@
             let cardAction = `window.EventsController.openLiveEvent('${evt.id}', '${evt.type || 'americana'}')`;
             let fabAction = cardAction, btnLabel = 'ENTRAR', btnIcon = 'fa-play', btnColor = '#CCFF00';
 
-            const isAmericanasOnlyUser = this.state.currentUser && this.state.currentUser.role === 'player_americanas';
+            const curUser = this.state.currentUser || {};
+            const curRole = (curUser.role || '').toLowerCase().trim();
+            const isStaffUser = ['admin', 'super_admin', 'superadmin', 'captain'].includes(curRole);
+            const isTeamUser = (curRole === 'player_somospadel') || 
+                               (Array.isArray(curUser.team_somospadel) && curUser.team_somospadel.length > 0) ||
+                               (typeof curUser.team_somospadel === 'string' && curUser.team_somospadel.trim() !== '');
+            const isEntrenoLockedForUser = isEntreno && !isStaffUser && !isTeamUser;
 
             if (isCancelled) {
                 btnLabel = 'ANULADO'; btnIcon = 'fa-ban'; btnColor = '#ef4444';
@@ -3325,9 +3331,9 @@
             } else if (isWaitlistPending) {
                 btnLabel = 'CONFIRMAR'; btnIcon = 'fa-star'; btnColor = '#CCFF00';
                 fabAction = `window.EventsController.confirmWaitlist('${evt.id}', '${evt.type || 'americana'}')`;
-            } else if (isEntreno && isAmericanasOnlyUser && !isJoined) {
-                btnLabel = 'SOLO AMERICANAS'; btnIcon = 'fa-lock'; btnColor = '#4b5563';
-                fabAction = `window.PremiumModal.alert({ title: '🏆 ACCESO EXCLUSIVO', message: 'Tu perfil de jugador está registrado exclusivamente para Americanas.' })`;
+            } else if (isEntrenoLockedForUser && !isJoined) {
+                btnLabel = 'SOLO EQUIPOS'; btnIcon = 'fa-lock'; btnColor = '#4b5563';
+                fabAction = `window.PremiumModal.alert({ title: '🔒 EXCLUSIVO EQUIPOS SOMOSPADEL', message: 'Los entrenamientos oficiales son exclusivos para jugadores de los equipos de SomosPadel BCN. Como jugador de perfil raso, si deseas optar a una plaza vacante debes realizar una petición previa a capitanía o administración.', type: 'warning' })`;
             } else if (isGenderMismatch && !isJoined) {
                 btnLabel = genderCheck.buttonLabel || (mismatchCase === 'male' ? 'SOLO CHICOS' : 'SOLO CHICAS'); 
                 btnIcon = 'fa-lock'; 
@@ -5710,6 +5716,25 @@
                 const events = type === 'entreno' ? this.state.entrenos : this.state.americanas;
                 const evt = events.find(e => e.id === id);
                 if (!evt) return;
+
+                // 🛑 Comprobación exclusiva: Los entrenamientos son solo para jugadores de equipos SomosPadel
+                if (type === 'entreno') {
+                    const u = this.state.currentUser || {};
+                    const role = (u.role || '').toLowerCase().trim();
+                    const isStaff = ['admin', 'super_admin', 'superadmin', 'captain'].includes(role);
+                    const isTeamPlayer = (role === 'player_somospadel') || 
+                                         (Array.isArray(u.team_somospadel) && u.team_somospadel.length > 0) ||
+                                         (typeof u.team_somospadel === 'string' && u.team_somospadel.trim() !== '');
+
+                    if (!isStaff && !isTeamPlayer) {
+                        window.PremiumModal.alert({
+                            title: "🔒 EXCLUSIVO EQUIPOS SOMOSPADEL",
+                            message: "Los entrenamientos oficiales están reservados para los jugadores de los equipos de SomosPadel BCN. Como jugador de perfil raso, si deseas optar a una plaza vacante debes realizar una petición previa a capitanía o administración.",
+                            type: 'warning'
+                        });
+                        return;
+                    }
+                }
 
                 // 🛑 Comprobación estricta de género del jugador
                 const genderCheck = this.checkGenderEligibility(evt, this.state.currentUser);
@@ -8613,7 +8638,13 @@
                 let cardAction = `window.EventsController.openLiveEvent('${evt.id}', '${evt.type || 'americana'}')`;
                 let fabAction = cardAction;
 
-                const isAmericanasOnlyUser = this.state.currentUser && this.state.currentUser.role === 'player_americanas';
+                const curUserSmart = this.state.currentUser || {};
+                const curRoleSmart = (curUserSmart.role || '').toLowerCase().trim();
+                const isStaffSmart = ['admin', 'super_admin', 'superadmin', 'captain'].includes(curRoleSmart);
+                const isTeamSmart = (curRoleSmart === 'player_somospadel') || 
+                                    (Array.isArray(curUserSmart.team_somospadel) && curUserSmart.team_somospadel.length > 0) ||
+                                    (typeof curUserSmart.team_somospadel === 'string' && curUserSmart.team_somospadel.trim() !== '');
+                const isEntrenoLockedForUserSmart = isEntreno && !isStaffSmart && !isTeamSmart;
 
                 // Gender Check in smartUpdate
                 const genderCheck = this.checkGenderEligibility(evt, this.state.currentUser);
@@ -8632,9 +8663,9 @@
                 } else if (isWaitlistPending) {
                     btnLabel = '¡NUEVA PLAZA! CONFIRMAR'; btnIcon = 'fa-star'; btnColor = '#CCFF00';
                     fabAction = `window.EventsController.confirmWaitlist('${evt.id}', '${evt.type || 'americana'}')`;
-                } else if (isEntreno && isAmericanasOnlyUser && !isJoined) {
-                    btnLabel = 'SOLO AMERICANAS'; btnIcon = 'fa-lock'; btnColor = '#4b5563';
-                    fabAction = `window.PremiumModal.alert({ title: '🏆 ACCESO EXCLUSIVO', message: 'Tu perfil de jugador está registrado exclusivamente para Americanas.' })`;
+                } else if (isEntrenoLockedForUserSmart && !isJoined) {
+                    btnLabel = 'SOLO EQUIPOS'; btnIcon = 'fa-lock'; btnColor = '#4b5563';
+                    fabAction = `window.PremiumModal.alert({ title: '🔒 EXCLUSIVO EQUIPOS SOMOSPADEL', message: 'Los entrenamientos oficiales son exclusivos para jugadores de los equipos de SomosPadel BCN. Como jugador de perfil raso, si deseas optar a una plaza vacante debes realizar una petición previa a capitanía o administración.', type: 'warning' })`;
                 } else if (isGenderMismatch && !isJoined) {
                     btnLabel = genderCheck.buttonLabel || (genderCheck.mismatchCase === 'male' ? 'SOLO CHICOS' : 'SOLO CHICAS');
                     btnIcon = 'fa-lock';
