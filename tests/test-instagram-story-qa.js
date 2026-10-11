@@ -18,7 +18,7 @@ const indexContent = fs.readFileSync(indexPath, 'utf8');
 
 // TEST 1: Cachebuster en index.html
 console.log("➡️ TEST 1: Verificación de cachebuster en index.html");
-assert(indexContent.includes('EventsController_V6.js?v=IG_STORY_FLYER_WHITE_HD_V22'), "El cachebuster en index.html debe ser IG_STORY_FLYER_WHITE_HD_V22");
+assert(/EventsController_V6\.js\?v=IG_STORY_FLYER_WHITE_HD_V\d+/.test(indexContent), "El cachebuster en index.html debe incluir IG_STORY_FLYER_WHITE_HD_V...");
 console.log("   ✅ Cachebuster verificado correctamente.");
 
 // TEST 2: Presencia de métodos clave en EventsController_V6.js

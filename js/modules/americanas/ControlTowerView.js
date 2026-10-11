@@ -25,6 +25,9 @@
             };
             this.autoStartInterval = null;
             this._recalcTimeout = null;
+            this._loadingWatchdog = null;
+            this._isLoading = false;
+            this._currentLoadingId = null;
         }
 
         /**
@@ -36,11 +39,15 @@
             if (this.unsubscribeEvent) this.unsubscribeEvent();
             if (this.autoStartInterval) clearInterval(this.autoStartInterval);
             if (this._recalcTimeout) clearTimeout(this._recalcTimeout);
+            if (this._loadingWatchdog) clearTimeout(this._loadingWatchdog);
 
             this.unsubscribeMatches = null;
             this.unsubscribeEvent = null;
             this.autoStartInterval = null;
             this._recalcTimeout = null;
+            this._loadingWatchdog = null;
+            this._isLoading = false;
+            this._currentLoadingId = null;
         }
 
         debouncedRecalc() {
@@ -89,40 +96,101 @@
             this.pendingId = id;
             this.pendingType = type;
             this.pendingAction = action;
-            // Force load immediately to ensure navigation works even if route "flash" happens
-            if (id) this.load(id, type);
+
+            // Si ya estamos en la ruta 'live', el Router no llamará a handleLiveRoute, así que lo disparamos directamente
+            const currentRoute = window.Router?.currentRoute || window.Router?.getCurrentRoute?.();
+            if (currentRoute === 'live') {
+                this.handleLiveRoute();
+            }
         }
 
         async handleLiveRoute() {
             if (this.pendingId) {
-                await this.load(this.pendingId, this.pendingType);
-
-                if (this.pendingAction === 'confirm_waitlist') {
-                    if (window.EventsController) {
-                        await window.EventsController.confirmWaitlist(this.pendingId, this.pendingType);
-                    }
-                }
+                const targetId = this.pendingId;
+                const targetType = this.pendingType;
+                const action = this.pendingAction;
 
                 this.pendingId = null;
                 this.pendingType = null;
                 this.pendingAction = null;
+
+                await this.load(targetId, targetType);
+
+                if (action === 'confirm_waitlist') {
+                    if (window.EventsController) {
+                        await window.EventsController.confirmWaitlist(targetId, targetType);
+                    }
+                }
+            } else if (!this._isLoading) {
+                await this.loadLatest();
             } else {
-                this.loadLatest();
+                console.log("⏳ [ControlTowerView] handleLiveRoute: Carga en curso para", this._currentLoadingId, "- Omitiendo loadLatest.");
             }
         }
 
         async load(eventId, forceType = null) {
+            // Evitar ejecución duplicada concurrente sobre el mismo evento
+            if (this._isLoading && this._currentLoadingId === eventId) {
+                console.log("⏳ [ControlTowerView] Carga en curso para:", eventId);
+                return;
+            }
+            this._isLoading = true;
+            this._currentLoadingId = eventId;
             this.currentAmericanaId = eventId;
             this.selectedRound = 1;
             this.mainSection = 'playing'; // Ensure we show the game area
             this._trainingFinishedShown = false; // Reset end-of-training modal flag
 
-            // Show loading
+            // Limpiar suscripciones previas inmediatamente para evitar interferencia de eventos anteriores
+            if (this.unsubscribeMatches) {
+                try { this.unsubscribeMatches(); } catch(e){}
+                this.unsubscribeMatches = null;
+            }
+            if (this.unsubscribeEvent) {
+                try { this.unsubscribeEvent(); } catch(e){}
+                this.unsubscribeEvent = null;
+            }
+
+            // 1. RESOLUCIÓN INMEDIATA DESDE MEMORIA LOCAL (Caché síncrona en 0ms)
+            let localEvent = null;
+            if (window.EventsController?.state) {
+                if (forceType === 'entreno') {
+                    localEvent = (window.EventsController.state.entrenos || []).find(e => e.id === eventId);
+                } else if (forceType === 'americana') {
+                    localEvent = (window.EventsController.state.americanas || []).find(e => e.id === eventId);
+                } else {
+                    localEvent = (window.EventsController.state.americanas || []).find(e => e.id === eventId)
+                              || (window.EventsController.state.entrenos || []).find(e => e.id === eventId);
+                }
+            }
+            if (!localEvent && window.EventService?.cache) {
+                localEvent = typeof window.EventService.cache.get === 'function' ? window.EventService.cache.get(eventId) : null;
+            }
+
+            let isEntreno = forceType ? (forceType === 'entreno') : (localEvent?.type === 'entreno' || !!localEvent?.isEntreno);
+
+            if (localEvent) {
+                this.currentAmericanaDoc = { ...localEvent, isEntreno };
+                if (this.currentAmericanaDoc.status === 'finished') {
+                    this.activeTab = 'results';
+                }
+                console.log("⚡ [ControlTowerView] Evento resuelto inmediatamente desde memoria:", this.currentAmericanaDoc.name || eventId);
+            }
+
+            // Mostrar estado de carga (EventHeader ya tendrá datos reales si localEvent existe)
             this.render({ status: 'LOADING' });
+
+            // 2. WATCHDOG TIMEOUT DE SEGURIDAD (1500ms):
+            // Garantiza que la interfaz NUNCA se quede colgada en el spinner si Firebase o la red tardan
+            if (this._loadingWatchdog) clearTimeout(this._loadingWatchdog);
+            this._loadingWatchdog = setTimeout(() => {
+                console.warn(`⏱️ [ControlTowerView] Watchdog timeout (1500ms) alcanzado para ${eventId}. Desbloqueando UI...`);
+                this._isLoading = false;
+                this.recalc();
+            }, 1500);
 
             try {
                 let doc = null;
-                let isEntreno = forceType === 'entreno';
 
                 if (forceType) {
                     const collection = isEntreno ? 'entrenos' : 'americanas';
@@ -132,15 +200,17 @@
                 if (!doc || !doc.exists) {
                     // Auto-detection fallback
                     doc = await window.db.collection('americanas').doc(eventId).get();
-                    isEntreno = false;
-
-                    if (!doc.exists) {
+                    if (doc && doc.exists) {
+                        isEntreno = false;
+                    } else {
                         doc = await window.db.collection('entrenos').doc(eventId).get();
-                        isEntreno = true;
+                        if (doc && doc.exists) {
+                            isEntreno = true;
+                        }
                     }
                 }
 
-                if (doc.exists) {
+                if (doc && doc.exists) {
                     this.currentAmericanaDoc = { id: doc.id, ...doc.data(), isEntreno };
 
                     // 🔒 Verificación de Acceso a Americana Privada con Contraseña
@@ -158,6 +228,8 @@
 
                         if (!isUnlocked) {
                             console.warn("🔒 [ControlTowerView] Acceso restringido a Americana Privada:", eventId);
+                            if (this._loadingWatchdog) clearTimeout(this._loadingWatchdog);
+                            this._isLoading = false;
                             this.renderPrivateLockScreen(this.currentAmericanaDoc);
                             return;
                         }
@@ -169,29 +241,43 @@
                     } else {
                         this.activeTab = 'results';
                     }
-                } else {
+                } else if (!this.currentAmericanaDoc) {
                     console.error("Event not found in either americanas or entrenos:", eventId);
+                    if (this._loadingWatchdog) clearTimeout(this._loadingWatchdog);
+                    this._isLoading = false;
                     this.renderEmptyState();
                     return;
                 }
             } catch (e) {
                 console.error("Error loading event doc:", e);
+                if (!this.currentAmericanaDoc) {
+                    if (this._loadingWatchdog) clearTimeout(this._loadingWatchdog);
+                    this._isLoading = false;
+                    this.renderEmptyState();
+                    return;
+                }
             }
 
-            // Unsubscribe previous listeners
-            if (this.unsubscribeMatches) this.unsubscribeMatches();
-            if (this.unsubscribeEvent) this.unsubscribeEvent();
+            // Unsubscribe previous listeners safely
+            if (this.unsubscribeMatches) {
+                try { this.unsubscribeMatches(); } catch(e){}
+                this.unsubscribeMatches = null;
+            }
+            if (this.unsubscribeEvent) {
+                try { this.unsubscribeEvent(); } catch(e){}
+                this.unsubscribeEvent = null;
+            }
 
-            const isEntreno = this.currentAmericanaDoc?.isEntreno;
+            const actualIsEntreno = !!this.currentAmericanaDoc?.isEntreno;
 
             // Real-time listener for EVENT STATUS CHANGES
-            const eventCollection = isEntreno ? 'entrenos' : 'americanas';
+            const eventCollection = actualIsEntreno ? 'entrenos' : 'americanas';
             this.unsubscribeEvent = window.db.collection(eventCollection)
                 .doc(eventId)
                 .onSnapshot(eventDoc => {
                     if (!eventDoc.exists) return;
 
-                    const updatedEvent = { id: eventDoc.id, ...eventDoc.data(), isEntreno };
+                    const updatedEvent = { id: eventDoc.id, ...eventDoc.data(), isEntreno: actualIsEntreno };
                     const previousStatus = this.currentAmericanaDoc?.status;
                     this.currentAmericanaDoc = updatedEvent;
 
@@ -200,7 +286,7 @@
                     if (updatedEvent.status === 'live' && previousStatus !== 'live' && previousStatus !== 'adjusting') {
                         console.log("🚀 [ControlTowerView] Event status changed to LIVE. Auto-generating matches...");
                         if (window.AmericanaService) {
-                            window.AmericanaService.generateFirstRoundMatches(eventId, isEntreno ? 'entreno' : 'americana');
+                            window.AmericanaService.generateFirstRoundMatches(eventId, actualIsEntreno ? 'entreno' : 'americana');
                         }
                     }
 
@@ -209,6 +295,7 @@
                     }
                 }, err => {
                     console.error("Error watching event status:", err);
+                    this.debouncedRecalc();
                 });
 
             // AUTO-START CHECKER (Every 30s)
@@ -245,17 +332,15 @@
                     const maxCourts = evt.max_courts || 4;
                     const isFull = players.length >= (maxCourts * 4);
 
-                    // Allow start if time matches OR passed (within last 2 hours to avoid auto-starting old events?)
-                    // Actually, if it's 'open' and time passed, it SHOULD go live.
                     if (nowTime >= schedTime) {
                         if (isFull) {
                             console.log("🚀 AUTO-START TRIGGERED: Changing status to LIVE and Generating Matches");
                             // 1. Update Status (Trigger listeners)
-                            await window.EventService.updateEvent(isEntreno ? 'entreno' : 'americana', eventId, { status: 'live' });
+                            await window.EventService.updateEvent(actualIsEntreno ? 'entreno' : 'americana', eventId, { status: 'live' });
 
                             // 2. Force Generation (Redundancy in case listener misses)
                             if (window.AmericanaService) {
-                                await window.AmericanaService.generateFirstRoundMatches(eventId, isEntreno ? 'entreno' : 'americana');
+                                await window.AmericanaService.generateFirstRoundMatches(eventId, actualIsEntreno ? 'entreno' : 'americana');
                             }
 
                             // 3. Update Local State immediately
@@ -270,16 +355,40 @@
 
             // FIXED: Dynamic collection selection based on Event Type
             // Entrenos use 'entrenos_matches', Americanas use 'matches'
-            const matchesCollection = isEntreno ? 'entrenos_matches' : 'matches';
+            const matchesCollection = actualIsEntreno ? 'entrenos_matches' : 'matches';
             // NOTE: Both Entrenos and Americanas use 'americana_id' field for consistency in ID reference
             const fieldName = 'americana_id';
 
-            console.log(`🔍 [ControlTowerView] Loading matches from ${matchesCollection} for event ${eventId} (IsEntreno: ${!!isEntreno})`);
+            console.log(`🔍 [ControlTowerView] Loading matches from ${matchesCollection} for event ${eventId} (IsEntreno: ${actualIsEntreno})`);
 
             this.unsubscribeMatches = window.db.collection(matchesCollection)
                 .where(fieldName, '==', eventId)
-                .onSnapshot(snapshot => {
-                    const rawMatches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                .onSnapshot(async snapshot => {
+                    let rawMatches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                    // Fallback resiliente: Si no hay partidos con 'americana_id', intentar comprobar si están con 'eventId' o 'americanaId'
+                    if (rawMatches.length === 0) {
+                        try {
+                            const [snapEventId, snapCamel] = await Promise.all([
+                                window.db.collection(matchesCollection).where('eventId', '==', eventId).get().catch(() => null),
+                                window.db.collection(matchesCollection).where('americanaId', '==', eventId).get().catch(() => null)
+                            ]);
+                            if (snapEventId && !snapEventId.empty) {
+                                rawMatches = snapEventId.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                            } else if (snapCamel && !snapCamel.empty) {
+                                rawMatches = snapCamel.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                            }
+                        } catch (fallbackErr) {
+                            console.warn("⚠️ [ControlTowerView] Error comprobando IDs alternativos de partidos:", fallbackErr);
+                        }
+                    }
+
+                    // Watchdog resuelto con éxito
+                    if (this._loadingWatchdog) {
+                        clearTimeout(this._loadingWatchdog);
+                        this._loadingWatchdog = null;
+                    }
+                    this._isLoading = false;
 
                     // CRITICAL FIX: Deduplicate matches by unique signature (court + round + teams)
                     // This prevents UI duplicates even if Firebase has duplicate documents
@@ -311,13 +420,13 @@
                     if (shouldGenerate && this.allMatches.length === 0) {
                         console.warn("⚠️ Event Trigger (Live or Full) - No matches found. Attempting auto-generation...");
                         if (window.AmericanaService) {
-                            window.AmericanaService.generateFirstRoundMatches(eventId, isEntreno ? 'entreno' : 'americana');
+                            window.AmericanaService.generateFirstRoundMatches(eventId, actualIsEntreno ? 'entreno' : 'americana');
                         }
                     }
 
                     // Auto-reconcile desincronizaciones entre jugadores inscritos y partidos programados (si no han empezado)
                     if (this.allMatches.length > 0 && window.RoundAutoRegenerationService && !this.isGeneratingRound) {
-                        window.RoundAutoRegenerationService.reconcileEventRounds(eventId, isEntreno ? 'entreno' : 'americana').catch(() => {});
+                        window.RoundAutoRegenerationService.reconcileEventRounds(eventId, actualIsEntreno ? 'entreno' : 'americana').catch(() => {});
                     }
 
                     // --- DETECT NEW DRAW FOR ANIMATION (Improved for Sync) ---
@@ -373,6 +482,12 @@
 
                 }, err => {
                     console.error("Error watching matches:", err);
+                    if (this._loadingWatchdog) {
+                        clearTimeout(this._loadingWatchdog);
+                        this._loadingWatchdog = null;
+                    }
+                    this._isLoading = false;
+                    this.debouncedRecalc();
                 });
         }
 
@@ -616,51 +731,60 @@
         }
 
         async loadLatest() {
-            this.render({ status: 'LOADING' });
             try {
                 const user = window.Store ? window.Store.getState('currentUser') : null;
 
-                // Fetch both Americanas and Entrenos
-                const [amsSnap, entsSnap] = await Promise.all([
+                // 1. Prioridad: Buscar en memoria local (0ms de latencia)
+                const localAms = (window.EventsController?.state?.americanas || []).map(doc => ({ id: doc.id, ...doc, type: 'americana' }));
+                const localEnts = (window.EventsController?.state?.entrenos || []).map(doc => ({ id: doc.id, ...doc, type: 'entreno' }));
+                const localEvents = [...localAms, ...localEnts];
+
+                const findBestTarget = (list) => {
+                    if (!list || list.length === 0) return null;
+                    const sorted = [...list].sort((a, b) => {
+                        if (a.status === 'live' && b.status !== 'live') return -1;
+                        if (b.status === 'live' && a.status !== 'live') return 1;
+                        return new Date(b.date || 0) - new Date(a.date || 0);
+                    });
+
+                    const myLive = user ? sorted.find(e =>
+                        e.status === 'live' && (
+                            (e.players && e.players.some(p => (p.uid || p.id) === user.uid)) ||
+                            (e.registeredPlayers && e.registeredPlayers.includes(user.uid))
+                        )
+                    ) : null;
+                    const anyLive = sorted.find(e => e.status === 'live');
+                    const myFinished = user ? sorted.find(e =>
+                        e.status === 'finished' && (
+                            (e.players && e.players.some(p => (p.uid || p.id) === user.uid)) ||
+                            (e.registeredPlayers && e.registeredPlayers.includes(user.uid))
+                        )
+                    ) : null;
+
+                    return myLive || anyLive || myFinished || sorted[0];
+                };
+
+                const localTarget = findBestTarget(localEvents);
+                if (localTarget) {
+                    console.log("⚡ [ControlTowerView] Evento resuelto inmediatamente desde memoria local en loadLatest:", localTarget.name || localTarget.id);
+                    return this.load(localTarget.id, localTarget.type);
+                }
+
+                // 2. Si no están en memoria local, mostramos spinner y consultamos Firestore con timeout de seguridad (2500ms)
+                this.render({ status: 'LOADING' });
+
+                const fetchFirestoreEvents = Promise.all([
                     window.db.collection('americanas').orderBy('date', 'desc').limit(5).get(),
                     window.db.collection('entrenos').orderBy('date', 'desc').limit(5).get()
-                ]);
-
-                const events = [
+                ]).then(([amsSnap, entsSnap]) => [
                     ...amsSnap.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'americana' })),
                     ...entsSnap.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'entreno' }))
-                ];
+                ]);
 
-                // Sort by prioritized relevance: Status (Live > Finished), then Date
-                events.sort((a, b) => {
-                    if (a.status === 'live' && b.status !== 'live') return -1;
-                    if (b.status === 'live' && a.status !== 'live') return 1;
-                    return new Date(b.date) - new Date(a.date);
-                });
+                const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT_LATEST')), 2500));
 
-                // Priority for selection: 
-                // 1. Live event where user plays
-                // 2. Any live event
-                // 3. User's most recent finished event
-                // 4. Latest overall event
-
-                const myLiveEvent = user ? events.find(e =>
-                    e.status === 'live' && (
-                        (e.players && e.players.some(p => (p.uid || p.id) === user.uid)) ||
-                        (e.registeredPlayers && e.registeredPlayers.includes(user.uid))
-                    )
-                ) : null;
-
-                const anyLiveEvent = events.find(e => e.status === 'live');
-
-                const myFinishedEvent = user ? events.find(e =>
-                    e.status === 'finished' && (
-                        (e.players && e.players.some(p => (p.uid || p.id) === user.uid)) ||
-                        (e.registeredPlayers && e.registeredPlayers.includes(user.uid))
-                    )
-                ) : null;
-
-                const target = myLiveEvent || anyLiveEvent || myFinishedEvent || events[0];
+                const events = await Promise.race([fetchFirestoreEvents, timeoutPromise]);
+                const target = findBestTarget(events);
 
                 if (target) {
                     this.load(target.id, target.type);

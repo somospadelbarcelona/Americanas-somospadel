@@ -7,6 +7,12 @@
 
     // Global handler for results navigation - USE PREMIUM CONTROLTOWER VIEW OR ENTRENO LIVE VIEW
     window.openResultsView = (id, type) => {
+        if (!type && window.EventsController?.state) {
+            const isEnt = (window.EventsController.state.entrenos || []).some(e => e.id === id);
+            const isAme = (window.EventsController.state.americanas || []).some(e => e.id === id);
+            if (isEnt && !isAme) type = 'entreno';
+            else if (isAme) type = 'americana';
+        }
         console.log("🚀 [EventsController] Opening Results for:", id, "Type:", type);
 
         // For Americanas & Entrenos (Unified Pro View): Wait for ControlTowerView to be ready
@@ -3324,7 +3330,7 @@
                 fabAction = cardAction;
             } else if (isFinished || evt.status === 'finished') {
                 btnLabel = isEntreno ? 'FINALIZADO' : 'FINALIZADA'; btnIcon = 'fa-history'; btnColor = '#475569';
-                cardAction = `window.openResultsView('${evt.id}', '${evt.type || 'americana'}')`;
+                cardAction = `window.openResultsView('${evt.id}', '${evt.type || (isEntreno ? 'entreno' : 'americana')}')`;
                 fabAction = cardAction;
             } else if (isLive) {
                 btnLabel = 'LIVE'; btnIcon = 'fa-broadcast-tower'; btnColor = '#FF2D55';
@@ -8688,7 +8694,7 @@
                     fabAction = cardAction;
                 } else if (isFinished) {
                     btnLabel = isEntreno ? 'FINALIZADO' : 'FINALIZADA'; btnIcon = 'fa-history'; btnColor = '#475569';
-                    cardAction = `window.openResultsView('${evt.id}', '${evt.type || 'americana'}')`;
+                    cardAction = `window.openResultsView('${evt.id}', '${evt.type || (isEntreno ? 'entreno' : 'americana')}')`;
                     fabAction = cardAction;
                 } else if (isLive) {
                     btnLabel = 'LIVE'; btnIcon = 'fa-broadcast-tower'; btnColor = '#FF2D55';
