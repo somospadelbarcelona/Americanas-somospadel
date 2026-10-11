@@ -72,10 +72,10 @@
                                 <span>CHAT DEL EVENTO</span>
                             </button>
                             <button type="button" onclick="window.ControlTowerView ? window.ControlTowerView.openChronicleAI() : (window.TournamentChronicleModal?.open())" 
-                                    title="Crónica Épica de la Jornada"
+                                    title="Crónica de la Jornada"
                                     style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.28) 0%, rgba(204, 255, 0, 0.12) 100%); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #CCFF00; padding: 7px 12px; border-radius: 12px; font-weight: 900; font-size: 0.68rem; cursor: pointer; border: 1px solid rgba(139, 92, 246, 0.5); display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(139,92,246,0.2); flex-shrink: 0; white-space: nowrap;">
                                 <span>✨</span>
-                                <span>CRÓNICA ÉPICA</span>
+                                <span>CRÓNICA</span>
                             </button>
                         </div>
                     </div>

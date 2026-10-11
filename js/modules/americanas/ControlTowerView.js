@@ -1259,10 +1259,10 @@
                                 ${isLastPlannedRound ? `
                                     <button type="button" onclick="event.stopPropagation(); window.ControlTowerView.openChronicleAI();"
                                             class="btn-primary-pro"
-                                            style="padding: 14px 20px; font-size: 0.90rem; background: linear-gradient(135deg, #8B5CF6 0%, #4C1D95 100%); color: #ffffff; border: 1px solid rgba(204, 255, 0, 0.5); border-radius: 16px; font-weight: 1000; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 8px 25px rgba(139, 92, 246, 0.35); cursor: pointer; transition: transform 0.15s ease; margin-bottom: 8px;">
+                                            style="padding: 14px 20px; font-size: 0.90rem; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; border: 1px solid #475569; border-radius: 16px; font-weight: 1000; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 8px 25px rgba(15, 23, 42, 0.25); cursor: pointer; transition: transform 0.15s ease; margin-bottom: 8px;">
                                         <span style="font-size: 1.1rem;">✨</span>
-                                        <span>📰 CRÓNICA ÉPICA DE LA JORNADA</span>
-                                        <span style="background: #CCFF00; color: #000; font-size: 0.58rem; padding: 2px 6px; border-radius: 6px; font-weight: 950;">NUEVO</span>
+                                        <span>📰 CRÓNICA DE LA JORNADA</span>
+                                        <span style="background: #0284c7; color: #fff; font-size: 0.58rem; padding: 2px 6px; border-radius: 6px; font-weight: 950;">OFICIAL</span>
                                     </button>
                                     <button type="button" id="btn-finish-and-standings" 
                                             onclick="event.stopPropagation(); window.ControlTowerView.finishTournament();"

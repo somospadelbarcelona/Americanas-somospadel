@@ -24,6 +24,48 @@
         static evolutionSelectedPlayer = 0;
         static evolutionMode = 'accumulated'; // 'accumulated' | 'round'
         static activeCompetitivenessCategory = null; // null | 'tight' | 'medium' | 'blowout'
+        static activeSubTab = 'podium'; // 'podium' | 'charts' | 'badges' | 'chronicle'
+
+        /**
+         * Alterna la sub-pestaña activa del Resumen con animación suave y actualización instantánea
+         * @param {'podium'|'charts'|'badges'|'chronicle'} tabName
+         */
+        static switchSubTab(tabName) {
+            if (!tabName) tabName = 'podium';
+            this.activeSubTab = tabName;
+
+            // 1. Actualizar estado visual de los botones de sub-pestañas
+            const tabButtons = document.querySelectorAll('.sp-subtab-btn');
+            tabButtons.forEach(btn => {
+                const target = btn.getAttribute('data-tab');
+                if (target === tabName) {
+                    btn.classList.add('active');
+                    btn.setAttribute('aria-selected', 'true');
+                } else {
+                    btn.classList.remove('active');
+                    btn.setAttribute('aria-selected', 'false');
+                }
+            });
+
+            // 2. Mostrar únicamente el panel de contenido seleccionado
+            const panels = document.querySelectorAll('.sp-subtab-pane');
+            panels.forEach(panel => {
+                const target = panel.getAttribute('data-tab-content');
+                if (target === tabName) {
+                    panel.classList.add('active');
+                    panel.style.display = 'block';
+                } else {
+                    panel.classList.remove('active');
+                    panel.style.display = 'none';
+                }
+            });
+
+            // 3. Si se accede a gráficos, forzar refresco suave de dimensiones
+            if (tabName === 'charts') {
+                this._updateEvolutionDOM();
+                this._updateCompetitivenessDOM();
+            }
+        }
 
         /**
          * Renderiza la vista unificada y completa del Resumen de Competición
@@ -144,97 +186,231 @@
                 chronicleSubheadline
             };
 
+            const currentSubTab = this.activeSubTab || 'podium';
+
             return `
                 <div class="sp-sum2" style="font-family:'Outfit',-apple-system,sans-serif;padding:16px 14px 60px;background:#f8fafc;color:#0f172a;min-height:100vh;box-sizing:border-box;">
                 <style>
-                  .sp-sum2*{box-sizing:border-box}
-                  @keyframes sp-fadeup{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-                  @keyframes sp-bar{from{width:0}to{width:var(--w)}}
-                  .sp-s2-fade{animation:sp-fadeup .45s ease both}
-                  .sp-s2-fade:nth-child(2){animation-delay:.06s}
-                  .sp-s2-fade:nth-child(3){animation-delay:.12s}
-                  .sp-s2-fade:nth-child(4){animation-delay:.18s}
-                  .sp-s2-fade:nth-child(5){animation-delay:.24s}
-                  .sp-s2-fade:nth-child(6){animation-delay:.30s}
-                  .sp-s2-fade:nth-child(7){animation-delay:.36s}
+                  .sp-sum2 * { box-sizing: border-box; }
+                  @keyframes sp-fadeup { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+                  @keyframes sp-bar { from { width: 0; } to { width: var(--w); } }
+                  .sp-s2-fade { animation: sp-fadeup .4s ease both; }
 
-                  /* Hero Banner */
-                  .sp-hero2{background:#ffffff;border:1.5px solid #e2e8f0;border-radius:22px;padding:20px 18px 18px;margin-bottom:16px;position:relative;overflow:hidden;box-shadow:0 10px 30px -5px rgba(0,0,0,0.05)}
-                  .sp-hero2-tag{display:inline-flex;align-items:center;gap:6px;background:#ecfccb;border:1px solid #bef264;color:#365314;padding:4px 12px;border-radius:20px;font-size:.65rem;font-weight:950;letter-spacing:.8px;text-transform:uppercase}
-                  .sp-hero2-dot{width:7px;height:7px;border-radius:50%;background:#84cc16;box-shadow:0 0 6px #84cc16}
-                  .sp-hero2-title{font-size:1.45rem;font-weight:1000;letter-spacing:-.5px;line-height:1.2;margin:10px 0 4px;color:#0f172a}
-                  .sp-hero2-sub{font-size:.74rem;color:#64748b;line-height:1.4}
-                  .sp-hero2-meta{font-size:.72rem;font-weight:800;color:#64748b;display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:9px}
-                  .sp-hero2-meta b{color:#0f172a}
-                  .sp-action-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
-                  .sp-action-btn{flex:1;min-width:130px;padding:11px 16px;border-radius:14px;font-weight:950;font-size:.75rem;letter-spacing:.3px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:transform .2s,box-shadow .2s;border:none;text-decoration:none}
-                  .sp-action-btn:hover{transform:translateY(-2px)}
-                  .sp-action-btn:active{transform:scale(.97)}
+                  /* Hero Banner Blanco Pro */
+                  .sp-hero2{background:#ffffff;border:1.5px solid #e2e8f0;border-radius:22px;padding:18px 18px 16px;margin-bottom:14px;position:relative;box-shadow:0 4px 20px -2px rgba(0,0,0,0.04)}
+                  .sp-hero2-tag {
+                      display: inline-flex;
+                      align-items: center;
+                      gap: 6px;
+                      background: #ecfccb;
+                      border: 1px solid #bef264;
+                      color: #365314;
+                      padding: 4px 11px;
+                      border-radius: 20px;
+                      font-size: .65rem;
+                      font-weight: 950;
+                      letter-spacing: .6px;
+                      text-transform: uppercase;
+                  }
+                  .sp-hero2-dot { width: 7px; height: 7px; border-radius: 50%; background: #84cc16; box-shadow: 0 0 6px #84cc16; }
+                  .sp-hero2-title { font-size: 1.4rem; font-weight: 1000; letter-spacing: -.5px; line-height: 1.2; margin: 8px 0 4px; color: #0f172a; }
+                  .sp-hero2-meta { font-size: .72rem; font-weight: 800; color: #64748b; display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-top: 6px; }
+                  .sp-hero2-meta b { color: #0f172a; }
+
+                  /* Action Buttons */
+                  .sp-action-btn {
+                      padding: 10px 16px;
+                      border-radius: 14px;
+                      font-weight: 950;
+                      font-size: .75rem;
+                      letter-spacing: .2px;
+                      cursor: pointer;
+                      display: inline-flex;
+                      align-items: center;
+                      justify-content: center;
+                      gap: 8px;
+                      transition: transform .2s, box-shadow .2s;
+                      border: none;
+                      text-decoration: none;
+                  }
+                  .sp-action-btn:hover { transform: translateY(-2px); }
+                  .sp-action-btn:active { transform: scale(.97); }
+
+                  /* KPI Grid Horizontal en Fila */
+                  .sp-kpi2 {
+                      display: grid;
+                      grid-template-columns: repeat(2, 1fr);
+                      gap: 8px;
+                      margin-top: 14px;
+                  }
+                  @media(min-width: 580px) {
+                      .sp-kpi2 { grid-template-columns: repeat(4, 1fr); }
+                  }
+                  .sp-kpi2-card{background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:12px 10px;text-align:center;box-shadow:0 2px 10px -2px rgba(0,0,0,0.02);transition:transform .15s,border-color .15s}
+                  .sp-kpi2-card:hover { border-color: #84cc16; transform: translateY(-2px); }
+                  .sp-kpi2-icon { font-size: .95rem; margin-bottom: 2px; }
+                  .sp-kpi2-num { font-size: 1.45rem; font-weight: 1000; line-height: 1.1; margin: 3px 0 1px; letter-spacing: -.4px; }
+                  .sp-kpi2-lbl { font-size: .62rem; color: #64748b; font-weight: 900; text-transform: uppercase; letter-spacing: .5px; }
+
+                  /* Navegador Segmentado de Sub-Tabs */
+                  .sp-subtabs-nav {
+                      display: flex;
+                      gap: 6px;
+                      background: #f1f5f9;
+                      border: 1.5px solid #e2e8f0;
+                      padding: 5px;
+                      border-radius: 16px;
+                      margin-bottom: 16px;
+                      overflow-x: auto;
+                      scrollbar-width: none;
+                      -webkit-overflow-scrolling: touch;
+                  }
+                  .sp-subtabs-nav::-webkit-scrollbar { display: none; }
+                  .sp-subtab-btn {
+                      flex: 1;
+                      min-width: 125px;
+                      padding: 10px 12px;
+                      border-radius: 12px;
+                      border: none;
+                      background: transparent;
+                      color: #475569;
+                      font-size: .72rem;
+                      font-weight: 950;
+                      letter-spacing: .2px;
+                      cursor: pointer;
+                      display: inline-flex;
+                      align-items: center;
+                      justify-content: center;
+                      gap: 6px;
+                      white-space: nowrap;
+                      transition: all .2s cubic-bezier(0.16, 1, 0.3, 1);
+                  }
+                  .sp-subtab-btn:hover:not(.active) { background: #e2e8f0; color: #0f172a; }
+                  .sp-subtab-btn.active {
+                      background: #0f172a;
+                      color: #ffffff;
+                      box-shadow: 0 4px 14px rgba(15,23,42,0.22);
+                  }
+                  .sp-subtab-badge {
+                      background: #84cc16;
+                      color: #000000;
+                      font-size: .56rem;
+                      font-weight: 1000;
+                      padding: 1px 6px;
+                      border-radius: 6px;
+                  }
+                  .sp-subtab-btn.active .sp-subtab-badge {
+                      background: #CCFF00;
+                      color: #000000;
+                  }
+
+                  /* Paneles de Contenido */
+                  .sp-subtab-pane { display: none; }
+                  .sp-subtab-pane.active { display: block; animation: sp-fadeup .35s ease both; }
 
                   /* Section Label */
-                  .sp-s2-lbl{font-size:.72rem;font-weight:950;letter-spacing:.8px;text-transform:uppercase;color:#475569;margin:22px 0 12px;display:flex;align-items:center;gap:8px}
-                  .sp-s2-lbl i{width:18px;text-align:center}
+                  .sp-s2-lbl {
+                      font-size: .72rem;
+                      font-weight: 950;
+                      letter-spacing: .7px;
+                      text-transform: uppercase;
+                      color: #475569;
+                      margin: 16px 0 10px;
+                      display: flex;
+                      align-items: center;
+                      gap: 8px;
+                  }
+                  .sp-s2-lbl i { width: 18px; text-align: center; }
 
                   /* Podio */
-                  .sp-podium2{display:grid;grid-template-columns:1fr 1.18fr 1fr;gap:10px;align-items:flex-end;margin-bottom:16px}
-                  .sp-pod-col{border-radius:20px;padding:16px 10px 14px;text-align:center;display:flex;flex-direction:column;align-items:center;position:relative;transition:transform .2s,box-shadow .2s;background:#ffffff}
-                  .sp-pod-col:hover{transform:translateY(-4px)}
-                  .sp-pod-avatar{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:1000;font-size:.88rem;margin-bottom:8px;flex-shrink:0}
-                  .sp-pod-pts{font-size:.72rem;font-weight:950;padding:4px 9px;border-radius:10px;margin-top:4px}
-                  .sp-pod-wl{font-size:.65rem;color:#64748b;font-weight:800;margin-top:4px}
+                  .sp-podium2 {
+                      display: grid;
+                      grid-template-columns: 1fr 1.15fr 1fr;
+                      gap: 10px;
+                      align-items: flex-end;
+                      margin-bottom: 16px;
+                  }
+                  .sp-pod-col {
+                      border-radius: 20px;
+                      padding: 16px 10px 14px;
+                      text-align: center;
+                      display: flex;
+                      flex-direction: column;
+                      align-items: center;
+                      position: relative;
+                      transition: transform .2s, box-shadow .2s;
+                      background: #ffffff;
+                  }
+                  .sp-pod-col:hover { transform: translateY(-4px); }
+                  .sp-pod-avatar { width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 1000; font-size: .88rem; margin-bottom: 8px; flex-shrink: 0; }
+                  .sp-pod-pts { font-size: .72rem; font-weight: 950; padding: 4px 9px; border-radius: 10px; margin-top: 4px; }
+                  .sp-pod-wl { font-size: .65rem; color: #64748b; font-weight: 800; margin-top: 4px; }
 
                   /* Progress Bar */
-                  .sp-pbar-track{height:6px;background:#f1f5f9;border-radius:6px;overflow:hidden;margin-top:8px}
-                  .sp-pbar-fill{height:100%;border-radius:6px;animation:sp-bar .8s ease both}
-
-                  /* KPI Grid */
-                  .sp-kpi2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
-                  @media(min-width:540px){.sp-kpi2{grid-template-columns:repeat(4,1fr)}}
-                  .sp-kpi2-card{background:#ffffff;border:1px solid #e2e8f0;border-radius:18px;padding:15px 12px;text-align:center;box-shadow:0 4px 16px -2px rgba(0,0,0,0.03);transition:transform .2s,border-color .2s}
-                  .sp-kpi2-card:hover{border-color:#84cc16;transform:translateY(-2px)}
-                  .sp-kpi2-num{font-size:1.6rem;font-weight:1000;line-height:1.1;margin:5px 0 2px;letter-spacing:-.5px}
-                  .sp-kpi2-lbl{font-size:.62rem;color:#64748b;font-weight:900;text-transform:uppercase;letter-spacing:.6px}
-                  .sp-kpi2-icon{font-size:.9rem;margin-bottom:3px}
+                  .sp-pbar-track { height: 6px; background: #f1f5f9; border-radius: 6px; overflow: hidden; margin-top: 8px; width: 100%; }
+                  .sp-pbar-fill { height: 100%; border-radius: 6px; animation: sp-bar .8s ease both; }
 
                   /* MVP Card */
-                  .sp-mvp2{background:linear-gradient(135deg,#fffbeb 0%,#ffffff 50%,#f0fdf4 100%);border:1.5px solid #fde68a;border-radius:20px;padding:18px 16px;margin-bottom:16px;box-shadow:0 8px 24px -4px rgba(245,158,11,0.12)}
-                  .sp-mvp2-pill{background:linear-gradient(135deg,#f59e0b,#d97706);color:#ffffff;font-size:.62rem;font-weight:1000;padding:4px 11px;border-radius:10px;display:inline-flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.5px;box-shadow:0 2px 8px rgba(245,158,11,0.3)}
-                  .sp-mvp2-name{font-size:1.15rem;font-weight:1000;color:#0f172a;margin:9px 0 3px}
-                  .sp-mvp2-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
-                  .sp-chip2{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:10px;font-size:.68rem;font-weight:950;letter-spacing:.2px}
+                  .sp-mvp2 {
+                      background: linear-gradient(135deg, #fffbeb 0%, #ffffff 50%, #f0fdf4 100%);
+                      border: 1.5px solid #fde68a;
+                      border-radius: 20px;
+                      padding: 18px 16px;
+                      margin-bottom: 16px;
+                      box-shadow: 0 8px 24px -4px rgba(245,158,11,0.12);
+                  }
+                  .sp-mvp2-pill {
+                      background: linear-gradient(135deg, #f59e0b, #d97706);
+                      color: #ffffff;
+                      font-size: .62rem;
+                      font-weight: 1000;
+                      padding: 4px 11px;
+                      border-radius: 10px;
+                      display: inline-flex;
+                      align-items: center;
+                      gap: 6px;
+                      text-transform: uppercase;
+                      letter-spacing: .5px;
+                      box-shadow: 0 2px 8px rgba(245,158,11,0.3);
+                  }
+                  .sp-mvp2-name { font-size: 1.15rem; font-weight: 1000; color: #0f172a; margin: 9px 0 3px; }
+                  .sp-mvp2-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+                  .sp-chip2 { display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 10px; font-size: .68rem; font-weight: 950; letter-spacing: .2px; }
 
                   /* Badges */
-                  .sp-badges2{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:16px}
-                  @media(min-width:540px){.sp-badges2{grid-template-columns:repeat(2,1fr)}}
+                  .sp-badges2 { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 16px; }
+                  @media(min-width: 540px) { .sp-badges2 { grid-template-columns: repeat(2, 1fr); } }
                   .sp-badge2{background:#ffffff;border:1px solid #e2e8f0;border-radius:18px;padding:13px 14px;display:flex;align-items:center;gap:12px;transition:all .2s;cursor:default;box-shadow:0 4px 14px -2px rgba(0,0,0,0.03)}
-                  .sp-badge2:hover{border-color:#84cc16;transform:translateY(-2px);box-shadow:0 8px 20px -2px rgba(0,0,0,0.06)}
-                  .sp-badge2-icon{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0}
-                  .sp-badge2-lbl{font-size:.62rem;font-weight:950;text-transform:uppercase;letter-spacing:.6px}
-                  .sp-badge2-name{font-size:.92rem;font-weight:1000;color:#0f172a;margin:2px 0}
-                  .sp-badge2-detail{font-size:.7rem;color:#475569;line-height:1.35}
+                  .sp-badge2:hover { border-color: #84cc16; transform: translateY(-2px); box-shadow: 0 8px 20px -2px rgba(0,0,0,0.06); }
+                  .sp-badge2-icon { width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; }
+                  .sp-badge2-lbl { font-size: .62rem; font-weight: 950; text-transform: uppercase; letter-spacing: .6px; }
+                  .sp-badge2-name { font-size: .92rem; font-weight: 1000; color: #0f172a; margin: 2px 0; }
+                  .sp-badge2-detail { font-size: .7rem; color: #475569; line-height: 1.35; }
 
                   /* Cronica */
                   .sp-chronicle2{background:#ffffff;border:1px solid #e2e8f0;border-radius:18px;padding:18px 16px;margin-bottom:16px;box-shadow:0 6px 20px -3px rgba(0,0,0,0.04)}
-                  .sp-chronicle2-headline{font-size:1.12rem;font-weight:1000;color:#0f172a;line-height:1.35;margin-bottom:5px}
-                  .sp-chronicle2-sub{font-size:.76rem;color:#475569;line-height:1.45}
-                  .sp-chronicle2-body{font-size:.78rem;color:#334155;line-height:1.6;margin-top:12px;border-top:1px solid #f1f5f9;padding-top:12px}
+                  .sp-chronicle2-headline { font-size: 1.15rem; font-weight: 1000; color: #0f172a; line-height: 1.35; margin-bottom: 5px; }
+                  .sp-chronicle2-sub { font-size: .76rem; color: #475569; line-height: 1.45; }
+                  .sp-chronicle2-body { font-size: .78rem; color: #334155; line-height: 1.6; margin-top: 12px; border-top: 1px solid #f1f5f9; padding-top: 12px; }
 
                   /* Charts */
                   .sp-chart-card2{background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;padding:18px 16px;margin-bottom:14px;box-shadow:0 6px 20px -3px rgba(0,0,0,0.04)}
-                  .sp-chart-title2{font-size:.86rem;font-weight:1000;color:#0f172a;margin-bottom:4px;display:flex;align-items:center;gap:8px}
-                  .sp-chart-sub2{font-size:.68rem;color:#64748b;margin-bottom:14px}
+                  .sp-chart-title2 { font-size: .86rem; font-weight: 1000; color: #0f172a; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+                  .sp-chart-sub2 { font-size: .68rem; color: #64748b; margin-bottom: 14px; }
 
                   /* Share Footer */
-                  .sp-share2{background:linear-gradient(135deg,#ffffff 0%,#f8fafc 100%);border:1.5px solid #e2e8f0;border-radius:22px;padding:22px 18px;text-align:center;margin-top:12px;box-shadow:0 10px 30px -5px rgba(0,0,0,0.05)}
-                  .sp-share2-title{font-size:1.15rem;font-weight:1000;color:#0f172a;margin-bottom:6px}
-                  .sp-share2-sub{font-size:.76rem;color:#64748b;max-width:440px;margin:0 auto 16px;line-height:1.45}
-                  .sp-share2-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+                  .sp-share2 { background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border: 1.5px solid #e2e8f0; border-radius: 22px; padding: 22px 18px; text-align: center; margin-top: 14px; box-shadow: 0 10px 30px -5px rgba(0,0,0,0.04); }
+                  .sp-share2-title { font-size: 1.15rem; font-weight: 1000; color: #0f172a; margin-bottom: 6px; }
+                  .sp-share2-sub { font-size: .76rem; color: #64748b; max-width: 440px; margin: 0 auto 16px; line-height: 1.45; }
+                  .sp-share2-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
                 </style>
 
-                <!-- A: HEADER ANIMADO -->
+                <!-- ========================================== -->
+                <!-- 1. HERO HEADER COMPACTO + 4 KPIS HORIZONTALES -->
+                <!-- ========================================== -->
                 <div class="sp-hero2 sp-s2-fade">
-                    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">
-                        <div>
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+                        <div style="flex:1;min-width:240px">
                             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
                                 <div class="sp-hero2-tag"><span class="sp-hero2-dot"></span>${isSwiss ? 'SUIZO' : (isFija ? 'PAREJA FIJA' : 'TWISTER')}</div>
                                 <div style="background:#e0f2fe;color:#0369a1;padding:3px 9px;border-radius:12px;font-size:.65rem;font-weight:900;border:1px solid #bae6fd">${categoryLabel}</div>
@@ -249,23 +425,26 @@
                                 <span><b style="color:#16a34a">${totalGames}</b> juegos disputados</span>
                             </div>
                         </div>
-                        <div style="display:flex;gap:8px;flex-shrink:0;margin-top:2px;align-items:center;flex-wrap:wrap">
-                            <button type="button" onclick="window.ControlTowerSummary.openChronicleAI()" title="Generar Crónica Épica del Torneo"
-                                    style="background:linear-gradient(135deg,#8B5CF6,#7C3AED);border:none;color:#ffffff;height:36px;padding:0 14px;border-radius:12px;display:flex;align-items:center;gap:6px;cursor:pointer;transition:transform .15s,box-shadow .15s;font-size:.74rem;font-weight:950;box-shadow:0 4px 14px rgba(139,92,246,.3)"
-                                    onmouseover="this.style.transform='scale(1.04)';this.style.boxShadow='0 6px 18px rgba(139,92,246,.45)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 4px 14px rgba(139,92,246,.3)'">
-                                <span style="font-size:.95rem">✨</span>
-                                <span>CRÓNICA ÉPICA</span>
-                                <span style="background:#CCFF00;color:#000;font-size:.56rem;padding:1px 6px;border-radius:6px;font-weight:1000">IA</span>
+                        <!-- Botonera de difusión rápida y compacta -->
+                        <div style="display:flex;gap:7px;flex-shrink:0;margin-top:2px;align-items:center;flex-wrap:wrap">
+                            <button type="button" onclick="window.ControlTowerSummary.openChronicleAI()" title="Ver Crónica Oficial del Torneo"
+                                    style="background:linear-gradient(135deg,#0f172a,#1e293b);border:none;color:#ffffff;height:36px;padding:0 13px;border-radius:12px;display:flex;align-items:center;gap:6px;cursor:pointer;transition:transform .15s,box-shadow .15s;font-size:.74rem;font-weight:950;box-shadow:0 3px 12px rgba(15,23,42,.2)"
+                                    onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+                                <span style="font-size:.9rem">✨</span>
+                                <span>CRÓNICA</span>
+                                <span style="background:#0284c7;color:#fff;font-size:.56rem;padding:1px 5px;border-radius:5px;font-weight:1000">OFICIAL</span>
                             </button>
-                            <button type="button" onclick="window.ControlTowerSummary.shareWhatsApp()" title="Compartir en WhatsApp"
-                                    style="background:#ecfdf5;border:1px solid #a7f3d0;color:#059669;width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .15s;font-size:.95rem"
-                                    onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-                                <i class="fab fa-whatsapp"></i>
+                            <button type="button" onclick="window.ControlTowerSummary.openInstagramFlyerModal()" title="Flyer Oficial para Instagram Stories y Estados"
+                                    style="background:linear-gradient(135deg,#ec4899,#8b5cf6);border:none;color:#ffffff;height:36px;padding:0 13px;border-radius:12px;display:flex;align-items:center;gap:6px;cursor:pointer;transition:transform .15s;font-size:.74rem;font-weight:950;box-shadow:0 3px 12px rgba(236,72,153,.25)"
+                                    onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+                                <span style="font-size:.9rem">📲</span>
+                                <span>STORY 9:16</span>
                             </button>
-                            <button type="button" onclick="window.ControlTowerSummary.openInstagramFlyerModal()" title="Flyer Oficial Instagram HD"
-                                    style="background:#fdf2f8;border:1px solid #fbcfe8;color:#db2777;width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .15s;font-size:.95rem"
-                                    onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-                                <i class="fab fa-instagram"></i>
+                            <button type="button" onclick="window.ControlTowerSummary.copyViralWhatsApp(this)" title="Copiar informe listo para WhatsApp"
+                                    style="background:#ecfdf5;border:1px solid #a7f3d0;color:#059669;height:36px;padding:0 12px;border-radius:12px;display:flex;align-items:center;gap:6px;cursor:pointer;transition:transform .15s;font-size:.74rem;font-weight:950"
+                                    onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+                                <i class="fab fa-whatsapp" style="font-size:.95rem"></i>
+                                <span>WHATSAPP</span>
                             </button>
                             <button type="button" onclick="window.SocialChannelsService ? window.SocialChannelsService.openFacebook() : window.open('https://www.facebook.com/?locale=es_ES','_blank')" title="Ver Álbum de Fotos en Facebook"
                                     style="background:#eff6ff;border:1px solid #bfdbfe;color:#2563eb;width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .15s;font-size:.95rem"
@@ -274,221 +453,279 @@
                             </button>
                         </div>
                     </div>
-                </div>
 
-                <!-- B: KPIs GLOBALES (BIG DATA) -->
-                <div class="sp-s2-lbl sp-s2-fade"><i class="fas fa-chart-bar" style="color:#0284c7"></i> MÉTRICAS BIG DATA DEL EVENTO</div>
-                <div class="sp-kpi2 sp-s2-fade">
-                    <div class="sp-kpi2-card">
-                        <div class="sp-kpi2-icon">🎾</div>
-                        <div class="sp-kpi2-num" style="color:#0f172a">${totalMatches}</div>
-                        <div class="sp-kpi2-lbl">Partidos disputados</div>
-                    </div>
-                    <div class="sp-kpi2-card">
-                        <div class="sp-kpi2-icon">💥</div>
-                        <div class="sp-kpi2-num" style="color:#16a34a">${totalGames}</div>
-                        <div class="sp-kpi2-lbl">Juegos totales</div>
-                    </div>
-                    <div class="sp-kpi2-card">
-                        <div class="sp-kpi2-icon">📊</div>
-                        <div class="sp-kpi2-num" style="color:#0284c7">${avgGamesPerMatch}</div>
-                        <div class="sp-kpi2-lbl">Media juegos/partido</div>
-                    </div>
-                    <div class="sp-kpi2-card">
-                        <div class="sp-kpi2-icon">⚡</div>
-                        <div class="sp-kpi2-num" style="color:${intensityColor};font-size:1.15rem;margin-top:6px">${intensityLevel.split(' ')[0]}</div>
-                        <div class="sp-kpi2-lbl">Intensidad / Ritmo</div>
-                    </div>
-                </div>
-
-                <!-- C: PODIO VISUAL 3D / CLEAN PRO -->
-                <div class="sp-s2-lbl sp-s2-fade"><i class="fas fa-medal" style="color:#f59e0b"></i> PODIO DE HONOR ESTELAR</div>
-                <div class="sp-podium2 sp-s2-fade">
-                    <!-- 2º SUBCAMPEÓN -->
-                    <div class="sp-pod-col" style="border:1.5px solid #cbd5e1;background:linear-gradient(180deg,#f8fafc 0%,#ffffff 100%);box-shadow:0 6px 18px -3px rgba(0,0,0,0.04);min-height:185px">
-                        <div class="sp-pod-avatar" style="background:#64748b;color:#ffffff;border:2px solid #ffffff;box-shadow:0 4px 10px rgba(100,116,139,.25)">${this._getInitials(p2.name)}</div>
-                        <div style="font-size:1.5rem;line-height:1;margin-bottom:3px">🥈</div>
-                        <div style="font-size:.6rem;font-weight:950;color:#64748b;text-transform:uppercase;letter-spacing:.6px">2º SUBCAMPEÓN</div>
-                        <div style="font-size:.85rem;font-weight:1000;color:#0f172a;word-break:break-word;line-height:1.2;margin:4px 0">${p2.name}</div>
-                        <div class="sp-pod-pts" style="background:#f1f5f9;border:1px solid #e2e8f0;color:#334155">${p2.points||0} pts</div>
-                        <div class="sp-pod-wl">${p2.won||0}V / ${p2.played||0}P</div>
-                        <div class="sp-pbar-track" style="width:100%"><div class="sp-pbar-fill" style="--w:${p1.points>0?Math.round((p2.points||0)/p1.points*100):0}%;background:linear-gradient(90deg,#94a3b8,#cbd5e1)"></div></div>
-                    </div>
-                    <!-- 1º CAMPEÓN (más alto, destacado) -->
-                    <div class="sp-pod-col" style="border:2px solid #f59e0b;background:linear-gradient(180deg,#fffdf5 0%,#ffffff 100%);box-shadow:0 12px 30px -4px rgba(245,158,11,.22);min-height:225px">
-                        <div style="position:absolute;top:-12px;background:#f59e0b;color:#ffffff;font-size:.6rem;font-weight:1000;padding:3px 12px;border-radius:14px;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;box-shadow:0 2px 8px rgba(245,158,11,.35)">👑 1º CAMPEÓN</div>
-                        <div class="sp-pod-avatar" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#ffffff;width:52px;height:52px;font-size:1rem;border:3px solid #ffffff;box-shadow:0 4px 14px rgba(245,158,11,.35)">${this._getInitials(p1.name)}</div>
-                        <div style="font-size:2rem;line-height:1;margin-bottom:3px">🥇</div>
-                        <div style="font-size:.62rem;font-weight:1000;color:#d97706;text-transform:uppercase;letter-spacing:.6px">CAMPEÓN OFICIAL</div>
-                        <div style="font-size:.95rem;font-weight:1000;color:#0f172a;word-break:break-word;line-height:1.2;margin:4px 0">${p1.name}</div>
-                        <div class="sp-pod-pts" style="background:#fef3c7;border:1px solid #fde68a;color:#92400e">${p1.points||0} pts · ${p1.diff>=0?'+':''}${p1.diff||0}</div>
-                        <div style="font-size:.65rem;color:#b45309;font-weight:950;margin-top:3px">${p1.won||0}V · ${p1WinPct}% efect.</div>
-                        <div class="sp-pbar-track" style="width:100%"><div class="sp-pbar-fill" style="--w:100%;background:linear-gradient(90deg,#f59e0b,#84cc16)"></div></div>
-                    </div>
-                    <!-- 3º TERCER PUESTO -->
-                    <div class="sp-pod-col" style="border:1.5px solid #fed7aa;background:linear-gradient(180deg,#fffaf5 0%,#ffffff 100%);box-shadow:0 6px 18px -3px rgba(0,0,0,0.04);min-height:175px">
-                        <div class="sp-pod-avatar" style="background:#b45309;color:#ffffff;border:2px solid #ffffff;box-shadow:0 4px 10px rgba(180,83,9,.25)">${this._getInitials(p3.name)}</div>
-                        <div style="font-size:1.4rem;line-height:1;margin-bottom:3px">🥉</div>
-                        <div style="font-size:.6rem;font-weight:950;color:#b45309;text-transform:uppercase;letter-spacing:.6px">3ER PUESTO</div>
-                        <div style="font-size:.85rem;font-weight:1000;color:#0f172a;word-break:break-word;line-height:1.2;margin:4px 0">${p3.name}</div>
-                        <div class="sp-pod-pts" style="background:#ffedd5;border:1px solid #fed7aa;color:#9a3412">${p3.points||0} pts</div>
-                        <div class="sp-pod-wl">${p3.won||0}V / ${p3.played||0}P</div>
-                        <div class="sp-pbar-track" style="width:100%"><div class="sp-pbar-fill" style="--w:${p1.points>0?Math.round((p3.points||0)/p1.points*100):0}%;background:linear-gradient(90deg,#d97706,#fbbf24)"></div></div>
-                    </div>
-                </div>
-
-                <!-- D: MVP CARD CON BIG DATA & ESTADÍSTICAS AVANZADAS -->
-                <div class="sp-s2-lbl sp-s2-fade"><i class="fas fa-crown" style="color:#d97706"></i> MVP DE LA JORNADA</div>
-                <div class="sp-mvp2 sp-s2-fade">
-                    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-                        <div style="width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#d97706);display:flex;align-items:center;justify-content:center;font-size:1.15rem;font-weight:1000;color:#ffffff;border:2.5px solid #ffffff;box-shadow:0 4px 14px rgba(245,158,11,.35);flex-shrink:0">${this._getInitials(p1.name)}</div>
-                        <div style="flex:1;min-width:180px">
-                            <div class="sp-mvp2-pill"><i class="fas fa-crown"></i> MVP OFICIAL DE LA JORNADA</div>
-                            <div class="sp-mvp2-name">${p1.name}</div>
-                            <div style="font-size:.74rem;color:#475569;line-height:1.4">${isEntreno?'Temple y dominio en Pista 1. Supo gestionar cada bola caliente bajo máxima exigencia.':'Actuación formidable de principio a fin. Regularidad sólida en cada turno para conquistar la cima.'}</div>
+                    <!-- 4 KPIs en Fila Horizontal (Métricas Big Data del Evento) -->
+                    <div class="sp-s2-lbl" style="margin:14px 0 8px"><i class="fas fa-chart-bar" style="color:#0284c7"></i> MÉTRICAS BIG DATA DEL EVENTO</div>
+                    <div class="sp-kpi2">
+                        <div class="sp-kpi2-card">
+                            <div class="sp-kpi2-icon">🎾</div>
+                            <div class="sp-kpi2-num" style="color:#0f172a">${totalMatches}</div>
+                            <div class="sp-kpi2-lbl">Partidos disputados</div>
                         </div>
-                    </div>
-                    <div class="sp-mvp2-chips">
-                        <div class="sp-chip2" style="background:#fef3c7;border:1px solid #fde68a;color:#92400e"><i class="fas fa-trophy"></i>${p1.won} Victorias</div>
-                        <div class="sp-chip2" style="background:#ecfccb;border:1px solid #bef264;color:#365314"><i class="fas fa-meteor"></i>${p1.points} Juegos ganados</div>
-                        <div class="sp-chip2" style="background:#e0f2fe;border:1px solid #bae6fd;color:#0369a1"><i class="fas fa-percentage"></i>${p1WinPct}% Efectividad</div>
-                        ${p1Court1Count>0?`<div class="sp-chip2" style="background:#f3e8ff;border:1px solid #e9d5ff;color:#6b21a8"><i class="fas fa-star"></i>${p1Court1Count} en Pista 1</div>`:''}
-                    </div>
-                </div>
-
-                <!-- E: GRÁFICOS INTERACTIVOS (CLEAN PRO SVG) -->
-                <div class="sp-s2-lbl sp-s2-fade"><i class="fas fa-chart-line" style="color:#0284c7"></i> EVOLUCIÓN POR RONDAS</div>
-                <div class="sp-chart-card2 sp-s2-fade">
-                    <div id="sp-evolution-chart-container">
-                        ${this._renderEvolutionChartSVG(finishedMatches, ranking)}
-                    </div>
-                </div>
-
-                <div style="display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:16px">
-                    <div class="sp-chart-card2 sp-s2-fade">
-                        <div class="sp-chart-title2"><i class="fas fa-fire" style="color:#ef4444"></i> TERMÓMETRO DE COMPETITIVIDAD</div>
-                        <div class="sp-chart-sub2">Distribución de los partidos por nivel de igualdad y tensión</div>
-                        <div id="sp-competitiveness-container">
-                            ${this._renderCompetitivenessDonutSVG(finishedMatches)}
+                        <div class="sp-kpi2-card">
+                            <div class="sp-kpi2-icon">💥</div>
+                            <div class="sp-kpi2-num" style="color:#16a34a">${totalGames}</div>
+                            <div class="sp-kpi2-lbl">Juegos totales</div>
                         </div>
-                    </div>
-                    <div class="sp-chart-card2 sp-s2-fade">
-                        <div class="sp-chart-title2"><i class="fas fa-table-tennis" style="color:#d97706"></i> ACTIVIDAD POR PISTAS</div>
-                        <div class="sp-chart-sub2">Volumen de juego y media por encuentro en cada pista</div>
-                        ${this._renderCourtsActivityBars(finishedMatches)}
-                    </div>
-                </div>
-
-                <!-- F: INSIGNIAS "DATOS QUE NADIE VE" (MONEYBALL) -->
-                <div class="sp-s2-lbl sp-s2-fade"><i class="fas fa-fingerprint" style="color:#16a34a"></i> DATOS QUE NADIE VE <span style="font-size:.65rem;background:#ecfccb;color:#365314;padding:3px 9px;border-radius:10px;margin-left:6px;font-weight:950;border:1px solid #bef264">8 INSIGNIAS</span></div>
-                <div class="sp-badges2 sp-s2-fade">
-                    <div class="sp-badge2">
-                        <div class="sp-badge2-icon" style="background:#fef3c7;color:#d97706">👑</div>
-                        <div style="flex:1;min-width:0">
-                            <div class="sp-badge2-lbl" style="color:#b45309">REY / REINA PISTA 1</div>
-                            <div class="sp-badge2-name">${badges.court1King.name}</div>
-                            <div class="sp-badge2-detail">${badges.court1King.detail}</div>
+                        <div class="sp-kpi2-card">
+                            <div class="sp-kpi2-icon">📊</div>
+                            <div class="sp-kpi2-num" style="color:#0284c7">${avgGamesPerMatch}</div>
+                            <div class="sp-kpi2-lbl">Media juegos/partido</div>
                         </div>
-                    </div>
-                    <div class="sp-badge2">
-                        <div class="sp-badge2-icon" style="background:#e0f2fe;color:#0284c7">🛡️</div>
-                        <div style="flex:1;min-width:0">
-                            <div class="sp-badge2-lbl" style="color:#0369a1">MURALLA DEFENSIVA</div>
-                            <div class="sp-badge2-name">${badges.defenseWall.name}</div>
-                            <div class="sp-badge2-detail">${badges.defenseWall.detail}</div>
-                        </div>
-                    </div>
-                    <div class="sp-badge2">
-                        <div class="sp-badge2-icon" style="background:#fee2e2;color:#dc2626">🔥</div>
-                        <div style="flex:1;min-width:0">
-                            <div class="sp-badge2-lbl" style="color:#b91c1c">RACHA IMBATIBLE</div>
-                            <div class="sp-badge2-name">${badges.unbeatableStreak.name}</div>
-                            <div class="sp-badge2-detail">${badges.unbeatableStreak.detail}</div>
-                        </div>
-                    </div>
-                    <div class="sp-badge2">
-                        <div class="sp-badge2-icon" style="background:#f3e8ff;color:#7c3aed">⚔️</div>
-                        <div style="flex:1;min-width:0">
-                            <div class="sp-badge2-lbl" style="color:#6d28d9">PARTIDO MÁS ÉPICO</div>
-                            <div class="sp-badge2-name">${badges.epicMatch.title}</div>
-                            <div class="sp-badge2-detail">${badges.epicMatch.detail}</div>
-                        </div>
-                    </div>
-                    <div class="sp-badge2">
-                        <div class="sp-badge2-icon" style="background:#dcfce7;color:#16a34a">🎯</div>
-                        <div style="flex:1;min-width:0">
-                            <div class="sp-badge2-lbl" style="color:#15803d">TÁNDEM MÁS LETAL</div>
-                            <div class="sp-badge2-name">${badges.deadlyTandem.name}</div>
-                            <div class="sp-badge2-detail">${badges.deadlyTandem.detail}</div>
-                        </div>
-                    </div>
-                    <div class="sp-badge2">
-                        <div class="sp-badge2-icon" style="background:#ffedd5;color:#ea580c">🚀</div>
-                        <div style="flex:1;min-width:0">
-                            <div class="sp-badge2-lbl" style="color:#c2410c">EFECTO DIÉSEL</div>
-                            <div class="sp-badge2-name">${badges.dieselEffect.name}</div>
-                            <div class="sp-badge2-detail">${badges.dieselEffect.detail}</div>
-                        </div>
-                    </div>
-                    <div class="sp-badge2">
-                        <div class="sp-badge2-icon" style="background:#ecfccb;color:#4d7c0f">💣</div>
-                        <div style="flex:1;min-width:0">
-                            <div class="sp-badge2-lbl" style="color:#365314">MÁXIMO CAÑONERO</div>
-                            <div class="sp-badge2-name">${badges.topScorer.name}</div>
-                            <div class="sp-badge2-detail">${badges.topScorer.detail}</div>
-                        </div>
-                    </div>
-                    <div class="sp-badge2">
-                        <div class="sp-badge2-icon" style="background:#e0e7ff;color:#4f46e5">📈</div>
-                        <div style="flex:1;min-width:0">
-                            <div class="sp-badge2-lbl" style="color:#4338ca">IMPACTO ELO</div>
-                            <div class="sp-badge2-name">${badges.eloImpact.name}</div>
-                            <div class="sp-badge2-detail">${badges.eloImpact.detail}</div>
+                        <div class="sp-kpi2-card">
+                            <div class="sp-kpi2-icon">⚡</div>
+                            <div class="sp-kpi2-num" style="color:${intensityColor};font-size:1.15rem;margin-top:3px">${intensityLevel.split(' ')[0]}</div>
+                            <div class="sp-kpi2-lbl">Intensidad / Ritmo</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- G: CRÓNICA OFICIAL CON DISEÑO DE DIARIO DEPORTIVO DIGITAL -->
-                <div class="sp-s2-lbl sp-s2-fade"><i class="fas fa-newspaper" style="color:#0284c7"></i> CRÓNICA OFICIAL DE LA JORNADA</div>
-                <div class="sp-chronicle2 sp-s2-fade">
-                    <div class="sp-chronicle2-headline">${chronicleHeadline}</div>
-                    <div class="sp-chronicle2-sub">${chronicleSubheadline}</div>
-                    <div class="sp-chronicle2-body">
-                        El ambiente vivido en <strong>${amName}</strong> fue puro espectáculo de pádel. A lo largo de los <strong>${totalMatches} partidos oficiales</strong> y los <strong>${totalGames} juegos disputados</strong> (media de <strong>${avgGamesPerMatch} j/partido</strong>), la paridad y la intensidad marcaron cada rotación de pista.
-                        ${p2.name!=='Por disputar'?`<strong>${p2.name}</strong> firmó una actuación soberbia conquistando la plata con ${p2.won} victorias y ${p2.points} puntos. `:''}
-                        ${p3.name!=='Por disputar'?`Mientras que <strong>${p3.name}</strong> completó el podio con ${p3.points} puntos. `:''}
-                        🤝 ¡Gracias a todos por el compañerismo y nivel exhibido!
+                <!-- ========================================== -->
+                <!-- 2. SELECTOR DE VISTAS SEGMENTADO (SUB-TABS) -->
+                <!-- ========================================== -->
+                <div class="sp-subtabs-nav sp-s2-fade" role="tablist" aria-label="Secciones del resumen">
+                    <button type="button" class="sp-subtab-btn ${currentSubTab === 'podium' ? 'active' : ''}" data-tab="podium" role="tab" aria-selected="${currentSubTab === 'podium' ? 'true' : 'false'}" onclick="window.ControlTowerSummary.switchSubTab('podium')">
+                        <span>🏆</span> PODIO & MVP
+                    </button>
+                    <button type="button" class="sp-subtab-btn ${currentSubTab === 'charts' ? 'active' : ''}" data-tab="charts" role="tab" aria-selected="${currentSubTab === 'charts' ? 'true' : 'false'}" onclick="window.ControlTowerSummary.switchSubTab('charts')">
+                        <span>📊</span> GRÁFICOS & BIG DATA
+                    </button>
+                    <button type="button" class="sp-subtab-btn ${currentSubTab === 'badges' ? 'active' : ''}" data-tab="badges" role="tab" aria-selected="${currentSubTab === 'badges' ? 'true' : 'false'}" onclick="window.ControlTowerSummary.switchSubTab('badges')">
+                        <span>🎖️</span> 8 INSIGNIAS <span class="sp-subtab-badge">8</span>
+                    </button>
+                    <button type="button" class="sp-subtab-btn ${currentSubTab === 'chronicle' ? 'active' : ''}" data-tab="chronicle" role="tab" aria-selected="${currentSubTab === 'chronicle' ? 'true' : 'false'}" onclick="window.ControlTowerSummary.switchSubTab('chronicle')">
+                        <span>📰</span> CRÓNICA PERIODÍSTICA
+                    </button>
+                </div>
+
+                <!-- ========================================== -->
+                <!-- 3. PANELES DE CONTENIDO SEGMENTADOS -->
+                <!-- ========================================== -->
+
+                <!-- SUB-TAB 1: PODIO & MVP -->
+                <div id="sp-tab-podium" class="sp-subtab-pane ${currentSubTab === 'podium' ? 'active' : ''}" data-tab-content="podium">
+                    <div class="sp-s2-lbl"><i class="fas fa-medal" style="color:#f59e0b"></i> PODIO DE HONOR ESTELAR</div>
+                    <div class="sp-podium2">
+                        <!-- 2º SUBCAMPEÓN -->
+                        <div class="sp-pod-col" style="border:1.5px solid #cbd5e1;background:linear-gradient(180deg,#f8fafc 0%,#ffffff 100%);box-shadow:0 6px 18px -3px rgba(0,0,0,0.04);min-height:185px">
+                            <div class="sp-pod-avatar" style="background:#64748b;color:#ffffff;border:2px solid #ffffff;box-shadow:0 4px 10px rgba(100,116,139,.25)">${this._getInitials(p2.name)}</div>
+                            <div style="font-size:1.5rem;line-height:1;margin-bottom:3px">🥈</div>
+                            <div style="font-size:.6rem;font-weight:950;color:#64748b;text-transform:uppercase;letter-spacing:.6px">2º SUBCAMPEÓN</div>
+                            <div style="font-size:.85rem;font-weight:1000;color:#0f172a;word-break:break-word;line-height:1.2;margin:4px 0">${p2.name}</div>
+                            <div class="sp-pod-pts" style="background:#f1f5f9;border:1px solid #e2e8f0;color:#334155">${p2.points||0} pts</div>
+                            <div class="sp-pod-wl">${p2.won||0}V / ${p2.played||0}P</div>
+                            <div class="sp-pbar-track"><div class="sp-pbar-fill" style="--w:${p1.points>0?Math.round((p2.points||0)/p1.points*100):0}%;background:linear-gradient(90deg,#94a3b8,#cbd5e1)"></div></div>
+                        </div>
+                        <!-- 1º CAMPEÓN (más alto, destacado) -->
+                        <div class="sp-pod-col" style="border:2px solid #f59e0b;background:linear-gradient(180deg,#fffdf5 0%,#ffffff 100%);box-shadow:0 12px 30px -4px rgba(245,158,11,.22);min-height:225px">
+                            <div style="position:absolute;top:-12px;background:#f59e0b;color:#ffffff;font-size:.6rem;font-weight:1000;padding:3px 12px;border-radius:14px;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;box-shadow:0 2px 8px rgba(245,158,11,.35)">👑 1º CAMPEÓN</div>
+                            <div class="sp-pod-avatar" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#ffffff;width:52px;height:52px;font-size:1rem;border:3px solid #ffffff;box-shadow:0 4px 14px rgba(245,158,11,.35)">${this._getInitials(p1.name)}</div>
+                            <div style="font-size:2rem;line-height:1;margin-bottom:3px">🥇</div>
+                            <div style="font-size:.62rem;font-weight:1000;color:#d97706;text-transform:uppercase;letter-spacing:.6px">CAMPEÓN OFICIAL</div>
+                            <div style="font-size:.95rem;font-weight:1000;color:#0f172a;word-break:break-word;line-height:1.2;margin:4px 0">${p1.name}</div>
+                            <div class="sp-pod-pts" style="background:#fef3c7;border:1px solid #fde68a;color:#92400e">${p1.points||0} pts · ${p1.diff>=0?'+':''}${p1.diff||0}</div>
+                            <div style="font-size:.65rem;color:#b45309;font-weight:950;margin-top:3px">${p1.won||0}V · ${p1WinPct}% efect.</div>
+                            <div class="sp-pbar-track"><div class="sp-pbar-fill" style="--w:100%;background:linear-gradient(90deg,#f59e0b,#84cc16)"></div></div>
+                        </div>
+                        <!-- 3º TERCER PUESTO -->
+                        <div class="sp-pod-col" style="border:1.5px solid #fed7aa;background:linear-gradient(180deg,#fffaf5 0%,#ffffff 100%);box-shadow:0 6px 18px -3px rgba(0,0,0,0.04);min-height:175px">
+                            <div class="sp-pod-avatar" style="background:#b45309;color:#ffffff;border:2px solid #ffffff;box-shadow:0 4px 10px rgba(180,83,9,.25)">${this._getInitials(p3.name)}</div>
+                            <div style="font-size:1.4rem;line-height:1;margin-bottom:3px">🥉</div>
+                            <div style="font-size:.6rem;font-weight:950;color:#b45309;text-transform:uppercase;letter-spacing:.6px">3ER PUESTO</div>
+                            <div style="font-size:.85rem;font-weight:1000;color:#0f172a;word-break:break-word;line-height:1.2;margin:4px 0">${p3.name}</div>
+                            <div class="sp-pod-pts" style="background:#ffedd5;border:1px solid #fed7aa;color:#9a3412">${p3.points||0} pts</div>
+                            <div class="sp-pod-wl">${p3.won||0}V / ${p3.played||0}P</div>
+                            <div class="sp-pbar-track"><div class="sp-pbar-fill" style="--w:${p1.points>0?Math.round((p3.points||0)/p1.points*100):0}%;background:linear-gradient(90deg,#d97706,#fbbf24)"></div></div>
+                        </div>
                     </div>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
-                        <button type="button" onclick="window.ControlTowerSummary.openChronicleAI()"
-                                style="background:linear-gradient(135deg,#8B5CF6 0%,#6D28D9 100%);border:none;color:#ffffff;font-size:.74rem;font-weight:950;padding:8px 16px;border-radius:12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 4px 14px rgba(139,92,246,.35)">
-                            <span style="font-size:.9rem">✨</span> CRÓNICA ÉPICA & STORY 9:16
-                            <span style="background:#CCFF00;color:#000;font-size:.56rem;padding:1px 6px;border-radius:6px;font-weight:1000">DESTACADO</span>
-                        </button>
-                        <button type="button" onclick="window.ControlTowerSummary.copyViralWhatsApp(this)"
-                                style="background:#f8fafc;border:1px solid #cbd5e1;color:#1e293b;font-size:.7rem;font-weight:900;padding:7px 13px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:6px">
-                            <i class="fab fa-whatsapp" style="color:#16a34a"></i> Copiar para WhatsApp
-                        </button>
+
+                    <!-- MVP CARD CON BIG DATA & ESTADÍSTICAS AVANZADAS -->
+                    <div class="sp-s2-lbl"><i class="fas fa-crown" style="color:#d97706"></i> MVP DE LA JORNADA</div>
+                    <div class="sp-mvp2">
+                        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+                            <div style="width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#d97706);display:flex;align-items:center;justify-content:center;font-size:1.15rem;font-weight:1000;color:#ffffff;border:2.5px solid #ffffff;box-shadow:0 4px 14px rgba(245,158,11,.35);flex-shrink:0">${this._getInitials(p1.name)}</div>
+                            <div style="flex:1;min-width:180px">
+                                <div class="sp-mvp2-pill"><i class="fas fa-crown"></i> MVP OFICIAL DE LA JORNADA</div>
+                                <div class="sp-mvp2-name">${p1.name}</div>
+                                <div style="font-size:.74rem;color:#475569;line-height:1.4">${isEntreno?'Temple y dominio en Pista 1. Supo gestionar cada bola caliente bajo máxima exigencia.':'Actuación formidable de principio a fin. Regularidad sólida en cada turno para conquistar la cima.'}</div>
+                            </div>
+                        </div>
+                        <div class="sp-mvp2-chips">
+                            <div class="sp-chip2" style="background:#fef3c7;border:1px solid #fde68a;color:#92400e"><i class="fas fa-trophy"></i>${p1.won} Victorias</div>
+                            <div class="sp-chip2" style="background:#ecfccb;border:1px solid #bef264;color:#365314"><i class="fas fa-meteor"></i>${p1.points} Juegos ganados</div>
+                            <div class="sp-chip2" style="background:#e0f2fe;border:1px solid #bae6fd;color:#0369a1"><i class="fas fa-percentage"></i>${p1WinPct}% Efectividad</div>
+                            ${p1Court1Count>0?`<div class="sp-chip2" style="background:#f3e8ff;border:1px solid #e9d5ff;color:#6b21a8"><i class="fas fa-star"></i>${p1Court1Count} en Pista 1</div>`:''}
+                        </div>
+                    </div>
+
+                    <!-- ACCESO DIRECTO A CLASIFICACIÓN COMPLETA -->
+                    <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;box-shadow:0 2px 10px -2px rgba(0,0,0,0.02)">
+                        <div style="display:flex;align-items:center;gap:10px">
+                            <span style="font-size:1.35rem">📋</span>
+                            <div>
+                                <div style="font-size:.84rem;font-weight:1000;color:#0f172a">Clasificación Completa del Torneo</div>
+                                <div style="font-size:.7rem;color:#64748b">Consulta la tabla completa con todos los jugadores y coeficientes</div>
+                            </div>
+                        </div>
                         <button type="button" onclick="window.ControlTowerView.switchTab('standings')"
-                                style="background:#f0fdf4;border:1px solid #86efac;color:#15803d;font-size:.7rem;font-weight:900;padding:7px 13px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+                                style="background:#f0fdf4;border:1px solid #86efac;color:#15803d;font-size:.72rem;font-weight:950;padding:8px 14px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:6px">
                             <i class="fas fa-list-ol"></i> Ver clasificación completa
                         </button>
                     </div>
                 </div>
 
-                <!-- H: BOTONES COMPARTIR (MARKETING ONLINE & DIFUSIÓN) -->
+                <!-- SUB-TAB 2: GRÁFICOS & BIG DATA -->
+                <div id="sp-tab-charts" class="sp-subtab-pane ${currentSubTab === 'charts' ? 'active' : ''}" data-tab-content="charts">
+                    <div class="sp-s2-lbl"><i class="fas fa-chart-line" style="color:#0284c7"></i> EVOLUCIÓN POR RONDAS</div>
+                    <div class="sp-chart-card2">
+                        <div id="sp-evolution-chart-container">
+                            ${this._renderEvolutionChartSVG(finishedMatches, ranking)}
+                        </div>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:16px">
+                        <div class="sp-chart-card2">
+                            <div class="sp-chart-title2"><i class="fas fa-fire" style="color:#ef4444"></i> TERMÓMETRO DE COMPETITIVIDAD</div>
+                            <div class="sp-chart-sub2">Distribución de los partidos por nivel de igualdad y tensión</div>
+                            <div id="sp-competitiveness-container">
+                                ${this._renderCompetitivenessDonutSVG(finishedMatches)}
+                            </div>
+                        </div>
+                        <div class="sp-chart-card2">
+                            <div class="sp-chart-title2"><i class="fas fa-table-tennis" style="color:#d97706"></i> ACTIVIDAD POR PISTAS</div>
+                            <div class="sp-chart-sub2">Volumen de juego y media por encuentro en cada pista</div>
+                            ${this._renderCourtsActivityBars(finishedMatches)}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUB-TAB 3: 8 INSIGNIAS DE HONOR -->
+                <div id="sp-tab-badges" class="sp-subtab-pane ${currentSubTab === 'badges' ? 'active' : ''}" data-tab-content="badges">
+                    <div class="sp-s2-lbl"><i class="fas fa-fingerprint" style="color:#16a34a"></i> DATOS QUE NADIE VE <span style="font-size:.65rem;background:#ecfccb;color:#365314;padding:3px 9px;border-radius:10px;margin-left:6px;font-weight:950;border:1px solid #bef264">8 INSIGNIAS</span></div>
+                    <div class="sp-badges2">
+                        <div class="sp-badge2">
+                            <div class="sp-badge2-icon" style="background:#fef3c7;color:#d97706">👑</div>
+                            <div style="flex:1;min-width:0">
+                                <div class="sp-badge2-lbl" style="color:#b45309">REY / REINA PISTA 1</div>
+                                <div class="sp-badge2-name">${badges.court1King.name}</div>
+                                <div class="sp-badge2-detail">${badges.court1King.detail}</div>
+                            </div>
+                        </div>
+                        <div class="sp-badge2">
+                            <div class="sp-badge2-icon" style="background:#e0f2fe;color:#0284c7">🛡️</div>
+                            <div style="flex:1;min-width:0">
+                                <div class="sp-badge2-lbl" style="color:#0369a1">MURALLA DEFENSIVA</div>
+                                <div class="sp-badge2-name">${badges.defenseWall.name}</div>
+                                <div class="sp-badge2-detail">${badges.defenseWall.detail}</div>
+                            </div>
+                        </div>
+                        <div class="sp-badge2">
+                            <div class="sp-badge2-icon" style="background:#fee2e2;color:#dc2626">🔥</div>
+                            <div style="flex:1;min-width:0">
+                                <div class="sp-badge2-lbl" style="color:#b91c1c">RACHA IMBATIBLE</div>
+                                <div class="sp-badge2-name">${badges.unbeatableStreak.name}</div>
+                                <div class="sp-badge2-detail">${badges.unbeatableStreak.detail}</div>
+                            </div>
+                        </div>
+                        <div class="sp-badge2">
+                            <div class="sp-badge2-icon" style="background:#f3e8ff;color:#7c3aed">⚔️</div>
+                            <div style="flex:1;min-width:0">
+                                <div class="sp-badge2-lbl" style="color:#6d28d9">PARTIDO MÁS ÉPICO</div>
+                                <div class="sp-badge2-name">${badges.epicMatch.title}</div>
+                                <div class="sp-badge2-detail">${badges.epicMatch.detail}</div>
+                            </div>
+                        </div>
+                        <div class="sp-badge2">
+                            <div class="sp-badge2-icon" style="background:#dcfce7;color:#16a34a">🎯</div>
+                            <div style="flex:1;min-width:0">
+                                <div class="sp-badge2-lbl" style="color:#15803d">TÁNDEM MÁS LETAL</div>
+                                <div class="sp-badge2-name">${badges.deadlyTandem.name}</div>
+                                <div class="sp-badge2-detail">${badges.deadlyTandem.detail}</div>
+                            </div>
+                        </div>
+                        <div class="sp-badge2">
+                            <div class="sp-badge2-icon" style="background:#ffedd5;color:#ea580c">🚀</div>
+                            <div style="flex:1;min-width:0">
+                                <div class="sp-badge2-lbl" style="color:#c2410c">EFECTO DIÉSEL</div>
+                                <div class="sp-badge2-name">${badges.dieselEffect.name}</div>
+                                <div class="sp-badge2-detail">${badges.dieselEffect.detail}</div>
+                            </div>
+                        </div>
+                        <div class="sp-badge2">
+                            <div class="sp-badge2-icon" style="background:#ecfccb;color:#4d7c0f">💣</div>
+                            <div style="flex:1;min-width:0">
+                                <div class="sp-badge2-lbl" style="color:#365314">MÁXIMO CAÑONERO</div>
+                                <div class="sp-badge2-name">${badges.topScorer.name}</div>
+                                <div class="sp-badge2-detail">${badges.topScorer.detail}</div>
+                            </div>
+                        </div>
+                        <div class="sp-badge2">
+                            <div class="sp-badge2-icon" style="background:#e0e7ff;color:#4f46e5">📈</div>
+                            <div style="flex:1;min-width:0">
+                                <div class="sp-badge2-lbl" style="color:#4338ca">IMPACTO ELO</div>
+                                <div class="sp-badge2-name">${badges.eloImpact.name}</div>
+                                <div class="sp-badge2-detail">${badges.eloImpact.detail}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUB-TAB 4: CRÓNICA PERIODÍSTICA -->
+                <div id="sp-tab-chronicle" class="sp-subtab-pane ${currentSubTab === 'chronicle' ? 'active' : ''}" data-tab-content="chronicle">
+                    <div class="sp-s2-lbl"><i class="fas fa-newspaper" style="color:#0284c7"></i> CRÓNICA OFICIAL DE LA JORNADA</div>
+                    <div class="sp-chronicle2">
+                        <div class="sp-chronicle2-headline">${chronicleHeadline}</div>
+                        <div class="sp-chronicle2-sub">${chronicleSubheadline}</div>
+                        <div class="sp-chronicle2-body">
+                            <div style="margin-bottom:10px">
+                                El ambiente vivido en <strong>${amName}</strong> fue puro espectáculo de pádel. A lo largo de los <strong>${totalMatches} partidos oficiales</strong> y los <strong>${totalGames} juegos disputados</strong> (media de <strong>${avgGamesPerMatch} j/partido</strong>), la paridad y la intensidad marcaron cada rotación de pista.
+                            </div>
+                            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:12px 14px;margin-bottom:12px">
+                                <div style="font-weight:950;color:#0f172a;margin-bottom:6px;font-size:.78rem">📌 PUNTOS CLAVE DE LA JORNADA:</div>
+                                <ul style="margin:0;padding-left:18px;color:#334155;line-height:1.6;font-size:.74rem">
+                                    <li><strong>Líder Indiscutible:</strong> ${p1.name} se alza con la corona de campeón sumando ${p1.points} puntos y ${p1.won} victorias (${p1WinPct}% de efectividad).</li>
+                                    ${p2.name!=='Por disputar'?`<li><strong>Plata Brillante:</strong> ${p2.name} firmó una actuación soberbia con ${p2.won} victorias y ${p2.points} puntos.</li>`:''}
+                                    ${p3.name!=='Por disputar'?`<li><strong>Podio de Honor:</strong> ${p3.name} completó el podio en tercer puesto con ${p3.points} puntos.</li>`:''}
+                                    <li><strong>Intensidad:</strong> Promedio de ${avgGamesPerMatch} juegos por encuentro con nivel de tensión deportiva ${intensityLevel.split(' ')[0]}.</li>
+                                </ul>
+                            </div>
+                            <div style="color:#15803d;font-weight:900;font-size:.74rem">
+                                🤝 ¡Gracias a todos los jugadores por su entrega, deportividad y pasión en cada punto!
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+                            <button type="button" onclick="window.ControlTowerSummary.openChronicleAI()"
+                                    style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);border:none;color:#ffffff;font-size:.74rem;font-weight:950;padding:9px 16px;border-radius:12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 4px 14px rgba(15,23,42,.25)">
+                                <span style="font-size:.9rem">✨</span> CRÓNICA & STORY 9:16
+                                <span style="background:#0284c7;color:#fff;font-size:.56rem;padding:1px 6px;border-radius:6px;font-weight:1000">DESTACADO</span>
+                            </button>
+                            <button type="button" onclick="window.ControlTowerSummary.copyViralWhatsApp(this)"
+                                    style="background:#f8fafc;border:1px solid #cbd5e1;color:#1e293b;font-size:.7rem;font-weight:900;padding:8px 14px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+                                <i class="fab fa-whatsapp" style="color:#16a34a"></i> Copiar para WhatsApp
+                            </button>
+                            <button type="button" onclick="window.ControlTowerView.switchTab('standings')"
+                                    style="background:#f0fdf4;border:1px solid #86efac;color:#15803d;font-size:.7rem;font-weight:900;padding:8px 14px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+                                <i class="fas fa-list-ol"></i> Ver clasificación completa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========================================== -->
+                <!-- 4. BOTONES COMPARTIR (MARKETING ONLINE & DIFUSIÓN) -->
+                <!-- ========================================== -->
                 <div class="sp-share2 sp-s2-fade">
                     <div class="sp-share2-title">🎾 ¡PRESUME DE TU TORNEO!</div>
-                    <div class="sp-share2-sub">Comparte el informe completo con podio e insignias, o genera tu crónica épica para Instagram Stories y WhatsApp.</div>
+                    <div class="sp-share2-sub">Comparte el informe oficial con podio e insignias, o consulta la crónica oficial para Instagram Stories y WhatsApp.</div>
                     <div class="sp-share2-btns">
-                        <!-- 1. Botón estelar: Generar Crónica Épica & Story HD -->
+                        <!-- 1. Botón estelar: Ver Crónica & Story HD -->
                         <button type="button" class="sp-action-btn" onclick="window.ControlTowerSummary.openChronicleAI()"
-                                style="flex:1 1 100%; background:linear-gradient(135deg,#7c3aed 0%,#4f46e5 50%,#0f172a 100%); border:1.5px solid #a78bfa; color:#fff; box-shadow:0 6px 20px rgba(124,58,237,0.35); padding:13px 18px; font-size:.82rem;">
+                                style="flex:1 1 100%; background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#334155 100%); border:1.5px solid #475569; color:#fff; box-shadow:0 6px 20px rgba(15,23,42,0.25); padding:13px 18px; font-size:.82rem;">
                             <span style="font-size:1.2rem">✨</span>
-                            <span style="font-weight:950;letter-spacing:.3px">GENERAR CRÓNICA ÉPICA & STORY HD</span>
-                            <span style="background:#CCFF00;color:#000;font-size:.58rem;padding:2px 7px;border-radius:6px;font-weight:1000;margin-left:6px">ÉPICA</span>
+                            <span style="font-weight:950;letter-spacing:.3px">CRÓNICA & STORY HD</span>
+                            <span style="background:#0284c7;color:#fff;font-size:.58rem;padding:2px 7px;border-radius:6px;font-weight:1000;margin-left:6px">OFICIAL</span>
                         </button>
-                        <!-- 2. Botón innovador: Compartir Story / Estado (Imagen HD 9:16) -->
+                        <!-- 2. Botón: Compartir Story / Estado (Imagen HD 9:16) -->
                         <button type="button" class="sp-action-btn" onclick="window.ControlTowerSummary.openInstagramFlyerModal()"
                                 style="flex:1 1 100%; background:linear-gradient(135deg,#ec4899 0%,#d946ef 50%,#8b5cf6 100%); color:#fff; box-shadow:0 6px 20px rgba(236,72,153,0.32); padding:13px 18px; font-size:.82rem;">
                             <span style="font-size:1.15rem">📲</span>
@@ -2294,7 +2531,7 @@
         }
 
         /**
-         * Abre la experiencia interactiva de Crónica Épica con IA y Story HD
+         * Abre la experiencia interactiva de Crónica y Story HD
          */
         static openChronicleAI() {
             if (window.TournamentChronicleModal) {
