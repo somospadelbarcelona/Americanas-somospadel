@@ -79,7 +79,7 @@
                     .sp-btn-nav-back {
                         background: #ffffff;
                         border: 1px solid #e2e8f0;
-                        color: #475569;
+                        color: #0f172a;
                         padding: 8px 14px;
                         border-radius: 12px;
                         font-weight: 800;
@@ -88,32 +88,54 @@
                         display: inline-flex;
                         align-items: center;
                         gap: 6px;
-                        box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+                        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
                         transition: all 0.2s;
                     }
                     .sp-btn-nav-back:hover {
-                        background: #0f172a;
-                        color: #ffffff;
-                        border-color: #0f172a;
+                        background: #f8fafc;
+                        color: #0f172a;
+                        border-color: #cbd5e1;
+                        transform: translateY(-1px);
                     }
                     .sp-btn-rules {
-                        background: linear-gradient(135deg, rgba(204, 255, 0, 0.15) 0%, rgba(14, 165, 233, 0.15) 100%);
+                        background: #ffffff;
                         color: #0f172a;
-                        border: 1px solid rgba(14, 165, 233, 0.4);
+                        border: 1px solid #e2e8f0;
                         padding: 8px 14px;
                         border-radius: 12px;
                         font-size: 0.72rem;
-                        font-weight: 900;
+                        font-weight: 800;
                         cursor: pointer;
                         display: inline-flex;
                         align-items: center;
                         gap: 6px;
+                        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
                         transition: all 0.2s;
                     }
                     .sp-btn-rules:hover {
-                        background: #0f172a;
-                        color: #CCFF00;
-                        border-color: #0f172a;
+                        background: #f8fafc;
+                        border-color: #cbd5e1;
+                        color: #0f172a;
+                        transform: translateY(-1px);
+                    }
+                    .sp-btn-points {
+                        background: #ffffff;
+                        color: #0f172a;
+                        border: 1px solid #e2e8f0;
+                        padding: 8px 14px;
+                        border-radius: 12px;
+                        font-size: 0.72rem;
+                        font-weight: 800;
+                        cursor: pointer;
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 6px;
+                        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+                        transition: all 0.2s;
+                    }
+                    .sp-btn-points:hover {
+                        background: #f8fafc;
+                        border-color: #cbd5e1;
                         transform: translateY(-1px);
                     }
                     .sp-btn-share-ranking {
@@ -123,16 +145,17 @@
                         padding: 8px 14px;
                         border-radius: 12px;
                         font-size: 0.72rem;
-                        font-weight: 900;
+                        font-weight: 800;
                         cursor: pointer;
                         display: inline-flex;
                         align-items: center;
                         gap: 7px;
-                        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.15);
+                        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
                         transition: all 0.2s;
                     }
                     .sp-btn-share-ranking:hover {
                         background: #1e293b;
+                        border-color: #1e293b;
                         transform: translateY(-1px);
                     }
 
@@ -140,11 +163,11 @@
                     .sp-rules-banner {
                         background: #ffffff;
                         border: 1px solid #e2e8f0;
-                        border-left: 4px solid #CCFF00;
+                        border-left: 4px solid #0284c7;
                         border-radius: 16px;
                         padding: 14px 16px;
                         margin-bottom: 18px;
-                        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+                        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
                     }
                     .sp-rules-header {
                         display: flex;
@@ -164,11 +187,22 @@
                         letter-spacing: 0.5px;
                     }
                     .sp-rules-toggle-action {
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 6px;
+                        font-size: 0.72rem;
+                        font-weight: 800;
+                        color: #0284c7;
+                        background: #eff6ff;
+                        border: 1px solid #dbeafe;
+                        padding: 4px 10px;
+                        border-radius: 20px;
+                        cursor: pointer;
                         transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
                         user-select: none;
                     }
                     .sp-rules-toggle-action:hover {
-                        background: #bae6fd !important;
+                        background: #dbeafe !important;
                         color: #0369a1 !important;
                         transform: translateY(-1px);
                     }
@@ -208,36 +242,41 @@
                         margin: 0;
                     }
 
-                    /* Olympic Podium */
+                    /* Olympic Podium - Clean White Style */
                     .sp-podium-card {
-                        background: linear-gradient(180deg, #0d1829 0%, #080f1d 100%);
-                        border-radius: 24px;
-                        padding: 22px 14px 18px;
-                        color: #ffffff;
-                        margin-bottom: 22px;
+                        background: #ffffff;
+                        border-radius: 20px;
+                        padding: 20px 14px 18px;
+                        color: #0f172a;
+                        margin-bottom: 20px;
                         position: relative;
                         overflow: hidden;
-                        border: 1px solid rgba(255, 255, 255, 0.08);
-                        box-shadow: 0 20px 45px rgba(10, 20, 35, 0.35);
+                        border: 1px solid #e2e8f0;
+                        box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
                     }
                     .sp-podium-title {
                         text-align: center;
-                        font-size: 0.72rem;
-                        font-weight: 900;
-                        letter-spacing: 2px;
+                        font-size: 0.74rem;
+                        font-weight: 950;
+                        letter-spacing: 1.5px;
                         text-transform: uppercase;
-                        color: #CCFF00;
+                        color: #0f172a;
                         margin-bottom: 18px;
                         display: flex;
                         align-items: center;
                         justify-content: center;
                         gap: 8px;
                     }
+                    .sp-podium-title span:first-child {
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 6px;
+                    }
                     .sp-podium-grid {
                         display: flex;
                         align-items: flex-end;
                         justify-content: center;
-                        gap: 12px;
+                        gap: 14px;
                     }
                     .sp-podium-col {
                         flex: 1;
@@ -257,46 +296,47 @@
                         align-items: center;
                         justify-content: center;
                         font-weight: 950;
-                        color: #ffffff;
                         position: relative;
-                        box-shadow: 0 8px 20px rgba(0,0,0,0.5);
                     }
                     .sp-podium-col.gold .sp-podium-avatar {
-                        width: 62px;
-                        height: 62px;
-                        background: linear-gradient(135deg, #ffd700, #b8860b);
-                        border: 3px solid #ffe866;
-                        box-shadow: 0 0 25px rgba(255, 215, 0, 0.5);
-                        font-size: 1.1rem;
+                        width: 64px;
+                        height: 64px;
+                        background: linear-gradient(135deg, #fef08a 0%, #eab308 100%);
+                        color: #713f12;
+                        border: 3px solid #facc15;
+                        box-shadow: 0 8px 24px rgba(234, 179, 8, 0.35);
+                        font-size: 1.15rem;
                     }
                     .sp-podium-col.silver .sp-podium-avatar {
-                        width: 52px;
-                        height: 52px;
-                        background: linear-gradient(135deg, #cbd5e1, #64748b);
-                        border: 2.5px solid #e2e8f0;
-                        box-shadow: 0 0 18px rgba(203, 213, 225, 0.4);
+                        width: 54px;
+                        height: 54px;
+                        background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%);
+                        color: #334155;
+                        border: 2.5px solid #94a3b8;
+                        box-shadow: 0 6px 18px rgba(148, 163, 184, 0.3);
                         font-size: 0.95rem;
                     }
                     .sp-podium-col.bronze .sp-podium-avatar {
-                        width: 48px;
-                        height: 48px;
-                        background: linear-gradient(135deg, #d97706, #92400e);
-                        border: 2.5px solid #fbbf24;
-                        box-shadow: 0 0 18px rgba(217, 119, 6, 0.4);
+                        width: 50px;
+                        height: 50px;
+                        background: linear-gradient(135deg, #ffedd5 0%, #f97316 100%);
+                        color: #7c2d12;
+                        border: 2.5px solid #fb923c;
+                        box-shadow: 0 6px 18px rgba(249, 115, 22, 0.3);
                         font-size: 0.9rem;
                     }
                     .sp-podium-crown {
                         position: absolute;
-                        top: -14px;
+                        top: -15px;
                         left: 50%;
                         transform: translateX(-50%);
-                        font-size: 1.1rem;
-                        filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6));
+                        font-size: 1.15rem;
+                        filter: drop-shadow(0 2px 4px rgba(202, 138, 4, 0.4));
                     }
                     .sp-podium-badge-medal {
                         position: absolute;
-                        bottom: -4px;
-                        right: -4px;
+                        bottom: -3px;
+                        right: -3px;
                         width: 22px;
                         height: 22px;
                         border-radius: 50%;
@@ -305,17 +345,18 @@
                         justify-content: center;
                         font-size: 0.72rem;
                         font-weight: 950;
-                        border: 2px solid #0d1829;
+                        border: 2px solid #ffffff;
+                        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
                     }
-                    .sp-podium-col.gold .sp-podium-badge-medal { background: #ffd700; color: #000; }
-                    .sp-podium-col.silver .sp-podium-badge-medal { background: #cbd5e1; color: #000; }
-                    .sp-podium-col.bronze .sp-podium-badge-medal { background: #d97706; color: #fff; }
+                    .sp-podium-col.gold .sp-podium-badge-medal { background: #eab308; color: #ffffff; }
+                    .sp-podium-col.silver .sp-podium-badge-medal { background: #64748b; color: #ffffff; }
+                    .sp-podium-col.bronze .sp-podium-badge-medal { background: #ea580c; color: #ffffff; }
 
                     .sp-podium-name {
-                        font-size: 0.75rem;
+                        font-size: 0.76rem;
                         font-weight: 900;
-                        color: #ffffff;
-                        line-height: 1.2;
+                        color: #0f172a;
+                        line-height: 1.25;
                         max-width: 100px;
                         white-space: nowrap;
                         overflow: hidden;
@@ -323,23 +364,37 @@
                         text-transform: uppercase;
                     }
                     .sp-podium-col.gold .sp-podium-name {
-                        font-size: 0.82rem;
-                        color: #CCFF00;
+                        font-size: 0.84rem;
+                        font-weight: 950;
+                        color: #0f172a;
                     }
                     .sp-podium-score-pill {
-                        margin-top: 4px;
+                        margin-top: 5px;
                         font-size: 0.65rem;
                         font-weight: 800;
-                        padding: 2px 8px;
+                        padding: 3px 8px;
                         border-radius: 10px;
-                        background: rgba(255, 255, 255, 0.08);
-                        color: rgba(255, 255, 255, 0.85);
+                        background: #f1f5f9;
+                        color: #334155;
+                        border: 1px solid #e2e8f0;
                     }
                     .sp-podium-col.gold .sp-podium-score-pill {
-                        background: rgba(204, 255, 0, 0.15);
-                        border: 1px solid rgba(204, 255, 0, 0.4);
-                        color: #CCFF00;
+                        background: #fef08a;
+                        border: 1px solid #facc15;
+                        color: #854d0e;
                         font-weight: 950;
+                    }
+                    .sp-podium-col.silver .sp-podium-score-pill {
+                        background: #f1f5f9;
+                        border: 1px solid #cbd5e1;
+                        color: #334155;
+                        font-weight: 800;
+                    }
+                    .sp-podium-col.bronze .sp-podium-score-pill {
+                        background: #ffedd5;
+                        border: 1px solid #fed7aa;
+                        color: #9a3412;
+                        font-weight: 800;
                     }
 
                     /* Main Standings Table Card */
@@ -348,11 +403,11 @@
                         border: 1px solid #e2e8f0;
                         border-radius: 20px;
                         overflow: hidden;
-                        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+                        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
                     }
                     .sp-table-toolbar {
                         padding: 12px 16px;
-                        background: #f8fafc;
+                        background: #ffffff;
                         border-bottom: 1px solid #e2e8f0;
                         display: flex;
                         flex-direction: column;
@@ -373,8 +428,8 @@
                     }
                     .sp-table-search input {
                         width: 100%;
-                        background: #ffffff;
-                        border: 1px solid #cbd5e1;
+                        background: #f8fafc;
+                        border: 1px solid #e2e8f0;
                         border-radius: 10px;
                         padding: 7px 10px 7px 30px;
                         font-size: 0.75rem;
@@ -382,9 +437,10 @@
                         color: #0f172a;
                         outline: none;
                         box-sizing: border-box;
-                        transition: border-color 0.2s, box-shadow 0.2s;
+                        transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
                     }
                     .sp-table-search input:focus {
+                        background: #ffffff;
                         border-color: #0284c7;
                         box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
                     }
@@ -400,7 +456,8 @@
                     /* Mode Switcher Segmented Control */
                     .sp-mode-switcher {
                         display: inline-flex;
-                        background: #e2e8f0;
+                        background: #f1f5f9;
+                        border: 1px solid #e2e8f0;
                         padding: 2.5px;
                         border-radius: 10px;
                         gap: 3px;
@@ -422,8 +479,8 @@
                     }
                     .sp-mode-btn.active {
                         background: #0f172a;
-                        color: #CCFF00;
-                        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
+                        color: #ffffff;
+                        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
                     }
                     .sp-mode-btn:hover:not(.active) {
                         color: #0f172a;
@@ -447,7 +504,8 @@
                         display: inline-flex;
                         align-items: center;
                         gap: 4px;
-                        background: rgba(14, 165, 233, 0.1);
+                        background: #eff6ff;
+                        border: 1px solid #bfdbfe;
                         color: #0284c7;
                         padding: 3px 8px;
                         border-radius: 6px;
@@ -510,12 +568,12 @@
                         text-align: left;
                     }
                     .sp-standings-table th {
-                        background: #f1f5f9;
+                        background: #f8fafc;
                         color: #475569;
                         font-weight: 900;
-                        padding: 10px 8px;
+                        padding: 11px 8px;
                         text-transform: uppercase;
-                        font-size: 0.62rem;
+                        font-size: 0.63rem;
                         letter-spacing: 0.5px;
                         border-bottom: 1px solid #e2e8f0;
                         white-space: nowrap;
@@ -527,10 +585,16 @@
                         white-space: nowrap;
                     }
                     .sp-row-champions {
-                        background: rgba(14, 165, 233, 0.04);
+                        background: rgba(14, 165, 233, 0.03);
                     }
                     .sp-row-gold {
-                        background: rgba(254, 240, 138, 0.15);
+                        background: rgba(254, 240, 138, 0.22);
+                    }
+                    .sp-row-silver {
+                        background: rgba(241, 245, 249, 0.6);
+                    }
+                    .sp-row-bronze {
+                        background: rgba(255, 237, 213, 0.25);
                     }
                     .sp-player-row {
                         cursor: pointer;
@@ -578,6 +642,21 @@
                         font-size: 0.68rem;
                         flex-shrink: 0;
                     }
+                    .sp-table-avatar.avatar-gold {
+                        background: linear-gradient(135deg, #fef08a, #eab308);
+                        color: #713f12;
+                        border: 1px solid #facc15;
+                    }
+                    .sp-table-avatar.avatar-silver {
+                        background: linear-gradient(135deg, #f1f5f9, #94a3b8);
+                        color: #1e293b;
+                        border: 1px solid #cbd5e1;
+                    }
+                    .sp-table-avatar.avatar-bronze {
+                        background: linear-gradient(135deg, #ffedd5, #f97316);
+                        color: #7c2d12;
+                        border: 1px solid #fdba74;
+                    }
                     .sp-table-player-name {
                         font-weight: 800;
                         color: #0f172a;
@@ -586,10 +665,9 @@
                     }
                     .sp-table-level-badge {
                         font-size: 0.6rem;
-                        font-weight: 900;
-                        padding: 1px 5px;
+                        font-weight: 800;
+                        padding: 1px 6px;
                         border-radius: 4px;
-                        color: #ffffff;
                         display: inline-block;
                         margin-top: 2px;
                     }
@@ -1058,8 +1136,8 @@
                                 <i class="fas fa-book-open"></i>
                                 <span>${isEntreno ? 'NORMAS DEL ENTRENO' : 'REGLAS OFICIALES'}</span>
                             </button>
-                            <button class="sp-btn-rules" style="background: #0f172a; color: #CCFF00; border: 1.5px solid rgba(204, 255, 0, 0.4);" onclick="window.showPointsPolicyModal ? window.showPointsPolicyModal() : null" title="Consultar Sistema Oficial de Puntos">
-                                <i class="fas fa-balance-scale"></i>
+                            <button class="sp-btn-points" onclick="window.showPointsPolicyModal ? window.showPointsPolicyModal() : null" title="Consultar Sistema Oficial de Puntos">
+                                <i class="fas fa-balance-scale" style="color: #0284c7;"></i>
                                 <span>PUNTOS RANKING</span>
                             </button>
                             <button class="sp-btn-share-ranking" onclick="window.ControlTowerStandings.shareStandings(window.ControlTowerStandings.lastRankingData, window.ControlTowerView?.currentAmericanaDoc)">
@@ -1469,14 +1547,17 @@
                                         </tr>
                                     ` : ranking.map((p, i) => {
                                         const rank = i + 1;
-                                        const isChamp = rank <= 4;
                                         const isTopGold = rank === 1;
+                                        const isSilver = rank === 2;
+                                        const isBronze = rank === 3;
+                                        const isChamp = rank <= 4;
                                         const diff = parseInt(p.diff || (p.points - (p.gamesLost || 0))) || 0;
                                         const diffClass = diff > 0 ? 'sp-diff-pos' : (diff < 0 ? 'sp-diff-neg' : 'sp-diff-zero');
                                         const diffStr = diff > 0 ? `+${diff}` : `${diff}`;
                                         const winPct = Math.round((p.won / Math.max(1, p.played)) * 100) || 0;
                                         const barColor = winPct >= 65 ? '#10b981' : (winPct >= 40 ? '#f59e0b' : '#ef4444');
-                                        const rowClass = isTopGold ? 'sp-row-gold' : (isChamp ? 'sp-row-champions' : '');
+                                        const rowClass = isTopGold ? 'sp-row-gold' : (isSilver ? 'sp-row-silver' : (isBronze ? 'sp-row-bronze' : (isChamp ? 'sp-row-champions' : '')));
+                                        const avatarClass = isTopGold ? 'avatar-gold' : (isSilver ? 'avatar-silver' : (isBronze ? 'avatar-bronze' : ''));
                                         
                                         // Trend simulation (based on diff)
                                         const trendIcon = diff > 2 ? '<i class="fas fa-caret-up sp-trend-icon trend-up"></i>' : (diff < -2 ? '<i class="fas fa-caret-down sp-trend-icon trend-down"></i>' : '<i class="fas fa-minus sp-trend-icon trend-same"></i>');
@@ -1489,13 +1570,13 @@
                                                 </td>
                                                 <td class="sp-col-player">
                                                     <div class="sp-player-cell">
-                                                        <div class="sp-table-avatar">${getInitials(p.name)}</div>
+                                                        <div class="sp-table-avatar ${avatarClass}">${getInitials(p.name)}</div>
                                                         <div style="min-width:0; flex:1;">
                                                             <div class="sp-table-player-name" title="${p.name}">${p.name}</div>
                                                             <div style="display:flex; gap:4px; align-items:center; margin-top:2px;">
-                                                                <span class="sp-table-level-badge" style="background:${getLevelColor(p.level || 3.5)}">Nv ${p.level || '3.5'}</span>
+                                                                <span class="sp-table-level-badge" style="background:${getLevelColor(p.level || 3.5)}; color:#ffffff;">Nv ${p.level || '3.5'}</span>
                                                                 ${isEntreno && p.lastMatchCourt && p.lastMatchCourt < 90 ? `
-                                                                    <span class="sp-court-badge" style="font-size:0.56rem; font-weight:900; padding:1px 4px; border-radius:4px; background:${p.lastMatchCourt === 1 ? '#CCFF00' : '#e2e8f0'}; color:${p.lastMatchCourt === 1 ? '#000000' : '#475569'}; border:1px solid ${p.lastMatchCourt === 1 ? '#a3e635' : '#cbd5e1'}; white-space:nowrap;">
+                                                                    <span class="sp-court-badge" style="font-size:0.56rem; font-weight:900; padding:1px 5px; border-radius:4px; background:${p.lastMatchCourt === 1 ? '#fef08a' : '#f1f5f9'}; color:${p.lastMatchCourt === 1 ? '#854d0e' : '#475569'}; border:1px solid ${p.lastMatchCourt === 1 ? '#facc15' : '#e2e8f0'}; white-space:nowrap;">
                                                                         ${p.lastMatchCourt === 1 ? '👑 P1' : `P${p.lastMatchCourt}`}
                                                                     </span>
                                                                 ` : ''}
