@@ -1317,17 +1317,66 @@
         // ==========================================
         // COMPARTIR EN REDES SOCIALES (WHATSAPP, IG, FB)
         // ==========================================
+        getAbsolutePath(path) {
+            if (!path) return 'https://somospadel.eu/img/logo_somospadel.png';
+            if (/^https?:\/\//i.test(path)) return path;
+            const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+            const isLocal = typeof window !== 'undefined' && window.location && 
+                (window.location.origin.includes('localhost') || 
+                 window.location.origin.includes('127.0.0.1') || 
+                 window.location.origin.startsWith('file'));
+            const base = (!isLocal && typeof window !== 'undefined' && window.location && window.location.origin)
+                ? window.location.origin
+                : 'https://somospadel.eu';
+            return `${base}/${cleanPath}`;
+        }
+
+        async getProductImageFile(product) {
+            if (!product || !product.image) return null;
+            try {
+                const imageUrl = this.getAbsolutePath(product.image);
+                const response = await fetch(imageUrl, { mode: 'cors' });
+                if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+                const blob = await response.blob();
+                
+                const mimeType = blob.type || 'image/jpeg';
+                let extension = 'jpg';
+                if (mimeType.includes('png')) extension = 'png';
+                else if (mimeType.includes('webp')) extension = 'webp';
+                else if (mimeType.includes('gif')) extension = 'gif';
+
+                const safeName = (product.name || 'producto').toLowerCase().replace(/[^a-z0-9]/g, '_');
+                return new File([blob], `${safeName}.${extension}`, { type: mimeType });
+            } catch (err) {
+                console.warn('[TiendaService] No se pudo obtener el archivo de imagen para compartir:', err);
+                return null;
+            }
+        }
+
         getSharePayload(productId) {
             const product = this.getProductById(productId);
             if (!product) return null;
 
-            const appBaseUrl = window.location.origin + window.location.pathname;
-            const productDeepLink = `${appBaseUrl}#tienda?producto=${product.id}`;
+            const origin = (typeof window !== 'undefined' && window.location && window.location.origin && !window.location.origin.startsWith('file'))
+                ? window.location.origin
+                : 'https://somospadel.eu';
+            let pathname = (typeof window !== 'undefined' && window.location && window.location.pathname) ? window.location.pathname : '/tienda.html';
+            let appBaseUrl = origin + pathname;
+            if (!appBaseUrl.includes('tienda.html') && !appBaseUrl.includes('index.html')) {
+                if (!appBaseUrl.endsWith('/')) appBaseUrl += '/';
+                appBaseUrl += 'tienda.html';
+            }
+
+            const productDeepLink = `${appBaseUrl}?producto=${product.id}#tienda?producto=${product.id}`;
+            const productImageUrl = this.getAbsolutePath(product.image);
+
+            const badgesText = (product.badges && product.badges.length) ? `🏷️ ${product.badges.join(' | ')}\n\n` : '';
 
             const textWhatsApp = `🎾 *¡Mira este producto en la TIENDA SOMOSPADEL BCN!* 🎾\n\n` +
                 `⭐ *${product.brand} - ${product.name}*\n` +
                 `🔥 Precio Exclusivo Comunidad: *${product.promoPrice}€* (Antes ${product.originalPrice}€)\n` +
-                `🏷️ ${product.badges.join(' | ')}\n\n` +
+                badgesText +
+                `📸 *Foto del producto:*\n${productImageUrl}\n\n` +
                 `👉 Descúbrelo aquí con descuento exclusivo:\n${productDeepLink}\n\n` +
                 `_SomosPadel Barcelona - La mayor comunidad de pádel_`;
 
@@ -1343,6 +1392,7 @@
             return {
                 product,
                 productDeepLink,
+                productImageUrl,
                 textWhatsApp,
                 textInstagram,
                 facebookUrl

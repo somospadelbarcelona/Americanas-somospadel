@@ -398,6 +398,13 @@ window.loadAdminView = async function (rawViewName) {
             else if (window.AdminViews && window.AdminViews.tienda_admin) await window.AdminViews.tienda_admin();
             else throw new Error("AdminTienda Module not loaded");
         }
+        else if (viewName === 'marketing') {
+            const titleEl = document.getElementById('page-title');
+            if (titleEl) titleEl.textContent = 'MARKETING & COOPATROCINIOS (SUPERADMIN)';
+            if (window.AdminMarketing) await window.AdminMarketing.init();
+            else if (window.AdminViews && window.AdminViews.marketing) await window.AdminViews.marketing();
+            else throw new Error("AdminMarketing Module not loaded");
+        }
         else if (viewName === 'sos_substitutes') {
             if (window.AdminSosSubstitutes) await window.AdminSosSubstitutes.render();
             else throw new Error("AdminSosSubstitutes Module not loaded");

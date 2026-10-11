@@ -314,8 +314,8 @@
         }
 
         /* Inputs & Selects priority fix */
-        input, select, textarea, .pro-input, .pro-input-micro,
-        .modal-content input, .modal-content select, .modal-content textarea,
+        input, select, .pro-input, .pro-input-micro,
+        .modal-content input, .modal-content select,
         #create-entreno-form input, #create-entreno-form select {
             color: #0f172a !important;
             -webkit-text-fill-color: #0f172a !important;
@@ -328,6 +328,23 @@
             width: 100% !important;
             font-family: 'Inter', sans-serif !important;
             box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
+        }
+
+        /* Textarea global fix: Nunca aplastar a 42px, permitir altura natural multilínea */
+        textarea, .modal-content textarea {
+            color: #0f172a !important;
+            -webkit-text-fill-color: #0f172a !important;
+            background: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
+            height: auto !important;
+            min-height: 90px !important;
+            padding: 10px 15px !important;
+            font-size: 0.95rem !important;
+            border-radius: 10px !important;
+            width: 100% !important;
+            font-family: 'Inter', sans-serif !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
+            resize: vertical !important;
         }
 
         input:focus, select:focus, textarea:focus {
@@ -1247,7 +1264,24 @@
             font-weight: 800 !important;
         }
 
-        /* --- D) MARKETING & CRECIMIENTO (Violeta & Neón & Cian) --- */
+        /* --- D) MARKETING & CRECIMIENTO (Violeta & Neón & Cian & Ámbar) --- */
+        .btn-marketing-hub .icon-box {
+            background: rgba(245, 158, 11, 0.14) !important;
+            color: #d97706 !important;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+        .btn-marketing-hub:hover {
+            background: rgba(245, 158, 11, 0.08) !important;
+            border-color: rgba(245, 158, 11, 0.4) !important;
+            transform: translateX(3px);
+        }
+        .btn-marketing-hub.active {
+            border-left: 4px solid #f59e0b !important;
+            background: rgba(245, 158, 11, 0.14) !important;
+            color: #b45309 !important;
+            font-weight: 800 !important;
+        }
+
         .btn-marketing-copilot .icon-box {
             background: rgba(139, 92, 246, 0.14) !important;
             color: #7c3aed !important;
@@ -1803,6 +1837,13 @@
                         <i class="fas fa-bolt"></i>
                         <span>MARKETING & CRECIMIENTO</span>
                     </div>
+
+                    <!-- Marketing & Coopatrocinios (Superadmin) -->
+                    <button class="nav-item-pro btn-marketing-hub" data-view="marketing" onclick="loadAdminView('marketing')">
+                        <span class="icon-box" style="color: #f59e0b;"><i class="fas fa-bullhorn"></i></span>
+                        <span class="nav-text">MARKETING & COOPATROCINIOS</span>
+                        <span class="nav-badge" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #000; font-weight: 900;">SUPERADMIN</span>
+                    </button>
 
                     <!-- Marketing & Copiloto Alex -->
                     <a href="promo-studio.html?mode=copilot" target="_blank" class="nav-item-pro btn-marketing-copilot" style="text-decoration: none;">
@@ -3117,6 +3158,9 @@
             <script src="js/modules/tienda/TiendaService.js?v=20261007_v2"></script>
             <script src="js/modules/admin-tienda.js?v=20261007_v1"></script>
 
+            <!-- 📢 Marketing Hub & Coopatrocinios (Superadmin) -->
+            <script src="js/modules/admin-marketing.js?v=20261011_V1"></script>
+
 
             <!-- DIAGNOSTIC SCRIPT (Optional) -->
             <script>
@@ -3939,6 +3983,7 @@
             { view: 'season_campaign', label: 'Equipos 2027', icon: 'fa-shield-halved' },
 
             // 5. 📈 MARKETING, TIENDA & BLOG
+            { view: 'marketing', label: 'Marketing Hub', icon: 'fa-bullhorn', isPrimary: true },
             { view: 'tienda_admin', label: 'Tienda Admin', icon: 'fa-store', isPrimary: true },
             { view: 'analytics', label: 'Analytics', icon: 'fa-chart-line', isPrimary: true },
             { view: 'blog_posts', label: 'Blog', icon: 'fa-newspaper' },

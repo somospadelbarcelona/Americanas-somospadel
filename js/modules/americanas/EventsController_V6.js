@@ -4638,12 +4638,12 @@
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    padding: 16px;
+                    padding: 14px;
                     box-sizing: border-box;
                     opacity: 0;
                     overflow-y: auto;
                     transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-                    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+                    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
                 `;
                 document.body.appendChild(overlay);
 
@@ -4680,14 +4680,14 @@
             const players = evt.players || evt.registeredPlayers || [];
             const filled = players.length;
             const isFull = filled >= maxPlayers;
-            const statusText = isFull ? 'COMPLETO' : 'DISPONIBLE';
-            const statusColor = isFull ? '#ef4444' : '#CCFF00';
+            const statusText = isFull ? 'COMPLETO' : `${Math.max(0, maxPlayers - filled)} LIBRES`;
+            const statusColor = isFull ? '#dc2626' : '#16a34a';
             const progressPct = Math.min(100, Math.round((filled / Math.max(1, maxPlayers)) * 100));
 
-            const numSoc = (evt.price_members !== undefined) ? evt.price_members : 10;
-            const numExt = (evt.price_external !== undefined) ? evt.price_external : 10;
+            const numSoc = (evt.price_members !== undefined) ? evt.price_members : (evt.price_socio || evt.price || 10);
+            const numExt = (evt.price_external !== undefined) ? evt.price_external : (evt.price_no_socio || evt.price_externo || evt.price || 10);
             const sede = evt.sede || evt.location || evt.club || 'SomosPadel BCN';
-            const level = evt.level || '2 - 4.5';
+            const level = evt.level || (evt.min_level ? `${evt.min_level} - ${evt.max_level || 4.5}` : '2 - 4.5');
             const timeStr = this.formatEventTime(evt);
             const category = (evt.category || 'Mixto').toUpperCase();
             const organizer = evt.organizer || (evt.organizer_type === 'external' ? (evt.club || 'Club Asociado') : 'SomosPadel BCN');
@@ -4698,15 +4698,15 @@
                 <div style="
                     position: relative;
                     width: 100%;
-                    max-width: 420px;
+                    max-width: 410px;
                     display: flex;
                     flex-direction: column;
                     align-items: center;
                     background: #090e18;
-                    border: 1.5px solid rgba(225, 48, 108, 0.4);
-                    border-radius: 24px;
+                    border: 1.5px solid rgba(225, 48, 108, 0.35);
+                    border-radius: 26px;
                     padding: 16px 14px 18px;
-                    box-shadow: 0 25px 60px rgba(0,0,0,0.95), 0 0 30px rgba(225,48,108,0.25);
+                    box-shadow: 0 25px 60px rgba(0,0,0,0.95), 0 0 35px rgba(225,48,108,0.25);
                     box-sizing: border-box;
                     margin: auto;
                 ">
@@ -4715,15 +4715,15 @@
                             aria-label="Cerrar ventana de Instagram"
                             style="
                                 position: absolute;
-                                top: -14px;
-                                right: -14px;
-                                width: 38px;
-                                height: 38px;
+                                top: -12px;
+                                right: -12px;
+                                width: 36px;
+                                height: 36px;
                                 border-radius: 50%;
                                 background: #0f172a;
                                 color: #ffffff;
                                 border: 2px solid #E1306C;
-                                font-size: 1.1rem;
+                                font-size: 1rem;
                                 font-weight: 900;
                                 cursor: pointer;
                                 display: flex;
@@ -4748,151 +4748,156 @@
                         </span>
                     </div>
 
-                    <!-- CONTENEDOR CAPTURABLE DEL FLYER (EL DISEÑO EXACTO DE LA CARD PARA INSTAGRAM) -->
+                    <!-- CONTENEDOR CAPTURABLE DEL FLYER (DISEÑO BLANCO PRO CALIBRADO A 9:16 / 1080x1920 HD) -->
                     <div id="instagram-story-capture-card" style="
-                        width: 100%;
-                        max-width: 360px;
-                        background: #060b14;
-                        border-radius: 22px;
+                        width: 360px;
+                        height: 640px;
+                        min-height: 640px;
+                        max-height: 640px;
+                        background: #ffffff;
+                        border-radius: 20px;
                         overflow: hidden;
-                        border: 1px solid rgba(255, 255, 255, 0.12);
-                        box-shadow: 0 16px 36px rgba(0,0,0,0.8);
+                        border: 1.5px solid #e2e8f0;
+                        box-shadow: 0 18px 40px rgba(0,0,0,0.28);
                         display: flex;
                         flex-direction: column;
                         position: relative;
-                        font-family: 'Outfit', sans-serif;
+                        box-sizing: border-box;
+                        font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                        -webkit-font-smoothing: antialiased;
                     ">
-                        <!-- Story Header Tag -->
-                        <div style="background: linear-gradient(90deg, #090e18, #111a2e, #090e18); padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08);">
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <span style="font-size: 0.9rem;">🎾</span>
-                                <span style="font-size: 0.68rem; font-weight: 950; color: #CCFF00; letter-spacing: 1px; text-transform: uppercase;">SOMOSPADEL BARCELONA</span>
+                        <!-- Story Header Tag con Marca SomosPadel BCN en Verde Oficial -->
+                        <div style="background: #ffffff; padding: 10px 14px 8px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; flex-shrink: 0;">
+                            <div style="display: flex; align-items: center; gap: 7px;">
+                                <span style="font-size: 1.05rem; line-height: 1;">🎾</span>
+                                <span style="font-size: 0.74rem; font-weight: 950; color: #16a34a; letter-spacing: 1.2px; text-transform: uppercase;">SOMOSPADEL BARCELONA</span>
                             </div>
-                            <span style="font-size: 0.6rem; font-weight: 800; color: #38bdf8; background: rgba(56,189,248,0.12); padding: 2px 7px; border-radius: 6px; border: 1px solid rgba(56,189,248,0.25);">
+                            <span style="font-size: 0.62rem; font-weight: 850; color: #0284c7; background: #f0f9ff; padding: 3px 8px; border-radius: 6px; border: 1px solid #bae6fd; letter-spacing: 0.4px;">
                                 ${fullDateHeader}
                             </span>
                         </div>
 
-                        <!-- Image Area with Floating Badges (Identical to User Screenshots) -->
-                        <div style="height: 140px; background: url('${imgUrl}') no-repeat center/cover; position: relative;">
-                            <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(10,14,26,0.3) 0%, rgba(10,14,26,0.75) 75%, #060b14 100%);"></div>
+                        <!-- Image Area con Floating Badges Pro -->
+                        <div style="height: 165px; background: url('${imgUrl}') no-repeat center/cover; position: relative; margin: 8px 12px 4px; border-radius: 14px; overflow: hidden; border: 1px solid #e2e8f0; flex-shrink: 0;">
+                            <!-- Degradado suave hacia la base de la foto -->
+                            <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(15,23,42,0.18) 0%, rgba(15,23,42,0.05) 45%, rgba(255,255,255,0.7) 85%, #ffffff 100%);"></div>
 
-                            <!-- Date Box (Left) -->
-                            <div style="position: absolute; top: 10px; left: 10px;">
-                                <div style="background: rgba(15, 23, 42, 0.9); width: 48px; height: 50px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.15); backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
-                                    <span style="font-size: 0.52rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">${dayName}</span>
-                                    <span style="font-size: 1.3rem; font-weight: 950; color: #ffffff; line-height: 1;">${dayNum}</span>
+                            <!-- Caja de Fecha Blanca (Arriba a la Izquierda) -->
+                            <div style="position: absolute; top: 8px; left: 8px;">
+                                <div style="background: #ffffff; width: 48px; height: 50px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1.5px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.12);">
+                                    <span style="font-size: 0.52rem; font-weight: 900; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">${dayName}</span>
+                                    <span style="font-size: 1.35rem; font-weight: 950; color: #0f172a; line-height: 1;">${dayNum}</span>
                                 </div>
                             </div>
 
-                            <!-- Badges Top Right (Cartel, WhatsApp, Instagram & Pricing) -->
-                            <div style="position: absolute; top: 10px; right: 10px; display: flex; align-items: center; gap: 4px; z-index: 10;">
-                                <div style="background: rgba(15, 23, 42, 0.9); height: 32px; padding: 0 8px; border-radius: 9px; border: 1px solid #CCFF00; color: #CCFF00; display: flex; align-items: center; gap: 4px; font-size: 0.65rem; font-weight: 950;">
-                                    <i class="fas fa-file-image" style="font-size: 0.75rem;"></i>
+                            <!-- Badges Top Right (Cartel, WhatsApp, Instagram y Precios) -->
+                            <div style="position: absolute; top: 8px; right: 8px; display: flex; align-items: center; gap: 4px; z-index: 10;">
+                                <div style="background: #ffffff; height: 30px; padding: 0 8px; border-radius: 9px; border: 1.5px solid #e2e8f0; color: #0f172a; display: flex; align-items: center; gap: 4px; font-size: 0.62rem; font-weight: 950; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                                    <i class="fas fa-file-image" style="color: #16a34a; font-size: 0.72rem;"></i>
                                     <span>CARTEL</span>
                                 </div>
-                                <div style="background: rgba(15, 23, 42, 0.9); width: 32px; height: 32px; border-radius: 9px; border: 1px solid rgba(34, 197, 94, 0.4); color: #22c55e; display: flex; align-items: center; justify-content: center; font-size: 0.95rem;">
+                                <div style="background: #ffffff; width: 30px; height: 30px; border-radius: 9px; border: 1.5px solid #e2e8f0; color: #22c55e; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
                                     <i class="fab fa-whatsapp"></i>
                                 </div>
-                                <div style="background: rgba(15, 23, 42, 0.9); width: 32px; height: 32px; border-radius: 9px; border: 1px solid rgba(225, 48, 108, 0.5); color: #E1306C; display: flex; align-items: center; justify-content: center; font-size: 0.95rem;">
+                                <div style="background: #ffffff; width: 30px; height: 30px; border-radius: 9px; border: 1.5px solid #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
                                     <i class="fab fa-instagram" style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
                                 </div>
-                                <div style="background: rgba(15, 23, 42, 0.92); border-radius: 9px; padding: 4px 7px; border: 1px solid rgba(255,255,255,0.15); color: #fff; display: flex; align-items: center; gap: 5px;">
+                                <div style="background: #ffffff; border-radius: 9px; padding: 3px 8px; border: 1.5px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 6px;">
                                     <div style="display: flex; flex-direction: column; align-items: center; line-height: 1;">
-                                        <span style="font-size: 0.42rem; font-weight: 900; color: #94a3b8;">SOCIO</span>
-                                        <span style="font-size: 0.75rem; font-weight: 950; color: #CCFF00; margin-top: 1px;">${numSoc}€</span>
+                                        <span style="font-size: 0.44rem; font-weight: 900; color: #64748b;">SOCIO</span>
+                                        <span style="font-size: 0.78rem; font-weight: 950; color: #16a34a; margin-top: 1px;">${numSoc}€</span>
                                     </div>
-                                    <div style="width: 1px; height: 14px; background: rgba(255,255,255,0.2);"></div>
+                                    <div style="width: 1px; height: 15px; background: #e2e8f0;"></div>
                                     <div style="display: flex; flex-direction: column; align-items: center; line-height: 1;">
-                                        <span style="font-size: 0.42rem; font-weight: 900; color: #94a3b8;">NO SOCIO</span>
-                                        <span style="font-size: 0.75rem; font-weight: 950; color: #ffffff; margin-top: 1px;">${numExt}€</span>
+                                        <span style="font-size: 0.44rem; font-weight: 900; color: #64748b;">NO SOCIO</span>
+                                        <span style="font-size: 0.78rem; font-weight: 950; color: #0f172a; margin-top: 1px;">${numExt}€</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Modality Pills on bottom of image -->
-                            <div style="position: absolute; bottom: 8px; left: 10px; right: 10px; display: flex; align-items: center; gap: 5px;">
+                            <!-- Badges de Modalidad en la base de la foto -->
+                            <div style="position: absolute; bottom: 8px; left: 8px; right: 8px; display: flex; align-items: center; gap: 5px; flex-wrap: wrap;">
                                 ${isEntreno ? `
-                                    <span style="background: linear-gradient(135deg, #a855f7, #6366f1); color: #fff; padding: 3px 8px; border-radius: 6px; font-size: 0.58rem; font-weight: 950;"><i class="fas fa-user-ninja"></i> ENTRENO</span>
+                                    <span style="background: linear-gradient(135deg, #7c3aed, #4f46e5); color: #ffffff; padding: 4px 9px; border-radius: 7px; font-size: 0.6rem; font-weight: 950; box-shadow: 0 2px 6px rgba(124,58,237,0.35);"><i class="fas fa-user-ninja"></i> ENTRENO</span>
                                 ` : `
-                                    <span style="background: linear-gradient(135deg, #CCFF00, #10b981); color: #000; padding: 3px 8px; border-radius: 6px; font-size: 0.58rem; font-weight: 950;"><i class="fas fa-trophy"></i> AMERICANA</span>
+                                    <span style="background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; padding: 4px 9px; border-radius: 7px; font-size: 0.6rem; font-weight: 950; box-shadow: 0 2px 6px rgba(16,185,129,0.35);"><i class="fas fa-trophy"></i> AMERICANA</span>
                                 `}
                                 ${isTwister ? `
-                                    <span style="background: linear-gradient(135deg, #06b6d4, #3b82f6); color: #fff; padding: 3px 8px; border-radius: 6px; font-size: 0.58rem; font-weight: 950;"><i class="fas fa-wind"></i> TWISTER</span>
+                                    <span style="background: linear-gradient(135deg, #0284c7, #2563eb); color: #ffffff; padding: 4px 9px; border-radius: 7px; font-size: 0.6rem; font-weight: 950; box-shadow: 0 2px 6px rgba(2,132,199,0.35);"><i class="fas fa-wind"></i> TWISTER</span>
                                 ` : `
-                                    <span style="background: linear-gradient(135deg, #ec4899, #8b5cf6); color: #fff; padding: 3px 8px; border-radius: 6px; font-size: 0.58rem; font-weight: 950;"><i class="fas fa-lock"></i> PAREJA FIJA</span>
+                                    <span style="background: linear-gradient(135deg, #ec4899, #8b5cf6); color: #ffffff; padding: 4px 9px; border-radius: 7px; font-size: 0.6rem; font-weight: 950; box-shadow: 0 2px 6px rgba(236,72,153,0.35);"><i class="fas fa-lock"></i> PAREJA FIJA</span>
                                 `}
-                                <span style="background: rgba(15, 23, 42, 0.85); color: #fff; padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.12); font-size: 0.58rem; font-weight: 850;"><i class="fas fa-table-tennis" style="color: #CCFF00; font-size: 0.55rem;"></i> ${maxCourts} PISTAS</span>
+                                <span style="background: #ffffff; color: #0f172a; padding: 4px 9px; border-radius: 7px; border: 1.5px solid #e2e8f0; font-size: 0.6rem; font-weight: 900; box-shadow: 0 2px 6px rgba(0,0,0,0.06);"><i class="fas fa-table-tennis" style="color: #16a34a; font-size: 0.62rem;"></i> ${maxCourts} PISTAS</span>
                             </div>
                         </div>
 
-                        <!-- Card Content (Tags, Title, Perks, Details, Plazas) -->
-                        <div style="padding: 12px 14px 14px;">
-                            <!-- Badges Strip -->
-                            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-bottom: 8px;">
-                                <span style="background: rgba(204, 255, 0, 0.12); color: #CCFF00; border: 1px solid rgba(204, 255, 0, 0.35); padding: 3px 7px; border-radius: 6px; font-size: 0.62rem; font-weight: 950;">
+                        <!-- Card Content: Fondo Blanco y Letra Negra con detalles Pro -->
+                        <div style="padding: 4px 14px 12px; display: flex; flex-direction: column; justify-content: space-between; flex: 1; box-sizing: border-box; gap: 6px;">
+                            <!-- Badges Strip Informativos con sus Colores -->
+                            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 5px;">
+                                <span style="background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; padding: 3px 8px; border-radius: 6px; font-size: 0.62rem; font-weight: 950;">
                                     🎾 SOMOSPADEL BCN
                                 </span>
-                                <span style="background: rgba(14, 165, 233, 0.12); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.3); padding: 3px 7px; border-radius: 6px; font-size: 0.62rem; font-weight: 950;">
+                                <span style="background: #f0f9ff; color: #0284c7; border: 1px solid #bae6fd; padding: 3px 8px; border-radius: 6px; font-size: 0.62rem; font-weight: 950;">
                                     ✓ VERIFICADO
                                 </span>
-                                <span style="background: rgba(255, 255, 255, 0.08); color: #f1f5f9; border: 1px solid rgba(255, 255, 255, 0.14); padding: 3px 7px; border-radius: 6px; font-size: 0.62rem; font-weight: 900;">
+                                <span style="background: #fefce8; color: #a16207; border: 1px solid #fef08a; padding: 3px 8px; border-radius: 6px; font-size: 0.62rem; font-weight: 900;">
                                     🎓 NIVEL ${level}
                                 </span>
-                                ${evt.organizer ? `
-                                    <span style="background: rgba(234, 179, 8, 0.15); color: #fde047; border: 1px solid rgba(234, 179, 8, 0.3); padding: 3px 7px; border-radius: 6px; font-size: 0.6rem; font-weight: 900;">
-                                        👤 Organiza: ${evt.organizer}
+                                ${organizer ? `
+                                    <span style="background: #f8fafc; color: #334155; border: 1px solid #e2e8f0; padding: 3px 8px; border-radius: 6px; font-size: 0.6rem; font-weight: 900;">
+                                        👤 Organiza: ${organizer}
                                     </span>
                                 ` : ''}
                             </div>
 
-                            <!-- Big Title -->
-                            <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 950; color: #ffffff; text-transform: uppercase; margin: 0 0 8px 0; line-height: 1.2; letter-spacing: -0.3px;">
+                            <!-- Gran Título en Negro Pro -->
+                            <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 950; color: #0f172a; text-transform: uppercase; margin: 0; line-height: 1.15; letter-spacing: -0.3px;">
                                 ${evt.name}
                             </h2>
 
-                            <!-- Optional Promo / Perk Banner -->
+                            <!-- Promo / Perk Banner Opcional -->
                             ${perk ? `
-                                <div style="background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 9px; padding: 6px 10px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; color: #bae6fd; font-size: 0.72rem; font-weight: 800;">
-                                    <i class="fas fa-bullhorn" style="color: #38bdf8;"></i>
+                                <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 9px; padding: 5px 9px; display: flex; align-items: center; gap: 6px; color: #1d4ed8; font-size: 0.7rem; font-weight: 800;">
+                                    <i class="fas fa-bullhorn" style="color: #2563eb;"></i>
                                     <span>${perk}</span>
                                 </div>
                             ` : ''}
 
-                            <!-- Time & Gender Box Grid -->
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-                                <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 7px 10px; display: flex; align-items: center; gap: 6px; color: #ffffff; font-size: 0.78rem; font-weight: 800;">
-                                    <i class="far fa-clock" style="color: #f59e0b;"></i>
+                            <!-- Grid de Horario y Género/Categoría -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 7px;">
+                                <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 6px 9px; display: flex; align-items: center; gap: 7px; color: #0f172a; font-size: 0.76rem; font-weight: 900;">
+                                    <i class="far fa-clock" style="color: #d97706; font-size: 0.88rem;"></i>
                                     <span>${timeStr}</span>
                                 </div>
-                                <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 7px 10px; display: flex; align-items: center; gap: 6px; color: #ffffff; font-size: 0.78rem; font-weight: 800;">
-                                    <i class="fas fa-venus-mars" style="color: #eab308;"></i>
+                                <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 6px 9px; display: flex; align-items: center; gap: 7px; color: #0f172a; font-size: 0.76rem; font-weight: 900;">
+                                    <i class="fas fa-venus-mars" style="color: #7c3aed; font-size: 0.88rem;"></i>
                                     <span>${category}</span>
                                 </div>
                             </div>
 
-                            <!-- Plazas & Occupancy Bar -->
-                            <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 8px 10px; margin-bottom: 8px;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; font-size: 0.78rem; font-weight: 900;">
-                                    <span style="color: #ffffff;"><i class="fas fa-users" style="color: #f59e0b;"></i> ${filled} / ${maxPlayers} Plazas</span>
+                            <!-- Plazas y Barra de Ocupación Visual Clara -->
+                            <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 7px 10px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; font-size: 0.76rem; font-weight: 900;">
+                                    <span style="color: #0f172a;"><i class="fas fa-users" style="color: #2563eb;"></i> ${filled} / ${maxPlayers} Plazas</span>
                                     <span style="color: ${statusColor}; font-weight: 950;">${statusText}</span>
                                 </div>
-                                <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
-                                    <div style="width: ${progressPct}%; height: 100%; background: ${isFull ? '#ef4444' : 'linear-gradient(90deg, #CCFF00, #10b981)'}; border-radius: 3px;"></div>
+                                <div style="width: 100%; height: 7px; background: #e2e8f0; border-radius: 4px; overflow: hidden;">
+                                    <div style="width: ${progressPct}%; height: 100%; background: ${isFull ? '#dc2626' : 'linear-gradient(90deg, #22c55e, #16a34a)'}; border-radius: 4px;"></div>
                                 </div>
                             </div>
 
-                            <!-- Location Box -->
-                            <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 7px 10px; display: flex; align-items: center; gap: 6px; color: #e2e8f0; font-size: 0.75rem; font-weight: 800; margin-bottom: 10px;">
-                                <i class="fas fa-map-marker-alt" style="color: #ef4444;"></i>
-                                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Sede Oficial: <strong>${sede}</strong></span>
+                            <!-- Sede Oficial con Pin Rojo -->
+                            <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 6px 10px; display: flex; align-items: center; gap: 7px; color: #334155; font-size: 0.74rem; font-weight: 800;">
+                                <i class="fas fa-map-marker-alt" style="color: #ef4444; font-size: 0.85rem;"></i>
+                                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Sede: <strong style="color: #0f172a;">${sede}</strong></span>
                             </div>
 
-                            <!-- Story Call To Action Banner -->
-                            <div style="background: linear-gradient(135deg, #CCFF00, #10b981); color: #000; border-radius: 12px; padding: 9px 12px; text-align: center; font-weight: 950; font-size: 0.78rem; letter-spacing: 0.4px; box-shadow: 0 4px 14px rgba(204,255,0,0.35);">
+                            <!-- Story Call To Action Banner Deportivo Pro -->
+                            <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border-radius: 12px; padding: 9px 12px; text-align: center; font-weight: 950; font-size: 0.78rem; letter-spacing: 0.4px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);">
                                 📲 ¡RESERVA TU PLAZA EN EL LINK DE LA BIO!
                             </div>
-                            <div style="text-align: center; color: #94a3b8; font-size: 0.62rem; font-weight: 700; margin-top: 6px; letter-spacing: 0.5px;">
+                            <div style="text-align: center; color: #64748b; font-size: 0.62rem; font-weight: 800; margin-top: 1px; letter-spacing: 0.5px;">
                                 @somospadelbcn • somospadel.com
                             </div>
                         </div>
@@ -4934,7 +4939,7 @@
                                     width: 100%;
                                     padding: 10px 14px;
                                     background: rgba(255,255,255,0.08);
-                                    border: 1px solid rgba(225,48,108,0.4);
+                                    border: 1.5px solid rgba(225,48,108,0.45);
                                     color: #ffffff;
                                     border-radius: 13px;
                                     font-weight: 900;
@@ -4960,8 +4965,8 @@
                                     style="
                                         flex: 1;
                                         padding: 9px;
-                                        background: rgba(255,255,255,0.05);
-                                        border: 1px solid rgba(255,255,255,0.15);
+                                        background: rgba(255,255,255,0.06);
+                                        border: 1px solid rgba(255,255,255,0.18);
                                         color: #ffffff;
                                         border-radius: 11px;
                                         font-weight: 850;
@@ -4972,7 +4977,7 @@
                                         justify-content: center;
                                         gap: 6px;
                                     ">
-                                <i class="fas fa-download" style="color: #38bdf8;"></i> Guardar Foto
+                                <i class="fas fa-download" style="color: #38bdf8;"></i> Guardar Foto HD
                             </button>
 
                             <!-- Botón 4: Copiar Texto -->
@@ -4980,8 +4985,8 @@
                                     style="
                                         flex: 1;
                                         padding: 9px;
-                                        background: rgba(255,255,255,0.05);
-                                        border: 1px solid rgba(255,255,255,0.15);
+                                        background: rgba(255,255,255,0.06);
+                                        border: 1px solid rgba(255,255,255,0.18);
                                         color: #ffffff;
                                         border-radius: 11px;
                                         font-weight: 850;
@@ -4992,7 +4997,7 @@
                                         justify-content: center;
                                         gap: 6px;
                                     ">
-                                <i class="fas fa-copy" style="color: #CCFF00;"></i> Copiar Texto
+                                <i class="fas fa-copy" style="color: #22c55e;"></i> Copiar Texto
                             </button>
                         </div>
 
@@ -5000,7 +5005,7 @@
                         <div style="background: rgba(225,48,108,0.08); border: 1px dashed rgba(225,48,108,0.35); border-radius: 12px; padding: 8px 10px; display: flex; align-items: center; gap: 8px; margin-top: 2px;">
                             <i class="fas fa-bolt" style="color: #E1306C; font-size: 0.95rem; flex-shrink: 0;"></i>
                             <div style="font-size: 0.65rem; color: #cbd5e1; line-height: 1.25;">
-                                <strong>Modo Automático:</strong> Abre la cámara de Instagram Stories con la foto copiada y guardada en tu galería para publicar al instante.
+                                <strong>Formato 1080x1920 HD:</strong> Calibrado para Historias de Instagram. Imagen nítida sin pixelación lista para publicar.
                             </div>
                         </div>
                     </div>
@@ -5015,10 +5020,10 @@
             overlay.style.display = 'flex';
             requestAnimationFrame(() => {
                 overlay.style.opacity = '1';
-                // Pre-render silencioso en background para que el click sea 100% instantáneo
+                // Pre-render silencioso inmediato para que el click sea instantáneo y no pierda user gesture
                 setTimeout(() => {
-                    this._getOrRenderStoryCanvas(evt).catch(() => {});
-                }, 120);
+                    this._getOrRenderStoryCanvas(evt).catch(err => console.warn("Pre-render story canvas:", err));
+                }, 60);
             });
         }
 
@@ -5042,15 +5047,17 @@
             await this._ensureHtml2Canvas();
             if (typeof html2canvas === 'undefined') throw new Error("html2canvas no disponible");
 
+            // Calibrado exacto a 1080x1920 px HD: 360px * scale 3 = 1080px; 640px * scale 3 = 1920px (9:16 nativo)
             const canvas = await html2canvas(cardEl, {
-                scale: 2.5,
+                scale: 3,
                 useCORS: true,
                 allowTaint: true,
-                backgroundColor: '#060b14',
-                logging: false
+                backgroundColor: '#ffffff',
+                logging: false,
+                imageTimeout: 6000
             });
 
-            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1.0));
             this._cachedStoryCanvas = canvas;
             this._cachedStoryBlob = blob;
             this._cachedStoryEventId = evt.id;
@@ -5064,19 +5071,40 @@
             const originalHtml = directBtn ? directBtn.innerHTML : '';
             if (directBtn) {
                 directBtn.disabled = true;
-                directBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Abriendo Instagram Stories...';
+                directBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparando Instagram Stories...';
             }
 
             try {
                 const { canvas, blob } = await this._getOrRenderStoryCanvas(evt);
                 if (!canvas || !blob) throw new Error("No se pudo renderizar la Story");
 
-                // 1. Guardar/Descargar copia en el dispositivo para que aparezca como foto #1 en la galería de Instagram
-                await this.downloadInstagramStory(evt, canvas, false);
-
-                // 2. Intentar copiar imagen binaria al portapapeles para sticker automático en Stories
                 const captionText = `🎾 ¡NUEVA CONVOCATORIA EN SOMOSPADEL BARCELONA! 🎾\n\n🏆 ${evt.name}\n📅 Fecha: ${evt.date}\n⏰ Horario: ${this.formatEventTime(evt)}\n📍 Sede: ${evt.sede || evt.location || 'SomosPadel BCN'}\n👥 Plazas: ${evt.players ? evt.players.length : 0} inscritos\n💰 Tarifa: ${evt.price_members || 10}€ socios / ${evt.price_external || 10}€ no socios\n\n📲 ¡Reserva tu plaza en el link de la bio @somospadelbcn!\n\n#SomosPadel #PadelBarcelona #AmericanasPadel #PadelAddict`;
 
+                const fileName = `somospadel_story_${(evt.name || 'evento').replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}.png`;
+                const file = new File([blob], fileName, { type: 'image/png' });
+
+                // 1. PRIORIDAD MÓVIL: Si el navegador soporta compartir archivos nativos, abre directo la hoja con Instagram Stories
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    try {
+                        await navigator.share({
+                            title: `SomosPadel: ${evt.name}`,
+                            text: captionText,
+                            files: [file]
+                        });
+                        if (window.NotificationService) {
+                            window.NotificationService.show("🚀 ¡Flyer HD compartido para Instagram Stories!", "success");
+                        }
+                        return;
+                    } catch (shareErr) {
+                        if (shareErr.name === 'AbortError') return;
+                        console.warn("Native file share fallback:", shareErr);
+                    }
+                }
+
+                // 2. FALLBACK: Descargar copia HD limpia al dispositivo
+                await this.downloadInstagramStory(evt, canvas, false);
+
+                // 3. Intentar copiar imagen binaria al portapapeles o texto
                 if (navigator.clipboard) {
                     try {
                         if (window.ClipboardItem) {
@@ -5095,10 +5123,10 @@
                 }
 
                 if (window.NotificationService) {
-                    window.NotificationService.show("🚀 ¡Abriendo Instagram Stories! Imagen guardada y lista en tu galería.", "success");
+                    window.NotificationService.show("🚀 ¡Flyer HD guardado! Abriendo cámara de Instagram Stories...", "success");
                 }
 
-                // 3. Deep link nativo a la cámara de Instagram Stories
+                // 4. Deep link nativo a la cámara de Instagram Stories
                 const ua = navigator.userAgent || navigator.vendor || window.opera || '';
                 const isAndroid = /android/i.test(ua);
                 const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
@@ -5130,7 +5158,7 @@
             } catch (err) {
                 console.error("Error en launchDirectInstagram:", err);
                 if (window.NotificationService) {
-                    window.NotificationService.show("Usa 'Guardar Foto' para subirla manualmente a Stories.", "warning");
+                    window.NotificationService.show("Usa 'Guardar Foto HD' para subirla manualmente a Stories.", "warning");
                 }
             } finally {
                 if (directBtn) {
@@ -5161,7 +5189,7 @@
                     }
                 } catch (e) {}
 
-                const fileName = `somospadel_story_${(evt.name || 'evento').replace(/\s+/g, '_').toLowerCase()}.png`;
+                const fileName = `somospadel_story_${(evt.name || 'evento').replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}.png`;
                 const file = new File([blob], fileName, { type: 'image/png' });
 
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -5172,7 +5200,7 @@
                             files: [file]
                         });
                         if (window.NotificationService) {
-                            window.NotificationService.show("¡Compartido con éxito!", "success");
+                            window.NotificationService.show("¡Compartido con éxito en Stories!", "success");
                         }
                         return;
                     } catch (shareErr) {
@@ -5182,15 +5210,19 @@
                 }
 
                 // Fallback si navigator.share no está disponible
-                this.downloadInstagramStory(evt, canvas, false);
+                await this.downloadInstagramStory(evt, canvas, false);
                 window.open('https://www.instagram.com/', '_blank');
                 if (window.NotificationService) {
-                    window.NotificationService.show("📸 Flyer guardado y texto copiado. Abriendo Instagram.", "success");
+                    window.NotificationService.show("📸 Flyer HD guardado y texto copiado. Abriendo Instagram.", "success");
                 }
 
             } catch (err) {
                 console.error("Error en executeInstagramShare:", err);
-                alert("No se pudo abrir el menú nativo. Usa 'Guardar Foto'.");
+                if (window.NotificationService) {
+                    window.NotificationService.show("No se pudo abrir el menú nativo. Usa 'Guardar Foto HD'.", "warning");
+                } else {
+                    alert("No se pudo abrir el menú nativo. Usa 'Guardar Foto HD'.");
+                }
             } finally {
                 if (shareBtn) {
                     shareBtn.disabled = false;
@@ -5209,14 +5241,14 @@
                 if (!canvas) return;
 
                 const link = document.createElement('a');
-                link.download = `somospadel_story_${(evt.name || 'evento').replace(/\s+/g, '_').toLowerCase()}.png`;
-                link.href = canvas.toDataURL('image/png');
+                link.download = `somospadel_story_${(evt.name || 'evento').replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}.png`;
+                link.href = canvas.toDataURL('image/png', 1.0);
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
 
                 if (showToast && window.NotificationService) {
-                    window.NotificationService.show("📥 ¡Imagen HD descargada en tu dispositivo!", "success");
+                    window.NotificationService.show("📥 ¡Flyer 1080x1920 HD descargado en tu dispositivo!", "success");
                 }
             } catch (e) {
                 console.error("Error al descargar Story:", e);
@@ -5231,7 +5263,7 @@
                     await navigator.clipboard.writeText(captionText);
                 }
                 if (window.NotificationService) {
-                    window.NotificationService.show("📋 ¡Texto y hashtags copiados!", "success");
+                    window.NotificationService.show("📋 ¡Texto y hashtags copiados para Instagram!", "success");
                 } else {
                     alert("📋 ¡Texto de Instagram copiado al portapapeles!");
                 }

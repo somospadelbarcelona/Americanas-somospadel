@@ -2179,7 +2179,7 @@
                     <!-- Canvas Container / Preview -->
                     <div style="width: 100%; display: flex; justify-content: center; margin: 4px 0;">
                         <canvas id="sp-flyer-canvas" width="1080" height="1920" 
-                                style="max-height: 52vh; width: auto; max-width: 100%; border-radius: 16px; border: 2px solid #84cc16; box-shadow: 0 10px 30px rgba(0,0,0,0.18); object-fit: contain; background: #070c18;">
+                                style="max-height: 52vh; width: auto; max-width: 100%; border-radius: 16px; border: 2px solid #16a34a; box-shadow: 0 10px 30px rgba(0,0,0,0.18); object-fit: contain; background: #ffffff;">
                         </canvas>
                     </div>
 
@@ -2188,7 +2188,7 @@
                         <button type="button" onclick="window.ControlTowerSummary.downloadFlyer()"
                                 style="flex: 1; min-width: 140px; background: #0f172a; color: #ffffff; border: 1.5px solid #0f172a; padding: 12px; border-radius: 14px; font-weight: 950; font-size: 0.78rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: transform .15s;"
                                 onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-                            <i class="fas fa-download" style="color: #84cc16;"></i>
+                            <i class="fas fa-download" style="color: #16a34a;"></i>
                             <span>DESCARGAR PNG HD</span>
                         </button>
                         <button type="button" onclick="window.ControlTowerSummary.shareFlyerToStory()"
@@ -2217,7 +2217,7 @@
         }
 
         /**
-         * Dibuja el Canvas 1080x1920 con arte deportivo pro
+         * Dibuja el Canvas 1080x1920 con arte deportivo pro (Fondo blanco e invertido)
          */
         static _drawFlyerCanvas(data) {
             const canvas = document.getElementById('sp-flyer-canvas');
@@ -2226,61 +2226,62 @@
             const w = 1080;
             const h = 1920;
 
-            // 1. Fondo Metalizado Oscuro
+            // 1. Fondo General Blanco / Perla Deportivo
             const bgGrad = ctx.createLinearGradient(0, 0, w, h);
-            bgGrad.addColorStop(0, '#070c18');
-            bgGrad.addColorStop(0.5, '#0f172a');
-            bgGrad.addColorStop(1, '#050914');
+            bgGrad.addColorStop(0, '#ffffff');
+            bgGrad.addColorStop(1, '#f8fafc');
             ctx.fillStyle = bgGrad;
             ctx.fillRect(0, 0, w, h);
 
-            // Resplandores Neón
+            // Resplandores de fondo suaves y translúcidos
             const glow1 = ctx.createRadialGradient(900, 200, 50, 900, 200, 600);
-            glow1.addColorStop(0, 'rgba(204, 255, 0, 0.16)');
+            glow1.addColorStop(0, 'rgba(22, 163, 74, 0.05)');
             glow1.addColorStop(1, 'transparent');
             ctx.fillStyle = glow1;
             ctx.fillRect(0, 0, w, h);
 
             const glow2 = ctx.createRadialGradient(200, 1600, 50, 200, 1600, 650);
-            glow2.addColorStop(0, 'rgba(56, 189, 248, 0.16)');
+            glow2.addColorStop(0, 'rgba(56, 189, 248, 0.04)');
             glow2.addColorStop(1, 'transparent');
             ctx.fillStyle = glow2;
             ctx.fillRect(0, 0, w, h);
 
-            // Borde Neón Exterior
-            ctx.strokeStyle = '#CCFF00';
+            // Borde exterior deportivo verde SomosPadel
+            ctx.strokeStyle = '#16a34a';
             ctx.lineWidth = 10;
             this._roundRect(ctx, 35, 35, w - 70, h - 70, 36, false, true);
 
             // 2. Cabecera SomosPadel
-            ctx.fillStyle = '#CCFF00';
+            ctx.fillStyle = '#16a34a';
             ctx.font = '900 32px Outfit, sans-serif';
             ctx.textAlign = 'center';
             ctx.fillText('SOMOSPADEL BCN • PRO TOUR', w / 2, 130);
 
             // Categoría Tag Pill
             const categoryText = (data.eventDoc?.category || 'PRO').toUpperCase();
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
-            this._roundRect(ctx, w / 2 - 130, 165, 260, 48, 24, true, false);
-            ctx.fillStyle = '#38bdf8';
+            ctx.fillStyle = '#f1f5f9';
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 1.5;
+            this._roundRect(ctx, w / 2 - 130, 165, 260, 48, 24, true, true);
+            ctx.fillStyle = '#0284c7';
             ctx.font = '800 22px Outfit, sans-serif';
             ctx.fillText(`CATEGORÍA ${categoryText}`, w / 2, 198);
 
             // Nombre del Torneo / Entreno
             const eventName = (data.eventDoc?.name || 'TORNEO DE PÁDEL').toUpperCase();
-            ctx.fillStyle = '#ffffff';
+            ctx.fillStyle = '#0f172a';
             ctx.font = '1000 52px Outfit, sans-serif';
             ctx.fillText(this._truncateText(ctx, eventName, 900), w / 2, 290);
 
             // Fecha
-            ctx.fillStyle = '#94a3b8';
+            ctx.fillStyle = '#64748b';
             ctx.font = '700 26px Outfit, sans-serif';
             ctx.fillText(data.eventDoc?.date || 'Fecha Oficial SomosPadel', w / 2, 335);
 
-            // Línea divisoria Neón
+            // Línea divisoria centrada en verde deportivo
             const lineGrad = ctx.createLinearGradient(150, 0, w - 150, 0);
             lineGrad.addColorStop(0, 'transparent');
-            lineGrad.addColorStop(0.5, '#CCFF00');
+            lineGrad.addColorStop(0.5, '#16a34a');
             lineGrad.addColorStop(1, 'transparent');
             ctx.strokeStyle = lineGrad;
             ctx.lineWidth = 3;
@@ -2289,30 +2290,30 @@
             ctx.lineTo(w - 150, 375);
             ctx.stroke();
 
-            // 3. PODIO DE HONOR ESTELAR
-            ctx.fillStyle = '#facc15';
+            // 3. Podio de Honor
+            ctx.fillStyle = '#b45309';
             ctx.font = '900 32px Outfit, sans-serif';
             ctx.fillText('🏆 PODIO DE HONOR', w / 2, 435);
 
-            // 1º Puesto Card (Gran Tarjeta Central Dorada)
+            // 1º CAMPEÓN (Oro)
             const p1 = data.p1;
             const goldGrad = ctx.createLinearGradient(100, 470, w - 100, 680);
-            goldGrad.addColorStop(0, 'rgba(250, 204, 21, 0.22)');
-            goldGrad.addColorStop(1, 'rgba(30, 41, 59, 0.85)');
+            goldGrad.addColorStop(0, 'rgba(254, 240, 138, 0.5)');
+            goldGrad.addColorStop(1, 'rgba(254, 249, 195, 0.95)');
             ctx.fillStyle = goldGrad;
-            ctx.strokeStyle = '#facc15';
+            ctx.strokeStyle = '#ca8a04';
             ctx.lineWidth = 4;
             this._roundRect(ctx, 110, 470, w - 220, 215, 28, true, true);
 
-            ctx.fillStyle = '#facc15';
+            ctx.fillStyle = '#a16207';
             ctx.font = '1000 68px Outfit, sans-serif';
             ctx.fillText('🥇 1º CAMPEÓN', w / 2, 550);
 
-            ctx.fillStyle = '#ffffff';
+            ctx.fillStyle = '#0f172a';
             ctx.font = '1000 48px Outfit, sans-serif';
             ctx.fillText(this._truncateText(ctx, p1.name, 800), w / 2, 615);
 
-            ctx.fillStyle = '#fef08a';
+            ctx.fillStyle = '#b45309';
             ctx.font = '800 30px Outfit, sans-serif';
             ctx.fillText(`${p1.points || 0} PUNTOS  •  DIF: ${p1.diff >= 0 ? '+' : ''}${p1.diff || 0}`, w / 2, 660);
 
@@ -2321,48 +2322,48 @@
             const p3 = data.p3;
 
             // 2º Puesto Plata
-            ctx.fillStyle = 'rgba(203, 213, 225, 0.12)';
-            ctx.strokeStyle = '#cbd5e1';
+            ctx.fillStyle = '#f8fafc';
+            ctx.strokeStyle = '#94a3b8';
             ctx.lineWidth = 3;
             this._roundRect(ctx, 110, 715, 415, 175, 24, true, true);
 
-            ctx.fillStyle = '#cbd5e1';
+            ctx.fillStyle = '#475569';
             ctx.font = '900 36px Outfit, sans-serif';
             ctx.fillText('🥈 2º PUESTO', 317, 770);
-            ctx.fillStyle = '#ffffff';
+            ctx.fillStyle = '#0f172a';
             ctx.font = '1000 32px Outfit, sans-serif';
             ctx.fillText(this._truncateText(ctx, p2.name, 370), 317, 825);
-            ctx.fillStyle = '#94a3b8';
+            ctx.fillStyle = '#64748b';
             ctx.font = '800 24px Outfit, sans-serif';
             ctx.fillText(`${p2.points || 0} PTS (${p2.diff >= 0 ? '+' : ''}${p2.diff || 0})`, 317, 865);
 
-            // 3er Puesto Bronce
-            ctx.fillStyle = 'rgba(217, 119, 6, 0.12)';
+            // 3º Puesto Bronce
+            ctx.fillStyle = '#fff7ed';
             ctx.strokeStyle = '#d97706';
             ctx.lineWidth = 3;
             this._roundRect(ctx, 555, 715, 415, 175, 24, true, true);
 
-            ctx.fillStyle = '#fbbf24';
+            ctx.fillStyle = '#c2410c';
             ctx.font = '900 36px Outfit, sans-serif';
             ctx.fillText('🥉 3º PUESTO', 762, 770);
-            ctx.fillStyle = '#ffffff';
+            ctx.fillStyle = '#0f172a';
             ctx.font = '1000 32px Outfit, sans-serif';
             ctx.fillText(this._truncateText(ctx, p3.name, 370), 762, 825);
-            ctx.fillStyle = '#fde68a';
+            ctx.fillStyle = '#b45309';
             ctx.font = '800 24px Outfit, sans-serif';
             ctx.fillText(`${p3.points || 0} PTS (${p3.diff >= 0 ? '+' : ''}${p3.diff || 0})`, 762, 865);
 
-            // 4. Cuadro de Insignias Clave (Grid 2x2)
-            ctx.fillStyle = '#CCFF00';
+            // 4. Insignias y Datos Destacados (Grid 2x2)
+            ctx.fillStyle = '#16a34a';
             ctx.font = '900 30px Outfit, sans-serif';
             ctx.fillText('⚡ INSIGNIAS & DATOS DESTACADOS', w / 2, 940);
 
             const b = data.badges;
             const bCards = [
-                { icon: '👑', title: 'REY PISTA 1', name: b.court1King.name, sub: b.court1King.detail, color: '#facc15' },
-                { icon: '🛡️', title: 'MURALLA', name: b.defenseWall.name, sub: b.defenseWall.detail, color: '#38bdf8' },
-                { icon: '🔥', title: 'RACHA IMBATIBLE', name: b.unbeatableStreak.name, sub: b.unbeatableStreak.detail, color: '#ef4444' },
-                { icon: '⚔️', title: 'PARTIDO ÉPICO', name: b.epicMatch.title, sub: b.epicMatch.detail, color: '#c084fc' }
+                { icon: '👑', title: 'REY PISTA 1', name: b.court1King.name, sub: b.court1King.detail, color: '#b45309' },
+                { icon: '🛡️', title: 'MURALLA', name: b.defenseWall.name, sub: b.defenseWall.detail, color: '#0284c7' },
+                { icon: '🔥', title: 'RACHA IMBATIBLE', name: b.unbeatableStreak.name, sub: b.unbeatableStreak.detail, color: '#dc2626' },
+                { icon: '⚔️', title: 'PARTIDO ÉPICO', name: b.epicMatch.title, sub: b.epicMatch.detail, color: '#7c3aed' }
             ];
 
             const startY = 970;
@@ -2375,8 +2376,8 @@
                 const x = col === 0 ? 110 : 555;
                 const y = startY + row * (bCardH + 20);
 
-                ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.14)';
+                ctx.fillStyle = '#ffffff';
+                ctx.strokeStyle = '#e2e8f0';
                 ctx.lineWidth = 2;
                 this._roundRect(ctx, x, y, bCardW, bCardH, 20, true, true);
 
@@ -2385,58 +2386,58 @@
                 ctx.font = '900 22px Outfit, sans-serif';
                 ctx.fillText(`${card.icon} ${card.title}`, x + 25, y + 42);
 
-                ctx.fillStyle = '#ffffff';
+                ctx.fillStyle = '#0f172a';
                 ctx.font = '1000 28px Outfit, sans-serif';
                 ctx.fillText(this._truncateText(ctx, card.name, bCardW - 50), x + 25, y + 86);
 
-                ctx.fillStyle = '#94a3b8';
+                ctx.fillStyle = '#64748b';
                 ctx.font = '700 20px Outfit, sans-serif';
                 ctx.fillText(this._truncateText(ctx, card.sub, bCardW - 50), x + 25, y + 125);
             });
 
             // 5. Barra de Estadísticas Globales
             const barY = 1350;
-            ctx.fillStyle = 'rgba(204, 255, 0, 0.08)';
-            ctx.strokeStyle = 'rgba(204, 255, 0, 0.3)';
+            ctx.fillStyle = '#f8fafc';
+            ctx.strokeStyle = 'rgba(22, 163, 74, 0.4)';
             ctx.lineWidth = 2;
             this._roundRect(ctx, 110, barY, w - 220, 130, 22, true, true);
 
             ctx.textAlign = 'center';
             // Metric 1: Matches
-            ctx.fillStyle = '#ffffff';
+            ctx.fillStyle = '#0f172a';
             ctx.font = '1000 42px Outfit, sans-serif';
             ctx.fillText(String(data.totalMatches), 240, barY + 62);
-            ctx.fillStyle = '#94a3b8';
+            ctx.fillStyle = '#64748b';
             ctx.font = '800 20px Outfit, sans-serif';
             ctx.fillText('PARTIDOS', 240, barY + 98);
 
             // Metric 2: Games
-            ctx.fillStyle = '#ccff00';
+            ctx.fillStyle = '#16a34a';
             ctx.font = '1000 42px Outfit, sans-serif';
             ctx.fillText(String(data.totalGames), w / 2, barY + 62);
-            ctx.fillStyle = '#94a3b8';
+            ctx.fillStyle = '#64748b';
             ctx.font = '800 20px Outfit, sans-serif';
             ctx.fillText('JUEGOS TOTALES', w / 2, barY + 98);
 
             // Metric 3: Avg
-            ctx.fillStyle = '#38bdf8';
+            ctx.fillStyle = '#0284c7';
             ctx.font = '1000 42px Outfit, sans-serif';
             ctx.fillText(String(data.avgGamesPerMatch), w - 240, barY + 62);
-            ctx.fillStyle = '#94a3b8';
+            ctx.fillStyle = '#64748b';
             ctx.font = '800 20px Outfit, sans-serif';
             ctx.fillText('PROMEDIO J/P', w - 240, barY + 98);
 
             // 6. Pie de Página / Marca de Agua
             ctx.textAlign = 'center';
-            ctx.fillStyle = '#ffffff';
+            ctx.fillStyle = '#0f172a';
             ctx.font = '900 26px Outfit, sans-serif';
             ctx.fillText('SOMOSPADEL BARCELONA', w / 2, 1680);
 
-            ctx.fillStyle = '#ccff00';
+            ctx.fillStyle = '#16a34a';
             ctx.font = '800 22px Outfit, sans-serif';
             ctx.fillText('SOMOSPADELBCN.COM • @SOMOSPADELBCN', w / 2, 1720);
 
-            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.fillStyle = '#94a3b8';
             ctx.font = '600 18px Outfit, sans-serif';
             ctx.fillText('Tecnología Torre de Control v6.0 • Todos los derechos reservados', w / 2, 1765);
         }

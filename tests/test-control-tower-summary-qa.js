@@ -29,15 +29,54 @@ console.log('   SUITE DE CERTIFICACIÓN QA: ControlTowerSummary.js');
 console.log('========================================================\n');
 
 // 1. Cargar el entorno global emulado para Node.js
+const domElements = new Map();
+const mockDocument = {
+    getElementById: (id) => domElements.get(id) || null,
+    createElement: (tag) => {
+        const el = {
+            tagName: tag,
+            id: '',
+            style: {},
+            children: [],
+            innerHTML: '',
+            remove: function() {
+                if (this.id) domElements.delete(this.id);
+            },
+            appendChild: function(c) {
+                this.children.push(c);
+                if (c.id) domElements.set(c.id, c);
+            },
+            removeChild: function(c) {
+                this.children = this.children.filter(x => x !== c);
+                if (c.id) domElements.delete(c.id);
+            }
+        };
+        return el;
+    },
+    body: {
+        children: [],
+        appendChild: function(c) {
+            this.children.push(c);
+            if (c.id) domElements.set(c.id, c);
+        },
+        removeChild: function(c) {
+            this.children = this.children.filter(x => x !== c);
+            if (c.id) domElements.delete(c.id);
+        }
+    }
+};
+
 const mockWindow = {
     location: { href: 'https://somospadel.app' },
-    alert: (msg) => console.log('  [Alert Mock]:', msg)
+    alert: (msg) => console.log('  [Alert Mock]:', msg),
+    document: mockDocument
 };
 mockWindow.window = mockWindow;
 
 const context = vm.createContext({
     window: mockWindow,
     global: mockWindow,
+    document: mockDocument,
     console: console,
     Math: Math,
     parseInt: parseInt,
@@ -311,6 +350,148 @@ assert.ok(ControlTowerSummary.lastChronicleText.includes('DATOS QUE NADIE VE'), 
 assert.ok(ControlTowerSummary.lastChronicleText.includes('Alex'), 'Texto WhatsApp contiene al ganador Alex');
 console.log('   ✅ Texto para compartir en WhatsApp generado y formateado correctamente.\n');
 
+// Test 10: Verificación del Flyer Canvas HD 1080x1920 (Fondo Blanco, Letras Oscuras y Medallas)
+console.log('🖼️ [TEST 10] Verificación de Flyer Canvas HD 1080x1920 (Fondo Blanco e Invertido)');
+
+// Crear mock canvas y 2d context
+const canvasOperations = {
+    gradients: [],
+    fills: [],
+    strokes: [],
+    texts: [],
+    roundRects: []
+};
+
+class MockGradient {
+    constructor(type, coords) {
+        this.type = type;
+        this.coords = coords;
+        this.stops = [];
+    }
+    addColorStop(stop, color) {
+        this.stops.push({ stop, color });
+    }
+}
+
+const mockCtx = {
+    fillStyle: '#000000',
+    strokeStyle: '#000000',
+    lineWidth: 1,
+    font: '',
+    textAlign: 'start',
+    createLinearGradient: (x0, y0, x1, y1) => {
+        const grad = new MockGradient('linear', [x0, y0, x1, y1]);
+        canvasOperations.gradients.push(grad);
+        return grad;
+    },
+    createRadialGradient: (x0, y0, r0, x1, y1, r1) => {
+        const grad = new MockGradient('radial', [x0, y0, r0, x1, y1, r1]);
+        canvasOperations.gradients.push(grad);
+        return grad;
+    },
+    fillRect: (x, y, w, h) => {
+        canvasOperations.fills.push({ type: 'fillRect', x, y, w, h, fillStyle: mockCtx.fillStyle });
+    },
+    beginPath: () => {},
+    moveTo: () => {},
+    lineTo: () => {},
+    quadraticCurveTo: () => {},
+    closePath: () => {},
+    stroke: () => {
+        canvasOperations.strokes.push({ strokeStyle: mockCtx.strokeStyle, lineWidth: mockCtx.lineWidth });
+    },
+    fill: () => {
+        canvasOperations.fills.push({ type: 'fill', fillStyle: mockCtx.fillStyle });
+    },
+    fillText: (text, x, y) => {
+        canvasOperations.texts.push({ text, x, y, font: mockCtx.font, fillStyle: mockCtx.fillStyle, textAlign: mockCtx.textAlign });
+    },
+    measureText: (text) => ({ width: (String(text).length) * 12 })
+};
+
+const mockCanvas = {
+    id: 'sp-flyer-canvas',
+    width: 1080,
+    height: 1920,
+    style: {},
+    getContext: (type) => (type === '2d' ? mockCtx : null),
+    toDataURL: (type) => 'data:image/png;base64,MOCK_CANVAS_DATA'
+};
+domElements.set('sp-flyer-canvas', mockCanvas);
+
+// Asegurarse de que lastSummaryData esté poblado invocando render previamente
+ControlTowerSummary.render(mockMatches, mockEventDoc);
+assert.ok(ControlTowerSummary.lastSummaryData, 'lastSummaryData debe estar preparado');
+
+// Ejecutar _drawFlyerCanvas
+ControlTowerSummary._drawFlyerCanvas(ControlTowerSummary.lastSummaryData);
+
+// 1. Verificar Gradiente de Fondo
+const bgGradient = canvasOperations.gradients.find(g => g.type === 'linear' && g.stops.some(s => s.color === '#ffffff'));
+assert.ok(bgGradient, 'Debe existir un degradado lineal con inicio en fondo blanco #ffffff');
+assert.strictEqual(bgGradient.stops[0].color, '#ffffff', 'Primer punto del gradiente debe ser blanco #ffffff');
+assert.strictEqual(bgGradient.stops[1].color, '#f8fafc', 'Segundo punto del gradiente debe ser perla claro #f8fafc');
+
+// 2. Verificar que no se usan fondos oscuros de flyer
+const hasDarkFillRect = canvasOperations.fills.some(f => f.fillStyle === '#0b0f19' || f.fillStyle === '#0f172a');
+assert.ok(!hasDarkFillRect, 'No debe haber fills oscuros (#0b0f19 o #0f172a) aplicados en el canvas flyer');
+
+// 3. Verificar textos oscuros legibles (#0f172a)
+const darkTexts = canvasOperations.texts.filter(t => t.fillStyle === '#0f172a');
+assert.ok(darkTexts.length >= 5, 'Debe haber múltiples textos principales dibujados con #0f172a');
+assert.ok(darkTexts.some(t => t.text.includes('AMERICANA ORO') || t.text.includes(mockEventDoc.name.toUpperCase())), 'El nombre del evento debe dibujarse en #0f172a');
+assert.ok(darkTexts.some(t => t.text.includes('SOMOSPADEL BARCELONA')), 'El footer debe dibujarse en #0f172a');
+
+// 4. Verificar colores de medallas y podio
+// Oro: Campeón en #a16207 / #b45309
+const goldChampionText = canvasOperations.texts.find(t => t.text.includes('1º CAMPEÓN'));
+assert.ok(goldChampionText, 'Debe dibujarse el texto de 1º CAMPEÓN');
+assert.strictEqual(goldChampionText.fillStyle, '#a16207', 'El título de campeón debe usar oro oscuro legible #a16207');
+
+// Plata: 2º Puesto en #475569
+const silverText = canvasOperations.texts.find(t => t.text.includes('2º PUESTO'));
+assert.ok(silverText, 'Debe dibujarse el texto de 2º PUESTO');
+assert.strictEqual(silverText.fillStyle, '#475569', 'El título de plata debe usar gris pizarra #475569');
+
+// Bronce: 3º Puesto en #c2410c
+const bronzeText = canvasOperations.texts.find(t => t.text.includes('3º PUESTO'));
+assert.ok(bronzeText, 'Debe dibujarse el texto de 3º PUESTO');
+assert.strictEqual(bronzeText.fillStyle, '#c2410c', 'El título de bronce debe usar ámbar/bronce tostado #c2410c');
+
+// 5. Verificar colores de insignias
+const badgeHeader = canvasOperations.texts.find(t => t.text.includes('INSIGNIAS & DATOS DESTACADOS'));
+assert.ok(badgeHeader, 'Cabecera de insignias presente');
+assert.strictEqual(badgeHeader.fillStyle, '#16a34a', 'Cabecera de insignias en verde deportivo #16a34a');
+
+const court1Badge = canvasOperations.texts.find(t => t.text.includes('REY PISTA 1'));
+assert.ok(court1Badge, 'Insignia REY PISTA 1 presente');
+assert.strictEqual(court1Badge.fillStyle, '#b45309', 'Insignia Rey Pista 1 con color dorado/ámbar #b45309');
+
+const defenseBadge = canvasOperations.texts.find(t => t.text.includes('MURALLA'));
+assert.ok(defenseBadge, 'Insignia MURALLA presente');
+assert.strictEqual(defenseBadge.fillStyle, '#0284c7', 'Insignia Muralla con azul marino #0284c7');
+
+const streakBadge = canvasOperations.texts.find(t => t.text.includes('RACHA IMBATIBLE'));
+assert.ok(streakBadge, 'Insignia RACHA IMBATIBLE presente');
+assert.strictEqual(streakBadge.fillStyle, '#dc2626', 'Insignia Racha con rojo deportivo #dc2626');
+
+const epicBadge = canvasOperations.texts.find(t => t.text.includes('PARTIDO ÉPICO'));
+assert.ok(epicBadge, 'Insignia PARTIDO ÉPICO presente');
+assert.strictEqual(epicBadge.fillStyle, '#7c3aed', 'Insignia Partido Épico con violeta deportivo #7c3aed');
+
+// 6. Test de Apertura y Cierre de Modal Flyer
+ControlTowerSummary.openInstagramFlyerModal();
+const modalEl = mockDocument.getElementById('sp-flyer-modal-root');
+assert.ok(modalEl, 'Modal del flyer debe abrirse y crearse en el DOM');
+assert.ok(modalEl.innerHTML.includes('FLYER OFICIAL INSTAGRAM HD'), 'Modal contiene cabecera de Flyer');
+assert.ok(modalEl.innerHTML.includes('sp-flyer-canvas'), 'Modal contiene elemento canvas');
+assert.ok(modalEl.innerHTML.includes('background: #ffffff;'), 'Modal tarjeta tiene fondo blanco #ffffff');
+
+ControlTowerSummary.closeInstagramFlyerModal();
+assert.strictEqual(mockDocument.getElementById('sp-flyer-modal-root'), null, 'Modal del flyer debe cerrarse y removerse');
+
+console.log('   ✅ Flyer Canvas HD validado: Fondo blanco (#ffffff a #f8fafc), textos oscuros (#0f172a), medallas e insignias con contraste perfecto.\n');
+
 console.log('🎉 ========================================================');
-console.log('   CERTIFICACIÓN QA COMPLETADA: 9/9 PRUEBAS EXITOSAS (100%)');
+console.log('   CERTIFICACIÓN QA COMPLETADA: 10/10 PRUEBAS EXITOSAS (100%)');
 console.log('========================================================');

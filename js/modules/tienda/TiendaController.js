@@ -55,15 +55,29 @@
                 window.SubnavManager.renderTienda(TiendaView.selectedCategory || 'todos');
             }
 
-            // Revisar si viene parámetro deep-link de producto en URL (ej: #tienda?producto=prod-bullpadel-hack)
-            const hash = window.location.hash || '';
-            if (hash.includes('producto=')) {
-                const match = hash.match(/producto=([^&]+)/);
-                if (match && match[1]) {
-                    setTimeout(() => {
-                        this.openProductModal(match[1]);
-                    }, 150);
+            // Revisar si viene parámetro deep-link de producto en URL (query string ?producto=... o hash #tienda?producto=...)
+            let deepLinkedProductId = null;
+            try {
+                if (typeof window !== 'undefined' && window.location) {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    deepLinkedProductId = urlParams.get('producto');
                 }
+            } catch (e) {}
+
+            if (!deepLinkedProductId) {
+                const hash = (typeof window !== 'undefined' && window.location && window.location.hash) || '';
+                if (hash.includes('producto=')) {
+                    const match = hash.match(/producto=([^&]+)/);
+                    if (match && match[1]) {
+                        deepLinkedProductId = match[1];
+                    }
+                }
+            }
+
+            if (deepLinkedProductId) {
+                setTimeout(() => {
+                    this.openProductModal(deepLinkedProductId);
+                }, 150);
             }
         }
 
@@ -599,6 +613,13 @@
             const unitPrice = variant ? variant.price : p.promoPrice;
             const total = (unitPrice * qty).toFixed(2);
 
+            const phone = (TiendaService.getSettings() && TiendaService.getSettings().whatsappPhone) || '34623456789';
+            const productImageUrl = TiendaService.getAbsolutePath(p.image);
+            const origin = (typeof window !== 'undefined' && window.location && window.location.origin && !window.location.origin.startsWith('file'))
+                ? window.location.origin
+                : 'https://somospadel.eu';
+            const productDeepLink = `${origin}/tienda.html?producto=${p.id}`;
+
             let msg = `🎾 *CONSULTA / PEDIDO - SOMOSPADEL BCN* 🎾\n\n`;
             msg += `¡Hola equipo de SomosPadel Barcelona! Deseo pedir el siguiente producto:\n\n`;
             msg += `📦 *Producto:* ${p.name}\n`;
@@ -609,12 +630,24 @@
             msg += `🔢 *Cantidad:* ${qty} ud(s)\n`;
             msg += `💰 *Precio Unitario:* ${unitPrice.toFixed(2)}€\n`;
             msg += `💎 *TOTAL A PAGAR:* ${total}€\n\n`;
+            msg += `📸 *Foto del producto:*\n${productImageUrl}\n\n`;
+            msg += `🔗 *Ver producto en Tienda:*\n${productDeepLink}\n\n`;
             msg += `¿Está disponible para recogida en mi próxima americana o para envío? ¡Gracias!`;
 
-            const phone = '34600000000';
+            // De manera asíncrona (sin bloquear), intentar copiar la imagen al portapapeles
+            if (typeof navigator !== 'undefined' && navigator.clipboard && window.ClipboardItem && typeof TiendaService.getProductImageFile === 'function') {
+                TiendaService.getProductImageFile(p).then(file => {
+                    if (file && navigator.clipboard.write) {
+                        navigator.clipboard.write([
+                            new ClipboardItem({ [file.type]: file })
+                        ]).catch(() => {});
+                    }
+                }).catch(() => {});
+            }
+
             const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(msg)}`;
             window.open(url, '_blank');
-            this.showToast('Abriendo WhatsApp para pedir producto 🎾');
+            this.showToast('Abriendo WhatsApp con tu pedido y la foto del producto 🎾');
         }
 
         escapeHtml(str) {
@@ -630,14 +663,53 @@
         // ==========================================
         // COMPARTIR EN REDES SOCIALES
         // ==========================================
-        shareWhatsApp(productId) {
+        async shareWhatsApp(productId) {
             const payload = TiendaService.getSharePayload(productId);
             if (!payload) return;
 
             TiendaService.recordClick(productId);
+
+            // Intentar compartir con archivo físico nativo en navegadores compatibles (móviles / Web Share API Level 2)
+            if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+                try {
+                    let imageFile = null;
+                    if (typeof TiendaService.getProductImageFile === 'function') {
+                        imageFile = await TiendaService.getProductImageFile(payload.product);
+                    }
+
+                    if (imageFile && navigator.canShare && navigator.canShare({ files: [imageFile] })) {
+                        await navigator.share({
+                            title: `${payload.product.brand} - ${payload.product.name}`,
+                            text: payload.textWhatsApp,
+                            files: [imageFile]
+                        });
+                        this.showToast('¡Compartido con foto exitosamente! 🎾');
+                        return;
+                    }
+                } catch (err) {
+                    if (err && err.name === 'AbortError') {
+                        // El usuario canceló la hoja de compartir nativa
+                        return;
+                    }
+                    console.warn('[TiendaController] navigator.share con archivo no completado, recurriendo a enlace directo:', err);
+                }
+            }
+
+            // Fallback (Desktop, navegadores sin canShare de archivos o error):
+            // Intenta copiar la imagen al portapapeles y abre WhatsApp Web / App
+            if (typeof navigator !== 'undefined' && navigator.clipboard && window.ClipboardItem && typeof TiendaService.getProductImageFile === 'function') {
+                TiendaService.getProductImageFile(payload.product).then(file => {
+                    if (file && navigator.clipboard.write) {
+                        navigator.clipboard.write([
+                            new ClipboardItem({ [file.type]: file })
+                        ]).catch(() => {});
+                    }
+                }).catch(() => {});
+            }
+
             const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(payload.textWhatsApp)}`;
             window.open(url, '_blank');
-            this.showToast('Abriendo WhatsApp para compartir oferta 🎾');
+            this.showToast('Abriendo WhatsApp para compartir oferta con foto 🎾');
         }
 
         shareInstagram(productId) {

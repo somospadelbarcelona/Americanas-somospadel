@@ -9,6 +9,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>TIENDA SOMOSPADEL BCN | Escaparate Comercial, Marcas & Colaboradores Oficiales</title>
 
+    <!-- Open Graph & WhatsApp / Redes Sociales Preview -->
+    <meta property="og:type" content="product">
+    <meta property="og:title" content="TIENDA SOMOSPADEL BCN | Material Oficial de Pádel">
+    <meta property="og:description" content="Descubre palas, pelotas, zapatillas y equipación oficial de pádel con ofertas exclusivas en SomosPadel Barcelona.">
+    <meta property="og:image" content="https://somospadel.eu/img/logo_somospadel.png">
+    <meta property="og:image:secure_url" content="https://somospadel.eu/img/logo_somospadel.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="https://somospadel.eu/img/logo_somospadel.png">
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -246,7 +255,38 @@
             };
         }
 
+        function updateProductOpenGraph() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                let prodId = urlParams.get('producto');
+                if (!prodId && window.location.hash.includes('producto=')) {
+                    const match = window.location.hash.match(/producto=([^&]+)/);
+                    if (match) prodId = match[1];
+                }
+                if (prodId && window.TiendaService && typeof window.TiendaService.getProductById === 'function') {
+                    const prod = window.TiendaService.getProductById(prodId);
+                    if (prod) {
+                        const imgUrl = window.TiendaService.getAbsolutePath(prod.image);
+                        document.title = `${prod.name} | Tienda SomosPadel BCN`;
+                        const metaTitle = document.querySelector('meta[property="og:title"]');
+                        if (metaTitle) metaTitle.setAttribute('content', `${prod.name} - ${prod.promoPrice}€ | SomosPadel BCN`);
+                        const metaDesc = document.querySelector('meta[property="og:description"]');
+                        if (metaDesc) metaDesc.setAttribute('content', `${prod.brand} - ${prod.description || 'Disponible en Tienda SomosPadel BCN'}`);
+                        const metaImg = document.querySelector('meta[property="og:image"]');
+                        if (metaImg) metaImg.setAttribute('content', imgUrl);
+                        const metaImgSec = document.querySelector('meta[property="og:image:secure_url"]');
+                        if (metaImgSec) metaImgSec.setAttribute('content', imgUrl);
+                        const metaTwImg = document.querySelector('meta[name="twitter:image"]');
+                        if (metaTwImg) metaTwImg.setAttribute('content', imgUrl);
+                    }
+                }
+            } catch (e) {
+                console.warn('[Tienda] Error actualizando Open Graph dinámico:', e);
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
+            updateProductOpenGraph();
             if (window.SubnavManager) {
                 window.SubnavManager.renderTienda('todos');
             }
@@ -254,6 +294,7 @@
                 window.TiendaController.init('content-area');
             }
         });
+        window.addEventListener('hashchange', updateProductOpenGraph);
     </script>
 </body>
 
