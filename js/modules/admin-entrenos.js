@@ -87,6 +87,16 @@ window.AdminViews.entrenos_mgmt = async function () {
         content.innerHTML = `
             <div class="planning-area" id="entrenos-planning-area" style="display: flex; flex-direction: column; height: calc(100vh - 140px);">
                 
+                <!-- ACTION HEADER BAR -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
+                    <div style="font-size: 1.1rem; font-weight: 900; color: #fff; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-dumbbell" style="color: var(--accent);"></i> ENTRENOS PROGRAMADOS
+                    </div>
+                    <button class="btn-primary-pro" onclick="window.WhatsAppService.openCarteleraModal()" style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); color: #fff; font-weight: 900; border: none; padding: 10px 18px; border-radius: 14px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4); font-size: 0.88rem;">
+                        <i class="fab fa-whatsapp" style="font-size: 1.15rem;"></i> 📢 CARTELERA MULTI-TORNEO (WHATSAPP)
+                    </button>
+                </div>
+
                 <!-- FILTER BAR -->
                 <div class="filter-bar-pro" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1.5rem; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); align-items: center;">
                     <div style="position:relative; grid-column: span 2;">
@@ -432,6 +442,13 @@ function renderEntrenoCard(e) {
 
                 <!-- Action Group -->
                 <div style="display: flex; gap: 8px; flex-shrink: 0; justify-content: flex-end; flex: 1;">
+                    <button class="btn-micro" 
+                            style="background: #10B981 !important; color: #fff !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
+                            onclick='window.checkScheduledEventHealthPrompt(${JSON.stringify(e).replace(/'/g, "&#39;")}, "entreno")' 
+                            title="🛡️ Comprobar si va a funcionar al 100% (Chequeo Pre-Flight)">
+                        <i class="fas fa-shield-halved" style="font-size: 0.95rem; color: #fff !important;"></i>
+                    </button>
+
                     ${(e.status === 'open' || e.status === 'live') ? `
                     <button class="btn-micro" 
                             style="background: #FFD700 !important; color: #000 !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
@@ -466,7 +483,7 @@ function renderEntrenoCard(e) {
                     
                     <button class="btn-micro" 
                             style="background: #475569 !important; color: #fff !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
-                            onclick='window.duplicateEntreno(${JSON.stringify(e).replace(/'/g, "&#39;")})' 
+                            onclick="window.duplicateEntreno('${e.id}')" 
                             title="Duplicar">
                         <i class="fas fa-clone" style="font-size: 0.8rem; color: #fff !important;"></i>
                     </button>
@@ -703,28 +720,189 @@ window.api.runAutomation = () => {
 
 // --- GLOBAL EXPORTS (KEEPING EXISTING APIs) --- //
 
-window.duplicateEntreno = async (e) => {
-    if (!confirm(`¿Duplicar "${e.name}" ?`)) return;
+window.duplicateEntreno = async (eOrId) => {
+    if (!eOrId) return;
+    let e = eOrId;
+    if (typeof eOrId === 'string') {
+        if (window._currentEntrenosCache && Array.isArray(window._currentEntrenosCache)) {
+            e = window._currentEntrenosCache.find(x => x.id === eOrId);
+        }
+        if (!e && window.EventService && typeof window.EventService.getById === 'function') {
+            try {
+                e = await window.EventService.getById('entreno', eOrId);
+            } catch (err) {
+                console.error("❌ [duplicateEntreno] Error al recuperar entreno por ID:", err);
+            }
+        }
+    }
+
+    if (!e || typeof e !== 'object' || (!e.id && !e.name)) {
+        const errorMsg = "No se ha encontrado el entrenamiento seleccionado para duplicar.";
+        if (window.NotificationService && typeof window.NotificationService.showToast === 'function') {
+            window.NotificationService.showToast(errorMsg, 'error');
+        } else {
+            alert(errorMsg);
+        }
+        return;
+    }
+
+    if (!confirm(`¿Duplicar "${e.name || 'este entreno'}"?`)) return;
+
     const copy = { ...e };
-    delete copy.id;
+
+    // 1. Cálculo robusto de fecha (+7 días) sin desfases horarios
+    const rawDate = copy.date || copy.eventDate || copy.fecha || '';
+    let normDate = '';
+    if (window.EventService && typeof window.EventService.normalizeDate === 'function') {
+        normDate = window.EventService.normalizeDate(rawDate);
+    }
+    if (!normDate && typeof rawDate === 'string') {
+        const clean = rawDate.trim();
+        if (clean.includes('/')) {
+            const parts = clean.split('/').map(p => p.trim());
+            if (parts.length >= 2) {
+                const day = parts[0].padStart(2, '0');
+                const month = parts[1].padStart(2, '0');
+                const year = parts[2] ? (parts[2].length === 2 ? '20' + parts[2] : parts[2]) : String(new Date().getFullYear());
+                normDate = `${year}-${month}-${day}`;
+            }
+        } else if (clean.includes('-')) {
+            const parts = clean.split('-').map(p => p.trim());
+            if (parts.length === 3) {
+                if (parts[0].length === 4) {
+                    normDate = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+                } else {
+                    const year = parts[2].length === 2 ? '20' + parts[2] : parts[2];
+                    normDate = `${year}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                }
+            }
+        }
+    }
+
+    let nextDate = '';
+    if (normDate && normDate.includes('-')) {
+        const [yStr, mStr, dStr] = normDate.split('-');
+        const y = parseInt(yStr, 10);
+        const m = parseInt(mStr, 10) - 1;
+        const d = parseInt(dStr, 10);
+        if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+            const dt = new Date(y, m, d, 12, 0, 0);
+            dt.setDate(dt.getDate() + 7);
+            const nextY = dt.getFullYear();
+            const nextM = String(dt.getMonth() + 1).padStart(2, '0');
+            const nextD = String(dt.getDate()).padStart(2, '0');
+            nextDate = `${nextY}-${nextM}-${nextD}`;
+        }
+    }
+
+    if (!nextDate) {
+        const fallbackDt = new Date();
+        fallbackDt.setHours(12, 0, 0, 0);
+        fallbackDt.setDate(fallbackDt.getDate() + 7);
+        const fY = fallbackDt.getFullYear();
+        const fM = String(fallbackDt.getMonth() + 1).padStart(2, '0');
+        const fD = String(fallbackDt.getDate()).padStart(2, '0');
+        nextDate = `${fY}-${fM}-${fD}`;
+    }
+
+    copy.date = nextDate;
+
+    // 2. Actualización inteligente del nombre del evento si incluye fechas
+    if (copy.name) {
+        let updatedName = copy.name.trim();
+        const [nY, nM, nD] = nextDate.split('-');
+        let dateReplaced = false;
+
+        // DD/MM/YYYY o DD-MM-YYYY (o YY de 2 dígitos)
+        const fullDateRegex = /\b(\d{1,2})([\/\-])(\d{1,2})\2(\d{2,4})\b/;
+        if (fullDateRegex.test(updatedName)) {
+            updatedName = updatedName.replace(fullDateRegex, (match, d, sep, m, y) => {
+                dateReplaced = true;
+                const targetY = y.length === 2 ? nY.slice(-2) : nY;
+                const targetD = d.length === 1 ? String(parseInt(nD, 10)) : nD;
+                const targetM = m.length === 1 ? String(parseInt(nM, 10)) : nM;
+                return `${targetD}${sep}${targetM}${sep}${targetY}`;
+            });
+        }
+
+        // YYYY-MM-DD o YYYY/MM/DD
+        if (!dateReplaced) {
+            const isoDateRegex = /\b(\d{4})([\/\-])(\d{1,2})\2(\d{1,2})\b/;
+            if (isoDateRegex.test(updatedName)) {
+                updatedName = updatedName.replace(isoDateRegex, (match, y, sep, m, d) => {
+                    dateReplaced = true;
+                    const targetD = d.length === 1 ? String(parseInt(nD, 10)) : nD;
+                    const targetM = m.length === 1 ? String(parseInt(nM, 10)) : nM;
+                    return `${nY}${sep}${targetM}${sep}${targetD}`;
+                });
+            }
+        }
+
+        // DD/MM o DD-MM (Validar rango: día 1-31, mes 1-12)
+        if (!dateReplaced) {
+            const shortDateRegex = /\b(0[1-9]|[12]\d|3[01]|[1-9])([\/\-])(0[1-9]|1[0-2]|[1-9])\b/;
+            if (shortDateRegex.test(updatedName)) {
+                updatedName = updatedName.replace(shortDateRegex, (match, d, sep, m) => {
+                    dateReplaced = true;
+                    const targetD = d.length === 1 ? String(parseInt(nD, 10)) : nD;
+                    const targetM = m.length === 1 ? String(parseInt(nM, 10)) : nM;
+                    return `${targetD}${sep}${targetM}`;
+                });
+            }
+        }
+
+        // Si no se reemplazó ninguna fecha, añadir (Copia) si no lo tiene ya
+        if (!dateReplaced) {
+            if (!/\(Copia\)$/i.test(updatedName)) {
+                updatedName = `${updatedName} (Copia)`;
+            }
+        }
+
+        copy.name = updatedName;
+    }
+
+    // 3. Limpieza profunda del payload para Firestore
+    const forbiddenKeys = [
+        'id', '_id',
+        'created_at', 'createdAt', 'updatedAt',
+        'chat_id', 'chatId',
+        'matches', 'rounds', 'liveMatches',
+        'classification', 'results',
+        'current_round', 'active_round', 'currentRound', 'round'
+    ];
+    forbiddenKeys.forEach(k => delete copy[k]);
+
     copy.status = 'open';
     copy.players = [];
+    copy.registeredPlayers = [];
     copy.waitlist = [];
     copy.fixed_pairs = [];
 
-    // Attempt to set next week
-    try {
-        if (copy.date) {
-            const d = new Date(copy.date);
-            d.setDate(d.getDate() + 7);
-            copy.date = d.toISOString().split('T')[0];
+    // Limpiar claves undefined para evitar error de Firestore
+    Object.keys(copy).forEach(k => {
+        if (copy[k] === undefined) {
+            delete copy[k];
         }
-    } catch (err) { }
+    });
 
+    // 4. Guardado, feedback y recarga
     try {
         await EventService.createEvent('entreno', copy);
-        window.loadAdminView('entrenos_mgmt');
-    } catch (err) { alert(err.message); }
+        const successMsg = `Entreno duplicado con éxito para el ${copy.date} 📅`;
+        if (window.NotificationService && typeof window.NotificationService.showToast === 'function') {
+            window.NotificationService.showToast(successMsg, 'success');
+        }
+        if (typeof window.loadAdminView === 'function') {
+            window.loadAdminView('entrenos_mgmt');
+        }
+    } catch (err) {
+        console.error("❌ Error al duplicar entreno:", err);
+        const errMsg = `Error al duplicar el entreno: ${err.message || 'Fallo desconocido'}`;
+        if (window.NotificationService && typeof window.NotificationService.showToast === 'function') {
+            window.NotificationService.showToast(errMsg, 'error');
+        }
+        alert(errMsg);
+    }
 };
 
 window.updateEntrenoStatus = async (id, newStatus) => {
@@ -818,17 +996,20 @@ window.openEditEntrenoModal = async (entreno) => {
         }
     }
 
-    const togglePairsArea = () => {
+    const togglePairsArea = async () => {
+        const val = pairModeSelect?.value;
+        const isFixed = val === 'fixed' || (val && String(val).includes('fij'));
         if (pairsArea) {
-            const val = pairModeSelect?.value;
-            if (val === 'fixed') {
-                pairsArea.style.display = 'block';
-            } else {
-                pairsArea.style.display = 'none';
-            }
+            pairsArea.style.display = isFixed ? 'block' : 'none';
         }
         if (window.updatePairModeHelper) {
             window.updatePairModeHelper(pairModeSelect, 'edit-entreno-pair-mode-desc');
+        }
+        if (window.loadEntrenoParticipantsUI) {
+            await window.loadEntrenoParticipantsUI(entreno.id);
+        }
+        if (isFixed && window.PairsUI) {
+            await window.PairsUI.load('entreno-fixed-pairs-area', entreno.id, 'entreno');
         }
     };
 
@@ -1047,6 +1228,29 @@ if (!window.updatePairModeHelper) {
             container.style.borderLeftColor = '#38bdf8';
             container.style.background = 'rgba(56, 189, 248, 0.08)';
         }
+
+        // Auto-sync UI if inside edit modals
+        if (descContainerId === 'edit-americana-pair-mode-desc') {
+            const form = document.getElementById('edit-americana-form');
+            const eventId = form ? form.querySelector('[name=id]')?.value : null;
+            if (eventId) {
+                const pairsArea = document.getElementById('americana-fixed-pairs-area');
+                const isFixed = mode === 'fixed';
+                if (pairsArea) pairsArea.style.display = isFixed ? 'block' : 'none';
+                if (window.loadAmericanaParticipantsUI) window.loadAmericanaParticipantsUI(eventId);
+                if (isFixed && window.PairsUI) window.PairsUI.load('americana-fixed-pairs-area', eventId, 'americana');
+            }
+        } else if (descContainerId === 'edit-entreno-pair-mode-desc') {
+            const form = document.getElementById('edit-entreno-form');
+            const eventId = form ? form.querySelector('[name=id]')?.value : null;
+            if (eventId) {
+                const pairsArea = document.getElementById('entreno-fixed-pairs-area');
+                const isFixed = mode === 'fixed';
+                if (pairsArea) pairsArea.style.display = isFixed ? 'block' : 'none';
+                if (window.loadEntrenoParticipantsUI) window.loadEntrenoParticipantsUI(eventId);
+                if (isFixed && window.PairsUI) window.PairsUI.load('entreno-fixed-pairs-area', eventId, 'entreno');
+            }
+        }
     };
 };
 
@@ -1148,9 +1352,33 @@ window.openAddPairToEntrenoSelector = async (eventId) => {
 
             // Add P1
             await ParticipantService.addPlayer(eventId, 'entreno', p1);
-            // Add P2 (Wait slightly)
             await new Promise(r => setTimeout(r, 200));
             await ParticipantService.addPlayer(eventId, 'entreno', p2);
+
+            try {
+                const event = await EventService.getById('entreno', eventId);
+                const currentPairs = event.fixed_pairs || [];
+                const nextIndex = currentPairs.length * 2;
+                const initialCourt = Math.floor(nextIndex / 4) + 1;
+                const newPair = {
+                    id: `pair_${Date.now()}_manual`,
+                    player1_id: selected1.id,
+                    player2_id: selected2.id,
+                    player1_name: selected1.name,
+                    player2_name: selected2.name,
+                    pair_name: `${selected1.name} / ${selected2.name}`,
+                    wins: 0,
+                    losses: 0,
+                    games_won: 0,
+                    games_lost: 0,
+                    current_court: initialCourt,
+                    initial_court: initialCourt
+                };
+                await EventService.updateEvent('entreno', eventId, {
+                    fixed_pairs: [...currentPairs, newPair],
+                    pair_mode: 'fixed'
+                });
+            } catch (syncErr) { console.warn("[Entreno] sync fixed_pairs error:", syncErr); }
 
             if (window.NotificationService) {
                 window.NotificationService.showToast(`Pareja Creada: ${selected1.name} & ${selected2.name}`, "success");
@@ -1158,6 +1386,7 @@ window.openAddPairToEntrenoSelector = async (eventId) => {
 
             // Reload UI
             window.loadEntrenoParticipantsUI(eventId);
+            if (window.PairsUI) window.PairsUI.load('entreno-fixed-pairs-area', eventId, 'entreno');
         }
 
     } catch (e) {
@@ -1211,12 +1440,35 @@ window.linkManualPartner = async (eventId, playerId, playerName) => {
             players[p2Index].partner_id = playerId;
             players[p2Index].partner_name = playerName;
 
-            // Save to DB
-            await FirebaseDB.entrenos.update(eventId, { players: players });
+            // Also add to fixed_pairs
+            const currentPairs = event.fixed_pairs || [];
+            const nextIndex = currentPairs.length * 2;
+            const initialCourt = Math.floor(nextIndex / 4) + 1;
+            const newPair = {
+                id: `pair_${Date.now()}_manual`,
+                player1_id: playerId,
+                player2_id: selected.id,
+                player1_name: playerName,
+                player2_name: selected.name,
+                pair_name: `${playerName} / ${selected.name}`,
+                wins: 0,
+                losses: 0,
+                games_won: 0,
+                games_lost: 0,
+                current_court: initialCourt,
+                initial_court: initialCourt
+            };
+
+            await EventService.updateEvent('entreno', eventId, {
+                players: players,
+                fixed_pairs: [...currentPairs, newPair],
+                pair_mode: 'fixed'
+            });
 
             if (window.NotificationService) window.NotificationService.showToast("Pareja vinculada correctamente", "success");
 
             window.loadEntrenoParticipantsUI(eventId);
+            if (window.PairsUI) window.PairsUI.load('entreno-fixed-pairs-area', eventId, 'entreno');
         }
 
     } catch (e) {
@@ -1265,14 +1517,17 @@ window.loadEntrenoParticipantsUI = async (id) => {
                 return parse(a.joinedAt) - parse(b.joinedAt);
             });
 
-        // 🧠 Smart Mode Detection (Consistent with MatchMakingService & PreFlightRoundVerifier)
-        let isFixedMode = false;
-        if (window.PreFlightRoundVerifier) {
-            isFixedMode = window.PreFlightRoundVerifier.normalizePairMode(event.pair_mode, event) === 'fixed';
-        } else {
-            isFixedMode = (event.pair_mode && event.pair_mode.includes('fixed')) ||
-                (event.fixed_pairs && event.fixed_pairs.length > 0) ||
-                (event.name && (event.name.toUpperCase().includes('FIJA') || event.name.toUpperCase().includes('FIJO')));
+        const liveSelect = document.getElementById('edit-entreno-pair-mode');
+        const activeMode = (liveSelect && liveSelect.value) ? liveSelect.value : (event.pair_mode || 'twister');
+
+        let isFixedMode = (activeMode === 'fixed') ||
+            String(activeMode || '').includes('fij') ||
+            (event.pair_mode && (event.pair_mode.includes('fixed') || event.pair_mode.includes('fij'))) ||
+            (event.fixed_pairs && event.fixed_pairs.length > 0) ||
+            (event.players && event.players.some(p => p.partner_id || p.partner_name)) ||
+            (event.name && (event.name.toUpperCase().includes('FIJA') || event.name.toUpperCase().includes('FIJO')));
+        if (!isFixedMode && window.PreFlightRoundVerifier) {
+            isFixedMode = window.PreFlightRoundVerifier.normalizePairMode(activeMode, event) === 'fixed';
         }
 
         // Render List with Header
@@ -1443,7 +1698,7 @@ window.loadEntrenoParticipantsUI = async (id) => {
                             </div>
                         </div>
                         <div style="display:flex; gap:4px; align-items:center;">
-                            ${(event.pair_mode && event.pair_mode.includes('fixed') && !hasMissingPartner) ?
+                            ${(isFixedMode) ?
                                 `<button onclick="window.linkManualPartner('${id}', '${pid}', '${playerName}')" title="Vincular pareja manual" style="background:rgba(59, 130, 246, 0.1); border:1px solid #3b82f6; color:#3b82f6; border-radius:6px; cursor:pointer; font-size:0.8rem; padding:6px 10px;"><i class="fas fa-handshake"></i></button>` : ''}
                             <button onclick="window.removeEntrenoPlayer('${id}', '${pid}')" title="BORRAR JUGADOR (Incluso en Juego)" style="background:rgba(239, 68, 68, 0.1); border:1px solid #ef4444; color:#ef4444; border-radius:10px; cursor:pointer; font-size:0.85rem; padding:8px 12px; font-weight: 800;"><i class="fas fa-trash-alt"></i> ELIMINAR</button>
                         </div>

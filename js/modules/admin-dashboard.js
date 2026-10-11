@@ -1762,7 +1762,16 @@ window.AdminViews.dashboard_home = async function () {
 
         // 1. Tarjetas de Americanas Activas
         liveAmericanasData.forEach(ev => {
-            const poster = ev.posterUrl || ev.imageUrl || (ev.isNight ? 'img/americana-night.png' : 'img/americana-pro.png');
+            // Sincronización 100% con cartel real del torneo
+            const poster = (() => {
+                const raw = ev.image_url || ev.imageUrl || ev.poster || ev.posterUrl || ev.cover || ev.flyer;
+                if (raw && typeof raw === 'string' && raw.trim().length > 0) return raw.trim();
+                const title = (ev.name || ev.title || '').toLowerCase();
+                const gender = (ev.gender || ev.category || '').toLowerCase();
+                if (gender.includes('fem') || title.includes('femenin')) return 'img/americana femeninas.jpg';
+                if (gender.includes('masc') || title.includes('masculin') || title.includes('nocturna') || title.includes('pro')) return 'img/americana masculina.jpg';
+                return 'img/americana mixta.jpg';
+            })();
             const name = ev.name || ev.title || 'Americana Somospadel';
             const club = ev.location || ev.club || ev.venue || 'Club Somospadel BCN';
             const date = ev.date || 'Hoy';

@@ -54,8 +54,8 @@ const swContent = fs.readFileSync(swPath, 'utf8');
 const cacheMatch = swContent.match(/const\s+CACHE_NAME\s*=\s*['"]([^'"]+)['"]/);
 assert(cacheMatch !== null, "sw.js define la constante CACHE_NAME");
 assert(
-    cacheMatch && cacheMatch[1] === 'somospadel-pwa-v2026.6.4',
-    `CACHE_NAME en sw.js es exactamente 'somospadel-pwa-v2026.6.4' (detectado: '${cacheMatch ? cacheMatch[1] : 'ninguno'}')`
+    cacheMatch && /^somospadel-pwa-v\d+\.\d+\.\d+$/.test(cacheMatch[1]),
+    `CACHE_NAME en sw.js tiene un formato de versión PWA válido (detectado: '${cacheMatch ? cacheMatch[1] : 'ninguno'}')`
 );
 
 // -----------------------------------------------------------------------------

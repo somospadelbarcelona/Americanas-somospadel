@@ -1,10 +1,10 @@
 /**
  * TournamentChronicleModal.js
- * 🏆 MODAL INTERACTIVO PRO: CRÓNICA ÉPICA POST-TORNEO & GENERADOR DE INSTAGRAM STORIES HD
+ * 🏆 MODAL INTERACTIVO PRO: CRÓNICA POST-TORNEO & GENERADOR DE INSTAGRAM STORIES HD
  * 
- * - Estética ultra-moderna SomosPádel BCN (Dark Glassmorphism, IA Violet #8B5CF6, Oro #FACC15, Neón #CCFF00)
- * - Simulación de análisis y generación con IA deportiva en tiempo real
- * - Selector de tono procedural al vuelo (Épico AS/Marca, Hype SomosPádel, Técnico WPT)
+ * - Estética ultra-moderna y limpia SomosPádel BCN (Fondo blanco #FFFFFF, letra negra carbón #0F172A)
+ * - Análisis y redacción procedural de crónica oficial en tiempo real
+ * - Selector de estilo al vuelo (Épico AS/Marca, Hype SomosPádel, Técnico WPT)
  * - Tarjetas de MVP, Podio, Momentos Cumbre y Ascensos de Pista / ELO
  * - Generador de Instagram Story 9:16 nativo en Canvas (1080x1920px reales) sin dependencias externas
  * - Compartir directo en WhatsApp, Portapapeles y Web Share API nativo
@@ -165,8 +165,8 @@
             overlay.style.cssText = `
                 position: fixed; inset: 0; z-index: 15000;
                 display: flex; align-items: center; justify-content: center;
-                background: rgba(5, 8, 16, 0.88); backdrop-filter: blur(16px);
-                -webkit-backdrop-filter: blur(16px);
+                background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
                 padding: 12px; box-sizing: border-box; overflow-y: auto;
                 opacity: 0; transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
             `;
@@ -176,45 +176,47 @@
                     #sp-tournament-chronicle-modal * { box-sizing: border-box; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
                     .sp-chronicle-modal-container {
                         width: 100%; max-width: 820px; max-height: 94vh;
-                        background: radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.12) 0%, rgba(9, 14, 23, 0.98) 70%);
-                        border: 1px solid rgba(139, 92, 246, 0.35);
+                        background: #ffffff;
+                        color: #0f172a;
+                        border: 1px solid #e2e8f0;
                         border-radius: 24px;
-                        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(139, 92, 246, 0.2);
+                        box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.25);
                         display: flex; flex-direction: column; overflow: hidden;
                         transform: scale(0.95) translateY(15px);
                         transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-                        color: #ffffff;
                     }
                     @keyframes spPulseGlow {
-                        0%, 100% { opacity: 0.6; filter: drop-shadow(0 0 15px rgba(139, 92, 246, 0.6)); }
-                        50% { opacity: 1; filter: drop-shadow(0 0 30px rgba(204, 255, 0, 0.8)); }
+                        0%, 100% { opacity: 0.8; transform: scale(1); }
+                        50% { opacity: 1; transform: scale(1.06); }
                     }
                     @keyframes spBarShimmer {
                         0% { background-position: -200% 0; }
                         100% { background-position: 200% 0; }
                     }
                     .sp-tab-btn {
-                        background: transparent; border: none; padding: 10px 18px;
-                        font-size: 0.82rem; font-weight: 800; color: #94a3b8;
+                        background: #ffffff; border: 1px solid #e2e8f0; padding: 10px 18px;
+                        font-size: 0.82rem; font-weight: 800; color: #64748b;
                         cursor: pointer; border-radius: 12px; transition: all 0.2s ease;
                         display: inline-flex; align-items: center; gap: 8px; letter-spacing: 0.5px;
                     }
+                    .sp-tab-btn:hover { background: #f1f5f9; color: #0f172a; }
                     .sp-tab-btn.active {
-                        background: rgba(139, 92, 246, 0.2);
-                        color: #ffffff; border: 1px solid rgba(139, 92, 246, 0.5);
-                        box-shadow: 0 4px 14px rgba(139, 92, 246, 0.25);
+                        background: #0f172a;
+                        color: #ffffff; border: 1px solid #0f172a;
+                        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
                     }
+                    .sp-tab-btn.active i { color: #ffffff !important; }
                     .sp-tone-pill {
-                        background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12);
-                        color: #94a3b8; font-size: 0.72rem; font-weight: 800; padding: 6px 12px;
+                        background: #ffffff; border: 1px solid #e2e8f0;
+                        color: #475569; font-size: 0.72rem; font-weight: 800; padding: 6px 13px;
                         border-radius: 999px; cursor: pointer; transition: all 0.2s ease;
                         display: inline-flex; align-items: center; gap: 6px;
                     }
-                    .sp-tone-pill:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+                    .sp-tone-pill:hover { background: #f1f5f9; color: #0f172a; border-color: #cbd5e1; }
                     .sp-tone-pill.active {
-                        background: linear-gradient(135deg, rgba(139, 92, 246, 0.3) 0%, rgba(204, 255, 0, 0.2) 100%);
-                        border-color: #8B5CF6; color: #CCFF00;
-                        box-shadow: 0 0 14px rgba(139, 92, 246, 0.4);
+                        background: #0f172a;
+                        border-color: #0f172a; color: #ffffff;
+                        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
                     }
                     .sp-action-btn-pro {
                         border: none; border-radius: 14px; font-weight: 900; font-size: 0.82rem;
@@ -222,12 +224,13 @@
                         align-items: center; justify-content: center; gap: 8px;
                         transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
                     }
-                    .sp-action-btn-pro:hover { transform: translateY(-2px); filter: brightness(1.1); }
+                    .sp-action-btn-pro:hover { transform: translateY(-2px); filter: brightness(1.05); }
                     .sp-action-btn-pro:active { transform: translateY(0); }
                     /* Scrollbar estilizada */
                     .sp-chronicle-scroll::-webkit-scrollbar { width: 6px; }
-                    .sp-chronicle-scroll::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
-                    .sp-chronicle-scroll::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.4); border-radius: 6px; }
+                    .sp-chronicle-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
+                    .sp-chronicle-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; }
+                    .sp-chronicle-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
                 </style>
                 <div class="sp-chronicle-modal-container" id="sp-chronicle-inner-container">
                     <!-- Contenido dinámico (Loading o Dashboard) -->
@@ -259,7 +262,7 @@
                 { icon: '⚡', text: 'Analizando marcadores, sets y diferenciales de juegos...' },
                 { icon: '🔥', text: 'Identificando la mayor remontada y el MVP de la jornada...' },
                 { icon: '📈', text: 'Detectando ascensos a Pista 1 y subidas estimadas de ELO...' },
-                { icon: '✨', text: 'Redactando crónica deportiva épica...' }
+                { icon: '✨', text: 'Redactando crónica deportiva oficial...' }
             ];
 
             let stageIndex = 0;
@@ -269,41 +272,36 @@
                 const pct = Math.round(((index + 1) / stages.length) * 100);
 
                 container.innerHTML = `
-                    <div style="padding: 60px 24px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 420px;">
+                    <div style="background: #ffffff; padding: 60px 24px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 420px; border-radius: 24px;">
                         
-                        <!-- Glowing AI Brain / Trophy Icon -->
+                        <!-- Glowing Trophy Icon -->
                         <div style="
                             position: relative; width: 90px; height: 90px; margin-bottom: 24px;
                             display: flex; align-items: center; justify-content: center;
-                            background: radial-gradient(circle, rgba(139, 92, 246, 0.25) 0%, rgba(0,0,0,0) 70%);
+                            background: #f8fafc; border: 2px dashed #cbd5e1;
                             border-radius: 50%;
                         ">
-                            <div style="
-                                position: absolute; inset: 0; border-radius: 50%;
-                                border: 2px dashed rgba(139, 92, 246, 0.6);
-                                animation: spin 8s linear infinite;
-                            "></div>
                             <span style="font-size: 3.2rem; animation: spPulseGlow 1.8s ease-in-out infinite;">🏆</span>
                         </div>
 
                         <!-- Badge -->
                         <div style="
-                            display: inline-flex; align-items: center; gap: 7px; padding: 4px 14px;
-                            border-radius: 999px; background: rgba(139, 92, 246, 0.15);
-                            border: 1px solid rgba(139, 92, 246, 0.4); color: #c4b5fd;
-                            font-size: 0.72rem; font-weight: 900; letter-spacing: 1.5px;
+                            display: inline-flex; align-items: center; gap: 7px; padding: 5px 14px;
+                            border-radius: 999px; background: #f1f5f9;
+                            border: 1px solid #e2e8f0; color: #0f172a;
+                            font-size: 0.72rem; font-weight: 900; letter-spacing: 1.2px;
                             text-transform: uppercase; margin-bottom: 14px;
                         ">
-                            <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#CCFF00; box-shadow:0 0 8px #CCFF00;"></span>
-                            IA DEPORTIVA SOMOSPÁDEL
+                            <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981; box-shadow:0 0 6px rgba(16,185,129,0.5);"></span>
+                            CRÓNICA DEPORTIVA SOMOSPÁDEL
                         </div>
 
-                        <h2 style="font-size: 1.4rem; font-weight: 950; margin: 0 0 8px; color: #ffffff; letter-spacing: 0.5px;">
-                            GENERANDO CRÓNICA ÉPICA
+                        <h2 style="font-size: 1.4rem; font-weight: 950; margin: 0 0 8px; color: #0f172a; letter-spacing: -0.3px;">
+                            GENERANDO CRÓNICA
                         </h2>
 
                         <p id="sp-ai-loading-text" style="
-                            font-size: 0.9rem; color: #cbd5e1; margin: 0 0 28px; max-width: 440px;
+                            font-size: 0.9rem; color: #475569; margin: 0 0 28px; max-width: 440px;
                             line-height: 1.4; min-height: 40px;
                         ">
                             <span style="margin-right: 6px;">${s.icon}</span> ${s.text}
@@ -312,14 +310,13 @@
                         <!-- Progress Bar -->
                         <div style="
                             width: 100%; max-width: 380px; height: 8px;
-                            background: rgba(255, 255, 255, 0.08); border-radius: 999px;
-                            overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,0.06);
+                            background: #e2e8f0; border-radius: 999px;
+                            overflow: hidden; position: relative;
                         ">
                             <div id="sp-ai-progress-bar" style="
                                 width: ${pct}%; height: 100%;
-                                background: linear-gradient(90deg, #8B5CF6 0%, #CCFF00 100%);
+                                background: linear-gradient(90deg, #0284c7 0%, #10b981 100%);
                                 border-radius: 999px; transition: width 0.35s ease;
-                                box-shadow: 0 0 12px rgba(204, 255, 0, 0.6);
                             "></div>
                         </div>
 
@@ -369,33 +366,32 @@
             container.innerHTML = `
                 <!-- CABECERA DEL MODAL -->
                 <div style="
-                    padding: 18px 22px; border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                    padding: 18px 22px; border-bottom: 1px solid #e2e8f0;
                     display: flex; align-items: center; justify-content: space-between; gap: 14px;
-                    background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(10px);
+                    background: #ffffff;
                     flex-shrink: 0;
                 ">
                     <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
                         <div style="
                             width: 44px; height: 44px; border-radius: 12px;
-                            background: linear-gradient(135deg, #8B5CF6 0%, #4C1D95 100%);
+                            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+                            border: 1px solid #fcd34d; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
                             display: flex; align-items: center; justify-content: center;
                             font-size: 1.4rem; flex-shrink: 0;
-                            border: 1px solid rgba(204, 255, 0, 0.4);
-                            box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4);
                         ">🏆</div>
                         <div style="min-width: 0;">
                             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                 <span style="
-                                    font-size: 0.62rem; font-weight: 900; padding: 2px 8px; border-radius: 6px;
-                                    background: rgba(204, 255, 0, 0.15); color: #CCFF00; border: 1px solid rgba(204, 255, 0, 0.4);
+                                    font-size: 0.65rem; font-weight: 900; padding: 3px 8px; border-radius: 6px;
+                                    background: #eff6ff; color: #0284c7; border: 1px solid #bfdbfe;
                                     letter-spacing: 0.8px; text-transform: uppercase;
-                                ">CRÓNICA ÉPICA OFICIAL</span>
-                                <span style="font-size: 0.68rem; color: #94a3b8; font-weight: 600;">${eventDate}</span>
+                                ">CRÓNICA OFICIAL</span>
+                                <span style="font-size: 0.72rem; color: #64748b; font-weight: 600;">${eventDate}</span>
                             </div>
                             <div style="
-                                font-size: 1.05rem; font-weight: 950; color: #ffffff;
+                                font-size: 1.12rem; font-weight: 950; color: #0f172a;
                                 white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-                                margin-top: 2px; letter-spacing: 0.2px;
+                                margin-top: 2px; letter-spacing: -0.2px;
                             ">
                                 ${eventTitle}
                             </div>
@@ -404,11 +400,11 @@
 
                     <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
                         <button type="button" onclick="window.TournamentChronicleModal.close()" style="
-                            background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.14);
-                            color: #cbd5e1; width: 36px; height: 36px; border-radius: 50%;
+                            background: #f1f5f9; border: 1px solid #e2e8f0;
+                            color: #475569; width: 36px; height: 36px; border-radius: 50%;
                             display: flex; align-items: center; justify-content: center; cursor: pointer;
                             font-size: 1rem; transition: all 0.2s ease;
-                        " onmouseover="this.style.background='rgba(255,255,255,0.18)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">
+                        " onmouseover="this.style.background='#e2e8f0'; this.style.color='#0f172a'" onmouseout="this.style.background='#f1f5f9'; this.style.color='#475569'">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
@@ -416,20 +412,20 @@
 
                 <!-- SELECTOR DE PESTAÑAS (CRÓNICA PERIODÍSTICA / INSTAGRAM STORY) -->
                 <div style="
-                    padding: 10px 20px; background: rgba(9, 14, 23, 0.6);
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                    padding: 10px 20px; background: #f8fafc;
+                    border-bottom: 1px solid #e2e8f0;
                     display: flex; align-items: center; justify-content: space-between; gap: 10px;
                     flex-wrap: wrap; flex-shrink: 0;
                 ">
-                    <div style="display: flex; gap: 6px;">
+                    <div style="display: flex; gap: 8px;">
                         <button type="button" class="sp-tab-btn ${this.activeTab === 'chronicle' ? 'active' : ''}" 
                                 onclick="window.TournamentChronicleModal.switchTab('chronicle')">
-                            <i class="fas fa-newspaper" style="color: ${this.activeTab === 'chronicle' ? '#CCFF00' : '#8B5CF6'};"></i>
+                            <i class="fas fa-newspaper" style="color: ${this.activeTab === 'chronicle' ? '#ffffff' : '#0284c7'};"></i>
                             <span>CRÓNICA & DETALLES</span>
                         </button>
                         <button type="button" class="sp-tab-btn ${this.activeTab === 'story' ? 'active' : ''}" 
                                 onclick="window.TournamentChronicleModal.switchTab('story')">
-                            <i class="fab fa-instagram" style="color: ${this.activeTab === 'story' ? '#e1306c' : '#94a3b8'};"></i>
+                            <i class="fab fa-instagram" style="color: ${this.activeTab === 'story' ? '#ffffff' : '#e1306c'};"></i>
                             <span>STORY HD (9:16)</span>
                         </button>
                     </div>
@@ -456,41 +452,41 @@
 
                 <!-- CUERPO PRINCIPAL CON SCROLL -->
                 <div class="sp-chronicle-scroll" style="
-                    padding: 20px 22px; overflow-y: auto; flex: 1; min-height: 280px;
+                    background: #f8fafc; padding: 20px 22px; overflow-y: auto; flex: 1; min-height: 280px;
                 ">
                     ${this.activeTab === 'chronicle' ? this._renderChronicleTabView() : this._renderStoryTabView()}
                 </div>
 
                 <!-- BARRA INFERIOR DE ACCIONES RÁPIDAS (COMPARTIR) -->
                 <div style="
-                    padding: 14px 22px; background: rgba(10, 16, 28, 0.95);
-                    border-top: 1px solid rgba(255, 255, 255, 0.08);
+                    padding: 14px 22px; background: #ffffff;
+                    border-top: 1px solid #e2e8f0;
                     display: flex; align-items: center; justify-content: space-between; gap: 10px;
                     flex-wrap: wrap; flex-shrink: 0;
                 ">
-                    <div style="display: flex; align-items: center; gap: 6px; font-size: 0.72rem; color: #94a3b8;">
-                        <i class="fas fa-bolt" style="color: #CCFF00;"></i>
-                        <span>IA Generativa con estadísticas oficiales SomosPádel</span>
+                    <div style="display: flex; align-items: center; gap: 6px; font-size: 0.74rem; color: #64748b; font-weight: 600;">
+                        <i class="fas fa-trophy" style="color: #0284c7;"></i>
+                        <span>Crónica oficial con estadísticas SomosPádel</span>
                     </div>
 
                     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                         <!-- WhatsApp Directo -->
                         <button type="button" class="sp-action-btn-pro" onclick="window.TournamentChronicleModal.shareWhatsApp()"
-                                style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); color: #ffffff; box-shadow: 0 4px 16px rgba(37, 211, 102, 0.35);">
+                                style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); color: #ffffff; box-shadow: 0 4px 14px rgba(37, 211, 102, 0.28);">
                             <i class="fab fa-whatsapp" style="font-size: 1.1rem;"></i>
                             <span>WHATSAPP</span>
                         </button>
 
                         <!-- Copiar Crónica -->
                         <button type="button" class="sp-action-btn-pro" onclick="window.TournamentChronicleModal.copyChronicle(this)"
-                                style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.16); color: #ffffff;">
+                                style="background: #f1f5f9; border: 1px solid #cbd5e1; color: #0f172a;">
                             <i class="fas fa-copy"></i>
                             <span>COPIAR</span>
                         </button>
 
                         <!-- Compartir Nativo (Móvil) -->
                         <button type="button" class="sp-action-btn-pro" onclick="window.TournamentChronicleModal.shareNative()"
-                                style="background: rgba(139, 92, 246, 0.2); border: 1px solid rgba(139, 92, 246, 0.5); color: #c4b5fd;">
+                                style="background: #0f172a; border: 1px solid #0f172a; color: #ffffff; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);">
                             <i class="fas fa-share-alt"></i>
                             <span>COMPARTIR</span>
                         </button>
@@ -514,19 +510,20 @@
                 <!-- TITULAR DE IMPACTO -->
                 <div style="
                     margin-bottom: 20px; padding: 20px; border-radius: 18px;
-                    background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(15, 23, 42, 0.6) 100%);
-                    border: 1px solid rgba(139, 92, 246, 0.3);
+                    background: #ffffff;
+                    border: 1px solid #e2e8f0;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
                 ">
-                    <div style="font-size: 0.72rem; font-weight: 900; color: #CCFF00; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 6px;">
+                    <div style="font-size: 0.72rem; font-weight: 900; color: #0284c7; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 6px;">
                         📰 CRÓNICA DEPORTIVA EXCLUSIVA
                     </div>
                     <h1 style="
-                        font-size: 1.45rem; font-weight: 950; color: #ffffff; line-height: 1.25;
+                        font-size: 1.45rem; font-weight: 950; color: #0f172a; line-height: 1.25;
                         margin: 0 0 10px; letter-spacing: -0.3px;
                     ">
                         ${c.headline || 'Jornada magistral en las pistas de SomosPádel'}
                     </h1>
-                    <div style="font-size: 0.88rem; color: #cbd5e1; line-height: 1.45; font-weight: 500;">
+                    <div style="font-size: 0.90rem; color: #475569; line-height: 1.5; font-weight: 500;">
                         ${c.subheadline || 'Los protagonistas brillaron en cada punto disputado.'}
                     </div>
                 </div>
@@ -536,39 +533,40 @@
                     
                     <!-- TARJETA MVP -->
                     <div style="
-                        padding: 16px; border-radius: 18px;
-                        background: radial-gradient(circle at top right, rgba(250, 204, 21, 0.15) 0%, rgba(15, 23, 42, 0.75) 100%);
-                        border: 1px solid rgba(250, 204, 21, 0.4);
+                        padding: 18px; border-radius: 18px;
+                        background: #ffffff;
+                        border: 1.5px solid #f59e0b;
+                        box-shadow: 0 4px 16px rgba(245, 158, 11, 0.08);
                         display: flex; flex-direction: column; justify-content: space-between;
                     ">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
                             <span style="
-                                background: linear-gradient(135deg, #FACC15 0%, #CA8A04 100%);
+                                background: #f59e0b;
                                 color: #000000; font-size: 0.64rem; font-weight: 950; padding: 3px 9px;
                                 border-radius: 6px; letter-spacing: 0.8px;
                             ">
                                 ⭐ MVP DE LA JORNADA
                             </span>
-                            <span style="font-size: 0.68rem; color: #FACC15; font-weight: 900;">
+                            <span style="font-size: 0.72rem; color: #d97706; font-weight: 900;">
                                 Impacto: ${mvp.impactScore || 95}/100
                             </span>
                         </div>
 
-                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
                             <div style="
-                                width: 50px; height: 50px; border-radius: 50%;
-                                background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-                                border: 2px solid #FACC15; display: flex; align-items: center; justify-content: center;
-                                font-weight: 950; font-size: 1.15rem; color: #FACC15; flex-shrink: 0;
-                                box-shadow: 0 0 15px rgba(250, 204, 21, 0.3);
+                                width: 52px; height: 52px; border-radius: 50%;
+                                background: #fef3c7;
+                                border: 2px solid #f59e0b; display: flex; align-items: center; justify-content: center;
+                                font-weight: 950; font-size: 1.2rem; color: #b45309; flex-shrink: 0;
+                                box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
                             ">
                                 ${this._getInitials(mvp.name)}
                             </div>
                             <div style="min-width: 0;">
-                                <div style="font-weight: 950; font-size: 1.15rem; color: #ffffff; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                <div style="font-weight: 950; font-size: 1.15rem; color: #0f172a; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                     ${mvp.name}
                                 </div>
-                                <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 2px;">
+                                <div style="font-size: 0.74rem; color: #64748b; margin-top: 2px;">
                                     ${mvp.court1Wins > 0 ? `👑 Rey de Pista 1 con ${mvp.court1Wins} victorias` : 'Rendimiento sobresaliente en pista'}
                                 </div>
                             </div>
@@ -576,32 +574,33 @@
 
                         <div style="
                             display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
-                            background: rgba(0, 0, 0, 0.25); padding: 8px 10px; border-radius: 12px;
-                            text-align: center; border: 1px solid rgba(255, 255, 255, 0.04);
+                            background: #f8fafc; padding: 10px 12px; border-radius: 12px;
+                            text-align: center; border: 1px solid #e2e8f0;
                         ">
                             <div>
-                                <div style="font-size: 0.95rem; font-weight: 950; color: #CCFF00;">${mvp.winRatePercent || 100}%</div>
-                                <div style="font-size: 0.58rem; color: #64748b; font-weight: 800; text-transform: uppercase;">Efectividad</div>
+                                <div style="font-size: 1rem; font-weight: 950; color: #10b981;">${mvp.winRatePercent || 100}%</div>
+                                <div style="font-size: 0.60rem; color: #64748b; font-weight: 800; text-transform: uppercase;">Efectividad</div>
                             </div>
                             <div>
-                                <div style="font-size: 0.95rem; font-weight: 950; color: #ffffff;">${mvp.won || 0}V</div>
-                                <div style="font-size: 0.58rem; color: #64748b; font-weight: 800; text-transform: uppercase;">Victorias</div>
+                                <div style="font-size: 1rem; font-weight: 950; color: #0f172a;">${mvp.won || 0}V</div>
+                                <div style="font-size: 0.60rem; color: #64748b; font-weight: 800; text-transform: uppercase;">Victorias</div>
                             </div>
                             <div>
-                                <div style="font-size: 0.95rem; font-weight: 950; color: #38bdf8;">${mvp.points || 0}</div>
-                                <div style="font-size: 0.58rem; color: #64748b; font-weight: 800; text-transform: uppercase;">Puntos</div>
+                                <div style="font-size: 1rem; font-weight: 950; color: #0284c7;">${mvp.points || 0}</div>
+                                <div style="font-size: 0.60rem; color: #64748b; font-weight: 800; text-transform: uppercase;">Puntos</div>
                             </div>
                         </div>
                     </div>
 
                     <!-- TARJETA PODIO RESUMIDO -->
                     <div style="
-                        padding: 16px; border-radius: 18px;
-                        background: radial-gradient(circle at top left, rgba(139, 92, 246, 0.15) 0%, rgba(15, 23, 42, 0.75) 100%);
-                        border: 1px solid rgba(139, 92, 246, 0.35);
+                        padding: 18px; border-radius: 18px;
+                        background: #ffffff;
+                        border: 1px solid #e2e8f0;
+                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
                         display: flex; flex-direction: column; justify-content: space-between;
                     ">
-                        <div style="font-size: 0.64rem; font-weight: 950; color: #c4b5fd; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 8px;">
+                        <div style="font-size: 0.68rem; font-weight: 950; color: #0f172a; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
                             🏅 PODIO DE HONOR
                         </div>
 
@@ -609,24 +608,25 @@
                             ${podium.map((p, idx) => `
                                 <div style="
                                     display: flex; align-items: center; justify-content: space-between;
-                                    padding: 6px 10px; border-radius: 10px;
-                                    background: rgba(255, 255, 255, ${idx === 0 ? '0.08' : '0.04'});
-                                    border-left: 3px solid ${idx === 0 ? '#FACC15' : (idx === 1 ? '#cbd5e1' : '#f97316')};
+                                    padding: 8px 12px; border-radius: 10px;
+                                    background: #f8fafc;
+                                    border: 1px solid #e2e8f0;
+                                    border-left: 3px solid ${idx === 0 ? '#f59e0b' : (idx === 1 ? '#94a3b8' : '#ea580c')};
                                 ">
                                     <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
-                                        <span style="font-size: 1rem;">${p.badge || (idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉')}</span>
-                                        <span style="font-weight: 900; font-size: 0.82rem; color: #ffffff; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        <span style="font-size: 1.05rem;">${p.badge || (idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉')}</span>
+                                        <span style="font-weight: 900; font-size: 0.84rem; color: #0f172a; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                             ${p.name}
                                         </span>
                                     </div>
-                                    <span style="font-size: 0.75rem; font-weight: 950; color: ${idx === 0 ? '#CCFF00' : '#94a3b8'}; flex-shrink: 0;">
+                                    <span style="font-size: 0.78rem; font-weight: 950; color: #0f172a; flex-shrink: 0;">
                                         ${p.points} pts
                                     </span>
                                 </div>
                             `).join('')}
                         </div>
 
-                        <div style="font-size: 0.65rem; color: #64748b; margin-top: 8px; text-align: right;">
+                        <div style="font-size: 0.66rem; color: #64748b; margin-top: 10px; text-align: right;">
                             Clasificación general homologada
                         </div>
                     </div>
@@ -634,60 +634,60 @@
 
                 <!-- BLOQUE MOMENTOS CUMBRE (HIGHLIGHTS) -->
                 <div style="margin-bottom: 20px;">
-                    <div style="font-size: 0.72rem; font-weight: 900; color: #CCFF00; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+                    <div style="font-size: 0.74rem; font-weight: 900; color: #0f172a; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
                         <span>🔥 MOMENTOS CUMBRE DE LA JORNADA</span>
                     </div>
 
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px;">
                         
                         <!-- Partido más ajustado -->
-                        <div style="padding: 12px; border-radius: 14px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08);">
-                            <div style="font-size: 0.62rem; font-weight: 900; color: #38bdf8; text-transform: uppercase; margin-bottom: 4px;">
+                        <div style="padding: 14px; border-radius: 14px; background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);">
+                            <div style="font-size: 0.64rem; font-weight: 900; color: #0284c7; text-transform: uppercase; margin-bottom: 4px;">
                                 ⚡ PARTIDO MÁS AJUSTADO
                             </div>
-                            <div style="font-size: 0.85rem; font-weight: 900; color: #ffffff; margin-bottom: 4px;">
+                            <div style="font-size: 0.88rem; font-weight: 900; color: #0f172a; margin-bottom: 4px;">
                                 ${hl.closestMatch?.scoreString ? `Marcador: ${hl.closestMatch.scoreString}` : 'Máxima igualdad'}
                             </div>
-                            <div style="font-size: 0.72rem; color: #94a3b8; line-height: 1.35;">
+                            <div style="font-size: 0.74rem; color: #475569; line-height: 1.4;">
                                 ${hl.closestMatch?.summary || 'Cruces resueltos por detalles en la bola de partido.'}
                             </div>
                         </div>
 
                         <!-- La gran muralla -->
-                        <div style="padding: 12px; border-radius: 14px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08);">
-                            <div style="font-size: 0.62rem; font-weight: 900; color: #10b981; text-transform: uppercase; margin-bottom: 4px;">
+                        <div style="padding: 14px; border-radius: 14px; background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);">
+                            <div style="font-size: 0.64rem; font-weight: 900; color: #10b981; text-transform: uppercase; margin-bottom: 4px;">
                                 🛡️ LA GRAN MURALLA
                             </div>
-                            <div style="font-size: 0.85rem; font-weight: 900; color: #ffffff; margin-bottom: 4px;">
+                            <div style="font-size: 0.88rem; font-weight: 900; color: #0f172a; margin-bottom: 4px;">
                                 ${hl.bestDefense?.name || 'Defensa impenetrable'}
                             </div>
-                            <div style="font-size: 0.72rem; color: #94a3b8; line-height: 1.35;">
+                            <div style="font-size: 0.74rem; color: #475569; line-height: 1.4;">
                                 ${hl.bestDefense ? `Apenas ${hl.bestDefense.avgLostPerMatch} juegos encajados por partido.` : 'Solidez defensiva ejemplar.'}
                             </div>
                         </div>
 
                         <!-- Escalada / Remontada -->
-                        <div style="padding: 12px; border-radius: 14px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08);">
-                            <div style="font-size: 0.62rem; font-weight: 900; color: #f59e0b; text-transform: uppercase; margin-bottom: 4px;">
+                        <div style="padding: 14px; border-radius: 14px; background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);">
+                            <div style="font-size: 0.64rem; font-weight: 900; color: #d97706; text-transform: uppercase; margin-bottom: 4px;">
                                 🚀 MAYOR ESCALADA
                             </div>
-                            <div style="font-size: 0.85rem; font-weight: 900; color: #ffffff; margin-bottom: 4px;">
+                            <div style="font-size: 0.88rem; font-weight: 900; color: #0f172a; margin-bottom: 4px;">
                                 ${hl.biggestClimber?.name || 'Superación'}
                             </div>
-                            <div style="font-size: 0.72rem; color: #94a3b8; line-height: 1.35;">
+                            <div style="font-size: 0.74rem; color: #475569; line-height: 1.4;">
                                 ${hl.biggestClimber?.description || 'Impresionante progresión a lo largo de las rondas.'}
                             </div>
                         </div>
 
                         <!-- Racha imparable -->
-                        <div style="padding: 12px; border-radius: 14px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08);">
-                            <div style="font-size: 0.62rem; font-weight: 900; color: #ec4899; text-transform: uppercase; margin-bottom: 4px;">
+                        <div style="padding: 14px; border-radius: 14px; background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);">
+                            <div style="font-size: 0.64rem; font-weight: 900; color: #db2777; text-transform: uppercase; margin-bottom: 4px;">
                                 🔥 RACHA IMPARABLE
                             </div>
-                            <div style="font-size: 0.85rem; font-weight: 900; color: #ffffff; margin-bottom: 4px;">
+                            <div style="font-size: 0.88rem; font-weight: 900; color: #0f172a; margin-bottom: 4px;">
                                 ${hl.longestStreak?.name || 'Racha de victorias'}
                             </div>
-                            <div style="font-size: 0.72rem; color: #94a3b8; line-height: 1.35;">
+                            <div style="font-size: 0.74rem; color: #475569; line-height: 1.4;">
                                 ${hl.longestStreak?.description || 'Enlace ganador en momentos determinantes.'}
                             </div>
                         </div>
@@ -698,19 +698,20 @@
                 <!-- BLOQUE ASCENSOS DE PISTA Y ELO -->
                 ${(prog.court1Ascents?.length || prog.eloGainList?.length || prog.categoryPromotions?.length) ? `
                 <div style="
-                    margin-bottom: 20px; padding: 14px 16px; border-radius: 16px;
-                    background: rgba(139, 92, 246, 0.08); border: 1px solid rgba(139, 92, 246, 0.25);
+                    margin-bottom: 20px; padding: 16px; border-radius: 16px;
+                    background: #ffffff; border: 1px solid #e2e8f0;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
                 ">
-                    <div style="font-size: 0.72rem; font-weight: 900; color: #c4b5fd; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 8px;">
+                    <div style="font-size: 0.72rem; font-weight: 900; color: #0f172a; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 10px;">
                         📈 ASCENSOS DE PISTA Y SUBIDAS DE ELO
                     </div>
                     
                     <div style="display: flex; flex-wrap: wrap; gap: 8px;">
                         ${(prog.categoryPromotions || []).map(p => `
                             <span style="
-                                display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px;
-                                border-radius: 8px; background: rgba(204, 255, 0, 0.15); color: #CCFF00;
-                                border: 1px solid rgba(204, 255, 0, 0.4); font-size: 0.72rem; font-weight: 900;
+                                display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px;
+                                border-radius: 8px; background: #f0fdf4; color: #166534;
+                                border: 1px solid #bbf7d0; font-size: 0.74rem; font-weight: 800;
                             ">
                                 ⭐ <strong>${p.name}</strong> • ${p.recommendation}
                             </span>
@@ -718,9 +719,9 @@
 
                         ${(prog.court1Ascents || []).map(a => `
                             <span style="
-                                display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px;
-                                border-radius: 8px; background: rgba(56, 189, 248, 0.15); color: #38bdf8;
-                                border: 1px solid rgba(56, 189, 248, 0.4); font-size: 0.72rem; font-weight: 800;
+                                display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px;
+                                border-radius: 8px; background: #f0f9ff; color: #0369a1;
+                                border: 1px solid #bae6fd; font-size: 0.74rem; font-weight: 800;
                             ">
                                 👑 <strong>${a.name}</strong>: ${a.title}
                             </span>
@@ -728,9 +729,9 @@
 
                         ${(prog.eloGainList || []).slice(0, 3).map(e => `
                             <span style="
-                                display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px;
-                                border-radius: 8px; background: rgba(255, 255, 255, 0.06); color: #e2e8f0;
-                                border: 1px solid rgba(255, 255, 255, 0.12); font-size: 0.72rem; font-weight: 800;
+                                display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px;
+                                border-radius: 8px; background: #f8fafc; color: #334155;
+                                border: 1px solid #e2e8f0; font-size: 0.74rem; font-weight: 800;
                             ">
                                 📊 <strong>${e.name}</strong> ${e.gain} (${e.winRate})
                             </span>
@@ -741,11 +742,12 @@
 
                 <!-- CUERPO NARRATIVO COMPLETO -->
                 <div style="
-                    padding: 18px; border-radius: 18px;
-                    background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255, 255, 255, 0.07);
-                    line-height: 1.65; font-size: 0.88rem; color: #cbd5e1;
+                    padding: 22px; border-radius: 18px;
+                    background: #ffffff; border: 1px solid #e2e8f0;
+                    line-height: 1.7; font-size: 0.90rem; color: #334155;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
                 ">
-                    <div style="font-size: 0.72rem; font-weight: 900; color: #94a3b8; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 10px;">
+                    <div style="font-size: 0.74rem; font-weight: 900; color: #0f172a; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 14px;">
                         📜 CUERPO DE LA CRÓNICA
                     </div>
                     
@@ -773,20 +775,20 @@
                     
                     <!-- Explicación y botón de descarga superior -->
                     <div style="
-                        width: 100%; max-width: 480px; padding: 14px 16px; border-radius: 16px;
-                        background: rgba(225, 48, 108, 0.1); border: 1px solid rgba(225, 48, 108, 0.35);
+                        width: 100%; max-width: 480px; padding: 14px 18px; border-radius: 16px;
+                        background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
                         display: flex; align-items: center; justify-content: space-between; gap: 12px;
                     ">
                         <div>
-                            <div style="font-weight: 900; font-size: 0.85rem; color: #ffffff;">
+                            <div style="font-weight: 900; font-size: 0.88rem; color: #0f172a;">
                                 📸 Story HD Vertical (1080 x 1920)
                             </div>
-                            <div style="font-size: 0.72rem; color: #cbd5e1; margin-top: 2px;">
+                            <div style="font-size: 0.74rem; color: #64748b; margin-top: 2px;">
                                 Lista para publicar directamente en Instagram Stories
                             </div>
                         </div>
                         <button type="button" class="sp-action-btn-pro" onclick="window.TournamentChronicleModal.downloadStoryPng()"
-                                style="background: linear-gradient(135deg, #e1306c 0%, #833ab4 50%, #fd1d1d 100%); color: #ffffff; box-shadow: 0 4px 16px rgba(225, 48, 108, 0.4); flex-shrink: 0;">
+                                style="background: linear-gradient(135deg, #e1306c 0%, #833ab4 50%, #fd1d1d 100%); color: #ffffff; box-shadow: 0 4px 14px rgba(225, 48, 108, 0.3); flex-shrink: 0;">
                             <i class="fas fa-download"></i>
                             <span>DESCARGAR PNG</span>
                         </button>
@@ -798,7 +800,7 @@
                         background: radial-gradient(circle at 50% 15%, #1e1b4b 0%, #070a13 85%);
                         border: 2px solid rgba(139, 92, 246, 0.5); border-radius: 28px;
                         padding: 24px 18px; display: flex; flex-direction: column; justify-content: space-between;
-                        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(139, 92, 246, 0.25);
+                        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4), 0 0 25px rgba(139, 92, 246, 0.2);
                         position: relative; overflow: hidden;
                     ">
                         <!-- Glows decorativos de fondo -->
@@ -881,7 +883,7 @@
 
                     <!-- Botón inferior para móviles -->
                     <button type="button" class="sp-action-btn-pro" onclick="window.TournamentChronicleModal.downloadStoryPng()"
-                            style="width: 100%; max-width: 320px; background: linear-gradient(135deg, #e1306c 0%, #833ab4 50%, #fd1d1d 100%); color: #ffffff;">
+                            style="width: 100%; max-width: 320px; background: linear-gradient(135deg, #e1306c 0%, #833ab4 50%, #fd1d1d 100%); color: #ffffff; box-shadow: 0 4px 14px rgba(225, 48, 108, 0.3);">
                         <i class="fas fa-camera"></i>
                         <span>DESCARGAR STORY HD (PNG 1080x1920)</span>
                     </button>
@@ -934,8 +936,8 @@
 
                 if (btnEl) {
                     const originalHtml = btnEl.innerHTML;
-                    btnEl.innerHTML = '<i class="fas fa-check" style="color:#CCFF00"></i> <span>¡COPIADO!</span>';
-                    btnEl.style.borderColor = '#CCFF00';
+                    btnEl.innerHTML = '<i class="fas fa-check" style="color:#10b981"></i> <span>¡COPIADO!</span>';
+                    btnEl.style.borderColor = '#10b981';
                     setTimeout(() => {
                         btnEl.innerHTML = originalHtml;
                         btnEl.style.borderColor = '';
@@ -1194,7 +1196,7 @@
 
             ctx.fillStyle = '#64748b';
             ctx.font = '600 20px "Inter", sans-serif';
-            ctx.fillText('Generado automáticamente por el motor de IA deportiva de SomosPádel', 540, 1835);
+            ctx.fillText('Generado automáticamente por el motor de crónica deportiva de SomosPádel', 540, 1835);
         }
 
         _drawBadgePill(ctx, x, y, text, textColor, bgColor) {
@@ -1261,9 +1263,9 @@
             const toast = document.createElement('div');
             toast.style.cssText = `
                 position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px);
-                background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(204, 255, 0, 0.5);
+                background: #0f172a; border: 1px solid #334155;
                 color: #ffffff; padding: 12px 24px; border-radius: 999px;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 15px rgba(204, 255, 0, 0.3);
+                box-shadow: 0 10px 30px rgba(0,0,0,0.25);
                 font-weight: 800; font-size: 0.85rem; z-index: 16000;
                 display: flex; align-items: center; gap: 8px;
                 opacity: 0; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);

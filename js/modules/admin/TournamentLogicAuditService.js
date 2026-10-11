@@ -1333,9 +1333,45 @@
             };
 
             if (mode === 'fixed') {
-                rule2.details = 'Modalidad Parejas Fijas: las duplas se mantienen estables por diseño.';
-                rule2.score = 100;
-                rule2.passed = true;
+                const playerInitialPartner = new Map();
+                let pairBreaks = 0;
+                const brokenDetails = [];
+
+                const sortedMatches = [...safeMatches].sort((a, b) => (Number(a.round) || 0) - (Number(b.round) || 0));
+                sortedMatches.forEach(m => {
+                    const teams = [m.team_a_ids || [], m.team_b_ids || []];
+                    teams.forEach(t => {
+                        if (t.length >= 2) {
+                            const p1 = String(t[0]);
+                            const p2 = String(t[1]);
+                            if (!playerInitialPartner.has(p1)) {
+                                playerInitialPartner.set(p1, p2);
+                            } else if (playerInitialPartner.get(p1) !== p2) {
+                                pairBreaks++;
+                                brokenDetails.push(`Jugador ${p1} jugó con ${playerInitialPartner.get(p1)} inicialmente, pero en R${m.round} jugó con ${p2}.`);
+                            }
+                            if (!playerInitialPartner.has(p2)) {
+                                playerInitialPartner.set(p2, p1);
+                            } else if (playerInitialPartner.get(p2) !== p1) {
+                                // Ya registrado
+                            }
+                        }
+                    });
+                });
+
+                if (pairBreaks === 0) {
+                    rule2.score = 100;
+                    rule2.passed = true;
+                    rule2.details = 'Modalidad Parejas Fijas: 100% de duplas preservadas intactas en todas las rondas.';
+                } else {
+                    rule2.score = Math.max(0, 100 - (pairBreaks * 20));
+                    rule2.passed = rule2.score >= 50;
+                    rule2.details = `Se detectaron ${pairBreaks} rupturas o modificaciones de parejas fijas.`;
+                    brokenDetails.forEach(msg => {
+                        rule2.warnings.push(msg);
+                        issuesFound.push(`[Regla 2] ${msg}`);
+                    });
+                }
             } else {
                 const partnerCounts = new Map();
                 safeMatches.forEach(m => {
@@ -1419,10 +1455,13 @@
                         totalGamesAwardedLost += (sB * countA) + (sA * countB);
 
                         if (sA === sB && mode !== 'swiss') {
-                            unresolvedTies++;
-                            const msg = `Partido ${m.id} (R${m.round} P${m.court}) finalizó en empate (${sA}-${sB}) no permitido en sistema Pozo.`;
-                            rule3.warnings.push(msg);
-                            issuesFound.push(`[Regla 3] ${msg}`);
+                            const hasTieBreak = m.tie_break_winner_team || m.winner_team || m.winner;
+                            if (!hasTieBreak) {
+                                unresolvedTies++;
+                                const msg = `Partido ${m.id} (R${m.round} P${m.court}) finalizó en empate (${sA}-${sB}) no dirimido en sistema Pozo.`;
+                                rule3.warnings.push(msg);
+                                issuesFound.push(`[Regla 3] ${msg}`);
+                            }
                         }
 
                         // Verificación de plausibilidad de marcador de pádel
@@ -1726,6 +1765,8 @@
                 eventId: eventDoc.id || String(eventId),
                 eventType: eventType,
                 eventName: eventDoc.name || 'Competición Somospadel',
+                eventDoc: eventDoc,
+                matches: matches,
                 auditResult: auditResult,
                 recommendations: recommendations,
                 timestamp: timestamp

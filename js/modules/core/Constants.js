@@ -625,5 +625,46 @@ window.AppConstants.FAVORITE_CLUBS = [
     { id: 'hosp_cem_tennis', name: "CEM Tennis Hospitalet", order: 4 }
 ];
 
+/**
+ * 🔄 Sincroniza dinámicamente los clubes registrados en Firestore ('organizations') al catálogo en memoria
+ */
+window.syncOrganizationsToClubsCatalog = async function() {
+    try {
+        if (!window.db) return;
+        const orgSnap = await window.db.collection('organizations').where('status', '==', 'active').get();
+        if (orgSnap.empty) return;
+
+        window.PADEL_CLUBS_CATALOG = window.PADEL_CLUBS_CATALOG || [];
+        orgSnap.forEach(doc => {
+            const data = doc.data();
+            const orgId = doc.id;
+            const exists = window.PADEL_CLUBS_CATALOG.some(c => c.id === orgId || c.name === data.name);
+            if (!exists) {
+                window.PADEL_CLUBS_CATALOG.push({
+                    id: orgId,
+                    name: data.name,
+                    shortName: data.name,
+                    sede: data.location || data.address || 'Barcelona',
+                    zone: data.location || 'Barcelona',
+                    courts: data.maxCourts || 4,
+                    address: data.address || data.location || ''
+                });
+            }
+        });
+        console.log(`🏛️ [Constants] Catálogo de sedes enriquecido con ${orgSnap.size} organización(es) de Firestore.`);
+    } catch (err) {
+        console.warn("⚠️ [Constants] Error cargando organizaciones:", err.message);
+    }
+};
+
+// Auto-ejecutar en arranque si Firebase ya está listo
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(window.syncOrganizationsToClubsCatalog, 1200);
+    });
+} else {
+    setTimeout(window.syncOrganizationsToClubsCatalog, 1200);
+}
+
 console.log("🚀 AppConstants Loaded with Padel Clubs Catalog (Favorites on top) & SedeCombobox");
 

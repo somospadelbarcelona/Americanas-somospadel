@@ -432,6 +432,20 @@
                     
                     updates.players = firebase.firestore.FieldValue.arrayUnion(newPlayerData, partnerData);
                     updates.registeredPlayers = firebase.firestore.FieldValue.arrayUnion(newPlayerData, partnerData);
+
+                    const pairObj = {
+                        id: `pair_${Date.now()}_${userUid}`,
+                        player1_id: newPlayerData.id,
+                        player2_id: partnerData.id,
+                        player1_name: newPlayerData.name,
+                        player2_name: partnerData.name,
+                        pair_name: `${newPlayerData.name} / ${partnerData.name}`,
+                        wins: 0,
+                        losses: 0,
+                        games_won: 0,
+                        games_lost: 0
+                    };
+                    updates.fixed_pairs = firebase.firestore.FieldValue.arrayUnion(pairObj);
                 }
 
                 // 4. ESCRITURA ATÓMICA DE ARRAY (Soporta alta concurrencia)

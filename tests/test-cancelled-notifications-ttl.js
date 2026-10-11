@@ -256,9 +256,10 @@ async function runTests() {
     // TEST 4: fetchAllGlobalNotifications consulta entrenos y americanas cancelados
     // -------------------------------------------------------------------------
     console.log("\n▶️ TEST 4: fetchAllGlobalNotifications incluye eventos cancelados de Firestore...");
+    const todayYmd = new Date().toISOString().split('T')[0];
     mockCollections.entrenos.set('ent_cancelled_db', {
         name: 'ENTRENO FEMENINO 23/09',
-        date: '2026-09-24',
+        date: todayYmd,
         time: '20:00',
         status: 'cancelado',
         cancelReason: 'Falta de inscripciones mínimas'

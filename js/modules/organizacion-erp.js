@@ -3776,12 +3776,50 @@ window.OrganizacionERP = (function () {
             console.warn("Aviso guardando en localStorage:", e);
         }
 
+        // ☁️ Sincronización transparente con Firestore (Colección Multi-Tenant 'organizations')
+        if (window.db) {
+            window.db.collection('organizations').doc(clubId).set({
+                name: name,
+                slug: clubId,
+                location: location,
+                maxCourts: courts,
+                contact: contact,
+                tariffs: newClub.tariffs,
+                notes: notes,
+                status: 'active',
+                updated_at: (window.firebase && window.firebase.firestore && window.firebase.firestore.FieldValue)
+                    ? window.firebase.firestore.FieldValue.serverTimestamp()
+                    : new Date().toISOString()
+            }, { merge: true }).then(() => {
+                console.log(`✅ [OrganizacionERP] Club sincronizado en Firestore: organizations/${clubId}`);
+            }).catch(fsErr => {
+                console.warn(`⚠️ [OrganizacionERP] Aviso sincronizando con Firestore (se mantendrá en local):`, fsErr.message);
+            });
+        }
+
+        // Si existe el catálogo global de sedes en admin, sincronizarlo inmediatamente
+        if (window.PADEL_CLUBS_CATALOG && Array.isArray(window.PADEL_CLUBS_CATALOG)) {
+            const alreadyInCatalog = window.PADEL_CLUBS_CATALOG.some(c => c.id === clubId || c.name === name);
+            if (!alreadyInCatalog) {
+                window.PADEL_CLUBS_CATALOG.push({
+                    id: clubId,
+                    name: name,
+                    shortName: name,
+                    sede: location,
+                    zone: location,
+                    courts: courts,
+                    address: location
+                });
+            }
+        }
+
         computeClubsAnalytics();
         closeModal('erp-new-club-modal');
         state.activeClubTab = name;
         renderActiveTab();
-        alert(`🎉 ¡El club "${name}" ha sido dado de alta correctamente! Se ha abierto su pestaña individual.`);
+        alert(`🎉 ¡El club "${name}" ha sido dado de alta correctamente! Se ha sincronizado en la base de datos de organizaciones.`);
     }
+
 
     function openEditClubModal(clubName) {
         if (!clubName) clubName = state.activeClubTab;

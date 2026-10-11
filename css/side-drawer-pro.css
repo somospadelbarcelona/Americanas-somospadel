@@ -1,14 +1,16 @@
 /* ==========================================================================
-   SOMOSPADEL — SIDE DRAWER PRO v3
+   SOMOSPADEL — SIDE DRAWER PRO v3 (MODO CLARO LUXURY)
    Menú lateral claro, accesible y fácil de interpretar para el jugador.
-   - Objetivos táctiles >= 48px, contraste AA, foco visible, reduced-motion.
-   - Clases con prefijo .sdx-* para no chocar con estilos heredados.
+   - Fondo blanco puro, texto de alto contraste (#0f172a), bordes limpios (#e2e8f0).
+   - Iconos temáticos vibrantes con micro-fondos tintados y badges nítidos.
    ========================================================================== */
 
 .side-drawer {
     width: 340px !important;
     max-width: 88vw !important;
-    background: linear-gradient(180deg, #080b12 0%, #0b1020 55%, #070a12 100%) !important;
+    background: #ffffff !important;
+    box-shadow: 4px 0 28px rgba(0, 0, 0, 0.08) !important;
+    border-right: 1px solid #e2e8f0 !important;
 }
 
 /* Reset de botones dentro del drawer (evita estilos globales de <button>) */
@@ -24,13 +26,15 @@
 
 .side-drawer .sdx-body button:focus-visible,
 .side-drawer .sdx-topbar button:focus-visible {
-    outline: 2px solid #CCFF00 !important;
+    outline: 2px solid #84cc16 !important;
     outline-offset: 2px;
 }
 
 /* ---------- TOP BAR ---------- */
 .side-drawer .sdx-topbar {
     gap: 10px;
+    background: #ffffff;
+    border-bottom: 1px solid #f1f5f9;
 }
 
 .side-drawer .sdx-brand {
@@ -42,7 +46,7 @@
     background: transparent;
     border: none;
     padding: 4px 0;
-    color: #fff;
+    color: #0f172a;
     cursor: pointer;
     text-align: left;
 }
@@ -53,7 +57,7 @@
     border-radius: 10px;
     object-fit: cover;
     flex-shrink: 0;
-    border: 1.5px solid rgba(204, 255, 0, 0.35);
+    border: 1.5px solid #e2e8f0;
 }
 
 .side-drawer .sdx-brand-text {
@@ -67,14 +71,14 @@
     font-size: 0.95rem;
     font-weight: 900;
     letter-spacing: 0.4px;
-    color: #fff;
+    color: #0f172a;
 }
 
 .side-drawer .sdx-brand-sub {
     font-size: 0.6rem;
     font-weight: 800;
     letter-spacing: 1.4px;
-    color: #CCFF00;
+    color: #65a30d;
 }
 
 .side-drawer .sdx-icon-btn {
@@ -82,9 +86,9 @@
     height: 44px;
     flex-shrink: 0;
     border-radius: 12px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #e2e8f0;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    color: #475569;
     font-size: 1.05rem;
     display: flex;
     align-items: center;
@@ -95,8 +99,8 @@
 
 .side-drawer .sdx-icon-btn:hover,
 .side-drawer .sdx-icon-btn:active {
-    background: rgba(204, 255, 0, 0.15);
-    color: #CCFF00;
+    background: #e2e8f0;
+    color: #0f172a;
 }
 
 /* ---------- BODY ---------- */
@@ -104,6 +108,7 @@
     gap: 18px !important;
     padding: 14px 14px !important;
     padding-bottom: calc(env(safe-area-inset-bottom, 16px) + 40px) !important;
+    background: #ffffff !important;
 }
 
 /* ---------- TARJETA JUGADOR ---------- */
@@ -111,10 +116,9 @@
     flex-shrink: 0;
     border-radius: 18px;
     padding: 12px;
-    background:
-        radial-gradient(120% 140% at 0% 0%, rgba(204, 255, 0, 0.12) 0%, transparent 55%),
-        rgba(255, 255, 255, 0.035);
-    border: 1px solid rgba(204, 255, 0, 0.22);
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
 .side-drawer .sdx-player-top {
@@ -125,7 +129,7 @@
     background: transparent;
     border: none;
     padding: 2px;
-    color: #fff;
+    color: #0f172a;
     cursor: pointer;
     text-align: left;
     border-radius: 12px;
@@ -138,9 +142,9 @@
     height: 50px;
     border-radius: 14px;
     overflow: hidden;
-    background: #1e293b;
-    border: 2px solid #CCFF00;
-    color: #CCFF00;
+    background: #f1f5f9;
+    border: 2px solid #84cc16;
+    color: #4d7c0f;
     font-weight: 900;
     font-size: 1.05rem;
     display: flex;
@@ -166,7 +170,7 @@
 .side-drawer .sdx-player-name {
     font-size: 1.02rem;
     font-weight: 900;
-    color: #fff;
+    color: #0f172a;
     line-height: 1.25;
     word-break: break-word;
     display: -webkit-box;
@@ -180,9 +184,9 @@
     font-size: 0.62rem;
     font-weight: 800;
     letter-spacing: 0.5px;
-    color: #CCFF00;
-    background: rgba(204, 255, 0, 0.1);
-    border: 1px solid rgba(204, 255, 0, 0.28);
+    color: #4d7c0f;
+    background: #ecfccb;
+    border: 1px solid #d9f99d;
     padding: 2px 8px;
     border-radius: 999px;
 }
@@ -192,21 +196,21 @@
     width: 28px;
     height: 28px;
     border-radius: 9px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #94a3b8;
+    color: #64748b;
     font-size: 0.72rem;
     transition: all 0.2s ease;
 }
 
 .side-drawer .sdx-player-top:hover .sdx-player-cta,
 .side-drawer .sdx-player-top:active .sdx-player-cta {
-    background: rgba(204, 255, 0, 0.15);
-    border-color: rgba(204, 255, 0, 0.35);
-    color: #CCFF00;
+    background: #e2e8f0;
+    border-color: #cbd5e1;
+    color: #0f172a;
 }
 
 .side-drawer .sdx-stats {
@@ -223,8 +227,8 @@
     gap: 2px;
     padding: 8px 4px;
     border-radius: 12px;
-    background: rgba(0, 0, 0, 0.28);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
 }
 
 .side-drawer .sdx-stat-val {
@@ -241,7 +245,7 @@
 .side-drawer .sdx-stat-lbl {
     font-size: 0.62rem;
     font-weight: 700;
-    color: #94a3b8;
+    color: #64748b;
     text-transform: uppercase;
     letter-spacing: 0.6px;
 }
@@ -259,9 +263,9 @@
     height: 42px;
     border-radius: 12px;
     flex-shrink: 0;
-    background: rgba(204, 255, 0, 0.14);
-    border: 1.5px solid #CCFF00;
-    color: #CCFF00;
+    background: #ecfccb;
+    border: 1.5px solid #84cc16;
+    color: #4d7c0f;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -270,14 +274,14 @@
 .side-drawer .sdx-guest-title {
     display: block;
     font-weight: 900;
-    color: #fff;
+    color: #0f172a;
     font-size: 0.95rem;
 }
 
 .side-drawer .sdx-guest-sub {
     display: block;
     font-size: 0.74rem;
-    color: #94a3b8;
+    color: #64748b;
     line-height: 1.35;
     margin-top: 2px;
 }
@@ -298,9 +302,9 @@
     padding: 10px 2px 9px;
     min-height: 74px;
     border-radius: 16px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    color: #e2e8f0;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #0f172a;
     cursor: pointer;
     transition: transform 0.15s, background 0.2s, border-color 0.2s;
 }
@@ -309,7 +313,7 @@
 
 .side-drawer .sdx-tile.is-active {
     border-color: var(--ic);
-    background: color-mix(in srgb, var(--ic) 12%, transparent);
+    background: color-mix(in srgb, var(--ic) 12%, #f8fafc);
 }
 
 .side-drawer .sdx-tile-icon {
@@ -322,8 +326,8 @@
     justify-content: center;
     font-size: 1rem;
     color: var(--ic);
-    background: color-mix(in srgb, var(--ic) 16%, transparent);
-    border: 1px solid color-mix(in srgb, var(--ic) 38%, transparent);
+    background: color-mix(in srgb, var(--ic) 14%, #ffffff);
+    border: 1px solid color-mix(in srgb, var(--ic) 28%, #e2e8f0);
 }
 
 .side-drawer .sdx-tile-live {
@@ -335,7 +339,7 @@
 .side-drawer .sdx-tile-label {
     font-size: 0.68rem;
     font-weight: 800;
-    color: #e2e8f0;
+    color: #0f172a;
 }
 
 /* ---------- SECCIONES ---------- */
@@ -362,7 +366,7 @@
     align-items: center;
     justify-content: center;
     font-size: 0.72rem;
-    color: #0b1020;
+    color: #ffffff;
     background: var(--acc);
 }
 
@@ -381,7 +385,7 @@
 .side-drawer .sdx-section-hint {
     margin: 1px 0 0 !important;
     font-size: 0.7rem;
-    color: #8492a6;
+    color: #64748b;
     line-height: 1.25;
 }
 
@@ -390,8 +394,9 @@
     flex-direction: column;
     border-radius: 16px;
     overflow: hidden;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
 }
 
 /* ---------- FILAS ---------- */
@@ -403,11 +408,11 @@
     align-items: center;
     gap: 12px;
     padding: 9px 12px;
-    background: transparent;
+    background: #ffffff;
     border: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid #f1f5f9;
     border-radius: 0;
-    color: #f1f5f9;
+    color: #0f172a;
     text-align: left;
     cursor: pointer;
     transition: background 0.18s;
@@ -415,11 +420,11 @@
 
 .side-drawer .sdx-row:last-child { border-bottom: none; }
 
-.side-drawer .sdx-row:hover { background: rgba(255, 255, 255, 0.045); }
-.side-drawer .sdx-row:active { background: rgba(255, 255, 255, 0.08); }
+.side-drawer .sdx-row:hover { background: #f8fafc; }
+.side-drawer .sdx-row:active { background: #f1f5f9; }
 
 .side-drawer .sdx-row.is-active {
-    background: color-mix(in srgb, var(--ic) 11%, transparent);
+    background: color-mix(in srgb, var(--ic) 8%, #ffffff);
 }
 
 .side-drawer .sdx-row.is-active::before {
@@ -443,8 +448,8 @@
     justify-content: center;
     font-size: 0.95rem;
     color: var(--ic);
-    background: color-mix(in srgb, var(--ic) 15%, transparent);
-    border: 1px solid color-mix(in srgb, var(--ic) 32%, transparent);
+    background: color-mix(in srgb, var(--ic) 12%, #f8fafc);
+    border: 1px solid color-mix(in srgb, var(--ic) 24%, #e2e8f0);
 }
 
 .side-drawer .sdx-row-text {
@@ -458,14 +463,14 @@
 .side-drawer .sdx-row-title {
     font-size: 0.9rem;
     font-weight: 800;
-    color: #f8fafc;
+    color: #0f172a;
     line-height: 1.2;
 }
 
 .side-drawer .sdx-row-desc {
     font-size: 0.71rem;
     font-weight: 500;
-    color: #94a3b8;
+    color: #64748b;
     line-height: 1.3;
     white-space: nowrap;
     overflow: hidden;
@@ -477,7 +482,7 @@
 .side-drawer .sdx-row-chevron {
     flex-shrink: 0;
     font-size: 0.66rem;
-    color: #475569;
+    color: #94a3b8;
 }
 
 /* ---------- BADGES ---------- */
@@ -495,13 +500,13 @@
     line-height: 1.2;
 }
 
-.side-drawer .sdx-badge--live    { background: rgba(239, 68, 68, 0.16);  color: #fca5a5; border-color: rgba(239, 68, 68, 0.4); }
-.side-drawer .sdx-badge--danger  { background: #ef4444;                   color: #fff;    border-color: #ef4444; min-width: 22px; justify-content: center; }
-.side-drawer .sdx-badge--success { background: rgba(16, 185, 129, 0.16); color: #6ee7b7; border-color: rgba(16, 185, 129, 0.4); }
-.side-drawer .sdx-badge--gold    { background: rgba(245, 158, 11, 0.16); color: #fcd34d; border-color: rgba(245, 158, 11, 0.4); }
-.side-drawer .sdx-badge--warning { background: #fef08a;                   color: #713f12; border-color: #fde047; }
-.side-drawer .sdx-badge--pink    { background: rgba(225, 48, 108, 0.16); color: #f9a8c4; border-color: rgba(225, 48, 108, 0.4); }
-.side-drawer .sdx-badge--neutral { background: rgba(148, 163, 184, 0.14); color: #cbd5e1; border-color: rgba(148, 163, 184, 0.3); }
+.side-drawer .sdx-badge--live    { background: #fee2e2;  color: #dc2626; border-color: #fca5a5; }
+.side-drawer .sdx-badge--danger  { background: #ef4444;  color: #fff;    border-color: #ef4444; min-width: 22px; justify-content: center; }
+.side-drawer .sdx-badge--success { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
+.side-drawer .sdx-badge--gold    { background: #fef3c7; color: #b45309; border-color: #fde68a; }
+.side-drawer .sdx-badge--warning { background: #fef9c3; color: #854d0e; border-color: #fde047; }
+.side-drawer .sdx-badge--pink    { background: #fce7f3; color: #be185d; border-color: #fbcfe8; }
+.side-drawer .sdx-badge--neutral { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
 
 .side-drawer .sdx-live-dot {
     width: 7px;
@@ -534,22 +539,28 @@
     justify-content: center;
     gap: 5px;
     border-radius: 14px;
-    background: color-mix(in srgb, var(--ic) 10%, rgba(255, 255, 255, 0.02));
-    border: 1px solid color-mix(in srgb, var(--ic) 35%, transparent);
-    color: #f1f5f9;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #0f172a;
     cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.side-drawer .sdx-social-btn:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
 }
 
 .side-drawer .sdx-social-btn i { font-size: 1.2rem; color: var(--ic); }
-.side-drawer .sdx-social-btn span { font-size: 0.68rem; font-weight: 800; }
+.side-drawer .sdx-social-btn span { font-size: 0.68rem; font-weight: 800; color: #0f172a; }
 
 /* ---------- STAFF ---------- */
 .side-drawer .sdx-staff {
     flex-shrink: 0;
     border-radius: 16px;
     padding: 12px;
-    background: linear-gradient(135deg, rgba(251, 191, 36, 0.09) 0%, rgba(15, 23, 42, 0.6) 100%);
-    border: 1px solid rgba(251, 191, 36, 0.35);
+    background: #fffbeb;
+    border: 1px solid #fef3c7;
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -566,7 +577,7 @@
     margin: 0 !important;
     font-size: 0.85rem !important;
     font-weight: 900 !important;
-    color: #fbbf24 !important;
+    color: #b45309 !important;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -575,7 +586,7 @@
 .side-drawer .sdx-staff-desc {
     margin: 0 !important;
     font-size: 0.72rem;
-    color: #cbd5e1;
+    color: #78350f;
     line-height: 1.35;
 }
 
@@ -597,10 +608,11 @@
 
 .side-drawer .sdx-btn:active { transform: scale(0.98); }
 
-.side-drawer .sdx-btn--primary { background: #CCFF00; color: #0b1020; }
-.side-drawer .sdx-btn--gold    { background: #fbbf24; color: #0b1020; }
-.side-drawer .sdx-btn--ghost   { background: rgba(255, 255, 255, 0.05); color: #e2e8f0; border-color: rgba(255, 255, 255, 0.12); }
-.side-drawer .sdx-btn--danger  { background: rgba(239, 68, 68, 0.1);   color: #fca5a5; border-color: rgba(239, 68, 68, 0.35); }
+.side-drawer .sdx-btn--primary { background: #CCFF00; color: #0b1020; border: 1px solid #bbf400; }
+.side-drawer .sdx-btn--gold    { background: #f59e0b; color: #ffffff; }
+.side-drawer .sdx-btn--ghost   { background: #f8fafc; color: #334155; border: 1px solid #e2e8f0; }
+.side-drawer .sdx-btn--ghost:hover { background: #f1f5f9; color: #0f172a; }
+.side-drawer .sdx-btn--danger  { background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; }
 
 /* ---------- FOOTER ---------- */
 .side-drawer .sdx-footer {
@@ -609,14 +621,14 @@
     flex-direction: column;
     gap: 8px;
     padding-top: 14px;
-    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    border-top: 1px solid #e2e8f0;
 }
 
 .side-drawer .sdx-link {
     min-height: 44px;
     background: transparent;
     border: none;
-    color: #94a3b8;
+    color: #64748b;
     font-size: 0.75rem;
     font-weight: 700;
     display: flex;
@@ -626,7 +638,9 @@
     cursor: pointer;
 }
 
-.side-drawer .sdx-link i { color: #fbbf24; }
+.side-drawer .sdx-link:hover { color: #0f172a; }
+
+.side-drawer .sdx-link i { color: #f59e0b; }
 
 .side-drawer .sdx-version {
     display: flex;
@@ -635,7 +649,7 @@
     gap: 7px;
     font-size: 0.66rem;
     font-weight: 700;
-    color: #64748b;
+    color: #94a3b8;
     padding: 4px 0;
 }
 

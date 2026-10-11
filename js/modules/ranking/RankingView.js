@@ -87,6 +87,15 @@
                 try { return this.renderRankingList(''); } catch (e) { console.error("⚠️ [RankingView] renderRankingList error:", e); return '<div style="padding:30px; text-align:center; color:#64748b;">No se pudo cargar la lista completa.</div>'; }
             })();
 
+            // Widget conjunto: Modos de Juego & Reglamento (al final del Ranking)
+            const modesHubHtml = (() => {
+                try {
+                    return (window.EventsController && typeof window.EventsController.renderGameModesHubWidget === 'function')
+                        ? window.EventsController.renderGameModesHubWidget()
+                        : '';
+                } catch (e) { console.error("⚠️ [RankingView] renderGameModesHubWidget error:", e); return ''; }
+            })();
+
             // Activity counts for each modality
             const countAmericanas = (this.playersData || []).filter(p => {
                 const s = p?.stats?.americanas;
@@ -493,8 +502,13 @@
                     </div>
 
                     <!-- Player List Container -->
-                    <div id="ranking-list-body" style="padding: 0 clamp(10px, 3vw, 16px) calc(140px + env(safe-area-inset-bottom, 20px));">
+                    <div id="ranking-list-body" style="padding: 0 clamp(10px, 3vw, 16px) 18px;">
                         ${listHtml}
+                    </div>
+
+                    <!-- 🎮 WIDGET CONJUNTO: MODOS DE JUEGO & REGLAMENTO -->
+                    <div id="ranking-game-modes-hub" style="padding: 6px clamp(10px, 3vw, 16px) 0; position: relative; z-index: 5;">
+                        ${modesHubHtml}
                     </div>
                 </div>
             `;

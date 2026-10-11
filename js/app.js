@@ -291,56 +291,56 @@
                     modal.id = 'sp-rules-modal';
                     modal.className = 'sp-rules-modal-overlay';
                     modal.innerHTML = `
-                        <div class="sp-rules-modal-box">
-                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:12px;">
+                        <div class="sp-rules-modal-box" style="background:#ffffff; border:1px solid #e2e8f0; box-shadow:0 25px 70px rgba(0,0,0,0.18);">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; border-bottom:1px solid #f1f5f9; padding-bottom:12px;">
                                 <div>
                                     <div style="display:flex; align-items:center; gap:8px;">
                                         <span style="font-size:1.4rem;">📜</span>
-                                        <h3 style="margin:0; font-size:1.15rem; font-weight:900; color:#ffffff;">Formato & Normativa</h3>
+                                        <h3 style="margin:0; font-size:1.15rem; font-weight:900; color:#0f172a;">Formato & Normativa</h3>
                                     </div>
-                                    <div style="font-size:0.65rem; color:#CCFF00; font-weight:800; letter-spacing:1px; margin-top:3px;">AMERICANAS SOMOSPADEL BCN</div>
+                                    <div style="font-size:0.65rem; color:#65a30d; font-weight:800; letter-spacing:1px; margin-top:3px;">AMERICANAS SOMOSPADEL BCN</div>
                                 </div>
-                                <button onclick="document.getElementById('sp-rules-modal').style.display='none'" style="background:rgba(255,255,255,0.08); border:none; color:#ffffff; width:34px; height:34px; border-radius:12px; cursor:pointer; display:flex; align-items:center; justify-content:center;">
+                                <button onclick="document.getElementById('sp-rules-modal').style.display='none'" style="background:#f1f5f9; border:1px solid #e2e8f0; color:#0f172a; width:34px; height:34px; border-radius:12px; cursor:pointer; display:flex; align-items:center; justify-content:center;">
                                     <i class="fas fa-times"></i>
                                 </button>
                             </div>
 
-                            <div style="display:flex; flex-direction:column; gap:11px; font-size:0.82rem; color:#cbd5e1; line-height:1.45;">
-                                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:12px;">
-                                    <div style="font-weight:900; color:#CCFF00; margin-bottom:4px; display:flex; align-items:center; gap:8px;">
+                            <div style="display:flex; flex-direction:column; gap:11px; font-size:0.82rem; color:#334155; line-height:1.45;">
+                                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:12px;">
+                                    <div style="font-weight:900; color:#4d7c0f; margin-bottom:4px; display:flex; align-items:center; gap:8px;">
                                         <i class="fas fa-stopwatch"></i> 1. Duración & Rondas
                                     </div>
                                     <div>Rondas dinámicas continuas de 16 a 20 minutos (o tanteo pactado a 32 puntos). Al sonar el aviso acústico, se concluye el punto en disputa.</div>
                                 </div>
 
-                                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:12px;">
-                                    <div style="font-weight:900; color:#00D2FF; margin-bottom:4px; display:flex; align-items:center; gap:8px;">
+                                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:12px;">
+                                    <div style="font-weight:900; color:#0284c7; margin-bottom:4px; display:flex; align-items:center; gap:8px;">
                                         <i class="fas fa-shuffle"></i> 2. Rotación de Pistas y Parejas
                                     </div>
                                     <div>Ascensos y descensos automáticos para equilibrar niveles en cada ronda y garantizar partidas reñidas.</div>
                                 </div>
 
-                                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:12px;">
-                                    <div style="font-weight:900; color:#fbbf24; margin-bottom:4px; display:flex; align-items:center; gap:8px;">
+                                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:12px;">
+                                    <div style="font-weight:900; color:#b45309; margin-bottom:4px; display:flex; align-items:center; gap:8px;">
                                         <i class="fas fa-calculator"></i> 3. Puntuación Individual
                                     </div>
                                     <div>Cada jugador suma sus juegos ganados. El diferencial de juegos totales (+/-) define el podio de la americana.</div>
                                 </div>
 
-                                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:12px;">
-                                    <div style="font-weight:900; color:#10b981; margin-bottom:4px; display:flex; align-items:center; gap:8px;">
+                                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:12px;">
+                                    <div style="font-weight:900; color:#15803d; margin-bottom:4px; display:flex; align-items:center; gap:8px;">
                                         <i class="fas fa-mobile-screen-button"></i> 4. Marcadores en Directo
                                     </div>
                                     <div>Sube el resultado de tu pista en la App al terminar cada ronda para actualizar el ranking en tiempo real.</div>
                                 </div>
 
-                                <div style="background:rgba(204,255,0,0.06); border:1px solid rgba(204,255,0,0.25); border-radius:14px; padding:12px; text-align:center;">
-                                    <span style="font-weight:900; color:#CCFF00; font-size:0.85rem;">🤝 Fair Play & Tercer Tiempo</span>
-                                    <div style="font-size:0.75rem; color:#94a3b8; margin-top:3px;">La deportividad, el respeto y la convivencia son el ADN de SomosPadel BCN.</div>
+                                <div style="background:#f7fee7; border:1px solid #d9f99d; border-radius:14px; padding:12px; text-align:center;">
+                                    <span style="font-weight:900; color:#4d7c0f; font-size:0.85rem;">🤝 Fair Play & Tercer Tiempo</span>
+                                    <div style="font-size:0.75rem; color:#475569; margin-top:3px;">La deportividad, el respeto y la convivencia son el ADN de SomosPadel BCN.</div>
                                 </div>
                             </div>
 
-                            <button onclick="document.getElementById('sp-rules-modal').style.display='none'" style="margin-top:16px; width:100%; background:#CCFF00; color:#000000; border:none; padding:13px; border-radius:14px; font-weight:900; font-size:0.85rem; cursor:pointer; box-shadow:0 4px 15px rgba(204,255,0,0.3); transition:all 0.2s;">
+                            <button onclick="document.getElementById('sp-rules-modal').style.display='none'" style="margin-top:16px; width:100%; background:#CCFF00; color:#0f172a; border:1px solid #bbf400; padding:13px; border-radius:14px; font-weight:900; font-size:0.85rem; cursor:pointer; box-shadow:0 4px 15px rgba(204,255,0,0.3); transition:all 0.2s;">
                                 ¡ENTENDIDO, A JUGAR! 🎾
                             </button>
                         </div>

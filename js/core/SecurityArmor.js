@@ -11,6 +11,8 @@
     // ==========================================
     // Si un tercero descarga el código y lo aloja en otro dominio, la app se bloquea de inmediato.
     const AUTHORIZED_HOSTS = [
+        'somospadel.eu',
+        'www.somospadel.eu',
         'americanas-somospadel.firebaseapp.com',
         'americanas-somospadel.web.app',
         'somospadelbarcelona.github.io',
@@ -23,6 +25,7 @@
     const isLocalFile = window.location.protocol === 'file:';
     const isAuthorized = isLocalFile || 
                          AUTHORIZED_HOSTS.includes(currentHost) || 
+                         currentHost.endsWith('.somospadel.eu') ||
                          currentHost.endsWith('.firebaseapp.com') || 
                          currentHost.endsWith('.web.app');
 

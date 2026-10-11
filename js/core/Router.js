@@ -125,15 +125,10 @@
             this.initGlobalExceptionHandler();
             console.log("🛣️ Enterprise Router System v2.0 Initialized");
 
-            // Sync role-americanas-only class dynamically
+            // Sync role classes dynamically (Todos los jugadores son miembros de SomosPadel)
             const syncRoleClass = () => {
-                const currentUser = window.Store?.getState('currentUser') || 
-                    (() => {
-                        try { return JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch (e) { return {}; }
-                    })();
-                const isAmericanasOnly = currentUser && currentUser.role === 'player_americanas';
                 if (document.body) {
-                    document.body.classList.toggle('role-americanas-only', !!isAmericanasOnly);
+                    document.body.classList.remove('role-americanas-only');
                 }
             };
             syncRoleClass();
@@ -314,38 +309,11 @@
                 window.closeCommunityMenu();
             }
 
-            // === ROLE ACCESS GUARD: JUGADOR AMERICANAS ===
-            const currentUser = window.Store?.getState('currentUser') || 
-                (() => {
-                    try { return JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch (e) { return {}; }
-                })();
-
-            const isAmericanasOnly = currentUser && currentUser.role === 'player_americanas';
+            // === ROLE ACCESS GUARD ===
+            // Todos los jugadores forman parte de SomosPadel BCN.
+            // Las rutas públicas y de comunidad son accesibles para todos los perfiles de la plataforma.
             if (document.body) {
-                document.body.classList.toggle('role-americanas-only', !!isAmericanasOnly);
-            }
-
-            if (isAmericanasOnly) {
-                const blockedRoutes = [
-                    'comunidad', 'community', 'partidas_abiertas',
-                    'results', 'equipos', 'teams', 'tournaments'
-                ];
-                if (blockedRoutes.includes(route)) {
-                    console.warn(`[Router] Acceso restringido para JUGADOR AMERICANAS a la ruta: ${route}`);
-                    if (window.PremiumModal && typeof window.PremiumModal.alert === 'function') {
-                        window.PremiumModal.alert({
-                            title: "🔒 ACCESO EXCLUSIVO",
-                            message: "No está permitido el acceso ya que esta sección es exclusiva para jugadores de SomosPadel Barcelona 🎾",
-                            type: "warning"
-                        });
-                    } else if (window.NotificationService && typeof window.NotificationService.showToast === 'function') {
-                        window.NotificationService.showToast("No está permitido el acceso: Exclusivo para jugadores de SomosPadel Barcelona 🎾", "warning");
-                    }
-                    if (!this.currentRoute) {
-                        return this.navigate('americanas');
-                    }
-                    return;
-                }
+                document.body.classList.remove('role-americanas-only');
             }
 
             const content = document.getElementById('content-area');
@@ -464,14 +432,9 @@
         }
 
         updateNavUI(route) {
-            // Sincronizar clase visual según el rol
-            const currentUser = window.Store?.getState('currentUser') || 
-                (() => {
-                    try { return JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch (e) { return {}; }
-                })();
-            const isAmericanasOnly = currentUser && currentUser.role === 'player_americanas';
+            // Todos los jugadores pertenecen a la comunidad SomosPadel
             if (document.body) {
-                document.body.classList.toggle('role-americanas-only', !!isAmericanasOnly);
+                document.body.classList.remove('role-americanas-only');
             }
 
             // 1. Bottom Nav Dock (New System)

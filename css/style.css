@@ -1187,6 +1187,12 @@ tr:hover td {
     font-weight: 500;
 }
 
+textarea {
+    height: auto !important;
+    min-height: 90px !important;
+    resize: vertical !important;
+}
+
 .pro-input {
     width: 100%;
     background: #ffffff !important;
@@ -2910,3 +2916,79 @@ tr:hover td {
         -webkit-overflow-scrolling: touch;
     }
 }
+
+/* ==========================================================================
+   🖨️ REGLAS GLOBALES DE IMPRESIÓN (PDF 5 PÁGINAS A4 - MARKETING HUB)
+   ========================================================================== */
+@media print {
+    html, body, .app-shell, .main-wrapper, .workspace-area, #content-area, .marketing-admin-wrapper {
+        overflow: visible !important;
+        height: auto !important;
+        max-height: none !important;
+        position: static !important;
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    #admin-sidebar, 
+    .top-bar, 
+    .top-header,
+    .admin-mobile-subnav, 
+    #admin-mobile-subnav, 
+    .no-print, 
+    .marketing-header, 
+    .marketing-tabs-nav, 
+    .marketing-toolbar,
+    .drawer-close-btn, 
+    #sidebar-overlay,
+    .inline-edit-toolbar,
+    .edit-mode-badge {
+        display: none !important;
+    }
+
+    .printable-executive-dossier {
+        position: static !important;
+        width: 100% !important;
+        display: block !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: #ffffff !important;
+    }
+
+    .pdf-page {
+        position: relative !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+        min-height: 260mm !important;
+        height: 270mm !important;
+        max-height: 275mm !important;
+        box-sizing: border-box !important;
+        page-break-after: always !important;
+        page-break-inside: avoid !important;
+        break-after: page !important;
+        break-inside: avoid !important;
+        padding: 10mm 12mm !important;
+        margin: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        background: #ffffff !important;
+        color: #0f172a !important;
+    }
+
+    .pdf-page-1 {
+        background: radial-gradient(circle at 80% 10%, #1e293b 0%, #0a0f1d 70%, #030712 100%) !important;
+        color: #ffffff !important;
+        border: 2px solid rgba(204, 255, 0, 0.35) !important;
+    }
+
+    .pdf-page:last-child {
+        page-break-after: auto !important;
+        break-after: auto !important;
+    }
+}

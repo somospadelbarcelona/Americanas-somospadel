@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     <script src="js/security-core.js"></script>
-    <script src="js/core/SecurityArmor.js"></script>
+    <script src="js/core/SecurityArmor.js?v=20261008_DOM_AUTH"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Control - App Somospadel BCN</title>
     <link rel="stylesheet" href="css/style.css?v=1002">
@@ -314,8 +314,8 @@
         }
 
         /* Inputs & Selects priority fix */
-        input, select, textarea, .pro-input, .pro-input-micro,
-        .modal-content input, .modal-content select, .modal-content textarea,
+        input, select, .pro-input, .pro-input-micro,
+        .modal-content input, .modal-content select,
         #create-entreno-form input, #create-entreno-form select {
             color: #0f172a !important;
             -webkit-text-fill-color: #0f172a !important;
@@ -328,6 +328,23 @@
             width: 100% !important;
             font-family: 'Inter', sans-serif !important;
             box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
+        }
+
+        /* Textarea global fix: Nunca aplastar a 42px, permitir altura natural multilínea */
+        textarea, .modal-content textarea {
+            color: #0f172a !important;
+            -webkit-text-fill-color: #0f172a !important;
+            background: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
+            height: auto !important;
+            min-height: 90px !important;
+            padding: 10px 15px !important;
+            font-size: 0.95rem !important;
+            border-radius: 10px !important;
+            width: 100% !important;
+            font-family: 'Inter', sans-serif !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
+            resize: vertical !important;
         }
 
         input:focus, select:focus, textarea:focus {
@@ -1247,7 +1264,24 @@
             font-weight: 800 !important;
         }
 
-        /* --- D) MARKETING & CRECIMIENTO (Violeta & Neón & Cian) --- */
+        /* --- D) MARKETING & CRECIMIENTO (Violeta & Neón & Cian & Ámbar) --- */
+        .btn-marketing-hub .icon-box {
+            background: rgba(245, 158, 11, 0.14) !important;
+            color: #d97706 !important;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+        .btn-marketing-hub:hover {
+            background: rgba(245, 158, 11, 0.08) !important;
+            border-color: rgba(245, 158, 11, 0.4) !important;
+            transform: translateX(3px);
+        }
+        .btn-marketing-hub.active {
+            border-left: 4px solid #f59e0b !important;
+            background: rgba(245, 158, 11, 0.14) !important;
+            color: #b45309 !important;
+            font-weight: 800 !important;
+        }
+
         .btn-marketing-copilot .icon-box {
             background: rgba(139, 92, 246, 0.14) !important;
             color: #7c3aed !important;
@@ -1804,6 +1838,13 @@
                         <span>MARKETING & CRECIMIENTO</span>
                     </div>
 
+                    <!-- Marketing & Coopatrocinios (Superadmin) -->
+                    <button class="nav-item-pro btn-marketing-hub" data-view="marketing" onclick="loadAdminView('marketing')">
+                        <span class="icon-box" style="color: #f59e0b;"><i class="fas fa-bullhorn"></i></span>
+                        <span class="nav-text">MARKETING & COOPATROCINIOS</span>
+                        <span class="nav-badge" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #000; font-weight: 900;">SUPERADMIN</span>
+                    </button>
+
                     <!-- Marketing & Copiloto Alex -->
                     <a href="promo-studio.html?mode=copilot" target="_blank" class="nav-item-pro btn-marketing-copilot" style="text-decoration: none;">
                         <span class="icon-box"><i class="fas fa-wand-magic-sparkles"></i></span>
@@ -1835,9 +1876,9 @@
 
                     <!-- Auditoría de Lógica (Lab) -->
                     <button class="nav-item-pro btn-logic-lab" data-view="logic_lab" onclick="loadAdminView('logic_lab')">
-                        <span class="icon-box"><i class="fas fa-flask-vial"></i></span>
-                        <span class="nav-text">Auditoría de Lógica (Lab)</span>
-                        <span class="nav-badge badge-lab">LAB</span>
+                        <span class="icon-box"><i class="fas fa-shield-halved" style="color: #38BDF8;"></i></span>
+                        <span class="nav-text">Auditoría & Seguridad Lógica</span>
+                        <span class="nav-badge badge-lab" style="background: rgba(16, 185, 129, 0.2); color: #10B981; border: 1px solid #10B981;">100% OK</span>
                     </button>
 
                     <!-- Mantenimiento & Datos (Submenú) -->
@@ -2090,11 +2131,11 @@
     </div>
 
     <!-- Edit/Create User Modal -->
-    <div id="admin-user-modal" class="modal-overlay hidden">
-        <div class="modal-content">
+    <div id="admin-user-modal" class="modal-overlay hidden" style="z-index: 999999;" onclick="if(event.target===this) closeAdminModal();">
+        <div class="modal-content" style="max-width: 540px; width: 95%; max-height: 90vh; overflow-y: auto;">
             <div class="modal-header">
-                <h2 id="modal-title">Editar Usuario</h2>
-                <button class="close-modal-btn" onclick="closeAdminModal()">&times;</button>
+                <h2 id="modal-title">Registrar Nuevo Jugador</h2>
+                <button type="button" class="close-modal-btn" onclick="closeAdminModal()">&times;</button>
             </div>
             <form id="admin-user-form" class="pro-form compact-admin-form">
                 <input type="hidden" name="id">
@@ -2102,43 +2143,36 @@
                 <div class="form-row-compact">
                     <div class="form-group">
                         <label><i class="fas fa-user"></i> NOMBRE</label>
-                        <input type="text" name="name" class="pro-input" required>
+                        <input type="text" name="name" class="pro-input" placeholder="Nombre y apellidos" required>
                     </div>
                     <div class="form-group">
                         <label><i class="fas fa-phone"></i> TELÉFONO</label>
-                        <input type="tel" name="phone" class="pro-input" required>
+                        <input type="tel" name="phone" class="pro-input" placeholder="600 000 000" required>
                     </div>
                 </div>
 
                 <div class="form-group" style="position: relative;">
-                    <label style="color: var(--primary); font-weight: 800;"><i class="fas fa-lock"></i> CONTRASEÑA
-                        (PLAIN TEXT / HASH)</label>
+                    <label style="color: var(--primary); font-weight: 800;"><i class="fas fa-lock"></i> CONTRASEÑA</label>
                     <div style="position: relative;">
                         <input type="password" name="password" id="admin-user-pwd-input"
-                            placeholder="Escribir p. cambiar..." class="pro-input">
+                            placeholder="Contraseña (opcional para jugadores sin app)" class="pro-input">
                         <i class="fas fa-eye" id="toggle-admin-user-pwd"
                             onclick="const i = document.getElementById('admin-user-pwd-input'); i.type = i.type === 'password' ? 'text' : 'password'; this.classList.toggle('fa-eye'); this.classList.toggle('fa-eye-slash');"
                             style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #888; z-index: 10;"></i>
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                <input type="hidden" name="membership" value="somospadel_bcn">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     <div class="form-group">
                         <label><i class="fas fa-chart-line"></i> NIVEL</label>
-                        <input type="text" name="level" class="pro-input" placeholder="Ej: 3,5" required>
+                        <input type="text" name="level" class="pro-input" placeholder="Ej: 3.5" value="3.5" required>
                     </div>
                     <div class="form-group">
                         <label><i class="fas fa-venus-mars"></i> GÉNERO</label>
                         <select name="gender" class="pro-input">
                             <option value="chico">CHICO</option>
                             <option value="chica">CHICA</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label><i class="fas fa-users-rectangle"></i> COMUNIDAD</label>
-                        <select name="membership" class="pro-input">
-                            <option value="externo">Externo</option>
-                            <option value="somospadel_bcn">SOMOSPADEL</option>
                         </select>
                     </div>
                 </div>
@@ -2167,15 +2201,11 @@
                 <div class="form-group">
                     <label><i class="fas fa-user-tag"></i> ROL DE SISTEMA</label>
                     <select name="role" class="pro-input">
+                        <option value="player" selected>JUGADOR SOMOSPADEL (Americanas / Raso) 👤</option>
+                        <option value="player_somospadel">JUGADOR EQUIPO SOMOSPADEL 🎾</option>
+                        <option value="captain">CAPITÁN (Equipos) 🧢</option>
+                        <option value="admin">ADMINISTRADOR 🛡️</option>
                         <option value="super_admin">SUPER ADMIN 👑</option>
-                        <option value="admin_player">ADMIN + JUGADOR 🎖️</option>
-                        <option value="admin">ADMIN (Solo Gestión) 🛡️</option>
-                        <option value="captain">CAPITÁN (Entrenos) 🧢</option>
-                        <option value="player_somospadel">JUGADOR SOMOSPADEL 🎾</option>
-                        <option value="player_americanas">JUGADOR AMERICANAS 🏆</option>
-                        <option value="player">JUGADOR EXTERNO 👤</option>
-                        <option value="collaborator">COLABORADOR 🤝</option>
-                        <option value="organizer">ORGANIZADOR / CLUB 🏛️</option>
                     </select>
                 </div>
 
@@ -2217,8 +2247,8 @@
                         <input type="number" name="matches_played" value="0" class="pro-input">
                     </div>
                 </div>
-                <button type="submit" class="btn-primary-pro"
-                    style="width: 100%; margin-top: 5px; height: 44px; font-weight: 800;">GUARDAR CAMBIOS 💾</button>
+                <button type="submit" id="admin-user-submit-btn" class="btn-primary-pro"
+                    style="width: 100%; margin-top: 5px; height: 44px; font-weight: 800;">REGISTRAR JUGADOR 🎾</button>
             </form>
         </div>
     </div>
@@ -2290,11 +2320,11 @@
                         <div>
                             <label style="font-size: 0.68rem; font-weight: 700; color: #64748b; display: block; margin-bottom: 4px;">ROL</label>
                             <select id="dup-user-role" class="pro-input" style="padding: 6px 8px; font-size: 0.85rem; border-radius: 6px;">
-                                <option value="player_somospadel">SOMOSPADEL 🎾</option>
-                                <option value="player_americanas">AMERICANAS 🏆</option>
-                                <option value="player">EXTERNO 👤</option>
+                                <option value="player" selected>JUGADOR RASO 👤</option>
+                                <option value="player_somospadel">EQUIPO 🎾</option>
                                 <option value="captain">CAPITÁN 🧢</option>
-                                <option value="admin_player">ADMIN+JUG 🎖️</option>
+                                <option value="admin">ADMIN 🛡️</option>
+                                <option value="super_admin">SUPER ADMIN 👑</option>
                             </select>
                         </div>
                     </div>
@@ -2999,7 +3029,7 @@
 
             <!-- App Config -->
             <script src="js/firebase-config.js"></script>
-            <script src="js/firebase-init.js?v=5007"></script>
+            <script src="js/firebase-init.js?v=5008"></script>
 
             <!-- CORE ARCHITECTURE (Absolute Priority) -->
             <script src="js/modules/core/Constants.js?v=5040_SEDE_COMBOBOX"></script>
@@ -3016,7 +3046,7 @@
             <!-- Module Logic -->
             <script src="js/modules/ui/PlayerAutocomplete.js"></script>
             <script src="js/modules/common/EventService.js"></script>
-            <script src="js/modules/common/ParticipantService.js?v=2001"></script>
+            <script src="js/modules/common/ParticipantService.js?v=PAIRS_SYNC_V1"></script>
             <script src="js/modules/common/NotificationService.js?v=PRO_CLEAN_WHITE_v12"></script>
             <script src="js/modules/ui/NotificationUi.js?v=PRO_CLEAN_WHITE_v12"></script>
             <script src="js/modules/common/WeatherService.js" defer></script>
@@ -3051,7 +3081,7 @@
             <!-- Logic Services (CORE) -->
             <script src="js/fixed-pairs-logic.js?v=2026.5.3"></script>
             <script src="js/rotating-pozo-logic.js?v=2026.5.3"></script>
-            <script src="js/PreFlightRoundVerifier.js?v=2026.5.3"></script>
+            <script src="js/PreFlightRoundVerifier.js?v=2026.5.4_FIXED_PAIRS"></script>
             <script src="js/MatchMakingService.js?v=2026.5.3"></script>
             <script src="js/modules/logic/RoundAutoRegenerationService.js?v=2026.5.3"></script>
             <script src="js/modules/ui/RoundAutoRegenNotice.js?v=2026.5.3"></script>
@@ -3066,7 +3096,7 @@
                 }
             </script>
             <script src="js/modules/americanas/AmericanaLogic.js"></script>
-            <script src="js/modules/americanas/AmericanaService.js"></script>
+            <script src="js/modules/americanas/AmericanaService.js?v=1016"></script>
             <script src="js/modules/players/PlayerHistoryService.js?v=2026.1"></script>
             <script src="js/modules/players/PadelFutCard.js?v=COTILLEAR_WHITE_v2026_2"></script>
             <script src="js/modules/logic/AutomationService.js"></script>
@@ -3079,12 +3109,13 @@
             <script src="js/modules/admin/NeuralAgent_v6.js"></script>
             <script src="js/modules/admin/BatSignalAgent.js"></script>
             <script src="js/modules/ai/TournamentChronicleService.js?v=1.0"></script>
-            <script src="js/modules/ai/TournamentChronicleModal.js?v=1.0"></script>
+            <script src="js/modules/ai/TournamentChronicleModal.js?v=WHITE_CHRONICLE_V2"></script>
             <script src="js/modules/admin/AdminNotifications.js?v=1.0"></script>
 
-            <script src="js/utils/RoleService.js?v=PLAYER_AMERICANAS_v1"></script>
-            <script src="js/modules/admin-users.js?v=DUPLICATE_USER_v2"></script>
-            <script src="js/modules/admin-americanas.js?v=5043_PRIVATE_AMERICANA"></script>
+            <script src="js/utils/RoleService.js?v=ROLES_V2"></script>
+            <script src="js/utils/RoleMigrationUtil.js?v=ROLES_V2"></script>
+            <script src="js/modules/admin-users.js?v=DUPLICATE_USER_v3_REGISTRAR_FIX"></script>
+            <script src="js/modules/admin-americanas.js?v=DUPLICATE_V2_ROBUST"></script>
             <script src="js/modules/admin-matches.js?v=20260926_EMERGENCY_V7"></script>
             <script src="js/modules/admin-results.js?v=20260926_EMERGENCY_V7"></script>
             <script src="js/modules/admin/ManualRoundModal.js?v=1.0"></script>
@@ -3092,10 +3123,10 @@
             <script src="js/admin-simulator.js?v=5000"></script>
             <script src="js/modules/admin-simulator-view.js?v=5000"></script>
             <script src="js/modules/logic/TwisterSimulation.js?v=1"></script>
-            <script src="js/modules/admin-pairs-ui.js?v=2000"></script>
+            <script src="js/modules/admin-pairs-ui.js?v=FIXED_PAIRS_SELECTION_v1"></script>
             <script src="js/modules/admin-analytics.js?v=ENTERPRISE_SMART_ANALYTICS_v95"></script>
-            <script src="js/modules/common/WhatsAppService.js?v=9002_ORGANIZER"></script>
-            <script src="js/modules/admin-entrenos.js?v=5041_SYNC_COURTS"></script>
+            <script src="js/modules/common/WhatsAppService.js?v=9.8_PAIRS_SYNC"></script>
+            <script src="js/modules/admin-entrenos.js?v=DUPLICATE_V2_ROBUST"></script>
             <script src="js/modules/admin-open-matches.js?v=3" defer></script>
             <script src="js/modules/admin-database-health.js"></script>
             <script src="js/modules/admin-fix-players.js"></script>
@@ -3119,12 +3150,16 @@
             <script src="js/modules/admin/AdminSosSubstitutes.js?v=2.2"></script>
 
             <!-- ⚖️ Centro de Control & Auditoría de Lógica de Torneos y Entrenos -->
+            <script src="js/PreFlightRoundVerifier.js?v=20261011_v1"></script>
             <script src="js/modules/admin/TournamentLogicAuditService.js?v=20260927_V3"></script>
             <script src="js/modules/admin/AdminTournamentLogicLab.js?v=20260927_V3"></script>
 
             <!-- 🛍️ Tienda SomosPadel BCN (E-Commerce Backoffice) -->
             <script src="js/modules/tienda/TiendaService.js?v=20261007_v2"></script>
             <script src="js/modules/admin-tienda.js?v=20261007_v1"></script>
+
+            <!-- 📢 Marketing Hub & Coopatrocinios (Superadmin) -->
+            <script src="js/modules/admin-marketing.js?v=20261011_V1"></script>
 
 
             <!-- DIAGNOSTIC SCRIPT (Optional) -->
@@ -3948,6 +3983,7 @@
             { view: 'season_campaign', label: 'Equipos 2027', icon: 'fa-shield-halved' },
 
             // 5. 📈 MARKETING, TIENDA & BLOG
+            { view: 'marketing', label: 'Marketing Hub', icon: 'fa-bullhorn', isPrimary: true },
             { view: 'tienda_admin', label: 'Tienda Admin', icon: 'fa-store', isPrimary: true },
             { view: 'analytics', label: 'Analytics', icon: 'fa-chart-line', isPrimary: true },
             { view: 'blog_posts', label: 'Blog', icon: 'fa-newspaper' },

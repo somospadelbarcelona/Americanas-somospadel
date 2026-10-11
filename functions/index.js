@@ -11,6 +11,33 @@ admin.initializeApp();
 const db = admin.firestore();
 const { JOURNAL_CATALOG, JOURNAL_DAILY_ARTICLES } = require('./journalCatalog');
 
+// Roles oficiales con facultades de gestión y administración (Staff)
+const STAFF_ROLES = [
+    'admin',
+    'super_admin',
+    'superadmin',
+    'admin_player',
+    'organizador',
+    'organizer',
+    'organizador_bcn',
+    'organizer_bcn'
+];
+
+/**
+ * Helper para verificar si un caller tiene privilegios de Staff vía Claims o Documento
+ */
+async function checkCallerIsStaff(context) {
+    if (!context || !context.auth) return false;
+    const tokenRole = context.auth.token ? context.auth.token.role : null;
+    if (tokenRole && STAFF_ROLES.includes(tokenRole)) return true;
+
+    // Fallback a Firestore
+    const callerDoc = await db.collection('players').doc(context.auth.uid).get();
+    if (!callerDoc.exists) return false;
+    const role = callerDoc.data()?.role;
+    return Boolean(role && STAFF_ROLES.includes(role));
+}
+
 // ==========================================
 // 1. CORE MATCHMAKING & ROUND GENERATION (BÚNKER ANTI-COPIA)
 // ==========================================
@@ -34,10 +61,7 @@ exports.secureGenerateRound = functions.https.onCall(async (data, context) => {
     const matchCollection = eventType === 'americana' ? 'matches' : 'entrenos_matches';
 
     // Verificar permisos de admin u organizador
-    const callerDoc = await db.collection('players').doc(context.auth.uid).get();
-    const callerRole = callerDoc.exists ? callerDoc.data().role : null;
-    const isAuthorized = ['admin', 'super_admin', 'admin_player', 'captain', 'organizador'].includes(callerRole);
-    
+    const isAuthorized = await checkCallerIsStaff(context);
     if (!isAuthorized) {
         throw new functions.https.HttpsError('permission-denied', 'No tienes permisos de administrador u organizador.');
     }
@@ -1415,5 +1439,493 @@ exports.diagnosePushSystem = functions.https.onCall(async (data, context) => {
     }
 });
 
+// ==========================================
+// 13. CUSTOM CLAIMS MANAGEMENT (ZERO-COST RULES)
+// ==========================================
+
+/**
+ * Callable: setUserRole
+ * Permite a un administrador asignar un rol oficial a un usuario tanto en Firestore como en Custom Claims de Firebase Auth.
+ */
+exports.setUserRole = functions.https.onCall(async (data, context) => {
+    const isAuthorized = await checkCallerIsStaff(context);
+    if (!isAuthorized) {
+        throw new functions.https.HttpsError('permission-denied', 'Solo personal autorizado puede modificar roles de usuario.');
+    }
+
+    const { targetUid, role } = data || {};
+    if (!targetUid || !role) {
+        throw new functions.https.HttpsError('invalid-argument', 'targetUid y role son obligatorios.');
+    }
+
+    const validRoles = [
+        ...STAFF_ROLES,
+        'captain',
+        'player',
+        'player_somospadel',
+        'player_americanas',
+        'collaborator'
+    ];
+
+    if (!validRoles.includes(role)) {
+        throw new functions.https.HttpsError('invalid-argument', `Rol inválido: ${role}`);
+    }
+
+    // 1. Asignar custom claim en Firebase Auth
+    await admin.auth().setCustomUserClaims(targetUid, { role });
+
+    // 2. Persistir en Firestore
+    await db.collection('players').doc(targetUid).set({
+        role: role,
+        role_updated_at: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    console.log(`🛡️ [setUserRole] Rol '${role}' asignado a ${targetUid} por ${context.auth.uid}`);
+    return { success: true, targetUid, role };
+});
+
+/**
+ * Trigger Firestore: syncUserRoleClaimsOnWrite
+ * Sincroniza automáticamente los Custom Claims cada vez que un documento de jugador cambia su campo 'role'.
+ */
+exports.syncUserRoleClaimsOnWrite = functions.firestore
+    .document('players/{userId}')
+    .onWrite(async (change, context) => {
+        const { userId } = context.params;
+        if (!change.after.exists) return null;
+
+        const beforeRole = change.before.exists ? change.before.data()?.role : null;
+        const afterRole = change.after.data()?.role;
+
+        if (afterRole && beforeRole !== afterRole) {
+            try {
+                await admin.auth().setCustomUserClaims(userId, { role: afterRole });
+                console.log(`✅ [syncUserRoleClaimsOnWrite] Sincronizado claim role='${afterRole}' para ${userId}`);
+            } catch (err) {
+                console.warn(`⚠️ [syncUserRoleClaimsOnWrite] Fallo al asignar claim a ${userId}:`, err.message);
+            }
+        }
+        return null;
+    });
+
+/**
+ * Callable: backfillRoleClaims
+ * Migración en lote: sincroniza los claims de todos los usuarios existentes en base a su perfil de Firestore.
+ */
+exports.backfillRoleClaims = functions.https.onCall(async (data, context) => {
+    const isAuthorized = await checkCallerIsStaff(context);
+    if (!isAuthorized) {
+        throw new functions.https.HttpsError('permission-denied', 'Solo personal autorizado puede realizar la migración.');
+    }
+
+    const snapshot = await db.collection('players').get();
+    let updatedCount = 0;
+    let errorsCount = 0;
+
+    for (const doc of snapshot.docs) {
+        const p = doc.data();
+        const role = p.role || 'player';
+        try {
+            await admin.auth().setCustomUserClaims(doc.id, { role });
+            updatedCount++;
+        } catch (e) {
+            errorsCount++;
+            console.warn(`⚠️ [backfillRoleClaims] Error en ${doc.id}:`, e.message);
+        }
+    }
+
+    console.log(`✅ [backfillRoleClaims] Migración completada: ${updatedCount} actualizados, ${errorsCount} fallos.`);
+    return { success: true, total: snapshot.size, updated: updatedCount, errors: errorsCount };
+});
+
+// ==========================================
+// 14. GESTIÓN TRANSACCIONAL SEGURA DE INSCRIPCIONES
+// ==========================================
+
+/**
+ * Callable: registerToEvent
+ * Inscripción atómica con control de aforo estricto para prevenir overbooking bajo concurrencia.
+ */
+exports.registerToEvent = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'Debes iniciar sesión para inscribirte.');
+    }
+
+    const { eventId, eventType = 'americana' } = data || {};
+    if (!eventId) {
+        throw new functions.https.HttpsError('invalid-argument', 'eventId es obligatorio.');
+    }
+
+    const collectionName = eventType === 'americana' ? 'americanas' : 'entrenos';
+    const eventRef = db.collection(collectionName).doc(eventId);
+    const userId = context.auth.uid;
+
+    // Obtener datos del jugador
+    const playerDoc = await db.collection('players').doc(userId).get();
+    if (!playerDoc.exists) {
+        throw new functions.https.HttpsError('not-found', 'Perfil de jugador no encontrado.');
+    }
+    const pData = playerDoc.data();
+
+    return await db.runTransaction(async (transaction) => {
+        const eventDoc = await transaction.get(eventRef);
+        if (!eventDoc.exists) {
+            throw new functions.https.HttpsError('not-found', 'El evento no existe.');
+        }
+
+        const event = eventDoc.data();
+        if (event.status !== 'open') {
+            throw new functions.https.HttpsError('failed-precondition', 'Las inscripciones para este evento están cerradas.');
+        }
+
+        const players = Array.isArray(event.players) ? [...event.players] : [];
+        const waitlist = Array.isArray(event.waitlist) ? [...event.waitlist] : [];
+        const maxCourts = parseInt(event.max_courts) || 4;
+        const maxPlayers = maxCourts * 4;
+
+        // Comprobar si ya está inscrito
+        const isEnrolled = players.some(p => String(p?.id || p?.uid) === userId);
+        const isWaitlisted = waitlist.some(p => String(p?.id || p?.uid) === userId);
+
+        if (isEnrolled) {
+            return { success: true, status: 'already_enrolled', message: 'Ya estás inscrito en la lista principal.' };
+        }
+        if (isWaitlisted) {
+            return { success: true, status: 'already_in_waitlist', message: 'Ya estás en la lista de espera.' };
+        }
+
+        const participantObject = {
+            id: userId,
+            uid: userId,
+            name: pData.name || pData.displayName || 'Jugador',
+            level: parseFloat(pData.level || pData.self_rate_level || 3.5),
+            gender: pData.gender || '?',
+            photoURL: pData.photoURL || pData.photo_url || null,
+            joinedAt: new Date().toISOString()
+        };
+
+        if (players.length < maxPlayers) {
+            players.push(participantObject);
+            transaction.update(eventRef, {
+                players: players,
+                registeredPlayers: players,
+                updated_at: admin.firestore.FieldValue.serverTimestamp()
+            });
+            return { success: true, status: 'enrolled', count: players.length, maxPlayers };
+        } else {
+            waitlist.push(participantObject);
+            transaction.update(eventRef, {
+                waitlist: waitlist,
+                updated_at: admin.firestore.FieldValue.serverTimestamp()
+            });
+            return { success: true, status: 'waitlist', position: waitlist.length, maxPlayers };
+        }
+    });
+});
+
+/**
+ * Callable: unregisterFromEvent
+ * Baja atómica con promoción automática y justa del primero en lista de espera.
+ */
+exports.unregisterFromEvent = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'Debes iniciar sesión.');
+    }
+
+    const { eventId, eventType = 'americana', targetPlayerId } = data || {};
+    if (!eventId) {
+        throw new functions.https.HttpsError('invalid-argument', 'eventId es obligatorio.');
+    }
+
+    // Permitir desapuntarse a sí mismo, o si es Staff, desapuntar a otro
+    const isStaffCaller = await checkCallerIsStaff(context);
+    const playerIdToRemove = (isStaffCaller && targetPlayerId) ? targetPlayerId : context.auth.uid;
+
+    const collectionName = eventType === 'americana' ? 'americanas' : 'entrenos';
+    const eventRef = db.collection(collectionName).doc(eventId);
+
+    return await db.runTransaction(async (transaction) => {
+        const eventDoc = await transaction.get(eventRef);
+        if (!eventDoc.exists) {
+            throw new functions.https.HttpsError('not-found', 'El evento no existe.');
+        }
+
+        const event = eventDoc.data();
+        let players = Array.isArray(event.players) ? [...event.players] : [];
+        let waitlist = Array.isArray(event.waitlist) ? [...event.waitlist] : [];
+        let fixedPairs = Array.isArray(event.fixed_pairs) ? [...event.fixed_pairs] : [];
+
+        const mainIndex = players.findIndex(p => String(p?.id || p?.uid) === playerIdToRemove);
+        const waitIndex = waitlist.findIndex(p => String(p?.id || p?.uid) === playerIdToRemove);
+
+        if (mainIndex === -1 && waitIndex === -1) {
+            return { success: false, message: 'El jugador no figuraba inscrito en el evento.' };
+        }
+
+        let promotedPlayer = null;
+
+        if (waitIndex !== -1) {
+            // Estaba en lista de espera: solo se elimina
+            waitlist.splice(waitIndex, 1);
+        } else if (mainIndex !== -1) {
+            // Estaba en lista principal: se elimina y se promociona al primero de waitlist si procede
+            players.splice(mainIndex, 1);
+
+            // Limpieza de parejas fijas
+            fixedPairs = fixedPairs.filter(pair => {
+                const p1 = String(pair?.player1_id || pair?.player1?.id || pair?.p1?.id || '');
+                const p2 = String(pair?.player2_id || pair?.player2?.id || pair?.p2?.id || '');
+                return p1 !== playerIdToRemove && p2 !== playerIdToRemove;
+            });
+
+            const maxCourts = parseInt(event.max_courts) || 4;
+            const maxPlayers = maxCourts * 4;
+
+            if (players.length < maxPlayers && waitlist.length > 0) {
+                promotedPlayer = waitlist.shift();
+                if (promotedPlayer && !promotedPlayer.level) promotedPlayer.level = 3.5;
+                players.push(promotedPlayer);
+            }
+        }
+
+        transaction.update(eventRef, {
+            players: players,
+            registeredPlayers: players,
+            waitlist: waitlist,
+            fixed_pairs: fixedPairs,
+            updated_at: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        return {
+            success: true,
+            status: 'removed',
+            promoted: promotedPlayer ? { id: promotedPlayer.id, name: promotedPlayer.name } : null
+        };
+    });
+});
+
+// ==========================================
+// 15. GESTIÓN MULTI-TENANT DE ORGANIZACIONES Y CLUBES (FASE 1)
+// ==========================================
+
+/**
+ * Callable: createOrganization
+ * Permite a la directiva dar de alta un club o entidad organizadora con su espacio de gestión independiente.
+ */
+exports.createOrganization = functions.https.onCall(async (data, context) => {
+    const isAuthorized = await checkCallerIsStaff(context);
+    if (!isAuthorized) {
+        throw new functions.https.HttpsError('permission-denied', 'Solo personal autorizado puede crear nuevas organizaciones.');
+    }
+
+    const { name, slug, address, phone, contactEmail, maxCourts = 4 } = data || {};
+    if (!name || !slug) {
+        throw new functions.https.HttpsError('invalid-argument', 'El nombre y el slug de la organización son obligatorios.');
+    }
+
+    const orgRef = db.collection('organizations').doc(slug);
+    const existingOrg = await orgRef.get();
+    if (existingOrg.exists) {
+        throw new functions.https.HttpsError('already-exists', 'Ya existe una organización con este identificador.');
+    }
+
+    const orgPayload = {
+        name: String(name).trim(),
+        slug: String(slug).trim().toLowerCase(),
+        address: address ? String(address).trim() : '',
+        phone: phone ? String(phone).trim() : '',
+        contactEmail: contactEmail ? String(contactEmail).trim() : '',
+        maxCourts: parseInt(maxCourts) || 4,
+        status: 'active',
+        created_at: admin.firestore.FieldValue.serverTimestamp(),
+        created_by: context.auth.uid
+    };
+
+    await orgRef.set(orgPayload);
+
+    console.log(`🏛️ [createOrganization] Club/Organización '${name}' creada por ${context.auth.uid}`);
+    return { success: true, orgId: slug, organization: orgPayload };
+});
+
+/**
+ * Callable: assignUserToOrganization
+ * Asocia un usuario a un club y le asigna claims de tenencia (orgId y role)
+ */
+exports.assignUserToOrganization = functions.https.onCall(async (data, context) => {
+    const isAuthorized = await checkCallerIsStaff(context);
+    if (!isAuthorized) {
+        throw new functions.https.HttpsError('permission-denied', 'Solo personal autorizado puede asignar miembros a una organización.');
+    }
+
+    const { targetUid, orgId, orgRole = 'organizer' } = data || {};
+    if (!targetUid || !orgId) {
+        throw new functions.https.HttpsError('invalid-argument', 'targetUid y orgId son obligatorios.');
+    }
+
+    const orgDoc = await db.collection('organizations').doc(orgId).get();
+    if (!orgDoc.exists) {
+        throw new functions.https.HttpsError('not-found', 'La organización no existe.');
+    }
+
+    // 1. Asignar custom claim en Auth incluyendo orgId
+    const currentClaims = (await admin.auth().getUser(targetUid)).customClaims || {};
+    await admin.auth().setCustomUserClaims(targetUid, {
+        ...currentClaims,
+        role: orgRole,
+        orgId: orgId
+    });
+
+    // 2. Registrar en subcolección de miembros de la organización
+    await db.collection('organizations').doc(orgId).collection('members').doc(targetUid).set({
+        uid: targetUid,
+        role: orgRole,
+        assigned_at: admin.firestore.FieldValue.serverTimestamp(),
+        assigned_by: context.auth.uid
+    });
+
+    // 3. Vincular en el documento del jugador
+    await db.collection('players').doc(targetUid).set({
+        orgId: orgId,
+        role: orgRole,
+        last_updated: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    console.log(`✅ [assignUserToOrganization] Usuario ${targetUid} asignado a ${orgId} con rol ${orgRole}`);
+    return { success: true, targetUid, orgId, orgRole };
+});
+
+// ==========================================
+// 16. LEADERBOARDS PRECALCULADOS EN SERVIDOR (FASE 2)
+// ==========================================
+
+/**
+ * Callable: recomputeLeaderboard
+ * Genera y almacena en un único documento el Top Ranking oficial de jugadores.
+ * Sustituye la descarga de miles de jugadores en el móvil por una lectura unitaria.
+ */
+exports.recomputeLeaderboard = functions.https.onCall(async (data, context) => {
+    const isAuthorized = await checkCallerIsStaff(context);
+    if (!isAuthorized) {
+        throw new functions.https.HttpsError('permission-denied', 'Solo personal autorizado puede recalcular rankings.');
+    }
+
+    const { limit = 100 } = data || {};
+    const playersSnap = await db.collection('players')
+        .where('status', 'in', ['active', 'pending'])
+        .orderBy('level', 'desc')
+        .limit(parseInt(limit) || 100)
+        .get();
+
+    const topPlayers = [];
+    let rank = 1;
+
+    playersSnap.forEach(doc => {
+        const p = doc.data();
+        topPlayers.push({
+            rank: rank++,
+            id: doc.id,
+            uid: doc.id,
+            name: p.name || p.displayName || 'Jugador',
+            level: parseFloat(p.level || 3.5),
+            gender: p.gender || '?',
+            photo_url: p.photo_url || p.photoURL || null,
+            points: p.ranking_points || p.points || 0,
+            matches_played: p.matches_played || 0,
+            orgId: p.orgId || 'global'
+        });
+    });
+
+    const payload = {
+        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+        total_players_sampled: topPlayers.length,
+        rankings: topPlayers
+    };
+
+    await db.collection('leaderboards').doc('global_top').set(payload);
+
+    console.log(`🏆 [recomputeLeaderboard] Leaderboard oficial precalculado con ${topPlayers.length} jugadores.`);
+    return { success: true, count: topPlayers.length };
+});
+
+/**
+ * Trigger: onMatchFinishedUpdateStats
+ * Cuando un partido se marca como 'finished', actualiza estadísticas agregadas
+ */
+exports.onMatchFinishedUpdateStats = functions.firestore
+    .document('matches/{matchId}')
+    .onUpdate(async (change, context) => {
+        const before = change.before.data();
+        const after = change.after.data();
+
+        if (before.status !== 'finished' && after.status === 'finished') {
+            const eventId = after.americana_id;
+            if (eventId) {
+                console.log(`🎾 [onMatchFinishedUpdateStats] Partido ${context.params.matchId} finalizado en americana ${eventId}.`);
+            }
+        }
+        return null;
+    });
+
+// ==========================================
+// 17. RED DE LIGAS Y CIRCUITOS INTERCLUBES (FASE 3)
+// ==========================================
+
+/**
+ * Callable: createLeague
+ * Crea un circuito o liga interclubes con calendario de jornadas compartido entre sedes.
+ */
+exports.createLeague = functions.https.onCall(async (data, context) => {
+    const isAuthorized = await checkCallerIsStaff(context);
+    if (!isAuthorized) {
+        throw new functions.https.HttpsError('permission-denied', 'Solo personal autorizado puede crear ligas o circuitos.');
+    }
+
+    const { name, code, participatingClubIds = [], season = '2026-T1' } = data || {};
+    if (!name || !code) {
+        throw new functions.https.HttpsError('invalid-argument', 'El nombre y el código de la liga son obligatorios.');
+    }
+
+    const leagueSlug = code.toLowerCase().trim();
+    const leagueRef = db.collection('leagues').doc(leagueSlug);
+
+    const payload = {
+        name: String(name).trim(),
+        code: leagueSlug,
+        season: String(season).trim(),
+        participatingClubIds: Array.isArray(participatingClubIds) ? participatingClubIds : [],
+        status: 'active',
+        created_at: admin.firestore.FieldValue.serverTimestamp(),
+        created_by: context.auth.uid
+    };
+
+    await leagueRef.set(payload);
+
+    console.log(`🏆 [createLeague] Liga interclubes '${name}' creada por ${context.auth.uid}`);
+    return { success: true, leagueId: leagueSlug, league: payload };
+});
+
+/**
+ * Callable: updateLeagueStandings
+ * Recalcula la clasificación general acumulada entre todos los clubes de una liga.
+ */
+exports.updateLeagueStandings = functions.https.onCall(async (data, context) => {
+    const isAuthorized = await checkCallerIsStaff(context);
+    if (!isAuthorized) {
+        throw new functions.https.HttpsError('permission-denied', 'Solo personal autorizado puede actualizar la clasificación de liga.');
+    }
+
+    const { leagueId, standings = [] } = data || {};
+    if (!leagueId) {
+        throw new functions.https.HttpsError('invalid-argument', 'leagueId es obligatorio.');
+    }
+
+    const standingsRef = db.collection('leagues').doc(leagueId).collection('standings').doc('current');
+    await standingsRef.set({
+        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+        table: Array.isArray(standings) ? standings : []
+    }, { merge: true });
+
+    return { success: true, leagueId, count: standings.length };
+});
 
 

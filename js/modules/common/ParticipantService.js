@@ -50,7 +50,9 @@ window.ParticipantService = {
             level: parseFloat(player.level || player.playtomic_level || player.self_rate_level || 3.5),
             gender: player.gender || '?',
             photoURL: player.photoURL || player.photo_url || null,
-            joinedAt: new Date().toISOString()
+            partner_id: player.partner_id || null,
+            partner_name: player.partner_name || null,
+            joinedAt: player.joinedAt || new Date().toISOString()
         };
 
         if (players.length < maxPlayers) {
@@ -138,8 +140,8 @@ window.ParticipantService = {
 
         // Cleanup Fixed Pairs referencing this player
         fixedPairs = fixedPairs.filter(pair => {
-            const p1Id = String(pair?.player1?.id || pair?.player1?.uid || '');
-            const p2Id = String(pair?.player2?.id || pair?.player2?.uid || '');
+            const p1Id = String(pair?.player1_id || pair?.player1?.id || pair?.player1?.uid || pair?.p1?.id || '');
+            const p2Id = String(pair?.player2_id || pair?.player2?.id || pair?.player2?.uid || pair?.p2?.id || '');
             return p1Id !== String(playerId) && p2Id !== String(playerId);
         });
 
