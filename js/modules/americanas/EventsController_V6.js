@@ -7754,20 +7754,23 @@
                             backdrop-filter: blur(6px);
                             border: 1px solid rgba(255,255,255,0.22);
                             border-radius: 10px;
-                            padding: 6px 8px;
+                            padding: 6px 7px;
                             display: flex;
                             align-items: center;
-                            gap: 8px;
+                            gap: 7px;
                             cursor: pointer;
                             box-shadow: 0 3px 8px rgba(0,0,0,0.3);
                             transition: transform 0.15s, background 0.15s;
+                            min-width: 0;
+                            overflow: hidden;
+                            box-sizing: border-box;
                         " onmouseover="this.style.transform='scale(1.02)'; this.style.background='rgba(15,23,42,1)';" onmouseout="this.style.transform='scale(1)'; this.style.background='rgba(15,23,42,0.9)';">
-                            <div style="width: 32px; height: 32px; border-radius: 8px; background: url('${photo}') center/cover; border: 1.5px solid #38bdf8; flex-shrink: 0;"></div>
-                            <div style="min-width: 0; flex: 1;">
-                                <div style="font-size: 0.72rem; font-weight: 950; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase;">${displayName}</div>
+                            <div style="width: 30px; height: 30px; border-radius: 8px; background: url('${photo}') center/cover; border: 1.5px solid #38bdf8; flex-shrink: 0;"></div>
+                            <div style="min-width: 0; flex: 1; overflow: hidden;">
+                                <div style="font-size: 0.70rem; font-weight: 950; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; display: block; max-width: 100%;">${displayName}</div>
                                 <div style="display: flex; align-items: center; gap: 4px; margin-top: 2px;">
-                                    <span style="background: #10b981; color: #ffffff; font-size: 0.55rem; font-weight: 950; padding: 0 4px; border-radius: 4px;">${level}</span>
-                                    <span style="color: rgba(255,255,255,0.75); font-size: 0.52rem; font-weight: 800;">${posLabel}</span>
+                                    <span style="background: #10b981; color: #ffffff; font-size: 0.54rem; font-weight: 950; padding: 0 4px; border-radius: 4px; flex-shrink: 0;">${level}</span>
+                                    <span style="color: rgba(255,255,255,0.75); font-size: 0.52rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${posLabel}</span>
                                 </div>
                             </div>
                         </div>
@@ -7778,19 +7781,22 @@
                             background: rgba(255, 255, 255, 0.12);
                             border: 1.5px dashed rgba(255, 255, 255, 0.55);
                             border-radius: 10px;
-                            padding: 8px 10px;
+                            padding: 7px 8px;
                             display: flex;
                             align-items: center;
                             justify-content: center;
                             gap: 6px;
                             cursor: pointer;
                             color: #ffffff;
-                            font-size: 0.68rem;
+                            font-size: 0.66rem;
                             font-weight: 900;
                             transition: all 0.15s;
+                            min-width: 0;
+                            overflow: hidden;
+                            box-sizing: border-box;
                         " onmouseover="this.style.background='rgba(34,197,94,0.3)'; this.style.borderColor='#4ade80';" onmouseout="this.style.background='rgba(255,255,255,0.12)'; this.style.borderColor='rgba(255,255,255,0.55)';">
-                            <i class="fas fa-plus-circle" style="color: #4ade80; font-size: 0.85rem;"></i>
-                            <span style="letter-spacing: 0.3px;">Plaza Libre</span>
+                            <i class="fas fa-plus-circle" style="color: #4ade80; font-size: 0.8rem; flex-shrink: 0;"></i>
+                            <span style="letter-spacing: 0.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Plaza Libre</span>
                         </div>
                     `;
                 }
@@ -7853,29 +7859,29 @@
                         background: #ffffff;
                         border: 1.5px solid #cbd5e1;
                         border-radius: 18px;
-                        padding: 14px;
+                        padding: 12px;
                         box-shadow: 0 4px 16px rgba(0,0,0,0.04);
-                        margin-bottom: 16px;
+                        box-sizing: border-box;
                     ">
                         <!-- Court Header -->
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 2px;">
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <span style="background: #0f172a; color: #38bdf8; font-weight: 1000; font-size: 0.72rem; padding: 4px 10px; border-radius: 8px; letter-spacing: 0.5px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 0 2px;">
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span style="background: #0f172a; color: #38bdf8; font-weight: 1000; font-size: 0.70rem; padding: 3px 8px; border-radius: 7px; letter-spacing: 0.5px;">
                                     🎾 PISTA ${courtNum}
                                 </span>
                                 ${hasOfficialRound1 ? `
-                                    <span style="background: #10b981; color: #ffffff; font-size: 0.54rem; font-weight: 1000; padding: 2px 7px; border-radius: 5px; letter-spacing: 0.4px;">
+                                    <span style="background: #10b981; color: #ffffff; font-size: 0.52rem; font-weight: 1000; padding: 2px 6px; border-radius: 5px; letter-spacing: 0.4px;">
                                         ⚡ OFICIAL R1
                                     </span>
                                 ` : `
-                                    <span style="background: #fff7ed; color: #c2410c; border: 1px solid #fdba74; font-size: 0.54rem; font-weight: 950; padding: 1px 6px; border-radius: 5px;">
+                                    <span style="background: #fff7ed; color: #c2410c; border: 1px solid #fdba74; font-size: 0.52rem; font-weight: 950; padding: 1px 5px; border-radius: 5px;">
                                         🕒 PROVISIONAL
                                     </span>
                                 `}
-                                <span style="font-size: 0.65rem; color: #64748b; font-weight: 800;">CÉSPED PREMIER AZUL</span>
+                                <span style="font-size: 0.62rem; color: #64748b; font-weight: 800;">CÉSPED PREMIER</span>
                             </div>
-                            <div style="font-size: 0.62rem; color: #0284c7; font-weight: 950; background: #f0f9ff; border: 1px solid #bae6fd; padding: 3px 8px; border-radius: 6px;">
-                                NIVEL MEDIO: ${courtAvgLvl} LVL
+                            <div style="font-size: 0.60rem; color: #0284c7; font-weight: 950; background: #f0f9ff; border: 1px solid #bae6fd; padding: 2px 7px; border-radius: 6px;">
+                                NIVEL: ${courtAvgLvl} LVL
                             </div>
                         </div>
 
@@ -7885,28 +7891,29 @@
                             border: 2px solid #ffffff;
                             border-radius: 14px;
                             position: relative;
-                            padding: 12px;
-                            box-shadow: inset 0 0 24px rgba(0,0,0,0.25);
+                            padding: 10px 8px;
+                            box-shadow: inset 0 0 20px rgba(0,0,0,0.25);
+                            box-sizing: border-box;
                         ">
                             <!-- Center Net Divider Line -->
                             <div style="position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: rgba(255,255,255,0.7); transform: translateX(-50%); z-index: 1;"></div>
                             
                             <!-- Center Net Pill -->
-                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #0f172a; color: #38bdf8; border: 1.5px solid #38bdf8; font-size: 0.52rem; font-weight: 1000; padding: 2px 7px; border-radius: 6px; z-index: 5; letter-spacing: 1px; box-shadow: 0 2px 8px rgba(0,0,0,0.4);">
+                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #0f172a; color: #38bdf8; border: 1.5px solid #38bdf8; font-size: 0.50rem; font-weight: 1000; padding: 2px 6px; border-radius: 6px; z-index: 5; letter-spacing: 1px; box-shadow: 0 2px 8px rgba(0,0,0,0.4);">
                                 RED 🎾
                             </div>
 
                             <!-- 2 Teams Grid -->
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; position: relative; z-index: 2;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; position: relative; z-index: 2;">
                                 <!-- Team Left (Team A) -->
-                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0; overflow: hidden;">
                                     <div style="font-size: 0.54rem; font-weight: 1000; color: rgba(255,255,255,0.9); text-transform: uppercase; letter-spacing: 0.5px;">PAREJA A</div>
                                     ${renderCourtPlayerSlot(s1, '⚡ Revés', 1)}
                                     ${renderCourtPlayerSlot(s2, '🛡️ Drive', 2)}
                                 </div>
 
                                 <!-- Team Right (Team B) -->
-                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0; overflow: hidden;">
                                     <div style="font-size: 0.54rem; font-weight: 1000; color: rgba(255,255,255,0.9); text-transform: uppercase; letter-spacing: 0.5px; text-align: right;">PAREJA B</div>
                                     ${renderCourtPlayerSlot(s3, '⚡ Revés', 3)}
                                     ${renderCourtPlayerSlot(s4, '🛡️ Drive', 4)}
@@ -7962,17 +7969,19 @@
                 }
             };
 
-            // 📸 COMPARTIR CRUCES POR WHATSAPP (OPCIÓN 2: FORMATO IMAGEN VISUAL HD)
+            // 📸 COMPARTIR CRUCES POR WHATSAPP (OPCIÓN 2: FORMATO IMAGEN VISUAL HD RECTANGULAR DE ALTA DEFINICIÓN)
             window.shareCourtsWhatsAppImage = async function() {
                 const btnIds = ['btn-share-courts-img-header', 'battle-courts-img-btn'];
                 const btns = btnIds.map(id => document.getElementById(id)).filter(Boolean);
                 const origContents = btns.map(b => b.innerHTML);
 
                 btns.forEach(b => {
-                    b.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO IMAGEN...';
+                    b.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO IMAGEN HD...';
                     b.style.opacity = '0.75';
                     b.disabled = true;
                 });
+
+                let exportPoster = null;
 
                 try {
                     // Asegurar html2canvas si no está cargado
@@ -7987,29 +7996,226 @@
                     }
 
                     const captureArea = document.getElementById('battle-courts-capture-area');
-                    if (!captureArea) {
+                    if (!captureArea && structuredCourtsList.length === 0) {
                         throw new Error('No se encontró el contenedor de pistas para capturar.');
                     }
 
                     window.playBattleAudio?.('tick');
 
-                    // Asegurar que esté temporalmente visible para la captura si estaba oculto
-                    const courtsContainer = document.getElementById('battle-courts-container');
-                    const wasHidden = courtsContainer && courtsContainer.style.display === 'none';
-                    if (wasHidden) {
-                        courtsContainer.style.display = 'block';
-                    }
+                    // =========================================================================
+                    // 🌟 CREACIÓN DEL PÓSTER OFF-SCREEN DEDICADO DE ALTA RESOLUCIÓN (1180px)
+                    // Disposición rectangular equilibrada (2 columnas) para máxima legibilidad
+                    // =========================================================================
+                    const exportWidth = 1180;
+                    exportPoster = document.createElement('div');
+                    exportPoster.id = 'battle-courts-export-poster';
+                    exportPoster.style.cssText = `
+                        position: fixed;
+                        left: -9999px;
+                        top: 0;
+                        width: ${exportWidth}px;
+                        background: #ffffff;
+                        padding: 28px 32px;
+                        box-sizing: border-box;
+                        font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
+                        color: #0f172a;
+                        z-index: -9999;
+                    `;
 
-                    const canvas = await window.html2canvas(captureArea, {
-                        scale: 2.2,
+                    // Helper para renderizar slots en el póster HD sin recortes
+                    const renderPosterPlayerSlot = (p, defaultPos) => {
+                        if (p) {
+                            const photo = p.photo_url || p.photoURL || 'img/logo_somospadel.png';
+                            const rawName = (p.name || 'Jugador').trim();
+                            const displayName = rawName.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                            const level = parseFloat(p.level || 3.5).toFixed(2);
+                            const position = p.position || defaultPos;
+                            const posLabel = position.toLowerCase().includes('rev') ? '⚡ Revés' : '🛡️ Drive';
+
+                            return `
+                                <div style="
+                                    background: rgba(15, 23, 42, 0.94);
+                                    border: 1.5px solid rgba(255,255,255,0.24);
+                                    border-radius: 12px;
+                                    padding: 8px 12px;
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 10px;
+                                    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+                                    box-sizing: border-box;
+                                    min-width: 0;
+                                ">
+                                    <div style="width: 38px; height: 38px; border-radius: 10px; background: url('${photo}') center/cover; border: 2px solid #38bdf8; flex-shrink: 0;"></div>
+                                    <div style="min-width: 0; flex: 1; overflow: hidden;">
+                                        <div style="font-size: 0.82rem; font-weight: 1000; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; letter-spacing: 0.3px;">
+                                            ${displayName}
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 6px; margin-top: 3px;">
+                                            <span style="background: #10b981; color: #ffffff; font-size: 0.62rem; font-weight: 1000; padding: 1px 6px; border-radius: 4px; flex-shrink: 0;">${level} LVL</span>
+                                            <span style="color: rgba(255,255,255,0.85); font-size: 0.60rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${posLabel}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            return `
+                                <div style="
+                                    background: rgba(255, 255, 255, 0.14);
+                                    border: 2px dashed rgba(255, 255, 255, 0.6);
+                                    border-radius: 12px;
+                                    padding: 11px 12px;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    gap: 8px;
+                                    color: #ffffff;
+                                    font-size: 0.78rem;
+                                    font-weight: 950;
+                                    box-sizing: border-box;
+                                    min-width: 0;
+                                ">
+                                    <span style="color: #4ade80; font-size: 0.95rem;">➕</span>
+                                    <span style="letter-spacing: 0.4px;">Plaza Libre</span>
+                                </div>
+                            `;
+                        }
+                    };
+
+                    // Tarjetas de pistas formateadas en el póster
+                    const posterCardsHtml = structuredCourtsList.map((c, idx) => {
+                        const isOddLast = (structuredCourtsList.length % 2 !== 0) && (idx === structuredCourtsList.length - 1);
+                        const gridSpanStyle = isOddLast ? 'grid-column: span 2; max-width: 550px; justify-self: center; width: 100%;' : '';
+
+                        return `
+                            <div style="
+                                background: #ffffff;
+                                border: 2px solid #cbd5e1;
+                                border-radius: 16px;
+                                padding: 14px;
+                                box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+                                box-sizing: border-box;
+                                ${gridSpanStyle}
+                            ">
+                                <!-- Court Header -->
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 2px;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span style="background: #0f172a; color: #38bdf8; font-weight: 1000; font-size: 0.76rem; padding: 4px 10px; border-radius: 8px; letter-spacing: 0.5px;">
+                                            🎾 PISTA ${c.courtNum}
+                                        </span>
+                                        ${hasOfficialRound1 ? `
+                                            <span style="background: #10b981; color: #ffffff; font-size: 0.60rem; font-weight: 1000; padding: 3px 8px; border-radius: 6px; letter-spacing: 0.4px;">
+                                                ⚡ OFICIAL R1
+                                            </span>
+                                        ` : `
+                                            <span style="background: #fff7ed; color: #c2410c; border: 1px solid #fdba74; font-size: 0.60rem; font-weight: 950; padding: 2px 7px; border-radius: 6px;">
+                                                🕒 PROVISIONAL
+                                            </span>
+                                        `}
+                                        <span style="font-size: 0.68rem; color: #64748b; font-weight: 800;">CÉSPED PREMIER AZUL</span>
+                                    </div>
+                                    <div style="font-size: 0.68rem; color: #0284c7; font-weight: 950; background: #f0f9ff; border: 1px solid #bae6fd; padding: 3px 9px; border-radius: 6px;">
+                                        NIVEL MEDIO: ${c.avgLvl} LVL
+                                    </div>
+                                </div>
+
+                                <!-- Court Simulation Box (Proporción reglamentaria césped de pádel) -->
+                                <div style="
+                                    background: linear-gradient(180deg, #0284c7 0%, #0369a1 100%);
+                                    border: 2px solid #ffffff;
+                                    border-radius: 14px;
+                                    position: relative;
+                                    padding: 12px 14px;
+                                    box-shadow: inset 0 0 24px rgba(0,0,0,0.25);
+                                    box-sizing: border-box;
+                                ">
+                                    <!-- Center Net Divider Line -->
+                                    <div style="position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: rgba(255,255,255,0.7); transform: translateX(-50%); z-index: 1;"></div>
+                                    
+                                    <!-- Center Net Pill -->
+                                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #0f172a; color: #38bdf8; border: 1.5px solid #38bdf8; font-size: 0.58rem; font-weight: 1000; padding: 3px 8px; border-radius: 6px; z-index: 5; letter-spacing: 1px; box-shadow: 0 2px 8px rgba(0,0,0,0.4);">
+                                        RED 🎾
+                                    </div>
+
+                                    <!-- 2 Teams Grid (Espacio holgado de más de 235px por pareja) -->
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; position: relative; z-index: 2;">
+                                        <!-- Team Left (Team A) -->
+                                        <div style="display: flex; flex-direction: column; gap: 8px; min-width: 0; overflow: hidden;">
+                                            <div style="font-size: 0.60rem; font-weight: 1000; color: rgba(255,255,255,0.95); text-transform: uppercase; letter-spacing: 0.5px;">PAREJA A</div>
+                                            ${renderPosterPlayerSlot(c.teamA[0], '⚡ Revés')}
+                                            ${renderPosterPlayerSlot(c.teamA[1], '🛡️ Drive')}
+                                        </div>
+
+                                        <!-- Team Right (Team B) -->
+                                        <div style="display: flex; flex-direction: column; gap: 8px; min-width: 0; overflow: hidden;">
+                                            <div style="font-size: 0.60rem; font-weight: 1000; color: rgba(255,255,255,0.95); text-transform: uppercase; letter-spacing: 0.5px; text-align: right;">PAREJA B</div>
+                                            ${renderPosterPlayerSlot(c.teamB[0], '⚡ Revés')}
+                                            ${renderPosterPlayerSlot(c.teamB[1], '🛡️ Drive')}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    // Cabecera deportiva de gala
+                    const posterHeaderHtml = `
+                        <div style="background: #0f172a; border-radius: 16px; padding: 18px 22px; margin-bottom: 20px; color: #ffffff; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid #38bdf8; box-shadow: 0 6px 18px rgba(0,0,0,0.06);">
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                                    <span style="font-size: 0.74rem; font-weight: 1000; background: #38bdf8; color: #0f172a; padding: 3px 9px; border-radius: 6px; letter-spacing: 0.8px;">SOMOSPADEL BCN</span>
+                                    <span style="font-size: 0.74rem; font-weight: 1000; background: ${hasOfficialRound1 ? '#10b981' : '#f59e0b'}; color: #ffffff; padding: 3px 9px; border-radius: 6px; letter-spacing: 0.5px;">
+                                        ${hasOfficialRound1 ? '⚡ CRUCES OFICIALES • RONDA 1' : '🕒 PREVIA PROVISIONAL • R1'}
+                                    </span>
+                                    <span style="font-size: 0.70rem; font-weight: 900; background: rgba(255,255,255,0.12); color: #cbd5e1; padding: 3px 8px; border-radius: 6px;">
+                                        ${structuredCourtsList.length} ${structuredCourtsList.length === 1 ? 'PISTA' : 'PISTAS'}
+                                    </span>
+                                </div>
+                                <div style="font-family: 'Montserrat', sans-serif; font-size: 1.35rem; font-weight: 1000; text-transform: uppercase; color: #ffffff; letter-spacing: 0.4px; line-height: 1.2;">
+                                    ${eventTitle}
+                                </div>
+                            </div>
+                            <div style="font-size: 0.76rem; color: #94a3b8; font-weight: 800; text-align: right; line-height: 1.5; flex-shrink: 0; padding-left: 16px;">
+                                <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
+                                    <span>📅 ${evt.date || ''}</span>
+                                    <span>🕒 ${eventFormattedTime || (evt.time || '18:00')}</span>
+                                </div>
+                                <div style="color: #38bdf8; font-weight: 900; margin-top: 2px;">📍 ${eventLocation}</div>
+                            </div>
+                        </div>
+                    `;
+
+                    // Pie deportivo de gala
+                    const posterFooterHtml = `
+                        <div style="margin-top: 20px; padding: 12px 18px; background: #f1f5f9; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; color: #475569; font-size: 0.74rem; font-weight: 800; border: 1px solid #cbd5e1;">
+                            <div>
+                                🎾 <b>SOMOSPADEL BARCELONA</b> • Sigue los marcadores y clasificación en directo en <b>somospadel.com</b>
+                            </div>
+                            <div style="color: #0284c7; font-weight: 900; letter-spacing: 0.4px;">
+                                ⚡ PÁDEL DE COMPETICIÓN & AMISTAD
+                            </div>
+                        </div>
+                    `;
+
+                    const gridColumns = structuredCourtsList.length === 1 ? '1fr' : 'repeat(2, 1fr)';
+
+                    exportPoster.innerHTML = `
+                        ${posterHeaderHtml}
+                        <div style="display: grid; grid-template-columns: ${gridColumns}; gap: 18px;">
+                            ${posterCardsHtml}
+                        </div>
+                        ${posterFooterHtml}
+                    `;
+
+                    document.body.appendChild(exportPoster);
+
+                    const canvas = await window.html2canvas(exportPoster, {
+                        scale: 2,
                         useCORS: true,
-                        backgroundColor: '#f8fafc',
+                        backgroundColor: '#ffffff',
+                        width: exportWidth,
+                        windowWidth: exportWidth,
                         logging: false
                     });
-
-                    if (wasHidden) {
-                        courtsContainer.style.display = 'none';
-                    }
 
                     canvas.toBlob(async (blob) => {
                         if (!blob) {
@@ -8053,6 +8259,9 @@
                     console.error('Error generando imagen de pistas:', err);
                     alert('Error al generar la imagen de las pistas: ' + err.message);
                 } finally {
+                    if (exportPoster && exportPoster.parentNode) {
+                        exportPoster.parentNode.removeChild(exportPoster);
+                    }
                     setTimeout(() => {
                         btns.forEach((b, i) => {
                             b.innerHTML = origContents[i] || '<i class="fas fa-camera"></i> WhatsApp Imagen HD';
@@ -8202,6 +8411,18 @@
                     @media (min-width: 640px) {
                         .battle-stats-grid {
                             grid-template-columns: repeat(4, 1fr);
+                        }
+                    }
+
+                    .battle-courts-grid {
+                        display: grid;
+                        grid-template-columns: 1fr;
+                        gap: 14px;
+                    }
+                    @media (min-width: 768px) {
+                        .battle-courts-grid {
+                            grid-template-columns: repeat(2, 1fr) !important;
+                            gap: 16px !important;
                         }
                     }
 
@@ -8853,7 +9074,7 @@
                             ${courtsHeaderHtml}
                             <div id="battle-courts-capture-area" style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 18px; padding: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
                                 ${capturePosterHeaderHtml}
-                                <div style="display: flex; flex-direction: column; gap: 14px;">
+                                <div class="battle-courts-grid">
                                     ${courtsHtml}
                                 </div>
                                 ${capturePosterFooterHtml}

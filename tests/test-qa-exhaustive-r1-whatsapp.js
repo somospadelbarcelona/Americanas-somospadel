@@ -40,12 +40,12 @@ console.log('✅ EventsController_V6.js sintaxis verificada correctamente.');
 // TEST 2: index.html Cache Buster check
 // -----------------------------------------------------------------------------
 console.log('\n--- TEST 2: Comprobación de Cache Buster en index.html ---');
-const expectedScriptTag = 'js/modules/americanas/EventsController_V6.js?v=IG_STORY_FLYER_WHITE_HD_V24';
+const expectedScriptTag = 'js/modules/americanas/EventsController_V6.js?v=IG_STORY_FLYER_WHITE_HD_V25';
 assert.ok(
     indexHtmlContent.includes(expectedScriptTag),
     `index.html debe contener la versión actualizada ${expectedScriptTag}`
 );
-console.log('✅ index.html incluye el cache buster V24 para garantizar refresco inmediato en clientes.');
+console.log('✅ index.html incluye el cache buster V25 para garantizar refresco inmediato en clientes.');
 
 // -----------------------------------------------------------------------------
 // Helper to build sandbox environment
