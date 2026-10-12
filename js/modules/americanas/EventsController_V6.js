@@ -6346,6 +6346,44 @@
                 console.log(`✅ [Inscritos] ${dbPlayers.length} titulares y ${waitlistPlayers.length} reservas procesados para el modal.`);
             } catch (e) { console.error("Error fetching players in batch:", e); }
 
+            // ⚡ QUERY OFICIAL RONDA 1 (Sincronización con cruces de Torre de Control)
+            let round1Matches = [];
+            let hasOfficialRound1 = false;
+            try {
+                const matchCol = (evt.type === 'entreno' || type === 'entreno') ? 'entrenos_matches' : 'matches';
+                if (window.db && typeof window.db.collection === 'function') {
+                    const colRef = window.db.collection(matchCol);
+                    if (colRef && typeof colRef.where === 'function') {
+                        let mSnap = await colRef.where('americana_id', '==', evt.id).where('round', '==', 1).get();
+                        if (mSnap.empty) {
+                            mSnap = await colRef.where('americana_id', '==', evt.id).where('round', '==', '1').get();
+                        }
+                        if (!mSnap.empty) {
+                            round1Matches = mSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                        }
+                    }
+                }
+                if (round1Matches.length === 0 && window.ControlTowerView?.currentAmericanaDoc?.id === evt.id && Array.isArray(window.ControlTowerView?.allMatches)) {
+                    round1Matches = window.ControlTowerView.allMatches.filter(m => parseInt(m.round) === 1);
+                }
+            } catch (errM) {
+                console.warn("⚠️ [Inscritos] Error consultando partidos de Ronda 1:", errM);
+                if (window.ControlTowerView?.currentAmericanaDoc?.id === evt.id && Array.isArray(window.ControlTowerView?.allMatches)) {
+                    round1Matches = window.ControlTowerView.allMatches.filter(m => parseInt(m.round) === 1);
+                }
+            }
+
+            if (round1Matches.length > 0) {
+                const courtMap = new Map();
+                round1Matches.forEach(m => {
+                    const cNum = parseInt(m.court || 1);
+                    if (!courtMap.has(cNum)) courtMap.set(cNum, m);
+                });
+                round1Matches = Array.from(courtMap.values()).sort((a, b) => parseInt(a.court || 1) - parseInt(b.court || 1));
+                hasOfficialRound1 = round1Matches.length > 0;
+                console.log(`⚡ [Inscritos] Encontrados ${round1Matches.length} partidos oficiales de Ronda 1.`);
+            }
+
             // --- REDESIGN: NEON BROADCAST WITH PAIR GROUPING ---
             const eventLocation = evt.sede || evt.location || evt.club || evt.venue || 'Barcelona Pádel el Prat';
             const isEntrenoModal = (evt.type === 'entreno' || type === 'entreno');
@@ -7177,7 +7215,7 @@
                         btnCourts.style.boxShadow = '0 2px 6px rgba(0,0,0,0.12)';
                     }
                 } else {
-                    if (cardsEl) cardsEl.style.display = 'grid';
+                    if (cardsEl) cardsEl.style.display = 'flex';
                     if (courtsEl) courtsEl.style.display = 'none';
                     if (btnCards) {
                         btnCards.style.background = '#0f172a';
@@ -7190,7 +7228,7 @@
                         btnCourts.style.boxShadow = 'none';
                     }
                 }
-                window.playBattleAudio('tick');
+                window.playBattleAudio?.('tick');
             };
 
             // Global Toggle Fullscreen TV Mode
@@ -7656,10 +7694,41 @@
                 `;
             }
 
-            // 🏟️ PREMIER PADEL COURTS GENERATION
-            const totalCourtsNeeded = Math.max(1, Math.ceil(Math.max(totalPlayers + slotsLeft, maxPlayers) / 4));
-            const assignedPlayerSlots = [];
+            // 🏟️ PREMIER PADEL COURTS GENERATION (SINCRONIZADO CON RONDA 1 OFICIAL O PREVIA PROVISIONAL)
+            const resolveCourtPlayer = (pid, rawName, defaultPos) => {
+                let p = null;
+                const sId = pid ? String(pid).trim() : '';
+                if (sId && window._currentInscritosPlayersMap && window._currentInscritosPlayersMap[sId]) {
+                    p = window._currentInscritosPlayersMap[sId];
+                } else if (sId) {
+                    p = dbPlayers.find(pl => String(pl.id || pl.uid) === sId) ||
+                        waitlistPlayers.find(pl => String(pl.id || pl.uid) === sId);
+                }
+                if (!p && rawName) {
+                    const cleanName = String(rawName).trim().toUpperCase();
+                    p = dbPlayers.find(pl => String(pl.name || '').trim().toUpperCase() === cleanName) ||
+                        waitlistPlayers.find(pl => String(pl.name || '').trim().toUpperCase() === cleanName);
+                }
+                if (p) {
+                    return { ...p, position: p.position || defaultPos };
+                }
+                if (sId || rawName) {
+                    return {
+                        id: sId || ('temp_' + Math.random().toString(36).substr(2, 6)),
+                        uid: sId,
+                        name: (rawName || 'Jugador').trim(),
+                        level: '3.5',
+                        position: defaultPos,
+                        photo_url: 'img/logo_somospadel.png'
+                    };
+                }
+                return null;
+            };
 
+            const provisionalCourtsCount = Math.max(1, Math.ceil(Math.max(totalPlayers + slotsLeft, maxPlayers) / 4));
+            const totalCourtsNeeded = hasOfficialRound1 ? Math.max(round1Matches.length, 1) : provisionalCourtsCount;
+
+            const assignedPlayerSlots = [];
             finalGroups.filter(g => g.type === 'pair').forEach(pairGroup => {
                 assignedPlayerSlots.push({ player: pairGroup.p1, isPair: true, pairPartner: pairGroup.p2 });
                 assignedPlayerSlots.push({ player: pairGroup.p2, isPair: true, pairPartner: pairGroup.p1 });
@@ -7727,19 +7796,57 @@
                 }
             };
 
+            const structuredCourtsList = [];
             let courtsHtml = '';
             for (let c = 0; c < totalCourtsNeeded; c++) {
                 const courtNum = c + 1;
-                const s1 = assignedPlayerSlots[c * 4 + 0] || null;
-                const s2 = assignedPlayerSlots[c * 4 + 1] || null;
-                const s3 = assignedPlayerSlots[c * 4 + 2] || null;
-                const s4 = assignedPlayerSlots[c * 4 + 3] || null;
+                let s1 = null, s2 = null, s3 = null, s4 = null;
+
+                if (hasOfficialRound1) {
+                    const m = round1Matches.find(match => parseInt(match.court || 0) === courtNum) || round1Matches[c] || null;
+                    if (m) {
+                        const idA1 = (m.team_a_ids && m.team_a_ids[0]) || m.player_a1_id || m.p1_a_id;
+                        const nameA1 = (m.team_a_names && m.team_a_names[0]) || m.player_a1_name || (Array.isArray(m.team_a) ? m.team_a[0] : (typeof m.team_a === 'string' ? m.team_a.split('/')[0] : null));
+                        const idA2 = (m.team_a_ids && m.team_a_ids[1]) || m.player_a2_id || m.p2_a_id;
+                        const nameA2 = (m.team_a_names && m.team_a_names[1]) || m.player_a2_name || (Array.isArray(m.team_a) ? m.team_a[1] : (typeof m.team_a === 'string' ? m.team_a.split('/')[1] : null));
+
+                        const idB1 = (m.team_b_ids && m.team_b_ids[0]) || m.player_b1_id || m.p1_b_id;
+                        const nameB1 = (m.team_b_names && m.team_b_names[0]) || m.player_b1_name || (Array.isArray(m.team_b) ? m.team_b[0] : (typeof m.team_b === 'string' ? m.team_b.split('/')[0] : null));
+                        const idB2 = (m.team_b_ids && m.team_b_ids[1]) || m.player_b2_id || m.p2_b_id;
+                        const nameB2 = (m.team_b_names && m.team_b_names[1]) || m.player_b2_name || (Array.isArray(m.team_b) ? m.team_b[1] : (typeof m.team_b === 'string' ? m.team_b.split('/')[1] : null));
+
+                        const pA1 = resolveCourtPlayer(idA1, nameA1, '⚡ Revés');
+                        const pA2 = resolveCourtPlayer(idA2, nameA2, '🛡️ Drive');
+                        const pB1 = resolveCourtPlayer(idB1, nameB1, '⚡ Revés');
+                        const pB2 = resolveCourtPlayer(idB2, nameB2, '🛡️ Drive');
+
+                        s1 = pA1 ? { player: pA1, isPair: true, pairPartner: pA2 } : null;
+                        s2 = pA2 ? { player: pA2, isPair: true, pairPartner: pA1 } : null;
+                        s3 = pB1 ? { player: pB1, isPair: true, pairPartner: pB2 } : null;
+                        s4 = pB2 ? { player: pB2, isPair: true, pairPartner: pB1 } : null;
+                    }
+                }
+
+                // Fallback a asignación provisional si no hay match oficial para esta pista
+                if (!s1 && !s2 && !s3 && !s4) {
+                    s1 = assignedPlayerSlots[c * 4 + 0] || null;
+                    s2 = assignedPlayerSlots[c * 4 + 1] || null;
+                    s3 = assignedPlayerSlots[c * 4 + 2] || null;
+                    s4 = assignedPlayerSlots[c * 4 + 3] || null;
+                }
 
                 const courtPlayers = [s1, s2, s3, s4].filter(s => s && s.player).map(s => s.player);
                 const courtPlayerNames = courtPlayers.map(p => p.name || '').join(' ').replace(/"/g, '&quot;');
                 const courtAvgLvl = courtPlayers.length > 0 
                     ? (courtPlayers.reduce((acc, p) => acc + parseFloat(p.level || 3.5), 0) / courtPlayers.length).toFixed(2)
                     : avgLevel;
+
+                structuredCourtsList.push({
+                    courtNum,
+                    avgLvl: courtAvgLvl,
+                    teamA: [s1 ? s1.player : null, s2 ? s2.player : null],
+                    teamB: [s3 ? s3.player : null, s4 ? s4.player : null]
+                });
 
                 courtsHtml += `
                     <div class="battle-court-card" data-player-names="${courtPlayerNames}" style="
@@ -7756,6 +7863,15 @@
                                 <span style="background: #0f172a; color: #38bdf8; font-weight: 1000; font-size: 0.72rem; padding: 4px 10px; border-radius: 8px; letter-spacing: 0.5px;">
                                     🎾 PISTA ${courtNum}
                                 </span>
+                                ${hasOfficialRound1 ? `
+                                    <span style="background: #10b981; color: #ffffff; font-size: 0.54rem; font-weight: 1000; padding: 2px 7px; border-radius: 5px; letter-spacing: 0.4px;">
+                                        ⚡ OFICIAL R1
+                                    </span>
+                                ` : `
+                                    <span style="background: #fff7ed; color: #c2410c; border: 1px solid #fdba74; font-size: 0.54rem; font-weight: 950; padding: 1px 6px; border-radius: 5px;">
+                                        🕒 PROVISIONAL
+                                    </span>
+                                `}
                                 <span style="font-size: 0.65rem; color: #64748b; font-weight: 800;">CÉSPED PREMIER AZUL</span>
                             </div>
                             <div style="font-size: 0.62rem; color: #0284c7; font-weight: 950; background: #f0f9ff; border: 1px solid #bae6fd; padding: 3px 8px; border-radius: 6px;">
@@ -7801,6 +7917,152 @@
                 `;
             }
 
+            // 🎾 COMPARTIR CRUCES POR WHATSAPP (OPCIÓN 1: FORMATO TEXTO)
+            window.shareCourtsWhatsAppText = function() {
+                const eventName = (evt.name || (isEntrenoModal ? 'Entreno SomosPadel' : 'Torneo Americano')).toUpperCase();
+                const eventDate = evt.date || new Date().toISOString().split('T')[0];
+                const eventTime = eventFormattedTime || (evt.time || '18:00');
+                const badgeRonda = hasOfficialRound1 ? 'CRUCES RONDA 1' : 'CRUCES RONDA 1 (Previa Provisional)';
+
+                let text = `🎾 *SOMOSPADEL BCN • ${badgeRonda}* 🎾\n`;
+                text += `🏆 *${eventName}*\n`;
+                text += `📅 ${eventDate} | 🕒 ${eventTime} | 📍 ${eventLocation}\n`;
+                text += `----------------------------------\n`;
+
+                structuredCourtsList.forEach(c => {
+                    const pA1 = c.teamA[0] ? `*${c.teamA[0].name}* (LVL ${parseFloat(c.teamA[0].level || 3.5).toFixed(1)})` : '_Plaza Libre_';
+                    const pA2 = c.teamA[1] ? `*${c.teamA[1].name}* (LVL ${parseFloat(c.teamA[1].level || 3.5).toFixed(1)})` : '_Plaza Libre_';
+                    const pB1 = c.teamB[0] ? `*${c.teamB[0].name}* (LVL ${parseFloat(c.teamB[0].level || 3.5).toFixed(1)})` : '_Plaza Libre_';
+                    const pB2 = c.teamB[1] ? `*${c.teamB[1].name}* (LVL ${parseFloat(c.teamB[1].level || 3.5).toFixed(1)})` : '_Plaza Libre_';
+
+                    text += `🎾 *PISTA ${c.courtNum}* (Nivel Medio: ${c.avgLvl} LVL)\n`;
+                    text += `🔵 *Pareja A:* ${pA1} & ${pA2}\n`;
+                    text += `⚔️ *VS*\n`;
+                    text += `🔴 *Pareja B:* ${pB1} & ${pB2}\n\n`;
+                });
+
+                text += `----------------------------------\n`;
+                text += `📲 Sigue los marcadores y clasificación en directo en la app:\n`;
+                text += `https://somospadel.com\n`;
+                text += `🔥 ¡Mucho pádel y a darlo todo!`;
+
+                if (navigator.share) {
+                    navigator.share({
+                        title: `Cruces Ronda 1 - ${eventName}`,
+                        text: text
+                    }).catch(() => {});
+                } else if (navigator.clipboard) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        alert('¡Cruces de pistas copiados al portapapeles! Ya puedes pegarlos en WhatsApp 🚀');
+                    }).catch(() => {
+                        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+                    });
+                } else {
+                    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+                }
+            };
+
+            // 📸 COMPARTIR CRUCES POR WHATSAPP (OPCIÓN 2: FORMATO IMAGEN VISUAL HD)
+            window.shareCourtsWhatsAppImage = async function() {
+                const btnIds = ['btn-share-courts-img-header', 'battle-courts-img-btn'];
+                const btns = btnIds.map(id => document.getElementById(id)).filter(Boolean);
+                const origContents = btns.map(b => b.innerHTML);
+
+                btns.forEach(b => {
+                    b.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO IMAGEN...';
+                    b.style.opacity = '0.75';
+                    b.disabled = true;
+                });
+
+                try {
+                    // Asegurar html2canvas si no está cargado
+                    if (typeof window.html2canvas === 'undefined') {
+                        await new Promise((resolve, reject) => {
+                            const s = document.createElement('script');
+                            s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+                            s.onload = resolve;
+                            s.onerror = () => reject(new Error('No se pudo cargar la librería html2canvas'));
+                            document.head.appendChild(s);
+                        });
+                    }
+
+                    const captureArea = document.getElementById('battle-courts-capture-area');
+                    if (!captureArea) {
+                        throw new Error('No se encontró el contenedor de pistas para capturar.');
+                    }
+
+                    window.playBattleAudio?.('tick');
+
+                    // Asegurar que esté temporalmente visible para la captura si estaba oculto
+                    const courtsContainer = document.getElementById('battle-courts-container');
+                    const wasHidden = courtsContainer && courtsContainer.style.display === 'none';
+                    if (wasHidden) {
+                        courtsContainer.style.display = 'block';
+                    }
+
+                    const canvas = await window.html2canvas(captureArea, {
+                        scale: 2.2,
+                        useCORS: true,
+                        backgroundColor: '#f8fafc',
+                        logging: false
+                    });
+
+                    if (wasHidden) {
+                        courtsContainer.style.display = 'none';
+                    }
+
+                    canvas.toBlob(async (blob) => {
+                        if (!blob) {
+                            alert('No se pudo generar la imagen de las pistas.');
+                            return;
+                        }
+
+                        const cleanEvtName = (evt.name || 'evento').replace(/[^a-zA-Z0-9]/g, '_');
+                        const fileName = `cruces_ronda1_somospadel_${cleanEvtName}.png`;
+                        const file = new File([blob], fileName, { type: 'image/png' });
+
+                        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                            try {
+                                await navigator.share({
+                                    files: [file],
+                                    title: `Cruces Ronda 1 - ${(evt.name || 'SomosPadel').toUpperCase()}`,
+                                    text: `🎾 Cruces oficiales de Ronda 1 en SomosPadel. ¡A darlo todo!`
+                                });
+                                window.playBattleAudio?.('fanfare');
+                                return;
+                            } catch (shareErr) {
+                                if (shareErr.name === 'AbortError') return;
+                                console.warn('navigator.share con archivo falló, recurriendo a descarga:', shareErr);
+                            }
+                        }
+
+                        // Descarga automática como fallback si el sistema no admite compartir archivos directamente
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        link.download = fileName;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        setTimeout(() => URL.revokeObjectURL(link.href), 3500);
+
+                        window.playBattleAudio?.('fanfare');
+                        alert('¡Imagen de las pistas generada y descargada! Ya puedes adjuntarla en tu grupo de WhatsApp 🚀');
+                    }, 'image/png');
+
+                } catch (err) {
+                    console.error('Error generando imagen de pistas:', err);
+                    alert('Error al generar la imagen de las pistas: ' + err.message);
+                } finally {
+                    setTimeout(() => {
+                        btns.forEach((b, i) => {
+                            b.innerHTML = origContents[i] || '<i class="fas fa-camera"></i> WhatsApp Imagen HD';
+                            b.style.opacity = '1';
+                            b.disabled = false;
+                        });
+                    }, 1000);
+                }
+            };
+
             // 🎰 Sorteo / Ruleta (Safe Handler)
             window.startBattleRoulette = function() {
                 console.log('Battle Roulette safe handler');
@@ -7833,6 +8095,99 @@
                     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
                 }
             };
+
+            // 🏟️ HEADERS & CAPTURE POSTER BLOCKS PARA MODO PISTAS
+            const courtsHeaderHtml = `
+                <div style="
+                    background: ${hasOfficialRound1 ? 'linear-gradient(135deg, #0f172a 0%, #064e3b 100%)' : 'linear-gradient(135deg, #0f172a 0%, #431407 100%)'};
+                    border: 1.5px solid ${hasOfficialRound1 ? '#10b981' : '#f97316'};
+                    border-radius: 14px;
+                    padding: 10px 14px;
+                    margin-bottom: 12px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    flex-wrap: wrap;
+                    gap: 8px;
+                    box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+                ">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 1.2rem;">${hasOfficialRound1 ? '⚡' : '🕒'}</span>
+                        <div>
+                            <div style="font-weight: 1000; font-size: 0.82rem; color: ${hasOfficialRound1 ? '#34d399' : '#fdba74'}; letter-spacing: 0.5px; text-transform: uppercase;">
+                                ${hasOfficialRound1 ? 'CRUCES OFICIALES • RONDA 1' : 'PREVIA PROVISIONAL • PENDIENTE DE SORTEO R1'}
+                            </div>
+                            <div style="font-size: 0.62rem; color: rgba(255,255,255,0.75); font-weight: 700;">
+                                ${hasOfficialRound1 ? 'Sincronizado con los cruces generados en Torre de Control' : 'Distribución provisional según parejas confirmadas y titulares'}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <button onclick="window.shareCourtsWhatsAppText()" style="
+                            background: #25D366;
+                            color: #ffffff;
+                            border: none;
+                            padding: 6px 12px;
+                            border-radius: 8px;
+                            font-weight: 950;
+                            font-size: 0.68rem;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            gap: 5px;
+                            box-shadow: 0 2px 6px rgba(37,211,102,0.3);
+                            transition: transform 0.15s;
+                        " onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'" title="Compartir cruces en texto para WhatsApp">
+                            <i class="fab fa-whatsapp" style="font-size: 0.85rem;"></i>
+                            <span>WhatsApp Texto</span>
+                        </button>
+                        <button id="btn-share-courts-img-header" onclick="window.shareCourtsWhatsAppImage()" style="
+                            background: linear-gradient(135deg, #0284c7 0%, #06b6d4 100%);
+                            color: #ffffff;
+                            border: none;
+                            padding: 6px 12px;
+                            border-radius: 8px;
+                            font-weight: 950;
+                            font-size: 0.68rem;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            gap: 5px;
+                            box-shadow: 0 2px 6px rgba(2,132,199,0.3);
+                            transition: transform 0.15s;
+                        " onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'" title="Generar y compartir imagen HD de las pistas">
+                            <i class="fas fa-camera" style="font-size: 0.8rem;"></i>
+                            <span>WhatsApp Imagen HD</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            const capturePosterHeaderHtml = `
+                <div style="background: #0f172a; border-radius: 14px; padding: 12px 14px; margin-bottom: 14px; color: #ffffff; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; border-left: 4px solid #38bdf8;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
+                            <span style="font-size: 0.62rem; font-weight: 1000; background: #38bdf8; color: #0f172a; padding: 2px 6px; border-radius: 4px; letter-spacing: 0.5px;">SOMOSPADEL BCN</span>
+                            <span style="font-size: 0.62rem; font-weight: 1000; background: ${hasOfficialRound1 ? '#10b981' : '#f59e0b'}; color: #ffffff; padding: 2px 7px; border-radius: 4px; letter-spacing: 0.4px;">
+                                ${hasOfficialRound1 ? '⚡ CRUCES OFICIALES • RONDA 1' : '🕒 PREVIA PROVISIONAL • R1'}
+                            </span>
+                        </div>
+                        <div style="font-family: 'Montserrat', sans-serif; font-size: 0.95rem; font-weight: 1000; text-transform: uppercase; color: #ffffff; letter-spacing: 0.3px;">
+                            ${eventTitle}
+                        </div>
+                    </div>
+                    <div style="font-size: 0.64rem; color: #94a3b8; font-weight: 800; text-align: right; line-height: 1.4;">
+                        <div>📅 ${evt.date || ''} | 🕒 ${this.formatEventTime(evt)}</div>
+                        <div>📍 ${eventLocation}</div>
+                    </div>
+                </div>
+            `;
+
+            const capturePosterFooterHtml = `
+                <div style="margin-top: 12px; text-align: center; font-size: 0.62rem; color: #64748b; font-weight: 800; padding: 6px; border-top: 1px dashed #cbd5e1;">
+                    🎾 SOMOSPADEL BARCELONA • Sigue los marcadores y clasificación en directo en <b>somospadel.com</b>
+                </div>
+            `;
 
             modal.innerHTML = `
                 <style>
@@ -8296,7 +8651,7 @@
                         </div>
                     </div>
 
-                    <!-- ACTION ROW: WHATSAPP SHARE + INSTAGRAM / STORY POSTER CREATOR (COMPACT 28px) -->
+                    <!-- ACTION ROWS: WHATSAPP SHARE CONVOCATORIA + CARTEL STORY + CRUCES DE PISTAS -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px;">
                         <button onclick="window.shareConvocatoriaBattleReady()" style="
                             background: #25D366;
@@ -8312,7 +8667,7 @@
                             justify-content: center;
                             gap: 5px;
                             transition: opacity 0.2s;
-                        ">
+                        " title="Compartir texto de convocatoria completa para WhatsApp">
                             <i class="fab fa-whatsapp" style="font-size: 0.85rem;"></i>
                             <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">COMPARTIR CONVOCATORIA</span>
                         </button>
@@ -8331,9 +8686,52 @@
                             justify-content: center;
                             gap: 5px;
                             transition: opacity 0.2s;
-                        ">
+                        " title="Generar cartel oficial en formato Story para redes">
                             <i class="fas fa-camera" style="font-size: 0.75rem;"></i>
                             <span id="battle-story-text" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Cartel Story</span>
+                        </button>
+                    </div>
+
+                    <!-- BOTONERA COMPARTIR CRUCES DE PISTAS (TEXTO + IMAGEN VISUAL) -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px;">
+                        <button onclick="window.shareCourtsWhatsAppText()" style="
+                            background: #128C7E;
+                            color: #ffffff;
+                            border: none;
+                            padding: 6px 10px;
+                            border-radius: 8px;
+                            font-weight: 900;
+                            font-size: 0.65rem;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 5px;
+                            transition: opacity 0.2s;
+                            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+                        " title="Compartir distribución de pistas y cruces en texto para WhatsApp">
+                            <i class="fab fa-whatsapp" style="font-size: 0.85rem;"></i>
+                            <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">CRUCES TEXTO</span>
+                        </button>
+
+                        <button id="battle-courts-img-btn" onclick="window.shareCourtsWhatsAppImage()" style="
+                            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+                            color: #ffffff;
+                            border: none;
+                            padding: 6px 10px;
+                            border-radius: 8px;
+                            font-weight: 900;
+                            font-size: 0.65rem;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 5px;
+                            transition: opacity 0.2s;
+                            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+                        " title="Generar y compartir imagen HD de las pistas para WhatsApp">
+                            <i class="fas fa-image" style="font-size: 0.75rem;"></i>
+                            <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">PISTAS IMAGEN HD</span>
                         </button>
                     </div>
 
@@ -8452,7 +8850,14 @@
 
                         <!-- COURTS VIEW CONTAINER (CÉSPED PREMIER PADEL) -->
                         <div id="battle-courts-container" style="display: none; margin-bottom: 30px;">
-                            ${courtsHtml}
+                            ${courtsHeaderHtml}
+                            <div id="battle-courts-capture-area" style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 18px; padding: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
+                                ${capturePosterHeaderHtml}
+                                <div style="display: flex; flex-direction: column; gap: 14px;">
+                                    ${courtsHtml}
+                                </div>
+                                ${capturePosterFooterHtml}
+                            </div>
                         </div>
                     </div>
 
