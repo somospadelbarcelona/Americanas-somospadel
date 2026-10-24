@@ -1,1844 +1,1875 @@
-/**
- * admin-entrenos.js
- * View Controller for Entrenos Management.
- * Version: 5001 - Optimized for Mobile Actions
- */
-console.log("🚀 AdminEntrenos Loaded (v5001)");
-
-window.AdminViews = window.AdminViews || {};
-
-// Main Management View
-// 1. GESTOR DE ENTRENOS (Listado y Filtros)
-// 1. GESTOR DE ENTRENOS (Listado y Filtros)
-window.AdminViews.entrenos_mgmt = async function () {
-    const navId = window._currentAdminNavId;
-    const content = document.getElementById('content-area');
-    const titleEl = document.getElementById('page-title');
-
-    if (titleEl) titleEl.textContent = 'Gestor de Entrenos';
-
-    // Diagnostic Helper
-    const updateStatus = (msg) => {
-        if (navId === window._currentAdminNavId) {
-            content.innerHTML = `<div class="loading-container"><div class="loader"></div><p>${msg}</p></div>`;
-        }
-    };
-
-    updateStatus("🚀 Iniciando Gestor...");
-
-    try {
-        // Dependency Checks
-        if (!window.EventService) throw new Error("EventService no cargado");
-        if (!window.AppConstants) throw new Error("AppConstants no cargado");
-        if (!window.FirebaseDB) throw new Error("FirebaseDB no cargado");
-
-        updateStatus("📡 Conectando con Base de Datos...");
-
-        // Fetch resiliente: soporte SWR y fallback a caché en caso de red lenta
-        let entrenos = [];
-        try {
-            const fetchPromise = EventService.getAll(AppConstants.EVENT_TYPES.ENTRENO);
-            const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error("⌛ Tiempo de espera de red (20s).")), 20000)
-            );
-            entrenos = await Promise.race([fetchPromise, timeoutPromise]);
-        } catch (fetchErr) {
-            console.warn("⚠️ [entrenos_mgmt] Red lenta o error, comprobando caché local:", fetchErr.message);
-            if (window.CacheService) {
-                const cached = await window.CacheService.get('entrenos', 'all');
-                if (cached && Array.isArray(cached) && cached.length > 0) {
-                    console.log("🛡️ [entrenos_mgmt] Recuperados entrenos desde caché local.");
-                    entrenos = cached;
-                }
-            }
-            if (!entrenos || !entrenos.length) throw fetchErr;
-        }
-
-        // Si el usuario navegó a otra vista mientras cargaban los datos, salir sin sobreescribir pantalla
-        if (navId !== window._currentAdminNavId) {
-            console.log(`⚠️ [entrenos_mgmt] Token de navegación caducado (#${navId} -> #${window._currentAdminNavId}), omitiendo render.`);
-            return;
-        }
-
-        updateStatus("✅ Datos recibidos. Procesando...");
-
-        const sortedEntrenos = entrenos.sort((a, b) => new Date(b.date) - new Date(a.date));
-        window._currentEntrenosCache = sortedEntrenos; // En memoria para acceso instantáneo y resiliente
-
-        // 📅 Get available months for filter list
-        const availableMonths = [...new Set(sortedEntrenos.map(e => {
-            if (!e.date) return null;
-            if (e.date.includes('-')) return e.date.substring(0, 7); // YYYY-MM
-            if (e.date.includes('/')) {
-                const p = e.date.split('/');
-                return `${p[2]}-${p[0].padStart(2, '0')}`;
-            }
-            return null;
-        }))].filter(Boolean).sort((a, b) => String(b).localeCompare(String(a)));
-
-        const monthNames = { '01': 'Enero', '02': 'Febrero', '03': 'Marzo', '04': 'Abril', '05': 'Mayo', '06': 'Junio', '07': 'Julio', '08': 'Agosto', '09': 'Septiembre', '10': 'Octubre', '11': 'Noviembre', '12': 'Diciembre' };
-        const monthOptions = availableMonths.map(m => {
-            const [y, mm] = m.split('-');
-            return `<option value="${m}">${(monthNames[mm] || mm).toUpperCase()} ${y}</option>`;
-        }).join('');
-
-        const listHtml = sortedEntrenos.map(evt => renderEntrenoCard(evt)).join('');
-
-        content.innerHTML = `
-            <div class="planning-area" id="entrenos-planning-area" style="display: flex; flex-direction: column; height: calc(100vh - 140px);">
-                
-                <!-- ACTION HEADER BAR -->
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
-                    <div style="font-size: 1.1rem; font-weight: 900; color: #fff; display: flex; align-items: center; gap: 8px;">
-                        <i class="fas fa-dumbbell" style="color: var(--accent);"></i> ENTRENOS PROGRAMADOS
-                    </div>
-                    <button class="btn-primary-pro" onclick="window.WhatsAppService.openCarteleraModal()" style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); color: #fff; font-weight: 900; border: none; padding: 10px 18px; border-radius: 14px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4); font-size: 0.88rem;">
-                        <i class="fab fa-whatsapp" style="font-size: 1.15rem;"></i> 📢 CARTELERA MULTI-TORNEO (WHATSAPP)
-                    </button>
-                </div>
-
-                <!-- FILTER BAR -->
-                <div class="filter-bar-pro" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1.5rem; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); align-items: center;">
-                    <div style="position:relative; grid-column: span 2;">
-                        <i class="fas fa-search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:rgba(255,255,255,0.3); font-size:0.8rem;"></i>
-                        <input type="text" id="entreno-search-input" placeholder="Buscar por nombre..."
-                            style="padding-left:35px; height:45px; font-size:0.9rem; width:100%; border-radius:12px; background:rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
-                    </div>
-                    <select id="filter-month" class="pro-input" style="height:45px; font-size: 0.8rem;">
-                        <option value="all">MES: TODOS</option>
-                        ${monthOptions}
-                    </select>
-                    <select id="filter-status" class="pro-input" style="height:45px; font-size: 0.8rem;">
-                        <option value="all">ESTADO: TODOS</option>
-                        <option value="open">🟢 ABIERTO</option>
-                        <option value="live">🎾 EN JUEGO</option>
-                        <option value="finished">🏁 FINALIZADO</option>
-                        <option value="pairing">🔀 EMPAREJANDO</option>
-                    </select>
-                    <select id="filter-category" class="pro-input" style="height:45px; font-size: 0.8rem;">
-                        <option value="all">CATEGORÍA: TODAS</option>
-                        <option value="male">MASCULINO</option>
-                        <option value="female">FEMENINO</option>
-                        <option value="mixed">MIXTO</option>
-                        <option value="open">OPEN / TODOS</option>
-                    </select>
-                    <div style="display:flex; gap: 8px;">
-                        <button class="btn-outline-pro" onclick="document.getElementById('entreno-search-input').value=''; document.getElementById('filter-month').value='all'; document.getElementById('filter-status').value='all'; document.getElementById('filter-category').value='all'; loadAdminView('entrenos_mgmt')" style="flex:1; height:45px; font-size: 0.7rem; padding: 0;">
-                            <i class="fas fa-eraser"></i> LIMPIAR
-                        </button>
-                        <button class="btn-outline-pro" onclick="loadAdminView('entrenos_mgmt')" style="width: 45px; height:45px; display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- SCROLLABLE LIST -->
-                <div class="entreno-scroll-list" id="entrenos-list-container" style="overflow-y: auto; padding-right: 10px; flex: 1;">
-                    ${listHtml.length ? listHtml : '<div class="glass-card-enterprise" style="text-align:center; padding: 5rem; color: var(--text-muted);"><i class="fas fa-terminal" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.2;"></i><br>No se encontraron entrenos con los filtros actuales.</div>'}
-                </div>
-            </div>
-        `;
-
-        setupFilters();
-
-    } catch (e) {
-        if (navId !== window._currentAdminNavId) {
-            console.warn(`⚠️ [entrenos_mgmt] Error ignorado porque la vista activa es #${window._currentAdminNavId}:`, e.message);
-            return;
-        }
-        console.error("Error en Gestor Entrenos:", e);
-        content.innerHTML = `<div class="error-box" style="padding:40px; text-align:center;">
-            <i class="fas fa-exclamation-triangle" style="font-size:3rem; color:#ff4444; margin-bottom:20px;"></i>
-            <h3 style="color:#ff4444;">Error de Carga</h3>
-            <p style="color:#fff; font-family:monospace; background:rgba(0,0,0,0.3); padding:10px; border-radius:8px;">${e.message}</p>
-            <button onclick="loadAdminView('entrenos_mgmt')" style="margin-top:20px; padding:10px 20px; background:#fff; border:none; border-radius:6px; cursor:pointer;">REINTENTAR</button>
-        </div>`;
-    }
-};
-
-// 2. CREAR ENTRENO (Formulario Dedicado)
-window.AdminViews.entrenos_create = async function () {
-    const content = document.getElementById('content-area');
-    const titleEl = document.getElementById('page-title');
-
-    if (titleEl) titleEl.textContent = 'Crear Nuevo Entreno';
-
-    content.innerHTML = `
-        <div style="max-width: 650px; margin: 0 auto;">
-            <div class="glass-card-enterprise fade-in" style="padding: 2.5rem;">
-                <h3 style="color: var(--primary); margin-bottom: 2rem; display: flex; align-items: center; gap: 12px; font-weight:800; font-size: 1.2rem;">
-                    <i class="fas fa-plus-circle" style="font-size: 1.5rem; color: #CCFF00;"></i> CREAR NUEVO EVENTO DE ENTRENO
-                </h3>
-
-                <!-- Botones de Preset Rápido -->
-                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;">
-                    <button type="button" class="btn-micro" onclick="window.applyEntrenoPreset('suizo')" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4);">🇨🇭 Entreno Suizo (2h • 6 Rondas)</button>
-                    <button type="button" class="btn-micro" onclick="window.applyEntrenoPreset('twister')" style="background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4);">🌪️ Twister Dinámico</button>
-                    <button type="button" class="btn-micro" onclick="window.applyEntrenoPreset('fija')" style="background: rgba(14, 165, 233, 0.2); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.4);">🔒 Pareja Fija</button>
-                </div>
-                
-                <form id="create-entreno-form" class="pro-form compact-admin-form">
-                    
-                    <h3 style="color: #CCFF00; font-size: 0.85rem; margin-bottom: 15px; border-bottom: 1px solid rgba(204,255,0,0.2); padding-bottom: 8px;">
-                        <i class="fas fa-sliders-h"></i> CONFIGURACIÓN GENERAL
-                    </h3>
-
-                    <div class="form-group" style="margin-bottom: 15px;">
-                        <label>NOMBRE DEL EVENTO</label>
-                        <input type="text" name="name" class="pro-input" placeholder="Ej: Entreno Mañanero Intensivo" required
-                            style="font-weight: 800; font-size: 1rem;">
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 15px;">
-                        <div class="form-group">
-                            <label>FECHA</label>
-                            <input type="date" name="date" class="pro-input" required>
-                        </div>
-                        <div class="form-group">
-                            <label>INICIO</label>
-                            <input type="time" name="time" class="pro-input" value="10:00" required>
-                        </div>
-                        <div class="form-group">
-                            <label>FIN</label>
-                            <input type="time" name="time_end" class="pro-input" value="11:30">
-                        </div>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
-                        <div class="form-group">
-                            <label>CATEGORÍA</label>
-                            <select name="category" class="pro-input">
-                                <option value="open">TODOS / OPEN</option>
-                                <option value="male">MASCULINO</option>
-                                <option value="female">FEMENINO</option>
-                                <option value="mixed">MIXTO</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-map-marker-alt" style="color: #38bdf8;"></i> SEDE / CLUB</label>
-                            <div class="sede-combobox-wrapper">
-                                <input type="text" 
-                                       name="location" 
-                                       id="create-entreno-location-input" 
-                                       class="pro-input sede-combobox-input" 
-                                       placeholder="🔍 Buscar o escribir sede / club..." 
-                                       autocomplete="off" 
-                                       required>
-                                <button type="button" class="sede-combobox-toggle" title="Ver lista de sedes">
-                                    <i class="fas fa-chevron-down"></i>
-                                </button>
-                                <div class="sede-combobox-dropdown"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px;">
-                        <div class="form-group">
-                            <label>MODO DE JUEGO</label>
-                            <select name="pair_mode" id="create-entreno-pair-mode" class="pro-input" onchange="window.updatePairModeHelper(this, 'create-entreno-pair-mode-desc')">
-                                <option value="twister" selected>🌪️ TWISTER INDIVIDUAL (Pozo rotativo)</option>
-                                <option value="fixed">🔒 PAREJA FIJA (Dupla todo el torneo)</option>
-                                <option value="swiss">🇨🇭 SUIZO (Puntos acumulados)</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>ESTADO</label>
-                            <select name="status" class="pro-input" style="font-weight: 800;">
-                                <option value="open" selected>🟢 ABIERTA</option>
-                                <option value="pairing">🔀 EMPAREJAMIENTO</option>
-                                <option value="live">🎾 EN JUEGO</option>
-                                <option value="finished">🏁 FINALIZADA</option>
-                                <option value="cancelled">⛔ ANULADO</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- EXPLICACIÓN DINÁMICA DEL MODO DE JUEGO -->
-                    <div id="create-entreno-pair-mode-desc" style="background: rgba(59, 130, 246, 0.08); border-left: 3px solid #3b82f6; padding: 8px 12px; border-radius: 8px; font-size: 0.72rem; color: #cbd5e1; margin-bottom: 15px; line-height: 1.35;">
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
-                        <div class="form-group">
-                            <label><i class="fas fa-signal" style="color: #CCFF00;"></i> NIVEL MÍNIMO</label>
-                            <input type="text" name="level_min" class="pro-input" placeholder="Ej: 3.5" value="3.5">
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-signal" style="color: #CCFF00;"></i> NIVEL MÁXIMO</label>
-                            <input type="text" name="level_max" class="pro-input" placeholder="Ej: 4.5" value="4.5">
-                        </div>
-                    </div>
-
-                    <h3 style="color: #60A5FA; font-size: 0.85rem; margin-bottom: 15px; border-bottom: 1px solid rgba(96,165,250,0.2); padding-bottom: 8px; margin-top: 20px;">
-                        <i class="fas fa-cogs"></i> LOGÍSTICA
-                    </h3>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px;">
-                        <div class="form-group">
-                            <label>PISTAS</label>
-                            <input type="number" name="max_courts" class="pro-input" value="4" placeholder="4">
-                        </div>
-                        <div class="form-group">
-                            <label>RONDAS</label>
-                            <input type="number" name="rounds_count" class="pro-input" value="6">
-                        </div>
-                        <div class="form-group">
-                            <label>€ SOCIO</label>
-                            <input type="number" name="price_members" step="0.1" class="pro-input" value="15">
-                        </div>
-                        <div class="form-group">
-                            <label>€ EXT.</label>
-                            <input type="number" name="price_external" step="0.1" class="pro-input" value="17">
-                        </div>
-                    </div>
-
-                    <div class="form-group" style="margin-top: 15px; margin-bottom: 2rem;">
-                        <label>IMAGEN DE PORTADA</label>
-                        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-                            <input type="text" name="image_url" id="create-entreno-img-input" class="pro-input"
-                                placeholder="URL de la imagen...">
-                            <img id="create-entreno-img-preview" src=""
-                                style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover; background: #333;">
-                        </div>
-
-                        <!-- Quick Image Selectors -->
-                        <div style="display: flex; gap: 5px; flex-wrap: wrap;">
-                            <button type="button" class="btn-micro"
-                                onclick="selectCreateEntrenoImage('img/entreno masculino prat.jpg')">Prat Masc</button>
-                            <button type="button" class="btn-micro"
-                                onclick="selectCreateEntrenoImage('img/entreno femenino prat.jpg')">Prat Fem</button>
-                            <button type="button" class="btn-micro" style="background: #ccff00; color: #000;"
-                                onclick="selectCreateEntrenoImage('img/entreno mixto prat.jpg')">Prat Mixto</button>
-                            <button type="button" class="btn-micro"
-                                onclick="selectCreateEntrenoImage('img/entreno masculino delfos.jpg')">Delfos Masc</button>
-                            <button type="button" class="btn-micro"
-                                onclick="selectCreateEntrenoImage('img/entreno femenino delfos.jpg')">Delfos Fem</button>
-                            <button type="button" class="btn-micro" style="background: #ccff00; color: #000;"
-                                onclick="selectCreateEntrenoImage('img/entreno mixto delfos.jpg')">Delfos Mixto</button>
-                            <button type="button" class="btn-micro" style="background: #38bdf8; color: #000; font-weight: 800;"
-                                onclick="selectCreateEntrenoImage('img/new_play_padel_pro.png')">⭐ New Play Padel</button>
-                            <button type="button" class="btn-micro" style="background: #0284c7; color: #fff; font-weight: 800;"
-                                onclick="selectCreateEntrenoImage('img/cem_tennis_hospitalet.png')">⭐ CEM Tennis</button>
-                        </div>
-                    </div>
-
-                    <div style="display: flex; gap: 15px; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1);">
-                        <button type="button" class="btn-outline-pro" onclick="loadAdminView('entrenos_mgmt')" style="flex: 1; height: 55px; font-weight: 700;">
-                            CANCELAR
-                        </button>
-                        <button type="submit" class="btn-primary-pro" style="flex: 2; height: 55px; font-weight: 900; font-size: 1.1rem; box-shadow: 0 8px 25px rgba(204,255,0,0.3);">
-                            PUBLICAR ENTRENO 🚀
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    `;
-
-    setupCreateForm();
-};
-
-// --- HELPER FUNCTIONS --- //
-
-function renderEntrenoCard(e) {
-    const playersCount = e.players?.length || 0;
-    const maxPlayers = (parseInt(e.max_courts) || 4) * 4;
-
-    const isCancelled = e.status === 'cancelled';
-    const statusLabel = e.status === 'live' ? 'EN JUEGO' : e.status === 'finished' ? 'FINALIZADA' : e.status === 'pairing' ? 'EMPAREJAMIENTO' : (isCancelled ? 'ANULADO' : 'ABIERTA');
-    const statusColor = e.status === 'live' ? '#FF2D55' : e.status === 'finished' ? '#888' : e.status === 'pairing' ? '#22D3EE' : (isCancelled ? '#F43F5E' : '#00E36D');
-
-    // Determine Month for filter
-    let month = '';
-    if (e.date) {
-        if (e.date.includes('-')) month = e.date.substring(0, 7); // 2024-01-25 -> 2024-01
-        else if (e.date.includes('/')) {
-            const p = e.date.split('/');
-            month = `${p[2]}-${p[1].padStart(2, '0')}`;
-        }
-    }
-
-    // Calculate Duration
-    let durationText = '';
-    if (e.time && e.time_end) {
-        try {
-            const [startH, startM] = e.time.split(':').map(Number);
-            const [endH, endM] = e.time_end.split(':').map(Number);
-            const startMinutes = startH * 60 + startM;
-            const endMinutes = endH * 60 + endM;
-            const durationMinutes = endMinutes - startMinutes;
-
-            if (durationMinutes > 0) {
-                const hours = Math.floor(durationMinutes / 60);
-                const mins = durationMinutes % 60;
-                if (hours > 0) {
-                    durationText = `${hours}h ${mins > 0 ? mins + 'min' : ''}`;
-                } else {
-                    durationText = `${mins}min`;
-                }
-            }
-        } catch (err) {
-            console.warn('Error calculating duration:', err);
-        }
-    }
-
-    // Level Text
-    const levelText = (e.level && String(e.level).trim()) || (e.level_min && e.level_max ? `${e.level_min} - ${e.level_max}` : (e.level_min ? `${e.level_min}` : (e.level_max ? `Hasta ${e.level_max}` : '3.5 - 4.5')));
-
-    return `
-        <div class="glass-card-enterprise entreno-card-item" 
-             data-month="${month}" 
-             data-status="${e.status || 'open'}" 
-             data-category="${e.category || 'open'}"
-             style="margin-bottom: 0.8rem; display: flex; flex-direction: column; padding: 0.8rem 1rem; border-left: 6px solid ${statusColor}; background: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 12px; gap: 0.6rem; color: #000000;">
-            
-            <div style="display: flex; gap: 1.2rem; align-items: flex-start;">
-                <div class="entreno-preview-img" style="width: 48px; height: 48px; border-radius: 12px; background: url('${(e.image_url || '').replace(/ /g, '%20')}') center/cover; border: 1px solid rgba(0,0,0,0.1); position:relative; flex-shrink: 0;">
-                    <div style="position:absolute; bottom:-5px; right:-5px; background:${statusColor}; width:12px; height:12px; border-radius:50%; border:2px solid #fff;"></div>
-                </div>
-                <div class="entreno-info-pro" style="flex: 1; min-width: 0;">
-                    <div style="font-weight: 950; font-size: 1.1rem; color: #000000; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
-                        ${e.name.toUpperCase()}
-                    </div>
-                    <div style="display: flex; gap: 0.8rem; font-size: 0.75rem; color: #333333; flex-wrap: wrap; align-items: center;">
-                         <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-calendar-alt" style="color: #60A5FA;"></i> <span style="color:#333; font-weight: 600;">${formatDate(e.date)}</span></span>
-                         <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-clock" style="color: #A78BFA;"></i> <span style="color:#333; font-weight: 600;">${e.time ? (e.time_end && !e.time.includes('-') ? `${e.time} - ${e.time_end}` : e.time) : '10:00'}${durationText ? ` (${durationText})` : ''}</span></span>
-                         <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-signal" style="color: #F59E0B;"></i> <span style="color:#333; font-weight: 700;">Niv. ${levelText}</span></span>
-                         <span onclick='window.openEditEntrenoModal(${JSON.stringify(e).replace(/'/g, "&#39;")})' style="cursor:pointer; display: flex; align-items: center; gap: 5px;" title="Gestionar participantes">
-                            <i class="fas fa-users" style="color: #10B981;"></i> <span style="color:#000; font-weight:800;">${playersCount}</span><span style="opacity:0.5;">/${maxPlayers}</span>
-                         </span>
-                    </div>
-                </div>
-                <div style="background:rgba(0,0,0,0.05); padding:6px 12px; border-radius:8px; font-size:0.8rem; font-weight:900; color:#000; border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0;">
-                    ${e.price_members || 15}€
-                </div>
-            </div>
-            
-            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-top: 0.3rem; border-top: 1px solid rgba(255,255,255,0.03);">
-                <!-- Status Selector -->
-                <div style="position: relative; flex: 1; min-width: 120px;">
-                    <select onchange="window.updateEntrenoStatus('${e.id}', this.value)" 
-                            style="
-                                width: 100%;
-                                appearance: none; 
-                                background: ${statusColor}20; 
-                                color: #000000 !important; 
-                                -webkit-text-fill-color: #000000 !important;
-                                border: 2px solid ${statusColor}; 
-                                padding: 6px 10px; 
-                                border-radius: 8px; 
-                                font-weight: 800; 
-                                font-size: 0.7rem; 
-                                cursor: pointer; 
-                                text-transform: uppercase;
-                                outline: none;
-                            ">
-                        <option value="open" ${e.status === 'open' ? 'selected' : ''}>🟢 ABIERTA</option>
-                        <option value="pairing" ${e.status === 'pairing' ? 'selected' : ''}>🔀 EMPAREJAMIENTO</option>
-                        <option value="live" ${e.status === 'live' ? 'selected' : ''}>🎾 EN JUEGO</option>
-                        <option value="finished" ${e.status === 'finished' ? 'selected' : ''}>🏁 FINALIZADA</option>
-                        <option value="cancelled" ${e.status === 'cancelled' ? 'selected' : ''}>⛔ ANULADO</option>
-                    </select>
-                </div>
-
-                <!-- Action Group -->
-                <div style="display: flex; gap: 8px; flex-shrink: 0; justify-content: flex-end; flex: 1;">
-                    <button class="btn-micro" 
-                            style="background: #10B981 !important; color: #fff !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
-                            onclick='window.checkScheduledEventHealthPrompt(${JSON.stringify(e).replace(/'/g, "&#39;")}, "entreno")' 
-                            title="🛡️ Comprobar si va a funcionar al 100% (Chequeo Pre-Flight)">
-                        <i class="fas fa-shield-halved" style="font-size: 0.95rem; color: #fff !important;"></i>
-                    </button>
-
-                    ${(e.status === 'open' || e.status === 'live') ? `
-                    <button class="btn-micro" 
-                            style="background: #FFD700 !important; color: #000 !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
-                            onclick="window.launchBatSignalEntreno('${e.id}')"
-                            title="Batseñal">
-                        <i class="fas fa-bullhorn" style="font-size: 0.9rem; color: #000 !important;"></i>
-                    </button>
-                    ` : ''}
-
-                    <button class="btn-micro" 
-                            style="background: #a855f7 !important; color: #fff !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
-                            onclick="window.openManualRoundModal('${e.id}', 'entreno', 1)" 
-                            title="Definir Ronda Manual (Admin/Superadmin)">
-                        <i class="fas fa-sliders" style="font-size: 0.85rem; color: #fff !important;"></i>
-                    </button>
-
-                    ${(e.status === 'finished') ? `
-                    <button class="btn-micro" 
-                            style="background: linear-gradient(135deg, #8B5CF6, #6D28D9) !important; color: #CCFF00 !important; border: 1px solid rgba(204, 255, 0, 0.5); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; box-shadow: 0 0 10px rgba(139, 92, 246, 0.4);" 
-                            onclick="window.launchAIChronicleEntreno('${e.id}')" 
-                            title="Crónica Épica IA & Story 9:16">
-                        <span style="font-size: 0.95rem;">✨</span>
-                    </button>
-                    ` : ''}
-
-                    <button class="btn-micro" 
-                            style="background: #25D366 !important; color: #fff !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
-                            onclick="window.launchWhatsAppShareEntreno('${e.id}')"
-                            title="WhatsApp">
-                        <i class="fab fa-whatsapp" style="font-size: 1rem; color: #fff !important;"></i>
-                    </button>
-                    
-                    <button class="btn-micro" 
-                            style="background: #475569 !important; color: #fff !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
-                            onclick="window.duplicateEntreno('${e.id}')" 
-                            title="Duplicar">
-                        <i class="fas fa-clone" style="font-size: 0.8rem; color: #fff !important;"></i>
-                    </button>
-                    
-                    <button class="btn-micro" 
-                            style="background: #3B82F6 !important; color: #fff !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
-                            onclick='window.openEditEntrenoModal(${JSON.stringify(e).replace(/'/g, "&#39;")})' 
-                            title="Editar">
-                        <i class="fas fa-pen" style="font-size: 0.8rem; color: #fff !important;"></i>
-                    </button>
-                    
-                    <button class="btn-micro" 
-                            style="background: #EF4444 !important; color: #fff !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
-                            onclick="window.deleteEntreno('${e.id}')" 
-                            title="Eliminar">
-                        <i class="fas fa-trash-alt" style="font-size: 0.8rem; color: #fff !important;"></i>
-                    </button>
-                </div>
-            </div>
-        </div>`;
-}
-
-window.selectCreateEntrenoImage = (url) => {
-    const input = document.getElementById('create-entreno-img-input');
-    if (input) {
-        input.value = url;
-        const preview = document.getElementById('create-entreno-img-preview');
-        if (preview) preview.src = url;
-    }
-};
-
-window.applyEntrenoPreset = (type) => {
-    const form = document.getElementById('create-entreno-form');
-    if (!form) return;
-
-    if (type === 'suizo') {
-        const nameInput = form.querySelector('[name=name]');
-        if (nameInput) nameInput.value = '🇨🇭 ENTRENO SUIZO';
-        const pairMode = form.querySelector('[name=pair_mode]');
-        if (pairMode) pairMode.value = 'swiss';
-        const courts = form.querySelector('[name=max_courts]');
-        if (courts) courts.value = '3';
-        const rounds = form.querySelector('[name=rounds_count]');
-        if (rounds) rounds.value = '6';
-        const tStart = form.querySelector('[name=time]');
-        const tEnd = form.querySelector('[name=time_end]');
-        if (tStart) tStart.value = '10:00';
-        if (tEnd) tEnd.value = '12:00';
-        if (window.selectCreateEntrenoImage) window.selectCreateEntrenoImage('img/entreno masculino prat.jpg');
-    } else if (type === 'twister') {
-        const nameInput = form.querySelector('[name=name]');
-        if (nameInput) nameInput.value = '🌪️ ENTRENO TWISTER DINÁMICO';
-        const pairMode = form.querySelector('[name=pair_mode]');
-        if (pairMode) pairMode.value = 'twister';
-        const courts = form.querySelector('[name=max_courts]');
-        if (courts) courts.value = '4';
-        const rounds = form.querySelector('[name=rounds_count]');
-        if (rounds) rounds.value = '6';
-        if (window.selectCreateEntrenoImage) window.selectCreateEntrenoImage('img/entreno fem indoor.jpg');
-    } else if (type === 'fija') {
-        const nameInput = form.querySelector('[name=name]');
-        if (nameInput) nameInput.value = '🔒 ENTRENO PAREJA FIJA';
-        const pairMode = form.querySelector('[name=pair_mode]');
-        if (pairMode) pairMode.value = 'fixed';
-        const courts = form.querySelector('[name=max_courts]');
-        if (courts) courts.value = '4';
-        const rounds = form.querySelector('[name=rounds_count]');
-        if (rounds) rounds.value = '6';
-        if (window.selectCreateEntrenoImage) window.selectCreateEntrenoImage('img/ball-mixta.png');
-    }
-
-    const pairModeEl = form.querySelector('[name=pair_mode]');
-    if (pairModeEl && window.updatePairModeHelper) {
-        window.updatePairModeHelper(pairModeEl, 'create-entreno-pair-mode-desc');
-    }
-};
-
-function setupCreateForm() {
-    const form = document.getElementById('create-entreno-form');
-    if (!form) return;
-
-    // Attach Sede Combobox
-    if (window.setupSedeCombobox) {
-        window.setupSedeCombobox('create-entreno-location-input');
-    }
-
-    // Auto-Sync Logic (Images & Names)
-    const cat = form.querySelector('[name=category]');
-    const loc = form.querySelector('[name=location]');
-    const img = form.querySelector('[name=image_url]');
-    const name = form.querySelector('[name=name]');
-    const date = form.querySelector('[name=date]');
-
-    // Pre-fill date with today
-    if (date && !date.value) {
-        date.valueAsDate = new Date();
-    }
-
-    const pairMode = form.querySelector('[name=pair_mode]');
-    if (pairMode && window.updatePairModeHelper) {
-        pairMode.onchange = () => window.updatePairModeHelper(pairMode, 'create-entreno-pair-mode-desc');
-        window.updatePairModeHelper(pairMode, 'create-entreno-pair-mode-desc');
-    }
-
-    const sync = () => {
-        const cVal = cat.value;
-        const lVal = loc.value;
-
-        // Smart Default Image
-        const autoImg = EventService.getAutoImage(lVal, cVal, 'entreno');
-        if (img && !img.value) {
-            img.value = autoImg; // Only set if empty
-            const preview = document.getElementById('create-entreno-img-preview');
-            if (preview) preview.src = autoImg;
-        }
-    };
-
-    if (cat) cat.onchange = sync;
-    if (loc) loc.onchange = sync;
-    
-    if (img) {
-        img.oninput = () => {
-            const preview = document.getElementById('create-entreno-img-preview');
-            if (preview) preview.src = img.value;
-        };
-    }
-
-    // Run initial sync to pre-populate default image
-    sync();
-
-    form.onsubmit = async (e) => {
-        e.preventDefault();
-        const fd = new FormData(form);
-        const data = Object.fromEntries(fd.entries());
-
-        try {
-            // Validations
-            if (!data.name) throw new Error("El nombre es obligatorio");
-            if (!data.date) throw new Error("La fecha es obligatoria");
-
-            const newEventId = await EventService.createEvent('entreno', data);
-
-            // Notify
-            if (window.NotificationService) window.NotificationService.showToast("Entreno Creado Correctamente", "success");
-
-            // Reload
-            window.loadAdminView('entrenos_mgmt');
-
-        } catch (err) { alert("Error al crear: " + err.message); }
-    };
-}
-
-function setupFilters() {
-    const searchInput = document.getElementById('entreno-search-input');
-    const monthSelect = document.getElementById('filter-month');
-    const statusSelect = document.getElementById('filter-status');
-    const catSelect = document.getElementById('filter-category');
-
-    const applyFilters = () => {
-        const query = searchInput?.value.toLowerCase() || '';
-        const month = monthSelect?.value || 'all';
-        const status = statusSelect?.value || 'all';
-        const cat = catSelect?.value || 'all';
-
-        const cards = document.querySelectorAll('#entrenos-list-container > .entreno-card-item');
-        cards.forEach(card => {
-            const cMonth = card.getAttribute('data-month');
-            const cStatus = card.getAttribute('data-status');
-            const cCat = card.getAttribute('data-category');
-            const cText = card.innerText.toLowerCase();
-
-            const matchesSearch = !query || cText.includes(query);
-            const matchesMonth = month === 'all' || cMonth === month;
-            const matchesStatus = status === 'all' || cStatus === status;
-            const matchesCat = cat === 'all' || cCat === cat;
-
-            card.style.display = (matchesSearch && matchesMonth && matchesStatus && matchesCat) ? 'flex' : 'none';
-        });
-    };
-
-    if (searchInput) searchInput.oninput = applyFilters;
-    if (monthSelect) monthSelect.onchange = applyFilters;
-    if (statusSelect) statusSelect.onchange = applyFilters;
-    if (catSelect) catSelect.onchange = applyFilters;
-}
-
-function formatDate(dateStr) {
-    if (!dateStr) return '---';
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return dateStr;
-    return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
-}
-
-// --- AUTOMATION LOGIC (Isolated) ---
-window.api = window.api || {};
-window.api.runAutomation = () => {
-    // console.log("🤖 [AdminBot] Checking for auto-start events...");
-    EventService.getAll(AppConstants.EVENT_TYPES.ENTRENO).then(evts => {
-        const now = new Date();
-        evts.forEach(evt => {
-            if (evt.status === 'finished' || evt.status === 'cancelled') return;
-
-            let start, end;
-            try {
-                const parts = (evt.time || '10:00').split('-').map(s => s.trim());
-                let dateIso = evt.date;
-                // Handle DD/MM/YYYY
-                if (evt.date && evt.date.includes('/')) {
-                    const [d, m, y] = evt.date.split('/');
-                    dateIso = `${y}-${m}-${d}`;
-                }
-                start = new Date(`${dateIso}T${parts[0]}:00`);
-                if (parts[1]) end = new Date(`${dateIso}T${parts[1]}:00`);
-                else end = new Date(start.getTime() + 90 * 60000); // 90 mins default
-            } catch (e) { return; }
-
-            // 1. AUTO START
-            if ((evt.status === 'open' || evt.status === 'pairing') && now >= start && now < end) {
-                const players = evt.players || [];
-                // Simplification: if it has players, start it
-                if (players.length >= 4) {
-                    console.log(`⚡ Admin Auto - Start: ${evt.name}`);
-                    updateEntrenoStatus(evt.id, 'live');
-                }
-            }
-            // 2. AUTO FINISH
-            else if (evt.status === 'live' && now >= end) {
-                console.log(`🏁 Admin Auto - Finish: ${evt.name}`);
-                updateEntrenoStatus(evt.id, 'finished');
-            }
-        });
-    }).catch(e => console.warn("Auto-bot error", e));
-};
-
-// --- GLOBAL EXPORTS (KEEPING EXISTING APIs) --- //
-
-window.duplicateEntreno = async (eOrId) => {
-    if (!eOrId) return;
-    let e = eOrId;
-    if (typeof eOrId === 'string') {
-        if (window._currentEntrenosCache && Array.isArray(window._currentEntrenosCache)) {
-            e = window._currentEntrenosCache.find(x => x.id === eOrId);
-        }
-        if (!e && window.EventService && typeof window.EventService.getById === 'function') {
-            try {
-                e = await window.EventService.getById('entreno', eOrId);
-            } catch (err) {
-                console.error("❌ [duplicateEntreno] Error al recuperar entreno por ID:", err);
-            }
-        }
-    }
-
-    if (!e || typeof e !== 'object' || (!e.id && !e.name)) {
-        const errorMsg = "No se ha encontrado el entrenamiento seleccionado para duplicar.";
-        if (window.NotificationService && typeof window.NotificationService.showToast === 'function') {
-            window.NotificationService.showToast(errorMsg, 'error');
-        } else {
-            alert(errorMsg);
-        }
-        return;
-    }
-
-    if (!confirm(`¿Duplicar "${e.name || 'este entreno'}"?`)) return;
-
-    const copy = { ...e };
-
-    // 1. Cálculo robusto de fecha (+7 días) sin desfases horarios
-    const rawDate = copy.date || copy.eventDate || copy.fecha || '';
-    let normDate = '';
-    if (window.EventService && typeof window.EventService.normalizeDate === 'function') {
-        normDate = window.EventService.normalizeDate(rawDate);
-    }
-    if (!normDate && typeof rawDate === 'string') {
-        const clean = rawDate.trim();
-        if (clean.includes('/')) {
-            const parts = clean.split('/').map(p => p.trim());
-            if (parts.length >= 2) {
-                const day = parts[0].padStart(2, '0');
-                const month = parts[1].padStart(2, '0');
-                const year = parts[2] ? (parts[2].length === 2 ? '20' + parts[2] : parts[2]) : String(new Date().getFullYear());
-                normDate = `${year}-${month}-${day}`;
-            }
-        } else if (clean.includes('-')) {
-            const parts = clean.split('-').map(p => p.trim());
-            if (parts.length === 3) {
-                if (parts[0].length === 4) {
-                    normDate = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
-                } else {
-                    const year = parts[2].length === 2 ? '20' + parts[2] : parts[2];
-                    normDate = `${year}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-                }
-            }
-        }
-    }
-
-    let nextDate = '';
-    if (normDate && normDate.includes('-')) {
-        const [yStr, mStr, dStr] = normDate.split('-');
-        const y = parseInt(yStr, 10);
-        const m = parseInt(mStr, 10) - 1;
-        const d = parseInt(dStr, 10);
-        if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
-            const dt = new Date(y, m, d, 12, 0, 0);
-            dt.setDate(dt.getDate() + 7);
-            const nextY = dt.getFullYear();
-            const nextM = String(dt.getMonth() + 1).padStart(2, '0');
-            const nextD = String(dt.getDate()).padStart(2, '0');
-            nextDate = `${nextY}-${nextM}-${nextD}`;
-        }
-    }
-
-    if (!nextDate) {
-        const fallbackDt = new Date();
-        fallbackDt.setHours(12, 0, 0, 0);
-        fallbackDt.setDate(fallbackDt.getDate() + 7);
-        const fY = fallbackDt.getFullYear();
-        const fM = String(fallbackDt.getMonth() + 1).padStart(2, '0');
-        const fD = String(fallbackDt.getDate()).padStart(2, '0');
-        nextDate = `${fY}-${fM}-${fD}`;
-    }
-
-    copy.date = nextDate;
-
-    // 2. Actualización inteligente del nombre del evento si incluye fechas
-    if (copy.name) {
-        let updatedName = copy.name.trim();
-        const [nY, nM, nD] = nextDate.split('-');
-        let dateReplaced = false;
-
-        // DD/MM/YYYY o DD-MM-YYYY (o YY de 2 dígitos)
-        const fullDateRegex = /\b(\d{1,2})([\/\-])(\d{1,2})\2(\d{2,4})\b/;
-        if (fullDateRegex.test(updatedName)) {
-            updatedName = updatedName.replace(fullDateRegex, (match, d, sep, m, y) => {
-                dateReplaced = true;
-                const targetY = y.length === 2 ? nY.slice(-2) : nY;
-                const targetD = d.length === 1 ? String(parseInt(nD, 10)) : nD;
-                const targetM = m.length === 1 ? String(parseInt(nM, 10)) : nM;
-                return `${targetD}${sep}${targetM}${sep}${targetY}`;
-            });
-        }
-
-        // YYYY-MM-DD o YYYY/MM/DD
-        if (!dateReplaced) {
-            const isoDateRegex = /\b(\d{4})([\/\-])(\d{1,2})\2(\d{1,2})\b/;
-            if (isoDateRegex.test(updatedName)) {
-                updatedName = updatedName.replace(isoDateRegex, (match, y, sep, m, d) => {
-                    dateReplaced = true;
-                    const targetD = d.length === 1 ? String(parseInt(nD, 10)) : nD;
-                    const targetM = m.length === 1 ? String(parseInt(nM, 10)) : nM;
-                    return `${nY}${sep}${targetM}${sep}${targetD}`;
-                });
-            }
-        }
-
-        // DD/MM o DD-MM (Validar rango: día 1-31, mes 1-12)
-        if (!dateReplaced) {
-            const shortDateRegex = /\b(0[1-9]|[12]\d|3[01]|[1-9])([\/\-])(0[1-9]|1[0-2]|[1-9])\b/;
-            if (shortDateRegex.test(updatedName)) {
-                updatedName = updatedName.replace(shortDateRegex, (match, d, sep, m) => {
-                    dateReplaced = true;
-                    const targetD = d.length === 1 ? String(parseInt(nD, 10)) : nD;
-                    const targetM = m.length === 1 ? String(parseInt(nM, 10)) : nM;
-                    return `${targetD}${sep}${targetM}`;
-                });
-            }
-        }
-
-        // Si no se reemplazó ninguna fecha, añadir (Copia) si no lo tiene ya
-        if (!dateReplaced) {
-            if (!/\(Copia\)$/i.test(updatedName)) {
-                updatedName = `${updatedName} (Copia)`;
-            }
-        }
-
-        copy.name = updatedName;
-    }
-
-    // 3. Limpieza profunda del payload para Firestore
-    const forbiddenKeys = [
-        'id', '_id',
-        'created_at', 'createdAt', 'updatedAt',
-        'chat_id', 'chatId',
-        'matches', 'rounds', 'liveMatches',
-        'classification', 'results',
-        'current_round', 'active_round', 'currentRound', 'round'
-    ];
-    forbiddenKeys.forEach(k => delete copy[k]);
-
-    copy.status = 'open';
-    copy.players = [];
-    copy.registeredPlayers = [];
-    copy.waitlist = [];
-    copy.fixed_pairs = [];
-
-    // Limpiar claves undefined para evitar error de Firestore
-    Object.keys(copy).forEach(k => {
-        if (copy[k] === undefined) {
-            delete copy[k];
-        }
-    });
-
-    // 4. Guardado, feedback y recarga
-    try {
-        await EventService.createEvent('entreno', copy);
-        const successMsg = `Entreno duplicado con éxito para el ${copy.date} 📅`;
-        if (window.NotificationService && typeof window.NotificationService.showToast === 'function') {
-            window.NotificationService.showToast(successMsg, 'success');
-        }
-        if (typeof window.loadAdminView === 'function') {
-            window.loadAdminView('entrenos_mgmt');
-        }
-    } catch (err) {
-        console.error("❌ Error al duplicar entreno:", err);
-        const errMsg = `Error al duplicar el entreno: ${err.message || 'Fallo desconocido'}`;
-        if (window.NotificationService && typeof window.NotificationService.showToast === 'function') {
-            window.NotificationService.showToast(errMsg, 'error');
-        }
-        alert(errMsg);
-    }
-};
-
-window.updateEntrenoStatus = async (id, newStatus) => {
-    try {
-        await EventService.updateEvent('entreno', id, { status: newStatus });
-
-        // Auto-Gen Match R1 if Live
-        if (newStatus === 'live' && window.MatchMakingService) {
-            // Check if matches exist logic... (omitted for brevity, assume service handles or user generates)
-            // Or call simple generation:
-            try {
-                await window.MatchMakingService.generateRound(id, 'entreno', 1);
-            } catch (e) { console.log("R1 gen skipped or failed", e); }
-        }
-
-        window.loadAdminView('entrenos_mgmt');
-    } catch (e) { alert("Error status: " + e.message); }
-};
-
-window.deleteEntreno = async (id) => {
-    if (!confirm("⚠️ ¿Seguro que quieres eliminar este entreno permanentemente?")) return;
-    await EventService.deleteEvent('entreno', id);
-    window.loadAdminView('entrenos_mgmt');
-};
-
-window.openEditEntrenoModal = async (entreno) => {
-    const modal = document.getElementById('admin-entreno-modal');
-    const form = document.getElementById('edit-entreno-form');
-    if (!modal || !form) return console.error("Edit modal misplaced");
-
-    // Populate Form
-    for (const [key, value] of Object.entries(entreno)) {
-        const input = form.querySelector(`[name="${key}"]`);
-        if (input) input.value = value;
-    }
-
-    // Normalizar time y time_end si vienen combinados o sin separar
-    if (entreno.time && entreno.time.includes('-')) {
-        const parts = entreno.time.split('-').map(s => s.trim());
-        const tStartInput = form.querySelector('[name="time"]');
-        const tEndInput = form.querySelector('[name="time_end"]');
-        if (tStartInput && parts[0]) tStartInput.value = parts[0].slice(0, 5);
-        if (tEndInput && (!entreno.time_end || !tEndInput.value) && parts[1]) tEndInput.value = parts[1].slice(0, 5);
-    }
-
-    // Setup Sede Combobox & Sync Sede
-    if (window.setupSedeCombobox) {
-        window.setupSedeCombobox('edit-entreno-location-input');
-    }
-    const locationInput = form.querySelector('[name=location]');
-    if (locationInput) {
-        locationInput.value = entreno.location || entreno.sede || '';
-    }
-
-    // Ensure level fields have values if undefined
-    const minInput = form.querySelector('[name="level_min"]');
-    if (minInput && (entreno.level_min === undefined || entreno.level_min === null || entreno.level_min === '')) {
-        minInput.value = '3.5';
-    }
-    const maxInput = form.querySelector('[name="level_max"]');
-    if (maxInput && (entreno.level_max === undefined || entreno.level_max === null || entreno.level_max === '')) {
-        maxInput.value = '4.5';
-    }
-
-    // Special Image Preview & Dropzone
-    if (window.updateAmericanaImagePreview) {
-        window.updateAmericanaImagePreview(entreno.image_url || '', 'edit-entreno-img-preview');
-        window.setupAmericanaDropzone('edit-entreno-img-dropzone', 'edit-entreno-file-input', 'edit-entreno-img-input', 'edit-entreno-img-preview');
-    } else {
-        const preview = document.getElementById('edit-entreno-img-preview');
-        if (preview && entreno.image_url) {
-            preview.src = entreno.image_url;
-            preview.style.display = 'block';
-        }
-    }
-
-    modal.classList.remove('hidden');
-    modal.style.display = 'flex';
-
-    // --- DYNAMIC VISIBILITY OF FIXED PAIRS (ENTRENO) ---
-    const pairModeSelect = form.querySelector('[name=pair_mode]');
-    const pairsArea = document.getElementById('entreno-fixed-pairs-area');
-
-    if (pairModeSelect) {
-        let pMode = entreno.pair_mode || 'twister';
-        if (pMode === 'rotating') pMode = 'twister';
-        if (pMode === 'swiss' || pMode === 'twister' || pMode === 'fixed') {
-            pairModeSelect.value = pMode;
-        } else {
-            pairModeSelect.value = (pMode.includes('fixed')) ? 'fixed' : 'twister';
-        }
-    }
-
-    const togglePairsArea = async () => {
-        const val = pairModeSelect?.value;
-        const isFixed = val === 'fixed' || (val && String(val).includes('fij'));
-        if (pairsArea) {
-            pairsArea.style.display = isFixed ? 'block' : 'none';
-        }
-        if (window.updatePairModeHelper) {
-            window.updatePairModeHelper(pairModeSelect, 'edit-entreno-pair-mode-desc');
-        }
-        if (window.loadEntrenoParticipantsUI) {
-            await window.loadEntrenoParticipantsUI(entreno.id);
-        }
-        if (isFixed && window.PairsUI) {
-            await window.PairsUI.load('entreno-fixed-pairs-area', entreno.id, 'entreno');
-        }
-    };
-
-    if (pairModeSelect) {
-        pairModeSelect.onchange = togglePairsArea; // Bind change listener
-        togglePairsArea(); // Init state based on loaded value
-    }
-
-    // Hook Sub-modules
-    if (window.loadEntrenoParticipantsUI) window.loadEntrenoParticipantsUI(entreno.id);
-    if (window.PairsUI) window.PairsUI.load('entreno-fixed-pairs-area', entreno.id, 'entreno');
-
-    // Attach Promote Button Logic
-    const btnPromote = document.getElementById('btn-promote-waitlist-entreno');
-    if (btnPromote) {
-        // Clone to remove old listeners
-        const newBtn = btnPromote.cloneNode(true);
-        btnPromote.parentNode.replaceChild(newBtn, btnPromote);
-
-        newBtn.onclick = async () => {
-            if (!confirm("¿Promover al siguiente jugador de la reserva?")) return;
-            try {
-                const promoted = await ParticipantService.promoteNext(entreno.id, 'entreno');
-                if (promoted) {
-                    if (window.NotificationService) window.NotificationService.showToast(`${promoted.name} promovido correctamente`, "success");
-                    window.loadEntrenoParticipantsUI(entreno.id);
-                } else {
-                    alert("No hay jugadores en reserva o error al promover.");
-                }
-            } catch (e) { alert("Error: " + e.message); }
-        };
-    }
-
-    // Attach Submit
-    form.onsubmit = async (e) => {
-        e.preventDefault();
-        const fd = new FormData(form);
-        const data = Object.fromEntries(fd.entries());
-        const id = data.id;
-        delete data.id;
-
-        // Sincronización de pistas y plazas
-        if (data.max_courts || data.courts) {
-            const courts = parseInt(data.max_courts || data.courts) || 4;
-            data.max_courts = courts;
-            data.courts = courts;
-            data.max_players = courts * 4;
-        }
-
-        try {
-            await EventService.updateEvent('entreno', id, data);
-            alert("✅ Guardado");
-            window.closeEntrenoModal();
-            window.loadAdminView('entrenos_mgmt'); // Refresh list
-        } catch (err) { alert("Error: " + err.message); }
-    };
-};
-
-window.closeEntrenoModal = () => {
-    const modal = document.getElementById('admin-entreno-modal');
-    if (modal) {
-        modal.classList.add('hidden');
-        modal.style.display = 'none';
-    }
-};
-
-// WhatsApp Share - Using Unified Service
-window.launchWhatsAppShareEntreno = async (id) => {
-    console.log("🔗 launchWhatsAppShareEntreno called for:", id);
-    try {
-        let evt = null;
-
-        // 1. Siempre consultar Firestore primero para tener datos 100% reales y actualizados
-        if (window.EventService) {
-            try {
-                evt = await EventService.getById('entreno', id);
-            } catch (fetchErr) {
-                console.warn("⚠️ [launchWhatsAppShareEntreno] Error al consultar Firestore:", fetchErr.message);
-            }
-        }
-
-        // 2. Fallback a memoria activa / caché local si falla la red
-        if (!evt) {
-            evt = window._currentEntrenosCache?.find(e => e.id === id);
-            if (!evt && window.CacheService) {
-                const cached = await window.CacheService.get('entrenos', 'all');
-                evt = cached?.find(e => e.id === id);
-            }
-        }
-
-        if (!evt) {
-            console.warn("⚠️ [launchWhatsAppShareEntreno] Entreno no encontrado:", id);
-            if (window.PremiumModal) {
-                window.PremiumModal.alert({ title: "WhatsApp", message: "No se encontró la información del entreno para compartir.", type: 'warning' });
-            }
-            return;
-        }
-
-        if (window.WhatsAppService) {
-            console.log("🚀 Triggering Unified WhatsApp Service...");
-            await window.WhatsAppService.shareStartFromAdmin(evt);
-        } else {
-            console.warn("⚠️ WhatsAppService not found");
-        }
-    } catch (err) {
-        console.error("❌ Error en launchWhatsAppShareEntreno:", err);
-    }
-};
-
-// Crónica Épica Post-Torneo para Entrenos
-window.launchAIChronicleEntreno = async (id) => {
-    console.log("✨ launchAIChronicleEntreno called for:", id);
-    try {
-        let evt = null;
-        if (window.EventService) {
-            try {
-                evt = await EventService.getById('entreno', id);
-            } catch (e) {
-                console.warn("⚠️ Error fetching entreno:", e);
-            }
-        }
-        if (!evt) {
-            evt = window._currentEntrenosCache?.find(e => e.id === id);
-        }
-
-        // Obtener partidos del entreno
-        let matches = [];
-        if (window.FirebaseDB?.matches) {
-            try {
-                if (typeof window.FirebaseDB.matches.getByAmericanaId === 'function') {
-                    matches = await window.FirebaseDB.matches.getByAmericanaId(id);
-                } else if (typeof window.FirebaseDB.matches.getAll === 'function') {
-                    const allM = await window.FirebaseDB.matches.getAll();
-                    matches = allM.filter(m => m.americanaId === id || m.tournamentId === id);
-                }
-            } catch (mErr) {
-                console.warn("⚠️ Error recuperando partidos del entreno:", mErr);
-            }
-        }
-
-        if (window.TournamentChronicleModal) {
-            window.TournamentChronicleModal.open(evt, matches);
-        } else {
-            alert("El servicio de crónica no está disponible en este momento.");
-        }
-    } catch (err) {
-        console.error("❌ Error en launchAIChronicleEntreno:", err);
-    }
-};
-
-// --- SUB-UI MANAGERS (Participants & Helpers) --- //
-
-window.selectEntrenoImage = (url) => {
-    const input = document.getElementById('edit-entreno-img-input');
-    if (input) {
-        input.value = url;
-        if (window.updateAmericanaImagePreview) {
-            window.updateAmericanaImagePreview(url, 'edit-entreno-img-preview');
-        } else {
-            const preview = document.getElementById('edit-entreno-img-preview');
-            if (preview) {
-                preview.src = url;
-                preview.style.display = 'block';
-            }
-        }
-    }
-};
-
-if (!window.updatePairModeHelper) {
-    window.updatePairModeHelper = function(selectEl, descContainerId) {
-        const container = document.getElementById(descContainerId);
-        if (!container) return;
-        const raw = selectEl ? selectEl.value : 'twister';
-        const mode = (raw === 'rotating') ? 'twister' : raw;
-
-        if (mode === 'swiss') {
-            container.innerHTML = `
-                <div style="display:flex; align-items:flex-start; gap:8px;">
-                    <span style="font-size: 1.15rem; line-height: 1;">🇨🇭</span>
-                    <div>
-                        <strong style="color: #ef4444; font-size: 0.76rem; text-transform: uppercase;">Modalidad Sistema Suizo (Puntos acumulados):</strong>
-                        <div style="color: #cbd5e1; font-size: 0.72rem; margin-top: 2px;">
-                            Cada jugador suma sus propios juegos conseguidos; la clasificación acumulada define en qué pista se juega cada ronda.
-                        </div>
-                    </div>
-                </div>
-            `;
-            container.style.borderLeftColor = '#ef4444';
-            container.style.background = 'rgba(239, 68, 68, 0.08)';
-        } else if (mode === 'fixed') {
-            container.innerHTML = `
-                <div style="display:flex; align-items:flex-start; gap:8px;">
-                    <span style="font-size: 1.15rem; line-height: 1;">🔒</span>
-                    <div>
-                        <strong style="color: #CCFF00; font-size: 0.76rem; text-transform: uppercase;">Modalidad Pareja Fija (Dupla todo el torneo):</strong>
-                        <div style="color: #cbd5e1; font-size: 0.72rem; margin-top: 2px;">
-                            Las duplas compiten juntas todo el evento; suben o bajan juntas de pista según ganen o pierdan.
-                        </div>
-                    </div>
-                </div>
-            `;
-            container.style.borderLeftColor = '#CCFF00';
-            container.style.background = 'rgba(204, 255, 0, 0.06)';
-        } else {
-            container.innerHTML = `
-                <div style="display:flex; align-items:flex-start; gap:8px;">
-                    <span style="font-size: 1.15rem; line-height: 1;">🌪️</span>
-                    <div>
-                        <strong style="color: #38bdf8; font-size: 0.76rem; text-transform: uppercase;">Modalidad Twister Individual (Pozo rotativo):</strong>
-                        <div style="color: #cbd5e1; font-size: 0.72rem; margin-top: 2px;">
-                            Los jugadores juegan individualmente; ganadores suben de pista, perdedores bajan, y en cada pista los compañeros rotan obligatoriamente sin repetir pareja de la ronda anterior.
-                        </div>
-                    </div>
-                </div>
-            `;
-            container.style.borderLeftColor = '#38bdf8';
-            container.style.background = 'rgba(56, 189, 248, 0.08)';
-        }
-
-        // Auto-sync UI if inside edit modals
-        if (descContainerId === 'edit-americana-pair-mode-desc') {
-            const form = document.getElementById('edit-americana-form');
-            const eventId = form ? form.querySelector('[name=id]')?.value : null;
-            if (eventId) {
-                const pairsArea = document.getElementById('americana-fixed-pairs-area');
-                const isFixed = mode === 'fixed';
-                if (pairsArea) pairsArea.style.display = isFixed ? 'block' : 'none';
-                if (window.loadAmericanaParticipantsUI) window.loadAmericanaParticipantsUI(eventId);
-                if (isFixed && window.PairsUI) window.PairsUI.load('americana-fixed-pairs-area', eventId, 'americana');
-            }
-        } else if (descContainerId === 'edit-entreno-pair-mode-desc') {
-            const form = document.getElementById('edit-entreno-form');
-            const eventId = form ? form.querySelector('[name=id]')?.value : null;
-            if (eventId) {
-                const pairsArea = document.getElementById('entreno-fixed-pairs-area');
-                const isFixed = mode === 'fixed';
-                if (pairsArea) pairsArea.style.display = isFixed ? 'block' : 'none';
-                if (window.loadEntrenoParticipantsUI) window.loadEntrenoParticipantsUI(eventId);
-                if (isFixed && window.PairsUI) window.PairsUI.load('entreno-fixed-pairs-area', eventId, 'entreno');
-            }
-        }
-    };
-};
-
-window.openAddPlayerToEntrenoSelector = async (eventId) => {
-    if (!window.PremiumModal) return alert("PremiumModal no disponible");
-
-    try {
-        // Forzamos bypass de caché para ver jugadores recién creados
-        const allPlayers = await FirebaseDB.players.getAll(true);
-
-        const selectorItems = allPlayers.map(p => ({
-            id: p.id || p.uid,
-            name: p.name || 'Sin nombre',
-            sub: `Nivel: ${p.level || '3.5'} • ${p.gender || '?'}`,
-            image: p.photoURL || p.photo_url || null,
-            playerObj: p
-        })).sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
-
-        const selected = await PremiumModal.selector({
-            title: 'AÑADIR JUGADOR',
-            message: 'Busca y selecciona al jugador que quieres añadir al entreno:',
-            items: selectorItems,
-            placeholder: 'Escribe nombre o apellido...',
-            type: 'success'
-        });
-
-        if (selected) {
-            console.log("➕ Adding selected player as admin:", selected.name);
-            const result = await ParticipantService.addPlayer(eventId, 'entreno', selected.playerObj);
-
-            if (window.NotificationService) {
-                if (result.status === 'waitlist') {
-                    window.NotificationService.showToast(`${selected.name} añadido a LISTA DE RESERVA`, "warning");
-                } else {
-                    window.NotificationService.showToast(`${selected.name} añadido correctamente`, "success");
-                }
-            }
-
-            // Reload UI
-            window.loadEntrenoParticipantsUI(eventId);
-        }
-    } catch (e) {
-        console.error("Error in admin player selection:", e);
-        alert("Error: " + e.message);
-    }
-};
-
-window.openAddPairToEntrenoSelector = async (eventId) => {
-    if (!window.PremiumModal) return alert("PremiumModal no disponible");
-
-    try {
-        // Forzamos bypass de caché para ver jugadores recién creados
-        const allPlayers = await FirebaseDB.players.getAll(true);
-
-        const selectorItems = allPlayers.map(p => ({
-            id: p.id || p.uid,
-            name: p.name || 'Sin nombre',
-            sub: `Nivel: ${p.level || '3.5'} • ${p.gender || '?'}`,
-            image: p.photoURL || p.photo_url || null,
-            playerObj: p
-        })).sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
-
-        // 1. SELECT PLAYER 1
-        const selected1 = await PremiumModal.selector({
-            title: 'SELECCIONA JUGADOR 1',
-            message: 'Elige el primer miembro de la pareja:',
-            items: selectorItems,
-            placeholder: 'Busca al primer jugador...',
-            type: 'primary'
-        });
-
-        if (!selected1) return;
-
-        // 2. SELECT PLAYER 2 (Filter out P1)
-        const items2 = selectorItems.filter(p => p.id !== selected1.id);
-        const selected2 = await PremiumModal.selector({
-            title: `Pareja de ${selected1.name.split(' ')[0]}`,
-            message: `Elige quién jugará con ${selected1.name}:`,
-            items: items2,
-            placeholder: 'Busca a su pareja...',
-            type: 'success'
-        });
-
-        if (!selected2) return;
-
-        // 3. Confirm & Add Both
-        if (confirm(`¿Confirmar pareja: ${selected1.name} 🤝 ${selected2.name}?`)) {
-
-            // Link them in Objects
-            const p1 = { ...selected1.playerObj };
-            p1.partner_id = selected2.id;
-            p1.partner_name = selected2.name;
-
-            const p2 = { ...selected2.playerObj };
-            p2.partner_id = selected1.id;
-            p2.partner_name = selected1.name;
-
-            console.log("Adding Pair:", p1.name, "&", p2.name);
-
-            // Add P1
-            await ParticipantService.addPlayer(eventId, 'entreno', p1);
-            await new Promise(r => setTimeout(r, 200));
-            await ParticipantService.addPlayer(eventId, 'entreno', p2);
-
-            try {
-                const event = await EventService.getById('entreno', eventId);
-                const currentPairs = event.fixed_pairs || [];
-                const nextIndex = currentPairs.length * 2;
-                const initialCourt = Math.floor(nextIndex / 4) + 1;
-                const newPair = {
-                    id: `pair_${Date.now()}_manual`,
-                    player1_id: selected1.id,
-                    player2_id: selected2.id,
-                    player1_name: selected1.name,
-                    player2_name: selected2.name,
-                    pair_name: `${selected1.name} / ${selected2.name}`,
-                    wins: 0,
-                    losses: 0,
-                    games_won: 0,
-                    games_lost: 0,
-                    current_court: initialCourt,
-                    initial_court: initialCourt
-                };
-                await EventService.updateEvent('entreno', eventId, {
-                    fixed_pairs: [...currentPairs, newPair],
-                    pair_mode: 'fixed'
-                });
-            } catch (syncErr) { console.warn("[Entreno] sync fixed_pairs error:", syncErr); }
-
-            if (window.NotificationService) {
-                window.NotificationService.showToast(`Pareja Creada: ${selected1.name} & ${selected2.name}`, "success");
-            }
-
-            // Reload UI
-            window.loadEntrenoParticipantsUI(eventId);
-            if (window.PairsUI) window.PairsUI.load('entreno-fixed-pairs-area', eventId, 'entreno');
-        }
-
-    } catch (e) {
-        console.error("Error adding pair:", e);
-        alert("Error al añadir pareja: " + e.message);
-    }
-};
-
-window.linkManualPartner = async (eventId, playerId, playerName) => {
-    if (!window.PremiumModal) return alert("PremiumModal no disponible");
-
-    try {
-        const event = await EventService.getById('entreno', eventId);
-        const players = event.players || [];
-
-        // Filter candidates: Already in event, Not the current player, No partner yet
-        const candidates = players.filter(p => {
-            const pid = String(p.id || p.uid);
-            return pid !== String(playerId) && !p.partner_id;
-        }).map(p => ({
-            id: p.id || p.uid,
-            name: p.name || 'Sin nombre',
-            sub: `Nivel: ${p.level || '3.5'}`,
-            image: p.photoURL || null
-        })).sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
-
-        if (candidates.length === 0) return alert("No hay jugadores disponibles sin pareja para vincular.");
-
-        const selected = await PremiumModal.selector({
-            title: `Pareja para ${playerName}`,
-            message: `Selecciona a su pareja de la lista de inscritos:`,
-            items: candidates,
-            placeholder: 'Busca jugador...',
-            type: 'primary'
-        });
-
-        if (!selected) return;
-
-        if (confirm(`¿Vincular a ${playerName} con ${selected.name}?`)) {
-            // Update local array first
-            const p1Index = players.findIndex(p => String(p.id || p.uid) === String(playerId));
-            const p2Index = players.findIndex(p => String(p.id || p.uid) === String(selected.id));
-
-            if (p1Index === -1 || p2Index === -1) return alert("Error al encontrar jugadores.");
-
-            // Link P1
-            players[p1Index].partner_id = selected.id;
-            players[p1Index].partner_name = selected.name;
-
-            // Link P2
-            players[p2Index].partner_id = playerId;
-            players[p2Index].partner_name = playerName;
-
-            // Also add to fixed_pairs
-            const currentPairs = event.fixed_pairs || [];
-            const nextIndex = currentPairs.length * 2;
-            const initialCourt = Math.floor(nextIndex / 4) + 1;
-            const newPair = {
-                id: `pair_${Date.now()}_manual`,
-                player1_id: playerId,
-                player2_id: selected.id,
-                player1_name: playerName,
-                player2_name: selected.name,
-                pair_name: `${playerName} / ${selected.name}`,
-                wins: 0,
-                losses: 0,
-                games_won: 0,
-                games_lost: 0,
-                current_court: initialCourt,
-                initial_court: initialCourt
-            };
-
-            await EventService.updateEvent('entreno', eventId, {
-                players: players,
-                fixed_pairs: [...currentPairs, newPair],
-                pair_mode: 'fixed'
-            });
-
-            if (window.NotificationService) window.NotificationService.showToast("Pareja vinculada correctamente", "success");
-
-            window.loadEntrenoParticipantsUI(eventId);
-            if (window.PairsUI) window.PairsUI.load('entreno-fixed-pairs-area', eventId, 'entreno');
-        }
-
-    } catch (e) {
-        console.error("Error linking partner:", e);
-        alert("Error al vincular: " + e.message);
-    }
-};
-
-window.loadEntrenoParticipantsUI = async (id) => {
-    const list = document.getElementById('participants-list-entreno');
-    if (!list) return;
-    list.innerHTML = 'Loading...';
-
-    try {
-        const [event, users] = await Promise.all([
-            EventService.getById('entreno', id),
-            FirebaseDB.players.getAll()
-        ]);
-
-        // Deduplicate players by ID/UID
-        const seenIds = new Set();
-        const uniquePlayers = (event.players || [])
-            .filter(p => {
-                const pid = String(p.id || p.uid || '');
-                if (!pid || seenIds.has(pid)) return false;
-                seenIds.add(pid);
-                return true;
-            })
-            .sort((a, b) => {
-                const parse = (d) => {
-                    if (!d) return 0;
-                    if (typeof d === 'number') return d;
-                    const ds = String(d);
-                    if (ds.includes('/')) {
-                        const parts = ds.split(' ');
-                        const dateParts = parts[0].split('/');
-                        const timePart = parts[1] || '00:00:00';
-                        // DD/MM/YYYY or DD/MM
-                        const day = dateParts[0];
-                        const month = dateParts[1];
-                        const year = dateParts[2] || new Date().getFullYear();
-                        return new Date(`${year}-${month}-${day}T${timePart}`).getTime() || 0;
-                    }
-                    return new Date(d).getTime() || 0;
-                };
-                return parse(a.joinedAt) - parse(b.joinedAt);
-            });
-
-        const liveSelect = document.getElementById('edit-entreno-pair-mode');
-        const activeMode = (liveSelect && liveSelect.value) ? liveSelect.value : (event.pair_mode || 'twister');
-
-        let isFixedMode = (activeMode === 'fixed') ||
-            String(activeMode || '').includes('fij') ||
-            (event.pair_mode && (event.pair_mode.includes('fixed') || event.pair_mode.includes('fij'))) ||
-            (event.fixed_pairs && event.fixed_pairs.length > 0) ||
-            (event.players && event.players.some(p => p.partner_id || p.partner_name)) ||
-            (event.name && (event.name.toUpperCase().includes('FIJA') || event.name.toUpperCase().includes('FIJO')));
-        if (!isFixedMode && window.PreFlightRoundVerifier) {
-            isFixedMode = window.PreFlightRoundVerifier.normalizePairMode(activeMode, event) === 'fixed';
-        }
-
-        // Render List with Header
-        list.innerHTML = `
-        <div style="margin-bottom:12px; display:flex; flex-direction:column; gap:8px; background:rgba(255,255,255,0.03); padding:10px; border-radius:10px;">
-             <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-size:0.8rem; font-weight:800; color:var(--primary);">${uniquePlayers.length} JUGADORES</span>
-                <div style="display:flex; gap:6px;">
-                    <button onclick="window.launchBatSignalEntreno('${id}')" class="btn-micro" style="background:#ffd700; color:#000; border:none; padding:5px 12px; font-size:0.65rem;">
-                        <i class="fas fa-bullhorn"></i> BATSEÑAL
-                    </button>
-                </div>
-             </div>
-             <div style="display:grid; grid-template-columns: ${isFixedMode ? '1fr 1fr' : '1fr'}; gap:8px;">
-                 <button onclick="window.openAddPlayerToEntrenoSelector('${id}')" 
-                         style="width:100%; height:40px; background:rgba(204,255,0,0.1); color:#000000 !important; border:1px solid rgba(204,255,0,0.2); border-radius:8px; font-weight:900; font-size:0.75rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
-                    <i class="fas fa-user-plus"></i> ${isFixedMode ? 'JUGADOR' : 'AÑADIR JUGADOR'}
-                 </button>
-                 ${isFixedMode ? `
-                 <button onclick="window.openAddPairToEntrenoSelector('${id}')" 
-                         style="width:100%; height:40px; background:rgba(59, 130, 246, 0.1); color:#000000 !important; border:1px solid rgba(59, 130, 246, 0.2); border-radius:8px; font-weight:900; font-size:0.75rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
-                    <i class="fas fa-user-friends"></i> AÑADIR PAREJA
-                 </button>` : ''}
-             </div>
-        </div>
-        ` + (() => {
-                const renderedIds = new Set();
-                let html = '';
-
-                // Pre-calculate signup order to ensure #1 is ALWAYS the first who joined, regardless of rendering order
-                const signupOrderMap = new Map();
-                uniquePlayers.forEach((p, idx) => {
-                    signupOrderMap.set(String(p.id || p.uid), idx + 1);
-                });
-
-                const formatJoinDate = (d) => {
-                    if (!d) return '';
-                    const date = new Date(d);
-                    const day = String(date.getDate()).padStart(2, '0');
-                    const month = String(date.getMonth() + 1).padStart(2, '0');
-                    const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                    return `${day}/${month} ${time}`;
-                };
-
-                // Helper for Level Color
-                const getLevelColor = (l) => {
-                    const level = parseFloat(l || '3.5');
-                    if (level < 3) return '#94a3b8'; // Beginner
-                    if (level < 3.5) return '#10b981'; // Green
-                    if (level < 4) return '#3b82f6'; // Blue
-                    if (level < 4.5) return '#f59e0b'; // Orange
-                    return '#ec4899'; // Pink/Purple (Pro)
-                };
-
-                uniquePlayers.forEach(p => {
-                    const pid = String(p.id || p.uid);
-                    if (renderedIds.has(pid)) return;
-
-                    // Try to find valid partner in the list
-                    let partner = null;
-                    if (p.partner_name) {
-                        partner = uniquePlayers.find(u =>
-                            (u.id && p.partner_id && String(u.id) === String(p.partner_id)) ||
-                            (u.name && u.name.trim().toLowerCase() === p.partner_name.trim().toLowerCase())
-                        );
-                    }
-
-                    // --- CASE 1: PAIR FOUND (Render Double Row) ---
-                    if (partner && !renderedIds.has(String(partner.id || partner.uid))) {
-                        const partnerId = String(partner.id || partner.uid);
-                        renderedIds.add(pid);
-                        renderedIds.add(partnerId);
-
-                        const c1 = getLevelColor(p.level);
-                        const c2 = getLevelColor(partner.level);
-                        const name1 = (p.name || 'JUGADOR').toUpperCase();
-                        const name2 = (partner.name || 'JUGADOR').toUpperCase();
-
-                        // Shorten names: First Name + Initial
-                        const shortName1 = name1.split(' ')[0] + (name1.split(' ')[1] ? ' ' + name1.split(' ')[1].charAt(0) + '.' : '');
-                        const shortName2 = name2.split(' ')[0] + (name2.split(' ')[1] ? ' ' + name2.split(' ')[1].charAt(0) + '.' : '');
-
-                        // Get registration times
-                        const time1 = formatJoinDate(p.joinedAt);
-                        const time2 = formatJoinDate(partner.joinedAt);
-
-                        const num1 = signupOrderMap.get(pid);
-                        const num2 = signupOrderMap.get(partnerId);
-
-                        html += `
-                     <div class="player-row" style="display:flex; align-items:center; justify-content:space-between; padding:10px; border-bottom:1px solid #e2e8f0; background:rgba(59, 130, 246, 0.08); border-left: 4px solid #3b82f6;">
-                         <!-- PAIR CONTAINER -->
-                         <div style="display:flex; align-items:center; flex:1; flex-wrap:wrap; gap:5px;">
-                            
-                            <!-- P1 -->
-                            <div style="display:flex; flex-direction:column; gap:2px;">
-                                <div style="display:flex; align-items:center; gap:6px; background:#fff; padding:4px 8px; border-radius:30px; border:1px solid rgba(0,0,0,0.05); box-shadow:0 1px 2px rgba(0,0,0,0.05);">
-                                     <div style="width:20px; height:20px; border-radius:50%; background:#CCFF00 !important; color:#000 !important; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:900; margin-right:2px; border:1px solid rgba(0,0,0,0.1); box-shadow:0 1px 3px rgba(0,0,0,0.2);">#${num1}</div>
-                                    <div style="width:24px; height:24px; border-radius:50%; background:${c1}; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:800; color:#fff;">${p.level || '3.5'}</div>
-                                    <span style="font-weight:800; font-size:0.75rem; color:#000;">${shortName1}</span>
-                                </div>
-                                ${time1 ? `<span style="font-size:0.6rem; color:#64748b; font-weight:700; padding-left:8px;">🕒 ${time1}</span>` : ''}
-                            </div>
-                            
-                            <!-- LINK ICON -->
-                            <div style="color:#3b82f6; font-size:0.75rem; margin:0 2px;"><i class="fas fa-link"></i></div>
-
-                            <!-- P2 -->
-                            <div style="display:flex; flex-direction:column; gap:2px;">
-                                <div style="display:flex; align-items:center; gap:6px; background:#fff; padding:4px 8px; border-radius:30px; border:1px solid rgba(0,0,0,0.05); box-shadow:0 1px 2px rgba(0,0,0,0.05);">
-                                     <div style="width:20px; height:20px; border-radius:50%; background:#CCFF00 !important; color:#000 !important; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:900; margin-right:2px; border:1px solid rgba(0,0,0,0.1); box-shadow:0 1px 3px rgba(0,0,0,0.2);">#${num2}</div>
-                                    <div style="width:24px; height:24px; border-radius:50%; background:${c2}; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:800; color:#fff;">${partner.level || '3.5'}</div>
-                                    <span style="font-weight:800; font-size:0.75rem; color:#000;">${shortName2}</span>
-                                </div>
-                                ${time2 ? `<span style="font-size:0.6rem; color:#64748b; font-weight:700; padding-left:8px;">🕒 ${time2}</span>` : ''}
-                            </div>
-
-                         </div>
-                         
-                         <!-- COURT SELECTOR (MANUAL) -->
-                         <div style="margin: 0 10px;">
-                            ${isFixedMode ? `
-                            <select onchange="window.setPairCourt('${id}', '${pid}', '${partnerId}', this.value)" style="padding: 4px 8px; border-radius: 8px; background: #fff; border: 1px solid #3b82f6; font-size: 0.75rem; font-weight: 800; color: #3b82f6; cursor: pointer;">
-                                <option value="">PISTA ?</option>
-                                ${[1, 2, 3, 4, 5, 6].map(num => {
-                            // Try to find current court in fixed_pairs
-                            const currentPair = (event.fixed_pairs || []).find(fp =>
-                                (String(fp.player1_id) === pid || String(fp.player2_id) === pid)
-                            );
-                            const assigned = currentPair ? currentPair.current_court : '';
-                            return `<option value="${num}" ${(assigned == num) ? 'selected' : ''}>PISTA ${num}</option>`;
-                        }).join('')}
-                            </select>
-                            ` : ''}
-                         </div>
-
-                         <!-- ACTIONS -->
-                         <div style="display:flex; gap:2px; margin-left:8px;">
-                            <button onclick="window.removeEntrenoPlayer('${id}', '${pid}')" title="Quitar ${name1}" style="background:none; border:none; color:#ef4444; opacity:0.6; cursor:pointer; font-size:0.8rem; padding:4px;"><i class="fas fa-trash-alt"></i></button>
-                            <button onclick="window.removeEntrenoPlayer('${id}', '${partnerId}')" title="Quitar ${name2}" style="background:none; border:none; color:#ef4444; opacity:0.6; cursor:pointer; font-size:0.8rem; padding:4px;"><i class="fas fa-trash-alt"></i></button>
-                         </div>
-                     </div>
-                    `;
-                    }
-                    // --- CASE 2: SINGLE PLAYER ---
-                    else {
-                        renderedIds.add(pid);
-                        const c = getLevelColor(p.level);
-                        const hasMissingPartner = !!p.partner_name;
-                        const playerName = (p.name || 'JUGADOR').toUpperCase();
-                        const time = formatJoinDate(p.joinedAt);
-
-                        const num = signupOrderMap.get(pid);
-
-                        html += `
-                     <div class="player-row" style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #e2e8f0;">
-                        <div style="display:flex; align-items:center; gap:12px;">
-                            <div style="width:24px; height:24px; border-radius:50%; background:#CCFF00 !important; color:#000 !important; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:900; border:1px solid rgba(0,0,0,0.2); box-shadow: 0 2px 5px rgba(0,0,0,0.2);">${num}</div>
-                            <div style="width:32px; height:32px; border-radius:50%; background:${c}; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:800; color:#ffffff; border: 1px solid rgba(0,0,0,0.1); overflow:hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                                ${p.level || '3.5'}
-                            </div>
-                            <div style="display:flex; flex-direction:column;">
-                                <div style="display:flex; align-items:center; gap:8px;">
-                                    <span style="font-weight:900; font-size:0.85rem; color:#000000; text-transform:uppercase;">${playerName}</span>
-                                    ${time ? `<span style="font-size:0.65rem; color:#64748b; font-weight:700; background:rgba(0,0,0,0.05); padding:2px 6px; border-radius:4px;">🕒 ${time}</span>` : ''}
-                                </div>
-                                ${hasMissingPartner ? `<span style="font-size:0.7rem; color:#ef4444; font-weight:600;"><i class="fas fa-exclamation-triangle"></i> Pareja: ${p.partner_name} (?)</span>` : ''}
-                            </div>
-                        </div>
-                        <div style="display:flex; gap:4px; align-items:center;">
-                            ${(isFixedMode) ?
-                                `<button onclick="window.linkManualPartner('${id}', '${pid}', '${playerName}')" title="Vincular pareja manual" style="background:rgba(59, 130, 246, 0.1); border:1px solid #3b82f6; color:#3b82f6; border-radius:6px; cursor:pointer; font-size:0.8rem; padding:6px 10px;"><i class="fas fa-handshake"></i></button>` : ''}
-                            <button onclick="window.removeEntrenoPlayer('${id}', '${pid}')" title="BORRAR JUGADOR (Incluso en Juego)" style="background:rgba(239, 68, 68, 0.1); border:1px solid #ef4444; color:#ef4444; border-radius:10px; cursor:pointer; font-size:0.85rem; padding:8px 12px; font-weight: 800;"><i class="fas fa-trash-alt"></i> ELIMINAR</button>
-                        </div>
-                     </div>
-                     `;
-                    }
-                });
-                return html;
-            })();
-
-    } catch (e) {
-        console.error("Error loading participants:", e);
-        list.innerHTML = '<div style="color:#ff4444; padding:20px; text-align:center;">Error al cargar la lista</div>';
-    }
-
-    // Load Waitlist as well
-    if (window.loadEntrenoWaitlistUI) window.loadEntrenoWaitlistUI(id);
-};
-
-window.loadEntrenoWaitlistUI = async (id) => {
-    const list = document.getElementById('waitlist-entreno');
-    if (!list) return;
-
-    try {
-        const waitlist = await ParticipantService.getWaitlist(id, 'entreno');
-
-        // Update header count if possible
-        // const header = document.querySelector('#waitlist-section-header');
-
-        if (!waitlist || waitlist.length === 0) {
-            list.innerHTML = '<div style="text-align:center; color:#333333; font-size:0.75rem; padding:15px; font-style:italic;">Lista de reserva vacía</div>';
-            return;
-        }
-
-        list.innerHTML = waitlist.map((p, i) => `
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid rgba(255,165,0,0.1); background:rgba(255,165,0,0.05); border-radius:6px; margin-bottom:4px;">
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <div style="width:20px; height:20px; background:#FFA500; color:black; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.7rem;">${i + 1}</div>
-                    <div style="display:flex; flex-direction:column;">
-                        <span style="color:black; font-size:0.85rem; font-weight:700;">${p.name}</span>
-                        <span style="color:black; font-size:0.65rem; font-weight:700;">Nivel ${p.level || '3.5'} • ${p.gender || '?'}</span>
-                    </div>
-                </div>
-                <div style="font-size:0.6rem; color:rgba(0,0,0,0.5); font-weight:600;">
-                    ${p.joinedAt ? new Date(p.joinedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                </div>
-            </div>
-        `).join('');
-
-    } catch (e) {
-        console.error("Waitlist error:", e);
-        list.innerHTML = '<div style="color:red; font-size:0.7rem;">Error cargando reserva</div>';
-    }
-};
-
-window.removeEntrenoPlayer = async (eid, uid) => {
-    if (!confirm("¿Eliminar jugador de este entreno?")) return;
-
-    // Check if there's someone in waitlist to ask about promotion
-    let skipPromotion = false;
-    try {
-        const waitlist = await ParticipantService.getWaitlist(eid, 'entreno');
-        if (waitlist.length > 0) {
-            if (!confirm("Hay jugadores en reserva. ¿Quieres PROMOVER al siguiente jugador automáticamente?\n\n(Pulsa CANCELAR para eliminar al jugador sin que entre nadie en su lugar)")) {
-                skipPromotion = true;
-            }
-        }
-    } catch (e) { console.warn("Waitlist check skipped", e); }
-
-    try {
-        await ParticipantService.removePlayer(eid, 'entreno', uid, skipPromotion);
-        window.loadEntrenoParticipantsUI(eid);
-    } catch (e) { alert(e.message); }
-};
-
-window.setPairCourt = async (eventId, p1Id, p2Id, courtNum) => {
-    try {
-        console.log(`🎯 Setting Court ${courtNum} for pair ${p1Id} + ${p2Id}`);
-        const event = await window.EventService.getById('entreno', eventId);
-        if (!event) return;
-
-        let pairs = event.fixed_pairs || [];
-        const court = parseInt(courtNum);
-
-        // Update pair in list
-        pairs = pairs.map(p => {
-            const isMatch = (String(p.player1_id) === String(p1Id) || String(p.player2_id) === String(p1Id)) &&
-                (String(p.player1_id) === String(p2Id) || String(p.player2_id) === String(p2Id));
-            if (isMatch) {
-                return { ...p, current_court: court, initial_court: court };
-            }
-            return p;
-        });
-
-        await window.EventService.updateEvent('entreno', eventId, { fixed_pairs: pairs });
-        console.log("✅ Court updated in DB");
-    } catch (e) {
-        console.error("Error updating court:", e);
-        alert("Error: " + e.message);
-    }
-};
-
-window.launchBatSignalEntreno = async (eventId) => {
-    if (!window.SmartAlertsService) return alert("⚠️ Smart Alerts no disponible");
-
-    const btn = document.activeElement;
-    const originalText = btn.innerText;
-    btn.innerText = "🦇 Buscando...";
-    btn.disabled = true;
-
-    try {
-        const event = await EventService.getById('entreno', eventId);
-        const candidates = await window.SmartAlertsService.findSubstitutes(event);
-
-        if (candidates.length === 0) {
-            alert("No se han encontrado candidatos óptimos.");
-            return;
-        }
-
-        const msg = `🦇 BATSEÑAL: Se han encontrado ${candidates.length} candidatos ideales.\n¿Enviar alertas push?`;
-        if (confirm(msg)) {
-            const res = await window.SmartAlertsService.sendBatSignal(candidates, event);
-            alert(`🚀 Enviado a ${res.count} usuarios.`);
-        }
-
-    } catch (e) {
-        console.error("Batseñal error:", e);
-        alert("Error: " + e.message);
-    }
-    finally {
-        btn.innerText = originalText;
-        btn.disabled = false;
-    }
-};
-
-// --- INITIALIZATION ---
-if (window.adminAutoInterval) clearInterval(window.adminAutoInterval);
-if (window.api && window.api.runAutomation) {
-    window.api.runAutomation();
-    window.adminAutoInterval = setInterval(window.api.runAutomation, 60000); // Check every 60s to save quota
-}
-
-console.log("✅ Admin Entrenos Module v3.5 - Splitted & Optimized");
+/**
+ * admin-entrenos.js
+ * View Controller for Entrenos Management.
+ * Version: 5001 - Optimized for Mobile Actions
+ */
+console.log("🚀 AdminEntrenos Loaded (v5001)");
+
+window.AdminViews = window.AdminViews || {};
+
+// Main Management View
+// 1. GESTOR DE ENTRENOS (Listado y Filtros)
+// 1. GESTOR DE ENTRENOS (Listado y Filtros)
+window.AdminViews.entrenos_mgmt = async function () {
+    const navId = window._currentAdminNavId;
+    const content = document.getElementById('content-area');
+    const titleEl = document.getElementById('page-title');
+
+    if (titleEl) titleEl.textContent = 'Gestor de Entrenos';
+
+    // Diagnostic Helper
+    const updateStatus = (msg) => {
+        if (navId === window._currentAdminNavId) {
+            content.innerHTML = `<div class="loading-container"><div class="loader"></div><p>${msg}</p></div>`;
+        }
+    };
+
+    updateStatus("🚀 Iniciando Gestor...");
+
+    try {
+        // Dependency Checks
+        if (!window.EventService) throw new Error("EventService no cargado");
+        if (!window.AppConstants) throw new Error("AppConstants no cargado");
+        if (!window.FirebaseDB) throw new Error("FirebaseDB no cargado");
+
+        updateStatus("📡 Conectando con Base de Datos...");
+
+        // Fetch resiliente: soporte SWR y fallback a caché en caso de red lenta
+        let entrenos = [];
+        try {
+            const fetchPromise = EventService.getAll(AppConstants.EVENT_TYPES.ENTRENO);
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("⌛ Tiempo de espera de red (20s).")), 20000)
+            );
+            entrenos = await Promise.race([fetchPromise, timeoutPromise]);
+        } catch (fetchErr) {
+            console.warn("⚠️ [entrenos_mgmt] Red lenta o error, comprobando caché local:", fetchErr.message);
+            if (window.CacheService) {
+                const cached = await window.CacheService.get('entrenos', 'all');
+                if (cached && Array.isArray(cached) && cached.length > 0) {
+                    console.log("🛡️ [entrenos_mgmt] Recuperados entrenos desde caché local.");
+                    entrenos = cached;
+                }
+            }
+            if (!entrenos || !entrenos.length) throw fetchErr;
+        }
+
+        // Si el usuario navegó a otra vista mientras cargaban los datos, salir sin sobreescribir pantalla
+        if (navId !== window._currentAdminNavId) {
+            console.log(`⚠️ [entrenos_mgmt] Token de navegación caducado (#${navId} -> #${window._currentAdminNavId}), omitiendo render.`);
+            return;
+        }
+
+        updateStatus("✅ Datos recibidos. Procesando...");
+
+        const sortedEntrenos = entrenos.sort((a, b) => new Date(b.date) - new Date(a.date));
+        window._currentEntrenosCache = sortedEntrenos; // En memoria para acceso instantáneo y resiliente
+
+        // 📅 Get available months for filter list
+        const availableMonths = [...new Set(sortedEntrenos.map(e => {
+            if (!e.date) return null;
+            if (e.date.includes('-')) return e.date.substring(0, 7); // YYYY-MM
+            if (e.date.includes('/')) {
+                const p = e.date.split('/');
+                return `${p[2]}-${p[0].padStart(2, '0')}`;
+            }
+            return null;
+        }))].filter(Boolean).sort((a, b) => String(b).localeCompare(String(a)));
+
+        const monthNames = { '01': 'Enero', '02': 'Febrero', '03': 'Marzo', '04': 'Abril', '05': 'Mayo', '06': 'Junio', '07': 'Julio', '08': 'Agosto', '09': 'Septiembre', '10': 'Octubre', '11': 'Noviembre', '12': 'Diciembre' };
+        const monthOptions = availableMonths.map(m => {
+            const [y, mm] = m.split('-');
+            return `<option value="${m}">${(monthNames[mm] || mm).toUpperCase()} ${y}</option>`;
+        }).join('');
+
+        const listHtml = sortedEntrenos.map(evt => renderEntrenoCard(evt)).join('');
+
+        content.innerHTML = `
+            <div class="planning-area" id="entrenos-planning-area" style="display: flex; flex-direction: column; height: calc(100vh - 140px);">
+                
+                <!-- ACTION HEADER BAR -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
+                    <div style="font-size: 1.1rem; font-weight: 900; color: #fff; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-dumbbell" style="color: var(--accent);"></i> ENTRENOS PROGRAMADOS
+                    </div>
+                    <button class="btn-primary-pro" onclick="window.WhatsAppService.openCarteleraModal()" style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); color: #fff; font-weight: 900; border: none; padding: 10px 18px; border-radius: 14px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4); font-size: 0.88rem;">
+                        <i class="fab fa-whatsapp" style="font-size: 1.15rem;"></i> 📢 CARTELERA MULTI-TORNEO (WHATSAPP)
+                    </button>
+                </div>
+
+                <!-- FILTER BAR -->
+                <div class="filter-bar-pro" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1.5rem; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); align-items: center;">
+                    <div style="position:relative; grid-column: span 2;">
+                        <i class="fas fa-search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:rgba(255,255,255,0.3); font-size:0.8rem;"></i>
+                        <input type="text" id="entreno-search-input" placeholder="Buscar por nombre..."
+                            style="padding-left:35px; height:45px; font-size:0.9rem; width:100%; border-radius:12px; background:rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
+                    </div>
+                    <select id="filter-month" class="pro-input" style="height:45px; font-size: 0.8rem;">
+                        <option value="all">MES: TODOS</option>
+                        ${monthOptions}
+                    </select>
+                    <select id="filter-status" class="pro-input" style="height:45px; font-size: 0.8rem;">
+                        <option value="all">ESTADO: TODOS</option>
+                        <option value="open">🟢 ABIERTO</option>
+                        <option value="live">🎾 EN JUEGO</option>
+                        <option value="finished">🏁 FINALIZADO</option>
+                        <option value="pairing">🔀 EMPAREJANDO</option>
+                    </select>
+                    <select id="filter-category" class="pro-input" style="height:45px; font-size: 0.8rem;">
+                        <option value="all">CATEGORÍA: TODAS</option>
+                        <option value="male">MASCULINO</option>
+                        <option value="female">FEMENINO</option>
+                        <option value="mixed">MIXTO</option>
+                        <option value="open">OPEN / TODOS</option>
+                    </select>
+                    <div style="display:flex; gap: 8px;">
+                        <button class="btn-outline-pro" onclick="document.getElementById('entreno-search-input').value=''; document.getElementById('filter-month').value='all'; document.getElementById('filter-status').value='all'; document.getElementById('filter-category').value='all'; loadAdminView('entrenos_mgmt')" style="flex:1; height:45px; font-size: 0.7rem; padding: 0;">
+                            <i class="fas fa-eraser"></i> LIMPIAR
+                        </button>
+                        <button class="btn-outline-pro" onclick="loadAdminView('entrenos_mgmt')" style="width: 45px; height:45px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SCROLLABLE LIST -->
+                <div class="entreno-scroll-list" id="entrenos-list-container" style="overflow-y: auto; padding-right: 10px; flex: 1;">
+                    ${listHtml.length ? listHtml : '<div class="glass-card-enterprise" style="text-align:center; padding: 5rem; color: var(--text-muted);"><i class="fas fa-terminal" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.2;"></i><br>No se encontraron entrenos con los filtros actuales.</div>'}
+                </div>
+            </div>
+        `;
+
+        setupFilters();
+
+    } catch (e) {
+        if (navId !== window._currentAdminNavId) {
+            console.warn(`⚠️ [entrenos_mgmt] Error ignorado porque la vista activa es #${window._currentAdminNavId}:`, e.message);
+            return;
+        }
+        console.error("Error en Gestor Entrenos:", e);
+        content.innerHTML = `<div class="error-box" style="padding:40px; text-align:center;">
+            <i class="fas fa-exclamation-triangle" style="font-size:3rem; color:#ff4444; margin-bottom:20px;"></i>
+            <h3 style="color:#ff4444;">Error de Carga</h3>
+            <p style="color:#fff; font-family:monospace; background:rgba(0,0,0,0.3); padding:10px; border-radius:8px;">${e.message}</p>
+            <button onclick="loadAdminView('entrenos_mgmt')" style="margin-top:20px; padding:10px 20px; background:#fff; border:none; border-radius:6px; cursor:pointer;">REINTENTAR</button>
+        </div>`;
+    }
+};
+
+// 2. CREAR ENTRENO (Formulario Dedicado)
+window.AdminViews.entrenos_create = async function () {
+    const content = document.getElementById('content-area');
+    const titleEl = document.getElementById('page-title');
+
+    if (titleEl) titleEl.textContent = 'Crear Nuevo Entreno';
+
+    content.innerHTML = `
+        <div style="max-width: 650px; margin: 0 auto;">
+            <div class="glass-card-enterprise fade-in" style="padding: 2.5rem;">
+                <h3 style="color: var(--primary); margin-bottom: 2rem; display: flex; align-items: center; gap: 12px; font-weight:800; font-size: 1.2rem;">
+                    <i class="fas fa-plus-circle" style="font-size: 1.5rem; color: #CCFF00;"></i> CREAR NUEVO EVENTO DE ENTRENO
+                </h3>
+
+                <!-- Botones de Preset Rápido -->
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;">
+                    <button type="button" class="btn-micro" onclick="window.applyEntrenoPreset('suizo')" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4);">🇨🇭 Entreno Suizo (2h • 6 Rondas)</button>
+                    <button type="button" class="btn-micro" onclick="window.applyEntrenoPreset('twister')" style="background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4);">🌪️ Twister Dinámico</button>
+                    <button type="button" class="btn-micro" onclick="window.applyEntrenoPreset('fija')" style="background: rgba(14, 165, 233, 0.2); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.4);">🔒 Pareja Fija</button>
+                </div>
+                
+                <form id="create-entreno-form" class="pro-form compact-admin-form">
+                    
+                    <h3 style="color: #CCFF00; font-size: 0.85rem; margin-bottom: 15px; border-bottom: 1px solid rgba(204,255,0,0.2); padding-bottom: 8px;">
+                        <i class="fas fa-sliders-h"></i> CONFIGURACIÓN GENERAL
+                    </h3>
+
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label>NOMBRE DEL EVENTO</label>
+                        <input type="text" name="name" class="pro-input" placeholder="Ej: Entreno Mañanero Intensivo" required
+                            style="font-weight: 800; font-size: 1rem;">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 15px;">
+                        <div class="form-group">
+                            <label>FECHA</label>
+                            <input type="date" name="date" class="pro-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label>INICIO</label>
+                            <input type="time" name="time" class="pro-input" value="10:00" required>
+                        </div>
+                        <div class="form-group">
+                            <label>FIN</label>
+                            <input type="time" name="time_end" class="pro-input" value="11:30">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
+                        <div class="form-group">
+                            <label>CATEGORÍA</label>
+                            <select name="category" class="pro-input">
+                                <option value="open">TODOS / OPEN</option>
+                                <option value="male">MASCULINO</option>
+                                <option value="female">FEMENINO</option>
+                                <option value="mixed">MIXTO</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-map-marker-alt" style="color: #38bdf8;"></i> SEDE / CLUB</label>
+                            <div class="sede-combobox-wrapper">
+                                <input type="text" 
+                                       name="location" 
+                                       id="create-entreno-location-input" 
+                                       class="pro-input sede-combobox-input" 
+                                       placeholder="🔍 Buscar o escribir sede / club..." 
+                                       autocomplete="off" 
+                                       required>
+                                <button type="button" class="sede-combobox-toggle" title="Ver lista de sedes">
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div class="sede-combobox-dropdown"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px;">
+                        <div class="form-group">
+                            <label>MODO DE JUEGO</label>
+                            <select name="pair_mode" id="create-entreno-pair-mode" class="pro-input" onchange="window.updatePairModeHelper(this, 'create-entreno-pair-mode-desc')">
+                                <option value="twister" selected>🌪️ TWISTER INDIVIDUAL (Pozo rotativo)</option>
+                                <option value="fixed">🔒 PAREJA FIJA (Dupla todo el torneo)</option>
+                                <option value="swiss">🇨🇭 SUIZO (Puntos acumulados)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>ESTADO</label>
+                            <select name="status" class="pro-input" style="font-weight: 800;">
+                                <option value="open" selected>🟢 ABIERTA</option>
+                                <option value="pairing">🔀 EMPAREJAMIENTO</option>
+                                <option value="live">🎾 EN JUEGO</option>
+                                <option value="finished">🏁 FINALIZADA</option>
+                                <option value="cancelled">⛔ ANULADO</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- EXPLICACIÓN DINÁMICA DEL MODO DE JUEGO -->
+                    <div id="create-entreno-pair-mode-desc" style="background: rgba(59, 130, 246, 0.08); border-left: 3px solid #3b82f6; padding: 8px 12px; border-radius: 8px; font-size: 0.72rem; color: #cbd5e1; margin-bottom: 15px; line-height: 1.35;">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                        <div class="form-group">
+                            <label><i class="fas fa-signal" style="color: #CCFF00;"></i> NIVEL MÍNIMO</label>
+                            <input type="text" name="level_min" class="pro-input" placeholder="Ej: 3.5" value="3.5">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-signal" style="color: #CCFF00;"></i> NIVEL MÁXIMO</label>
+                            <input type="text" name="level_max" class="pro-input" placeholder="Ej: 4.5" value="4.5">
+                        </div>
+                    </div>
+
+                    <h3 style="color: #60A5FA; font-size: 0.85rem; margin-bottom: 15px; border-bottom: 1px solid rgba(96,165,250,0.2); padding-bottom: 8px; margin-top: 20px;">
+                        <i class="fas fa-cogs"></i> LOGÍSTICA
+                    </h3>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                        <div class="form-group">
+                            <label>PISTAS</label>
+                            <input type="number" name="max_courts" class="pro-input" value="4" placeholder="4">
+                        </div>
+                        <div class="form-group">
+                            <label>RONDAS</label>
+                            <input type="number" name="rounds_count" class="pro-input" value="6">
+                        </div>
+                        <div class="form-group">
+                            <label>€ SOCIO</label>
+                            <input type="number" name="price_members" step="0.1" class="pro-input" value="15">
+                        </div>
+                        <div class="form-group">
+                            <label>€ EXT.</label>
+                            <input type="number" name="price_external" step="0.1" class="pro-input" value="17">
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 15px; margin-bottom: 2rem;">
+                        <label>IMAGEN DE PORTADA</label>
+                        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                            <input type="text" name="image_url" id="create-entreno-img-input" class="pro-input"
+                                placeholder="URL de la imagen...">
+                            <img id="create-entreno-img-preview" src=""
+                                style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover; background: #333;">
+                        </div>
+
+                        <!-- Quick Image Selectors -->
+                        <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                            <button type="button" class="btn-micro"
+                                onclick="selectCreateEntrenoImage('img/entreno masculino prat.jpg')">Prat Masc</button>
+                            <button type="button" class="btn-micro"
+                                onclick="selectCreateEntrenoImage('img/entreno femenino prat.jpg')">Prat Fem</button>
+                            <button type="button" class="btn-micro" style="background: #ccff00; color: #000;"
+                                onclick="selectCreateEntrenoImage('img/entreno mixto prat.jpg')">Prat Mixto</button>
+                            <button type="button" class="btn-micro"
+                                onclick="selectCreateEntrenoImage('img/entreno masculino delfos.jpg')">Delfos Masc</button>
+                            <button type="button" class="btn-micro"
+                                onclick="selectCreateEntrenoImage('img/entreno femenino delfos.jpg')">Delfos Fem</button>
+                            <button type="button" class="btn-micro" style="background: #ccff00; color: #000;"
+                                onclick="selectCreateEntrenoImage('img/entreno mixto delfos.jpg')">Delfos Mixto</button>
+                            <button type="button" class="btn-micro" style="background: #38bdf8; color: #000; font-weight: 800;"
+                                onclick="selectCreateEntrenoImage('img/new_play_padel_pro.png')">⭐ New Play Padel</button>
+                            <button type="button" class="btn-micro" style="background: #0284c7; color: #fff; font-weight: 800;"
+                                onclick="selectCreateEntrenoImage('img/cem_tennis_hospitalet.png')">⭐ CEM Tennis</button>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 15px; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <button type="button" class="btn-outline-pro" onclick="loadAdminView('entrenos_mgmt')" style="flex: 1; height: 55px; font-weight: 700;">
+                            CANCELAR
+                        </button>
+                        <button type="submit" class="btn-primary-pro" style="flex: 2; height: 55px; font-weight: 900; font-size: 1.1rem; box-shadow: 0 8px 25px rgba(204,255,0,0.3);">
+                            PUBLICAR ENTRENO 🚀
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+
+    setupCreateForm();
+};
+
+// --- HELPER FUNCTIONS --- //
+
+function renderEntrenoCard(e) {
+    const playersCount = e.players?.length || 0;
+    const maxPlayers = (parseInt(e.max_courts) || 4) * 4;
+
+    const isCancelled = e.status === 'cancelled';
+    const statusLabel = e.status === 'live' ? 'EN JUEGO' : e.status === 'finished' ? 'FINALIZADA' : e.status === 'pairing' ? 'EMPAREJAMIENTO' : (isCancelled ? 'ANULADO' : 'ABIERTA');
+    const statusColor = e.status === 'live' ? '#FF2D55' : e.status === 'finished' ? '#888' : e.status === 'pairing' ? '#22D3EE' : (isCancelled ? '#F43F5E' : '#00E36D');
+
+    // Determine Month for filter
+    let month = '';
+    if (e.date) {
+        if (e.date.includes('-')) month = e.date.substring(0, 7); // 2024-01-25 -> 2024-01
+        else if (e.date.includes('/')) {
+            const p = e.date.split('/');
+            month = `${p[2]}-${p[1].padStart(2, '0')}`;
+        }
+    }
+
+    // Calculate Duration
+    let durationText = '';
+    if (e.time && e.time_end) {
+        try {
+            const [startH, startM] = e.time.split(':').map(Number);
+            const [endH, endM] = e.time_end.split(':').map(Number);
+            const startMinutes = startH * 60 + startM;
+            const endMinutes = endH * 60 + endM;
+            const durationMinutes = endMinutes - startMinutes;
+
+            if (durationMinutes > 0) {
+                const hours = Math.floor(durationMinutes / 60);
+                const mins = durationMinutes % 60;
+                if (hours > 0) {
+                    durationText = `${hours}h ${mins > 0 ? mins + 'min' : ''}`;
+                } else {
+                    durationText = `${mins}min`;
+                }
+            }
+        } catch (err) {
+            console.warn('Error calculating duration:', err);
+        }
+    }
+
+    // Level Text
+    const levelText = (e.level && String(e.level).trim()) || (e.level_min && e.level_max ? `${e.level_min} - ${e.level_max}` : (e.level_min ? `${e.level_min}` : (e.level_max ? `Hasta ${e.level_max}` : '3.5 - 4.5')));
+
+    return `
+        <div class="glass-card-enterprise entreno-card-item" 
+             data-month="${month}" 
+             data-status="${e.status || 'open'}" 
+             data-category="${e.category || 'open'}"
+             style="margin-bottom: 0.8rem; display: flex; flex-direction: column; padding: 0.8rem 1rem; border-left: 6px solid ${statusColor}; background: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 12px; gap: 0.6rem; color: #000000;">
+            
+            <div style="display: flex; gap: 1.2rem; align-items: flex-start;">
+                <div class="entreno-preview-img" style="width: 48px; height: 48px; border-radius: 12px; background: url('${(e.image_url || '').replace(/ /g, '%20')}') center/cover; border: 1px solid rgba(0,0,0,0.1); position:relative; flex-shrink: 0;">
+                    <div style="position:absolute; bottom:-5px; right:-5px; background:${statusColor}; width:12px; height:12px; border-radius:50%; border:2px solid #fff;"></div>
+                </div>
+                <div class="entreno-info-pro" style="flex: 1; min-width: 0;">
+                    <div style="font-weight: 950; font-size: 1.1rem; color: #000000; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
+                        ${e.name.toUpperCase()}
+                    </div>
+                    <div style="display: flex; gap: 0.8rem; font-size: 0.75rem; color: #333333; flex-wrap: wrap; align-items: center;">
+                         <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-calendar-alt" style="color: #60A5FA;"></i> <span style="color:#333; font-weight: 600;">${formatDate(e.date)}</span></span>
+                         <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-clock" style="color: #A78BFA;"></i> <span style="color:#333; font-weight: 600;">${e.time ? (e.time_end && !e.time.includes('-') ? `${e.time} - ${e.time_end}` : e.time) : '10:00'}${durationText ? ` (${durationText})` : ''}</span></span>
+                         <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-signal" style="color: #F59E0B;"></i> <span style="color:#333; font-weight: 700;">Niv. ${levelText}</span></span>
+                         <span onclick='window.openEditEntrenoModal(${JSON.stringify(e).replace(/'/g, "&#39;")})' style="cursor:pointer; display: flex; align-items: center; gap: 5px;" title="Gestionar participantes">
+                            <i class="fas fa-users" style="color: #10B981;"></i> <span style="color:#000; font-weight:800;">${playersCount}</span><span style="opacity:0.5;">/${maxPlayers}</span>
+                         </span>
+                    </div>
+                </div>
+                <div style="background:rgba(0,0,0,0.05); padding:6px 12px; border-radius:8px; font-size:0.8rem; font-weight:900; color:#000; border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0;">
+                    ${e.price_members || 15}€
+                </div>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-top: 0.3rem; border-top: 1px solid rgba(255,255,255,0.03);">
+                <!-- Status Selector -->
+                <div style="position: relative; flex: 1; min-width: 120px;">
+                    <select onchange="window.updateEntrenoStatus('${e.id}', this.value)" 
+                            style="
+                                width: 100%;
+                                appearance: none; 
+                                background: ${statusColor}20; 
+                                color: #000000 !important; 
+                                -webkit-text-fill-color: #000000 !important;
+                                border: 2px solid ${statusColor}; 
+                                padding: 6px 10px; 
+                                border-radius: 8px; 
+                                font-weight: 800; 
+                                font-size: 0.7rem; 
+                                cursor: pointer; 
+                                text-transform: uppercase;
+                                outline: none;
+                            ">
+                        <option value="open" ${e.status === 'open' ? 'selected' : ''}>🟢 ABIERTA</option>
+                        <option value="pairing" ${e.status === 'pairing' ? 'selected' : ''}>🔀 EMPAREJAMIENTO</option>
+                        <option value="live" ${e.status === 'live' ? 'selected' : ''}>🎾 EN JUEGO</option>
+                        <option value="finished" ${e.status === 'finished' ? 'selected' : ''}>🏁 FINALIZADA</option>
+                        <option value="cancelled" ${e.status === 'cancelled' ? 'selected' : ''}>⛔ ANULADO</option>
+                    </select>
+                </div>
+
+                <!-- Action Group -->
+                <div style="display: flex; gap: 8px; flex-shrink: 0; justify-content: flex-end; flex: 1;">
+                    <button class="btn-micro" 
+                            style="background: #10B981 !important; color: #fff !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
+                            onclick='window.checkScheduledEventHealthPrompt(${JSON.stringify(e).replace(/'/g, "&#39;")}, "entreno")' 
+                            title="🛡️ Comprobar si va a funcionar al 100% (Chequeo Pre-Flight)">
+                        <i class="fas fa-shield-halved" style="font-size: 0.95rem; color: #fff !important;"></i>
+                    </button>
+
+                    ${(e.status === 'open' || e.status === 'live') ? `
+                    <button class="btn-micro" 
+                            style="background: #FFD700 !important; color: #000 !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
+                            onclick="window.launchBatSignalEntreno('${e.id}')"
+                            title="Batseñal">
+                        <i class="fas fa-bullhorn" style="font-size: 0.9rem; color: #000 !important;"></i>
+                    </button>
+                    ` : ''}
+
+                    <button class="btn-micro" 
+                            style="background: #a855f7 !important; color: #fff !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
+                            onclick="window.openManualRoundModal('${e.id}', 'entreno', 1)" 
+                            title="Definir Ronda Manual (Admin/Superadmin)">
+                        <i class="fas fa-sliders" style="font-size: 0.85rem; color: #fff !important;"></i>
+                    </button>
+
+                    ${(e.status === 'finished') ? `
+                    <button class="btn-micro" 
+                            style="background: linear-gradient(135deg, #8B5CF6, #6D28D9) !important; color: #CCFF00 !important; border: 1px solid rgba(204, 255, 0, 0.5); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; box-shadow: 0 0 10px rgba(139, 92, 246, 0.4);" 
+                            onclick="window.launchAIChronicleEntreno('${e.id}')" 
+                            title="Crónica Épica IA & Story 9:16">
+                        <span style="font-size: 0.95rem;">✨</span>
+                    </button>
+                    ` : ''}
+
+                    <button class="btn-micro" 
+                            style="background: #25D366 !important; color: #fff !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
+                            onclick="window.launchWhatsAppShareEntreno('${e.id}')"
+                            title="WhatsApp">
+                        <i class="fab fa-whatsapp" style="font-size: 1rem; color: #fff !important;"></i>
+                    </button>
+                    
+                    <button class="btn-micro" 
+                            style="background: #475569 !important; color: #fff !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
+                            onclick="window.duplicateEntreno('${e.id}')" 
+                            title="Duplicar">
+                        <i class="fas fa-clone" style="font-size: 0.8rem; color: #fff !important;"></i>
+                    </button>
+                    
+                    <button class="btn-micro" 
+                            style="background: #3B82F6 !important; color: #fff !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
+                            onclick='window.openEditEntrenoModal(${JSON.stringify(e).replace(/'/g, "&#39;")})' 
+                            title="Editar">
+                        <i class="fas fa-pen" style="font-size: 0.8rem; color: #fff !important;"></i>
+                    </button>
+                    
+                    <button class="btn-micro" 
+                            style="background: #EF4444 !important; color: #fff !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
+                            onclick="window.deleteEntreno('${e.id}')" 
+                            title="Eliminar">
+                        <i class="fas fa-trash-alt" style="font-size: 0.8rem; color: #fff !important;"></i>
+                    </button>
+                </div>
+            </div>
+        </div>`;
+}
+
+window.selectCreateEntrenoImage = (url) => {
+    const input = document.getElementById('create-entreno-img-input');
+    if (input) {
+        input.value = url;
+        const preview = document.getElementById('create-entreno-img-preview');
+        if (preview) preview.src = url;
+    }
+};
+
+window.applyEntrenoPreset = (type) => {
+    const form = document.getElementById('create-entreno-form');
+    if (!form) return;
+
+    if (type === 'suizo') {
+        const nameInput = form.querySelector('[name=name]');
+        if (nameInput) nameInput.value = '🇨🇭 ENTRENO SUIZO';
+        const pairMode = form.querySelector('[name=pair_mode]');
+        if (pairMode) pairMode.value = 'swiss';
+        const courts = form.querySelector('[name=max_courts]');
+        if (courts) courts.value = '3';
+        const rounds = form.querySelector('[name=rounds_count]');
+        if (rounds) rounds.value = '6';
+        const tStart = form.querySelector('[name=time]');
+        const tEnd = form.querySelector('[name=time_end]');
+        if (tStart) tStart.value = '10:00';
+        if (tEnd) tEnd.value = '12:00';
+        if (window.selectCreateEntrenoImage) window.selectCreateEntrenoImage('img/entreno masculino prat.jpg');
+    } else if (type === 'twister') {
+        const nameInput = form.querySelector('[name=name]');
+        if (nameInput) nameInput.value = '🌪️ ENTRENO TWISTER DINÁMICO';
+        const pairMode = form.querySelector('[name=pair_mode]');
+        if (pairMode) pairMode.value = 'twister';
+        const courts = form.querySelector('[name=max_courts]');
+        if (courts) courts.value = '4';
+        const rounds = form.querySelector('[name=rounds_count]');
+        if (rounds) rounds.value = '6';
+        if (window.selectCreateEntrenoImage) window.selectCreateEntrenoImage('img/entreno fem indoor.jpg');
+    } else if (type === 'fija') {
+        const nameInput = form.querySelector('[name=name]');
+        if (nameInput) nameInput.value = '🔒 ENTRENO PAREJA FIJA';
+        const pairMode = form.querySelector('[name=pair_mode]');
+        if (pairMode) pairMode.value = 'fixed';
+        const courts = form.querySelector('[name=max_courts]');
+        if (courts) courts.value = '4';
+        const rounds = form.querySelector('[name=rounds_count]');
+        if (rounds) rounds.value = '6';
+        if (window.selectCreateEntrenoImage) window.selectCreateEntrenoImage('img/ball-mixta.png');
+    }
+
+    const pairModeEl = form.querySelector('[name=pair_mode]');
+    if (pairModeEl && window.updatePairModeHelper) {
+        window.updatePairModeHelper(pairModeEl, 'create-entreno-pair-mode-desc');
+    }
+};
+
+function setupCreateForm() {
+    const form = document.getElementById('create-entreno-form');
+    if (!form) return;
+
+    // Attach Sede Combobox
+    if (window.setupSedeCombobox) {
+        window.setupSedeCombobox('create-entreno-location-input');
+    }
+
+    // Auto-Sync Logic (Images & Names)
+    const cat = form.querySelector('[name=category]');
+    const loc = form.querySelector('[name=location]');
+    const img = form.querySelector('[name=image_url]');
+    const name = form.querySelector('[name=name]');
+    const date = form.querySelector('[name=date]');
+
+    // Pre-fill date with today
+    if (date && !date.value) {
+        date.valueAsDate = new Date();
+    }
+
+    const pairMode = form.querySelector('[name=pair_mode]');
+    if (pairMode && window.updatePairModeHelper) {
+        pairMode.onchange = () => window.updatePairModeHelper(pairMode, 'create-entreno-pair-mode-desc');
+        window.updatePairModeHelper(pairMode, 'create-entreno-pair-mode-desc');
+    }
+
+    const sync = () => {
+        const cVal = cat.value;
+        const lVal = loc.value;
+
+        // Smart Default Image
+        const autoImg = EventService.getAutoImage(lVal, cVal, 'entreno');
+        if (img && !img.value) {
+            img.value = autoImg; // Only set if empty
+            const preview = document.getElementById('create-entreno-img-preview');
+            if (preview) preview.src = autoImg;
+        }
+    };
+
+    if (cat) cat.onchange = sync;
+    if (loc) loc.onchange = sync;
+    
+    if (img) {
+        img.oninput = () => {
+            const preview = document.getElementById('create-entreno-img-preview');
+            if (preview) preview.src = img.value;
+        };
+    }
+
+    // Run initial sync to pre-populate default image
+    sync();
+
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const fd = new FormData(form);
+        const data = Object.fromEntries(fd.entries());
+
+        try {
+            // Validations
+            if (!data.name) throw new Error("El nombre es obligatorio");
+            if (!data.date) throw new Error("La fecha es obligatoria");
+
+            const newEventId = await EventService.createEvent('entreno', data);
+
+            // Notify
+            if (window.NotificationService) window.NotificationService.showToast("Entreno Creado Correctamente", "success");
+
+            // Reload
+            window.loadAdminView('entrenos_mgmt');
+
+        } catch (err) { alert("Error al crear: " + err.message); }
+    };
+}
+
+function setupFilters() {
+    const searchInput = document.getElementById('entreno-search-input');
+    const monthSelect = document.getElementById('filter-month');
+    const statusSelect = document.getElementById('filter-status');
+    const catSelect = document.getElementById('filter-category');
+
+    const applyFilters = () => {
+        const query = searchInput?.value.toLowerCase() || '';
+        const month = monthSelect?.value || 'all';
+        const status = statusSelect?.value || 'all';
+        const cat = catSelect?.value || 'all';
+
+        const cards = document.querySelectorAll('#entrenos-list-container > .entreno-card-item');
+        cards.forEach(card => {
+            const cMonth = card.getAttribute('data-month');
+            const cStatus = card.getAttribute('data-status');
+            const cCat = card.getAttribute('data-category');
+            const cText = card.innerText.toLowerCase();
+
+            const matchesSearch = !query || cText.includes(query);
+            const matchesMonth = month === 'all' || cMonth === month;
+            const matchesStatus = status === 'all' || cStatus === status;
+            const matchesCat = cat === 'all' || cCat === cat;
+
+            card.style.display = (matchesSearch && matchesMonth && matchesStatus && matchesCat) ? 'flex' : 'none';
+        });
+    };
+
+    if (searchInput) searchInput.oninput = applyFilters;
+    if (monthSelect) monthSelect.onchange = applyFilters;
+    if (statusSelect) statusSelect.onchange = applyFilters;
+    if (catSelect) catSelect.onchange = applyFilters;
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '---';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+// --- AUTOMATION LOGIC (Isolated) ---
+window.api = window.api || {};
+window.api.runAutomation = () => {
+    // console.log("🤖 [AdminBot] Checking for auto-start events...");
+    EventService.getAll(AppConstants.EVENT_TYPES.ENTRENO).then(evts => {
+        const now = new Date();
+        evts.forEach(evt => {
+            if (evt.status === 'finished' || evt.status === 'cancelled') return;
+
+            let start, end;
+            try {
+                const parts = (evt.time || '10:00').split('-').map(s => s.trim());
+                let dateIso = evt.date;
+                // Handle DD/MM/YYYY
+                if (evt.date && evt.date.includes('/')) {
+                    const [d, m, y] = evt.date.split('/');
+                    dateIso = `${y}-${m}-${d}`;
+                }
+                start = new Date(`${dateIso}T${parts[0]}:00`);
+                if (parts[1]) end = new Date(`${dateIso}T${parts[1]}:00`);
+                else end = new Date(start.getTime() + 90 * 60000); // 90 mins default
+            } catch (e) { return; }
+
+            // 1. AUTO START
+            if ((evt.status === 'open' || evt.status === 'pairing') && now >= start && now < end) {
+                const players = evt.players || [];
+                // Simplification: if it has players, start it
+                if (players.length >= 4) {
+                    console.log(`⚡ Admin Auto - Start: ${evt.name}`);
+                    updateEntrenoStatus(evt.id, 'live');
+                }
+            }
+            // 2. AUTO FINISH
+            else if (evt.status === 'live' && now >= end) {
+                console.log(`🏁 Admin Auto - Finish: ${evt.name}`);
+                updateEntrenoStatus(evt.id, 'finished');
+            }
+        });
+    }).catch(e => console.warn("Auto-bot error", e));
+};
+
+// --- GLOBAL EXPORTS (KEEPING EXISTING APIs) --- //
+
+window.duplicateEntreno = async (eOrId) => {
+    if (!eOrId) return;
+    let e = eOrId;
+    if (typeof eOrId === 'string') {
+        if (window._currentEntrenosCache && Array.isArray(window._currentEntrenosCache)) {
+            e = window._currentEntrenosCache.find(x => x.id === eOrId);
+        }
+        if (!e && window.EventService && typeof window.EventService.getById === 'function') {
+            try {
+                e = await window.EventService.getById('entreno', eOrId);
+            } catch (err) {
+                console.error("❌ [duplicateEntreno] Error al recuperar entreno por ID:", err);
+            }
+        }
+    }
+
+    if (!e || typeof e !== 'object' || (!e.id && !e.name)) {
+        const errorMsg = "No se ha encontrado el entrenamiento seleccionado para duplicar.";
+        if (window.NotificationService && typeof window.NotificationService.showToast === 'function') {
+            window.NotificationService.showToast(errorMsg, 'error');
+        } else {
+            alert(errorMsg);
+        }
+        return;
+    }
+
+    if (!confirm(`¿Duplicar "${e.name || 'este entreno'}"?`)) return;
+
+    const copy = { ...e };
+
+    // 1. Cálculo robusto de fecha (+7 días) sin desfases horarios
+    const rawDate = copy.date || copy.eventDate || copy.fecha || '';
+    let normDate = '';
+    if (window.EventService && typeof window.EventService.normalizeDate === 'function') {
+        normDate = window.EventService.normalizeDate(rawDate);
+    }
+    if (!normDate && typeof rawDate === 'string') {
+        const clean = rawDate.trim();
+        if (clean.includes('/')) {
+            const parts = clean.split('/').map(p => p.trim());
+            if (parts.length >= 2) {
+                const day = parts[0].padStart(2, '0');
+                const month = parts[1].padStart(2, '0');
+                const year = parts[2] ? (parts[2].length === 2 ? '20' + parts[2] : parts[2]) : String(new Date().getFullYear());
+                normDate = `${year}-${month}-${day}`;
+            }
+        } else if (clean.includes('-')) {
+            const parts = clean.split('-').map(p => p.trim());
+            if (parts.length === 3) {
+                if (parts[0].length === 4) {
+                    normDate = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+                } else {
+                    const year = parts[2].length === 2 ? '20' + parts[2] : parts[2];
+                    normDate = `${year}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                }
+            }
+        }
+    }
+
+    let nextDate = '';
+    if (normDate && normDate.includes('-')) {
+        const [yStr, mStr, dStr] = normDate.split('-');
+        const y = parseInt(yStr, 10);
+        const m = parseInt(mStr, 10) - 1;
+        const d = parseInt(dStr, 10);
+        if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+            const dt = new Date(y, m, d, 12, 0, 0);
+            dt.setDate(dt.getDate() + 7);
+            const nextY = dt.getFullYear();
+            const nextM = String(dt.getMonth() + 1).padStart(2, '0');
+            const nextD = String(dt.getDate()).padStart(2, '0');
+            nextDate = `${nextY}-${nextM}-${nextD}`;
+        }
+    }
+
+    if (!nextDate) {
+        const fallbackDt = new Date();
+        fallbackDt.setHours(12, 0, 0, 0);
+        fallbackDt.setDate(fallbackDt.getDate() + 7);
+        const fY = fallbackDt.getFullYear();
+        const fM = String(fallbackDt.getMonth() + 1).padStart(2, '0');
+        const fD = String(fallbackDt.getDate()).padStart(2, '0');
+        nextDate = `${fY}-${fM}-${fD}`;
+    }
+
+    copy.date = nextDate;
+
+    // 2. Actualización inteligente del nombre del evento si incluye fechas
+    if (copy.name) {
+        let updatedName = copy.name.trim();
+        const [nY, nM, nD] = nextDate.split('-');
+        let dateReplaced = false;
+
+        // DD/MM/YYYY o DD-MM-YYYY (o YY de 2 dígitos)
+        const fullDateRegex = /\b(\d{1,2})([\/\-])(\d{1,2})\2(\d{2,4})\b/;
+        if (fullDateRegex.test(updatedName)) {
+            updatedName = updatedName.replace(fullDateRegex, (match, d, sep, m, y) => {
+                dateReplaced = true;
+                const targetY = y.length === 2 ? nY.slice(-2) : nY;
+                const targetD = d.length === 1 ? String(parseInt(nD, 10)) : nD;
+                const targetM = m.length === 1 ? String(parseInt(nM, 10)) : nM;
+                return `${targetD}${sep}${targetM}${sep}${targetY}`;
+            });
+        }
+
+        // YYYY-MM-DD o YYYY/MM/DD
+        if (!dateReplaced) {
+            const isoDateRegex = /\b(\d{4})([\/\-])(\d{1,2})\2(\d{1,2})\b/;
+            if (isoDateRegex.test(updatedName)) {
+                updatedName = updatedName.replace(isoDateRegex, (match, y, sep, m, d) => {
+                    dateReplaced = true;
+                    const targetD = d.length === 1 ? String(parseInt(nD, 10)) : nD;
+                    const targetM = m.length === 1 ? String(parseInt(nM, 10)) : nM;
+                    return `${nY}${sep}${targetM}${sep}${targetD}`;
+                });
+            }
+        }
+
+        // DD/MM o DD-MM (Validar rango: día 1-31, mes 1-12)
+        if (!dateReplaced) {
+            const shortDateRegex = /\b(0[1-9]|[12]\d|3[01]|[1-9])([\/\-])(0[1-9]|1[0-2]|[1-9])\b/;
+            if (shortDateRegex.test(updatedName)) {
+                updatedName = updatedName.replace(shortDateRegex, (match, d, sep, m) => {
+                    dateReplaced = true;
+                    const targetD = d.length === 1 ? String(parseInt(nD, 10)) : nD;
+                    const targetM = m.length === 1 ? String(parseInt(nM, 10)) : nM;
+                    return `${targetD}${sep}${targetM}`;
+                });
+            }
+        }
+
+        // Si no se reemplazó ninguna fecha, añadir (Copia) si no lo tiene ya
+        if (!dateReplaced) {
+            if (!/\(Copia\)$/i.test(updatedName)) {
+                updatedName = `${updatedName} (Copia)`;
+            }
+        }
+
+        copy.name = updatedName;
+    }
+
+    // 3. Limpieza profunda del payload para Firestore
+    const forbiddenKeys = [
+        'id', '_id',
+        'created_at', 'createdAt', 'updatedAt',
+        'chat_id', 'chatId',
+        'matches', 'rounds', 'liveMatches',
+        'classification', 'results',
+        'current_round', 'active_round', 'currentRound', 'round'
+    ];
+    forbiddenKeys.forEach(k => delete copy[k]);
+
+    copy.status = 'open';
+    copy.players = [];
+    copy.registeredPlayers = [];
+    copy.waitlist = [];
+    copy.fixed_pairs = [];
+
+    // Limpiar claves undefined para evitar error de Firestore
+    Object.keys(copy).forEach(k => {
+        if (copy[k] === undefined) {
+            delete copy[k];
+        }
+    });
+
+    // 4. Guardado, feedback y recarga
+    try {
+        await EventService.createEvent('entreno', copy);
+        const successMsg = `Entreno duplicado con éxito para el ${copy.date} 📅`;
+        if (window.NotificationService && typeof window.NotificationService.showToast === 'function') {
+            window.NotificationService.showToast(successMsg, 'success');
+        }
+        if (typeof window.loadAdminView === 'function') {
+            window.loadAdminView('entrenos_mgmt');
+        }
+    } catch (err) {
+        console.error("❌ Error al duplicar entreno:", err);
+        const errMsg = `Error al duplicar el entreno: ${err.message || 'Fallo desconocido'}`;
+        if (window.NotificationService && typeof window.NotificationService.showToast === 'function') {
+            window.NotificationService.showToast(errMsg, 'error');
+        }
+        alert(errMsg);
+    }
+};
+
+window.updateEntrenoStatus = async (id, newStatus) => {
+    try {
+        await EventService.updateEvent('entreno', id, { status: newStatus });
+
+        // Auto-Gen Match R1 if Live
+        if (newStatus === 'live' && window.MatchMakingService) {
+            // Check if matches exist logic... (omitted for brevity, assume service handles or user generates)
+            // Or call simple generation:
+            try {
+                await window.MatchMakingService.generateRound(id, 'entreno', 1);
+            } catch (e) { console.log("R1 gen skipped or failed", e); }
+        }
+
+        window.loadAdminView('entrenos_mgmt');
+    } catch (e) { alert("Error status: " + e.message); }
+};
+
+window.deleteEntreno = async (id) => {
+    if (!confirm("⚠️ ¿Seguro que quieres eliminar este entreno permanentemente?")) return;
+    await EventService.deleteEvent('entreno', id);
+    window.loadAdminView('entrenos_mgmt');
+};
+
+window.openEditEntrenoModal = async (entreno) => {
+    const modal = document.getElementById('admin-entreno-modal');
+    const form = document.getElementById('edit-entreno-form');
+    if (!modal || !form) return console.error("Edit modal misplaced");
+
+    window._editingEntreno = entreno;
+
+    // Populate Form
+    for (const [key, value] of Object.entries(entreno)) {
+        const input = form.querySelector(`[name="${key}"]`);
+        if (input) input.value = value;
+    }
+
+    // Normalizar time y time_end si vienen combinados o sin separar
+    if (entreno.time && entreno.time.includes('-')) {
+        const parts = entreno.time.split('-').map(s => s.trim());
+        const tStartInput = form.querySelector('[name="time"]');
+        const tEndInput = form.querySelector('[name="time_end"]');
+        if (tStartInput && parts[0]) tStartInput.value = parts[0].slice(0, 5);
+        if (tEndInput && (!entreno.time_end || !tEndInput.value) && parts[1]) tEndInput.value = parts[1].slice(0, 5);
+    }
+
+    // Setup Sede Combobox & Sync Sede
+    if (window.setupSedeCombobox) {
+        window.setupSedeCombobox('edit-entreno-location-input');
+    }
+    const locationInput = form.querySelector('[name=location]');
+    if (locationInput) {
+        locationInput.value = entreno.location || entreno.sede || '';
+    }
+
+    // Ensure level fields have values if undefined
+    const minInput = form.querySelector('[name="level_min"]');
+    if (minInput && (entreno.level_min === undefined || entreno.level_min === null || entreno.level_min === '')) {
+        minInput.value = '3.5';
+    }
+    const maxInput = form.querySelector('[name="level_max"]');
+    if (maxInput && (entreno.level_max === undefined || entreno.level_max === null || entreno.level_max === '')) {
+        maxInput.value = '4.5';
+    }
+
+    // Special Image Preview & Dropzone
+    if (window.updateAmericanaImagePreview) {
+        window.updateAmericanaImagePreview(entreno.image_url || '', 'edit-entreno-img-preview');
+        window.setupAmericanaDropzone('edit-entreno-img-dropzone', 'edit-entreno-file-input', 'edit-entreno-img-input', 'edit-entreno-img-preview');
+    } else {
+        const preview = document.getElementById('edit-entreno-img-preview');
+        if (preview && entreno.image_url) {
+            preview.src = entreno.image_url;
+            preview.style.display = 'block';
+        }
+    }
+
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+
+    // --- DYNAMIC VISIBILITY OF FIXED PAIRS (ENTRENO) ---
+    const pairModeSelect = form.querySelector('[name=pair_mode]');
+    const pairsArea = document.getElementById('entreno-fixed-pairs-area');
+
+    if (pairModeSelect) {
+        let pMode = entreno.pair_mode || 'twister';
+        if (pMode === 'rotating') pMode = 'twister';
+        if (pMode === 'swiss' || pMode === 'twister' || pMode === 'fixed') {
+            pairModeSelect.value = pMode;
+        } else {
+            pairModeSelect.value = (pMode.includes('fixed')) ? 'fixed' : 'twister';
+        }
+    }
+
+    const togglePairsArea = async () => {
+        const val = pairModeSelect?.value;
+        const isFixed = val === 'fixed' || (val && String(val).includes('fij'));
+        if (pairsArea) {
+            pairsArea.style.display = isFixed ? 'block' : 'none';
+        }
+        if (window.updatePairModeHelper) {
+            window.updatePairModeHelper(pairModeSelect, 'edit-entreno-pair-mode-desc');
+        }
+        if (window.loadEntrenoParticipantsUI) {
+            await window.loadEntrenoParticipantsUI(entreno.id, entreno);
+        }
+        if (isFixed && window.PairsUI) {
+            await window.PairsUI.load('entreno-fixed-pairs-area', entreno.id, 'entreno');
+        }
+    };
+
+    if (pairModeSelect) {
+        pairModeSelect.onchange = togglePairsArea; // Bind change listener
+        togglePairsArea(); // Init state based on loaded value
+    } else {
+        if (window.loadEntrenoParticipantsUI) window.loadEntrenoParticipantsUI(entreno.id, entreno);
+        if (window.PairsUI) window.PairsUI.load('entreno-fixed-pairs-area', entreno.id, 'entreno');
+    }
+
+    // Attach Promote Button Logic
+    const btnPromote = document.getElementById('btn-promote-waitlist-entreno');
+    if (btnPromote) {
+        // Clone to remove old listeners
+        const newBtn = btnPromote.cloneNode(true);
+        btnPromote.parentNode.replaceChild(newBtn, btnPromote);
+
+        newBtn.onclick = async () => {
+            if (!confirm("¿Promover al siguiente jugador de la reserva?")) return;
+            try {
+                const promoted = await ParticipantService.promoteNext(entreno.id, 'entreno');
+                if (promoted) {
+                    if (window.NotificationService) window.NotificationService.showToast(`${promoted.name} promovido correctamente`, "success");
+                    window.loadEntrenoParticipantsUI(entreno.id);
+                } else {
+                    alert("No hay jugadores en reserva o error al promover.");
+                }
+            } catch (e) { alert("Error: " + e.message); }
+        };
+    }
+
+    // Attach Submit
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const fd = new FormData(form);
+        const data = Object.fromEntries(fd.entries());
+        const id = data.id;
+        delete data.id;
+
+        // Sincronización de pistas y plazas
+        if (data.max_courts || data.courts) {
+            const courts = parseInt(data.max_courts || data.courts) || 4;
+            data.max_courts = courts;
+            data.courts = courts;
+            data.max_players = courts * 4;
+        }
+
+        try {
+            await EventService.updateEvent('entreno', id, data);
+            alert("✅ Guardado");
+            window.closeEntrenoModal();
+            window.loadAdminView('entrenos_mgmt'); // Refresh list
+        } catch (err) { alert("Error: " + err.message); }
+    };
+};
+
+window.closeEntrenoModal = () => {
+    const modal = document.getElementById('admin-entreno-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+};
+
+// WhatsApp Share - Using Unified Service
+window.launchWhatsAppShareEntreno = async (id) => {
+    console.log("🔗 launchWhatsAppShareEntreno called for:", id);
+    try {
+        let evt = null;
+
+        // 1. Siempre consultar Firestore primero para tener datos 100% reales y actualizados
+        if (window.EventService) {
+            try {
+                evt = await EventService.getById('entreno', id);
+            } catch (fetchErr) {
+                console.warn("⚠️ [launchWhatsAppShareEntreno] Error al consultar Firestore:", fetchErr.message);
+            }
+        }
+
+        // 2. Fallback a memoria activa / caché local si falla la red
+        if (!evt) {
+            evt = window._currentEntrenosCache?.find(e => e.id === id);
+            if (!evt && window.CacheService) {
+                const cached = await window.CacheService.get('entrenos', 'all');
+                evt = cached?.find(e => e.id === id);
+            }
+        }
+
+        if (!evt) {
+            console.warn("⚠️ [launchWhatsAppShareEntreno] Entreno no encontrado:", id);
+            if (window.PremiumModal) {
+                window.PremiumModal.alert({ title: "WhatsApp", message: "No se encontró la información del entreno para compartir.", type: 'warning' });
+            }
+            return;
+        }
+
+        if (window.WhatsAppService) {
+            console.log("🚀 Triggering Unified WhatsApp Service...");
+            await window.WhatsAppService.shareStartFromAdmin(evt);
+        } else {
+            console.warn("⚠️ WhatsAppService not found");
+        }
+    } catch (err) {
+        console.error("❌ Error en launchWhatsAppShareEntreno:", err);
+    }
+};
+
+// Crónica Épica Post-Torneo para Entrenos
+window.launchAIChronicleEntreno = async (id) => {
+    console.log("✨ launchAIChronicleEntreno called for:", id);
+    try {
+        let evt = null;
+        if (window.EventService) {
+            try {
+                evt = await EventService.getById('entreno', id);
+            } catch (e) {
+                console.warn("⚠️ Error fetching entreno:", e);
+            }
+        }
+        if (!evt) {
+            evt = window._currentEntrenosCache?.find(e => e.id === id);
+        }
+
+        // Obtener partidos del entreno
+        let matches = [];
+        if (window.FirebaseDB?.matches) {
+            try {
+                if (typeof window.FirebaseDB.matches.getByAmericanaId === 'function') {
+                    matches = await window.FirebaseDB.matches.getByAmericanaId(id);
+                } else if (typeof window.FirebaseDB.matches.getAll === 'function') {
+                    const allM = await window.FirebaseDB.matches.getAll();
+                    matches = allM.filter(m => m.americanaId === id || m.tournamentId === id);
+                }
+            } catch (mErr) {
+                console.warn("⚠️ Error recuperando partidos del entreno:", mErr);
+            }
+        }
+
+        if (window.TournamentChronicleModal) {
+            window.TournamentChronicleModal.open(evt, matches);
+        } else {
+            alert("El servicio de crónica no está disponible en este momento.");
+        }
+    } catch (err) {
+        console.error("❌ Error en launchAIChronicleEntreno:", err);
+    }
+};
+
+// --- SUB-UI MANAGERS (Participants & Helpers) --- //
+
+window.selectEntrenoImage = (url) => {
+    const input = document.getElementById('edit-entreno-img-input');
+    if (input) {
+        input.value = url;
+        if (window.updateAmericanaImagePreview) {
+            window.updateAmericanaImagePreview(url, 'edit-entreno-img-preview');
+        } else {
+            const preview = document.getElementById('edit-entreno-img-preview');
+            if (preview) {
+                preview.src = url;
+                preview.style.display = 'block';
+            }
+        }
+    }
+};
+
+if (!window.updatePairModeHelper) {
+    window.updatePairModeHelper = function(selectEl, descContainerId) {
+        const container = document.getElementById(descContainerId);
+        if (!container) return;
+        const raw = selectEl ? selectEl.value : 'twister';
+        const mode = (raw === 'rotating') ? 'twister' : raw;
+
+        if (mode === 'swiss') {
+            container.innerHTML = `
+                <div style="display:flex; align-items:flex-start; gap:8px;">
+                    <span style="font-size: 1.15rem; line-height: 1;">🇨🇭</span>
+                    <div>
+                        <strong style="color: #ef4444; font-size: 0.76rem; text-transform: uppercase;">Modalidad Sistema Suizo (Puntos acumulados):</strong>
+                        <div style="color: #cbd5e1; font-size: 0.72rem; margin-top: 2px;">
+                            Cada jugador suma sus propios juegos conseguidos; la clasificación acumulada define en qué pista se juega cada ronda.
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.style.borderLeftColor = '#ef4444';
+            container.style.background = 'rgba(239, 68, 68, 0.08)';
+        } else if (mode === 'fixed') {
+            container.innerHTML = `
+                <div style="display:flex; align-items:flex-start; gap:8px;">
+                    <span style="font-size: 1.15rem; line-height: 1;">🔒</span>
+                    <div>
+                        <strong style="color: #CCFF00; font-size: 0.76rem; text-transform: uppercase;">Modalidad Pareja Fija (Dupla todo el torneo):</strong>
+                        <div style="color: #cbd5e1; font-size: 0.72rem; margin-top: 2px;">
+                            Las duplas compiten juntas todo el evento; suben o bajan juntas de pista según ganen o pierdan.
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.style.borderLeftColor = '#CCFF00';
+            container.style.background = 'rgba(204, 255, 0, 0.06)';
+        } else {
+            container.innerHTML = `
+                <div style="display:flex; align-items:flex-start; gap:8px;">
+                    <span style="font-size: 1.15rem; line-height: 1;">🌪️</span>
+                    <div>
+                        <strong style="color: #38bdf8; font-size: 0.76rem; text-transform: uppercase;">Modalidad Twister Individual (Pozo rotativo):</strong>
+                        <div style="color: #cbd5e1; font-size: 0.72rem; margin-top: 2px;">
+                            Los jugadores juegan individualmente; ganadores suben de pista, perdedores bajan, y en cada pista los compañeros rotan obligatoriamente sin repetir pareja de la ronda anterior.
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.style.borderLeftColor = '#38bdf8';
+            container.style.background = 'rgba(56, 189, 248, 0.08)';
+        }
+
+        // Auto-sync UI if inside edit modals
+        if (descContainerId === 'edit-americana-pair-mode-desc') {
+            const form = document.getElementById('edit-americana-form');
+            const eventId = form ? form.querySelector('[name=id]')?.value : null;
+            if (eventId) {
+                const pairsArea = document.getElementById('americana-fixed-pairs-area');
+                const isFixed = mode === 'fixed';
+                if (pairsArea) pairsArea.style.display = isFixed ? 'block' : 'none';
+                if (window.loadAmericanaParticipantsUI) window.loadAmericanaParticipantsUI(eventId);
+                if (isFixed && window.PairsUI) window.PairsUI.load('americana-fixed-pairs-area', eventId, 'americana');
+            }
+        } else if (descContainerId === 'edit-entreno-pair-mode-desc') {
+            const form = document.getElementById('edit-entreno-form');
+            const eventId = form ? form.querySelector('[name=id]')?.value : null;
+            if (eventId) {
+                const pairsArea = document.getElementById('entreno-fixed-pairs-area');
+                const isFixed = mode === 'fixed';
+                if (pairsArea) pairsArea.style.display = isFixed ? 'block' : 'none';
+                if (window.loadEntrenoParticipantsUI) window.loadEntrenoParticipantsUI(eventId);
+                if (isFixed && window.PairsUI) window.PairsUI.load('entreno-fixed-pairs-area', eventId, 'entreno');
+            }
+        }
+    };
+};
+
+window.openAddPlayerToEntrenoSelector = async (eventId) => {
+    if (!window.PremiumModal) return alert("PremiumModal no disponible");
+
+    try {
+        // Forzamos bypass de caché para ver jugadores recién creados
+        const allPlayers = await FirebaseDB.players.getAll(true);
+
+        const selectorItems = allPlayers.map(p => ({
+            id: p.id || p.uid,
+            name: p.name || 'Sin nombre',
+            sub: `Nivel: ${p.level || '3.5'} • ${p.gender || '?'}`,
+            image: p.photoURL || p.photo_url || null,
+            playerObj: p
+        })).sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+
+        const selected = await PremiumModal.selector({
+            title: 'AÑADIR JUGADOR',
+            message: 'Busca y selecciona al jugador que quieres añadir al entreno:',
+            items: selectorItems,
+            placeholder: 'Escribe nombre o apellido...',
+            type: 'success'
+        });
+
+        if (selected) {
+            console.log("➕ Adding selected player as admin:", selected.name);
+            const result = await ParticipantService.addPlayer(eventId, 'entreno', selected.playerObj);
+
+            if (window.NotificationService) {
+                if (result.status === 'waitlist') {
+                    window.NotificationService.showToast(`${selected.name} añadido a LISTA DE RESERVA`, "warning");
+                } else {
+                    window.NotificationService.showToast(`${selected.name} añadido correctamente`, "success");
+                }
+            }
+
+            // Reload UI
+            window.loadEntrenoParticipantsUI(eventId);
+        }
+    } catch (e) {
+        console.error("Error in admin player selection:", e);
+        alert("Error: " + e.message);
+    }
+};
+
+window.openAddPairToEntrenoSelector = async (eventId) => {
+    if (!window.PremiumModal) return alert("PremiumModal no disponible");
+
+    try {
+        // Forzamos bypass de caché para ver jugadores recién creados
+        const allPlayers = await FirebaseDB.players.getAll(true);
+
+        const selectorItems = allPlayers.map(p => ({
+            id: p.id || p.uid,
+            name: p.name || 'Sin nombre',
+            sub: `Nivel: ${p.level || '3.5'} • ${p.gender || '?'}`,
+            image: p.photoURL || p.photo_url || null,
+            playerObj: p
+        })).sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+
+        // 1. SELECT PLAYER 1
+        const selected1 = await PremiumModal.selector({
+            title: 'SELECCIONA JUGADOR 1',
+            message: 'Elige el primer miembro de la pareja:',
+            items: selectorItems,
+            placeholder: 'Busca al primer jugador...',
+            type: 'primary'
+        });
+
+        if (!selected1) return;
+
+        // 2. SELECT PLAYER 2 (Filter out P1)
+        const items2 = selectorItems.filter(p => p.id !== selected1.id);
+        const selected2 = await PremiumModal.selector({
+            title: `Pareja de ${selected1.name.split(' ')[0]}`,
+            message: `Elige quién jugará con ${selected1.name}:`,
+            items: items2,
+            placeholder: 'Busca a su pareja...',
+            type: 'success'
+        });
+
+        if (!selected2) return;
+
+        // 3. Confirm & Add Both
+        if (confirm(`¿Confirmar pareja: ${selected1.name} 🤝 ${selected2.name}?`)) {
+
+            // Link them in Objects
+            const p1 = { ...selected1.playerObj };
+            p1.partner_id = selected2.id;
+            p1.partner_name = selected2.name;
+
+            const p2 = { ...selected2.playerObj };
+            p2.partner_id = selected1.id;
+            p2.partner_name = selected1.name;
+
+            console.log("Adding Pair:", p1.name, "&", p2.name);
+
+            // Add P1
+            await ParticipantService.addPlayer(eventId, 'entreno', p1);
+            await new Promise(r => setTimeout(r, 200));
+            await ParticipantService.addPlayer(eventId, 'entreno', p2);
+
+            try {
+                const event = await EventService.getById('entreno', eventId);
+                const currentPairs = event.fixed_pairs || [];
+                const nextIndex = currentPairs.length * 2;
+                const initialCourt = Math.floor(nextIndex / 4) + 1;
+                const newPair = {
+                    id: `pair_${Date.now()}_manual`,
+                    player1_id: selected1.id,
+                    player2_id: selected2.id,
+                    player1_name: selected1.name,
+                    player2_name: selected2.name,
+                    pair_name: `${selected1.name} / ${selected2.name}`,
+                    wins: 0,
+                    losses: 0,
+                    games_won: 0,
+                    games_lost: 0,
+                    current_court: initialCourt,
+                    initial_court: initialCourt
+                };
+                await EventService.updateEvent('entreno', eventId, {
+                    fixed_pairs: [...currentPairs, newPair],
+                    pair_mode: 'fixed'
+                });
+            } catch (syncErr) { console.warn("[Entreno] sync fixed_pairs error:", syncErr); }
+
+            if (window.NotificationService) {
+                window.NotificationService.showToast(`Pareja Creada: ${selected1.name} & ${selected2.name}`, "success");
+            }
+
+            // Reload UI
+            window.loadEntrenoParticipantsUI(eventId);
+            if (window.PairsUI) window.PairsUI.load('entreno-fixed-pairs-area', eventId, 'entreno');
+        }
+
+    } catch (e) {
+        console.error("Error adding pair:", e);
+        alert("Error al añadir pareja: " + e.message);
+    }
+};
+
+window.linkManualPartner = async (eventId, playerId, playerName) => {
+    if (!window.PremiumModal) return alert("PremiumModal no disponible");
+
+    try {
+        const event = await EventService.getById('entreno', eventId);
+        const players = event.players || [];
+
+        // Filter candidates: Already in event, Not the current player, No partner yet
+        const candidates = players.filter(p => {
+            const pid = String(p.id || p.uid);
+            return pid !== String(playerId) && !p.partner_id;
+        }).map(p => ({
+            id: p.id || p.uid,
+            name: p.name || 'Sin nombre',
+            sub: `Nivel: ${p.level || '3.5'}`,
+            image: p.photoURL || null
+        })).sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+
+        if (candidates.length === 0) return alert("No hay jugadores disponibles sin pareja para vincular.");
+
+        const selected = await PremiumModal.selector({
+            title: `Pareja para ${playerName}`,
+            message: `Selecciona a su pareja de la lista de inscritos:`,
+            items: candidates,
+            placeholder: 'Busca jugador...',
+            type: 'primary'
+        });
+
+        if (!selected) return;
+
+        if (confirm(`¿Vincular a ${playerName} con ${selected.name}?`)) {
+            // Update local array first
+            const p1Index = players.findIndex(p => String(p.id || p.uid) === String(playerId));
+            const p2Index = players.findIndex(p => String(p.id || p.uid) === String(selected.id));
+
+            if (p1Index === -1 || p2Index === -1) return alert("Error al encontrar jugadores.");
+
+            // Link P1
+            players[p1Index].partner_id = selected.id;
+            players[p1Index].partner_name = selected.name;
+
+            // Link P2
+            players[p2Index].partner_id = playerId;
+            players[p2Index].partner_name = playerName;
+
+            // Also add to fixed_pairs
+            const currentPairs = event.fixed_pairs || [];
+            const nextIndex = currentPairs.length * 2;
+            const initialCourt = Math.floor(nextIndex / 4) + 1;
+            const newPair = {
+                id: `pair_${Date.now()}_manual`,
+                player1_id: playerId,
+                player2_id: selected.id,
+                player1_name: playerName,
+                player2_name: selected.name,
+                pair_name: `${playerName} / ${selected.name}`,
+                wins: 0,
+                losses: 0,
+                games_won: 0,
+                games_lost: 0,
+                current_court: initialCourt,
+                initial_court: initialCourt
+            };
+
+            await EventService.updateEvent('entreno', eventId, {
+                players: players,
+                fixed_pairs: [...currentPairs, newPair],
+                pair_mode: 'fixed'
+            });
+
+            if (window.NotificationService) window.NotificationService.showToast("Pareja vinculada correctamente", "success");
+
+            window.loadEntrenoParticipantsUI(eventId);
+            if (window.PairsUI) window.PairsUI.load('entreno-fixed-pairs-area', eventId, 'entreno');
+        }
+
+    } catch (e) {
+        console.error("Error linking partner:", e);
+        alert("Error al vincular: " + e.message);
+    }
+};
+
+window.loadEntrenoParticipantsUI = async (id, preloadedEvent = null) => {
+    const list = document.getElementById('participants-list-entreno');
+    if (!list) return;
+
+    if (!preloadedEvent) {
+        list.innerHTML = '<div style="padding: 12px; text-align: center; color: #64748b; font-weight: 700; font-size: 0.85rem;"><i class="fas fa-spinner fa-spin"></i> Cargando participantes...</div>';
+    }
+
+    try {
+        let event = preloadedEvent;
+        if (!event) {
+            try {
+                event = await EventService.getById('entreno', id);
+            } catch (err) {
+                console.warn("⚠️ [loadEntrenoParticipantsUI] EventService fallback:", err);
+            }
+        }
+
+        if (!event && window._editingEntreno && String(window._editingEntreno.id) === String(id)) {
+            event = window._editingEntreno;
+        }
+
+        if (!event && window._currentEntrenosCache && Array.isArray(window._currentEntrenosCache)) {
+            event = window._currentEntrenosCache.find(e => String(e.id) === String(id));
+        }
+
+        if (!event && window.CacheService) {
+            try {
+                const all = await window.CacheService.get('entrenos', 'all');
+                if (Array.isArray(all)) {
+                    event = all.find(e => String(e.id) === String(id));
+                }
+            } catch (_) {}
+        }
+
+        if (!event) {
+            list.innerHTML = '<div style="color:#ef4444; padding:20px; text-align:center; font-weight:700;">No se pudo cargar la lista de participantes. Revisa la conexión o intenta de nuevo.</div>';
+            if (window.loadEntrenoWaitlistUI) window.loadEntrenoWaitlistUI(id, []);
+            return;
+        }
+
+        // Deduplicate players by ID/UID
+        const seenIds = new Set();
+        const uniquePlayers = (event.players || [])
+            .filter(p => {
+                const pid = String(p.id || p.uid || '');
+                if (!pid || seenIds.has(pid)) return false;
+                seenIds.add(pid);
+                return true;
+            })
+            .sort((a, b) => {
+                const parse = (d) => {
+                    if (!d) return 0;
+                    if (typeof d === 'number') return d;
+                    const ds = String(d);
+                    if (ds.includes('/')) {
+                        const parts = ds.split(' ');
+                        const dateParts = parts[0].split('/');
+                        const timePart = parts[1] || '00:00:00';
+                        // DD/MM/YYYY or DD/MM
+                        const day = dateParts[0];
+                        const month = dateParts[1];
+                        const year = dateParts[2] || new Date().getFullYear();
+                        return new Date(`${year}-${month}-${day}T${timePart}`).getTime() || 0;
+                    }
+                    return new Date(d).getTime() || 0;
+                };
+                return parse(a.joinedAt) - parse(b.joinedAt);
+            });
+
+        const liveSelect = document.getElementById('edit-entreno-pair-mode');
+        const activeMode = (liveSelect && liveSelect.value) ? liveSelect.value : (event.pair_mode || 'twister');
+
+        let isFixedMode = (activeMode === 'fixed') ||
+            String(activeMode || '').includes('fij') ||
+            (event.pair_mode && (event.pair_mode.includes('fixed') || event.pair_mode.includes('fij'))) ||
+            (event.fixed_pairs && event.fixed_pairs.length > 0) ||
+            (event.players && event.players.some(p => p.partner_id || p.partner_name)) ||
+            (event.name && (event.name.toUpperCase().includes('FIJA') || event.name.toUpperCase().includes('FIJO')));
+        if (!isFixedMode && window.PreFlightRoundVerifier) {
+            isFixedMode = window.PreFlightRoundVerifier.normalizePairMode(activeMode, event) === 'fixed';
+        }
+
+        // Render List with Header
+        list.innerHTML = `
+        <div style="margin-bottom:12px; display:flex; flex-direction:column; gap:8px; background:rgba(255,255,255,0.03); padding:10px; border-radius:10px;">
+             <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:0.8rem; font-weight:800; color:var(--primary);">${uniquePlayers.length} JUGADORES</span>
+                <div style="display:flex; gap:6px;">
+                    <button onclick="window.launchBatSignalEntreno('${id}')" class="btn-micro" style="background:#ffd700; color:#000; border:none; padding:5px 12px; font-size:0.65rem;">
+                        <i class="fas fa-bullhorn"></i> BATSEÑAL
+                    </button>
+                </div>
+             </div>
+             <div style="display:grid; grid-template-columns: ${isFixedMode ? '1fr 1fr' : '1fr'}; gap:8px;">
+                 <button onclick="window.openAddPlayerToEntrenoSelector('${id}')" 
+                         style="width:100%; height:40px; background:rgba(204,255,0,0.1); color:#000000 !important; border:1px solid rgba(204,255,0,0.2); border-radius:8px; font-weight:900; font-size:0.75rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+                    <i class="fas fa-user-plus"></i> ${isFixedMode ? 'JUGADOR' : 'AÑADIR JUGADOR'}
+                 </button>
+                 ${isFixedMode ? `
+                 <button onclick="window.openAddPairToEntrenoSelector('${id}')" 
+                         style="width:100%; height:40px; background:rgba(59, 130, 246, 0.1); color:#000000 !important; border:1px solid rgba(59, 130, 246, 0.2); border-radius:8px; font-weight:900; font-size:0.75rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+                    <i class="fas fa-user-friends"></i> AÑADIR PAREJA
+                 </button>` : ''}
+             </div>
+        </div>
+        ` + (() => {
+                const renderedIds = new Set();
+                let html = '';
+
+                // Pre-calculate signup order to ensure #1 is ALWAYS the first who joined, regardless of rendering order
+                const signupOrderMap = new Map();
+                uniquePlayers.forEach((p, idx) => {
+                    signupOrderMap.set(String(p.id || p.uid), idx + 1);
+                });
+
+                const formatJoinDate = (d) => {
+                    if (!d) return '';
+                    const date = new Date(d);
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    return `${day}/${month} ${time}`;
+                };
+
+                // Helper for Level Color
+                const getLevelColor = (l) => {
+                    const level = parseFloat(l || '3.5');
+                    if (level < 3) return '#94a3b8'; // Beginner
+                    if (level < 3.5) return '#10b981'; // Green
+                    if (level < 4) return '#3b82f6'; // Blue
+                    if (level < 4.5) return '#f59e0b'; // Orange
+                    return '#ec4899'; // Pink/Purple (Pro)
+                };
+
+                uniquePlayers.forEach(p => {
+                    const pid = String(p.id || p.uid);
+                    if (renderedIds.has(pid)) return;
+
+                    // Try to find valid partner in the list
+                    let partner = null;
+                    if (p.partner_name) {
+                        partner = uniquePlayers.find(u =>
+                            (u.id && p.partner_id && String(u.id) === String(p.partner_id)) ||
+                            (u.name && u.name.trim().toLowerCase() === p.partner_name.trim().toLowerCase())
+                        );
+                    }
+
+                    // --- CASE 1: PAIR FOUND (Render Double Row) ---
+                    if (partner && !renderedIds.has(String(partner.id || partner.uid))) {
+                        const partnerId = String(partner.id || partner.uid);
+                        renderedIds.add(pid);
+                        renderedIds.add(partnerId);
+
+                        const c1 = getLevelColor(p.level);
+                        const c2 = getLevelColor(partner.level);
+                        const name1 = (p.name || 'JUGADOR').toUpperCase();
+                        const name2 = (partner.name || 'JUGADOR').toUpperCase();
+
+                        // Shorten names: First Name + Initial
+                        const shortName1 = name1.split(' ')[0] + (name1.split(' ')[1] ? ' ' + name1.split(' ')[1].charAt(0) + '.' : '');
+                        const shortName2 = name2.split(' ')[0] + (name2.split(' ')[1] ? ' ' + name2.split(' ')[1].charAt(0) + '.' : '');
+
+                        // Get registration times
+                        const time1 = formatJoinDate(p.joinedAt);
+                        const time2 = formatJoinDate(partner.joinedAt);
+
+                        const num1 = signupOrderMap.get(pid);
+                        const num2 = signupOrderMap.get(partnerId);
+
+                        html += `
+                     <div class="player-row" style="display:flex; align-items:center; justify-content:space-between; padding:10px; border-bottom:1px solid #e2e8f0; background:rgba(59, 130, 246, 0.08); border-left: 4px solid #3b82f6;">
+                         <!-- PAIR CONTAINER -->
+                         <div style="display:flex; align-items:center; flex:1; flex-wrap:wrap; gap:5px;">
+                            
+                            <!-- P1 -->
+                            <div style="display:flex; flex-direction:column; gap:2px;">
+                                <div style="display:flex; align-items:center; gap:6px; background:#fff; padding:4px 8px; border-radius:30px; border:1px solid rgba(0,0,0,0.05); box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                                     <div style="width:20px; height:20px; border-radius:50%; background:#CCFF00 !important; color:#000 !important; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:900; margin-right:2px; border:1px solid rgba(0,0,0,0.1); box-shadow:0 1px 3px rgba(0,0,0,0.2);">#${num1}</div>
+                                    <div style="width:24px; height:24px; border-radius:50%; background:${c1}; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:800; color:#fff;">${p.level || '3.5'}</div>
+                                    <span style="font-weight:800; font-size:0.75rem; color:#000;">${shortName1}</span>
+                                </div>
+                                ${time1 ? `<span style="font-size:0.6rem; color:#64748b; font-weight:700; padding-left:8px;">🕒 ${time1}</span>` : ''}
+                            </div>
+                            
+                            <!-- LINK ICON -->
+                            <div style="color:#3b82f6; font-size:0.75rem; margin:0 2px;"><i class="fas fa-link"></i></div>
+
+                            <!-- P2 -->
+                            <div style="display:flex; flex-direction:column; gap:2px;">
+                                <div style="display:flex; align-items:center; gap:6px; background:#fff; padding:4px 8px; border-radius:30px; border:1px solid rgba(0,0,0,0.05); box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                                     <div style="width:20px; height:20px; border-radius:50%; background:#CCFF00 !important; color:#000 !important; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:900; margin-right:2px; border:1px solid rgba(0,0,0,0.1); box-shadow:0 1px 3px rgba(0,0,0,0.2);">#${num2}</div>
+                                    <div style="width:24px; height:24px; border-radius:50%; background:${c2}; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:800; color:#fff;">${partner.level || '3.5'}</div>
+                                    <span style="font-weight:800; font-size:0.75rem; color:#000;">${shortName2}</span>
+                                </div>
+                                ${time2 ? `<span style="font-size:0.6rem; color:#64748b; font-weight:700; padding-left:8px;">🕒 ${time2}</span>` : ''}
+                            </div>
+
+                         </div>
+                         
+                         <!-- COURT SELECTOR (MANUAL) -->
+                         <div style="margin: 0 10px;">
+                            ${isFixedMode ? `
+                            <select onchange="window.setPairCourt('${id}', '${pid}', '${partnerId}', this.value)" style="padding: 4px 8px; border-radius: 8px; background: #fff; border: 1px solid #3b82f6; font-size: 0.75rem; font-weight: 800; color: #3b82f6; cursor: pointer;">
+                                <option value="">PISTA ?</option>
+                                ${[1, 2, 3, 4, 5, 6].map(num => {
+                            // Try to find current court in fixed_pairs
+                            const currentPair = (event.fixed_pairs || []).find(fp =>
+                                (String(fp.player1_id) === pid || String(fp.player2_id) === pid)
+                            );
+                            const assigned = currentPair ? currentPair.current_court : '';
+                            return `<option value="${num}" ${(assigned == num) ? 'selected' : ''}>PISTA ${num}</option>`;
+                        }).join('')}
+                            </select>
+                            ` : ''}
+                         </div>
+
+                         <!-- ACTIONS -->
+                         <div style="display:flex; gap:2px; margin-left:8px;">
+                            <button onclick="window.removeEntrenoPlayer('${id}', '${pid}')" title="Quitar ${name1}" style="background:none; border:none; color:#ef4444; opacity:0.6; cursor:pointer; font-size:0.8rem; padding:4px;"><i class="fas fa-trash-alt"></i></button>
+                            <button onclick="window.removeEntrenoPlayer('${id}', '${partnerId}')" title="Quitar ${name2}" style="background:none; border:none; color:#ef4444; opacity:0.6; cursor:pointer; font-size:0.8rem; padding:4px;"><i class="fas fa-trash-alt"></i></button>
+                         </div>
+                     </div>
+                    `;
+                    }
+                    // --- CASE 2: SINGLE PLAYER ---
+                    else {
+                        renderedIds.add(pid);
+                        const c = getLevelColor(p.level);
+                        const hasMissingPartner = !!p.partner_name;
+                        const playerName = (p.name || 'JUGADOR').toUpperCase();
+                        const time = formatJoinDate(p.joinedAt);
+
+                        const num = signupOrderMap.get(pid);
+
+                        html += `
+                     <div class="player-row" style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #e2e8f0;">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <div style="width:24px; height:24px; border-radius:50%; background:#CCFF00 !important; color:#000 !important; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:900; border:1px solid rgba(0,0,0,0.2); box-shadow: 0 2px 5px rgba(0,0,0,0.2);">${num}</div>
+                            <div style="width:32px; height:32px; border-radius:50%; background:${c}; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:800; color:#ffffff; border: 1px solid rgba(0,0,0,0.1); overflow:hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                ${p.level || '3.5'}
+                            </div>
+                            <div style="display:flex; flex-direction:column;">
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <span style="font-weight:900; font-size:0.85rem; color:#000000; text-transform:uppercase;">${playerName}</span>
+                                    ${time ? `<span style="font-size:0.65rem; color:#64748b; font-weight:700; background:rgba(0,0,0,0.05); padding:2px 6px; border-radius:4px;">🕒 ${time}</span>` : ''}
+                                </div>
+                                ${hasMissingPartner ? `<span style="font-size:0.7rem; color:#ef4444; font-weight:600;"><i class="fas fa-exclamation-triangle"></i> Pareja: ${p.partner_name} (?)</span>` : ''}
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:4px; align-items:center;">
+                            ${(isFixedMode) ?
+                                `<button onclick="window.linkManualPartner('${id}', '${pid}', '${playerName}')" title="Vincular pareja manual" style="background:rgba(59, 130, 246, 0.1); border:1px solid #3b82f6; color:#3b82f6; border-radius:6px; cursor:pointer; font-size:0.8rem; padding:6px 10px;"><i class="fas fa-handshake"></i></button>` : ''}
+                            <button onclick="window.removeEntrenoPlayer('${id}', '${pid}')" title="BORRAR JUGADOR (Incluso en Juego)" style="background:rgba(239, 68, 68, 0.1); border:1px solid #ef4444; color:#ef4444; border-radius:10px; cursor:pointer; font-size:0.85rem; padding:8px 12px; font-weight: 800;"><i class="fas fa-trash-alt"></i> ELIMINAR</button>
+                        </div>
+                     </div>
+                     `;
+                    }
+                });
+                return html;
+            })();
+
+    } catch (e) {
+        console.error("Error loading participants:", e);
+        list.innerHTML = '<div style="color:#ff4444; padding:20px; text-align:center;">Error al cargar la lista</div>';
+    }
+
+    // Load Waitlist as well
+    if (window.loadEntrenoWaitlistUI) window.loadEntrenoWaitlistUI(id, event.waitlist || []);
+};
+
+window.loadEntrenoWaitlistUI = async (id, preloadedWaitlist = null) => {
+    const list = document.getElementById('waitlist-entreno');
+    if (!list) return;
+
+    try {
+        let waitlist = preloadedWaitlist;
+        if (!waitlist || !Array.isArray(waitlist)) {
+            waitlist = await ParticipantService.getWaitlist(id, 'entreno');
+        }
+
+        if (!waitlist || waitlist.length === 0) {
+            list.innerHTML = '<div style="text-align:center; color:#333333; font-size:0.75rem; padding:15px; font-style:italic;">Lista de reserva vacía</div>';
+            return;
+        }
+
+        list.innerHTML = waitlist.map((p, i) => `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid rgba(255,165,0,0.1); background:rgba(255,165,0,0.05); border-radius:6px; margin-bottom:4px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="width:20px; height:20px; background:#FFA500; color:black; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.7rem;">${i + 1}</div>
+                    <div style="display:flex; flex-direction:column;">
+                        <span style="color:black; font-size:0.85rem; font-weight:700;">${p.name || 'JUGADOR'}</span>
+                        <span style="color:black; font-size:0.65rem; font-weight:700;">Nivel ${p.level || '3.5'} • ${p.gender || '?'}</span>
+                    </div>
+                </div>
+                <div style="font-size:0.6rem; color:rgba(0,0,0,0.5); font-weight:600;">
+                    ${p.joinedAt ? new Date(p.joinedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                </div>
+            </div>
+        `).join('');
+
+    } catch (e) {
+        console.error("Waitlist error:", e);
+        list.innerHTML = '<div style="text-align:center; color:#64748b; font-size:0.75rem; padding:15px; font-style:italic;">Lista de reserva vacía</div>';
+    }
+};
+
+window.removeEntrenoPlayer = async (eid, uid) => {
+    if (!confirm("¿Eliminar jugador de este entreno?")) return;
+
+    // Check if there's someone in waitlist to ask about promotion
+    let skipPromotion = false;
+    try {
+        const waitlist = await ParticipantService.getWaitlist(eid, 'entreno');
+        if (waitlist.length > 0) {
+            if (!confirm("Hay jugadores en reserva. ¿Quieres PROMOVER al siguiente jugador automáticamente?\n\n(Pulsa CANCELAR para eliminar al jugador sin que entre nadie en su lugar)")) {
+                skipPromotion = true;
+            }
+        }
+    } catch (e) { console.warn("Waitlist check skipped", e); }
+
+    try {
+        await ParticipantService.removePlayer(eid, 'entreno', uid, skipPromotion);
+        window.loadEntrenoParticipantsUI(eid);
+    } catch (e) { alert(e.message); }
+};
+
+window.setPairCourt = async (eventId, p1Id, p2Id, courtNum) => {
+    try {
+        console.log(`🎯 Setting Court ${courtNum} for pair ${p1Id} + ${p2Id}`);
+        const event = await window.EventService.getById('entreno', eventId);
+        if (!event) return;
+
+        let pairs = event.fixed_pairs || [];
+        const court = parseInt(courtNum);
+
+        // Update pair in list
+        pairs = pairs.map(p => {
+            const isMatch = (String(p.player1_id) === String(p1Id) || String(p.player2_id) === String(p1Id)) &&
+                (String(p.player1_id) === String(p2Id) || String(p.player2_id) === String(p2Id));
+            if (isMatch) {
+                return { ...p, current_court: court, initial_court: court };
+            }
+            return p;
+        });
+
+        await window.EventService.updateEvent('entreno', eventId, { fixed_pairs: pairs });
+        console.log("✅ Court updated in DB");
+    } catch (e) {
+        console.error("Error updating court:", e);
+        alert("Error: " + e.message);
+    }
+};
+
+window.launchBatSignalEntreno = async (eventId) => {
+    if (!window.SmartAlertsService) return alert("⚠️ Smart Alerts no disponible");
+
+    const btn = document.activeElement;
+    const originalText = btn.innerText;
+    btn.innerText = "🦇 Buscando...";
+    btn.disabled = true;
+
+    try {
+        const event = await EventService.getById('entreno', eventId);
+        const candidates = await window.SmartAlertsService.findSubstitutes(event);
+
+        if (candidates.length === 0) {
+            alert("No se han encontrado candidatos óptimos.");
+            return;
+        }
+
+        const msg = `🦇 BATSEÑAL: Se han encontrado ${candidates.length} candidatos ideales.\n¿Enviar alertas push?`;
+        if (confirm(msg)) {
+            const res = await window.SmartAlertsService.sendBatSignal(candidates, event);
+            alert(`🚀 Enviado a ${res.count} usuarios.`);
+        }
+
+    } catch (e) {
+        console.error("Batseñal error:", e);
+        alert("Error: " + e.message);
+    }
+    finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
+};
+
+// --- INITIALIZATION ---
+if (window.adminAutoInterval) clearInterval(window.adminAutoInterval);
+if (window.api && window.api.runAutomation) {
+    window.api.runAutomation();
+    window.adminAutoInterval = setInterval(window.api.runAutomation, 60000); // Check every 60s to save quota
+}
+
+console.log("✅ Admin Entrenos Module v3.5 - Splitted & Optimized");
