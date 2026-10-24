@@ -1,2 +1,3 @@
-# Pega aquí enlaces de torneos Playtomic (uno por línea)
+# Lista oficial de enlaces de torneos Playtomic sincronizados
 https://app.playtomic.com/tournaments/46011a01-68b4-433f-b2e3-581ca5fabfdb?utm_source=app_android&utm_campaign=share
+https://app.playtomic.io/tournaments/f25003a4-105e-440d-a0ed-930bf047bd94?utm_source=manager
