@@ -35,6 +35,7 @@ OUTPUT_JSON = os.path.join(SCRAPER_DIR, "playtomic_extracted.json")
 LOG_FILE = os.path.join(SCRAPER_DIR, "playtomic_daemon.log")
 
 FIRESTORE_BASE = "https://firestore.googleapis.com/v1/projects/americanas-somospadel/databases/(default)/documents/americanas"
+FIREBASE_API_KEY = "AIzaSyBCy8nN4wKL2Cqvxp_mkmYpsA923N1g5iE"
 
 KNOWN_TENANTS = {
     "bd2ea8dd-4c1d-4e64-98eb-3ff2ab9b2051": {
@@ -194,7 +195,7 @@ def parse_playtomic_tournament(tournament_id):
 
     # FILTRO DE MARCAS / PROMOTORES EXTERNOS:
     # Excluir torneos de otras organizaciones que alquilan pistas en el club (CrazyxPadel, Saturday Breakfast, Vibra Pádel, Jaleo)
-    external_brands = ["vibra", "jaleo", "crazyxpadel", "crazy", "breakfast"]
+    external_brands = ["vibra", "siux", "jaleo", "crazyxpadel", "crazy", "breakfast", "saturday"]
     if any(b in name_lower for b in external_brands):
         log(f"   ⛔ FILTRADO / DESCARTADO: '{name}' pertenece a una marca externa ajena a Somos Pádel.")
         return None
@@ -215,7 +216,10 @@ def parse_playtomic_tournament(tournament_id):
             return None
     else:
         sede = "NEW Play Padel Pro Hospitalet"
-        organizer = "Somospadel Barcelona" # Cuenta oficial somospadeleugestion@gmail.com en Playtomic
+        organizer = "somospadeleugestion@gmail.com"
+        if any(b in name_lower for b in ["crazy", "breakfast", "vibra", "jaleo", "siux"]):
+            log(f"   ⛔ FILTRADO / DESCARTADO: '{name}' en Hospitalet pertenece a una marca externa ajena a Somos Pádel.")
+            return None
 
     # 4. Tipo de americana: Pareja Fija vs Twister Individual
     # Analizamos únicamente el título y el contenido visible, evitando scripts JS
@@ -450,7 +454,7 @@ def sync_to_firestore(t_data):
 
     req_data = json.dumps({"fields": fields}).encode('utf-8')
     req = urllib.request.Request(
-        f"{url}?updateMask.fieldPaths=name&updateMask.fieldPaths=location&updateMask.fieldPaths=sede&updateMask.fieldPaths=date&updateMask.fieldPaths=time&updateMask.fieldPaths=time_end&updateMask.fieldPaths=duration&updateMask.fieldPaths=pair_mode&updateMask.fieldPaths=format&updateMask.fieldPaths=price&updateMask.fieldPaths=price_members&updateMask.fieldPaths=price_external&updateMask.fieldPaths=max_players&updateMask.fieldPaths=occupied_players&updateMask.fieldPaths=spots_left&updateMask.fieldPaths=max_courts&updateMask.fieldPaths=courts&updateMask.fieldPaths=image_url&updateMask.fieldPaths=playtomic_id&updateMask.fieldPaths=playtomicUrl&updateMask.fieldPaths=playtomic_url&updateMask.fieldPaths=status&updateMask.fieldPaths=is_external&updateMask.fieldPaths=organizer&updateMask.fieldPaths=description&updateMask.fieldPaths=players&updateMask.fieldPaths=registeredPlayers",
+        f"{url}?key={FIREBASE_API_KEY}&updateMask.fieldPaths=name&updateMask.fieldPaths=location&updateMask.fieldPaths=sede&updateMask.fieldPaths=date&updateMask.fieldPaths=time&updateMask.fieldPaths=time_end&updateMask.fieldPaths=duration&updateMask.fieldPaths=pair_mode&updateMask.fieldPaths=format&updateMask.fieldPaths=price&updateMask.fieldPaths=price_members&updateMask.fieldPaths=price_external&updateMask.fieldPaths=max_players&updateMask.fieldPaths=occupied_players&updateMask.fieldPaths=spots_left&updateMask.fieldPaths=max_courts&updateMask.fieldPaths=courts&updateMask.fieldPaths=image_url&updateMask.fieldPaths=playtomic_id&updateMask.fieldPaths=playtomicUrl&updateMask.fieldPaths=playtomic_url&updateMask.fieldPaths=status&updateMask.fieldPaths=is_external&updateMask.fieldPaths=organizer&updateMask.fieldPaths=description&updateMask.fieldPaths=players&updateMask.fieldPaths=registeredPlayers",
         data=req_data,
         headers={"Content-Type": "application/json"},
         method="PATCH"
@@ -463,7 +467,7 @@ def sync_to_firestore(t_data):
     except urllib.error.HTTPError as e:
         if e.code == 404:
             # Crear documento nuevo si no existía
-            create_url = f"{FIRESTORE_BASE}?documentId={doc_id}"
+            create_url = f"{FIRESTORE_BASE}?documentId={doc_id}&key={FIREBASE_API_KEY}"
             create_req = urllib.request.Request(create_url, data=req_data, headers={"Content-Type": "application/json"}, method="POST")
             try:
                 with urllib.request.urlopen(create_req, timeout=10) as c_resp:

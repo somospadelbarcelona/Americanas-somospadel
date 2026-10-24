@@ -125,11 +125,8 @@
                 await batch.commit();
                 console.log(`🗑️ [RoundAutoRegen] Borrados ${currentRoundMatches.length} partidos previos de Ronda ${currentRound}.`);
 
-                // Ajustar max_courts según la nueva cantidad de jugadores
-                const playersList = Array.isArray(eventData.players) ? eventData.players : [];
-                const effectiveCourts = Math.max(1, Math.floor(playersList.length / 4));
+                // Preservar max_courts original en Firestore (capacidad física de pistas reservadas)
                 await db.collection(eventCollection).doc(eventId).update({
-                    max_courts: effectiveCourts,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
 

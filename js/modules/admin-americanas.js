@@ -2657,6 +2657,9 @@ window.openEditAmericanaModal = async (americana) => {
 
 
     // Normalizar time y time_end si vienen combinados o sin separar
+    const courtsVal = parseInt(americana.max_courts || americana.courts || 4);
+    const maxCourtsInput = form.querySelector('[name="max_courts"]');
+    if (maxCourtsInput) maxCourtsInput.value = courtsVal;
 
     if (americana.time && americana.time.includes('-')) {
 
@@ -3494,9 +3497,9 @@ window.loadAmericanaParticipantsUI = async (id, preloadedEvent = null) => {
 
 
 
-    try {
+    let event = preloadedEvent;
 
-        let event = preloadedEvent;
+    try {
 
         if (!event) {
 
@@ -3994,7 +3997,7 @@ window.loadAmericanaParticipantsUI = async (id, preloadedEvent = null) => {
 
 
 
-    if (window.loadAmericanaWaitlistUI) window.loadAmericanaWaitlistUI(id, event.waitlist || []);
+    if (window.loadAmericanaWaitlistUI) window.loadAmericanaWaitlistUI(id, (event && event.waitlist) ? event.waitlist : []);
 
 };
 

@@ -207,15 +207,25 @@ def extract_playtomic_tournament(url_or_id):
         "el prat" in html_lower
     )
     
+    # FILTRO DE MARCAS / PROMOTORES EXTERNOS:
+    external_brands = ["vibra", "siux", "jaleo", "crazyxpadel", "crazy", "breakfast", "saturday"]
+    if any(b in name_lower for b in external_brands):
+        print(f"   ⛔ FILTRADO / DESCARTADO: '{name}' pertenece a una marca externa ajena a Somos Pádel.")
+        return None
+
     if is_el_prat:
         sede = "Barcelona Pádel El Prat"
         organizer = "Eduard Bainad Puig"
-        # Si el torneo es en El Prat y el título no menciona SOMOS PADEL BCN, asegurar nombre
-        if "somos" not in name_lower:
-            name = "AMERICANA SOMOS PÁDEL BCN"
+        is_somospadel_prat = any(k in name_lower for k in ["somospadel", "somos padel", "somos pádel"])
+        if not is_somospadel_prat:
+            print(f"   ⛔ FILTRADO / DESCARTADO: '{name}' de Eduard Bainad Puig no pertenece a 'somospadel barcelona'.")
+            return None
     else:
         sede = "NEW Play Padel Pro Hospitalet"
         organizer = "somospadeleugestion@gmail.com"
+        if any(b in name_lower for b in ["crazy", "breakfast", "vibra", "jaleo", "siux"]):
+            print(f"   ⛔ FILTRADO / DESCARTADO: '{name}' en Hospitalet pertenece a una marca externa ajena a Somos Pádel.")
+            return None
 
     # 5. Nivel
     level_min = "0"
@@ -412,7 +422,7 @@ def extract_playtomic_tournament(url_or_id):
 
 def upload_to_firestore(t_data):
     doc_id = t_data["doc_id"]
-    url = f"{FIRESTORE_BASE}/{doc_id}"
+    url = f"{FIRESTORE_BASE}/{doc_id}?key=AIzaSyBCy8nN4wKL2Cqvxp_mkmYpsA923N1g5iE"
     
     players_raw = []
     for p in t_data.get("players", []):

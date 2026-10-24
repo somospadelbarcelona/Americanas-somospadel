@@ -1486,8 +1486,8 @@ window.loadEntrenoParticipantsUI = async (id, preloadedEvent = null) => {
         list.innerHTML = '<div style="padding: 12px; text-align: center; color: #64748b; font-weight: 700; font-size: 0.85rem;"><i class="fas fa-spinner fa-spin"></i> Cargando participantes...</div>';
     }
 
+    let event = preloadedEvent;
     try {
-        let event = preloadedEvent;
         if (!event) {
             try {
                 event = await EventService.getById('entreno', id);
@@ -1746,7 +1746,7 @@ window.loadEntrenoParticipantsUI = async (id, preloadedEvent = null) => {
     }
 
     // Load Waitlist as well
-    if (window.loadEntrenoWaitlistUI) window.loadEntrenoWaitlistUI(id, event.waitlist || []);
+    if (window.loadEntrenoWaitlistUI) window.loadEntrenoWaitlistUI(id, (event && event.waitlist) ? event.waitlist : []);
 };
 
 window.loadEntrenoWaitlistUI = async (id, preloadedWaitlist = null) => {

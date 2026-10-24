@@ -405,8 +405,34 @@ window.PairsUI = {
 
                 // Generate R1
                 const event = await EventService.getById(eventType, eventId);
-                const pairs = event.fixed_pairs || [];
-                const maxCourts = event.max_courts || 4;
+                let pairs = event.fixed_pairs || [];
+                const maxCourts = parseInt(event.max_courts || event.courts || 4);
+
+                // Auto-emparejar jugadores restantes antes de generar R1
+                const pairedIds = new Set();
+                pairs.forEach(p => {
+                    if (p.player1_id) { pairedIds.add(String(p.player1_id)); pairedIds.add(String(p.player2_id)); }
+                    else if (p.player1) { pairedIds.add(String(p.player1.id)); pairedIds.add(String(p.player2.id)); }
+                });
+                const seenIds = new Set();
+                const available = (event.players || []).filter(p => {
+                    const pid = String(p.id || p.uid || '');
+                    if (!pid || pairedIds.has(pid) || seenIds.has(pid)) return false;
+                    seenIds.add(pid);
+                    return true;
+                });
+                if (available.length >= 2 && typeof FixedPairsLogic !== 'undefined') {
+                    const newPairs = FixedPairsLogic.createSmartFixedPairs(available, event.category);
+                    const offset = pairs.length * 2;
+                    newPairs.forEach((p, idx) => {
+                        const globIndex = offset + (idx * 2);
+                        const newCourt = Math.floor(globIndex / 4) + 1;
+                        p.current_court = newCourt;
+                        p.initial_court = newCourt;
+                    });
+                    pairs = [...pairs, ...newPairs];
+                    await EventService.updateEvent(eventType, eventId, { fixed_pairs: pairs });
+                }
 
                 const pMatches = FixedPairsLogic.generatePozoRound(pairs, 1, maxCourts);
 
@@ -430,8 +456,34 @@ window.PairsUI = {
                 }
 
                 const event = await EventService.getById(eventType, eventId);
-                const pairs = event.fixed_pairs || [];
-                const maxCourts = event.max_courts || 4;
+                let pairs = event.fixed_pairs || [];
+                const maxCourts = parseInt(event.max_courts || event.courts || 4);
+
+                // Auto-emparejar jugadores restantes antes de generar R1
+                const pairedIds = new Set();
+                pairs.forEach(p => {
+                    if (p.player1_id) { pairedIds.add(String(p.player1_id)); pairedIds.add(String(p.player2_id)); }
+                    else if (p.player1) { pairedIds.add(String(p.player1.id)); pairedIds.add(String(p.player2.id)); }
+                });
+                const seenIds = new Set();
+                const available = (event.players || []).filter(p => {
+                    const pid = String(p.id || p.uid || '');
+                    if (!pid || pairedIds.has(pid) || seenIds.has(pid)) return false;
+                    seenIds.add(pid);
+                    return true;
+                });
+                if (available.length >= 2 && typeof FixedPairsLogic !== 'undefined') {
+                    const newPairs = FixedPairsLogic.createSmartFixedPairs(available, event.category);
+                    const offset = pairs.length * 2;
+                    newPairs.forEach((p, idx) => {
+                        const globIndex = offset + (idx * 2);
+                        const newCourt = Math.floor(globIndex / 4) + 1;
+                        p.current_court = newCourt;
+                        p.initial_court = newCourt;
+                    });
+                    pairs = [...pairs, ...newPairs];
+                    await EventService.updateEvent(eventType, eventId, { fixed_pairs: pairs });
+                }
 
                 const pMatches = FixedPairsLogic.generatePozoRound(pairs, 1, maxCourts);
                 for (const m of pMatches) {

@@ -125,18 +125,22 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5004...");
                         return existingRoundMatches;
                     }
 
-                    // --- 5. SMART SCALING (PISTAS NECESARIAS) ---
-                    let effectiveCourts = parseInt(event.max_courts || 4);
+                    // --- 5. SMART SCALING (PISTAS NECESARIAS EN MEMORIA) ---
+                    // NOTA CRÍTICA: max_courts en Firestore representa la reserva de pistas del club (ej. 3 pistas).
+                    // NUNCA debe sobreescribirse ni reducirse en la base de datos por un tope temporal de jugadores.
+                    // Solo ajustamos effectiveCourts en memoria para la generación de la ronda actual.
+                    let effectiveCourts = parseInt(event.max_courts || event.courts || 4);
                     const playersCount = isFixedPairs
-                        ? ((event.fixed_pairs && event.fixed_pairs.length > 0 ? event.fixed_pairs.length * 2 : 0) || normalizedPlayers.length)
+                        ? Math.max(
+                            normalizedPlayers.length,
+                            (event.fixed_pairs && event.fixed_pairs.length > 0) ? event.fixed_pairs.length * 2 : 0
+                          )
                         : normalizedPlayers.length;
 
                     const maxPossibleCourts = Math.max(1, Math.floor(playersCount / 4));
                     if (effectiveCourts > maxPossibleCourts) {
-                        console.log(`⚠️ AI Scaling CAP: Reduciendo de ${effectiveCourts} a ${maxPossibleCourts} pistas por límite de jugadores.`);
+                        console.log(`⚠️ AI Scaling CAP (In-Memory): Ajustando generación a ${maxPossibleCourts} pistas por ${playersCount} jugadores (reserva en BD preservada: ${effectiveCourts}).`);
                         effectiveCourts = maxPossibleCourts;
-                        await collection.update(eventId, { max_courts: effectiveCourts });
-                        event.max_courts = effectiveCourts;
                     }
 
                     // --- 6. GENERACIÓN DE PARTIDOS ---
@@ -374,6 +378,20 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5004...");
 
                                 let pairs = event.fixed_pairs || [];
 
+                                // Comprobar qué jugadores inscritos ya tienen pareja asignada
+                                const pairedPlayerIds = new Set();
+                                pairs.forEach(p => {
+                                    const p1Id = String(p.player1_id || (p.player1 && (p.player1.id || p.player1.uid)) || '');
+                                    const p2Id = String(p.player2_id || (p.player2 && (p.player2.id || p.player2.uid)) || '');
+                                    if (p1Id) pairedPlayerIds.add(p1Id);
+                                    if (p2Id) pairedPlayerIds.add(p2Id);
+                                });
+
+                                const unpairedPlayers = normalizedPlayers.filter(p => {
+                                    const pid = String(p.id || p.uid || '');
+                                    return pid && !pairedPlayerIds.has(pid);
+                                });
+
                                 if (pairs.length === 0 || randomize) {
                                     console.log(`🔒 Generando parejas fijas iniciales (randomize: ${randomize})...`);
                                     let pool = [...normalizedPlayers];
@@ -384,12 +402,36 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5004...");
                                         current_court: p.current_court || (Math.floor(i / 4) + 1)
                                     }));
 
-                                    if (event.pair_mode === APP_CONSTANTS.PAIR_MODES.FIXED_AUTO) {
+                                    if (event.pair_mode === APP_CONSTANTS.PAIR_MODES.FIXED_AUTO || event.category === 'mixed' || String(event.name || '').toUpperCase().includes('MIXT')) {
                                         pairs = FixedPairsLogic.createSmartFixedPairs(playersWithCourts, event.category);
                                     } else {
                                         pairs = FixedPairsLogic.createFixedPairs(playersWithCourts, event.category, eventType === 'entreno');
                                     }
 
+                                    await collection.update(eventId, { fixed_pairs: pairs });
+                                } else if (unpairedPlayers.length >= 2) {
+                                    console.log(`⚡ [MatchMaking] Auto-emparejando ${unpairedPlayers.length} jugadores restantes en modo pareja fija...`);
+                                    const offset = pairs.length * 2;
+                                    const additionalPlayersWithCourts = unpairedPlayers.map((p, i) => ({
+                                        ...p,
+                                        current_court: Math.floor((offset + i) / 4) + 1
+                                    }));
+
+                                    let additionalPairs = [];
+                                    if (event.pair_mode === APP_CONSTANTS.PAIR_MODES.FIXED_AUTO || event.category === 'mixed' || String(event.name || '').toUpperCase().includes('MIXT')) {
+                                        additionalPairs = FixedPairsLogic.createSmartFixedPairs(additionalPlayersWithCourts, event.category);
+                                    } else {
+                                        additionalPairs = FixedPairsLogic.createFixedPairs(additionalPlayersWithCourts, event.category, eventType === 'entreno');
+                                    }
+
+                                    additionalPairs.forEach((p, idx) => {
+                                        const globIndex = offset + (idx * 2);
+                                        const newCourt = Math.floor(globIndex / 4) + 1;
+                                        p.current_court = newCourt;
+                                        p.initial_court = newCourt;
+                                    });
+
+                                    pairs = [...pairs, ...additionalPairs];
                                     await collection.update(eventId, { fixed_pairs: pairs });
                                 }
 
