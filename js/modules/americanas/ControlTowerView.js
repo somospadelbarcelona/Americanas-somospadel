@@ -1228,6 +1228,20 @@
 
             const isRoundLive = roundData?.matches && roundData.matches.some(m => (m.status === 'live' || m.status === 'en juego') && !m.isFinished);
 
+            // 🎾 Inteligencia de asignación: Si el jugador participa en la ronda, priorizar y destacar su pista en primer lugar
+            let orderedMatches = [...(roundData?.matches || [])];
+            const uid = user ? user.uid : null;
+            if (uid && orderedMatches.length > 1) {
+                const isUserInMatch = (m) => (m.team_a_ids || []).includes(uid) || (m.team_b_ids || []).includes(uid);
+                orderedMatches.sort((a, b) => {
+                    const aMine = isUserInMatch(a);
+                    const bMine = isUserInMatch(b);
+                    if (aMine && !bMine) return -1;
+                    if (!aMine && bMine) return 1;
+                    return (parseInt(a.court || a.pista || 0)) - (parseInt(b.court || b.pista || 0));
+                });
+            }
+
             return `
                 <div class="tour-filter-bar" style="position: sticky; top: 96px; z-index: 1000; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border-bottom: 1px solid rgba(0,0,0,0.06); box-shadow: 0 2px 12px rgba(0,0,0,0.02);">
                    <div class="tour-filter-tabs-wrapper" style="flex: 1; min-width: 0; overflow-x: auto; display: flex; align-items: center; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch;">
@@ -1260,7 +1274,7 @@
                 </div>
                 <div class="tour-grid-container" style="padding: 14px 14px; display: grid; gap: 12px; padding-bottom: calc(140px + env(safe-area-inset-bottom, 24px));">
                     ${hasMatches ? '' : emptyStateMarkup}
-                    ${roundData.matches.map(match => this.renderTournamentCard(match)).join('')}
+                    ${orderedMatches.map(match => this.renderTournamentCard(match)).join('')}
                     ${this.renderRoundControlToolbar(roundData, allRounds)}
                 </div>
             `;

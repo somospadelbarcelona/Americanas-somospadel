@@ -184,11 +184,15 @@ main#content-area {
     }
 
     .bottom-nav-bar {
-        min-height: 56px !important;
+        min-height: 64px !important;
+        padding-top: 6px !important;
+        padding-bottom: max(env(safe-area-inset-bottom, 0px), 14px) !important;
+        box-sizing: border-box !important;
     }
 
     .nav-item span {
-        font-size: 0.52rem !important;
+        font-size: 0.46rem !important;
+        letter-spacing: -0.25px !important;
     }
 
     .nav-item i {

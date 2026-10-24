@@ -52,7 +52,7 @@
     align-items: center;
     z-index: 10000;
     padding: 8px 6px;
-    padding-bottom: max(env(safe-area-inset-bottom, 0px), 10px);
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 14px);
     box-shadow: 0 -8px 30px var(--nav-glow-color, rgba(204, 255, 0, 0.15)), 0 -1px 0 rgba(255, 255, 255, 0.08) inset !important;
     transition: box-shadow 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
     box-sizing: border-box;
@@ -96,7 +96,7 @@
     font-size: 0.70rem;
     font-weight: 850;
     text-transform: uppercase;
-    letter-spacing: 0.4px;
+    letter-spacing: -0.25px;
     line-height: 1.1;
     text-align: center;
     white-space: nowrap;
