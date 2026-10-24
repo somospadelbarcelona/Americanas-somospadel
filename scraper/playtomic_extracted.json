@@ -31,7 +31,7 @@
     "is_external": true,
     "is_private": false,
     "organizer": "somospadeleugestion@gmail.com",
-    "description": "🎾 AMERICANA HALLOWEEN\n📍 NEW Play Padel Pro Hospitalet\n👤 Organizador: somospadeleugestion@gmail.com\n📲 Inscripción oficial directa por Playtomic\n🌪️ Sistema Twister individual (cambio de pareja por ronda, NO pareja fija)\n⏱️ 18:00 - 20:00 h (5 Pistas)\n⚡ 2 de 20 plazas ocupadas (2/20 Plazas)",
+    "description": "🎾 AMERICANA HALLOWEEN\n📍 NEW Play Padel Pro Hospitalet\n👤 Organizador: somospadeleugestion@gmail.com\n📲 Inscripción oficial directa por Playtomic\n🌪️ Sistema Twister individual (rotación por ronda, NO pareja fija)\n⏱️ 18:00 - 20:00 h (5 Pistas)\n⚡ 2 de 20 plazas ocupadas (2/20 Plazas)\n💶 Precio oficial: 12.48 €",
     "players": [
       {
         "id": "pt_playtomic_46011a01_1",
@@ -46,7 +46,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-24T13:27:13.893161+00:00"
+        "joinedAt": "2026-10-24T20:03:31.840227+00:00"
       },
       {
         "id": "pt_playtomic_46011a01_2",
@@ -61,7 +61,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-24T13:27:13.893161+00:00"
+        "joinedAt": "2026-10-24T20:03:31.840227+00:00"
       }
     ],
     "registeredPlayers": [
@@ -78,7 +78,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-24T13:27:13.893161+00:00"
+        "joinedAt": "2026-10-24T20:03:31.840227+00:00"
       },
       {
         "id": "pt_playtomic_46011a01_2",
@@ -93,10 +93,10 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-24T13:27:13.893161+00:00"
+        "joinedAt": "2026-10-24T20:03:31.840227+00:00"
       }
     ],
-    "createdAt": "2026-10-24T13:27:13.893161+00:00"
+    "updatedAt": "2026-10-24T20:03:31.840227+00:00"
   },
   {
     "doc_id": "HWAnrOcyb85pT0eklDnc",
@@ -114,9 +114,9 @@
     "category": "open",
     "level_min": "0",
     "level_max": "7",
-    "price": "0",
-    "price_member": "0",
-    "price_external": "0",
+    "price": "12.48",
+    "price_member": "12.48",
+    "price_external": "12.48",
     "max_players": 28,
     "maxPlayers": 28,
     "occupied_players": 1,
@@ -130,7 +130,7 @@
     "is_external": true,
     "is_private": false,
     "organizer": "Eduard Bainad Puig",
-    "description": "🎾 AMERICANA SOMOS PÁDEL BCN\n📍 Barcelona Pádel El Prat\n👤 Organizador: Eduard Bainad Puig\n📲 Inscripción oficial directa por Playtomic\n🌪️ Sistema Twister individual (cambio de pareja por ronda, NO pareja fija)\n⏱️ 18:00 - 20:00 h (7 Pistas)\n⚡ 1 de 28 plazas ocupadas (1/28 Plazas)",
+    "description": "🎾 AMERICANA SOMOS PÁDEL BCN\n📍 Barcelona Pádel El Prat\n👤 Organizador: Eduard Bainad Puig\n📲 Inscripción oficial directa por Playtomic\n🌪️ Sistema Twister individual (rotación por ronda, NO pareja fija)\n⏱️ 18:00 - 20:00 h (7 Pistas)\n⚡ 1 de 28 plazas ocupadas (1/28 Plazas)\n💶 Precio oficial: 12.48 €",
     "players": [
       {
         "id": "pt_playtomic_f25003a4_1",
@@ -142,10 +142,10 @@
         "is_external": true,
         "is_playtomic": true,
         "playtomic_status": "confirmed",
-        "price_paid": 0.0,
+        "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-24T13:27:15.092252+00:00"
+        "joinedAt": "2026-10-24T20:03:33.007167+00:00"
       }
     ],
     "registeredPlayers": [
@@ -159,12 +159,12 @@
         "is_external": true,
         "is_playtomic": true,
         "playtomic_status": "confirmed",
-        "price_paid": 0.0,
+        "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-24T13:27:15.092252+00:00"
+        "joinedAt": "2026-10-24T20:03:33.007167+00:00"
       }
     ],
-    "createdAt": "2026-10-24T13:27:15.092252+00:00"
+    "updatedAt": "2026-10-24T20:03:33.007167+00:00"
   }
 ]

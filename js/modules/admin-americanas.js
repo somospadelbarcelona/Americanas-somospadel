@@ -2373,7 +2373,7 @@ window.previewPlaytomicSync = async function() {
             newPlaytomicPlayers.push({
                 rawInput: cleanName,
                 finalName: formattedName,
-                displayName: Jugador Playtomic ,
+                displayName: `Jugador Playtomic ${formattedName}`,
                 formattedRaw: formattedName,
                 type: 'playtomic'
             });
