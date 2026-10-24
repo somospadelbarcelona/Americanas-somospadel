@@ -561,8 +561,9 @@
             const liveCount = evList.filter(e => e.status === 'live').length;
             const availableCount = evList.filter(e => {
                 const players = e.players || e.registeredPlayers || [];
-                const maxCourts = parseInt(e.max_courts || e.courts || 4);
-                return players.length < (maxCourts * 4);
+                const maxCourts = parseInt(e.courts || e.max_courts || (e.max_players ? Math.ceil(parseInt(e.max_players) / 4) : 4));
+                const maxP = parseInt(e.max_players || e.maxPlayers || (maxCourts * 4));
+                return players.length < maxP;
             }).length;
 
             const isFiltered = this.hasActiveFilters();
@@ -2078,8 +2079,9 @@
             if (statusFilter === 'available') {
                 events = events.filter(e => {
                     const players = e.players || e.registeredPlayers || [];
-                    const maxCourts = parseInt(e.max_courts || e.courts || 4);
-                    return players.length < (maxCourts * 4);
+                    const maxCourts = parseInt(e.courts || e.max_courts || (e.max_players ? Math.ceil(parseInt(e.max_players) / 4) : 4));
+                    const maxP = parseInt(e.max_players || e.maxPlayers || (maxCourts * 4));
+                    return players.length < maxP;
                 });
             } else if (statusFilter === 'live') {
                 events = events.filter(e => e.status === 'live');
@@ -3210,8 +3212,8 @@
             // ✅ LOGIC BLOCK (Restored)
             const players = (evt.players && evt.players.length > 0) ? evt.players : (evt.registeredPlayers || []);
             const playerCount = players.length;
-            const maxCourts = parseInt(evt.max_courts || evt.courts || 4);
-            const maxPlayers = maxCourts * 4;
+            const maxCourts = parseInt(evt.courts || evt.max_courts || (evt.max_players ? Math.ceil(parseInt(evt.max_players) / 4) : 4));
+            const maxPlayers = parseInt(evt.max_players || evt.maxPlayers || (maxCourts * 4));
             const user = this.state.currentUser;
             const uid = user ? user.uid : '-';
             const isJoined = players.some(p => p.uid === uid || p.id === uid);
