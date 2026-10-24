@@ -192,17 +192,22 @@ def parse_playtomic_tournament(tournament_id):
         tenant_id == "da77c69a-43b3-11e8-8674-52540049669c"
     )
 
+    # FILTRO DE MARCAS / PROMOTORES EXTERNOS:
+    # Excluir torneos de otras organizaciones que alquilan pistas en el club (CrazyxPadel, Saturday Breakfast, Vibra Pádel, Jaleo)
+    external_brands = ["vibra", "jaleo", "crazyxpadel", "crazy", "breakfast"]
+    if any(b in name_lower for b in external_brands):
+        log(f"   ⛔ FILTRADO / DESCARTADO: '{name}' pertenece a una marca externa ajena a Somos Pádel.")
+        return None
+
     if is_el_prat:
         sede = "Barcelona Pádel El Prat"
         organizer = "Eduard Bainad Puig"
-        # FILTRO ESTRICTO EDUARD BAINAD PUIG: Solo torneos de 'somospadel barcelona'
-        # Descartar promociones ajenas como Vibra Pádel, Jaleo, etc.
+        # En El Prat, Eduard Bainad promociona torneos propios de Somos Pádel y torneos ajenos.
+        # Filtramos estrictamente para quedarnos solo con Somos Pádel.
         is_somospadel_prat = (
             tournament_id.lower() == "f25003a4-105e-440d-a0ed-930bf047bd94" or
             any(k in name_lower for k in [
-                "somospadel barcelona", "somos padel barcelona", 
-                "somospadel bcn", "somos padel bcn", 
-                "somospadel", "somos pádel", "somos padel"
+                "somospadel", "somos padel", "somos pádel"
             ])
         )
         if not is_somospadel_prat:
@@ -210,25 +215,7 @@ def parse_playtomic_tournament(tournament_id):
             return None
     else:
         sede = "NEW Play Padel Pro Hospitalet"
-        organizer = "somospadeleugestion@gmail.com" # Exigido: somospadeleugestion@gmail.com SIEMPRE para este club
-        # FILTRO ESTRICTO SOMOSPADELEUGESTION: Solo americanas de:
-        # 1. 'Pádel Barcelona reservadas' / 'Padel Barcelona reservadas'
-        # 2. 'somospadel barcelona' (o variantes somospadel bcn, etc.)
-        # 3. Y la americana oficial de Halloween (46011a01-68b4-433f-b2e3-581ca5fabfdb)
-        is_somospadel_hosp = (
-            tournament_id.lower() == "46011a01-68b4-433f-b2e3-581ca5fabfdb" or
-            any(k in name_lower for k in [
-                "pádel barcelona reservadas", "padel barcelona reservadas",
-                "pádel barcelona reservada", "padel barcelona reservada",
-                "pádel barcelona", "padel barcelona",
-                "somospadel barcelona", "somos padel barcelona",
-                "somospadel bcn", "somos padel bcn",
-                "somospadel", "somos pádel", "somos padel"
-            ])
-        )
-        if not is_somospadel_hosp:
-            log(f"   ⛔ FILTRADO / DESCARTADO: '{name}' de somospadeleugestion no pertenece a 'Pádel Barcelona reservadas' ni a 'somospadel barcelona'.")
-            return None
+        organizer = "Somospadel Barcelona" # Cuenta oficial somospadeleugestion@gmail.com en Playtomic
 
     # 4. Tipo de americana: Pareja Fija vs Twister Individual
     # Analizamos únicamente el título y el contenido visible, evitando scripts JS
@@ -257,7 +244,9 @@ def parse_playtomic_tournament(tournament_id):
     date_str = ""
     time_str = "18:00"
     time_end_str = "20:00"
-    m_date_text = re.search(r'"text-xs font-medium text-\[#566670\] mb-1","children":"([^"]+)"', html)
+    m_date_text = re.search(r'class="text-xs font-medium text-\[#566670\] mb-1">([^<]+)<', html)
+    if not m_date_text:
+        m_date_text = re.search(r'"text-xs font-medium text-\[#566670\] mb-1","children":"([^"]+)"', html)
     if m_date_text:
         raw_datetime = m_date_text.group(1)
         day_match = re.search(r'(\d{1,2})', raw_datetime)
@@ -318,10 +307,9 @@ def parse_playtomic_tournament(tournament_id):
             m_val = re.search(r'(\d+[\.,]?\d*)', m_money.group(1))
             if m_val: extracted_price = m_val.group(1).replace(',', '.')
 
-    if extracted_price is not None and float(extracted_price.replace(',', '.')) > 0:
+    if extracted_price is not None:
         price_val = extracted_price
     else:
-        # Fallback de seguridad al precio oficial de Playtomic (12.48 €)
         price_val = "12.48"
 
     # Doc ID coherente

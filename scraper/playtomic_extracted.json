@@ -1,5 +1,74 @@
 [
   {
+    "doc_id": "pt_39749043",
+    "playtomic_id": "39749043-afd0-4d2a-9996-964723b75e02",
+    "name": "AMERICANA MAÑANAS",
+    "location": "NEW Play Padel Pro Hospitalet",
+    "sede": "NEW Play Padel Pro Hospitalet",
+    "date": "2026-11-04",
+    "normDate": "2026-11-04",
+    "time": "10:00",
+    "time_end": "20:00",
+    "duration": "2h",
+    "pair_mode": "twister",
+    "format": "twister",
+    "category": "open",
+    "level_min": "0",
+    "level_max": "7",
+    "price": "0",
+    "price_member": "0",
+    "price_external": "0",
+    "max_players": 20,
+    "maxPlayers": 20,
+    "occupied_players": 1,
+    "spots_left": 19,
+    "courts": 5,
+    "max_courts": 5,
+    "image_url": "https://res.cloudinary.com/playtomic/image/upload/v1774566721/pro/tenants/bd2ea8dd-4c1d-4e64-98eb-3ff2ab9b2051/1774566716539.jpg",
+    "playtomicUrl": "https://app.playtomic.com/tournaments/39749043-afd0-4d2a-9996-964723b75e02?utm_source=app_android&utm_campaign=share",
+    "playtomic_url": "https://app.playtomic.com/tournaments/39749043-afd0-4d2a-9996-964723b75e02?utm_source=app_android&utm_campaign=share",
+    "status": "open",
+    "is_external": true,
+    "is_private": false,
+    "organizer": "Somospadel Barcelona",
+    "description": "🎾 AMERICANA MAÑANAS\n📍 NEW Play Padel Pro Hospitalet\n👤 Organizador: Somospadel Barcelona\n📲 Inscripción oficial directa por Playtomic\n🌪️ Sistema Twister individual (rotación por ronda, NO pareja fija)\n⏱️ 10:00 - 20:00 h (5 Pistas)\n⚡ 1 de 20 plazas ocupadas (1/20 Plazas)\n💶 Precio oficial: 0 €",
+    "players": [
+      {
+        "id": "pt_playtomic_39749043_1",
+        "name": "Plaza Playtomic #1",
+        "display_name": "Plaza Playtomic #1",
+        "level": 3.5,
+        "position": "Drive",
+        "source": "playtomic",
+        "is_external": true,
+        "is_playtomic": true,
+        "playtomic_status": "confirmed",
+        "price_paid": 0.0,
+        "club": "NEW Play Padel Pro Hospitalet",
+        "organizer": "Somospadel Barcelona",
+        "joinedAt": "2026-10-24T21:05:17.245420+00:00"
+      }
+    ],
+    "registeredPlayers": [
+      {
+        "id": "pt_playtomic_39749043_1",
+        "name": "Plaza Playtomic #1",
+        "display_name": "Plaza Playtomic #1",
+        "level": 3.5,
+        "position": "Drive",
+        "source": "playtomic",
+        "is_external": true,
+        "is_playtomic": true,
+        "playtomic_status": "confirmed",
+        "price_paid": 0.0,
+        "club": "NEW Play Padel Pro Hospitalet",
+        "organizer": "Somospadel Barcelona",
+        "joinedAt": "2026-10-24T21:05:17.245420+00:00"
+      }
+    ],
+    "updatedAt": "2026-10-24T21:05:17.245420+00:00"
+  },
+  {
     "doc_id": "pt_46011a01_halloween",
     "playtomic_id": "46011a01-68b4-433f-b2e3-581ca5fabfdb",
     "name": "AMERICANA HALLOWEEN",
@@ -30,8 +99,8 @@
     "status": "open",
     "is_external": true,
     "is_private": false,
-    "organizer": "somospadeleugestion@gmail.com",
-    "description": "🎾 AMERICANA HALLOWEEN\n📍 NEW Play Padel Pro Hospitalet\n👤 Organizador: somospadeleugestion@gmail.com\n📲 Inscripción oficial directa por Playtomic\n🌪️ Sistema Twister individual (rotación por ronda, NO pareja fija)\n⏱️ 18:00 - 20:00 h (5 Pistas)\n⚡ 2 de 20 plazas ocupadas (2/20 Plazas)\n💶 Precio oficial: 12.48 €",
+    "organizer": "Somospadel Barcelona",
+    "description": "🎾 AMERICANA HALLOWEEN\n📍 NEW Play Padel Pro Hospitalet\n👤 Organizador: Somospadel Barcelona\n📲 Inscripción oficial directa por Playtomic\n🌪️ Sistema Twister individual (rotación por ronda, NO pareja fija)\n⏱️ 18:00 - 20:00 h (5 Pistas)\n⚡ 2 de 20 plazas ocupadas (2/20 Plazas)\n💶 Precio oficial: 12.48 €",
     "players": [
       {
         "id": "pt_playtomic_46011a01_1",
@@ -45,8 +114,8 @@
         "playtomic_status": "confirmed",
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
-        "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-24T20:03:31.840227+00:00"
+        "organizer": "Somospadel Barcelona",
+        "joinedAt": "2026-10-24T21:05:17.989173+00:00"
       },
       {
         "id": "pt_playtomic_46011a01_2",
@@ -60,8 +129,8 @@
         "playtomic_status": "confirmed",
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
-        "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-24T20:03:31.840227+00:00"
+        "organizer": "Somospadel Barcelona",
+        "joinedAt": "2026-10-24T21:05:17.989173+00:00"
       }
     ],
     "registeredPlayers": [
@@ -77,8 +146,8 @@
         "playtomic_status": "confirmed",
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
-        "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-24T20:03:31.840227+00:00"
+        "organizer": "Somospadel Barcelona",
+        "joinedAt": "2026-10-24T21:05:17.989173+00:00"
       },
       {
         "id": "pt_playtomic_46011a01_2",
@@ -92,11 +161,11 @@
         "playtomic_status": "confirmed",
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
-        "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-24T20:03:31.840227+00:00"
+        "organizer": "Somospadel Barcelona",
+        "joinedAt": "2026-10-24T21:05:17.989173+00:00"
       }
     ],
-    "updatedAt": "2026-10-24T20:03:31.840227+00:00"
+    "updatedAt": "2026-10-24T21:05:17.989173+00:00"
   },
   {
     "doc_id": "HWAnrOcyb85pT0eklDnc",
@@ -104,9 +173,9 @@
     "name": "AMERICANA SOMOS PÁDEL BCN",
     "location": "Barcelona Pádel El Prat",
     "sede": "Barcelona Pádel El Prat",
-    "date": "2026-10-31",
-    "normDate": "2026-10-31",
-    "time": "18:00",
+    "date": "2026-11-01",
+    "normDate": "2026-11-01",
+    "time": "17:00",
     "time_end": "20:00",
     "duration": "2h",
     "pair_mode": "twister",
@@ -114,9 +183,9 @@
     "category": "open",
     "level_min": "0",
     "level_max": "7",
-    "price": "12.48",
-    "price_member": "12.48",
-    "price_external": "12.48",
+    "price": "0",
+    "price_member": "0",
+    "price_external": "0",
     "max_players": 28,
     "maxPlayers": 28,
     "occupied_players": 1,
@@ -130,7 +199,7 @@
     "is_external": true,
     "is_private": false,
     "organizer": "Eduard Bainad Puig",
-    "description": "🎾 AMERICANA SOMOS PÁDEL BCN\n📍 Barcelona Pádel El Prat\n👤 Organizador: Eduard Bainad Puig\n📲 Inscripción oficial directa por Playtomic\n🌪️ Sistema Twister individual (rotación por ronda, NO pareja fija)\n⏱️ 18:00 - 20:00 h (7 Pistas)\n⚡ 1 de 28 plazas ocupadas (1/28 Plazas)\n💶 Precio oficial: 12.48 €",
+    "description": "🎾 AMERICANA SOMOS PÁDEL BCN\n📍 Barcelona Pádel El Prat\n👤 Organizador: Eduard Bainad Puig\n📲 Inscripción oficial directa por Playtomic\n🌪️ Sistema Twister individual (rotación por ronda, NO pareja fija)\n⏱️ 17:00 - 20:00 h (7 Pistas)\n⚡ 1 de 28 plazas ocupadas (1/28 Plazas)\n💶 Precio oficial: 0 €",
     "players": [
       {
         "id": "pt_playtomic_f25003a4_1",
@@ -142,10 +211,10 @@
         "is_external": true,
         "is_playtomic": true,
         "playtomic_status": "confirmed",
-        "price_paid": 12.48,
+        "price_paid": 0.0,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-24T20:03:33.007167+00:00"
+        "joinedAt": "2026-10-24T21:05:19.104399+00:00"
       }
     ],
     "registeredPlayers": [
@@ -159,12 +228,12 @@
         "is_external": true,
         "is_playtomic": true,
         "playtomic_status": "confirmed",
-        "price_paid": 12.48,
+        "price_paid": 0.0,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-24T20:03:33.007167+00:00"
+        "joinedAt": "2026-10-24T21:05:19.104399+00:00"
       }
     ],
-    "updatedAt": "2026-10-24T20:03:33.007167+00:00"
+    "updatedAt": "2026-10-24T21:05:19.104399+00:00"
   }
 ]
