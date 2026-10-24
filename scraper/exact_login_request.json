@@ -1,0 +1,31 @@
+[
+  {
+    "url": "https://manager.playtomic.io/auth/login",
+    "method": "GET",
+    "headers": {
+      "accept-language": "es-ES",
+      "upgrade-insecure-requests": "1",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/147.0.7727.15 Safari/537.36",
+      "sec-ch-ua": "\"HeadlessChrome\";v=\"147\", \"Not.A/Brand\";v=\"8\", \"Chromium\";v=\"147\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "post_data": null
+  },
+  {
+    "url": "https://manager.playtomic.io/api/v3/auth/login",
+    "method": "POST",
+    "headers": {
+      "sec-ch-ua-platform": "\"Windows\"",
+      "referer": "https://manager.playtomic.io/auth/login",
+      "accept-language": "es-ES",
+      "sec-ch-ua": "\"HeadlessChrome\";v=\"147\", \"Not.A/Brand\";v=\"8\", \"Chromium\";v=\"147\"",
+      "sec-ch-ua-mobile": "?0",
+      "x-requested-with": "com.playtomic.manager 1.328.0+build.5972",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/147.0.7727.15 Safari/537.36",
+      "accept": "application/json, text/plain, */*",
+      "content-type": "application/json; charset=utf-8"
+    },
+    "post_data": "{\"requested_user_scopes\":[{\"role\":\"ROLE_CUSTOMER\",\"scope_id\":null}],\"email\":\"somospadeleugestion@gmail.com\",\"password\":\"Factor2000!\"}"
+  }
+]

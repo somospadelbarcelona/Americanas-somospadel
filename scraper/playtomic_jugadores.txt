@@ -1,0 +1,16 @@
+# =========================================================================
+# 🎾 LISTA DE JUGADORES INSCRITOS POR PLAYTOMIC PARA SINCRONIZACIÓN
+# =========================================================================
+# Pega aquí los nombres de los jugadores inscritos en Playtomic (uno por línea o separados por comas).
+#
+# • Si el jugador YA ESTÁ registrado en la base de datos de la App de Somos Pádel:
+#   El sistema lo vinculará automáticamente a su perfil oficial con su nivel, nombre y estadísticas.
+#
+# • Si el jugador NO ESTÁ registrado en la App:
+#   El sistema lo guardará automáticamente como: "Jugador Playtomic [Nombre y Apellidos]".
+#
+# Ejemplo:
+# Pablo Mena Gutierrez
+# Carlos Sánchez
+# Paula Sanz
+# Laura Gómez

@@ -52,12 +52,94 @@
     };
 
     // Global handler for inspecting a player profile (Cotillear Jugador / FutCard)
+
+    window.openPlaytomicInfoModal = (playerId) => {
+        let modal = document.getElementById('playtomic-player-info-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'playtomic-player-info-modal';
+            modal.style.cssText = 'position:fixed; inset:0; background:rgba(15,23,42,0.8); backdrop-filter:blur(8px); z-index:99999; display:flex; align-items:center; justify-content:center; padding:16px;';
+            document.body.appendChild(modal);
+        }
+
+        const isP2 = String(playerId).endsWith('2') || String(playerId).includes('_2');
+        const pos = isP2 ? '⚡ Revés' : '🛡️ Drive';
+        const num = isP2 ? '2' : '1';
+
+        modal.innerHTML = `
+            <div style="background:#ffffff; border-radius:24px; max-width:420px; width:100%; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.35); border:1px solid #e2e8f0; font-family:'Outfit', sans-serif; animation:modalPopIn 0.25s cubic-bezier(0.16,1,0.3,1);">
+                <!-- Header con degradado Playtomic Oficial -->
+                <div style="background:linear-gradient(135deg, #00C6FF 0%, #0072FF 100%); padding:24px 20px; text-align:center; position:relative; color:#ffffff;">
+                    <button onclick="document.getElementById('playtomic-player-info-modal').style.display='none'" 
+                            style="position:absolute; top:14px; right:14px; background:rgba(0,0,0,0.2); border:none; color:#ffffff; width:30px; height:30px; border-radius:50%; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center;">
+                        ✕
+                    </button>
+                    <div style="width:68px; height:68px; border-radius:20px; background:#ffffff; margin:0 auto 12px; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 16px rgba(0,0,0,0.15); border:3px solid rgba(255,255,255,0.8);">
+                        <i class="fas fa-table-tennis" style="font-size:2rem; color:#0072FF;"></i>
+                    </div>
+                    <span style="background:rgba(255,255,255,0.25); color:#ffffff; font-size:0.65rem; font-weight:900; letter-spacing:1px; padding:3px 10px; border-radius:20px; text-transform:uppercase; border:1px solid rgba(255,255,255,0.4);">
+                        🎾 PLAYTOMIC OFICIAL
+                    </span>
+                    <h2 style="margin:10px 0 2px; font-size:1.35rem; font-weight:950; color:#ffffff;">
+                        Plaza Playtomic #${num}
+                    </h2>
+                    <p style="margin:0; font-size:0.8rem; opacity:0.95; font-weight:600;">
+                        Inscripción verificada desde Playtomic App
+                    </p>
+                </div>
+
+                <!-- Detalles de la reserva -->
+                <div style="padding:20px 22px;">
+                    <div style="display:flex; flex-direction:column; gap:12px;">
+                        <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0;">
+                            <span style="font-size:0.8rem; color:#64748b; font-weight:700;"><i class="fas fa-map-marker-alt" style="color:#0072FF; margin-right:6px;"></i> Club</span>
+                            <strong style="font-size:0.82rem; color:#0f172a;">NEW Play Padel Pro Hospitalet</strong>
+                        </div>
+                        <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0;">
+                            <span style="font-size:0.8rem; color:#64748b; font-weight:700;"><i class="fas fa-user-shield" style="color:#0072FF; margin-right:6px;"></i> Organizador</span>
+                            <strong style="font-size:0.75rem; color:#0f172a;">somospadeleugestion@gmail.com</strong>
+                        </div>
+                        <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0;">
+                            <span style="font-size:0.8rem; color:#64748b; font-weight:700;"><i class="fas fa-euro-sign" style="color:#10b981; margin-right:6px;"></i> Tarifa Oficial</span>
+                            <span style="background:#ecfdf5; color:#059669; font-weight:900; font-size:0.85rem; padding:3px 10px; border-radius:8px; border:1px solid #a7f3d0;">
+                                12.48 € PAGADO
+                            </span>
+                        </div>
+                        <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0;">
+                            <span style="font-size:0.8rem; color:#64748b; font-weight:700;"><i class="fas fa-sync" style="color:#0072FF; margin-right:6px;"></i> Modalidad</span>
+                            <strong style="font-size:0.82rem; color:#0f172a;">Twister Individual (5 Pistas)</strong>
+                        </div>
+                        <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0;">
+                            <span style="font-size:0.8rem; color:#64748b; font-weight:700;"><i class="fas fa-crosshairs" style="color:#0072FF; margin-right:6px;"></i> Posición Asignada</span>
+                            <span style="font-weight:800; font-size:0.8rem; color:#0f172a;">${pos} • Nivel 3.50</span>
+                        </div>
+                    </div>
+
+                    <!-- Botón de acción -->
+                    <div style="margin-top:20px; display:flex; flex-direction:column; gap:8px;">
+                        <button onclick="document.getElementById('playtomic-player-info-modal').style.display='none'" 
+                                style="width:100%; background:#0f172a; color:#ffffff; font-weight:900; font-size:0.85rem; padding:12px; border-radius:12px; border:none; cursor:pointer; transition:all 0.2s;">
+                            ENTENDIDO • PLAZA CONFIRMADA
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        modal.style.display = 'flex';
+    };
+
     window.cotillearJugador = (playerId, e) => {
         if (e && typeof e.stopPropagation === 'function') {
             e.stopPropagation();
         }
         try {
             if (!playerId) return;
+            if (String(playerId).includes('playtomic') || String(playerId).startsWith('pt_')) {
+                if (typeof window.openPlaytomicInfoModal === 'function') {
+                    window.openPlaytomicInfoModal(playerId);
+                    return;
+                }
+            }
             const playerObj = (window._currentInscritosPlayersMap && window._currentInscritosPlayersMap[playerId]) || 
                               (window.EventsController && window.EventsController.state && window.EventsController.state.users && window.EventsController.state.users.find(u => (u.id === playerId || u.uid === playerId))) ||
                               { id: playerId, uid: playerId };
@@ -561,8 +643,9 @@
             const liveCount = evList.filter(e => e.status === 'live').length;
             const availableCount = evList.filter(e => {
                 const players = e.players || e.registeredPlayers || [];
-                const maxCourts = parseInt(e.max_courts || e.courts || 4);
-                return players.length < (maxCourts * 4);
+                const maxCourts = parseInt(e.courts || e.max_courts || (e.max_players ? Math.ceil(parseInt(e.max_players) / 4) : 4));
+                const maxP = parseInt(e.max_players || e.maxPlayers || (maxCourts * 4));
+                return players.length < maxP;
             }).length;
 
             const isFiltered = this.hasActiveFilters();
@@ -2078,8 +2161,9 @@
             if (statusFilter === 'available') {
                 events = events.filter(e => {
                     const players = e.players || e.registeredPlayers || [];
-                    const maxCourts = parseInt(e.max_courts || e.courts || 4);
-                    return players.length < (maxCourts * 4);
+                    const maxCourts = parseInt(e.courts || e.max_courts || (e.max_players ? Math.ceil(parseInt(e.max_players) / 4) : 4));
+                    const maxP = parseInt(e.max_players || e.maxPlayers || (maxCourts * 4));
+                    return players.length < maxP;
                 });
             } else if (statusFilter === 'live') {
                 events = events.filter(e => e.status === 'live');
@@ -3210,8 +3294,8 @@
             // ✅ LOGIC BLOCK (Restored)
             const players = (evt.players && evt.players.length > 0) ? evt.players : (evt.registeredPlayers || []);
             const playerCount = players.length;
-            const maxCourts = parseInt(evt.max_courts || evt.courts || 4);
-            const maxPlayers = maxCourts * 4;
+            const maxCourts = parseInt(evt.courts || evt.max_courts || (evt.max_players ? Math.ceil(parseInt(evt.max_players) / 4) : 4));
+            const maxPlayers = parseInt(evt.max_players || evt.maxPlayers || (maxCourts * 4));
             const user = this.state.currentUser;
             const uid = user ? user.uid : '-';
             const isJoined = players.some(p => p.uid === uid || p.id === uid);
@@ -3354,8 +3438,16 @@
                 btnLabel = '🔔 AVISADME DE BAJA'; btnIcon = 'fa-bell'; btnColor = '#eab308';
                 fabAction = `window.EventsController.joinWaitlist('${evt.id}', '${evt.type || 'americana'}')`;
             } else if (!isJoined && !isFull) {
-                btnLabel = 'APUNTARME'; btnIcon = 'fa-plus'; btnColor = '#CCFF00';
-                fabAction = `window.EventsController.joinEvent('${evt.id}', '${evt.type || 'americana'}')`;
+                if (evt.playtomicUrl || evt.playtomic_url) {
+                    const pUrl = evt.playtomicUrl || evt.playtomic_url;
+                    btnLabel = 'INSCRIBIRME (PLAYTOMIC)';
+                    btnIcon = 'fa-external-link-alt';
+                    btnColor = '#0284c7';
+                    fabAction = `window.open('${pUrl}', '_blank')`;
+                } else {
+                    btnLabel = 'APUNTARME'; btnIcon = 'fa-plus'; btnColor = '#CCFF00';
+                    fabAction = `window.EventsController.joinEvent('${evt.id}', '${evt.type || 'americana'}')`;
+                }
             } else if (isJoined) {
                 btnLabel = 'INSCRITO'; btnIcon = 'fa-check-circle'; btnColor = '#4ade80';
                 fabAction = `window.EventsController.leaveEvent('${evt.id}', '${evt.type || 'americana'}')`;
@@ -3593,7 +3685,7 @@
                                         onmouseout="${isJoined ? "this.style.background='#dcfce7 !important'; this.style.color='#15803d !important'; this.style.borderColor='#86efac !important'; const lbl = this.querySelector('span'); if(lbl) lbl.innerText='INSCRITO';" : "this.style.transform='scale(1)';"}"
                                 >
                                     <i id="event-fab-icon-${evt.id}" class="fas ${btnIcon}" style="font-size: 0.74rem; color: ${isFinished || isLive ? '#ffffff' : (isJoined ? '#15803d' : (isGenderMismatch ? '#64748b' : '#000000'))} !important;"></i>
-                                    <span id="event-fab-label-${evt.id}" style="white-space: nowrap; color: ${isFinished || isLive ? '#ffffff' : (isJoined ? '#15803d' : (isGenderMismatch ? '#64748b' : '#000000'))} !important;">${isFinished ? btnLabel : (isCancelled ? 'ANULADO' : (isLive ? 'LIVE' : (isGenderMismatch && !isJoined ? btnLabel : (btnLabel === 'CLAVE ACCESO 🔒' ? 'CLAVE' : (isJoined ? 'INSCRITO' : (isFull && !isJoined ? 'ESPERA' : 'UNIRME'))))))}</span>
+                                    <span id="event-fab-label-${evt.id}" style="white-space: nowrap; color: ${isFinished || isLive ? '#ffffff' : (isJoined ? '#15803d' : (isGenderMismatch ? '#64748b' : '#000000'))} !important;">${isFinished ? btnLabel : (isCancelled ? 'ANULADO' : (isLive ? 'LIVE' : (isGenderMismatch && !isJoined ? btnLabel : (btnLabel === 'CLAVE ACCESO 🔒' ? 'CLAVE' : (isJoined ? 'INSCRITO' : (isFull && !isJoined ? 'ESPERA' : ((evt.playtomicUrl || evt.playtomic_url) ? 'PLAYTOMIC' : 'UNIRME')))))))}</span>
                                 </button>
 
                                 <!-- Chevron Button for Expand -->
@@ -4064,6 +4156,14 @@
                                             ctaTextColor = '#854d0e';
                                             ctaBorder = '1.5px solid #facc15';
                                             ctaShadow = '0 4px 12px rgba(234, 179, 8, 0.2)';
+                                        } else if ((evt.playtomicUrl || evt.playtomic_url) && !isJoined) {
+                                            ctaBg = 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)';
+                                            ctaTextColor = '#ffffff';
+                                            ctaBorder = 'none';
+                                            ctaShadow = '0 4px 14px rgba(2, 132, 199, 0.4)';
+                                            btnLabel = 'INSCRIBIRME (PLAYTOMIC)';
+                                            btnIcon = 'fa-external-link-alt';
+                                            fabAction = `window.open('${evt.playtomicUrl || evt.playtomic_url}', '_blank')`;
                                         }
 
                                         if (isCancelled || isFinished || evt.status === 'finished' || isLive) {
@@ -5755,6 +5855,13 @@
                 const evt = events.find(e => e.id === id);
                 if (!evt) return;
 
+                // Redirección directa a Playtomic si la americana está vinculada
+                const playtomicLink = evt.playtomicUrl || evt.playtomic_url;
+                if (playtomicLink) {
+                    window.open(playtomicLink, '_blank');
+                    return;
+                }
+
                 // 🛑 Comprobación exclusiva: Los entrenamientos son solo para jugadores de equipos SomosPadel
                 if (type === 'entreno') {
                     const u = this.state.currentUser || {};
@@ -6100,19 +6207,25 @@
             }
             modal.style.display = 'block';
 
-            // ✅ FIX V2: LECTURA DIRECTA desde Firestore (evita datos stale del snapshot local)
+            // ✅ FIX V3: LECTURA DIRECTA ULTRA-SEGURA CON TIMEOUT (nunca bloquea la UI en 'CARGANDO JUGADORES...')
             try {
                 const collectionName = type === 'entreno' ? 'entrenos' : 'americanas';
-                const freshDoc = await window.db.collection(collectionName).doc(id).get();
-                if (freshDoc.exists) {
-                    const freshData = { id: freshDoc.id, ...freshDoc.data() };
-                    console.log(`✅ [Inscritos] Lectura fresca OK: players=${(freshData.players || []).length}, registeredPlayers=${(freshData.registeredPlayers || []).length}`);
-                    evt = freshData;
-                } else {
-                    console.warn(`⚠️ [Inscritos] Doc ${id} no existe en ${collectionName}. Usando snapshot local.`);
+                if (window.db && typeof window.db.collection === 'function') {
+                    const freshPromise = (window.safeFirestoreGet)
+                        ? window.safeFirestoreGet(window.db.collection(collectionName).doc(id), null, 1500)
+                        : Promise.race([
+                            window.db.collection(collectionName).doc(id).get(),
+                            new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout 1.5s")), 1500))
+                        ]);
+                    const freshDoc = await freshPromise;
+                    if (freshDoc && freshDoc.exists) {
+                        const freshData = { id: freshDoc.id, ...freshDoc.data() };
+                        console.log(`✅ [Inscritos] Lectura fresca OK: players=${(freshData.players || []).length}, registeredPlayers=${(freshData.registeredPlayers || []).length}`);
+                        evt = freshData;
+                    }
                 }
             } catch (freshErr) {
-                console.warn(`⚠️ [Inscritos] Error lectura fresca, usando snapshot local:`, freshErr);
+                console.warn(`⚠️ [Inscritos] Lectura fresca omitida o timeout, usando datos locales:`, freshErr);
             }
 
             // ✅ FIX V2: Robust player list — prioriza players, luego registeredPlayers
@@ -6201,19 +6314,28 @@
                     for (const chunk of chunks) {
                         if (chunk.length === 0) continue;
                         try {
-                            const snap = await window.db.collection('players').where(FieldPath.documentId(), 'in', chunk).get();
-                            snap.forEach(doc => {
-                                fetchedRawMap.set(doc.id, { id: doc.id, ...doc.data() });
-                            });
-                        } catch (chunkErr) { console.error("Error fetching chunk:", chunkErr); }
+                            const queryPromise = Promise.race([
+                                window.db.collection('players').where(FieldPath.documentId(), 'in', chunk).get(),
+                                new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout chunk")), 1800))
+                            ]);
+                            const snap = await queryPromise;
+                            if (snap) {
+                                snap.forEach(doc => {
+                                    fetchedRawMap.set(doc.id, { id: doc.id, ...doc.data() });
+                                });
+                            }
+                        } catch (chunkErr) { console.warn("Notice fetching chunk:", chunkErr); }
                     }
                 } else if (allUids.length > 0 && !FieldPath && window.db) {
-                    // ✅ FALLBACK EXTREMO: Si FieldPath no existe, buscar uno a uno por doc ID
-                    console.warn(`⚠️ [Inscritos] FieldPath no disponible, buscando jugadores uno a uno...`);
-                    for (const uid of allUids) {
+                    console.warn(`⚠️ [Inscritos] FieldPath no disponible, buscando jugadores con timeout...`);
+                    for (const uid of allUids.slice(0, 10)) {
                         try {
-                            const doc = await window.db.collection('players').doc(uid).get();
-                            if (doc.exists) {
+                            const queryPromise = Promise.race([
+                                window.db.collection('players').doc(uid).get(),
+                                new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout single")), 800))
+                            ]);
+                            const doc = await queryPromise;
+                            if (doc && doc.exists) {
                                 fetchedRawMap.set(doc.id, { id: doc.id, ...doc.data() });
                             }
                         } catch (e) { /* skip */ }
@@ -6354,11 +6476,17 @@
                 if (window.db && typeof window.db.collection === 'function') {
                     const colRef = window.db.collection(matchCol);
                     if (colRef && typeof colRef.where === 'function') {
-                        let mSnap = await colRef.where('americana_id', '==', evt.id).where('round', '==', 1).get();
-                        if (mSnap.empty) {
-                            mSnap = await colRef.where('americana_id', '==', evt.id).where('round', '==', '1').get();
+                        let mSnap = await Promise.race([
+                            colRef.where('americana_id', '==', evt.id).where('round', '==', 1).get(),
+                            new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout round 1")), 1500))
+                        ]).catch(() => null);
+                        if (mSnap && mSnap.empty) {
+                            mSnap = await Promise.race([
+                                colRef.where('americana_id', '==', evt.id).where('round', '==', '1').get(),
+                                new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout round 1 string")), 1500))
+                            ]).catch(() => null);
                         }
-                        if (!mSnap.empty) {
+                        if (mSnap && !mSnap.empty) {
                             round1Matches = mSnap.docs.map(d => ({ id: d.id, ...d.data() }));
                         }
                     }
@@ -7394,23 +7522,31 @@
             const renderNeonPlayer = (player, badgeText, badgeColor = '#0284c7') => {
                 if (!player) return '';
                 const pid = player.id || player.uid;
-                const photo = player.photo_url || player.photoURL || 'img/logo_somospadel.png';
+                const isPlaytomic = player.is_playtomic || player.source === 'playtomic' || (player.name && player.name.toLowerCase().includes('playtomic')) || (pid && String(pid).includes('playtomic'));
+                const photo = isPlaytomic ? 'img/logo_somospadel.png' : (player.photo_url || player.photoURL || 'img/logo_somospadel.png');
                 const level = parseFloat(player.level || 3.5).toFixed(2);
                 const teams = Array.isArray(player.team_somospadel) ? player.team_somospadel : (player.team_somospadel ? [player.team_somospadel] : []);
                 const position = player.position || (level > 3.6 ? 'Revés' : 'Drive');
                 const isRev = position.toLowerCase().includes('rev');
                 const posIcon = isRev ? '⚡ Revés' : '🛡️ Drive';
                 const streak = player.streak || (parseFloat(level) > 3.5 ? 3 : 1);
-                const rawName = (player.name || 'Jugador').trim();
+                
+                let rawName = (player.display_name || player.name || 'Jugador').trim();
+                if (/^jugador\s+playtomic\s+\d+$/i.test(rawName)) {
+                    const numM = rawName.match(/\d+/);
+                    rawName = `Plaza Playtomic #${numM ? numM[0] : '1'}`;
+                }
                 const displayName = rawName.replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 const safeNameAttr = rawName.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
                 const isMe = currentUid && (pid === currentUid);
+                const actualBadgeColor = isPlaytomic ? '#0072FF' : badgeColor;
+                const actualBadgeText = isPlaytomic ? '🎾 PLAYTOMIC' : badgeText;
 
                 return `
                     <div class="player-roster-row" data-player-name="${safeNameAttr}" onclick="event.stopPropagation(); window.cotillearJugador('${pid}')" title="Toca para cotillear perfil de ${safeNameAttr}" style="display: flex; align-items: center; gap: 9px; padding: 6px 8px; position: relative; border-radius: 10px; cursor: pointer; transition: background 0.15s ease;">
                         <!-- Avatar -->
                         <div style="position: relative; flex-shrink: 0;">
-                            <div style="width: 38px; height: 38px; border-radius: 10px; background: url('${photo}') center/cover; border: 2px solid ${badgeColor}; box-shadow: 0 1px 4px rgba(0,0,0,0.06);"></div>
+                            <div style="width: 38px; height: 38px; border-radius: 10px; background: url('${photo}') center/cover; border: 2px solid ${actualBadgeColor}; box-shadow: 0 1px 4px rgba(0,0,0,0.06);"></div>
                             <span style="position: absolute; bottom: -3px; right: -3px; background: #0f172a; color: #f59e0b; font-size: 0.5rem; font-weight: 950; padding: 1px 3px; border-radius: 4px; border: 1px solid #e2e8f0;">🔥${streak}W</span>
                         </div>
                         <!-- Info -->
@@ -7427,9 +7563,15 @@
                         </div>
                         <!-- Actions & Badge -->
                         <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0;">
-                            <div style="background: ${badgeColor}; color: #ffffff; font-size: 0.48rem; font-weight: 1000; padding: 1px 6px; border-radius: 4px; letter-spacing: 0.4px;">${badgeText}</div>
+                            <div style="background: ${actualBadgeColor}; color: #ffffff; font-size: 0.48rem; font-weight: 1000; padding: 1px 6px; border-radius: 4px; letter-spacing: 0.4px;">${actualBadgeText}</div>
                             <div style="display: flex; align-items: center; gap: 4px;">
-                                ${!isMe ? `
+                                ${!isMe ? (isPlaytomic ? `
+                                <button onclick="event.stopPropagation(); window.openPlaytomicInfoModal('${pid}')" 
+                                        style="background: linear-gradient(135deg, #00C6FF, #0072FF); border: 1px solid #00C6FF; color: #ffffff; font-size: 0.55rem; font-weight: 950; padding: 2px 7px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 3px; transition: all 0.2s; box-shadow: 0 1px 4px rgba(0,198,255,0.3);"
+                                        title="Plaza Oficial Playtomic • 12.48 € Pagada">
+                                    <i class="fas fa-check-circle" style="font-size: 0.54rem;"></i> PLAYTOMIC
+                                </button>
+                                ` : `
                                 <button onclick="event.stopPropagation(); window.openDirectChatWithPlayer('${pid}')" 
                                         style="background: #0284c7; border: 1px solid #0284c7; color: #ffffff; font-size: 0.55rem; font-weight: 950; padding: 2px 6px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 3px; transition: all 0.2s; box-shadow: 0 1px 3px rgba(2,132,199,0.2);"
                                         onmouseover="this.style.background='#0369a1';"
@@ -7437,7 +7579,7 @@
                                         title="Abrir chat privado con ${displayName}">
                                     <i class="fas fa-comment-dots" style="font-size: 0.54rem;"></i> CHAT
                                 </button>
-                                ` : ''}
+                                `) : ''}
                                 <button onclick="event.stopPropagation(); window.cotillearJugador('${pid}')" 
                                         style="background: #f8fafc; border: 1px solid #cbd5e1; color: #0284c7; font-size: 0.55rem; font-weight: 950; padding: 2px 6px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 3px; transition: all 0.2s;"
                                         onmouseover="this.style.background='#0284c7'; this.style.color='#ffffff'; this.style.borderColor='#0284c7';"
@@ -7635,7 +7777,13 @@
                         <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0;">
                             <div style="background: #ea580c; color: #ffffff; font-size: 0.48rem; font-weight: 1000; padding: 1px 6px; border-radius: 4px; letter-spacing: 0.4px;">SUPLENTE</div>
                             <div style="display: flex; align-items: center; gap: 4px;">
-                                ${!isMe ? `
+                                ${!isMe ? (isPlaytomic ? `
+                                <button onclick="event.stopPropagation(); window.openPlaytomicInfoModal('${pid}')" 
+                                        style="background: linear-gradient(135deg, #00C6FF, #0072FF); border: 1px solid #00C6FF; color: #ffffff; font-size: 0.55rem; font-weight: 950; padding: 2px 7px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 3px; transition: all 0.2s; box-shadow: 0 1px 4px rgba(0,198,255,0.3);"
+                                        title="Plaza Oficial Playtomic • 12.48 € Pagada">
+                                    <i class="fas fa-check-circle" style="font-size: 0.54rem;"></i> PLAYTOMIC
+                                </button>
+                                ` : `
                                 <button onclick="event.stopPropagation(); window.openDirectChatWithPlayer('${pid}')" 
                                         style="background: #0284c7; border: 1px solid #0284c7; color: #ffffff; font-size: 0.55rem; font-weight: 950; padding: 2px 6px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 3px; transition: all 0.2s; box-shadow: 0 1px 3px rgba(2,132,199,0.2);"
                                         onmouseover="this.style.background='#0369a1';"
@@ -7643,7 +7791,7 @@
                                         title="Abrir chat privado con ${displayName}">
                                     <i class="fas fa-comment-dots" style="font-size: 0.54rem;"></i> CHAT
                                 </button>
-                                ` : ''}
+                                `) : ''}
                                 <button onclick="event.stopPropagation(); window.cotillearJugador('${pid}')" 
                                         style="background: #fff7ed; border: 1px solid #fdba74; color: #c2410c; font-size: 0.55rem; font-weight: 950; padding: 2px 6px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 3px; transition: all 0.2s;"
                                         onmouseover="this.style.background='#ea580c'; this.style.color='#ffffff'; this.style.borderColor='#ea580c';"
@@ -9709,9 +9857,21 @@
         try {
             let player = targetId;
             if (typeof targetId === 'string') {
+                if (String(targetId).includes('playtomic') || String(targetId).startsWith('pt_')) {
+                    if (typeof window.openPlaytomicInfoModal === 'function') {
+                        window.openPlaytomicInfoModal(targetId);
+                        return;
+                    }
+                }
                 player = (window._currentInscritosPlayersMap && window._currentInscritosPlayersMap[targetId]) || 
                          (window.EventsController?.state?.users?.find?.(u => (u.id === targetId || u.uid === targetId))) ||
                          { id: targetId, uid: targetId, name: 'Jugador' };
+            }
+            if (player && (player.is_playtomic || player.source === 'playtomic' || String(player.name).toLowerCase().includes('playtomic'))) {
+                if (typeof window.openPlaytomicInfoModal === 'function') {
+                    window.openPlaytomicInfoModal(player.id || targetId);
+                    return;
+                }
             }
             if (typeof window.PlayerView?.haptic === 'function') window.PlayerView.haptic(20);
 

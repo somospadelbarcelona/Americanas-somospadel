@@ -1,0 +1,247 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, minimum-scale=1.0, maximum-scale=1.0, viewport-fit=cover, user-scalable=no, shrink-to-fit=no" />
+
+    <!-- PWA-related -->
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/favicon.svg" sizes="any" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
+    <meta name="theme-color" content="#0e2433" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+
+    <meta name="x-app-version" content="1.328.0+build.5972" />
+    <!-- Load public environment variables -->
+    <script type="module" src="/config-dd816834.js"></script>
+
+    <title>Playtomic Manager</title>
+    <style>
+      .app-loader {
+        box-sizing: content-box;
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+      }
+
+      .app-loader__logo {
+        box-sizing: content-box;
+        max-width: 300px;
+        fill: #0f2333;
+        fill-rule: evenodd;
+        clip-rule: evenodd;
+        stroke-linejoin: round;
+        stroke-miterlimit: 2;
+      }
+
+      .app-loader__activity-indicator {
+        box-sizing: content-box;
+        width: 20px;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        border: 2px solid #0f2333;
+        animation:
+          l01 0.8s infinite linear alternate,
+          l02 1.6s infinite linear;
+      }
+
+      @keyframes l01 {
+        0% {
+          clip-path: polygon(50% 50%, 0 0, 50% 0%, 50% 0%, 50% 0%, 50% 0%, 50% 0%);
+        }
+        12.5% {
+          clip-path: polygon(50% 50%, 0 0, 50% 0%, 100% 0%, 100% 0%, 100% 0%, 100% 0%);
+        }
+        25% {
+          clip-path: polygon(50% 50%, 0 0, 50% 0%, 100% 0%, 100% 100%, 100% 100%, 100% 100%);
+        }
+        50% {
+          clip-path: polygon(50% 50%, 0 0, 50% 0%, 100% 0%, 100% 100%, 50% 100%, 0% 100%);
+        }
+        62.5% {
+          clip-path: polygon(50% 50%, 100% 0, 100% 0%, 100% 0%, 100% 100%, 50% 100%, 0% 100%);
+        }
+        75% {
+          clip-path: polygon(50% 50%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 50% 100%, 0% 100%);
+        }
+        100% {
+          clip-path: polygon(50% 50%, 50% 100%, 50% 100%, 50% 100%, 50% 100%, 50% 100%, 0% 100%);
+        }
+      }
+      @keyframes l02 {
+        0% {
+          transform: scaleY(1) rotate(0deg);
+        }
+        49.99% {
+          transform: scaleY(1) rotate(135deg);
+        }
+        50% {
+          transform: scaleY(-1) rotate(0deg);
+        }
+        100% {
+          transform: scaleY(-1) rotate(-135deg);
+        }
+      }
+    </style>
+    <script type="module" crossorigin src="/assets/index-BFvobo1d.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-GtAvUg8K-CO5al3w4.js">
+    <link rel="modulepreload" crossorigin href="/assets/rolldown-runtime-CV_IkQJQ.js">
+    <link rel="modulepreload" crossorigin href="/assets/icon--CKIGPQf-CwyEZ9au.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-J1l2CBzh-Du-6VSci.js">
+    <link rel="modulepreload" crossorigin href="/assets/exK-Q_68-YUDflZvq-CSJQRGeB.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor--xaeLcgA-tFE7Iv1L.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-3luudFaF-sGucFhH5.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-17iVxsRK-D9nSe15N.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-0txN6GN5-n-DMyfSs.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-E7qabc7A-D711g97_.js">
+    <link rel="modulepreload" crossorigin href="/assets/icon-WAb4t2Xx-CmwFD4NF.js">
+    <link rel="modulepreload" crossorigin href="/assets/icon-TQS2okgc-Dlo1D_n_.js">
+    <link rel="modulepreload" crossorigin href="/assets/icon-2w64AzaK-CbxaYoG3.js">
+    <link rel="modulepreload" crossorigin href="/assets/icon-SV3RnUrN-6b4lTx9o.js">
+    <link rel="modulepreload" crossorigin href="/assets/icon-2oFRCwP1-1af_rpfb.js">
+    <link rel="modulepreload" crossorigin href="/assets/icon-CIJv3qeX-BD0E5ikJ.js">
+    <link rel="modulepreload" crossorigin href="/assets/icon-KAFSeD2p-DbC7AIff.js">
+    <link rel="modulepreload" crossorigin href="/assets/icon-T38E50oF-CJAzkop0.js">
+    <link rel="modulepreload" crossorigin href="/assets/icon-R8IVtfcO-3LeoYiXU.js">
+    <link rel="modulepreload" crossorigin href="/assets/icon-P33xd2JU-BndjgAxg.js">
+    <link rel="modulepreload" crossorigin href="/assets/icon-8lKlVWdM-CDU8G0dY.js">
+    <link rel="modulepreload" crossorigin href="/assets/icon-NZjOb5Zb-DbiUrk7u.js">
+    <link rel="modulepreload" crossorigin href="/assets/icon-UijlvUXq-BhFMbQfY.js">
+    <link rel="modulepreload" crossorigin href="/assets/icon-D5IhzAhu-DgT29RP1.js">
+    <link rel="modulepreload" crossorigin href="/assets/icon-OKgeh-eW-C9ZAje_N.js">
+    <link rel="modulepreload" crossorigin href="/assets/icon-S6Po43Zf-CZt3-duf.js">
+    <link rel="modulepreload" crossorigin href="/assets/icon-SToUsV_7-BIdqfUzD.js">
+    <link rel="modulepreload" crossorigin href="/assets/icon-8WKBYmxP-al-9nGKM.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-5dKGUWk9-Dwv1jmID.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-K9HQvfGF-BefmGSZf.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-5gTJA5qk-RWwd8TeZ.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-KaM9fvVr-O_rwnbe3.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-hT9I3dUA-icIp5rXe.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-V7othM7q-BZKXxdGO.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-f2Wot75h-BswD7q6f.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-mkKR4emP-eiJlNG5o.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-dM75fvjy-Dy3ad_6n.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-Mc3tabY9-CvhgSYCQ.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-2kuaKAvN-CWA1NQi0.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-2vr_RN5T-BuKoG_Zu.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-3NYVFuZU-Dr6YzmDP.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-6ChtUVnv-wEgIc2wW.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-G9UJ8TZG-BSe5SnOy.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-JUUGib3U-D0HFYMu_.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-Rgru7Xqu-CDRgWpmJ.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-lKdVU10T-CRi6gNSG.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-Bkz7dEIN-CSDv8xCt.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-CAuqF8kL-DAE58LAy.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-8G4MnZnP-BJQBtARp.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-MqQZfdqP-BcK0D37E.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-Nha3pcR7-BxC5Fb7M.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-ne5szvaj-BKteSJ7n.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-PMdR9Av4-DiYWzKAs.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-gp2wvNSk-xk4BV0OC.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-t1cg7szl-V54EYQa7.js">
+    <link rel="modulepreload" crossorigin href="/assets/i18n-DCMMQPvc.js">
+    <link rel="modulepreload" crossorigin href="/assets/b9iXNBLK-tEQNaZlN-CpSogw2O.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-CKILuqmI-Dw8bNjF6.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-0eb_2YgK-BjRRTZPg.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-_wBqVxqC-Dg5K-Ni4.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-j79_Cp-r-jJQdFTYH.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-I51_JWc8-CVPbkYWu.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-Jb_gZ0li-nzwQftLh.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-nIGo4aBQ-kdckymRG.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-tmbx822V-BavWEKzO.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-S_rLr527-D7XLES1k.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-PBIFGvqu-mHCme0WT.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-Tqz4U3cu-CU3qOYto.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-kIoxcH5B-vFo2a3GT.js">
+    <link rel="modulepreload" crossorigin href="/assets/exK-Q_68-174Y9Rfu-C-_AmHW3.js">
+    <link rel="modulepreload" crossorigin href="/assets/exK-Q_68-27nEMJ4l-DXi-kPrU.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-hNaB37RZ-CjRrqD0u.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-kRPwZvqn-Bix7THQN.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-BQ-CvaD_-DulJFtGB.js">
+    <link rel="modulepreload" crossorigin href="/assets/exK-Q_68-Me_zDa1V-DX0ATyL7.js">
+    <link rel="modulepreload" crossorigin href="/assets/b9iXNBLK-EtBOHWd2-CsfG8iII.js">
+    <link rel="modulepreload" crossorigin href="/assets/b9iXNBLK-ovxEdOmE-YQ2oWklG.js">
+    <link rel="modulepreload" crossorigin href="/assets/icon-2BmO-jYE-DbW6uyLX.js">
+    <link rel="modulepreload" crossorigin href="/assets/exK-Q_68-4USFW6Wx-DbGu9stS.js">
+    <link rel="modulepreload" crossorigin href="/assets/qfqf2pjX-53AzP6hs-Dlvz6V6y.js">
+    <link rel="modulepreload" crossorigin href="/assets/b9iXNBLK-Ql_GnU4y-D-hNGjGy.js">
+    <link rel="modulepreload" crossorigin href="/assets/b9iXNBLK-S1-jClpb-za4q8lvC.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-M6Qd4sRR-dR6-lWjd.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor--fPDyFqR-BxNLGuXd.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-YYuMjeJM-DKmOcfft.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-geSVTRwF-chOfDbGy.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-A9xkKmK5-Cd_cMy9L.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-7Uc00_ap-Ck5LK-Ai.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-XcJ68of6-D0BUUs98.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-CmPOMosc-nx1OT7rz.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-GWEIW0CH-LjdCLEbp.js">
+    <link rel="stylesheet" crossorigin href="/assets/vendor-BQ-CvaD_-Da2Wtd0x.css">
+  </head>
+
+  <body>
+    <noscript> You need to enable JavaScript to run this app. </noscript>
+    <div id="root">
+      <!--
+        This app-loader will only be rendered while application is initially loading. You can find a lengthier
+        explanation on the AppRootLoader component
+      -->
+      <div class="app-loader">
+        <svg
+          class="app-loader__logo"
+          viewBox="0 0 909 117"
+          xml:space="preserve"
+          xmlns="http://www.w3.org/2000/svg"
+          xmlns:xlink="http://www.w3.org/1999/xlink">
+          <g>
+            <path
+              d="M450.096,31.822c-14.844,0 -24.067,8.761 -24.067,22.853c-0,14.093 9.223,22.829 24.067,22.829c14.843,-0 24.06,-8.761 24.06,-22.854c0,-14.092 -9.23,-22.828 -24.06,-22.828Zm-0.072,37.797c-9.311,-0 -14.873,-5.588 -14.873,-14.944c0,-9.355 5.633,-14.943 15.02,-14.943c9.386,0 14.873,5.588 14.873,14.943c-0,9.356 -5.62,14.919 -15.02,14.919l0,0.025Z" />
+            <path
+              d="M409.826,32.818l-40.813,0l-0.156,8.097l16.107,0l0,35.569l8.865,0l0,-35.569l16.108,0l-0.111,-8.097Z" />
+            <path
+              d="M537.646,47.417l-0,29.067l8.806,0l0,-43.666l-10.657,0l-14.612,25.851l-14.938,-25.851l-10.475,0l0,43.666l8.68,0l-0,-29.067l1,0l0.137,0.238l15.29,26.408l0.218,-0l15.551,-26.646l1,0Z" />
+            <path
+              d="M343.043,32.818l-13.387,19.693l-1.271,0l-0.143,-0.213l-12.99,-19.48l-10.313,0l19.587,28.567l-0,15.099l8.86,0l0,-15.287l0.088,-0.125l19.5,-28.254l-9.931,0Z" />
+            <rect x="571.139" y="32.818" width="8.865" height="43.666" />
+            <path d="M196.425,32.818l-0,43.666l33.992,0l0.287,-8.103l-25.412,-0l-0,-35.563l-8.867,0Z" />
+            <path
+              d="M160.404,32.818l-23.041,0l0,43.666l8.861,0l-0,-12.046l13.223,0c10.638,0 16.733,-5.844 16.733,-16.032c-0,-9.906 -5.751,-15.588 -15.776,-15.588Zm-0.763,23.711l-13.417,-0l-0,-15.801l13.223,-0c5.137,-0 7.741,2.665 7.741,7.935c-0,4.925 -2.823,7.866 -7.547,7.866Z" />
+            <path
+              d="M263.551,32.818l-17.021,43.666l9.048,0l4.093,-10.581l22.071,-0l4.017,10.581l9.231,0l-16.984,-43.666l-14.455,0Zm-0.951,25.431l6.614,-17.139l3.01,-0l6.546,17.139l-16.17,0Z" />
+            <path
+              d="M638.215,61.678c-1.766,5.006 -5.77,7.916 -12.478,7.916c-9.318,-0 -14.873,-5.588 -14.873,-14.944c-0,-9.355 5.63,-14.943 15.016,-14.943c6.458,-0 10.546,2.703 12.159,8.035l9.719,-0c-1.984,-9.456 -9.787,-15.92 -21.959,-15.92c-14.837,0 -24.061,8.761 -24.061,22.853c0,14.093 9.224,22.829 24.061,22.829c11.579,-0 20.193,-6.258 22.047,-15.826l-9.631,-0Z" />
+            <path
+              d="M47.095,4.996l-41.683,-0l0,82.52l22.854,0l-0,23.698l18.829,0c17.24,0 31.289,-13.197 31.289,-29.411l-0,-47.39c-0.025,-16.219 -14.049,-29.417 -31.289,-29.417Zm-3.661,98.872l-7.84,-0l-0,-40.05l7.84,0l0,40.05Zm27.603,-22.09c0,11.033 -8.81,20.2 -20.275,21.833l0,-16.332c9.424,-1.127 16.833,-6.052 20.275,-11.627l0,6.126Zm0,-23.691c0,11.025 -8.817,20.168 -20.275,21.801l0,-16.27c9.424,-1.126 16.833,-6.051 20.275,-11.627l0,6.096Zm-23.942,-1.584l-18.829,0l-0,23.692l-15.526,-0l0,-67.871l34.355,-0c13.204,-0 23.942,9.912 23.942,22.089c0,12.178 -10.738,22.09 -23.942,22.09Z" />
+          </g>
+          <path
+            d="M677.346,31.385l-0,46.638l3.524,-0l-0,-46.638l-3.524,0Zm35.423,38.865l3.887,-0l-0,-30.884l11.348,30.884l4.975,-0l11.297,-30.625l-0,30.625l3.886,-0l-0,-36.015l-5.804,0l-11.763,32.336l-12.022,-32.336l-5.804,0l0,36.015Zm50.883,0.518c4.612,0 7.307,-2.124 8.81,-4.508c-0,1.347 -0,2.85 0.103,3.99l3.938,-0c-0.259,-1.814 -0.362,-4.094 -0.362,-5.752l-0,-10.882c-0,-6.426 -4.042,-9.276 -10.105,-9.276c-6.581,0 -10.053,3.42 -10.623,8.188l3.99,-0c0.363,-2.747 2.332,-5.182 6.685,-5.182c4.353,-0 6.374,2.332 6.374,5.493l-0,1.658l-6.581,0.673c-3.472,0.311 -11.349,1.037 -11.349,7.929c0,4.767 3.783,7.669 9.12,7.669Zm-5.182,-7.825c0.104,-3.99 5.493,-4.56 9.431,-4.922l4.612,-0.415l-0.051,1.762c-0.104,5.959 -4.612,8.343 -8.343,8.343c-3.576,-0 -5.752,-2.228 -5.649,-4.768Zm24.305,-18.085l-0,25.392l3.834,-0l0,-14.302c0,-5.234 3.42,-8.447 7.359,-8.447c3.109,0 6.218,1.399 6.218,7.721l-0,15.028l3.835,-0l-0,-15.287c-0,-8.084 -4.664,-10.675 -9.121,-10.675c-3.731,0 -6.632,1.659 -8.291,4.664l0,-4.094l-3.834,0Zm34.974,25.91c4.612,0 7.306,-2.124 8.809,-4.508c0,1.347 0,2.85 0.104,3.99l3.938,-0c-0.259,-1.814 -0.363,-4.094 -0.363,-5.752l0,-10.882c0,-6.426 -4.042,-9.276 -10.104,-9.276c-6.582,0 -10.053,3.42 -10.623,8.188l3.99,-0c0.362,-2.747 2.332,-5.182 6.684,-5.182c4.353,-0 6.374,2.332 6.374,5.493l0,1.658l-6.581,0.673c-3.472,0.311 -11.348,1.037 -11.348,7.929c-0,4.767 3.782,7.669 9.12,7.669Zm-5.182,-7.825c0.104,-3.99 5.493,-4.56 9.431,-4.922l4.612,-0.415l-0.052,1.762c-0.104,5.959 -4.612,8.343 -8.343,8.343c-3.575,-0 -5.752,-2.228 -5.648,-4.768Zm34.409,17.204c7.358,0 11.452,-4.145 11.452,-10.778l0,-24.511l-3.835,0l0,4.042c-1.45,-2.746 -4.456,-4.612 -8.083,-4.612c-6.685,0 -11.452,5.182 -11.452,12.8c-0,7.721 4.715,12.851 11.296,12.851c3.783,-0 6.633,-1.917 8.239,-4.664l0,4.146c0,4.819 -2.591,7.617 -7.565,7.669c-3.679,0 -6.737,-1.295 -7.255,-4.871l-3.886,0c0.622,5.856 5.441,7.928 11.089,7.928Zm-8.032,-22.956c0,-5.7 3.109,-9.482 8.084,-9.482c5.026,-0 7.773,3.782 7.773,9.223c-0,5.649 -2.747,9.742 -7.773,9.742c-4.975,0 -8.084,-3.834 -8.084,-9.483Zm28.999,1.607l19.536,-0l-0,-1.244c-0,-7.773 -4.353,-13.162 -11.711,-13.162c-7.514,0 -11.867,5.441 -11.867,13.059c0,7.617 4.457,13.11 11.97,13.11c5.597,-0 9.95,-2.591 11.09,-8.188l-3.887,0c-0.881,3.576 -3.99,5.027 -7.306,5.027c-4.923,-0 -7.618,-3.576 -7.825,-8.602Zm-0.104,-3.006c0.415,-4.819 3.058,-8.187 7.929,-8.187c4.663,-0 7.41,3.264 7.773,8.187l-15.702,0Zm25.356,-10.934l-0,25.392l3.835,-0l-0,-12.696c-0,-7.565 4.404,-9.224 7.721,-9.224l1.762,0l-0,-3.575l-1.814,-0c-3.265,-0 -6.115,1.399 -7.669,5.026l-0,-4.923l-3.835,0Z" />
+        </svg>
+        <div class="app-loader__activity-indicator"></div>
+      </div>
+    </div>
+    <div id="modal"></div>
+    <div id="alert"></div>
+
+    <script>
+      // Force a refresh if the app-loader stays for more than 60s. This usually means the user experienced an
+      // error during the service-worker update. This is a workaround for the actual issue (which we have not
+      // been able to properly fix)
+      setTimeout(
+        () =>
+          'serviceWorker' in navigator && document.querySelector('.app-loader') && window.location.reload(),
+        60000,
+      )
+    </script>
+
+  </body>
+</html>

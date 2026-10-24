@@ -1,0 +1,6 @@
+2026/10/24-14:46:09.704 6c48 Creating DB C:\Users\acoscolin\OneDrive - GRUPO SIFU INTEGRACION LABORAL SL\Escritorio\ALEX\AMERICANAS\scraper\chrome_clone\Profile 6\IndexedDB\https_manager.playtomic.io_0.indexeddb.leveldb since it was missing.
+2026/10/24-14:46:10.449 6c48 Reusing MANIFEST C:\Users\acoscolin\OneDrive - GRUPO SIFU INTEGRACION LABORAL SL\Escritorio\ALEX\AMERICANAS\scraper\chrome_clone\Profile 6\IndexedDB\https_manager.playtomic.io_0.indexeddb.leveldb/MANIFEST-000001
+2026/10/24-14:46:10.886 80b0 Level-0 table #5: started
+2026/10/24-14:46:11.006 80b0 Level-0 table #5: 782 bytes OK
+2026/10/24-14:46:11.021 80b0 Delete type=0 #3
+2026/10/24-14:46:11.080 80b0 Manual compaction at level-0 from '\x00\x01\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x02\x00\x00\x00' @ 0 : 0; will stop at (end)

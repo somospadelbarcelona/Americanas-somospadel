@@ -1,0 +1,57 @@
+[
+  {
+    "url": "https://manager.playtomic.io/auth/login?return_to=https://manager.playtomic.io/dashboard/schedule/f58f8078-f156-454e-9b4f-d12ad00c0d90?tid=bd2ea8dd-4c1d-4e64-98eb-3ff2ab9b2051&tid=bd2ea8dd-4c1d-4e64-98eb-3ff2ab9b2051",
+    "status": 200,
+    "data": "<!doctype html>\n<html>\n  <head>\n    <meta charset=\"utf-8\" />\n    <meta\n      name=\"viewport\"\n      content=\"width=device-width, initial-scale=1, minimum-scale=1.0, maximum-scale=1.0, viewport-fit=cover, user-scalable=no, shrink-to-fit=no\" />\n\n    <!-- PWA-related -->\n    <link rel=\"icon\" href=\"/favicon.ico\" sizes=\"48x48\" />\n    <link rel=\"icon\" href=\"/favicon.svg\" sizes=\"any\" type=\"image/svg+xml\" />\n    <link rel=\"apple-touch-icon\" href=\"/apple-touch-icon-180x180.png\" />\n    <meta name=\"theme-co"
+  },
+  {
+    "url": "https://manager.playtomic.io/assets/auth-BAwX8b-G.js",
+    "status": 200,
+    "data": "import{o as e}from\"./rolldown-runtime-CV_IkQJQ.js\";import{a as t}from\"./icon--CKIGPQf-CwyEZ9au.js\";import{$ as n,Q as r,et as i,ft as a,tt as o}from\"./i18n-DCMMQPvc.js\";import{K as s,U as c,dt as l,l as u,mt as d,n as f,st as p,yt as m,z as h}from\"./vendor-K9HQvfGF-BefmGSZf.js\";import{t as g}from\"./vendor-hT9I3dUA-icIp5rXe.js\";import{h as _,y as v}from\"./exK-Q_68-174Y9Rfu-C-_AmHW3.js\";import{t as ee}from\"./vendor-J1l2CBzh-Du-6VSci.js\";import{r as te}from\"./exK-Q_68-27nEMJ4l-DXi-kPrU.js\";import{a"
+  },
+  {
+    "url": "https://manager.playtomic.io/assets/tenantSettings-CqxtnOm9.js",
+    "status": 200,
+    "data": "import{o as e}from\"./rolldown-runtime-CV_IkQJQ.js\";import{a as t}from\"./icon--CKIGPQf-CwyEZ9au.js\";import{et as n}from\"./i18n-DCMMQPvc.js\";import{t as r}from\"./vendor-JUUGib3U-D0HFYMu_.js\";import{G as i,W as a,yt as o}from\"./vendor-K9HQvfGF-BefmGSZf.js\";import{t as s}from\"./vendor-J1l2CBzh-Du-6VSci.js\";import{a as c}from\"./exK-Q_68-4USFW6Wx-DbGu9stS.js\";import{r as l,t as u}from\"./vendor-Bkz7dEIN-CSDv8xCt.js\";import{o as d}from\"./index-BFvobo1d.js\";import{r as f}from\"./vendor-MqQZfdqP-BcK0D37E.j"
+  },
+  {
+    "url": "https://manager.playtomic.io/assets/auth-phbusBKy.js",
+    "status": 200,
+    "data": "import{o as e}from\"./rolldown-runtime-CV_IkQJQ.js\";import{a as t}from\"./icon--CKIGPQf-CwyEZ9au.js\";import\"./vendor-17iVxsRK-D9nSe15N.js\";import{et as n}from\"./i18n-DCMMQPvc.js\";import\"./vendor-GtAvUg8K-CO5al3w4.js\";import\"./vendor-lKdVU10T-CRi6gNSG.js\";import\"./vendor-f2Wot75h-BswD7q6f.js\";import\"./vendor-mkKR4emP-eiJlNG5o.js\";import\"./vendor--fPDyFqR-BxNLGuXd.js\";import\"./vendor-YYuMjeJM-DKmOcfft.js\";import\"./vendor-2kuaKAvN-CWA1NQi0.js\";import\"./vendor-3NYVFuZU-Dr6YzmDP.js\";import\"./vendor-JUU"
+  },
+  {
+    "url": "https://manager.playtomic.io/locales/es/auth.json?v=1.328.0%2Bbuild.5972",
+    "status": 200,
+    "data": "{\n  \"auth:caption\": \"Tu dashboard de administrador te est\u00e1 esperando\",\n  \"auth:email\": \"Email\",\n  \"auth:legal_text\": \"\u00a9 2020 Todos los derechos reservados.\\nPlaytomic, SL.\\nCookies, Privacidad y T\u00e9rminos.\",\n  \"auth:login\": \"Iniciar sesi\u00f3n\",\n  \"auth:login.helpdesk_login_troubleshooting.link\": \"\u00bfProblemas de inicio de sesi\u00f3n? Visita nuestro <helpdesk_link>art\u00edculo de ayuda</helpdesk_link>\",\n  \"auth:login.submit\": \"Iniciar sesi\u00f3n\",\n  \"auth:login.subtitle\": \"\u00bfQuieres crear tu club en Playtomic?\",\n  "
+  },
+  {
+    "url": "https://manager.playtomic.io/locales/en/auth.json?v=1.328.0%2Bbuild.5972",
+    "status": 200,
+    "data": "{\n  \"auth:caption\": \"Your admin dashboard is waiting for you\",\n  \"auth:email\": \"Email\",\n  \"auth:legal_text\": \"\u00a9 2020 All rights reserved.\\nPlaytomic, SL.\\nCookie Preferences, Privacy, and Terms.\",\n  \"auth:login\": \"Log in\",\n  \"auth:login.helpdesk_login_troubleshooting.link\": \"Login issues? Visit our <helpdesk_link>Help Article</helpdesk_link>\",\n  \"auth:login.submit\": \"Log In\",\n  \"auth:login.subtitle\": \"Want to list your club on Playtomic?\",\n  \"auth:login.subtitle.signup\": \"Get started\",\n  \"auth:l"
+  },
+  {
+    "url": "https://region1.google-analytics.com/g/collect?v=2&tid=G-N7DG05CFR6&gtm=45je6al1v881531805za200zd881531805xf1&_p=1792846083484&gcs=G100&gcd=13p3p3l2l5l1&npa=1&dma_cps=a&dma=1&_eu=AEA&_fid=cOIRbFjDtHsnenA3snmO04&ae=a&are=1&cid=482799147.1792846084&frm=0&ngs=1&pscdl=denied&rcb=11&sr=1280x720&uaa=x86&uab=64&uafvl=HeadlessChrome%3B147.0.7727.15%7CNot.A%252FBrand%3B8.0.0.0%7CChromium%3B147.0.7727.15&uam=&uamb=0&uap=Windows&uapv=19.0.0&uaw=0&ul=es-es&_s=2&tag_exp=115616986~115938465~115938469~118897920~118897930~120213116~120385423~120469145~120469153~121246026~121246034&sid=1792846083&sct=1&seg=0&dl=https%3A%2F%2Fmanager.playtomic.io%2Fauth%2Flogin%3Freturn_to%3Dhttps%3A%2F%2Fmanager.playtomic.io%2Fdashboard%2Fschedule%2Ff58f8078-f156-454e-9b4f-d12ad00c0d90%3Ftid%3Dbd2ea8dd-4c1d-4e64-98eb-3ff2ab9b2051%26tid%3Dbd2ea8dd-4c1d-4e64-98eb-3ff2ab9b2051&dt=Playtomic%20Manager&en=scroll&ep.origin=firebase&epn.percent_scrolled=90&_et=29&tfd=4210",
+    "status": 204,
+    "data": ""
+  },
+  {
+    "url": "https://region1.google-analytics.com/g/collect?v=2&tid=G-N7DG05CFR6&gtm=45je6al1v881531805za200zd881531805xf1&_p=1792846083484&gcs=G100&gcd=13p3p3l2l5l1&npa=1&dma_cps=a&dma=1&gdid=dOThhZD&_fid=cOIRbFjDtHsnenA3snmO04&are=1&cid=482799147.1792846084&frm=0&ngs=1&pscdl=denied&rcb=11&sr=1280x720&uaa=x86&uab=64&uafvl=HeadlessChrome%3B147.0.7727.15%7CNot.A%252FBrand%3B8.0.0.0%7CChromium%3B147.0.7727.15&uam=&uamb=0&uap=Windows&uapv=19.0.0&uaw=0&ul=es-es&_s=3&tag_exp=115616986~115938465~115938469~118897920~118897930~120213116~120385423~120469145~120469153~121246026~121246034&sid=1792846083&sct=1&seg=0&dl=https%3A%2F%2Fmanager.playtomic.io%2Fauth%2Flogin%3Freturn_to%3Dhttps%3A%2F%2Fmanager.playtomic.io%2Fdashboard%2Fschedule%2Ff58f8078-f156-454e-9b4f-d12ad00c0d90%3Ftid%3Dbd2ea8dd-4c1d-4e64-98eb-3ff2ab9b2051%26tid%3Dbd2ea8dd-4c1d-4e64-98eb-3ff2ab9b2051&dt=Playtomic%20Manager&_tu=CA&en=User%20Consent%20Banner%20opened&_ee=1&ep.origin=firebase&ep.settingId=kBhcAt1n9W27jZ&ep.settingVersion=17.2.61&ep.settingType=GDPR&_et=448&tfd=5814",
+    "status": 204,
+    "data": ""
+  },
+  {
+    "url": "https://manager.playtomic.io/api/v3/auth/login",
+    "status": 401,
+    "data": "{\"localized_message\":\"Nombre de usuario o contrase\u00f1a incorrectos.\",\"status\":\"WRONG_PASSWORD\"}"
+  },
+  {
+    "url": "https://region1.google-analytics.com/g/collect?v=2&tid=G-N7DG05CFR6&gtm=45je6al1v881531805za200zd881531805xf1&_p=1792846083484&gcs=G101&gcd=13q3r3m2m5l1&npa=1&dma_cps=-&dma=1&gdid=dOThhZD&_eu=AAAAAAQ&_fid=cOIRbFjDtHsnenA3snmO04&are=1&cid=482799147.1792846084&frm=0&ngs=1&pscdl=denied&rcb=11&sr=1280x720&uaa=x86&uab=64&uafvl=HeadlessChrome%3B147.0.7727.15%7CNot.A%252FBrand%3B8.0.0.0%7CChromium%3B147.0.7727.15&uam=&uamb=0&uap=Windows&uapv=19.0.0&uaw=0&ul=es-es&tag_exp=115616986~115938465~115938469~118897920~118897930~120213116~120385423~120469145~120469153~121246026~121246034&sid=1792846083&sct=1&seg=0&dl=https%3A%2F%2Fmanager.playtomic.io%2Fauth%2Flogin%3Freturn_to%3Dhttps%3A%2F%2Fmanager.playtomic.io%2Fdashboard%2Fschedule%2Ff58f8078-f156-454e-9b4f-d12ad00c0d90%3Ftid%3Dbd2ea8dd-4c1d-4e64-98eb-3ff2ab9b2051%26tid%3Dbd2ea8dd-4c1d-4e64-98eb-3ff2ab9b2051&dt=Playtomic%20Manager&_tu=CA&_s=4&tfd=10829",
+    "status": 204,
+    "data": ""
+  },
+  {
+    "url": "https://play.google.com/log?format=json&hasfast=true&authuser=0",
+    "status": 200,
+    "data": "[\"-1\",null,[[[\"ANDROID_BACKUP\",0],[\"BATTERY_STATS\",0],[\"SMART_SETUP\",0],[\"TRON\",0]],-3334737594024971225],[],{\"175237375\":[10000]}]"
+  }
+]

@@ -1,0 +1,287 @@
+2026/10/24-09:22:40.728 6a6c Reusing MANIFEST C:\Users\acoscolin\AppData\Local\Google\Chrome\User Data\Profile 6\Local Storage\leveldb/MANIFEST-000001
+2026/10/24-09:22:40.891 6a6c Recovering log #9419
+2026/10/24-09:22:41.019 6a6c Reusing old log C:\Users\acoscolin\AppData\Local\Google\Chrome\User Data\Profile 6\Local Storage\leveldb/009419.log 
+2026/10/24-09:40:21.476 6ab4 Level-0 table #9426: started
+2026/10/24-09:40:21.798 6ab4 Level-0 table #9426: 1149309 bytes OK
+2026/10/24-09:40:21.808 6ab4 Delete type=0 #9419
+2026/10/24-09:47:24.017 6ab4 Level-0 table #9428: started
+2026/10/24-09:47:24.078 6ab4 Level-0 table #9428: 65212 bytes OK
+2026/10/24-09:47:24.084 6ab4 Delete type=0 #9425
+2026/10/24-09:47:29.258 6ab4 Level-0 table #9430: started
+2026/10/24-09:47:29.371 6ab4 Level-0 table #9430: 4584893 bytes OK
+2026/10/24-09:47:29.376 6ab4 Delete type=0 #9427
+2026/10/24-10:08:23.951 6ab4 Level-0 table #9432: started
+2026/10/24-10:08:23.995 6ab4 Level-0 table #9432: 65855 bytes OK
+2026/10/24-10:08:24.002 6ab4 Delete type=0 #9429
+2026/10/24-10:08:24.008 6ab4 Compacting 4@0 + 3@1 files
+2026/10/24-10:08:24.107 6ab4 Generated table #9433@0: 401 keys, 5903252 bytes
+2026/10/24-10:08:24.163 6ab4 Generated table #9434@0: 381 keys, 2504825 bytes
+2026/10/24-10:08:24.190 6ab4 Generated table #9435@0: 1322 keys, 226310 bytes
+2026/10/24-10:08:24.190 6ab4 Compacted 4@0 + 3@1 files => 8634387 bytes
+2026/10/24-10:08:24.191 6ab4 compacted to: files[ 0 3 9 0 0 0 0 ]
+2026/10/24-10:08:24.194 6ab4 Delete type=2 #9421
+2026/10/24-10:08:24.195 6ab4 Delete type=2 #9422
+2026/10/24-10:08:24.195 6ab4 Delete type=2 #9423
+2026/10/24-10:08:24.195 6ab4 Delete type=2 #9426
+2026/10/24-10:08:24.196 6ab4 Delete type=2 #9428
+2026/10/24-10:08:24.196 6ab4 Delete type=2 #9430
+2026/10/24-10:08:24.196 6ab4 Delete type=2 #9432
+2026/10/24-10:08:30.183 6ab4 Level-0 table #9437: started
+2026/10/24-10:08:30.246 6ab4 Level-0 table #9437: 4619794 bytes OK
+2026/10/24-10:08:30.251 6ab4 Delete type=0 #9431
+2026/10/24-10:09:24.304 6ab4 Level-0 table #9439: started
+2026/10/24-10:09:24.476 6ab4 Level-0 table #9439: 4664427 bytes OK
+2026/10/24-10:09:24.482 6ab4 Delete type=0 #9436
+2026/10/24-10:17:19.389 6ab4 Level-0 table #9441: started
+2026/10/24-10:17:19.721 6ab4 Level-0 table #9441: 4623675 bytes OK
+2026/10/24-10:17:19.729 6ab4 Delete type=0 #9438
+2026/10/24-10:23:48.913 6ab4 Level-0 table #9443: started
+2026/10/24-10:23:48.995 6ab4 Level-0 table #9443: 5875307 bytes OK
+2026/10/24-10:23:49.001 6ab4 Delete type=0 #9440
+2026/10/24-10:23:49.006 6ab4 Compacting 4@0 + 3@1 files
+2026/10/24-10:23:49.151 6ab4 Generated table #9444@0: 419 keys, 5937241 bytes
+2026/10/24-10:23:49.257 6ab4 Generated table #9445@0: 383 keys, 2508177 bytes
+2026/10/24-10:23:49.310 6ab4 Generated table #9446@0: 1322 keys, 226360 bytes
+2026/10/24-10:23:49.311 6ab4 Compacted 4@0 + 3@1 files => 8671778 bytes
+2026/10/24-10:23:49.312 6ab4 compacted to: files[ 0 3 9 0 0 0 0 ]
+2026/10/24-10:23:49.315 6ab4 Delete type=2 #9433
+2026/10/24-10:23:49.315 6ab4 Delete type=2 #9434
+2026/10/24-10:23:49.316 6ab4 Delete type=2 #9435
+2026/10/24-10:23:49.316 6ab4 Delete type=2 #9437
+2026/10/24-10:23:49.316 6ab4 Delete type=2 #9439
+2026/10/24-10:23:49.316 6ab4 Delete type=2 #9441
+2026/10/24-10:23:49.317 6ab4 Delete type=2 #9443
+2026/10/24-10:24:15.416 6ab4 Level-0 table #9448: started
+2026/10/24-10:24:15.479 6ab4 Level-0 table #9448: 1152438 bytes OK
+2026/10/24-10:24:15.483 6ab4 Delete type=0 #9442
+2026/10/24-10:24:59.047 6ab4 Level-0 table #9450: started
+2026/10/24-10:24:59.149 6ab4 Level-0 table #9450: 4618565 bytes OK
+2026/10/24-10:24:59.154 6ab4 Delete type=0 #9447
+2026/10/24-10:33:37.122 6ab4 Level-0 table #9452: started
+2026/10/24-10:33:37.264 6ab4 Level-0 table #9452: 4619607 bytes OK
+2026/10/24-10:33:37.270 6ab4 Delete type=0 #9449
+2026/10/24-11:25:21.171 6ab4 Level-0 table #9454: started
+2026/10/24-11:25:21.218 6ab4 Level-0 table #9454: 4653411 bytes OK
+2026/10/24-11:25:21.221 6ab4 Delete type=0 #9451
+2026/10/24-11:25:21.227 6ab4 Compacting 4@0 + 3@1 files
+2026/10/24-11:25:21.317 6ab4 Generated table #9455@0: 447 keys, 5959019 bytes
+2026/10/24-11:25:21.342 6ab4 Generated table #9456@0: 384 keys, 2508206 bytes
+2026/10/24-11:25:21.355 6ab4 Generated table #9457@0: 1322 keys, 226373 bytes
+2026/10/24-11:25:21.355 6ab4 Compacted 4@0 + 3@1 files => 8693598 bytes
+2026/10/24-11:25:21.356 6ab4 compacted to: files[ 0 3 9 0 0 0 0 ]
+2026/10/24-11:25:21.357 6ab4 Delete type=2 #9444
+2026/10/24-11:25:21.357 6ab4 Delete type=2 #9445
+2026/10/24-11:25:21.357 6ab4 Delete type=2 #9446
+2026/10/24-11:25:21.357 6ab4 Delete type=2 #9448
+2026/10/24-11:25:21.357 6ab4 Delete type=2 #9450
+2026/10/24-11:25:21.357 6ab4 Delete type=2 #9452
+2026/10/24-11:25:21.357 6ab4 Delete type=2 #9454
+2026/10/24-11:25:42.389 6ab4 Level-0 table #9459: started
+2026/10/24-11:25:42.412 6ab4 Level-0 table #9459: 40122 bytes OK
+2026/10/24-11:25:42.415 6ab4 Delete type=0 #9453
+2026/10/24-11:29:43.231 6ab4 Level-0 table #9461: started
+2026/10/24-11:29:43.279 6ab4 Level-0 table #9461: 4619379 bytes OK
+2026/10/24-11:29:43.281 6ab4 Delete type=0 #9458
+2026/10/24-11:31:18.766 6ab4 Level-0 table #9463: started
+2026/10/24-11:31:18.802 6ab4 Level-0 table #9463: 65816 bytes OK
+2026/10/24-11:31:18.805 6ab4 Delete type=0 #9460
+2026/10/24-11:35:46.058 6ab4 Level-0 table #9465: started
+2026/10/24-11:35:46.884 6ab4 Level-0 table #9465: 4663736 bytes OK
+2026/10/24-11:35:46.894 6ab4 Delete type=0 #9462
+2026/10/24-11:35:46.928 6ab4 Compacting 4@0 + 3@1 files
+2026/10/24-11:35:47.255 6ab4 Generated table #9466@0: 471 keys, 5919763 bytes
+2026/10/24-11:35:47.421 6ab4 Generated table #9467@0: 384 keys, 2508206 bytes
+2026/10/24-11:35:47.535 6ab4 Generated table #9468@0: 1323 keys, 226262 bytes
+2026/10/24-11:35:47.535 6ab4 Compacted 4@0 + 3@1 files => 8654231 bytes
+2026/10/24-11:35:47.550 6ab4 compacted to: files[ 0 3 9 0 0 0 0 ]
+2026/10/24-11:35:47.566 6ab4 Delete type=2 #9455
+2026/10/24-11:35:47.566 6ab4 Delete type=2 #9456
+2026/10/24-11:35:47.566 6ab4 Delete type=2 #9457
+2026/10/24-11:35:47.567 6ab4 Delete type=2 #9459
+2026/10/24-11:35:47.567 6ab4 Delete type=2 #9461
+2026/10/24-11:35:47.567 6ab4 Delete type=2 #9463
+2026/10/24-11:35:47.568 6ab4 Delete type=2 #9465
+2026/10/24-11:37:15.086 6ab4 Level-0 table #9470: started
+2026/10/24-11:37:15.256 6ab4 Level-0 table #9470: 4672859 bytes OK
+2026/10/24-11:37:15.296 6ab4 Delete type=0 #9464
+2026/10/24-11:40:00.458 6ab4 Level-0 table #9472: started
+2026/10/24-11:40:00.541 6ab4 Level-0 table #9472: 4394673 bytes OK
+2026/10/24-11:40:00.545 6ab4 Delete type=0 #9469
+2026/10/24-11:41:50.252 6ab4 Level-0 table #9474: started
+2026/10/24-11:41:50.285 6ab4 Level-0 table #9474: 4374954 bytes OK
+2026/10/24-11:41:50.286 6ab4 Delete type=0 #9471
+2026/10/24-11:47:01.761 6ab4 Level-0 table #9476: started
+2026/10/24-11:47:01.820 6ab4 Level-0 table #9476: 69946 bytes OK
+2026/10/24-11:47:01.824 6ab4 Delete type=0 #9473
+2026/10/24-11:47:01.832 6ab4 Compacting 4@0 + 3@1 files
+2026/10/24-11:47:02.647 6ab4 Generated table #9477@0: 579 keys, 5717914 bytes
+2026/10/24-11:47:02.982 6ab4 Generated table #9478@0: 395 keys, 2508511 bytes
+2026/10/24-11:47:03.089 6ab4 Generated table #9479@0: 1323 keys, 226260 bytes
+2026/10/24-11:47:03.089 6ab4 Compacted 4@0 + 3@1 files => 8452685 bytes
+2026/10/24-11:47:03.108 6ab4 compacted to: files[ 0 3 9 0 0 0 0 ]
+2026/10/24-11:47:03.114 6ab4 Delete type=2 #9466
+2026/10/24-11:47:03.115 6ab4 Delete type=2 #9467
+2026/10/24-11:47:03.116 6ab4 Delete type=2 #9468
+2026/10/24-11:47:03.119 6ab4 Delete type=2 #9470
+2026/10/24-11:47:03.119 6ab4 Delete type=2 #9472
+2026/10/24-11:47:03.125 6ab4 Delete type=2 #9474
+2026/10/24-11:47:03.128 6ab4 Delete type=2 #9476
+2026/10/24-11:50:59.889 6ab4 Level-0 table #9481: started
+2026/10/24-11:51:00.329 6ab4 Level-0 table #9481: 4384306 bytes OK
+2026/10/24-11:51:00.410 6ab4 Delete type=0 #9475
+2026/10/24-11:53:00.749 60e4 Level-0 table #9483: started
+2026/10/24-11:53:00.874 60e4 Level-0 table #9483: 4358353 bytes OK
+2026/10/24-11:53:00.878 60e4 Delete type=0 #9480
+2026/10/24-12:04:02.705 60e4 Level-0 table #9485: started
+2026/10/24-12:04:02.832 60e4 Level-0 table #9485: 4399136 bytes OK
+2026/10/24-12:04:02.837 60e4 Delete type=0 #9482
+2026/10/24-12:15:58.720 6ab4 Level-0 table #9487: started
+2026/10/24-12:15:58.926 6ab4 Level-0 table #9487: 4375625 bytes OK
+2026/10/24-12:15:58.932 6ab4 Delete type=0 #9484
+2026/10/24-12:15:58.940 6ab4 Compacting 4@0 + 3@1 files
+2026/10/24-12:15:59.360 6ab4 Generated table #9488@0: 670 keys, 5671713 bytes
+2026/10/24-12:15:59.519 6ab4 Generated table #9489@0: 401 keys, 2507546 bytes
+2026/10/24-12:15:59.565 6ab4 Generated table #9490@0: 1323 keys, 226260 bytes
+2026/10/24-12:15:59.565 6ab4 Compacted 4@0 + 3@1 files => 8405519 bytes
+2026/10/24-12:15:59.570 6ab4 compacted to: files[ 0 3 9 0 0 0 0 ]
+2026/10/24-12:15:59.578 6ab4 Delete type=2 #9477
+2026/10/24-12:15:59.579 6ab4 Delete type=2 #9478
+2026/10/24-12:15:59.579 6ab4 Delete type=2 #9479
+2026/10/24-12:15:59.580 6ab4 Delete type=2 #9481
+2026/10/24-12:15:59.581 6ab4 Delete type=2 #9483
+2026/10/24-12:15:59.581 6ab4 Delete type=2 #9485
+2026/10/24-12:15:59.581 6ab4 Delete type=2 #9487
+2026/10/24-12:26:07.360 6ab4 Level-0 table #9492: started
+2026/10/24-12:26:07.407 6ab4 Level-0 table #9492: 4396533 bytes OK
+2026/10/24-12:26:07.411 6ab4 Delete type=0 #9486
+2026/10/24-12:34:09.646 6ab4 Level-0 table #9494: started
+2026/10/24-12:34:09.676 6ab4 Level-0 table #9494: 1246458 bytes OK
+2026/10/24-12:34:09.680 6ab4 Delete type=0 #9491
+2026/10/24-12:35:20.872 6ab4 Level-0 table #9496: started
+2026/10/24-12:35:20.916 6ab4 Level-0 table #9496: 1246818 bytes OK
+2026/10/24-12:35:20.919 6ab4 Delete type=0 #9493
+2026/10/24-12:52:12.424 6ab4 Level-0 table #9498: started
+2026/10/24-12:52:12.488 6ab4 Level-0 table #9498: 4362615 bytes OK
+2026/10/24-12:52:12.493 6ab4 Delete type=0 #9495
+2026/10/24-12:52:12.498 6ab4 Compacting 4@0 + 3@1 files
+2026/10/24-12:52:12.632 6ab4 Generated table #9499@0: 708 keys, 5659157 bytes
+2026/10/24-12:52:12.676 6ab4 Generated table #9500@0: 402 keys, 2507574 bytes
+2026/10/24-12:52:12.704 6ab4 Generated table #9501@0: 1326 keys, 226369 bytes
+2026/10/24-12:52:12.704 6ab4 Compacted 4@0 + 3@1 files => 8393100 bytes
+2026/10/24-12:52:12.704 6ab4 compacted to: files[ 0 3 9 0 0 0 0 ]
+2026/10/24-12:52:12.706 6ab4 Delete type=2 #9488
+2026/10/24-12:52:12.706 6ab4 Delete type=2 #9489
+2026/10/24-12:52:12.707 6ab4 Delete type=2 #9490
+2026/10/24-12:52:12.707 6ab4 Delete type=2 #9492
+2026/10/24-12:52:12.707 6ab4 Delete type=2 #9494
+2026/10/24-12:52:12.707 6ab4 Delete type=2 #9496
+2026/10/24-12:52:12.708 6ab4 Delete type=2 #9498
+2026/10/24-12:57:11.606 6ab4 Level-0 table #9503: started
+2026/10/24-12:57:11.620 6ab4 Level-0 table #9503: 38917 bytes OK
+2026/10/24-12:57:11.621 6ab4 Delete type=0 #9497
+2026/10/24-12:57:16.634 6ab4 Level-0 table #9505: started
+2026/10/24-12:57:16.671 6ab4 Level-0 table #9505: 4400275 bytes OK
+2026/10/24-12:57:16.672 6ab4 Delete type=0 #9502
+2026/10/24-13:00:08.599 6ab4 Level-0 table #9507: started
+2026/10/24-13:00:08.618 6ab4 Level-0 table #9507: 67472 bytes OK
+2026/10/24-13:00:08.621 6ab4 Delete type=0 #9504
+2026/10/24-13:04:42.223 60e4 Level-0 table #9509: started
+2026/10/24-13:04:42.291 60e4 Level-0 table #9509: 1215127 bytes OK
+2026/10/24-13:04:42.300 60e4 Delete type=0 #9506
+2026/10/24-13:04:42.315 60e4 Compacting 4@0 + 3@1 files
+2026/10/24-13:04:42.616 60e4 Generated table #9510@0: 730 keys, 5659581 bytes
+2026/10/24-13:04:42.733 60e4 Generated table #9511@0: 408 keys, 2507655 bytes
+2026/10/24-13:04:42.803 60e4 Generated table #9512@0: 1329 keys, 226551 bytes
+2026/10/24-13:04:42.804 60e4 Compacted 4@0 + 3@1 files => 8393787 bytes
+2026/10/24-13:04:42.805 60e4 compacted to: files[ 0 3 9 0 0 0 0 ]
+2026/10/24-13:04:42.808 60e4 Delete type=2 #9499
+2026/10/24-13:04:42.808 60e4 Delete type=2 #9500
+2026/10/24-13:04:42.809 60e4 Delete type=2 #9501
+2026/10/24-13:04:42.809 60e4 Delete type=2 #9503
+2026/10/24-13:04:42.810 60e4 Delete type=2 #9505
+2026/10/24-13:04:42.811 60e4 Delete type=2 #9507
+2026/10/24-13:04:42.811 60e4 Delete type=2 #9509
+2026/10/24-13:19:55.610 60e4 Level-0 table #9514: started
+2026/10/24-13:19:55.724 60e4 Level-0 table #9514: 4369313 bytes OK
+2026/10/24-13:19:55.729 60e4 Delete type=0 #9508
+2026/10/24-13:28:42.619 6ab4 Level-0 table #9516: started
+2026/10/24-13:28:42.666 6ab4 Level-0 table #9516: 4370433 bytes OK
+2026/10/24-13:28:42.670 6ab4 Delete type=0 #9513
+2026/10/24-13:29:53.621 6ab4 Level-0 table #9518: started
+2026/10/24-13:29:53.633 6ab4 Level-0 table #9518: 63902 bytes OK
+2026/10/24-13:29:53.637 6ab4 Delete type=0 #9515
+2026/10/24-13:33:59.625 60e4 Level-0 table #9520: started
+2026/10/24-13:33:59.765 60e4 Level-0 table #9520: 4365761 bytes OK
+2026/10/24-13:33:59.773 60e4 Delete type=0 #9517
+2026/10/24-13:33:59.779 6ab4 Compacting 4@0 + 3@1 files
+2026/10/24-13:33:59.998 6ab4 Generated table #9521@0: 762 keys, 5690231 bytes
+2026/10/24-13:34:00.067 6ab4 Generated table #9522@0: 408 keys, 2507655 bytes
+2026/10/24-13:34:00.110 6ab4 Generated table #9523@0: 1331 keys, 226869 bytes
+2026/10/24-13:34:00.110 6ab4 Compacted 4@0 + 3@1 files => 8424755 bytes
+2026/10/24-13:34:00.111 6ab4 compacted to: files[ 0 3 9 0 0 0 0 ]
+2026/10/24-13:34:00.113 6ab4 Delete type=2 #9510
+2026/10/24-13:34:00.113 6ab4 Delete type=2 #9511
+2026/10/24-13:34:00.114 6ab4 Delete type=2 #9512
+2026/10/24-13:34:00.114 6ab4 Delete type=2 #9514
+2026/10/24-13:34:00.114 6ab4 Delete type=2 #9516
+2026/10/24-13:34:00.115 6ab4 Delete type=2 #9518
+2026/10/24-13:34:00.115 6ab4 Delete type=2 #9520
+2026/10/24-13:42:51.612 6ab4 Level-0 table #9525: started
+2026/10/24-13:42:51.711 6ab4 Level-0 table #9525: 4341251 bytes OK
+2026/10/24-13:42:51.716 6ab4 Delete type=0 #9519
+2026/10/24-13:50:27.743 6ab4 Level-0 table #9527: started
+2026/10/24-13:50:27.828 6ab4 Level-0 table #9527: 4351711 bytes OK
+2026/10/24-13:50:27.833 6ab4 Delete type=0 #9524
+2026/10/24-13:50:50.327 6ab4 Level-0 table #9529: started
+2026/10/24-13:50:50.382 6ab4 Level-0 table #9529: 4347876 bytes OK
+2026/10/24-13:50:50.386 6ab4 Delete type=0 #9526
+2026/10/24-13:51:31.619 6ab4 Level-0 table #9531: started
+2026/10/24-13:51:31.652 6ab4 Level-0 table #9531: 63786 bytes OK
+2026/10/24-13:51:31.659 6ab4 Delete type=0 #9528
+2026/10/24-13:51:31.665 6ab4 Compacting 4@0 + 3@1 files
+2026/10/24-13:51:31.949 6ab4 Generated table #9532@0: 774 keys, 5664372 bytes
+2026/10/24-13:51:32.021 6ab4 Generated table #9533@0: 408 keys, 2507666 bytes
+2026/10/24-13:51:32.055 6ab4 Generated table #9534@0: 1331 keys, 226972 bytes
+2026/10/24-13:51:32.055 6ab4 Compacted 4@0 + 3@1 files => 8399010 bytes
+2026/10/24-13:51:32.056 6ab4 compacted to: files[ 0 3 9 0 0 0 0 ]
+2026/10/24-13:51:32.059 6ab4 Delete type=2 #9521
+2026/10/24-13:51:32.059 6ab4 Delete type=2 #9522
+2026/10/24-13:51:32.060 6ab4 Delete type=2 #9523
+2026/10/24-13:51:32.061 6ab4 Delete type=2 #9525
+2026/10/24-13:51:32.061 6ab4 Delete type=2 #9527
+2026/10/24-13:51:32.061 6ab4 Delete type=2 #9529
+2026/10/24-13:51:32.062 6ab4 Delete type=2 #9531
+2026/10/24-13:52:13.143 6ab4 Level-0 table #9536: started
+2026/10/24-13:52:13.174 6ab4 Level-0 table #9536: 752247 bytes OK
+2026/10/24-13:52:13.176 6ab4 Delete type=0 #9530
+2026/10/24-13:54:04.439 6ab4 Level-0 table #9538: started
+2026/10/24-13:54:04.471 6ab4 Level-0 table #9538: 4312451 bytes OK
+2026/10/24-13:54:04.473 6ab4 Delete type=0 #9535
+2026/10/24-13:56:04.442 6ab4 Level-0 table #9540: started
+2026/10/24-13:56:04.452 6ab4 Level-0 table #9540: 66501 bytes OK
+2026/10/24-13:56:04.453 6ab4 Delete type=0 #9537
+2026/10/24-14:19:25.296 6ab4 Level-0 table #9542: started
+2026/10/24-14:19:25.332 6ab4 Level-0 table #9542: 36656 bytes OK
+2026/10/24-14:19:25.338 6ab4 Delete type=0 #9539
+2026/10/24-14:19:25.348 6ab4 Compacting 4@0 + 3@1 files
+2026/10/24-14:19:25.498 6ab4 Generated table #9543@0: 778 keys, 5651284 bytes
+2026/10/24-14:19:25.580 6ab4 Generated table #9544@0: 408 keys, 2507666 bytes
+2026/10/24-14:19:25.624 6ab4 Generated table #9545@0: 1332 keys, 226909 bytes
+2026/10/24-14:19:25.624 6ab4 Compacted 4@0 + 3@1 files => 8385859 bytes
+2026/10/24-14:19:25.626 6ab4 compacted to: files[ 0 3 9 0 0 0 0 ]
+2026/10/24-14:19:25.631 6ab4 Delete type=2 #9532
+2026/10/24-14:19:25.634 6ab4 Delete type=2 #9533
+2026/10/24-14:19:25.634 6ab4 Delete type=2 #9534
+2026/10/24-14:19:25.635 6ab4 Delete type=2 #9536
+2026/10/24-14:19:25.635 6ab4 Delete type=2 #9538
+2026/10/24-14:19:25.635 6ab4 Delete type=2 #9540
+2026/10/24-14:19:25.636 6ab4 Delete type=2 #9542
+2026/10/24-14:19:39.197 60e4 Level-0 table #9547: started
+2026/10/24-14:19:39.300 60e4 Level-0 table #9547: 4335441 bytes OK
+2026/10/24-14:19:39.308 60e4 Delete type=0 #9541
+2026/10/24-14:24:03.607 6ab4 Level-0 table #9549: started
+2026/10/24-14:24:03.791 6ab4 Level-0 table #9549: 4330696 bytes OK
+2026/10/24-14:24:03.794 6ab4 Delete type=0 #9546
+2026/10/24-14:34:04.629 6ab4 Level-0 table #9551: started
+2026/10/24-14:34:04.786 6ab4 Level-0 table #9551: 4359503 bytes OK
+2026/10/24-14:34:04.797 6ab4 Delete type=0 #9548
