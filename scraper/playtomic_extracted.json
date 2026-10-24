@@ -20,8 +20,8 @@
     "price_external": "12.48",
     "max_players": 20,
     "maxPlayers": 20,
-    "occupied_players": 18,
-    "spots_left": 2,
+    "occupied_players": 2,
+    "spots_left": 18,
     "courts": 5,
     "max_courts": 5,
     "image_url": "https://res.cloudinary.com/playtomic/image/upload/v1792773256/pro/tournaments/46011a01-68b4-433f-b2e3-581ca5fabfdb/poster_46011a01-68b4-433f-b2e3-581ca5fabfdb.jpg",
@@ -31,7 +31,7 @@
     "is_external": true,
     "is_private": false,
     "organizer": "Somospadel Barcelona",
-    "description": "🎾 AMERICANA HALLOWEEN\n📍 NEW Play Padel Pro Hospitalet\n👤 Organizador: Somospadel Barcelona\n📲 Inscripción oficial directa por Playtomic\n🌪️ Sistema Twister individual (cambio de pareja por ronda, NO pareja fija)\n⏱️ 18:00 - 20:00 h (5 Pistas)\n⚡ 18 de 20 plazas ocupadas (¡ÚLTIMAS 2 PLAZAS LIBRES!)",
+    "description": "🎾 AMERICANA HALLOWEEN\n📍 NEW Play Padel Pro Hospitalet\n👤 Organizador: Somospadel Barcelona\n📲 Inscripción oficial directa por Playtomic\n🌪️ Sistema Twister individual (cambio de pareja por ronda, NO pareja fija)\n⏱️ 18:00 - 20:00 h (5 Pistas)\n⚡ 2 de 20 plazas ocupadas (2/20 Plazas)",
     "players": [
       {
         "id": "playtomic_46011a01_p1",
@@ -41,86 +41,6 @@
       {
         "id": "playtomic_46011a01_p2",
         "name": "Jugador Playtomic 2",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p3",
-        "name": "Jugador Playtomic 3",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p4",
-        "name": "Jugador Playtomic 4",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p5",
-        "name": "Jugador Playtomic 5",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p6",
-        "name": "Jugador Playtomic 6",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p7",
-        "name": "Jugador Playtomic 7",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p8",
-        "name": "Jugador Playtomic 8",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p9",
-        "name": "Jugador Playtomic 9",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p10",
-        "name": "Jugador Playtomic 10",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p11",
-        "name": "Jugador Playtomic 11",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p12",
-        "name": "Jugador Playtomic 12",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p13",
-        "name": "Jugador Playtomic 13",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p14",
-        "name": "Jugador Playtomic 14",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p15",
-        "name": "Jugador Playtomic 15",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p16",
-        "name": "Jugador Playtomic 16",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p17",
-        "name": "Jugador Playtomic 17",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p18",
-        "name": "Jugador Playtomic 18",
         "source": "playtomic"
       }
     ],
@@ -134,89 +54,9 @@
         "id": "playtomic_46011a01_p2",
         "name": "Jugador Playtomic 2",
         "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p3",
-        "name": "Jugador Playtomic 3",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p4",
-        "name": "Jugador Playtomic 4",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p5",
-        "name": "Jugador Playtomic 5",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p6",
-        "name": "Jugador Playtomic 6",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p7",
-        "name": "Jugador Playtomic 7",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p8",
-        "name": "Jugador Playtomic 8",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p9",
-        "name": "Jugador Playtomic 9",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p10",
-        "name": "Jugador Playtomic 10",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p11",
-        "name": "Jugador Playtomic 11",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p12",
-        "name": "Jugador Playtomic 12",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p13",
-        "name": "Jugador Playtomic 13",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p14",
-        "name": "Jugador Playtomic 14",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p15",
-        "name": "Jugador Playtomic 15",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p16",
-        "name": "Jugador Playtomic 16",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p17",
-        "name": "Jugador Playtomic 17",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_46011a01_p18",
-        "name": "Jugador Playtomic 18",
-        "source": "playtomic"
       }
     ],
-    "createdAt": "2026-10-24T10:00:04.272634+00:00"
+    "createdAt": "2026-10-24T10:06:36.184173+00:00"
   },
   {
     "doc_id": "HWAnrOcyb85pT0eklDnc",
@@ -239,8 +79,8 @@
     "price_external": "12.48",
     "max_players": 28,
     "maxPlayers": 28,
-    "occupied_players": 27,
-    "spots_left": 1,
+    "occupied_players": 1,
+    "spots_left": 27,
     "courts": 7,
     "max_courts": 7,
     "image_url": "https://res.cloudinary.com/playtomic/image/upload/v1792784733/pro/tenants/da77c69a-43b3-11e8-8674-52540049669c/programs/33bbb407-1cea-4111-987a-f9362f8b5c40/poster_33bbb407-1cea-4111-987a-f9362f8b5c40_0.jpg",
@@ -250,141 +90,11 @@
     "is_external": true,
     "is_private": false,
     "organizer": "Eduard Bainad Puig",
-    "description": "🎾 AMERICANA SOMOS PÁDEL BCN\n📍 Barcelona Pádel El Prat\n👤 Organizador: Eduard Bainad Puig\n📲 Inscripción oficial directa por Playtomic\n🌪️ Sistema Twister individual (cambio de pareja por ronda, NO pareja fija)\n⏱️ 18:00 - 20:00 h (7 Pistas)\n⚡ 27 de 28 plazas ocupadas (¡ÚLTIMAS 1 PLAZAS LIBRES!)",
+    "description": "🎾 AMERICANA SOMOS PÁDEL BCN\n📍 Barcelona Pádel El Prat\n👤 Organizador: Eduard Bainad Puig\n📲 Inscripción oficial directa por Playtomic\n🌪️ Sistema Twister individual (cambio de pareja por ronda, NO pareja fija)\n⏱️ 18:00 - 20:00 h (7 Pistas)\n⚡ 1 de 28 plazas ocupadas (1/28 Plazas)",
     "players": [
       {
         "id": "playtomic_f25003a4_p1",
         "name": "Jugador Playtomic 1",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p2",
-        "name": "Jugador Playtomic 2",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p3",
-        "name": "Jugador Playtomic 3",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p4",
-        "name": "Jugador Playtomic 4",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p5",
-        "name": "Jugador Playtomic 5",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p6",
-        "name": "Jugador Playtomic 6",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p7",
-        "name": "Jugador Playtomic 7",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p8",
-        "name": "Jugador Playtomic 8",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p9",
-        "name": "Jugador Playtomic 9",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p10",
-        "name": "Jugador Playtomic 10",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p11",
-        "name": "Jugador Playtomic 11",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p12",
-        "name": "Jugador Playtomic 12",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p13",
-        "name": "Jugador Playtomic 13",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p14",
-        "name": "Jugador Playtomic 14",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p15",
-        "name": "Jugador Playtomic 15",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p16",
-        "name": "Jugador Playtomic 16",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p17",
-        "name": "Jugador Playtomic 17",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p18",
-        "name": "Jugador Playtomic 18",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p19",
-        "name": "Jugador Playtomic 19",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p20",
-        "name": "Jugador Playtomic 20",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p21",
-        "name": "Jugador Playtomic 21",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p22",
-        "name": "Jugador Playtomic 22",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p23",
-        "name": "Jugador Playtomic 23",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p24",
-        "name": "Jugador Playtomic 24",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p25",
-        "name": "Jugador Playtomic 25",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p26",
-        "name": "Jugador Playtomic 26",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p27",
-        "name": "Jugador Playtomic 27",
         "source": "playtomic"
       }
     ],
@@ -393,138 +103,8 @@
         "id": "playtomic_f25003a4_p1",
         "name": "Jugador Playtomic 1",
         "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p2",
-        "name": "Jugador Playtomic 2",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p3",
-        "name": "Jugador Playtomic 3",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p4",
-        "name": "Jugador Playtomic 4",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p5",
-        "name": "Jugador Playtomic 5",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p6",
-        "name": "Jugador Playtomic 6",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p7",
-        "name": "Jugador Playtomic 7",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p8",
-        "name": "Jugador Playtomic 8",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p9",
-        "name": "Jugador Playtomic 9",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p10",
-        "name": "Jugador Playtomic 10",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p11",
-        "name": "Jugador Playtomic 11",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p12",
-        "name": "Jugador Playtomic 12",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p13",
-        "name": "Jugador Playtomic 13",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p14",
-        "name": "Jugador Playtomic 14",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p15",
-        "name": "Jugador Playtomic 15",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p16",
-        "name": "Jugador Playtomic 16",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p17",
-        "name": "Jugador Playtomic 17",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p18",
-        "name": "Jugador Playtomic 18",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p19",
-        "name": "Jugador Playtomic 19",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p20",
-        "name": "Jugador Playtomic 20",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p21",
-        "name": "Jugador Playtomic 21",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p22",
-        "name": "Jugador Playtomic 22",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p23",
-        "name": "Jugador Playtomic 23",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p24",
-        "name": "Jugador Playtomic 24",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p25",
-        "name": "Jugador Playtomic 25",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p26",
-        "name": "Jugador Playtomic 26",
-        "source": "playtomic"
-      },
-      {
-        "id": "playtomic_f25003a4_p27",
-        "name": "Jugador Playtomic 27",
-        "source": "playtomic"
       }
     ],
-    "createdAt": "2026-10-24T10:00:05.931153+00:00"
+    "createdAt": "2026-10-24T10:06:38.301004+00:00"
   }
 ]

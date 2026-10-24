@@ -167,22 +167,25 @@ def extract_playtomic_tournament(url_or_id):
         level_max = m_level.group(2)
 
     # 6. Plazas Reales y Pistas Reales (Extracción en vivo multilingüe)
-    # Soporta tanto "18 de 20 plazas" como "18 of 20 spots"
-    occupied_spots = 0
+    # IMPORTANTE: En Playtomic la etiqueta es '{left} de {max} plazas' (spots_left).
+    # Es decir: "18 de 20 plazas" significa que QUEDAN 18 PLAZAS LIBRES de 20 totales (2 ocupadas).
+    # Y "27 de 28 plazas" significa que QUEDAN 27 PLAZAS LIBRES de 28 totales (1 ocupada).
+    spots_left = 20
     total_spots = 20
     m_spots = re.search(r'(\d+)\s*(?:de|of)\s*(\d+)\s*(?:plazas|spots)', html, re.I)
     if not m_spots:
         m_spots = re.search(r'(\d+)\s*(?:de|of)\s*(\d+)', html)
         
     if m_spots:
-        occupied_spots = int(m_spots.group(1))
+        spots_left = int(m_spots.group(1))
         total_spots = int(m_spots.group(2))
+        occupied_spots = max(0, total_spots - spots_left)
     else:
         print(f"⚠️ No se encontró patrón de plazas en HTML, buscando fallback...")
+        occupied_spots = 0
     
     # Calcular pistas reales (4 plazas por pista)
     courts_count = max(2, int(total_spots / 4))
-    spots_left = max(0, total_spots - occupied_spots)
 
     price_socio = "12"
     price_externo = "12.48"
