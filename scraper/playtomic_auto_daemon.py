@@ -27,6 +27,86 @@ import argparse
 import urllib.request
 import urllib.error
 from datetime import datetime, timezone
+_DIR = os.path.dirname(os.path.abspath(__file__))
+_PARENT = os.path.dirname(_DIR)
+if _DIR not in sys.path:
+    sys.path.insert(0, _DIR)
+if _PARENT not in sys.path:
+    sys.path.insert(0, _PARENT)
+
+try:
+    from scraper.playtomic_authenticated_fetcher import playtomic_login, fetch_tournament_participants
+except ImportError:
+    from playtomic_authenticated_fetcher import playtomic_login, fetch_tournament_participants
+
+_TOKEN_CACHE = {"token": None, "ts": 0}
+
+def get_playtomic_auth_token():
+    """Obtiene y cachea el token de sesión autenticada de Playtomic."""
+    import time
+    now = time.time()
+    if _TOKEN_CACHE["token"] and (now - _TOKEN_CACHE["ts"]) < 3000:
+        return _TOKEN_CACHE["token"]
+    auth = playtomic_login('somospadeleugestion@gmail.com', 'Factor2000!')
+    if auth.get("success"):
+        _TOKEN_CACHE["token"] = auth["access_token"]
+        _TOKEN_CACHE["ts"] = now
+        return _TOKEN_CACHE["token"]
+    return None
+
+def fetch_playtomic_real_players(tournament_id, sede="Club Oficial", organizer="Somospadel"):
+    """Descarga de forma 100% autónoma los nombres, fotos y niveles reales de los inscritos."""
+    token = get_playtomic_auth_token()
+    if not token:
+        return []
+    res = fetch_tournament_participants(tournament_id, token)
+    if not res.get("success"):
+        return []
+    
+    teams = res["data"].get("teams", [])
+    now_iso = datetime.now(timezone.utc).isoformat()
+    players_list = []
+    
+    for t_idx, team in enumerate(teams, 1):
+        team_players = team.get("players", [])
+        is_double = len(team_players) == 2
+        team_id = team.get("team_id", f"t_{t_idx}")
+        pair_id = f"pair_{team_id[:8]}" if is_double else None
+        
+        for p_idx, p in enumerate(team_players):
+            uid = p.get("user_id") or f"pt_{t_idx}_{p_idx+1}"
+            partner = team_players[1 - p_idx] if is_double else None
+            partner_name = partner.get("name") if partner else None
+            partner_id = f"pt_{partner.get('user_id')}" if partner else None
+            pos = "Drive" if p_idx % 2 == 0 else "Revés"
+            
+            p_obj = {
+                "id": f"pt_{uid}",
+                "uid": f"pt_{uid}",
+                "user_id": str(uid),
+                "name": p.get("name") or f"Jugador #{len(players_list)+1}",
+                "display_name": p.get("name") or f"Jugador #{len(players_list)+1}",
+                "level": float(p.get("level_value") or 3.5),
+                "photoURL": p.get("picture"),
+                "photo_url": p.get("picture"),
+                "picture": p.get("picture"),
+                "gender": p.get("gender") or "?",
+                "position": pos,
+                "pair_id": pair_id,
+                "partner_name": partner_name,
+                "partner_id": partner_id,
+                "source": "playtomic",
+                "is_external": True,
+                "is_playtomic": True,
+                "playtomic_status": "confirmed",
+                "price_paid": 12.48,
+                "club": sede,
+                "organizer": organizer,
+                "joinedAt": now_iso
+            }
+            players_list.append(p_obj)
+            
+    return players_list
 
 WORKSPACE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRAPER_DIR = os.path.join(WORKSPACE_DIR, "scraper")
@@ -325,25 +405,34 @@ def parse_playtomic_tournament(tournament_id):
     else:
         doc_id = f"pt_{tournament_id[:8]}"
 
-    # 8. Generar jugadores estructurados VIP Playtomic (sin placeholders numéricos planos)
+    # 8. Extraer JUGADORES REALES de Playtomic de forma 100% autónoma
     now_iso = datetime.now(timezone.utc).isoformat()
-    players_list = []
-    for i in range(1, occupied_spots + 1):
-        players_list.append({
-            "id": f"pt_playtomic_{tournament_id[:8]}_{i}",
-            "name": f"Plaza Playtomic #{i}",
-            "display_name": f"Plaza Playtomic #{i}",
-            "level": 3.5,
-            "position": "Drive" if i % 2 != 0 else "Revés",
-            "source": "playtomic",
-            "is_external": True,
-            "is_playtomic": True,
-            "playtomic_status": "confirmed",
-            "price_paid": float(price_val),
-            "club": sede,
-            "organizer": organizer,
-            "joinedAt": now_iso
-        })
+    real_players = fetch_playtomic_real_players(tournament_id, sede, organizer)
+    
+    if real_players:
+        players_list = real_players
+        occupied_spots = len(real_players)
+        spots_left = max(0, total_spots - occupied_spots)
+        log(f"   🌟 [PLAYTOMIC AUTÓNOMO] {len(real_players)} jugadores REALES extraídos con éxito (con nombres, fotos y niveles)")
+    else:
+        # Fallback resiliente si la API no estuviera disponible
+        players_list = []
+        for i in range(1, occupied_spots + 1):
+            players_list.append({
+                "id": f"pt_playtomic_{tournament_id[:8]}_{i}",
+                "name": f"Plaza Playtomic #{i}",
+                "display_name": f"Plaza Playtomic #{i}",
+                "level": 3.5,
+                "position": "Drive" if i % 2 != 0 else "Revés",
+                "source": "playtomic",
+                "is_external": True,
+                "is_playtomic": True,
+                "playtomic_status": "confirmed",
+                "price_paid": float(price_val),
+                "club": sede,
+                "organizer": organizer,
+                "joinedAt": now_iso
+            })
 
     urgency_tag = f"¡ÚLTIMAS {spots_left} PLAZAS LIBRES!" if 0 < spots_left <= 4 else f"{occupied_spots}/{total_spots} Plazas"
     desc_mode = "👥 Sistema Pareja Fija (juegas con tu pareja)" if is_fixed else "🌪️ Sistema Twister individual (rotación por ronda, NO pareja fija)"
@@ -413,6 +502,10 @@ def sync_to_firestore(t_data):
                     "display_name": {"stringValue": p.get("display_name", p["name"])},
                     "level": {"doubleValue": float(p.get("level", 3.5))},
                     "position": {"stringValue": p.get("position", "Drive")},
+                    "photoURL": {"stringValue": str(p.get("photoURL") or "")},
+                    "photo_url": {"stringValue": str(p.get("photo_url") or "")},
+                    "pair_id": {"stringValue": str(p.get("pair_id") or "")},
+                    "partner_name": {"stringValue": str(p.get("partner_name") or "")},
                     "source": {"stringValue": "playtomic"},
                     "is_playtomic": {"booleanValue": True},
                     "playtomic_status": {"stringValue": "confirmed"},

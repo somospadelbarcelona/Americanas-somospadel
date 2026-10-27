@@ -424,8 +424,10 @@
                         }
                     }
 
-                    // Auto-reconcile desincronizaciones entre jugadores inscritos y partidos programados (si no han empezado)
-                    if (this.allMatches.length > 0 && window.RoundAutoRegenerationService && !this.isGeneratingRound) {
+                    // Auto-reconcile desincronizaciones entre jugadores inscritos y partidos programados (solo 1 vez por carga)
+                    if (!this._reconciledEvents) this._reconciledEvents = new Set();
+                    if (!this._reconciledEvents.has(eventId) && this.allMatches.length > 0 && window.RoundAutoRegenerationService && !this.isGeneratingRound) {
+                        this._reconciledEvents.add(eventId);
                         window.RoundAutoRegenerationService.reconcileEventRounds(eventId, actualIsEntreno ? 'entreno' : 'americana').catch(() => {});
                     }
 
@@ -1133,10 +1135,17 @@
                     const valAEl = document.getElementById(`score-a-val-${match.id}`);
                     const valBEl = document.getElementById(`score-b-val-${match.id}`);
 
-                    if (scoreAEl && scoreAEl.innerText != sA) scoreAEl.innerText = sA;
-                    if (scoreBEl && scoreBEl.innerText != sB) scoreBEl.innerText = sB;
-                    if (valAEl && valAEl.innerText != sA) valAEl.innerText = sA;
-                    if (valBEl && valBEl.innerText != sB) valBEl.innerText = sB;
+                    const hasPendingDebounceA = window._scoreDebounceMap && window._scoreDebounceMap[`${match.id}_score_a`];
+                    const hasPendingDebounceB = window._scoreDebounceMap && window._scoreDebounceMap[`${match.id}_score_b`];
+
+                    if (!hasPendingDebounceA) {
+                        if (scoreAEl && scoreAEl.innerText != sA) scoreAEl.innerText = sA;
+                        if (valAEl && valAEl.innerText != sA) valAEl.innerText = sA;
+                    }
+                    if (!hasPendingDebounceB) {
+                        if (scoreBEl && scoreBEl.innerText != sB) scoreBEl.innerText = sB;
+                        if (valBEl && valBEl.innerText != sB) valBEl.innerText = sB;
+                    }
 
                     // Update Styles for Winner
                     if (match.isFinished) {
@@ -1745,7 +1754,6 @@
             const lblSmallB = document.getElementById(`score-b-val-${matchId}`);
             if (lblSmallB) lblSmallB.innerText = sB;
 
-
             // 3. HAPTIC FEEDBACK
             if (window.navigator?.vibrate) window.navigator.vibrate(20);
 
@@ -1762,76 +1770,232 @@
 
             window._scoreDebounceMap[debounceKey] = setTimeout(async () => {
                 try {
+                    delete window._scoreDebounceMap[debounceKey];
                     await window.db.collection(collection).doc(matchId).update({
                         [field]: newVal
                     });
                     console.log(`✅ Score synced (debounced): ${field} = ${newVal}`);
-                    const match = this.allMatches.find(m => m.id === matchId);
-                    if (match && (match.status === 'finished' || match.status === 'finalizado')) {
+                    const m = this.allMatches.find(x => x.id === matchId);
+                    if (m && (m.status === 'finished' || m.status === 'finalizado')) {
                         if (window.RoundAutoRegenerationService) {
                             window.RoundAutoRegenerationService.handleScoreCorrection(
                                 this.currentAmericanaDoc?.id,
                                 isEntreno ? 'entreno' : 'americana',
-                                parseInt(match.round || 1)
+                                parseInt(m.round || 1)
                             );
                         }
                     }
                 } catch (e) {
                     console.error("❌ Firebase debounced update failed:", e);
-                    window.PremiumModal.alert({
+                    window.PremiumModal?.alert?.({
                         title: "❌ ERROR AL GUARDAR",
                         message: e.message.includes('permission') ? "No tienes permisos para editar." : e.message,
                         type: 'error'
                     });
                 }
-            }, 800);
+            }, 600);
+        }
+
+        async setDirectScore(matchId, field, value) {
+            const match = this.allMatches.find(m => m.id === matchId);
+            if (!match) return;
+
+            const newVal = Math.max(0, parseInt(value) || 0);
+            match[field] = newVal;
+
+            // 1. Instant tie warning
+            if (this.currentAmericanaDoc?.isEntreno) {
+                const updatedSA = parseInt(match.score_a || 0);
+                const updatedSB = parseInt(match.score_b || 0);
+                const isTie = updatedSA === updatedSB;
+                const tieDiv = document.getElementById(`tie-warning-${matchId}`);
+                const finishBtn = document.getElementById(`finish-btn-${matchId}`);
+                if (tieDiv) tieDiv.style.display = isTie && (updatedSA > 0 || updatedSB > 0) ? 'flex' : 'none';
+                if (finishBtn) {
+                    finishBtn.style.background = isTie ? 'rgba(255,160,0,0.2)' : 'var(--brand-neon)';
+                    finishBtn.style.color = isTie ? '#FFA000' : 'black';
+                    finishBtn.style.border = isTie ? '2px solid rgba(255,160,0,0.5)' : 'none';
+                    finishBtn.style.boxShadow = isTie ? 'none' : '0 10px 25px rgba(204,255,0,0.3)';
+                    finishBtn.innerHTML = `<i class="fas ${isTie ? 'fa-exclamation-triangle' : 'fa-check-circle'}" style="font-size:1.2rem;margin-right:10px;"></i>${isTie ? 'EMPATE — CORRIGE EL MARCADOR' : 'FINALIZAR PARTIDO'}`;
+                }
+            }
+
+            // 2. Instant Odometer and labels
+            const sA = parseInt(match.score_a || 0);
+            const sB = parseInt(match.score_b || 0);
+
+            if (window.MatchCard && window.MatchCard.updateOdometer) {
+                window.MatchCard.updateOdometer(matchId, 'a', sA, sA > sB);
+                window.MatchCard.updateOdometer(matchId, 'b', sB, sB > sA);
+            }
+
+            const lblSmallA = document.getElementById(`score-a-val-${matchId}`);
+            if (lblSmallA) lblSmallA.innerText = sA;
+            const lblSmallB = document.getElementById(`score-b-val-${matchId}`);
+            if (lblSmallB) lblSmallB.innerText = sB;
+
+            if (window.navigator?.vibrate) window.navigator.vibrate(25);
+
+            // 3. Debounced persist
+            const isEntreno = this.currentAmericanaDoc?.isEntreno;
+            const collection = isEntreno ? 'entrenos_matches' : 'matches';
+
+            if (!window._scoreDebounceMap) window._scoreDebounceMap = {};
+            const debounceKey = `${matchId}_${field}`;
+
+            if (window._scoreDebounceMap[debounceKey]) {
+                clearTimeout(window._scoreDebounceMap[debounceKey]);
+            }
+
+            window._scoreDebounceMap[debounceKey] = setTimeout(async () => {
+                try {
+                    delete window._scoreDebounceMap[debounceKey];
+                    await window.db.collection(collection).doc(matchId).update({
+                        [field]: newVal
+                    });
+                    console.log(`✅ Score synced (direct): ${field} = ${newVal}`);
+                    const m = this.allMatches.find(x => x.id === matchId);
+                    if (m && (m.status === 'finished' || m.status === 'finalizado')) {
+                        if (window.RoundAutoRegenerationService) {
+                            window.RoundAutoRegenerationService.handleScoreCorrection(
+                                this.currentAmericanaDoc?.id,
+                                isEntreno ? 'entreno' : 'americana',
+                                parseInt(m.round || 1)
+                            );
+                        }
+                    }
+                } catch (e) {
+                    console.error("❌ Firebase direct update failed:", e);
+                    window.PremiumModal?.alert?.({
+                        title: "❌ ERROR AL GUARDAR",
+                        message: e.message.includes('permission') ? "No tienes permisos para editar." : e.message,
+                        type: 'error'
+                    });
+                }
+            }, 350);
         }
 
         async manualScoreEdit(matchId, field) {
             const match = this.allMatches.find(m => m.id === matchId);
             if (!match) return;
 
-            const user = window.Store ? window.Store.getState('currentUser') : null;
-            const isAdmin = ['super_admin', 'superadmin', 'admin', 'admin_player', 'captain'].includes((user?.role || '').toLowerCase());
-
-            // Check if restricted (Optional: add extra safety if needed)
-
             const currentVal = parseInt(match[field] || 0);
-            const teamLabel = field === 'score_a' ? 'EQUIPO ARRIBA' : 'EQUIPO ABAJO';
+            const isTeamA = field === 'score_a';
+            const names = isTeamA ? (match.team_a_names || match.teamA || 'Equipo A') : (match.team_b_names || match.teamB || 'Equipo B');
+            const teamTitle = Array.isArray(names) ? names.join(' / ') : names;
 
-            const options = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(v => ({
-                id: v,
-                name: String(v),
-                sub: v === currentVal ? 'ACTUAL' : ''
-            }));
+            // Remove existing modal if any
+            const modalId = 'sp-quick-score-modal';
+            const existing = document.getElementById(modalId);
+            if (existing) existing.remove();
 
-            const selected = await window.PremiumModal.selector({
-                title: `MARCADOR - ${teamLabel}`,
-                message: `Puntuación actual: ${currentVal}`,
-                items: options,
-                type: 'primary'
+            const overlay = document.createElement('div');
+            overlay.id = modalId;
+            overlay.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(10, 25, 47, 0.78); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+                display: flex; align-items: flex-end; justify-content: center;
+                z-index: 10000; animation: spFadeIn 0.15s ease-out;
+            `;
+
+            // Score grid: 0 to 12
+            const scores = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+            const buttonsHtml = scores.map(s => {
+                const isCurrent = s === currentVal;
+                return `
+                    <button type="button" class="sp-score-key" data-val="${s}" style="
+                        width: 100%; height: 52px; border-radius: 14px;
+                        background: ${isCurrent ? '#CCFF00' : '#1e293b'};
+                        color: ${isCurrent ? '#000000' : '#f8fafc'};
+                        border: ${isCurrent ? '2px solid #00E36D' : '1px solid #334155'};
+                        font-size: 1.35rem; font-weight: 1000; font-family: 'Outfit', sans-serif;
+                        cursor: pointer; display: flex; align-items: center; justify-content: center;
+                        box-shadow: ${isCurrent ? '0 4px 15px rgba(204,255,0,0.35)' : '0 2px 6px rgba(0,0,0,0.2)'};
+                        transition: transform 0.08s, background 0.1s;
+                        -webkit-tap-highlight-color: transparent;
+                    ">${s}</button>
+                `;
+            }).join('');
+
+            overlay.innerHTML = `
+                <div style="
+                    background: #0f172a; border: 1px solid #334155; border-radius: 24px 24px 0 0;
+                    width: 100%; max-width: 480px; padding: 20px 20px 28px; box-sizing: border-box;
+                    box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid #1e293b; padding-bottom: 12px;">
+                        <div style="overflow: hidden; padding-right: 10px;">
+                            <span style="font-size: 0.65rem; color: #00E36D; font-weight: 950; letter-spacing: 1px; text-transform: uppercase;">
+                                ⚡ MARCADOR RÁPIDO (1 TOQUE)
+                            </span>
+                            <h3 style="color: #ffffff; font-size: 0.95rem; font-weight: 900; margin: 3px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                ${teamTitle}
+                            </h3>
+                        </div>
+                        <button type="button" id="sp-close-score-modal" style="
+                            background: #1e293b; color: #94a3b8; border: 1px solid #334155;
+                            width: 36px; height: 36px; border-radius: 50%; font-size: 1rem; cursor: pointer;
+                            display: flex; align-items: center; justify-content: center;
+                        ">✕</button>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px;">
+                        ${buttonsHtml}
+                        <button type="button" id="sp-score-custom-btn" style="
+                            width: 100%; height: 52px; border-radius: 14px;
+                            background: #1e293b; color: #38bdf8; border: 1px dashed #0284c7;
+                            font-size: 0.85rem; font-weight: 900; cursor: pointer; display: flex;
+                            align-items: center; justify-content: center;
+                        ">+13...</button>
+                    </div>
+
+                    <div style="text-align: center; color: #64748b; font-size: 0.68rem; font-weight: 750;">
+                        Toca el resultado para aplicarlo al instante sin esperas
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+
+            const close = () => {
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.remove(), 120);
+            };
+
+            overlay.querySelector('#sp-close-score-modal').onclick = close;
+            overlay.onclick = (e) => { if (e.target === overlay) close(); };
+
+            overlay.querySelectorAll('.sp-score-key').forEach(btn => {
+                btn.onclick = async () => {
+                    const val = parseInt(btn.getAttribute('data-val'));
+                    close();
+
+                    if (match.status === 'finished' || match.status === 'finalizado') {
+                        const confirmed = await window.PremiumModal?.confirm?.({
+                            title: "⚠️ PARTIDO FINALIZADO",
+                            message: "¿Deseas corregir el marcador de este partido ya terminado?",
+                            confirmText: "CORREGIR",
+                            cancelText: "CANCELAR"
+                        });
+                        if (!confirmed) return;
+                    }
+
+                    await this.setDirectScore(matchId, field, val);
+                };
             });
 
-            if (selected !== null && selected !== undefined) {
-                const val = (typeof selected === 'object') ? selected.id : selected;
-
-                // If match is finished, check for confirmation
-                if (match.status === 'finished' || match.status === 'finalizado') {
-                    const confirmed = await window.PremiumModal.confirm({
-                        title: "⚠️ PARTIDO FINALIZADO",
-                        message: "¿Deseas corregir el marcador de este partido ya terminado? Esto sincronizará el resultado y avisará al sistema.",
-                        confirmText: "CORREGIR",
-                        cancelText: "CANCELAR"
-                    });
-                    if (!confirmed) return;
-                }
-
-                // Call adjustScore with a direct set logic (we can modify adjustScore or do direct update)
-                // For directness:
-                const diff = val - currentVal;
-                if (diff !== 0) {
-                    await this.adjustScore(matchId, field, diff);
-                }
+            const customBtn = overlay.querySelector('#sp-score-custom-btn');
+            if (customBtn) {
+                customBtn.onclick = async () => {
+                    close();
+                    const input = prompt("Introduce el número de juegos:", currentVal);
+                    if (input !== null && input.trim() !== '') {
+                        const val = parseInt(input);
+                        if (!isNaN(val) && val >= 0) {
+                            await this.setDirectScore(matchId, field, val);
+                        }
+                    }
+                };
             }
         }
 
@@ -1850,8 +2014,7 @@
             const pairMode = String(this.currentAmericanaDoc?.pair_mode || '').toLowerCase();
             const isTwisterOrPozo = pairMode === 'twister' || pairMode === 'pozo' || pairMode.includes('rey') || pairMode === 'rotating';
 
-            // ⛔ ANTI-EMPATE: En entrenos y en modalidades de ascensos/descensos (Twister, Pozo, Rey)
-            // no se permiten empates porque bloquean la determinación matemática de ascensos y parejas
+            // ⛔ ANTI-EMPATE: En entrenos y en modalidades de ascensos/descensos
             if (isEntreno || isTwisterOrPozo) {
                 const match = this.allMatches.find(m => m.id === matchId);
                 if (match) {
@@ -1864,7 +2027,7 @@
                             message: `El resultado está igualado (${sA}-${sB}). En ${isTwisterOrPozo ? 'el modo Twister/Pozo' : 'los entrenos'} debe haber un ganador claro para calcular ascensos y parejas. Ajusta el marcador antes de finalizar.`,
                             type: 'warning'
                         });
-                        return; // Block finalization
+                        return;
                     }
                 }
             }
@@ -1872,71 +2035,80 @@
             // Haptic feedback
             if (window.navigator?.vibrate) window.navigator.vibrate([30, 50, 30]);
 
-            // OPTIMISTIC UI: Instant visual feedback to the user before Firebase responds
-            const matchCardEl = document.getElementById(`card-${matchId}`);
-            if (matchCardEl) {
-                matchCardEl.style.transition = 'all 0.25s ease-out';
-                matchCardEl.style.opacity = '0.85';
-                matchCardEl.style.pointerEvents = 'none'; // Lock interaction momentarily
+            const match = this.allMatches.find(m => m.id === matchId);
+            const sA = parseInt(match?.score_a || 0);
+            const sB = parseInt(match?.score_b || 0);
+
+            // TRUE OPTIMISTIC UI: Instant visual confirmation in 0ms!
+            if (match) {
+                match.status = 'finished';
+                match.score_a = sA;
+                match.score_b = sB;
             }
 
-            try {
-                const match = this.allMatches.find(m => m.id === matchId);
-                const sA = parseInt(match?.score_a || 0);
-                const sB = parseInt(match?.score_b || 0);
+            const matchCardEl = document.getElementById(`card-${matchId}`);
+            if (matchCardEl && match) {
+                matchCardEl.outerHTML = this.renderTournamentCard(match);
+            }
+            this.recalc();
 
-                await window.db.collection(collection).doc(matchId).update({
-                    status: 'finished',
-                    score_a: sA,
-                    score_b: sB
+            // Confetti feedback
+            if (window.confetti && (sA > 0 || sB > 0)) {
+                window.confetti({
+                    particleCount: 120,
+                    spread: 60,
+                    origin: { y: 0.6 },
+                    colors: ['#CCFF00', '#00E36D', '#ffffff']
                 });
-                if (match) {
-                    match.status = 'finished';
-                    match.score_a = sA;
-                    match.score_b = sB;
-                }
-                if (matchCardEl) {
-                    matchCardEl.style.pointerEvents = '';
-                }
-                console.log("Match finished:", matchId);
+            }
 
-                // 🎊 CONFETTI FEEDBACK (Punto 6)
-                if (window.confetti) {
-                    window.confetti({
-                        particleCount: 150,
-                        spread: 70,
-                        origin: { y: 0.6 },
-                        colors: ['#CCFF00', '#00E36D', '#ffffff']
+            // Clear any pending debounces for this match
+            if (window._scoreDebounceMap) {
+                clearTimeout(window._scoreDebounceMap[`${matchId}_score_a`]);
+                clearTimeout(window._scoreDebounceMap[`${matchId}_score_b`]);
+                delete window._scoreDebounceMap[`${matchId}_score_a`];
+                delete window._scoreDebounceMap[`${matchId}_score_b`];
+            }
+
+            // Async background persistence without freezing the user
+            (async () => {
+                try {
+                    await window.db.collection(collection).doc(matchId).update({
+                        status: 'finished',
+                        score_a: sA,
+                        score_b: sB
                     });
-                }
+                    console.log("Match finished:", matchId);
 
-                if (window.LevelService) {
-                    if (match) {
+                    if (window.LevelService && match) {
                         const updatedMatch = { ...match, status: 'finished', score_a: sA, score_b: sB };
-                        window.LevelService.processMatchResult(updatedMatch, isEntreno ? 'entreno' : 'americana');
+                        window.LevelService.processMatchResult(updatedMatch, isEntreno ? 'entreno' : 'americana').catch(e => {
+                            console.warn("LevelService warning in background:", e);
+                        });
+                    }
+
+                    if (window.RoundAutoRegenerationService && match) {
+                        window.RoundAutoRegenerationService.handleScoreCorrection(
+                            this.currentAmericanaDoc?.id,
+                            isEntreno ? 'entreno' : 'americana',
+                            parseInt(match.round || 1)
+                        ).catch(() => {});
+                    }
+                } catch (e) {
+                    console.error("Finish match async fail:", e);
+                    window.PremiumModal?.alert?.({
+                        title: "⚠️ ERROR AL FINALIZAR",
+                        message: "Hubo un problema de conexión al guardar el partido. Comprueba tu red.",
+                        type: 'error'
+                    });
+                    // Revert local state if DB update completely failed
+                    if (match) {
+                        match.status = 'live';
+                        this.recalc();
                     }
                 }
-                // Reemplazo instantáneo de la tarjeta en el DOM con la vista finalizada
-                if (matchCardEl && match) {
-                    matchCardEl.outerHTML = this.renderTournamentCard(match);
-                }
-                this.recalc();
-
-                if (window.RoundAutoRegenerationService && match) {
-                    window.RoundAutoRegenerationService.handleScoreCorrection(
-                        this.currentAmericanaDoc?.id,
-                        isEntreno ? 'entreno' : 'americana',
-                        parseInt(match.round || 1)
-                    );
-                }
-            } catch (e) {
-                console.error("Finish match failed:", e);
-                if (matchCardEl) {
-                    matchCardEl.style.pointerEvents = '';
-                }
-            }
+            })();
         }
-
 
         async rollbackTournament(fromRound) {
             const confirmed = await window.PremiumModal.confirm({

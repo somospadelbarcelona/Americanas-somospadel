@@ -216,29 +216,45 @@
                             <span style="font-size: 0.6rem; font-weight: 950; color: #72a800; letter-spacing: 1.2px; text-transform: uppercase;">
                                 <i class="fas fa-sliders-h"></i> CONTROL DE MARCADOR
                             </span>
-                            <span style="font-size: 0.58rem; color: #94a3b8; font-weight: 800;">PULSA + O -</span>
+                            <span style="font-size: 0.58rem; color: #059669; font-weight: 800;">
+                                <i class="fas fa-hand-pointer"></i> TOCA EL NÚMERO O USA + / -
+                            </span>
                         </div>
                         <div style="display: flex; gap: 8px; justify-content: space-between; width: 100%;">
                             <!-- Team A score buttons -->
                             <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; background: #f8fafc; padding: 9px 6px; border-radius: 14px; border: 1px solid #e2e8f0;">
                                 <div style="font-size: 0.55rem; color: #64748b; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">EQ. SUPERIOR</div>
-                                <div style="display: flex; align-items: center; gap: 8px; justify-content: center;">
+                                <div style="display: flex; align-items: center; gap: 6px; justify-content: center;">
                                     <button type="button" onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_a', -1)" 
-                                            style="width: 34px; height: 34px; border-radius: 10px; border: 1px solid #cbd5e1; background: #ffffff; color: #0a192f; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 900; box-shadow: 0 2px 5px rgba(0,0,0,0.04); transition: transform 0.1s;">-</button>
-                                    <span id="score-a-val-${match.id}" style="font-size: 1.35rem; font-weight: 1000; color: #0a192f; min-width: 26px; text-align: center; font-family: 'Outfit', sans-serif;">${sA}</span>
+                                            style="width: 36px; height: 36px; border-radius: 10px; border: 1px solid #cbd5e1; background: #ffffff; color: #0a192f; font-size: 1.25rem; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 900; box-shadow: 0 2px 5px rgba(0,0,0,0.04); transition: transform 0.1s;" aria-label="Restar">-</button>
+                                    
+                                    <button type="button" onclick="window.ControlTowerView.manualScoreEdit('${match.id}', 'score_a')" 
+                                            title="Toca para elegir puntuación directamente"
+                                            style="background: #ffffff; border: 1.5px solid #00E36D; border-radius: 10px; padding: 3px 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 44px; box-shadow: 0 2px 8px rgba(0,227,109,0.18); transition: transform 0.1s;">
+                                        <span id="score-a-val-${match.id}" style="font-size: 1.35rem; font-weight: 1000; color: #0a192f; font-family: 'Outfit', sans-serif; line-height: 1.1;">${sA}</span>
+                                        <span style="font-size: 0.48rem; color: #059669; font-weight: 950; letter-spacing: 0.3px;">ELEGIR</span>
+                                    </button>
+
                                     <button type="button" onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_a', 1)" 
-                                            style="width: 34px; height: 34px; border-radius: 10px; border: 1px solid #cbd5e1; background: #ffffff; color: #0a192f; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 900; box-shadow: 0 2px 5px rgba(0,0,0,0.04); transition: transform 0.1s;">+</button>
+                                            style="width: 36px; height: 36px; border-radius: 10px; border: 1px solid #cbd5e1; background: #ffffff; color: #0a192f; font-size: 1.25rem; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 900; box-shadow: 0 2px 5px rgba(0,0,0,0.04); transition: transform 0.1s;" aria-label="Sumar">+</button>
                                 </div>
                             </div>
                             <!-- Team B score buttons -->
                             <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; background: #f8fafc; padding: 9px 6px; border-radius: 14px; border: 1px solid #e2e8f0;">
                                 <div style="font-size: 0.55rem; color: #64748b; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">EQ. INFERIOR</div>
-                                <div style="display: flex; align-items: center; gap: 8px; justify-content: center;">
+                                <div style="display: flex; align-items: center; gap: 6px; justify-content: center;">
                                     <button type="button" onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_b', -1)" 
-                                            style="width: 34px; height: 34px; border-radius: 10px; border: 1px solid #cbd5e1; background: #ffffff; color: #0a192f; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 900; box-shadow: 0 2px 5px rgba(0,0,0,0.04); transition: transform 0.1s;">-</button>
-                                    <span id="score-b-val-${match.id}" style="font-size: 1.35rem; font-weight: 1000; color: #0a192f; min-width: 26px; text-align: center; font-family: 'Outfit', sans-serif;">${sB}</span>
+                                            style="width: 36px; height: 36px; border-radius: 10px; border: 1px solid #cbd5e1; background: #ffffff; color: #0a192f; font-size: 1.25rem; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 900; box-shadow: 0 2px 5px rgba(0,0,0,0.04); transition: transform 0.1s;" aria-label="Restar">-</button>
+                                    
+                                    <button type="button" onclick="window.ControlTowerView.manualScoreEdit('${match.id}', 'score_b')" 
+                                            title="Toca para elegir puntuación directamente"
+                                            style="background: #ffffff; border: 1.5px solid #00E36D; border-radius: 10px; padding: 3px 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 44px; box-shadow: 0 2px 8px rgba(0,227,109,0.18); transition: transform 0.1s;">
+                                        <span id="score-b-val-${match.id}" style="font-size: 1.35rem; font-weight: 1000; color: #0a192f; font-family: 'Outfit', sans-serif; line-height: 1.1;">${sB}</span>
+                                        <span style="font-size: 0.48rem; color: #059669; font-weight: 950; letter-spacing: 0.3px;">ELEGIR</span>
+                                    </button>
+
                                     <button type="button" onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_b', 1)" 
-                                            style="width: 34px; height: 34px; border-radius: 10px; border: 1px solid #cbd5e1; background: #ffffff; color: #0a192f; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 900; box-shadow: 0 2px 5px rgba(0,0,0,0.04); transition: transform 0.1s;">+</button>
+                                            style="width: 36px; height: 36px; border-radius: 10px; border: 1px solid #cbd5e1; background: #ffffff; color: #0a192f; font-size: 1.25rem; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 900; box-shadow: 0 2px 5px rgba(0,0,0,0.04); transition: transform 0.1s;" aria-label="Sumar">+</button>
                                 </div>
                             </div>
                         </div>
