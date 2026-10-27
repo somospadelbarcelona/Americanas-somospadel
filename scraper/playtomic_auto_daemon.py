@@ -121,8 +121,8 @@ def extract_tournament_uuids_from_club_pages():
                 discovered.add(m.lower())
     return discovered
 
-def get_all_target_uuids():
-    """Reúne todos los torneos Playtomic configurados y los descubiertos autónomamente."""
+def get_all_target_uuids(deep_discovery=False):
+    """Reúne los torneos Playtomic configurados y opcionalmente descubre nuevos en la web o navegador."""
     uuids = set()
     if os.path.exists(URLS_FILE):
         try:
@@ -136,15 +136,16 @@ def get_all_target_uuids():
         except Exception as e:
             log(f"⚠️ Error leyendo {URLS_FILE}: {e}")
 
-    # 1. Descubrir desde las páginas oficiales de los clubes
-    club_uuids = extract_tournament_uuids_from_club_pages()
-    for u in club_uuids:
-        uuids.add(u)
+    if deep_discovery:
+        # 1. Descubrir desde las páginas oficiales de los clubes
+        club_uuids = extract_tournament_uuids_from_club_pages()
+        for u in club_uuids:
+            uuids.add(u)
 
-    # 2. Descubrir desde el navegador
-    browser_uuids = extract_tournament_uuids_from_browser()
-    for u in browser_uuids:
-        uuids.add(u)
+        # 2. Descubrir desde el navegador
+        browser_uuids = extract_tournament_uuids_from_browser()
+        for u in browser_uuids:
+            uuids.add(u)
 
     return sorted(list(uuids))
 
@@ -482,64 +483,66 @@ def sync_to_firestore(t_data):
         log(f"   [FIRESTORE] ⚠️ Error: {e}")
         return False
 
-def run_sync_cycle():
-    """Ejecuta una ronda completa de descubrimiento, análisis y sincronización."""
+def run_sync_cycle(deep_discovery=False):
+    """Ejecuta una ronda de análisis y sincronización Playtomic en tiempo real."""
+    mode_str = "COMPLETO (+ búsqueda de nuevos torneos)" if deep_discovery else "RÁPIDO EN TIEMPO REAL"
     log("==================================================================")
-    log("🚀 INICIANDO CICLO AUTÓNOMO DE SINCRONIZACIÓN PLAYTOMIC")
+    log(f"🚀 SINCRONIZACIÓN PLAYTOMIC [MODO {mode_str}]")
     log("==================================================================")
     
-    uuids = get_all_target_uuids()
+    uuids = get_all_target_uuids(deep_discovery=deep_discovery)
     log(f"📋 Torneos a sincronizar: {len(uuids)}")
 
     results = []
     for uid in uuids:
-        log(f"\n🔎 Analizando torneo: {uid}...")
         t_data = parse_playtomic_tournament(uid)
         if t_data:
-            log(f"   -> Nombre: {t_data['name']}")
-            log(f"   -> Sede: {t_data['location']}")
-            log(f"   -> Organizador: {t_data['organizer']}")
-            log(f"   -> Formato: {t_data['pair_mode'].upper()} ({'Pareja Fija' if t_data['pair_mode']=='fixed' else 'Twister individual'})")
-            log(f"   -> Pistas: {t_data['courts']} ({t_data['max_players']} plazas)")
-            log(f"   -> Ocupación: {t_data['occupied_players']} / {t_data['max_players']} ({t_data['spots_left']} libres)")
-            log(f"   -> Precio oficial: {t_data['price']} €")
-            log(f"   -> Cartel HD: {t_data['image_url'][:70]}...")
-
+            log(f"   🎾 {t_data['name']} [{t_data['location']}]: {t_data['occupied_players']}/{t_data['max_players']} plazas ({t_data['spots_left']} libres) • {t_data['courts']} pistas")
             sync_to_firestore(t_data)
             results.append(t_data)
         else:
-            log(f"   ⚠️ No se pudieron obtener datos del torneo {uid}")
+            log(f"   ⚠️ Torneo {uid} descartado o no accesible")
 
     # Guardar snapshot completo en scraper/playtomic_extracted.json
     if results:
         with open(OUTPUT_JSON, "w", encoding="utf-8") as f:
             json.dump(results, f, indent=2, ensure_ascii=False)
-        log(f"💾 Snapshot local guardado en {OUTPUT_JSON} ({len(results)} torneos)")
+        log(f"💾 Snapshot actualizado en {OUTPUT_JSON} ({len(results)} torneos)")
 
     log("==================================================================")
-    log("✅ CICLO COMPLETADO CON ÉXITO")
+    log("✅ CICLO DE SINCRONIZACIÓN COMPLETADO")
     log("==================================================================")
     return results
 
 def main():
     parser = argparse.ArgumentParser(description="Automatismo Playtomic Somos Pádel")
     parser.add_argument("--once", action="store_true", help="Ejecutar una sola vez y salir")
-    parser.add_argument("--interval-hours", type=float, default=3.0, help="Intervalo en horas entre revisiones (por defecto 3h)")
+    parser.add_argument("--interval-hours", type=float, default=None, help="Intervalo en horas")
+    parser.add_argument("--interval-minutes", type=float, default=2.0, help="Intervalo en minutos (por defecto 2 min)")
     args = parser.parse_args()
 
     if args.once:
-        run_sync_cycle()
+        run_sync_cycle(deep_discovery=True)
         sys.exit(0)
 
-    log(f"🔄 Modo daemon activo. Intervalo de revisión: cada {args.interval_hours} horas.")
+    if args.interval_hours is not None:
+        sleep_secs = int(args.interval_hours * 3600)
+        desc = f"{args.interval_hours} horas"
+    else:
+        sleep_secs = int(args.interval_minutes * 60)
+        desc = f"{args.interval_minutes} minutos"
+
+    log(f"🔄 Modo Daemon Tiempo Real ACTIVO. Intervalo de actualización: cada {desc}.")
+    cycle_count = 0
     while True:
         try:
-            run_sync_cycle()
+            deep = (cycle_count % 30 == 0)
+            run_sync_cycle(deep_discovery=deep)
+            cycle_count += 1
         except Exception as e:
-            log(f"❌ Error inesperado en ciclo: {e}")
+            log(f"❌ Error en ciclo daemon: {e}")
         
-        sleep_secs = int(args.interval_hours * 3600)
-        log(f"💤 Durmiendo {sleep_secs}s hasta la próxima revisión periódica...")
+        log(f"💤 Siguiente comprobación en vivo en {sleep_secs}s ({desc})...")
         time.sleep(sleep_secs)
 
 if __name__ == "__main__":

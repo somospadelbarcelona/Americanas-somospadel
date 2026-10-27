@@ -3293,7 +3293,11 @@
         renderCard(evt, isFinished = false) {
             // ✅ LOGIC BLOCK (Restored)
             const players = (evt.players && evt.players.length > 0) ? evt.players : (evt.registeredPlayers || []);
-            const playerCount = players.length;
+            const occDeclared = parseInt(evt.occupied_players || 0);
+            const occFromSpots = (evt.max_players !== undefined && evt.spots_left !== undefined)
+                ? Math.max(0, parseInt(evt.max_players || 0) - parseInt(evt.spots_left || 0))
+                : 0;
+            const playerCount = Math.max(players.length, occDeclared, occFromSpots);
             const maxCourts = parseInt(evt.courts || evt.max_courts || (evt.max_players ? Math.ceil(parseInt(evt.max_players) / 4) : 4));
             const maxPlayers = parseInt(evt.max_players || evt.maxPlayers || (maxCourts * 4));
             const user = this.state.currentUser;
@@ -9411,7 +9415,11 @@
 
                 // 1. Update Player Count & Capacity
                 const players = (evt.players && evt.players.length > 0) ? evt.players : (evt.registeredPlayers || []);
-                const playerCount = players.length;
+                const occDeclared = parseInt(evt.occupied_players || 0);
+                const occFromSpots = (evt.max_players !== undefined && evt.spots_left !== undefined)
+                    ? Math.max(0, parseInt(evt.max_players || 0) - parseInt(evt.spots_left || 0))
+                    : 0;
+                const playerCount = Math.max(players.length, occDeclared, occFromSpots);
                 const maxCourts = parseInt(evt.max_courts || evt.courts || 4);
                 const maxPlayers = maxCourts * 4;
                 const isFull = playerCount >= maxPlayers;
