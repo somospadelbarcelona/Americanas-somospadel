@@ -450,12 +450,15 @@ def sync_to_firestore(t_data):
         "organizer": {"stringValue": t_data["organizer"]},
         "description": {"stringValue": t_data["description"]},
         "players": {"arrayValue": {"values": players_raw}},
-        "registeredPlayers": {"arrayValue": {"values": players_raw}}
+        "registeredPlayers": {"arrayValue": {"values": players_raw}},
+        "has_freed_spot": {"booleanValue": bool(t_data.get("has_freed_spot", False))},
+        "freed_spots_count": {"integerValue": str(t_data.get("freed_spots_count", 0))},
+        "last_freed_spot_at": {"stringValue": str(t_data.get("last_freed_spot_at", ""))}
     }
 
     req_data = json.dumps({"fields": fields}).encode('utf-8')
     req = urllib.request.Request(
-        f"{url}?key={FIREBASE_API_KEY}&updateMask.fieldPaths=name&updateMask.fieldPaths=location&updateMask.fieldPaths=sede&updateMask.fieldPaths=date&updateMask.fieldPaths=time&updateMask.fieldPaths=time_end&updateMask.fieldPaths=duration&updateMask.fieldPaths=pair_mode&updateMask.fieldPaths=format&updateMask.fieldPaths=price&updateMask.fieldPaths=price_members&updateMask.fieldPaths=price_external&updateMask.fieldPaths=max_players&updateMask.fieldPaths=occupied_players&updateMask.fieldPaths=spots_left&updateMask.fieldPaths=max_courts&updateMask.fieldPaths=courts&updateMask.fieldPaths=image_url&updateMask.fieldPaths=playtomic_id&updateMask.fieldPaths=playtomicUrl&updateMask.fieldPaths=playtomic_url&updateMask.fieldPaths=status&updateMask.fieldPaths=is_external&updateMask.fieldPaths=organizer&updateMask.fieldPaths=description&updateMask.fieldPaths=players&updateMask.fieldPaths=registeredPlayers",
+        f"{url}?key={FIREBASE_API_KEY}&updateMask.fieldPaths=name&updateMask.fieldPaths=location&updateMask.fieldPaths=sede&updateMask.fieldPaths=date&updateMask.fieldPaths=time&updateMask.fieldPaths=time_end&updateMask.fieldPaths=duration&updateMask.fieldPaths=pair_mode&updateMask.fieldPaths=format&updateMask.fieldPaths=price&updateMask.fieldPaths=price_members&updateMask.fieldPaths=price_external&updateMask.fieldPaths=max_players&updateMask.fieldPaths=occupied_players&updateMask.fieldPaths=spots_left&updateMask.fieldPaths=max_courts&updateMask.fieldPaths=courts&updateMask.fieldPaths=image_url&updateMask.fieldPaths=playtomic_id&updateMask.fieldPaths=playtomicUrl&updateMask.fieldPaths=playtomic_url&updateMask.fieldPaths=status&updateMask.fieldPaths=is_external&updateMask.fieldPaths=organizer&updateMask.fieldPaths=description&updateMask.fieldPaths=players&updateMask.fieldPaths=registeredPlayers&updateMask.fieldPaths=has_freed_spot&updateMask.fieldPaths=freed_spots_count&updateMask.fieldPaths=last_freed_spot_at",
         data=req_data,
         headers={"Content-Type": "application/json"},
         method="PATCH"
@@ -493,10 +496,35 @@ def run_sync_cycle(deep_discovery=False):
     uuids = get_all_target_uuids(deep_discovery=deep_discovery)
     log(f"📋 Torneos a sincronizar: {len(uuids)}")
 
+    # Cargar histórico previo para detectar cancelaciones/bajas en vivo
+    prev_map = {}
+    if os.path.exists(OUTPUT_JSON):
+        try:
+            with open(OUTPUT_JSON, "r", encoding="utf-8") as f_prev:
+                for item in json.load(f_prev):
+                    prev_map[item.get("playtomic_id")] = item
+        except Exception:
+            pass
+
     results = []
     for uid in uuids:
         t_data = parse_playtomic_tournament(uid)
         if t_data:
+            # Detección inteligente de bajas / plazas liberadas
+            prev_t = prev_map.get(uid)
+            if prev_t:
+                prev_occ = prev_t.get("occupied_players", 0)
+                curr_occ = t_data.get("occupied_players", 0)
+                if curr_occ < prev_occ:
+                    freed = prev_occ - curr_occ
+                    log(f"   🚨 [BAT-SIGNAL ALERTA BAJA] ¡Se ha liberado {freed} plaza(s) en {t_data['name']}! (De {prev_occ} a {curr_occ} ocupadas)")
+                    t_data["has_freed_spot"] = True
+                    t_data["freed_spots_count"] = freed
+                    t_data["last_freed_spot_at"] = datetime.now(timezone.utc).isoformat()
+                elif curr_occ >= t_data.get("max_players", 20):
+                    t_data["has_freed_spot"] = False
+                    t_data["freed_spots_count"] = 0
+            
             log(f"   🎾 {t_data['name']} [{t_data['location']}]: {t_data['occupied_players']}/{t_data['max_players']} plazas ({t_data['spots_left']} libres) • {t_data['courts']} pistas")
             sync_to_firestore(t_data)
             results.append(t_data)

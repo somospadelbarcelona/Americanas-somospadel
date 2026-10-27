@@ -4004,76 +4004,57 @@ window.loadAmericanaParticipantsUI = async (id, preloadedEvent = null) => {
 
 
 window.loadAmericanaWaitlistUI = async (id, preloadedWaitlist = null) => {
-
     const list = document.getElementById('waitlist-americana');
-
     if (!list) return;
 
-
-
     try {
-
         let waitlist = preloadedWaitlist;
-
         if (!waitlist || !Array.isArray(waitlist)) {
-
             waitlist = await ParticipantService.getWaitlist(id, 'americana');
-
         }
-
-
 
         if (!waitlist || waitlist.length === 0) {
-
             list.innerHTML = '<div style="text-align:center; color:#333333; font-size:0.75rem; padding:15px; font-style:italic;">Lista de reserva vacía</div>';
-
             return;
-
         }
 
+        const eventDoc = window._currentPlaytomicSyncEvent || (window.currentAmericanaData ? window.currentAmericanaData : {});
+        const hasFreed = eventDoc && (eventDoc.has_freed_spot || (eventDoc.spots_left && eventDoc.spots_left > 0));
+        let freedBanner = '';
+        if (hasFreed) {
+            freedBanner = `
+                <div style="background:linear-gradient(135deg, #10B981, #059669); color:#fff; padding:8px 12px; border-radius:8px; font-weight:800; font-size:0.72rem; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 8px rgba(16,185,129,0.3);">
+                    <span><i class="fas fa-bell fa-shake"></i> ¡PLAZA LIBERADA EN PLAYTOMIC! Hay vacante para convocar.</span>
+                    <button onclick="window.notifyWaitlistWhatsApp('${id}', '${waitlist[0]?.name || ''}', '${waitlist[0]?.phone || ''}', '${eventDoc.name || 'Americana'}', '${eventDoc.date || ''}', '${eventDoc.time || ''}')" style="background:#fff; color:#059669; border:none; padding:3px 8px; border-radius:6px; font-weight:900; font-size:0.65rem; cursor:pointer;">AVISAR AHORA</button>
+                </div>
+            `;
+        }
 
-
-        list.innerHTML = waitlist.map((p, i) => `
-
+        list.innerHTML = freedBanner + waitlist.map((p, i) => `
             <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid rgba(255,165,0,0.1); background:rgba(255,165,0,0.05); border-radius:6px; margin-bottom:4px;">
-
                 <div style="display:flex; align-items:center; gap:10px;">
-
                     <div style="width:20px; height:20px; background:#FFA500; color:black; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.7rem;">${i + 1}</div>
-
                     <div style="display:flex; flex-direction:column;">
-
                         <span style="color:black; font-size:0.85rem; font-weight:700;">${p.name || 'JUGADOR'}</span>
-
                         <span style="color:black; font-size:0.65rem; font-weight:700;">Nivel ${p.level || '3.5'} • ${p.gender || '?'}</span>
-
                     </div>
-
                 </div>
-
-                <div style="font-size:0.6rem; color:rgba(0,0,0,0.5); font-weight:600;">
-
-                    ${p.joinedAt ? new Date(p.joinedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <button onclick="window.notifyWaitlistWhatsApp('${id}', '${p.name || ''}', '${p.phone || ''}', '${eventDoc.name || 'Americana'}', '${eventDoc.date || ''}', '${eventDoc.time || ''}')" title="Enviar WhatsApp de plaza libre" style="background:#25D366; color:#fff; border:none; padding:4px 8px; border-radius:6px; font-weight:800; font-size:0.65rem; display:inline-flex; align-items:center; gap:4px; cursor:pointer; box-shadow:0 1px 4px rgba(37,211,102,0.3);">
+                        <i class="fab fa-whatsapp"></i> Avisar
+                    </button>
+                    <div style="font-size:0.6rem; color:rgba(0,0,0,0.5); font-weight:600;">
+                        ${p.joinedAt ? new Date(p.joinedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                    </div>
                 </div>
-
             </div>
-
         `).join('');
 
-
-
     } catch (e) {
-
         console.error("Waitlist error in americana:", e);
-
         list.innerHTML = '<div style="text-align:center; color:#64748b; font-size:0.75rem; padding:15px; font-style:italic;">Lista de reserva vacía</div>';
-
     }
-
 };
-
-
 
 window.removeAmericanaPlayer = async (eid, uid) => {
 
@@ -4369,29 +4350,51 @@ function normalizePlayerName(str) {
 
 
 
-function cleanPlaytomicInputName(raw) {
+const SPANISH_NICKNAMES_MAP = {
+    'alex': 'alejandro', 'ale': 'alejandro', 'alexandre': 'alejandro',
+    'edu': 'eduard', 'eduardo': 'eduard',
+    'javi': 'javier',
+    'nacho': 'ignacio',
+    'dani': 'daniel',
+    'fran': 'francisco', 'paco': 'francisco', 'curro': 'francisco', 'kiko': 'francisco',
+    'pepe': 'jose', 'josep': 'jose', 'pep': 'jose',
+    'manu': 'manuel', 'manolo': 'manuel',
+    'santi': 'santiago',
+    'rafa': 'rafael',
+    'tono': 'antonio', 'tono': 'antonio', 'toni': 'antonio',
+    'fer': 'fernando', 'nando': 'fernando',
+    'guille': 'guillermo',
+    'chema': 'jose maria',
+    'juanma': 'juan manuel',
+    'miguel': 'mikel', 'miki': 'mikel',
+    'vicente': 'vicent',
+    'carles': 'carlos', 'charly': 'carlos',
+    'pau': 'pablo',
+    'quim': 'joaquin',
+    'sergi': 'sergio',
+    'marc': 'marcos',
+    'jordi': 'jorge',
+    'cris': 'cristina',
+    'bea': 'beatriz',
+    'patri': 'patricia',
+    'montse': 'montserrat'
+};
 
-    if (!raw) return '';
-
-    let clean = String(raw).trim();
-
-    // Quitar números, viñetas, emojis y guiones iniciales: ej: "1.", "-", "•", "✔️", "🎾", "1/28"
-
-    clean = clean.replace(/^[\s\d\.\-\*•✔️✔🎾\:\#]+/g, '').trim();
-
-    // Quitar niveles o comentarios entre paréntesis al final: ej: "(3.5)", "[Nivel 4]"
-
-    clean = clean.replace(/\s*[\(\[][^\)\]]*[\)\]]/g, '').trim();
-
-    // Quitar prefijos comunes si el usuario copió texto tipo "Jugador: Juan Perez"
-
-    clean = clean.replace(/^(jugador|player|nombre)\s*:\s*/i, '').trim();
-
-    return clean;
-
+function normalizeWithNicknames(str) {
+    const rawTokens = normalizePlayerName(str).split(' ').filter(Boolean);
+    return rawTokens.map(t => SPANISH_NICKNAMES_MAP[t] || t);
 }
 
-
+function cleanPlaytomicInputName(raw) {
+    if (!raw) return '';
+    let clean = String(raw).trim();
+    clean = clean.replace(/^(plaza\s*\d+\s*[\:\-]\s*|jugador\s*\d+\s*[\:\-]\s*|[\s\d\.\-\*•✔️✔🎾\:\#\/\\]+)/gi, '').trim();
+    clean = clean.replace(/[\-\–\—\•\|\/]\s*(pagado|confirmado|pendiente|manager|organizador|paid|confirmed|pending)\s*$/gi, '').trim();
+    clean = clean.replace(/\s*[\(\[][^\)\]]*[\)\]]/g, '').trim();
+    clean = clean.replace(/[\-\–\—\s]+[0-7][\.,]\d{1,2}\s*$/g, '').trim();
+    clean = clean.replace(/^(jugador|player|nombre|name)\s*[\:\-]\s*/i, '').trim();
+    return clean;
+}
 
 function capitalizeWords(str) {
 
@@ -4735,76 +4738,30 @@ window.previewPlaytomicSync = async function() {
 
 
         // 1. Coincidencia exacta normalizada
-
         for (const p of dbPlayers) {
-
             const normDb = normalizePlayerName(p.name || '');
-
             if (normDb && normDb === normInput) {
-
                 found = p;
-
                 break;
-
             }
-
         }
 
-
-
-        // 2. Coincidencia de tokens (nombre + primer apellido)
-
-        if (!found && inputTokens.size >= 2) {
-
+        // 2. Coincidencia Inteligente con Expansión de Nombres e Hipocorísticos
+        if (!found) {
+            const inNormTokens = normalizeWithNicknames(cleanName);
             for (const p of dbPlayers) {
-
-                const normDb = normalizePlayerName(p.name || '');
-
-                const dbTokens = new Set(normDb.split(' ').filter(t => t.length > 0));
-
-                let allMatch = true;
-
-                for (const t of inputTokens) {
-
-                    if (!dbTokens.has(t)) { allMatch = false; break; }
-
-                }
-
-                if (allMatch) {
-
+                const dbNormTokens = normalizeWithNicknames(p.name || '');
+                if (inNormTokens.length >= 2 && inNormTokens.every(t => dbNormTokens.includes(t))) {
                     found = p;
-
                     break;
-
                 }
-
-                if (dbTokens.size >= 2) {
-
-                    let dbAllMatch = true;
-
-                    for (const t of dbTokens) {
-
-                        if (!inputTokens.has(t)) { dbAllMatch = false; break; }
-
-                    }
-
-                    if (dbAllMatch) {
-
-                        found = p;
-
-                        break;
-
-                    }
-
+                if (dbNormTokens.length >= 2 && dbNormTokens.every(t => inNormTokens.includes(t))) {
+                    found = p;
+                    break;
                 }
-
             }
-
         }
-
-
-
-        if (found) {
+    if (found) {
 
             matchedAppPlayers.push({
 
@@ -4908,7 +4865,7 @@ window.previewPlaytomicSync = async function() {
 
                     <span style="background:#10B981; color:#000; font-weight:900; font-size:0.65rem; padding:2px 6px; border-radius:4px;">NIVEL ${level}</span>
 
-                    <span style="background:rgba(255,255,255,0.1); color:#10B981; font-weight:800; font-size:0.62rem; padding:2px 6px; border-radius:4px; text-transform:uppercase;">REGISTRADO APP</span>
+                    <span style="background:rgba(255,255,255,0.1); color:#10B981; font-weight:800; font-size:0.62rem; padding:2px 6px; border-radius:4px; text-transform:uppercase;">✨ VINCULADO APP</span>
 
                 </div>
 
@@ -5087,7 +5044,7 @@ window.executePlaytomicSync = async function() {
                 photoURL: p.photoURL || p.photo_url || null,
 
                 phone: p.phone || '',
-
+                position: p.position || p.preferred_side || (p.hand === 'left' ? 'Drive' : 'Revés'),
                 source: 'app',
 
                 is_matched_app: true,
@@ -5585,3 +5542,15 @@ window.fetchPlaytomicAutoPlayers = async function() {
     }
 };
 
+
+window.notifyWaitlistWhatsApp = function(eventId, playerName, playerPhone, eventName, eventDate, eventTime) {
+    const pName = playerName || 'compañero/a';
+    const eName = eventName || 'la Americana oficial';
+    const dateStr = eventDate ? `del ${eventDate}` : '';
+    const timeStr = eventTime ? `a las ${eventTime}h` : '';
+    const msg = `🎾 ¡Hola ${pName}! Te avisamos de Somos Pádel porque se acaba de liberar 1 PLAZA en ${eName} (${dateStr} ${timeStr}). ¡Confirma tu plaza en la app antes de que se ocupe!`;
+    const cleanPhone = String(playerPhone || '').replace(/[^0-9]/g, '');
+    const encoded = encodeURIComponent(msg);
+    const url = cleanPhone.length >= 9 ? `https://wa.me/${cleanPhone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
+    window.open(url, '_blank');
+};
