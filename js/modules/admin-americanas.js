@@ -3839,7 +3839,17 @@ window.loadAmericanaParticipantsUI = async (id, preloadedEvent = null) => {
 
                             
 
-                            <div style="color:#3b82f6; font-size:0.75rem; margin:0 2px;"><i class="fas fa-link"></i></div>
+                            ${(() => {
+                                const avgVal = ((parseFloat(p.level || 3.5) + parseFloat(partner.level || 3.5)) / 2).toFixed(2);
+                                return `
+                                <div style="display:flex; flex-direction:column; align-items:center; margin:0 5px; gap:2px;">
+                                    <div style="color:#3b82f6; font-size:0.68rem;"><i class="fas fa-link"></i></div>
+                                    <span style="font-size:0.56rem; font-weight:900; color:#0369a1; background:#e0f2fe; border:1px solid #bae6fd; padding:1px 5px; border-radius:4px;" title="Nivel medio de la pareja">
+                                        Media <b>${avgVal}</b>
+                                    </span>
+                                </div>
+                                `;
+                            })()}
 
 
 

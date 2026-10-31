@@ -7529,9 +7529,10 @@
             const renderNeonPlayer = (player, badgeText, badgeColor = '#0284c7') => {
                 if (!player) return '';
                 const pid = player.id || player.uid;
-                const isPlaytomic = player.is_playtomic || player.source === 'playtomic' || (player.name && player.name.toLowerCase().includes('playtomic')) || (pid && String(pid).includes('playtomic'));
+                const isPlaytomic = player.is_playtomic || player.source === 'playtomic' || (player.name && player.name.toLowerCase().includes('playtomic')) || (pid && String(pid).includes('playtomic')) || (player.playtomic_status === 'confirmed') || (evt && evt.is_external && evt.playtomic_id);
                 const photo = player.photo_url || player.photoURL || player.picture || 'img/logo_somospadel.png';
                 const level = parseFloat(player.level || 3.5).toFixed(2);
+                const playtomicLevel = player.playtomic_level ? parseFloat(player.playtomic_level).toFixed(2) : (isPlaytomic ? level : null);
                 const teams = Array.isArray(player.team_somospadel) ? player.team_somospadel : (player.team_somospadel ? [player.team_somospadel] : []);
                 const position = player.position || (level > 3.6 ? 'Revés' : 'Drive');
                 const isRev = position.toLowerCase().includes('rev');
@@ -7546,14 +7547,12 @@
                 const displayName = rawName.replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 const safeNameAttr = rawName.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
                 const isMe = currentUid && (pid === currentUid);
-                const actualBadgeColor = isPlaytomic ? '#0072FF' : badgeColor;
-                const actualBadgeText = isPlaytomic ? '🎾 PLAYTOMIC' : badgeText;
 
                 return `
                     <div class="player-roster-row" data-player-name="${safeNameAttr}" onclick="event.stopPropagation(); window.cotillearJugador('${pid}')" title="Toca para cotillear perfil de ${safeNameAttr}" style="display: flex; align-items: center; gap: 9px; padding: 6px 8px; position: relative; border-radius: 10px; cursor: pointer; transition: background 0.15s ease;">
                         <!-- Avatar -->
                         <div style="position: relative; flex-shrink: 0;">
-                            <div style="width: 38px; height: 38px; border-radius: 10px; background: url('${photo}') center/cover; border: 2px solid ${actualBadgeColor}; box-shadow: 0 1px 4px rgba(0,0,0,0.06);"></div>
+                            <div style="width: 38px; height: 38px; border-radius: 10px; background: url('${photo}') center/cover; border: 2px solid ${isPlaytomic ? '#0072FF' : badgeColor}; box-shadow: 0 1px 4px rgba(0,0,0,0.06);"></div>
                             <span style="position: absolute; bottom: -3px; right: -3px; background: #0f172a; color: #f59e0b; font-size: 0.5rem; font-weight: 950; padding: 1px 3px; border-radius: 4px; border: 1px solid #e2e8f0;">🔥${streak}W</span>
                         </div>
                         <!-- Info -->
@@ -7562,15 +7561,24 @@
                                 <span style="font-weight: 950; font-size: 0.84rem; color: #0f172a; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.2px;">${displayName}</span>
                                 ${isMe ? `<span style="background: #CCFF00; color: #0f172a; font-size: 0.5rem; font-weight: 1000; padding: 1px 4px; border-radius: 4px;">TÚ</span>` : ''}
                             </div>
-                            <div style="display: flex; align-items: center; gap: 4px; margin-top: 2px; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 5px; margin-top: 2px; flex-wrap: wrap;">
+                                ${playtomicLevel ? `
+                                <span onclick="event.stopPropagation(); if (typeof window.openPlaytomicInfoModal === 'function') window.openPlaytomicInfoModal('${pid}')" style="background: linear-gradient(135deg, #0284c7, #0072FF); color: #ffffff; border: 1px solid #00C6FF; font-weight: 950; font-size: 0.60rem; padding: 1.5px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px; box-shadow: 0 1px 3px rgba(0,114,255,0.22); cursor: pointer;" title="Nivel oficial verificado en Playtomic. Toca para ver detalles">
+                                    <i class="fas fa-check-circle" style="color: #67e8f9; font-size: 0.52rem;"></i> ${playtomicLevel} <small style="font-weight: 900; font-size: 0.46rem; letter-spacing: 0.3px; background: rgba(255,255,255,0.22); padding: 0.5px 3px; border-radius: 3px;">PLAYTOMIC</small>
+                                </span>
+                                ` : `
                                 <span style="background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; font-weight: 950; font-size: 0.62rem; padding: 1px 5px; border-radius: 4px;">${level} <small style="font-weight: 800;">LVL</small></span>
+                                `}
                                 <span style="background: #f1f5f9; color: #334155; font-size: 0.56rem; font-weight: 800; padding: 1px 5px; border-radius: 4px; border: 1px solid #e2e8f0;">${posIcon}</span>
                                 ${teams.length > 0 ? `<span style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.5rem; font-weight: 900; padding: 1px 4px; border-radius: 4px;">${teams[0].toUpperCase()}</span>` : ''}
                             </div>
                         </div>
                         <!-- Actions & Badge -->
                         <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0;">
-                            <div style="background: ${actualBadgeColor}; color: #ffffff; font-size: 0.48rem; font-weight: 1000; padding: 1px 6px; border-radius: 4px; letter-spacing: 0.4px;">${actualBadgeText}</div>
+                            <div style="display: flex; align-items: center; gap: 3px;">
+                                ${isPlaytomic ? `<span style="background: linear-gradient(135deg, #00C6FF, #0072FF); color: #ffffff; font-size: 0.46rem; font-weight: 1000; padding: 1px 5px; border-radius: 4px; letter-spacing: 0.3px; box-shadow: 0 1px 2px rgba(0,114,255,0.2);">🎾 OFICIAL</span>` : ''}
+                                <div style="background: ${badgeColor}; color: #ffffff; font-size: 0.48rem; font-weight: 1000; padding: 1px 6px; border-radius: 4px; letter-spacing: 0.4px;">${badgeText}</div>
+                            </div>
                             <div style="display: flex; align-items: center; gap: 4px;">
                                 ${!isMe ? (isPlaytomic ? `
                                 <button onclick="event.stopPropagation(); window.openPlaytomicInfoModal('${pid}')" 
@@ -7651,10 +7659,35 @@
                         margin-bottom: 8px;
                         transition: transform 0.15s, box-shadow 0.15s;
                     " onmouseover="this.style.boxShadow='0 4px 14px rgba(2, 132, 199, 0.12)'; this.style.transform='translateY(-1px)';" onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.03)'; this.style.transform='none';">
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 2px 8px 3px; border-bottom: 1px solid #f1f5f9;">
-                            <span style="font-size: 0.55rem; font-weight: 1000; color: #0284c7; text-transform: uppercase; letter-spacing: 0.5px;">👥 PAREJA CONFIRMADA</span>
-                            <span style="font-size: 0.52rem; font-weight: 900; color: ${synergyColor}; background: #f8fafc; border: 1px solid #e2e8f0; padding: 1px 5px; border-radius: 4px;">${synergyBadge}</span>
-                        </div>
+                        ${(() => {
+                            const l1 = parseFloat(String(group.p1?.playtomic_level || group.p1?.level || 3.5).replace(',', '.')) || 3.5;
+                            const l2 = parseFloat(String(group.p2?.playtomic_level || group.p2?.level || 3.5).replace(',', '.')) || 3.5;
+                            const pairAvg = ((l1 + l2) / 2).toFixed(2);
+                            const id1 = String(group.p1?.id || group.p1?.uid || '');
+                            const id2 = String(group.p2?.id || group.p2?.uid || '');
+                            const fpMatch = Array.isArray(evt.fixed_pairs) ? evt.fixed_pairs.find(fp => {
+                                const fp1 = String(fp.player1_id || '');
+                                const fp2 = String(fp.player2_id || '');
+                                return (fp1 === id1 && fp2 === id2) || (fp1 === id2 && fp2 === id1);
+                            }) : null;
+                            const pairCourt = group.p1?.court || group.p2?.court || fpMatch?.current_court || null;
+
+                            return `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 3px 8px 4px; border-bottom: 1px solid #f1f5f9; gap: 6px; flex-wrap: wrap; background: #fafafa; border-radius: 10px 10px 0 0;">
+                                <div style="display: flex; align-items: center; gap: 5px; flex-wrap: wrap;">
+                                    <span style="font-size: 0.55rem; font-weight: 1000; color: #0284c7; text-transform: uppercase; letter-spacing: 0.5px;">👥 PAREJA CONFIRMADA</span>
+                                    <span style="font-size: 0.54rem; font-weight: 1000; color: #0369a1; background: linear-gradient(135deg, #e0f2fe, #bae6fd); border: 1px solid #7dd3fc; padding: 1.5px 7px; border-radius: 5px; display: inline-flex; align-items: center; gap: 3px; box-shadow: 0 1px 2px rgba(2,132,199,0.12);" title="Nivel medio de la pareja">
+                                        <i class="fas fa-chart-line" style="font-size: 0.5rem; color: #0284c7;"></i> MEDIA <b style="font-size: 0.63rem; color: #0c4a6e;">${pairAvg}</b>
+                                    </span>
+                                    ${pairCourt ? `
+                                    <span style="font-size: 0.52rem; font-weight: 1000; color: #15803d; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 1.5px 6px; border-radius: 5px; display: inline-flex; align-items: center; gap: 3px;">
+                                        🎾 PISTA <b>${pairCourt}</b>
+                                    </span>` : ''}
+                                </div>
+                                <span style="font-size: 0.52rem; font-weight: 900; color: ${synergyColor}; background: #ffffff; border: 1px solid #e2e8f0; padding: 1px 5px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">${synergyBadge}</span>
+                            </div>
+                            `;
+                        })()}
                         ${renderNeonPlayer(group.p1, 'J1', '#0284c7')}
                         <div style="height: 1px; background: #f8fafc; margin: 0 8px;"></div>
                         ${renderNeonPlayer(group.p2, 'J2', '#0284c7')}
