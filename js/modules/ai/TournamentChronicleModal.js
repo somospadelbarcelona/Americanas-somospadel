@@ -486,7 +486,61 @@
         }
 
         // =========================================================================
-        // VISTA A: RESUMEN DEPORTIVO VISUAL Y AL GRANO
+        // FORMATEADOR VISUAL DE NARRATIVA (EMOTICONOS, NEGRITAS Y MICRO-BLOQUES)
+        // =========================================================================
+
+        _formatNarrativeText(text) {
+            if (!text || typeof text !== 'string') return '';
+            let formatted = text;
+
+            // 1. Inserción de emoticonos contextuales en frases clave (si no están ya presentes)
+            const emojiReplacements = [
+                { match: /Bajo el cielo de/i, replace: '🌤️ Bajo el cielo de' },
+                { match: /Las cuatro esquinas/i, replace: '🎾 Las cuatro esquinas' },
+                { match: /El partido más vibrante/i, replace: '⚡ El partido más vibrante' },
+                { match: /En defensa, emergió/i, replace: '🛡️ En defensa, emergió' },
+                { match: /La mayor proeza/i, replace: '🚀 La mayor proeza' },
+                { match: /impuso su ley encadenando/i, replace: '🔥 Impuso su ley encadenando' },
+                { match: /El laurel de MVP/i, replace: '👑 El laurel de MVP' },
+                { match: /La gloria del podio/i, replace: '🏆 La gloria del podio' },
+                { match: /Conquistas a Pista 1:/i, replace: '🏰 Conquistas a Pista 1:' },
+                { match: /Mención Especial de Ascenso:/i, replace: '⭐ Mención Especial de Ascenso:' },
+                { match: /Cae el telón/i, replace: '🎭 Cae el telón' },
+                { match: /El tercer tiempo/i, replace: '🍻 El tercer tiempo' },
+                { match: /¡Gracias a toda la familia/i, replace: '🙌 ¡Gracias a toda la familia' }
+            ];
+
+            emojiReplacements.forEach(({ match, replace }) => {
+                if (match.test(formatted) && !formatted.includes(replace.slice(0, 2))) {
+                    formatted = formatted.replace(match, replace);
+                }
+            });
+
+            // 2. Resaltar nombres de jugadores y clubes en MAYÚSCULAS (2 o más palabras consecutivas en mayúsculas)
+            formatted = formatted.replace(/\b([A-ZÁÉÍÓÚÑ]{2,}(?:\s+[A-ZÁÉÍÓÚÑ]{2,})+)\b/g, 
+                '<strong style="color: #0f172a; font-weight: 900;">$1</strong>');
+
+            // 3. Resaltar marcadores de partidos tipo 4-5, 6-2, 8-7 en cápsula azul suave
+            formatted = formatted.replace(/\b(\d+)\s*[-–]\s*(\d+)\b/g, 
+                '<strong style="display: inline-block; background: #e0f2fe; color: #0284c7; padding: 1px 6px; border-radius: 5px; font-weight: 900; font-size: 0.78rem; margin: 0 2px;">$1-$2</strong>');
+
+            // 4. Resaltar Pistas y Rondas (ej: Ronda 4, Pista 1)
+            formatted = formatted.replace(/\b(Ronda\s+\d+|Pista\s+\d+)\b/gi, 
+                '<strong style="color: #4338ca; font-weight: 850;">$1</strong>');
+
+            // 5. Resaltar estadísticas, porcentajes y victorias
+            formatted = formatted.replace(/\b(\d+%\s*(?:de efectividad|de victorias)?|\d+V(?:\s*en la central)?|\d+\s*(?:juegos|puntos|victorias(?: consecutivas)?))\b/gi, 
+                '<strong style="color: #16a34a; font-weight: 850;">$1</strong>');
+
+            // 6. Resaltar motes o hitos especiales
+            formatted = formatted.replace(/\b("La Gran Muralla"|Rey de Pista 1|Mención Especial de Ascenso|laurel de MVP|MVP absoluto|faro indiscutible)\b/gi, 
+                '<strong style="color: #92400e; font-weight: 900; background: #fef3c7; padding: 1px 5px; border-radius: 4px;">$1</strong>');
+
+            return formatted;
+        }
+
+        // =========================================================================
+        // VISTA A: CRÓNICA NARRATIVA DESPLEGADA, ATRACTIVA & PODIO
         // =========================================================================
 
         _renderChronicleTabView() {
@@ -521,7 +575,112 @@
             ];
 
             return `
-                <!-- 1. PODIO DE HONOR (AL GRANO, VISUAL Y DIRECTO) -->
+                <!-- 1. CRÓNICA NARRATIVA DESPLEGADA (DIARIO DEPORTIVO ULTRA ATRACTIVO) -->
+                <div style="
+                    margin-bottom: 12px; padding: 12px 14px; border-radius: 16px;
+                    background: #ffffff; border: 1.5px solid #e2e8f0;
+                    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.04);
+                ">
+                    <!-- Cabecera de la crónica con fecha -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="
+                            display: inline-flex; align-items: center; gap: 5px;
+                            background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+                            color: #ffffff; font-size: 0.58rem; font-weight: 950;
+                            padding: 3px 8px; border-radius: 6px; letter-spacing: 0.5px; text-transform: uppercase;
+                        ">
+                            <i class="fas fa-newspaper"></i> CRÓNICA DEPORTIVA EXCLUSIVA
+                        </span>
+                        <span style="font-size: 0.62rem; color: #64748b; font-weight: 800;">
+                            ${c?.meta?.date || 'Jornada Oficial'}
+                        </span>
+                    </div>
+
+                    <!-- Titular de impacto periodístico -->
+                    <div style="
+                        font-family: 'Outfit', sans-serif; font-size: 0.98rem; font-weight: 950;
+                        color: #0f172a; line-height: 1.35; margin-bottom: 8px; letter-spacing: -0.2px;
+                    ">
+                        ${c?.headline || 'Jornada magistral de pádel en SomosPádel 🎾'}
+                    </div>
+
+                    <!-- Subheadline destacado tipo resumen de prensa -->
+                    ${c?.subheadline ? `
+                    <div style="
+                        background: #f8fafc; border-left: 3px solid #0284c7; padding: 6px 10px;
+                        border-radius: 0 8px 8px 0; font-size: 0.74rem; color: #334155; line-height: 1.4;
+                        margin-bottom: 12px; font-weight: 500;
+                    ">
+                        💬 ${this._formatNarrativeText(c.subheadline)}
+                    </div>
+                    ` : ''}
+
+                    <!-- MICRO-BLOQUES TEMÁTICOS CON EMOTICONOS Y NEGRITAS (LECTURA RÁPIDA) -->
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        
+                        <!-- ACTO 1: EL AMBIENTE -->
+                        ${c?.act1_intro ? `
+                        <div style="
+                            background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px;
+                            padding: 9px 11px;
+                        ">
+                            <div style="font-size: 0.60rem; font-weight: 950; color: #166534; text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; gap: 5px;">
+                                <span>🎾</span> EL AMBIENTE EN PISTA
+                            </div>
+                            <div style="font-size: 0.76rem; color: #1e293b; line-height: 1.5;">
+                                ${this._formatNarrativeText(c.act1_intro)}
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        <!-- ACTO 2: MOMENTOS CUMBRE & PARTIDAZO -->
+                        ${c?.act2_highlights ? `
+                        <div style="
+                            background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px;
+                            padding: 9px 11px;
+                        ">
+                            <div style="font-size: 0.60rem; font-weight: 950; color: #1e40af; text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; gap: 5px;">
+                                <span>⚡</span> PARTIDAZOS DE INFARTO & MOMENTOS CUMBRE
+                            </div>
+                            <div style="font-size: 0.76rem; color: #1e293b; line-height: 1.5;">
+                                ${this._formatNarrativeText(c.act2_highlights)}
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        <!-- ACTO 3: MVP & HEROÍSMOS -->
+                        ${c?.act3_mvp_ascents ? `
+                        <div style="
+                            background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px;
+                            padding: 9px 11px;
+                        ">
+                            <div style="font-size: 0.60rem; font-weight: 950; color: #92400e; text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; gap: 5px;">
+                                <span>👑</span> REYES DEL 20x10 & PROEZAS
+                            </div>
+                            <div style="font-size: 0.76rem; color: #1e293b; line-height: 1.5;">
+                                ${this._formatNarrativeText(c.act3_mvp_ascents)}
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        <!-- ACTO 4: TERCER TIEMPO & CIERRE (si existe) -->
+                        ${c?.act4_outro ? `
+                        <div style="
+                            background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 12px;
+                            padding: 9px 11px;
+                        ">
+                            <div style="font-size: 0.60rem; font-weight: 950; color: #6b21a8; text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; gap: 5px;">
+                                <span>🍻</span> TERCER TIEMPO & COMUNIDAD
+                            </div>
+                            <div style="font-size: 0.76rem; color: #1e293b; line-height: 1.5;">
+                                ${this._formatNarrativeText(c.act4_outro)}
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+
+                <!-- 2. PODIO DE HONOR (TOP 3 OFICIAL) -->
                 <div style="
                     margin-bottom: 10px; padding: 10px 12px; border-radius: 14px;
                     background: #ffffff; border: 1px solid #e2e8f0;
@@ -570,7 +729,7 @@
                     </div>
                 </div>
 
-                <!-- 2. TARJETA MVP DE LA JORNADA -->
+                <!-- 3. TARJETA MVP DE LA JORNADA -->
                 <div style="
                     margin-bottom: 10px; padding: 10px 12px; border-radius: 14px;
                     background: linear-gradient(135deg, #fefce8 0%, #ffffff 100%);
@@ -629,8 +788,8 @@
                     </div>
                 </div>
 
-                <!-- 3. DATOS DESTACADOS EN 2 CÁPSULAS DIRECTAS -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px;">
+                <!-- 4. DATOS DESTACADOS EN 2 CÁPSULAS DIRECTAS -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px;">
                     <!-- Partido más disputado -->
                     <div style="padding: 8px 10px; border-radius: 10px; background: #ffffff; border: 1px solid #e2e8f0;">
                         <div style="font-size: 0.56rem; font-weight: 900; color: #0284c7; text-transform: uppercase; margin-bottom: 2px;">
@@ -657,32 +816,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- 4. CRÓNICA NARRATIVA COLAPSABLE (OPCIONAL, SIN ENSUCIAR) -->
-                <details style="
-                    border: 1px solid #e2e8f0; border-radius: 12px;
-                    background: #ffffff; padding: 9px 12px; margin-bottom: 4px;
-                ">
-                    <summary style="
-                        font-size: 0.70rem; font-weight: 850; color: #475569;
-                        cursor: pointer; display: flex; align-items: center; justify-content: space-between;
-                        user-select: none;
-                    ">
-                        <span>📰 Leer crónica narrativa completa...</span>
-                        <i class="fas fa-chevron-down" style="font-size: 0.62rem; color: #94a3b8;"></i>
-                    </summary>
-                    <div style="
-                        margin-top: 8px; font-size: 0.78rem; color: #334155; line-height: 1.5;
-                        border-top: 1px solid #f1f5f9; padding-top: 8px;
-                    ">
-                        <div style="font-weight: 900; color: #0f172a; font-size: 0.84rem; margin-bottom: 4px;">
-                            ${c.headline || 'Jornada magistral en SomosPádel'}
-                        </div>
-                        <p style="margin: 0 0 6px 0;">${c.act1_intro || c.subheadline || ''}</p>
-                        <p style="margin: 0 0 6px 0;">${c.act2_highlights || ''}</p>
-                        <p style="margin: 0;">${c.act3_mvp_ascents || ''}</p>
-                    </div>
-                </details>
             `;
         }
 
