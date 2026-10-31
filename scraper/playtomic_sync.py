@@ -131,6 +131,109 @@ def find_existing_firestore_doc_id(tournament_id):
         print(f"⚠️ Error buscando doc en Firestore: {e}")
     return f"pt_{tournament_id[:12]}"
 
+def extract_playtomic_datetime(html):
+    """
+    Extrae con maxima precision la fecha, hora de inicio y fin desde el HTML de Playtomic.
+    Soporta formato en ingles ('Wed, Nov 4 · 10:00 AM') y espanol ('Mie, 4 nov · 10:00').
+    """
+    raw_datetime = None
+    
+    # Intento 1: Etiqueta <p> con color de texto gris de Playtomic
+    m = re.search(r'<p[^>]*class="[^"]*text-\[#566670\][^"]*"[^>]*>([^<]+)</p>', html)
+    if m:
+        raw_datetime = m.group(1).strip()
+        
+    # Intento 2: Atributos RSC / Next.js
+    if not raw_datetime:
+        m = re.search(r'"text-xs[^"]*","children":"([^"]+)"', html)
+        if m:
+            raw_datetime = m.group(1).strip()
+            
+    # Intento 3: Cualquier texto con dia de la semana y separador ·
+    if not raw_datetime:
+        m = re.search(r'(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun|Lun|Mar|Mie|Mié|Jue|Vie|Sab|Sáb|Dom)[^<>
+"]*·\s*([^<>
+"]+)', html, re.I)
+        if m:
+            raw_datetime = m.group(0).strip()
+
+    now = datetime.now()
+    default_date = now.strftime("%Y-%m-%d")
+    
+    if not raw_datetime:
+        return default_date, "18:00", "20:00"
+
+    raw_datetime = raw_datetime.replace('\u00a0', ' ').replace('&middot;', '·')
+    
+    # 1. Extraccion de Mes y Dia
+    months = {
+        "ene": "01", "jan": "01",
+        "feb": "02",
+        "mar": "03",
+        "abr": "04", "apr": "04",
+        "may": "05",
+        "jun": "06",
+        "jul": "07",
+        "ago": "08", "aug": "08",
+        "sep": "09", "set": "09",
+        "oct": "10",
+        "nov": "11",
+        "dic": "12", "dec": "12"
+    }
+    
+    month_num = None
+    day_num = None
+    
+    # Formato A: "Nov 4" o "November 4"
+    mA = re.search(r'([a-z]{3,})[a-z]*\s+(\d{1,2})', raw_datetime, re.I)
+    if mA:
+        prefix = mA.group(1).lower()[:3]
+        if prefix in months:
+            month_num = months[prefix]
+            day_num = mA.group(2).zfill(2)
+            
+    # Formato B: "4 Nov" o "4 de Noviembre"
+    if not month_num:
+        mB = re.search(r'(\d{1,2})\s+(?:de\s+)?([a-z]{3,})', raw_datetime, re.I)
+        if mB:
+            prefix = mB.group(2).lower()[:3]
+            if prefix in months:
+                month_num = months[prefix]
+                day_num = mB.group(1).zfill(2)
+                
+    if month_num and day_num:
+        year = now.year
+        if int(month_num) < now.month:
+            year += 1
+        date_str = f"{year}-{month_num}-{day_num}"
+    else:
+        day_match = re.search(r'(\d{1,2})', raw_datetime)
+        day_num = day_match.group(1).zfill(2) if day_match else now.strftime("%d")
+        date_str = f"{now.year}-{now.strftime('%m')}-{day_num}"
+
+    # 2. Extraccion y normalizacion de Horario (12h AM/PM -> 24h)
+    time_str = "18:00"
+    time_end_str = "20:00"
+    
+    mT = re.search(r'(\d{1,2}):(\d{2})\s*(AM|PM)?', raw_datetime, re.I)
+    if mT:
+        hour = int(mT.group(1))
+        minute = int(mT.group(2))
+        ampm = mT.group(3)
+        if ampm:
+            ampm = ampm.upper()
+            if ampm == "PM" and hour < 12:
+                hour += 12
+            elif ampm == "AM" and hour == 12:
+                hour = 0
+        time_str = f"{hour:02d}:{minute:02d}"
+        
+        # En padel / americanas, la duracion estandar es de 2 horas
+        end_hour = hour + 2
+        time_end_str = f"{end_hour:02d}:{minute:02d}"
+
+    return date_str, time_str, time_end_str
+
 def extract_playtomic_tournament(url_or_id):
     match = re.search(r'([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})', url_or_id)
     if not match:
@@ -161,36 +264,7 @@ def extract_playtomic_tournament(url_or_id):
         name = m_name.group(1).strip()
     
     # 3. Extraer Fecha y Hora
-    date_str = ""
-    time_str = "18:00"
-    time_end_str = "20:00"
-    m_date_text = re.search(r'"text-xs font-medium text-\[#566670\] mb-1","children":"([^"]+)"', html)
-    if m_date_text:
-        raw_datetime = m_date_text.group(1)
-        day_match = re.search(r'(\d{1,2})', raw_datetime)
-        day_num = day_match.group(1).zfill(2) if day_match else "31"
-        
-        month_num = "10"
-        for m_name_en, m_code in [("oct", "10"), ("nov", "11"), ("dec", "12"), ("dic", "12"), ("ene", "01"), ("jan", "01"), ("feb", "02"), ("mar", "03"), ("abr", "04"), ("apr", "04"), ("may", "05"), ("jun", "06"), ("jul", "07"), ("ago", "08"), ("aug", "08"), ("sep", "09")]:
-            if m_name_en in raw_datetime.lower():
-                month_num = m_code
-                break
-        
-        current_year = datetime.now().year
-        date_str = f"{current_year}-{month_num}-{day_num}"
-        
-        if "6:00 PM" in raw_datetime or "18:00" in raw_datetime:
-            time_str = "18:00"
-            time_end_str = "20:00"
-        elif "16:30" in raw_datetime or "4:30 PM" in raw_datetime:
-            time_str = "16:30"
-            time_end_str = "18:30"
-        else:
-            m_time = re.search(r'(\d{1,2}:\d{2})', raw_datetime)
-            if m_time:
-                time_str = m_time.group(1)
-    else:
-        date_str = f"{datetime.now().year}-10-31"
+    date_str, time_str, time_end_str = extract_playtomic_datetime(html)
 
     # 4. Sede y Organizador Inteligente
     m_tenant = re.search(r'data-tracking-property-tenant-name="([^"]+)"', html)
@@ -208,7 +282,7 @@ def extract_playtomic_tournament(url_or_id):
     )
     
     # FILTRO DE MARCAS / PROMOTORES EXTERNOS:
-    external_brands = ["vibra", "siux", "jaleo", "crazyxpadel", "crazy", "breakfast", "saturday"]
+    external_brands = ["vibra", "siux", "jaleo", "crazyxpadel", "crazy", "breakfast", "saturday", "grx"]
     if any(b in name_lower for b in external_brands):
         print(f"   ⛔ FILTRADO / DESCARTADO: '{name}' pertenece a una marca externa ajena a Somos Pádel.")
         return None
@@ -223,8 +297,14 @@ def extract_playtomic_tournament(url_or_id):
     else:
         sede = "NEW Play Padel Pro Hospitalet"
         organizer = "somospadeleugestion@gmail.com"
-        if any(b in name_lower for b in ["crazy", "breakfast", "vibra", "jaleo", "siux"]):
-            print(f"   ⛔ FILTRADO / DESCARTADO: '{name}' en Hospitalet pertenece a una marca externa ajena a Somos Pádel.")
+        if any(b in name_lower for b in external_brands):
+            print(f"   ⛔ FILTRADO / DESCARTADO: '{name}' pertenece a una marca externa ajena a Somos Pádel.")
+            return None
+        is_somospadel = any(k in name_lower for k in [
+            "somospadel", "somos padel", "somos pádel", "americana mañanas", "americana halloween", "entrenamiento somospadel"
+        ])
+        if not is_somospadel:
+            print(f"   ⛔ FILTRADO / DESCARTADO: '{name}' en Hospitalet no pertenece a Somos Pádel.")
             return None
 
     # 5. Nivel
@@ -456,6 +536,7 @@ def upload_to_firestore(t_data):
         "location": {"stringValue": t_data["location"]},
         "sede": {"stringValue": t_data["sede"]},
         "date": {"stringValue": t_data["date"]},
+        "normDate": {"stringValue": t_data["date"]},
         "time": {"stringValue": t_data["time"]},
         "time_end": {"stringValue": t_data["time_end"]},
         "duration": {"stringValue": t_data["duration"]},

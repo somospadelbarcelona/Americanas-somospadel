@@ -1,3 +1,19 @@
+def get_configured_uuids():
+    """Lee únicamente los UUIDs explícitamente configurados por el usuario en URLS_FILE."""
+    uuids = set()
+    if os.path.exists(URLS_FILE):
+        try:
+            with open(URLS_FILE, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#"):
+                        m = re.search(r'([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})', line, re.I)
+                        if m:
+                            uuids.add(m.group(1).lower())
+        except Exception:
+            pass
+    return list(uuids)
+
 # -*- coding: utf-8 -*-
 """
 🤖 MOTOR DE AUTOMATIZACIÓN AUTÓNOMA PLAYTOMIC ⇄ SOMOS PÁDEL
@@ -380,6 +396,107 @@ def get_all_target_uuids(deep_discovery=False):
 
     return sorted(list(uuids))
 
+def extract_playtomic_datetime(html):
+    """
+    Extrae con maxima precision la fecha, hora de inicio y fin desde el HTML de Playtomic.
+    Soporta formato en ingles ('Wed, Nov 4 · 10:00 AM') y espanol ('Mie, 4 nov · 10:00').
+    """
+    raw_datetime = None
+    
+    # Intento 1: Etiqueta <p> con color de texto gris de Playtomic
+    m = re.search(r'<p[^>]*class="[^"]*text-\[#566670\][^"]*"[^>]*>([^<]+)</p>', html)
+    if m:
+        raw_datetime = m.group(1).strip()
+        
+    # Intento 2: Atributos RSC / Next.js
+    if not raw_datetime:
+        m = re.search(r'"text-xs[^"]*","children":"([^"]+)"', html)
+        if m:
+            raw_datetime = m.group(1).strip()
+            
+    # Intento 3: Cualquier texto con dia de la semana y separador ·
+    if not raw_datetime:
+        m = re.search(r'(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun|Lun|Mar|Mie|Mié|Jue|Vie|Sab|Sáb|Dom)[^<>\n"]*·\s*([^<>\n"]+)', html, re.I)
+        if m:
+            raw_datetime = m.group(0).strip()
+
+    now = datetime.now()
+    default_date = now.strftime("%Y-%m-%d")
+    
+    if not raw_datetime:
+        return default_date, "18:00", "20:00"
+
+    raw_datetime = raw_datetime.replace('\u00a0', ' ').replace('&middot;', '·')
+    
+    # 1. Extraccion de Mes y Dia
+    months = {
+        "ene": "01", "jan": "01",
+        "feb": "02",
+        "mar": "03",
+        "abr": "04", "apr": "04",
+        "may": "05",
+        "jun": "06",
+        "jul": "07",
+        "ago": "08", "aug": "08",
+        "sep": "09", "set": "09",
+        "oct": "10",
+        "nov": "11",
+        "dic": "12", "dec": "12"
+    }
+    
+    month_num = None
+    day_num = None
+    
+    # Formato A: "Nov 4" o "November 4"
+    mA = re.search(r'([a-z]{3,})[a-z]*\s+(\d{1,2})', raw_datetime, re.I)
+    if mA:
+        prefix = mA.group(1).lower()[:3]
+        if prefix in months:
+            month_num = months[prefix]
+            day_num = mA.group(2).zfill(2)
+            
+    # Formato B: "4 Nov" o "4 de Noviembre"
+    if not month_num:
+        mB = re.search(r'(\d{1,2})\s+(?:de\s+)?([a-z]{3,})', raw_datetime, re.I)
+        if mB:
+            prefix = mB.group(2).lower()[:3]
+            if prefix in months:
+                month_num = months[prefix]
+                day_num = mB.group(1).zfill(2)
+                
+    if month_num and day_num:
+        year = now.year
+        if int(month_num) < now.month:
+            year += 1
+        date_str = f"{year}-{month_num}-{day_num}"
+    else:
+        day_match = re.search(r'(\d{1,2})', raw_datetime)
+        day_num = day_match.group(1).zfill(2) if day_match else now.strftime("%d")
+        date_str = f"{now.year}-{now.strftime('%m')}-{day_num}"
+
+    # 2. Extraccion y normalizacion de Horario (12h AM/PM -> 24h)
+    time_str = "18:00"
+    time_end_str = "20:00"
+    
+    mT = re.search(r'(\d{1,2}):(\d{2})\s*(AM|PM)?', raw_datetime, re.I)
+    if mT:
+        hour = int(mT.group(1))
+        minute = int(mT.group(2))
+        ampm = mT.group(3)
+        if ampm:
+            ampm = ampm.upper()
+            if ampm == "PM" and hour < 12:
+                hour += 12
+            elif ampm == "AM" and hour == 12:
+                hour = 0
+        time_str = f"{hour:02d}:{minute:02d}"
+        
+        # En padel / americanas, la duracion estandar es de 2 horas
+        end_hour = hour + 2
+        time_end_str = f"{end_hour:02d}:{minute:02d}"
+
+    return date_str, time_str, time_end_str
+
 def parse_playtomic_tournament(tournament_id):
     """Parsea exhaustivamente todos los datos necesarios de una americana creada en Playtomic."""
     url = f"https://app.playtomic.com/tournaments/{tournament_id}"
@@ -427,7 +544,7 @@ def parse_playtomic_tournament(tournament_id):
 
     # FILTRO DE MARCAS / PROMOTORES EXTERNOS:
     # Excluir torneos de otras organizaciones que alquilan pistas en el club (CrazyxPadel, Saturday Breakfast, Vibra Pádel, Jaleo)
-    external_brands = ["vibra", "siux", "jaleo", "crazyxpadel", "crazy", "breakfast", "saturday"]
+    external_brands = ["vibra", "siux", "jaleo", "crazyxpadel", "crazy", "breakfast", "saturday", "grx"]
     if any(b in name_lower for b in external_brands):
         log(f"   ⛔ FILTRADO / DESCARTADO: '{name}' pertenece a una marca externa ajena a Somos Pádel.")
         return None
@@ -449,8 +566,19 @@ def parse_playtomic_tournament(tournament_id):
     else:
         sede = "NEW Play Padel Pro Hospitalet"
         organizer = "somospadeleugestion@gmail.com"
-        if any(b in name_lower for b in ["crazy", "breakfast", "vibra", "jaleo", "siux"]):
-            log(f"   ⛔ FILTRADO / DESCARTADO: '{name}' en Hospitalet pertenece a una marca externa ajena a Somos Pádel.")
+        if any(b in name_lower for b in external_brands):
+            log(f"   ⛔ FILTRADO / DESCARTADO: '{name}' pertenece a una marca externa ajena a Somos Pádel.")
+            return None
+        # Validar pertenencia estricta a Somos Pádel
+        configured_uuids = [u.lower() for u in get_configured_uuids()]
+        is_somospadel = (
+            tournament_id.lower() in configured_uuids or
+            any(k in name_lower for k in [
+                "somospadel", "somos padel", "somos pádel", "americana mañanas", "americana halloween", "entrenamiento somospadel"
+            ])
+        )
+        if not is_somospadel:
+            log(f"   ⛔ FILTRADO / DESCARTADO: '{name}' en Hospitalet no pertenece a Somos Pádel.")
             return None
 
     # 4. Tipo de americana: Pareja Fija vs Twister Individual
@@ -480,38 +608,7 @@ def parse_playtomic_tournament(tournament_id):
     mode_label = "Pareja Fija" if is_fixed else "Twister individual (rotación por ronda)"
 
     # 5. Fecha y Horario
-    date_str = ""
-    time_str = "18:00"
-    time_end_str = "20:00"
-    m_date_text = re.search(r'class="text-xs font-medium text-\[#566670\] mb-1">([^<]+)<', html)
-    if not m_date_text:
-        m_date_text = re.search(r'"text-xs font-medium text-\[#566670\] mb-1","children":"([^"]+)"', html)
-    if m_date_text:
-        raw_datetime = m_date_text.group(1)
-        day_match = re.search(r'(\d{1,2})', raw_datetime)
-        day_num = day_match.group(1).zfill(2) if day_match else "31"
-        
-        month_num = "10"
-        for m_name_en, m_code in [("oct", "10"), ("nov", "11"), ("dec", "12"), ("dic", "12"), ("ene", "01"), ("jan", "01"), ("feb", "02"), ("mar", "03"), ("abr", "04"), ("apr", "04"), ("may", "05"), ("jun", "06"), ("jul", "07"), ("ago", "08"), ("aug", "08"), ("sep", "09")]:
-            if m_name_en in raw_datetime.lower():
-                month_num = m_code
-                break
-        
-        current_year = datetime.now().year
-        date_str = f"{current_year}-{month_num}-{day_num}"
-        
-        if "6:00 PM" in raw_datetime or "18:00" in raw_datetime:
-            time_str = "18:00"
-            time_end_str = "20:00"
-        elif "16:30" in raw_datetime or "4:30 PM" in raw_datetime:
-            time_str = "16:30"
-            time_end_str = "18:30"
-        else:
-            m_time = re.search(r'(\d{1,2}:\d{2})', raw_datetime)
-            if m_time:
-                time_str = m_time.group(1)
-    else:
-        date_str = f"{datetime.now().year}-10-31"
+    date_str, time_str, time_end_str = extract_playtomic_datetime(html)
 
     # 6. Plazas Reales y Pistas Reales
     spots_left = 20
@@ -639,16 +736,6 @@ def parse_playtomic_tournament(tournament_id):
         "updatedAt": now_iso
     }
 
-    # Persistir en URLS_FILE únicamente los torneos que superen los filtros oficiales
-    try:
-        with open(URLS_FILE, "r", encoding="utf-8") as f_u:
-            existing_urls = f_u.read()
-        if tournament_id not in existing_urls:
-            with open(URLS_FILE, "a", encoding="utf-8") as f_u:
-                f_u.write(f"https://app.playtomic.com/tournaments/{tournament_id}?utm_source=app_android&utm_campaign=share\n")
-    except Exception:
-        pass
-
     return tournament_data
 
 def sync_to_firestore(t_data):
@@ -710,6 +797,7 @@ def sync_to_firestore(t_data):
         "location": {"stringValue": t_data["location"]},
         "sede": {"stringValue": t_data["sede"]},
         "date": {"stringValue": t_data["date"]},
+        "normDate": {"stringValue": t_data["date"]},
         "time": {"stringValue": t_data["time"]},
         "time_end": {"stringValue": t_data["time_end"]},
         "duration": {"stringValue": t_data["duration"]},
@@ -743,7 +831,7 @@ def sync_to_firestore(t_data):
 
     req_data = json.dumps({"fields": fields}).encode('utf-8')
     req = urllib.request.Request(
-        f"{url}?key={FIREBASE_API_KEY}&updateMask.fieldPaths=name&updateMask.fieldPaths=location&updateMask.fieldPaths=sede&updateMask.fieldPaths=date&updateMask.fieldPaths=time&updateMask.fieldPaths=time_end&updateMask.fieldPaths=duration&updateMask.fieldPaths=pair_mode&updateMask.fieldPaths=format&updateMask.fieldPaths=price&updateMask.fieldPaths=price_members&updateMask.fieldPaths=price_external&updateMask.fieldPaths=max_players&updateMask.fieldPaths=occupied_players&updateMask.fieldPaths=spots_left&updateMask.fieldPaths=max_courts&updateMask.fieldPaths=courts&updateMask.fieldPaths=image_url&updateMask.fieldPaths=playtomic_id&updateMask.fieldPaths=playtomicUrl&updateMask.fieldPaths=playtomic_url&updateMask.fieldPaths=status&updateMask.fieldPaths=is_external&updateMask.fieldPaths=organizer&updateMask.fieldPaths=description&updateMask.fieldPaths=players&updateMask.fieldPaths=registeredPlayers&updateMask.fieldPaths=has_freed_spot&updateMask.fieldPaths=freed_spots_count&updateMask.fieldPaths=last_freed_spot_at&updateMask.fieldPaths=category&updateMask.fieldPaths=fixed_pairs&updateMask.fieldPaths=fixedPairs",
+        f"{url}?key={FIREBASE_API_KEY}&updateMask.fieldPaths=name&updateMask.fieldPaths=location&updateMask.fieldPaths=sede&updateMask.fieldPaths=date&updateMask.fieldPaths=normDate&updateMask.fieldPaths=time&updateMask.fieldPaths=time_end&updateMask.fieldPaths=duration&updateMask.fieldPaths=pair_mode&updateMask.fieldPaths=format&updateMask.fieldPaths=price&updateMask.fieldPaths=price_members&updateMask.fieldPaths=price_external&updateMask.fieldPaths=max_players&updateMask.fieldPaths=occupied_players&updateMask.fieldPaths=spots_left&updateMask.fieldPaths=max_courts&updateMask.fieldPaths=courts&updateMask.fieldPaths=image_url&updateMask.fieldPaths=playtomic_id&updateMask.fieldPaths=playtomicUrl&updateMask.fieldPaths=playtomic_url&updateMask.fieldPaths=status&updateMask.fieldPaths=is_external&updateMask.fieldPaths=organizer&updateMask.fieldPaths=description&updateMask.fieldPaths=players&updateMask.fieldPaths=registeredPlayers&updateMask.fieldPaths=has_freed_spot&updateMask.fieldPaths=freed_spots_count&updateMask.fieldPaths=last_freed_spot_at&updateMask.fieldPaths=category&updateMask.fieldPaths=fixed_pairs&updateMask.fieldPaths=fixedPairs",
         data=req_data,
         headers={"Content-Type": "application/json"},
         method="PATCH"
@@ -835,7 +923,7 @@ def main():
     args = parser.parse_args()
 
     if args.once:
-        run_sync_cycle(deep_discovery=True)
+        run_sync_cycle(deep_discovery=False)
         sys.exit(0)
 
     if args.interval_hours is not None:
@@ -850,7 +938,7 @@ def main():
     while True:
         try:
             deep = (cycle_count % 30 == 0)
-            run_sync_cycle(deep_discovery=deep)
+            run_sync_cycle(deep_discovery=False)
             cycle_count += 1
         except Exception as e:
             log(f"❌ Error en ciclo daemon: {e}")
