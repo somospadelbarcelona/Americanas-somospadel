@@ -88,53 +88,53 @@
             return `
                 <div style="position: relative; flex-shrink: 0;">
                     <div style="
-                        width: 44px; height: 44px; border-radius: 50%;
+                        width: 36px; height: 36px; border-radius: 50%;
                         background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-                        border: 2.5px solid ${ringColor};
+                        border: 2px solid ${ringColor};
                         display: flex; align-items: center; justify-content: center;
-                        font-weight: 950; font-size: 0.95rem; color: #0f172a;
-                        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+                        font-weight: 950; font-size: 0.82rem; color: #0f172a;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
                     ">${init1}</div>
                     <span style="
-                        position: absolute; bottom: -4px; right: -4px;
-                        width: 20px; height: 20px; border-radius: 50%;
-                        background: ${medalBg}; border: 1.5px solid ${medalBorder};
+                        position: absolute; bottom: -3px; right: -3px;
+                        width: 17px; height: 17px; border-radius: 50%;
+                        background: ${medalBg}; border: 1.2px solid ${medalBorder};
                         display: flex; align-items: center; justify-content: center;
-                        font-size: 0.72rem; line-height: 1; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+                        font-size: 0.62rem; line-height: 1; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
                     ">${medalIcon}</span>
                 </div>
             `;
         }
 
         return `
-            <div style="position: relative; flex-shrink: 0; width: 62px; height: 44px; display: flex; align-items: center;">
+            <div style="position: relative; flex-shrink: 0; width: 52px; height: 38px; display: flex; align-items: center;">
                 <div style="
-                    width: 38px; height: 38px; border-radius: 50%;
+                    width: 33px; height: 33px; border-radius: 50%;
                     background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
-                    border: 2.5px solid ${ringColor};
+                    border: 2px solid ${ringColor};
                     display: flex; align-items: center; justify-content: center;
-                    font-weight: 950; font-size: 0.8rem; color: #0f172a;
-                    box-shadow: 0 3px 8px rgba(0,0,0,0.12); z-index: 2; position: relative;
+                    font-weight: 950; font-size: 0.72rem; color: #0f172a;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.12); z-index: 2; position: relative;
                 " title="${p1}">
                     ${init1}
                 </div>
                 <div style="
-                    width: 38px; height: 38px; border-radius: 50%;
+                    width: 33px; height: 33px; border-radius: 50%;
                     background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%);
-                    border: 2.5px solid ${ringColor};
+                    border: 2px solid ${ringColor};
                     display: flex; align-items: center; justify-content: center;
-                    font-weight: 950; font-size: 0.8rem; color: #0f172a;
-                    box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+                    font-weight: 950; font-size: 0.72rem; color: #0f172a;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
                     margin-left: -14px; z-index: 1; position: relative;
                 " title="${p2}">
                     ${init2}
                 </div>
                 <span style="
-                    position: absolute; bottom: -2px; right: 0;
-                    width: 20px; height: 20px; border-radius: 50%;
-                    background: ${medalBg}; border: 1.5px solid ${medalBorder};
+                    position: absolute; bottom: -1px; right: -1px;
+                    width: 17px; height: 17px; border-radius: 50%;
+                    background: ${medalBg}; border: 1.2px solid ${medalBorder};
                     display: flex; align-items: center; justify-content: center;
-                    font-size: 0.72rem; line-height: 1; z-index: 3; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+                    font-size: 0.62rem; line-height: 1; z-index: 3; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
                 ">${medalIcon}</span>
             </div>
         `;
@@ -142,16 +142,24 @@
 
     const renderPairNamesWithBadges = (names, allPlayers, nameColor) => {
         if (!names || names.length === 0) return `<span style="color:#94a3b8; font-style:italic;">Equipo Pista 1</span>`;
-        return names.map(name => {
-            const lvl = resolvePlayerLevel({ name }, allPlayers);
-            const lvlColor = getLevelColor(lvl);
-            return `
-                <span style="display: inline-flex; align-items: center; gap: 4px; font-weight: 900; font-size: 0.92rem; color: ${nameColor}; text-transform: uppercase; letter-spacing: 0.3px;">
-                    <span>${name}</span>
-                    <span style="font-size: 0.58rem; font-weight: 800; padding: 1px 5px; border-radius: 4px; background: ${lvlColor}; color: #ffffff; letter-spacing: 0;">Nv ${lvl}</span>
-                </span>
-            `;
-        }).join(`<span style="color: rgba(255,255,255,0.25); font-size: 0.75rem; font-weight: 700; margin: 0 2px;">/</span>`);
+        return `
+            <div style="display: flex; flex-direction: column; gap: 2px; width: 100%;">
+                ${names.map(name => {
+                    const lvl = resolvePlayerLevel({ name }, allPlayers);
+                    const lvlColor = getLevelColor(lvl);
+                    return `
+                        <div style="display: flex; align-items: center; gap: 6px; min-width: 0;">
+                            <span style="font-weight: 900; font-size: 0.82rem; color: ${nameColor}; text-transform: uppercase; letter-spacing: 0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                ${name}
+                            </span>
+                            <span style="font-size: 0.54rem; font-weight: 850; padding: 1px 5px; border-radius: 4px; background: ${lvlColor}; color: #ffffff; letter-spacing: 0; flex-shrink: 0;">
+                                Nv ${lvl}
+                            </span>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
     };
 
     window.EventModals = {
@@ -435,31 +443,29 @@
 
                 const winningCardHTML = `
                     <div class="sp-final-pair-card" style="
-                        padding: 14px 16px; border-radius: 18px; margin-bottom: 10px;
+                        padding: 9px 12px; border-radius: 14px; margin-bottom: 7px;
                         background: linear-gradient(135deg, #f7fee7 0%, #ffffff 100%);
-                        border: 2px solid #84cc16;
-                        box-shadow: 0 4px 16px rgba(132, 204, 22, 0.18);
+                        border: 1.5px solid #84cc16;
+                        box-shadow: 0 3px 12px rgba(132, 204, 22, 0.15);
                         animation: spSlideInRow 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
                     ">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                             <span style="
-                                display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px;
-                                border-radius: 6px; background: #CCFF00; color: #0f172a;
-                                border: 1.5px solid #84cc16;
-                                font-size: 0.64rem; font-weight: 950; letter-spacing: 0.8px; text-transform: uppercase;
+                                display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px;
+                                border-radius: 5px; background: #CCFF00; color: #0f172a;
+                                border: 1px solid #84cc16;
+                                font-size: 0.58rem; font-weight: 950; letter-spacing: 0.6px; text-transform: uppercase;
                             ">
                                 ${winnerBadgeTitle}
                             </span>
                             ${winnerScoreBadge}
                         </div>
-                        <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
                             ${doubleAvatarWinner}
                             <div style="flex: 1; min-width: 0;">
-                                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px;">
-                                    ${renderPairNamesWithBadges(winningPair.names, allPlayers, '#0f172a')}
-                                </div>
-                                <div style="font-size: 0.70rem; color: #15803d; font-weight: 850; margin-top: 5px; display: flex; align-items: center; gap: 6px;">
-                                    <i class="fas fa-trophy" style="font-size: 0.75rem; color: #16a34a;"></i>
+                                ${renderPairNamesWithBadges(winningPair.names, allPlayers, '#0f172a')}
+                                <div style="font-size: 0.66rem; color: #15803d; font-weight: 850; margin-top: 4px; display: flex; align-items: center; gap: 5px;">
+                                    <i class="fas fa-trophy" style="font-size: 0.70rem; color: #16a34a;"></i>
                                     <span>${winnerScoreText}</span>
                                 </div>
                             </div>
@@ -479,8 +485,8 @@
 
                     const finalistScoreBadge = (finalistPair.score !== null && finalistPair.rivalScore !== null)
                         ? `<span style="
-                            display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px;
-                            border-radius: 6px; background: #f1f5f9; color: #334155; border: 1.5px solid #cbd5e1; font-size: 0.68rem; font-weight: 900;
+                            display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px;
+                            border-radius: 5px; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; font-size: 0.64rem; font-weight: 900;
                         ">
                             ${finalistPair.score} - ${finalistPair.rivalScore}
                         </span>`
@@ -496,31 +502,27 @@
 
                     finalistCardHTML = `
                         <div class="sp-final-pair-card" style="
-                            padding: 13px 16px; border-radius: 18px; margin-bottom: 12px;
+                            padding: 9px 12px; border-radius: 14px; margin-bottom: 8px;
                             background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
                             border: 1.5px solid #cbd5e1;
-                            box-shadow: 0 3px 12px rgba(0,0,0,0.04);
+                            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
                             animation: spSlideInRow 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.08s both;
                         ">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                                 <span style="
-                                    display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px;
-                                    border-radius: 6px; background: #e2e8f0; color: #1e293b;
+                                    display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px;
+                                    border-radius: 5px; background: #e2e8f0; color: #1e293b;
                                     border: 1px solid #cbd5e1;
-                                    font-size: 0.64rem; font-weight: 950; letter-spacing: 0.8px; text-transform: uppercase;
-                                ">
-                                    ${finalistBadgeTitle}
+                                    font-size: 0.58rem; font-weight: 950; letter-spacing: 0.6px; text-transform: uppercase;
                                 </span>
                                 ${finalistScoreBadge}
                             </div>
-                            <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
                                 ${doubleAvatarFinalist}
                                 <div style="flex: 1; min-width: 0;">
-                                    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px;">
-                                        ${renderPairNamesWithBadges(finalistPair.names, allPlayers, '#0f172a')}
-                                    </div>
-                                    <div style="font-size: 0.70rem; color: #64748b; font-weight: 750; margin-top: 5px; display: flex; align-items: center; gap: 6px;">
-                                        <i class="fas fa-medal" style="font-size: 0.75rem; color: #94a3b8;"></i>
+                                    ${renderPairNamesWithBadges(finalistPair.names, allPlayers, '#0f172a')}
+                                    <div style="font-size: 0.66rem; color: #64748b; font-weight: 750; margin-top: 4px; display: flex; align-items: center; gap: 5px;">
+                                        <i class="fas fa-medal" style="font-size: 0.70rem; color: #94a3b8;"></i>
                                         <span>${finalistSubText}</span>
                                     </div>
                                 </div>
@@ -628,21 +630,21 @@
                         tier.border
                     );
                     nameBlockHTML = `
-                        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 2px;">
+                        <div style="display: flex; align-items: center; gap: 5px; flex-wrap: wrap; margin-bottom: 2px;">
                             <span style="
-                                font-size: 0.58rem; font-weight: 900; padding: 1px 6px;
+                                font-size: 0.55rem; font-weight: 900; padding: 1px 5px;
                                 border-radius: 4px; background: ${tier.badgeBg}; color: ${tier.badgeText};
-                                letter-spacing: 0.5px;
+                                letter-spacing: 0.4px;
                             ">${tier.rankBadge}</span>
                             <span style="
-                                font-size: 0.58rem; font-weight: 900; padding: 1px 6px;
-                                border-radius: 4px; background: rgba(255,255,255,0.08); color: #e2e8f0;
+                                font-size: 0.55rem; font-weight: 900; padding: 1px 5px;
+                                border-radius: 4px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;
                             ">PAREJA</span>
                         </div>
                         <div style="
-                            font-weight: 900; font-size: 0.90rem; color: ${tier.nameColor};
+                            font-weight: 900; font-size: 0.82rem; color: ${tier.nameColor};
                             text-transform: uppercase; white-space: nowrap; overflow: hidden;
-                            text-overflow: ellipsis; letter-spacing: 0.3px;
+                            text-overflow: ellipsis; letter-spacing: 0.2px;
                         ">
                             ${p.name || 'Pareja'}
                         </div>
@@ -658,12 +660,12 @@
                     if (lastCourt && lastCourt < 90) {
                         if (lastCourt === 1) {
                             courtBadgeHTML = `
-                                <span style="display:inline-flex; align-items:center; gap:4px; padding:2px 7px; border-radius:6px; background:rgba(204,255,0,0.18); color:#CCFF00; border:1px solid rgba(204,255,0,0.5); font-size:0.62rem; font-weight:900; letter-spacing:0.5px;">
+                                <span style="display:inline-flex; align-items:center; gap:3px; padding:1px 5px; border-radius:4px; background:rgba(204,255,0,0.18); color:#15803d; border:1px solid rgba(204,255,0,0.5); font-size:0.58rem; font-weight:900;">
                                     👑 PISTA 1
                                 </span>`;
                         } else {
                             courtBadgeHTML = `
-                                <span style="display:inline-flex; align-items:center; gap:3px; padding:2px 7px; border-radius:6px; background:rgba(255,255,255,0.06); color:#cbd5e1; border:1px solid rgba(255,255,255,0.12); font-size:0.62rem; font-weight:800;">
+                                <span style="display:inline-flex; align-items:center; gap:3px; padding:1px 5px; border-radius:4px; background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; font-size:0.58rem; font-weight:800;">
                                     PISTA ${lastCourt}
                                 </span>`;
                         }
@@ -672,35 +674,35 @@
                     avatarBlockHTML = `
                         <div style="position: relative; flex-shrink: 0;">
                             <div style="
-                                width: 44px; height: 44px; border-radius: 50%;
+                                width: 36px; height: 36px; border-radius: 50%;
                                 background: ${tier.avatarBg || '#f1f5f9'};
-                                border: 2.5px solid ${tier.ringColor};
+                                border: 2px solid ${tier.ringColor};
                                 display: flex; align-items: center; justify-content: center;
-                                font-weight: 950; font-size: 0.95rem; color: ${tier.avatarColor || '#0f172a'};
-                                box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+                                font-weight: 950; font-size: 0.82rem; color: ${tier.avatarColor || '#0f172a'};
+                                box-shadow: 0 2px 6px rgba(0,0,0,0.08);
                             ">
                                 ${initials}
                             </div>
                             <span style="
-                                position: absolute; bottom: -4px; right: -4px;
-                                width: 20px; height: 20px; border-radius: 50%;
-                                background: ${tier.medalBg}; border: 1.5px solid ${tier.medalBorder || tier.border}; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                                position: absolute; bottom: -3px; right: -3px;
+                                width: 17px; height: 17px; border-radius: 50%;
+                                background: ${tier.medalBg}; border: 1.2px solid ${tier.medalBorder || tier.border}; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
                                 display: flex; align-items: center; justify-content: center;
-                                font-size: 0.72rem; line-height: 1;
+                                font-size: 0.62rem; line-height: 1;
                             ">${tier.medalIcon}</span>
                         </div>
                     `;
 
                     nameBlockHTML = `
-                        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 2px;">
+                        <div style="display: flex; align-items: center; gap: 5px; flex-wrap: wrap; margin-bottom: 2px;">
                             <span style="
-                                font-size: 0.58rem; font-weight: 900; padding: 1px 6px;
+                                font-size: 0.55rem; font-weight: 900; padding: 1px 5px;
                                 border-radius: 4px; background: ${tier.badgeBg}; color: ${tier.badgeText};
-                                letter-spacing: 0.5px;
+                                letter-spacing: 0.4px;
                             ">${tier.rankBadge}</span>
                             
                             <span style="
-                                font-size: 0.58rem; font-weight: 900; padding: 1px 6px;
+                                font-size: 0.55rem; font-weight: 900; padding: 1px 5px;
                                 border-radius: 4px; background: ${levelColor}; color: #ffffff;
                             ">Nv ${playerLevel}</span>
 
@@ -708,9 +710,9 @@
                         </div>
 
                         <div style="
-                            font-weight: 900; font-size: 0.94rem; color: ${tier.nameColor};
+                            font-weight: 900; font-size: 0.82rem; color: ${tier.nameColor};
                             text-transform: uppercase; white-space: nowrap; overflow: hidden;
-                            text-overflow: ellipsis; letter-spacing: 0.3px;
+                            text-overflow: ellipsis; letter-spacing: 0.2px;
                         ">
                             ${p.name || 'Jugador'}
                         </div>
@@ -719,9 +721,9 @@
 
                 return `
                     <div class="sp-podium-card" style="
-                        display: flex; align-items: center; gap: 12px; padding: 13px 16px;
-                        border-radius: 18px; background: ${tier.cardBg}; border: 1px solid ${tier.border};
-                        margin-bottom: 9px; box-shadow: ${tier.accentGlow}; position: relative;
+                        display: flex; align-items: center; gap: 10px; padding: 7px 10px;
+                        border-radius: 13px; background: ${tier.cardBg}; border: 1px solid ${tier.border};
+                        margin-bottom: 5px; box-shadow: ${tier.accentGlow}; position: relative;
                         animation: spSlideInRow 0.4s cubic-bezier(0.16, 1, 0.3, 1) ${(i + 1) * 0.1}s both;
                         backdrop-filter: blur(8px);
                     ">
@@ -729,7 +731,7 @@
 
                         <div style="flex: 1; min-width: 0;">
                             ${nameBlockHTML}
-                            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.72rem; color: #64748b; font-weight: 700; margin-top: 3px;">
+                            <div style="display: flex; align-items: center; gap: 6px; font-size: 0.65rem; color: #64748b; font-weight: 700; margin-top: 2px;">
                                 <span style="color: #16a34a; font-weight: 950;">${p.won || 0}V</span>
                                 <span>·</span>
                                 <span>${p.played || 0}PJ</span>
@@ -740,12 +742,12 @@
 
                         <div style="text-align: right; flex-shrink: 0; padding-left: 4px;">
                             <div style="
-                                font-size: 1.35rem; font-weight: 950; color: ${tier.ptsColor};
+                                font-size: 1.15rem; font-weight: 950; color: ${tier.ptsColor};
                                 font-family: 'Outfit', sans-serif; line-height: 1;
                             ">
                                 ${ptsValue}
                             </div>
-                            <div style="font-size: 0.55rem; color: #64748b; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; margin-top: 3px;">
+                            <div style="font-size: 0.50rem; color: #64748b; font-weight: 900; letter-spacing: 0.8px; text-transform: uppercase; margin-top: 2px;">
                                 ${ptsLabel}
                             </div>
                         </div>
@@ -758,13 +760,13 @@
             const individualPodiumHeaderHTML = `
                 <div style="
                     display: flex; justify-content: space-between; align-items: center;
-                    margin-bottom: 11px; padding: ${finalPairsSectionHTML ? '10px 4px 0' : '0 4px'};
-                    ${finalPairsSectionHTML ? 'border-top: 1.5px solid #e2e8f0; margin-top: 8px;' : ''}
+                    margin-bottom: 6px; padding: ${finalPairsSectionHTML ? '8px 4px 0' : '0 4px'};
+                    ${finalPairsSectionHTML ? 'border-top: 1.5px solid #e2e8f0; margin-top: 6px;' : ''}
                 ">
-                    <div style="font-size: 0.72rem; color: #0f172a; font-weight: 950; letter-spacing: 1.2px; text-transform: uppercase; display: flex; align-items: center; gap: 6px;">
+                    <div style="font-size: 0.68rem; color: #0f172a; font-weight: 950; letter-spacing: 1px; text-transform: uppercase; display: flex; align-items: center; gap: 5px;">
                         <span>${podiumTitleText}</span>
                     </div>
-                    <div style="font-size: 0.62rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <div style="font-size: 0.60rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;">
                         ${podiumSubtitleText}
                     </div>
                 </div>
@@ -809,8 +811,8 @@
             overlay.style.cssText = `
                 position: fixed; inset: 0; z-index: 14000;
                 display: flex; align-items: center; justify-content: center;
-                background: rgba(15, 23, 42, 0.60); backdrop-filter: blur(10px);
-                animation: spModalFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1); padding: 12px;
+                background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(10px);
+                animation: spModalFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1); padding: 8px;
                 box-sizing: border-box; overflow-y: auto;
             `;
 
@@ -822,10 +824,10 @@
                     }
                     @keyframes spFloatTrophy {
                         0%, 100% { transform: translateY(0) rotate(0deg); }
-                        50% { transform: translateY(-6px) rotate(2deg); }
+                        50% { transform: translateY(-4px) rotate(2deg); }
                     }
                     @keyframes spSlideInRow {
-                        from { opacity: 0; transform: translateY(12px); }
+                        from { opacity: 0; transform: translateY(8px); }
                         to { opacity: 1; transform: translateY(0); }
                     }
                     @keyframes spParticleDrift {
@@ -846,8 +848,8 @@
                         animation: spParticleDrift linear infinite;
                     }
                     .sp-tf-btn-social:hover {
-                        transform: translateY(-2px);
-                        filter: brightness(1.08);
+                        transform: translateY(-1px);
+                        filter: brightness(1.06);
                     }
                     .sp-tf-btn-social:active {
                         transform: scale(0.98);
@@ -855,37 +857,37 @@
                     .sp-tf-tab-btn {
                         background: #f8fafc;
                         color: #1e293b;
-                        border: 1.5px solid #e2e8f0;
-                        padding: 9px 4px;
-                        border-radius: 12px;
+                        border: 1px solid #cbd5e1;
+                        padding: 6px 3px;
+                        border-radius: 8px;
                         font-weight: 800;
-                        font-size: 0.66rem;
+                        font-size: 0.62rem;
                         cursor: pointer;
                         display: flex;
                         flex-direction: column;
                         align-items: center;
-                        gap: 3px;
+                        gap: 2px;
                         transition: all 0.2s ease;
-                        letter-spacing: 0.5px;
+                        letter-spacing: 0.3px;
                     }
                     .sp-tf-tab-btn:hover {
-                        background: rgba(204, 255, 0, 0.1);
-                        border-color: rgba(204, 255, 0, 0.4);
-                        color: #ffffff;
+                        background: #e2e8f0;
+                        border-color: #94a3b8;
+                        color: #0f172a;
                         transform: translateY(-1px);
                     }
                     .sp-tf-tab-btn i {
-                        font-size: 0.95rem;
+                        font-size: 0.82rem;
                         color: #16a34a;
                     }
                     .sp-tf-menu-btn:hover {
-                        background: rgba(255, 255, 255, 0.08) !important;
-                        border-color: rgba(255, 255, 255, 0.25) !important;
-                        color: #ffffff !important;
+                        background: #e2e8f0 !important;
+                        border-color: #94a3b8 !important;
+                        color: #0f172a !important;
                     }
                     .sp-close-icon-btn:hover {
-                        background: rgba(255, 255, 255, 0.2) !important;
-                        color: #ffffff !important;
+                        background: #e2e8f0 !important;
+                        color: #0f172a !important;
                         transform: rotate(90deg) scale(1.08);
                     }
                 </style>
@@ -903,69 +905,69 @@
                 <!-- Modal Container Card -->
                 <div style="
                     background: #ffffff; color: #0f172a;
-                    width: 100%; max-width: 440px; border-radius: 26px;
+                    width: 100%; max-width: 440px; border-radius: 20px;
                     border: 1.5px solid #e2e8f0;
                     box-shadow: 0 25px 60px rgba(0,0,0,0.22), 0 0 35px rgba(22, 163, 74, 0.12);
                     overflow: hidden; position: relative; font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
-                    max-height: calc(100vh - 28px); display: flex; flex-direction: column;
+                    max-height: min(calc(100dvh - 16px), calc(100vh - 16px)); display: flex; flex-direction: column;
                 ">
                     <!-- Close button in top right -->
                     <button id="btn-close-training-modal" class="sp-close-icon-btn" style="
-                        position: absolute; top: 16px; right: 16px; width: 34px; height: 34px;
+                        position: absolute; top: 10px; right: 10px; width: 30px; height: 30px;
                         border-radius: 50%; background: #f1f5f9; border: 1.5px solid #cbd5e1; color: #475569; display: flex; align-items: center; justify-content: center;
-                        font-size: 1rem; cursor: pointer; transition: all 0.2s ease; z-index: 30;
+                        font-size: 0.90rem; cursor: pointer; transition: all 0.2s ease; z-index: 30;
                     ">
                         <i class="fas fa-times"></i>
                     </button>
 
                     <!-- Scrollable Content Body -->
-                    <div style="overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1; min-height: 0; padding-bottom: 8px;">
+                    <div style="overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1; min-height: 0; padding-bottom: 6px;">
                         <!-- Capturable Container for Flyer Export -->
                         <div id="sp-flyer-capture-card" style="
                             background: #ffffff;
-                            margin: 12px; border-radius: 22px; border: 2px solid #e2e8f0;
-                            overflow: hidden; position: relative; box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+                            margin: 6px 8px; border-radius: 16px; border: 1.5px solid #e2e8f0;
+                            overflow: hidden; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.05);
                         ">
                             <!-- Olympic Header -->
                             <div style="
-                                padding: 24px 20px 16px; text-align: center;
+                                padding: 12px 14px 8px; text-align: center;
                                 background: radial-gradient(circle at 50% 10%, rgba(204, 255, 0, 0.22) 0%, rgba(255, 255, 255, 0) 75%);
                                 border-bottom: 1.5px solid #e2e8f0;
                                 position: relative;
                             ">
                                 <!-- Status Badge -->
                                 <div style="
-                                    display: inline-flex; align-items: center; gap: 7px; padding: 4px 12px;
+                                    display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px;
                                     border-radius: 999px; background: #dcfce7; border: 1.5px solid #86efac; color: #15803d;
-                                    font-size: 0.63rem; font-weight: 900; letter-spacing: 1.3px;
-                                    text-transform: uppercase; margin-bottom: 12px;
+                                    font-size: 0.58rem; font-weight: 900; letter-spacing: 1px;
+                                    text-transform: uppercase; margin-bottom: 5px;
                                 ">
                                     ${badgeText}
                                 </div>
 
                                 <!-- Floating Trophy -->
                                 <div style="
-                                    font-size: 3.1rem; line-height: 1; margin-bottom: 8px;
-                                    filter: drop-shadow(0 6px 14px rgba(204, 255, 0, 0.35));
+                                    font-size: 2.1rem; line-height: 1; margin-bottom: 3px;
+                                    filter: drop-shadow(0 4px 10px rgba(204, 255, 0, 0.35));
                                     animation: spFloatTrophy 3.5s ease-in-out infinite;
                                 ">🏆</div>
 
                                 <!-- Title & Event Info -->
                                 <h1 style="
-                                    font-size: 1.55rem; font-weight: 950; color: #0f172a; letter-spacing: 0.5px; margin: 0 0 4px 0; text-transform: uppercase;
+                                    font-size: 1.22rem; font-weight: 950; color: #0f172a; letter-spacing: 0.4px; margin: 0 0 2px 0; text-transform: uppercase;
                                 ">
                                     ${modalTitle}
                                 </h1>
                                 <div style="
-                                    font-size: 0.76rem; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.6px;
-                                    display: flex; align-items: center; justify-content: center; gap: 8px;
+                                    font-size: 0.68rem; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.4px;
+                                    display: flex; align-items: center; justify-content: center; gap: 6px;
                                 ">
                                     <span>${modalSubtitle}</span>
                                 </div>
                             </div>
 
                             <!-- Content Cards: Court 1 + Podium -->
-                            <div style="padding: 14px 14px 6px;">
+                            <div style="padding: 8px 10px 4px;">
                                 ${finalPairsSectionHTML}
                                 ${individualPodiumHeaderHTML}
                                 ${podiumHTML}
@@ -973,27 +975,27 @@
 
                             <!-- Watermark / Footer Inside Captured Flyer -->
                             <div style="
-                                padding: 10px 16px; display: flex; justify-content: space-between; align-items: center;
+                                padding: 6px 12px; display: flex; justify-content: space-between; align-items: center;
                                 border-top: 1.5px solid #e2e8f0; background: #f8fafc;
                             ">
-                                <div style="display: flex; align-items: center; gap: 6px;">
-                                    <img src="img/logo_somospadel.png" style="width: 17px; height: 17px; border-radius: 50%; object-fit: cover;" onerror="this.style.display='none'">
-                                    <span style="font-size: 0.62rem; color: #0f172a; font-weight: 950; letter-spacing: 0.8px;">SOMOSPADEL BCN</span>
+                                <div style="display: flex; align-items: center; gap: 5px;">
+                                    <img src="img/logo_somospadel.png" style="width: 15px; height: 15px; border-radius: 50%; object-fit: cover;" onerror="this.style.display='none'">
+                                    <span style="font-size: 0.58rem; color: #0f172a; font-weight: 950; letter-spacing: 0.6px;">SOMOSPADEL BCN</span>
                                 </div>
-                                <span style="font-size: 0.58rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                                <span style="font-size: 0.54rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;">
                                     PÁDEL SOCIAL & COMPETITIVO
                                 </span>
                             </div>
                         </div>
 
                         <!-- Fair Play & Level Compute Info Capsule -->
-                        <div style="padding: 0 16px; margin-top: 2px; margin-bottom: 8px;">
+                        <div style="padding: 0 10px; margin-top: 2px; margin-bottom: 6px;">
                             <div style="
                                 background: #f8fafc; border: 1.5px solid #e2e8f0;
-                                border-radius: 12px; padding: 9px 12px; display: flex; align-items: center; gap: 8px;
+                                border-radius: 10px; padding: 5px 9px; display: flex; align-items: center; gap: 6px;
                             ">
-                                <span style="font-size: 1rem; color: #CCFF00; flex-shrink: 0;">🎯</span>
-                                <span style="font-size: 0.68rem; color: #475569; line-height: 1.35; font-weight: 650;">
+                                <span style="font-size: 0.85rem; color: #CCFF00; flex-shrink: 0;">🎯</span>
+                                <span style="font-size: 0.62rem; color: #475569; line-height: 1.3; font-weight: 650;">
                                     <strong style="color: #0f172a;">Objetivo: Superación & Fair Play.</strong> Los partidos de este evento computan para tu Nivel Oficial SomosPadel.
                                 </span>
                             </div>
@@ -1002,88 +1004,87 @@
 
                     <!-- Interactive Action Buttons (Fixed at bottom) -->
                     <div style="
-                        padding: 14px 16px; display: flex; flex-direction: column; gap: 9px;
+                        padding: 8px 10px; display: flex; flex-direction: column; gap: 5px;
                         background: #ffffff;
                         border-top: 1.5px solid #e2e8f0; flex-shrink: 0; z-index: 10;
                     ">
                         <!-- Row 0: Crónica Épica IA Post-Torneo -->
                         <button id="btn-tf-chronicle-ai" class="sp-tf-btn-social" style="
                             background: linear-gradient(135deg, #8B5CF6 0%, #4C1D95 100%);
-                            color: #ffffff; border: 1px solid rgba(204, 255, 0, 0.6); padding: 11px 14px; border-radius: 14px;
-                            font-weight: 950; font-size: 0.82rem; cursor: pointer;
-                            display: flex; align-items: center; justify-content: center; gap: 8px;
-                            box-shadow: 0 4px 18px rgba(139, 92, 246, 0.4); transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-                            letter-spacing: 0.5px;
+                            color: #ffffff; border: 1px solid rgba(204, 255, 0, 0.6); padding: 7px 10px; border-radius: 10px;
+                            font-weight: 950; font-size: 0.74rem; cursor: pointer;
+                            display: flex; align-items: center; justify-content: center; gap: 6px;
+                            box-shadow: 0 3px 12px rgba(139, 92, 246, 0.35); transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+                            letter-spacing: 0.3px;
                         ">
-                            <span style="font-size: 1.05rem;">✨</span>
+                            <span style="font-size: 0.95rem;">✨</span>
                             <span>CRÓNICA ÉPICA & STORY 9:16</span>
-                            <span style="background: #CCFF00; color: #000; font-size: 0.58rem; padding: 2px 6px; border-radius: 6px; font-weight: 950;">NUEVO</span>
+                            <span style="background: #CCFF00; color: #000; font-size: 0.54rem; padding: 1px 5px; border-radius: 4px; font-weight: 950;">NUEVO</span>
                         </button>
 
-                        <!-- Row 1: WhatsApp & Instagram (50% / 50%) -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <!-- Row 1: WhatsApp, Instagram & Guardar Flyer en 3 columnas -->
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;">
                             <button id="btn-tf-whatsapp" class="sp-tf-btn-social" style="
                                 background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
-                                color: #ffffff; border: none; padding: 12px 10px; border-radius: 14px;
-                                font-weight: 950; font-size: 0.82rem; cursor: pointer;
-                                display: flex; align-items: center; justify-content: center; gap: 8px;
-                                box-shadow: 0 4px 16px rgba(37, 211, 102, 0.35); transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-                                letter-spacing: 0.5px;
+                                color: #ffffff; border: none; padding: 8px 4px; border-radius: 10px;
+                                font-weight: 950; font-size: 0.68rem; cursor: pointer;
+                                display: flex; align-items: center; justify-content: center; gap: 5px;
+                                box-shadow: 0 3px 10px rgba(37, 211, 102, 0.3); transition: all 0.2s ease;
+                                letter-spacing: 0.2px; white-space: nowrap;
                             ">
-                                <i class="fab fa-whatsapp" style="font-size: 1.15rem;"></i>
+                                <i class="fab fa-whatsapp" style="font-size: 0.95rem;"></i>
                                 <span>WHATSAPP</span>
                             </button>
 
                             <button id="btn-tf-instagram" class="sp-tf-btn-social" style="
                                 background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
-                                color: #ffffff; border: none; padding: 12px 10px; border-radius: 14px;
-                                font-weight: 950; font-size: 0.82rem; cursor: pointer;
-                                display: flex; align-items: center; justify-content: center; gap: 8px;
-                                box-shadow: 0 4px 16px rgba(220, 39, 67, 0.35); transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-                                letter-spacing: 0.5px;
+                                color: #ffffff; border: none; padding: 8px 4px; border-radius: 10px;
+                                font-weight: 950; font-size: 0.68rem; cursor: pointer;
+                                display: flex; align-items: center; justify-content: center; gap: 5px;
+                                box-shadow: 0 3px 10px rgba(220, 39, 67, 0.3); transition: all 0.2s ease;
+                                letter-spacing: 0.2px; white-space: nowrap;
                             ">
-                                <i class="fab fa-instagram" style="font-size: 1.15rem;"></i>
+                                <i class="fab fa-instagram" style="font-size: 0.95rem;"></i>
                                 <span>INSTAGRAM</span>
+                            </button>
+
+                            <button id="btn-tf-download-flyer" class="sp-tf-btn-social" style="
+                                background: #f0fdf4; color: #15803d;
+                                border: 1.5px solid #22c55e; padding: 8px 4px; border-radius: 10px;
+                                font-weight: 950; font-size: 0.68rem; box-shadow: 0 2px 8px rgba(34, 197, 94, 0.15); cursor: pointer;
+                                display: flex; align-items: center; justify-content: center; gap: 5px;
+                                transition: all 0.2s ease; white-space: nowrap;
+                            ">
+                                <i class="fas fa-download" style="font-size: 0.82rem;"></i>
+                                <span>FLYER HD</span>
                             </button>
                         </div>
 
-                        <!-- Row 2: Guardar Flyer HD -->
-                        <button id="btn-tf-download-flyer" class="sp-tf-btn-social" style="
-                            background: #f0fdf4; color: #15803d;
-                            border: 2px solid #22c55e; padding: 11px 14px; border-radius: 12px;
-                            font-weight: 950; font-size: 0.80rem; box-shadow: 0 3px 12px rgba(34, 197, 94, 0.18); cursor: pointer;
-                            display: flex; align-items: center; justify-content: center; gap: 7px;
-                            transition: all 0.2s ease;
-                        ">
-                            <i class="fas fa-download" style="font-size: 0.85rem;"></i>
-                            <span>GUARDAR FLYER HD</span>
-                        </button>
-
-                        <!-- Row 3: Quick Navigation Tabs -->
-                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
-                            <button id="btn-tf-tab-pos" class="sp-tf-tab-btn">
-                                <i class="fas fa-list-ol"></i>
+                        <!-- Row 2: Quick Navigation Tabs (Posiciones, Cuadros, Estadísticas) -->
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;">
+                            <button id="btn-tf-tab-pos" class="sp-tf-tab-btn" style="padding: 5px 2px; font-size: 0.62rem; gap: 2px; border-radius: 8px;">
+                                <i class="fas fa-list-ol" style="font-size: 0.80rem;"></i>
                                 <span>POSICIONES</span>
                             </button>
-                            <button id="btn-tf-tab-cuadros" class="sp-tf-tab-btn">
-                                <i class="fas fa-sitemap"></i>
+                            <button id="btn-tf-tab-cuadros" class="sp-tf-tab-btn" style="padding: 5px 2px; font-size: 0.62rem; gap: 2px; border-radius: 8px;">
+                                <i class="fas fa-sitemap" style="font-size: 0.80rem;"></i>
                                 <span>CUADROS</span>
                             </button>
-                            <button id="btn-tf-tab-stats" class="sp-tf-tab-btn">
-                                <i class="fas fa-chart-pie"></i>
+                            <button id="btn-tf-tab-stats" class="sp-tf-tab-btn" style="padding: 5px 2px; font-size: 0.62rem; gap: 2px; border-radius: 8px;">
+                                <i class="fas fa-chart-pie" style="font-size: 0.80rem;"></i>
                                 <span>ESTADÍSTICAS</span>
                             </button>
                         </div>
 
-                        <!-- Row 4: Return Button -->
+                        <!-- Row 3: Return Button -->
                         <button id="btn-tf-menu" class="sp-tf-menu-btn" style="
-                            width: 100%; background: #ffffff; color: #475569;
-                            border: 1.5px solid #cbd5e1; padding: 9px;
-                            border-radius: 12px; font-weight: 850; font-size: 0.76rem;
+                            width: 100%; background: #f8fafc; color: #475569;
+                            border: 1px solid #cbd5e1; padding: 6px;
+                            border-radius: 8px; font-weight: 850; font-size: 0.70rem;
                             cursor: pointer; transition: all 0.2s ease; display: flex;
-                            align-items: center; justify-content: center; gap: 6px;
+                            align-items: center; justify-content: center; gap: 5px;
                         ">
-                            <i class="fas fa-arrow-left"></i>
+                            <i class="fas fa-arrow-left" style="font-size: 0.72rem;"></i>
                             <span>VOLVER A EVENTOS</span>
                         </button>
                     </div>
@@ -1105,39 +1106,87 @@
             let _cachedBlob = null;
             let _cachedFile = null;
             let _cachedFileName = null;
+            let _generatingPromise = null;
+
+            const downloadBlobFile = (blob, fileName) => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 5000);
+            };
 
             const generateFlyerImage = async () => {
                 if (_cachedCanvas && _cachedBlob && _cachedFile) {
                     return { canvas: _cachedCanvas, blob: _cachedBlob, file: _cachedFile, fileName: _cachedFileName };
                 }
+                if (_generatingPromise) {
+                    return _generatingPromise;
+                }
 
-                await ensureHtml2Canvas();
+                _generatingPromise = (async () => {
+                    await ensureHtml2Canvas();
 
-                const captureEl = document.getElementById('sp-flyer-capture-card');
-                if (!captureEl) throw new Error('Flyer card element not found');
+                    const captureEl = document.getElementById('sp-flyer-capture-card');
+                    if (!captureEl) throw new Error('Flyer card element not found');
 
-                const canvas = await window.html2canvas(captureEl, {
-                    scale: 2,
-                    useCORS: true,
-                    allowTaint: true,
-                    backgroundColor: '#ffffff',
-                    logging: false,
-                    scrollX: 0,
-                    scrollY: 0
-                });
+                    // Ultra-HD Retina scale (2.5x a 3x para calidad cristalina sin pixelación)
+                    const scale = Math.min(Math.max(window.devicePixelRatio || 2, 2.5), 3);
 
-                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 0.95));
-                const safeName = (americanaDoc?.name || (isEntreno ? 'Entreno' : 'Americana')).replace(/[^a-zA-Z0-9]/g, '_');
-                const fileName = `SomosPadel_Flyer_${safeName}.png`;
-                const file = new File([blob], fileName, { type: 'image/png' });
+                    const canvas = await window.html2canvas(captureEl, {
+                        scale,
+                        useCORS: true,
+                        allowTaint: true,
+                        backgroundColor: '#ffffff',
+                        logging: false,
+                        imageTimeout: 8000,
+                        scrollX: 0,
+                        scrollY: 0,
+                        onclone: (clonedDoc) => {
+                            const card = clonedDoc.getElementById('sp-flyer-capture-card');
+                            if (card) {
+                                card.style.transform = 'none';
+                                card.style.margin = '0';
+                                card.style.boxShadow = 'none';
+                                card.style.width = '100%';
+                                card.style.maxWidth = '440px';
+                            }
+                        }
+                    });
 
-                _cachedCanvas = canvas;
-                _cachedBlob = blob;
-                _cachedFile = file;
-                _cachedFileName = fileName;
+                    const blob = await new Promise((resolve, reject) => {
+                        canvas.toBlob((b) => {
+                            if (b) resolve(b);
+                            else reject(new Error('No se pudo generar el blob de la imagen'));
+                        }, 'image/png');
+                    });
 
-                return { canvas, blob, file, fileName };
+                    const safeName = (americanaDoc?.name || (isEntreno ? 'Entreno' : 'Americana')).replace(/[^a-zA-Z0-9]/g, '_');
+                    const fileName = `SomosPadel_Flyer_${safeName}.png`;
+                    const file = new File([blob], fileName, { type: 'image/png' });
+
+                    _cachedCanvas = canvas;
+                    _cachedBlob = blob;
+                    _cachedFile = file;
+                    _cachedFileName = fileName;
+
+                    return { canvas, blob, file, fileName };
+                })();
+
+                try {
+                    return await _generatingPromise;
+                } finally {
+                    _generatingPromise = null;
+                }
             };
+
+            // Precalentamiento en segundo plano: genera el Flyer HD al instante nada más abrir el modal
+            setTimeout(() => {
+                generateFlyerImage().catch(e => console.warn("Background flyer pre-render:", e));
+            }, 120);
 
             // AI CHRONICLE MODAL
             const chronicleAiBtn = document.getElementById('btn-tf-chronicle-ai');
@@ -1149,15 +1198,15 @@
                 };
             }
 
-            // WHATSAPP SHARE
+            // WHATSAPP SHARE (Súper ágil, directo nativo en móvil)
             document.getElementById('btn-tf-whatsapp').onclick = async () => {
                 const btn = document.getElementById('btn-tf-whatsapp');
                 const origHtml = btn.innerHTML;
                 try {
                     btn.disabled = true;
-                    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> <span>GENERANDO...</span>`;
+                    btn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> <span>LISTO...</span>`;
 
-                    const { canvas, file, fileName } = await generateFlyerImage();
+                    const { blob, file, fileName } = await generateFlyerImage();
                     const shareText = generateOfficialText();
 
                     // Check mobile Web Share API for direct image share
@@ -1175,13 +1224,8 @@
                         }
                     }
 
-                    // Desktop / fallback: Download image and open WhatsApp Web/App
-                    const a = document.createElement('a');
-                    a.href = canvas.toDataURL('image/png');
-                    a.download = fileName;
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
+                    // Desktop / fallback: Descarga inmediata con Blob y apertura directa de WhatsApp
+                    downloadBlobFile(blob, fileName);
 
                     const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
                     window.open(waUrl, '_blank');
@@ -1198,15 +1242,15 @@
                 }
             };
 
-            // INSTAGRAM SHARE
+            // INSTAGRAM SHARE (Directo a Stories o descarga + portapapeles inmediata)
             document.getElementById('btn-tf-instagram').onclick = async () => {
                 const btn = document.getElementById('btn-tf-instagram');
                 const origHtml = btn.innerHTML;
                 try {
                     btn.disabled = true;
-                    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> <span>GENERANDO...</span>`;
+                    btn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> <span>LISTO...</span>`;
 
-                    const { canvas, blob, file, fileName } = await generateFlyerImage();
+                    const { blob, file, fileName } = await generateFlyerImage();
 
                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
                         try {
@@ -1221,13 +1265,8 @@
                         }
                     }
 
-                    // Desktop / fallback: Download image and attempt clipboard copy
-                    const a = document.createElement('a');
-                    a.href = canvas.toDataURL('image/png');
-                    a.download = fileName;
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
+                    // Desktop / fallback: Descarga inmediata con Blob y copia al portapapeles
+                    downloadBlobFile(blob, fileName);
 
                     let copied = false;
                     if (navigator.clipboard && window.ClipboardItem) {
@@ -1242,8 +1281,8 @@
                     if (window.NotificationService?.showToast) {
                         window.NotificationService.showToast(
                             copied
-                                ? '📸 Flyer HD descargado y copiado al portapapeles para Instagram'
-                                : '📸 Flyer HD descargado para tus Stories de Instagram',
+                                ? '📸 Flyer HD guardado y copiado. ¡Pégalo directo en tus Stories!'
+                                : '📸 Flyer HD descargado en máxima calidad para tus Stories',
                             'success'
                         );
                     }
@@ -1256,22 +1295,16 @@
                 }
             };
 
-            // DIRECT HD FLYER DOWNLOAD
+            // DIRECT HD FLYER DOWNLOAD (Descarga de archivo ultra rápida)
             document.getElementById('btn-tf-download-flyer').onclick = async () => {
                 const btn = document.getElementById('btn-tf-download-flyer');
                 const origHtml = btn.innerHTML;
                 try {
                     btn.disabled = true;
-                    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> <span>GENERANDO...</span>`;
+                    btn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> <span>LISTO...</span>`;
 
-                    const { canvas, fileName } = await generateFlyerImage();
-
-                    const a = document.createElement('a');
-                    a.href = canvas.toDataURL('image/png');
-                    a.download = fileName;
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
+                    const { blob, fileName } = await generateFlyerImage();
+                    downloadBlobFile(blob, fileName);
 
                     if (window.NotificationService?.showToast) {
                         window.NotificationService.showToast('📸 Flyer HD guardado en tus descargas', 'success');
