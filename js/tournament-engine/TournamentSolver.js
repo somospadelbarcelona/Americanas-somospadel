@@ -108,11 +108,22 @@
                 }
 
                 const [p0, p1, p2, p3] = courtPlayers;
+                // ⚖️ En R1 y modos compensados: la configuración óptima matemáticamente es 1º con 4º vs 2º con 3º
                 const configurations = [
-                    { teamA: [p0, p1], teamB: [p2, p3] },
-                    { teamA: [p0, p2], teamB: [p1, p3] },
-                    { teamA: [p0, p3], teamB: [p1, p2] }
+                    { teamA: [p0, p3], teamB: [p1, p2] }, // Máxima compensación: 1º con 4º vs 2º con 3º
+                    { teamA: [p0, p2], teamB: [p1, p3] }, // 1º con 3º vs 2º con 4º
+                    { teamA: [p0, p1], teamB: [p2, p3] }  // 1º con 2º vs 3º con 4º
                 ];
+
+                const isRegisteredPartner = (a, b) => {
+                    if (!a || !b) return false;
+                    const aKeys = [String(a.id || ''), String(a.uid || '')].filter(Boolean);
+                    const bKeys = [String(b.id || ''), String(b.uid || '')].filter(Boolean);
+                    if (a.pair_id && b.pair_id && a.pair_id === b.pair_id) return true;
+                    if (a.partner_id && bKeys.includes(String(a.partner_id))) return true;
+                    if (b.partner_id && aKeys.includes(String(b.partner_id))) return true;
+                    return false;
+                };
 
                 let bestConfig = null;
                 let bestScore = -Infinity;
@@ -129,7 +140,12 @@
                         options
                     );
 
-                    this.logger.logScore(`Pista ${courtNum} Conf ${i + 1}`, evalResult.score, evalResult.breakdown);
+                    let finalScore = evalResult.score;
+                    if (isRegisteredPartner(cfg.teamA[0], cfg.teamA[1]) || isRegisteredPartner(cfg.teamB[0], cfg.teamB[1])) {
+                        finalScore += 50000;
+                    }
+
+                    this.logger.logScore(`Pista ${courtNum} Conf ${i + 1}`, finalScore, evalResult.breakdown);
 
                     if (evalResult.score === -Infinity) {
                         this.logger.logPrune(`Hard constraint violada en Pista ${courtNum}`, {

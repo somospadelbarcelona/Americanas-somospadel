@@ -378,12 +378,25 @@
         generatePozoRound(pairs, roundNumber, maxCourts) {
             console.log(`🔒 Generando Ronda ${roundNumber} Pozo Parejas Fijas (${pairs.length} parejas, ${maxCourts} pistas)...`);
 
-            // Asegurar que todas las parejas tienen current_court válido
-            pairs.forEach((p, idx) => {
-                if (!p.current_court || p.current_court < 1) {
+            // ⚖️ En Ronda 1: ordenar parejas por nivel medio para que la Pista 1 tenga el nivel más alto, etc.
+            if (parseInt(roundNumber) === 1) {
+                const getPairAvg = (pair) => {
+                    const l1 = parseFloat(pair.player1_level || pair.level || 3.5);
+                    const l2 = parseFloat(pair.player2_level || pair.level || 3.5);
+                    return (l1 + l2) / 2;
+                };
+                pairs.sort((a, b) => getPairAvg(b) - getPairAvg(a));
+                pairs.forEach((p, idx) => {
                     p.current_court = Math.floor(idx / 2) + 1;
-                }
-            });
+                });
+            } else {
+                // Asegurar que todas las parejas tienen current_court válido
+                pairs.forEach((p, idx) => {
+                    if (!p.current_court || p.current_court < 1) {
+                        p.current_court = Math.floor(idx / 2) + 1;
+                    }
+                });
+            }
 
             const matches = [];
 

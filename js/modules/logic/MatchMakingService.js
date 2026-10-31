@@ -101,16 +101,40 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5004...");
 
                     let normalizedPlayers = rawPlayers.map((p, idx) => {
                         if (typeof p === 'string') {
-                            return { id: p, uid: p, name: `Jugador ${idx + 1}`, level: 3.0, current_court: Math.floor(idx / 4) + 1 };
+                            return { id: p, uid: p, name: `Jugador ${idx + 1}`, level: 3.0, current_court: null, forced_court: null };
                         }
                         return {
                             ...p,
                             id: String(p.id || p.uid || `player_${idx + 1}`),
                             name: p.name || `Jugador ${idx + 1}`,
                             level: parseFloat(p.level || p.self_rate_level || 3.0),
-                            current_court: parseInt(p.current_court || (Math.floor(idx / 4) + 1))
+                            forced_court: p.forced_court ? parseInt(p.forced_court) : null,
+                            current_court: p.current_court ? parseInt(p.current_court) : null
                         };
                     });
+
+                    // ⚖️ EN RONDA 1: ASIGNACIÓN 100% EQUITATIVA Y COMPENSADA POR NIVEL
+                    if (parseInt(roundNum) === 1) {
+                        if (!isFixedPairs) {
+                            normalizedPlayers.sort((a, b) => {
+                                if (a.forced_court && b.forced_court && a.forced_court !== b.forced_court) {
+                                    return a.forced_court - b.forced_court;
+                                }
+                                if (a.forced_court && !b.forced_court) return -1;
+                                if (!a.forced_court && b.forced_court) return 1;
+                                return (b.level - a.level);
+                            });
+                            normalizedPlayers.forEach((p, idx) => {
+                                p.current_court = p.forced_court || (Math.floor(idx / 4) + 1);
+                            });
+                        }
+                    } else {
+                        normalizedPlayers.forEach((p, idx) => {
+                            if (!p.current_court) {
+                                p.current_court = Math.floor(idx / 4) + 1;
+                            }
+                        });
+                    }
 
                     // --- 4. VERIFICACIÓN DE IDEMPOTENCIA EN BASE DE DATOS ---
                     const checkColl = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
@@ -434,6 +458,14 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5004...");
                                     pairs = [...pairs, ...additionalPairs];
                                     await collection.update(eventId, { fixed_pairs: pairs });
                                 }
+
+                                // ⚖️ Ordenar parejas por nivel promedio en Ronda 1
+                                const getPairAvgLvl = (pair) => {
+                                    const l1 = parseFloat(pair.player1_level || pair.level || 3.5);
+                                    const l2 = parseFloat(pair.player2_level || pair.level || 3.5);
+                                    return (l1 + l2) / 2;
+                                };
+                                pairs.sort((a, b) => getPairAvgLvl(b) - getPairAvgLvl(a));
 
                                 pairs = pairs.map((p, i) => ({
                                     ...p,

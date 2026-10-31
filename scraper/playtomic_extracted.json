@@ -55,7 +55,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.090920+00:00"
+        "joinedAt": "2026-10-31T11:01:02.177277+00:00"
       },
       {
         "id": "pt_643826",
@@ -79,7 +79,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.090920+00:00"
+        "joinedAt": "2026-10-31T11:01:02.177277+00:00"
       },
       {
         "id": "pt_10223840",
@@ -103,7 +103,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.090920+00:00"
+        "joinedAt": "2026-10-31T11:01:02.177277+00:00"
       },
       {
         "id": "pt_3246858",
@@ -127,7 +127,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.090920+00:00"
+        "joinedAt": "2026-10-31T11:01:02.177277+00:00"
       },
       {
         "id": "pt_10515342",
@@ -151,7 +151,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.090920+00:00"
+        "joinedAt": "2026-10-31T11:01:02.177277+00:00"
       },
       {
         "id": "pt_17867815",
@@ -175,7 +175,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.090920+00:00"
+        "joinedAt": "2026-10-31T11:01:02.177277+00:00"
       }
     ],
     "registeredPlayers": [
@@ -201,7 +201,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.090920+00:00"
+        "joinedAt": "2026-10-31T11:01:02.177277+00:00"
       },
       {
         "id": "pt_643826",
@@ -225,7 +225,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.090920+00:00"
+        "joinedAt": "2026-10-31T11:01:02.177277+00:00"
       },
       {
         "id": "pt_10223840",
@@ -249,7 +249,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.090920+00:00"
+        "joinedAt": "2026-10-31T11:01:02.177277+00:00"
       },
       {
         "id": "pt_3246858",
@@ -273,7 +273,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.090920+00:00"
+        "joinedAt": "2026-10-31T11:01:02.177277+00:00"
       },
       {
         "id": "pt_10515342",
@@ -297,7 +297,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.090920+00:00"
+        "joinedAt": "2026-10-31T11:01:02.177277+00:00"
       },
       {
         "id": "pt_17867815",
@@ -321,10 +321,10 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.090920+00:00"
+        "joinedAt": "2026-10-31T11:01:02.177277+00:00"
       }
     ],
-    "updatedAt": "2026-10-31T10:11:46.880079+00:00"
+    "updatedAt": "2026-10-31T11:01:01.795618+00:00"
   },
   {
     "doc_id": "pt_46011a01_halloween",
@@ -347,8 +347,8 @@
     "price_external": "0",
     "max_players": 20,
     "maxPlayers": 20,
-    "occupied_players": 18,
-    "spots_left": 2,
+    "occupied_players": 20,
+    "spots_left": 0,
     "courts": 5,
     "max_courts": 5,
     "image_url": "https://res.cloudinary.com/playtomic/image/upload/v1792773256/pro/tournaments/46011a01-68b4-433f-b2e3-581ca5fabfdb/poster_46011a01-68b4-433f-b2e3-581ca5fabfdb.jpg",
@@ -358,7 +358,7 @@
     "is_external": true,
     "is_private": false,
     "organizer": "somospadeleugestion@gmail.com",
-    "description": "🎾 AMERICANA HALLOWEEN\n📍 NEW Play Padel Pro Hospitalet\n👤 Organizador: somospadeleugestion@gmail.com\n📲 Inscripción oficial directa por Playtomic\n🌪️ Sistema Twister individual (rotación por ronda, NO pareja fija)\n⏱️ 18:00 - 20:00 h (5 Pistas)\n⚡ 18 de 20 plazas ocupadas (¡ÚLTIMAS 2 PLAZAS LIBRES!)\n💶 Precio oficial: 0 €",
+    "description": "🎾 AMERICANA HALLOWEEN\n📍 NEW Play Padel Pro Hospitalet\n👤 Organizador: somospadeleugestion@gmail.com\n📲 Inscripción oficial directa por Playtomic\n🌪️ Sistema Twister individual (rotación por ronda, NO pareja fija)\n⏱️ 18:00 - 20:00 h (5 Pistas)\n⚡ 20 de 20 plazas ocupadas (20/20 Plazas)\n💶 Precio oficial: 0 €",
     "players": [
       {
         "id": "pt_2086399",
@@ -382,7 +382,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_5080468",
@@ -406,7 +406,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_1410091",
@@ -430,7 +430,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_1919151",
@@ -454,7 +454,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_56391",
@@ -478,7 +478,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_35769",
@@ -502,7 +502,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_3027764",
@@ -526,7 +526,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_4323394",
@@ -550,7 +550,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_3066330",
@@ -574,7 +574,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_15936303",
@@ -598,7 +598,55 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
+      },
+      {
+        "id": "pt_119105",
+        "uid": "pt_119105",
+        "user_id": "119105",
+        "name": "David Cena",
+        "display_name": "David Cena",
+        "level": 2.27,
+        "photoURL": "https://cdn.playtomic.io/users/119105/1711617414805/width=700,smartCrop=true",
+        "photo_url": "https://cdn.playtomic.io/users/119105/1711617414805/width=700,smartCrop=true",
+        "picture": "https://cdn.playtomic.io/users/119105/1711617414805/width=700,smartCrop=true",
+        "gender": "?",
+        "position": "Drive",
+        "pair_id": null,
+        "partner_name": null,
+        "partner_id": null,
+        "source": "playtomic",
+        "is_external": true,
+        "is_playtomic": true,
+        "playtomic_status": "confirmed",
+        "price_paid": 12.48,
+        "club": "NEW Play Padel Pro Hospitalet",
+        "organizer": "somospadeleugestion@gmail.com",
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
+      },
+      {
+        "id": "pt_17756166",
+        "uid": "pt_17756166",
+        "user_id": "17756166",
+        "name": "Ilya",
+        "display_name": "Ilya",
+        "level": 2.24,
+        "photoURL": null,
+        "photo_url": null,
+        "picture": null,
+        "gender": "?",
+        "position": "Drive",
+        "pair_id": null,
+        "partner_name": null,
+        "partner_id": null,
+        "source": "playtomic",
+        "is_external": true,
+        "is_playtomic": true,
+        "playtomic_status": "confirmed",
+        "price_paid": 12.48,
+        "club": "NEW Play Padel Pro Hospitalet",
+        "organizer": "somospadeleugestion@gmail.com",
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_3386971",
@@ -622,7 +670,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_112538",
@@ -646,7 +694,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_1587815",
@@ -670,7 +718,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_778440",
@@ -694,7 +742,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_748421",
@@ -718,7 +766,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_3344486",
@@ -742,7 +790,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_5277942",
@@ -766,7 +814,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_9362589",
@@ -790,7 +838,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       }
     ],
     "registeredPlayers": [
@@ -816,7 +864,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_5080468",
@@ -840,7 +888,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_1410091",
@@ -864,7 +912,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_1919151",
@@ -888,7 +936,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_56391",
@@ -912,7 +960,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_35769",
@@ -936,7 +984,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_3027764",
@@ -960,7 +1008,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_4323394",
@@ -984,7 +1032,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_3066330",
@@ -1008,7 +1056,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_15936303",
@@ -1032,7 +1080,55 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
+      },
+      {
+        "id": "pt_119105",
+        "uid": "pt_119105",
+        "user_id": "119105",
+        "name": "David Cena",
+        "display_name": "David Cena",
+        "level": 2.27,
+        "photoURL": "https://cdn.playtomic.io/users/119105/1711617414805/width=700,smartCrop=true",
+        "photo_url": "https://cdn.playtomic.io/users/119105/1711617414805/width=700,smartCrop=true",
+        "picture": "https://cdn.playtomic.io/users/119105/1711617414805/width=700,smartCrop=true",
+        "gender": "?",
+        "position": "Drive",
+        "pair_id": null,
+        "partner_name": null,
+        "partner_id": null,
+        "source": "playtomic",
+        "is_external": true,
+        "is_playtomic": true,
+        "playtomic_status": "confirmed",
+        "price_paid": 12.48,
+        "club": "NEW Play Padel Pro Hospitalet",
+        "organizer": "somospadeleugestion@gmail.com",
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
+      },
+      {
+        "id": "pt_17756166",
+        "uid": "pt_17756166",
+        "user_id": "17756166",
+        "name": "Ilya",
+        "display_name": "Ilya",
+        "level": 2.24,
+        "photoURL": null,
+        "photo_url": null,
+        "picture": null,
+        "gender": "?",
+        "position": "Drive",
+        "pair_id": null,
+        "partner_name": null,
+        "partner_id": null,
+        "source": "playtomic",
+        "is_external": true,
+        "is_playtomic": true,
+        "playtomic_status": "confirmed",
+        "price_paid": 12.48,
+        "club": "NEW Play Padel Pro Hospitalet",
+        "organizer": "somospadeleugestion@gmail.com",
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_3386971",
@@ -1056,7 +1152,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_112538",
@@ -1080,7 +1176,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_1587815",
@@ -1104,7 +1200,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_778440",
@@ -1128,7 +1224,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_748421",
@@ -1152,7 +1248,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_3344486",
@@ -1176,7 +1272,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_5277942",
@@ -1200,7 +1296,7 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       },
       {
         "id": "pt_9362589",
@@ -1224,10 +1320,12 @@
         "price_paid": 12.48,
         "club": "NEW Play Padel Pro Hospitalet",
         "organizer": "somospadeleugestion@gmail.com",
-        "joinedAt": "2026-10-31T10:11:47.581103+00:00"
+        "joinedAt": "2026-10-31T11:01:02.672891+00:00"
       }
     ],
-    "updatedAt": "2026-10-31T10:11:47.507334+00:00"
+    "updatedAt": "2026-10-31T11:01:02.568600+00:00",
+    "has_freed_spot": false,
+    "freed_spots_count": 0
   },
   {
     "doc_id": "pt_b37aa155",
@@ -1264,7 +1362,7 @@
     "description": "🎾 Entrenamiento somospadel\n📍 NEW Play Padel Pro Hospitalet\n👤 Organizador: somospadeleugestion@gmail.com\n📲 Inscripción oficial directa por Playtomic\n🌪️ Sistema Twister individual (rotación por ronda, NO pareja fija)\n⏱️ 18:00 - 20:00 h (2 Pistas)\n⚡ 0 de 4 plazas ocupadas (¡ÚLTIMAS 4 PLAZAS LIBRES!)\n💶 Precio oficial: 0 €",
     "players": [],
     "registeredPlayers": [],
-    "updatedAt": "2026-10-31T10:11:48.099000+00:00"
+    "updatedAt": "2026-10-31T11:01:03.312623+00:00"
   },
   {
     "doc_id": "HWAnrOcyb85pT0eklDnc",
@@ -1322,7 +1420,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_6890876",
@@ -1346,7 +1444,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_12765121",
@@ -1370,7 +1468,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_74361",
@@ -1394,7 +1492,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_1919151",
@@ -1418,7 +1516,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_14246050",
@@ -1442,7 +1540,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_580067",
@@ -1466,7 +1564,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_971331",
@@ -1490,7 +1588,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_4172453",
@@ -1514,7 +1612,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_4913414",
@@ -1538,7 +1636,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_2242571",
@@ -1562,7 +1660,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_2342076",
@@ -1586,7 +1684,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_2935626",
@@ -1610,7 +1708,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_547498",
@@ -1634,7 +1732,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_5903671",
@@ -1658,7 +1756,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_1785625",
@@ -1682,7 +1780,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_291098",
@@ -1706,7 +1804,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_3848926",
@@ -1730,7 +1828,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_6699586",
@@ -1754,7 +1852,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_2053859",
@@ -1778,7 +1876,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_2246790",
@@ -1802,7 +1900,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       }
     ],
     "registeredPlayers": [
@@ -1828,7 +1926,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_6890876",
@@ -1852,7 +1950,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_12765121",
@@ -1876,7 +1974,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_74361",
@@ -1900,7 +1998,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_1919151",
@@ -1924,7 +2022,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_14246050",
@@ -1948,7 +2046,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_580067",
@@ -1972,7 +2070,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_971331",
@@ -1996,7 +2094,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_4172453",
@@ -2020,7 +2118,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_4913414",
@@ -2044,7 +2142,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_2242571",
@@ -2068,7 +2166,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_2342076",
@@ -2092,7 +2190,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_2935626",
@@ -2116,7 +2214,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_547498",
@@ -2140,7 +2238,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_5903671",
@@ -2164,7 +2262,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_1785625",
@@ -2188,7 +2286,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_291098",
@@ -2212,7 +2310,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_3848926",
@@ -2236,7 +2334,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_6699586",
@@ -2260,7 +2358,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_2053859",
@@ -2284,7 +2382,7 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       },
       {
         "id": "pt_2246790",
@@ -2308,9 +2406,9 @@
         "price_paid": 12.48,
         "club": "Barcelona Pádel El Prat",
         "organizer": "Eduard Bainad Puig",
-        "joinedAt": "2026-10-31T10:11:48.781425+00:00"
+        "joinedAt": "2026-10-31T11:01:04.108982+00:00"
       }
     ],
-    "updatedAt": "2026-10-31T10:11:48.681954+00:00"
+    "updatedAt": "2026-10-31T11:01:03.979597+00:00"
   }
 ]

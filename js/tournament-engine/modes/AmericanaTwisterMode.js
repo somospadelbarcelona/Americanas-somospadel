@@ -118,18 +118,29 @@
             };
 
             if (roundNum === 1) {
-                // --- RONDA 1: Asignación inicial por nivel o pista preasignada ---
+                // --- RONDA 1: Asignación inicial 100% equitativa por nivel (Tiering de Pistas) ---
                 const sorted = [...activePlayers].sort((a, b) => {
-                    const cA = a.current_court || 999;
-                    const cB = b.current_court || 999;
-                    if (cA !== cB) return cA - cB;
-                    return (parseFloat(b.level || 3.0) - parseFloat(a.level || 3.0));
+                    const cA = a.forced_court || null;
+                    const cB = b.forced_court || null;
+                    if (cA && cB && cA !== cB) return cA - cB;
+                    if (cA && !cB) return -1;
+                    if (!cA && cB) return 1;
+                    const lvlA = parseFloat(a.level || a.self_rate_level || 3.0);
+                    const lvlB = parseFloat(b.level || b.self_rate_level || 3.0);
+                    return lvlB - lvlA;
                 });
 
                 const playersByCourt = {};
                 for (let c = 1; c <= effectiveCourts; c++) {
                     const startIdx = (c - 1) * 4;
-                    playersByCourt[c] = sorted.slice(startIdx, startIdx + 4);
+                    const courtGroup = sorted.slice(startIdx, startIdx + 4);
+                    // Ordenamos de mayor a menor nivel dentro de la pista: p[0] >= p[1] >= p[2] >= p[3]
+                    courtGroup.sort((a, b) => {
+                        const lvlA = parseFloat(a.level || a.self_rate_level || 3.0);
+                        const lvlB = parseFloat(b.level || b.self_rate_level || 3.0);
+                        return lvlB - lvlA;
+                    });
+                    playersByCourt[c] = courtGroup;
                 }
 
                 // Resolver emparejamientos en R1 forzando isMixed: false

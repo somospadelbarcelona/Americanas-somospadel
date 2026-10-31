@@ -85,17 +85,23 @@
                         playersByCourt[c] = [...courtMen, ...courtWomen];
                     }
                 } else {
-                    // Ronda 1: Asignar por nivel inicial (o current_court si viene establecido)
+                    // Ronda 1: Asignar por nivel inicial descendente (Tiering de pistas)
                     const sorted = [...activePlayers].sort((a, b) => {
-                        const cA = a.current_court || 999;
-                        const cB = b.current_court || 999;
-                        if (cA !== cB) return cA - cB;
-                        return (parseFloat(b.level || 3.0) - parseFloat(a.level || 3.0));
+                        const cA = a.forced_court || null;
+                        const cB = b.forced_court || null;
+                        if (cA && cB && cA !== cB) return cA - cB;
+                        if (cA && !cB) return -1;
+                        if (!cA && cB) return 1;
+                        const lvlA = parseFloat(a.level || a.self_rate_level || 3.0);
+                        const lvlB = parseFloat(b.level || b.self_rate_level || 3.0);
+                        return lvlB - lvlA;
                     });
 
                     for (let c = 1; c <= effectiveCourts; c++) {
                         const startIdx = (c - 1) * 4;
-                        playersByCourt[c] = sorted.slice(startIdx, startIdx + 4);
+                        const courtGroup = sorted.slice(startIdx, startIdx + 4);
+                        courtGroup.sort((a, b) => parseFloat(b.level || 3.0) - parseFloat(a.level || 3.0));
+                        playersByCourt[c] = courtGroup;
                     }
                 }
             } else {

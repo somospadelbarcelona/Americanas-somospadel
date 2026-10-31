@@ -347,6 +347,18 @@ const RotatingPozoLogic = {
 
         const matches = [];
 
+        // ⚖️ En Ronda 1: ordenar jugadores por nivel para graduar las pistas equitativamente
+        if (parseInt(roundNumber) === 1) {
+            const sortedByLevel = [...players].sort((a, b) => {
+                const lvlA = parseFloat(a.level || a.self_rate_level || 3.0);
+                const lvlB = parseFloat(b.level || b.self_rate_level || 3.0);
+                return lvlB - lvlA;
+            });
+            sortedByLevel.forEach((p, idx) => {
+                p.current_court = Math.floor(idx / 4) + 1;
+            });
+        }
+
         // Agrupar jugadores por su pista actual
         const courts = {};
         for (let i = 1; i <= maxCourts; i++) courts[i] = [];
