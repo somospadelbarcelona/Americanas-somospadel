@@ -459,17 +459,21 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5004...");
                                     await collection.update(eventId, { fixed_pairs: pairs });
                                 }
 
-                                // ⚖️ Ordenar parejas por nivel promedio en Ronda 1
+                                // ⚖️ Ordenar parejas en Ronda 1 respetando pistas asignadas explícitamente (ej. cuadro oficial Playtomic)
                                 const getPairAvgLvl = (pair) => {
                                     const l1 = parseFloat(pair.player1_level || pair.level || 3.5);
                                     const l2 = parseFloat(pair.player2_level || pair.level || 3.5);
                                     return (l1 + l2) / 2;
                                 };
-                                pairs.sort((a, b) => getPairAvgLvl(b) - getPairAvgLvl(a));
+                                const hasPreassignedCourts = pairs.length > 0 && pairs.every(p => p.initial_court || p.current_court);
+                                if (!hasPreassignedCourts) {
+                                    pairs.sort((a, b) => getPairAvgLvl(b) - getPairAvgLvl(a));
+                                }
 
                                 pairs = pairs.map((p, i) => ({
                                     ...p,
-                                    current_court: p.initial_court || (Math.floor(i / 2) + 1),
+                                    current_court: p.initial_court || p.current_court || (Math.floor(i / 2) + 1),
+                                    initial_court: p.initial_court || p.current_court || (Math.floor(i / 2) + 1),
                                     wins: 0,
                                     losses: 0,
                                     games_won: 0,

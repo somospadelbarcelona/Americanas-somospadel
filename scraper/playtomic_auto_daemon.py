@@ -216,7 +216,58 @@ def fetch_playtomic_real_players(tournament_id, sede="Club Oficial", organizer="
 
     fixed_pairs_list = []
     if is_pairs_tournament:
-        # Agrupar compensativamente los jugadores libres por nivel (alto con bajo)
+        if tournament_id == '46011a01-68b4-433f-b2e3-581ca5fabfdb':
+            # Cuadro inicial exacto y validado desde Playtomic Manager (Foto 2)
+            player_by_id = {p['id']: p for p in all_players}
+            exact_mapping = [
+                {'c': 1, 'p1': 'pt_2086399', 'p2': 'pt_5080468', 'id': 'pair_pt_0b1bb356', 'ofic': True},
+                {'c': 1, 'p1': 'pt_1410091', 'p2': 'pt_1919151', 'id': 'pair_pt_3f905fef', 'ofic': True},
+                {'c': 2, 'p1': 'pt_56391', 'p2': 'pt_35769', 'id': 'pair_pt_0c7b6162', 'ofic': True},
+                {'c': 2, 'p1': 'pt_3027764', 'p2': 'pt_15936303', 'id': 'pair_pt_bal_302776_159363', 'ofic': False},
+                {'c': 3, 'p1': 'pt_4323394', 'p2': 'pt_3066330', 'id': 'pair_pt_bal_432339_306633', 'ofic': False},
+                {'c': 3, 'p1': 'pt_119105', 'p2': 'pt_1587815', 'id': 'pair_pt_bal_119105_158781', 'ofic': False},
+                {'c': 4, 'p1': 'pt_3386971', 'p2': 'pt_112538', 'id': 'pair_pt_d13735f4', 'ofic': True},
+                {'c': 4, 'p1': 'pt_17756166', 'p2': 'pt_3344486', 'id': 'pair_pt_bal_177561_334448', 'ofic': False},
+                {'c': 5, 'p1': 'pt_778440', 'p2': 'pt_748421', 'id': 'pair_pt_c6ad96ad', 'ofic': True},
+                {'c': 5, 'p1': 'pt_5277942', 'p2': 'pt_9362589', 'id': 'pair_pt_62bbbb7d', 'ofic': True}
+            ]
+            for m in exact_mapping:
+                p1 = player_by_id.get(m['p1'])
+                p2 = player_by_id.get(m['p2'])
+                if p1 and p2:
+                    p1['court'] = str(m['c'])
+                    p1['pair_id'] = m['id']
+                    p1['partner_id'] = p2['id']
+                    p1['partner_name'] = p2['name']
+                    p2['court'] = str(m['c'])
+                    p2['pair_id'] = m['id']
+                    p2['partner_id'] = p1['id']
+                    p2['partner_name'] = p1['name']
+                    avg_val = round((p1['level'] + p2['level']) / 2.0, 2)
+                    fixed_pairs_list.append({
+                        'id': m['id'],
+                        'pair_name': f"{p1['name']} / {p2['name']}",
+                        'player1_id': p1['id'],
+                        'player1_name': p1['name'],
+                        'player1_photo': p1.get('photoURL') or '',
+                        'player1_level': p1['level'],
+                        'player2_id': p2['id'],
+                        'player2_name': p2['name'],
+                        'player2_photo': p2.get('photoURL') or '',
+                        'player2_level': p2['level'],
+                        'avg_level': avg_val,
+                        'current_court': m['c'],
+                        'initial_court': m['c'],
+                        'court': m['c'],
+                        'wins': 0,
+                        'losses': 0,
+                        'games_won': 0,
+                        'games_lost': 0,
+                        'points': 0,
+                        'is_official_playtomic': m['ofic']
+                    })
+        else:
+            # Agrupar compensativamente los jugadores libres por nivel (alto con bajo)
         unpaired_players.sort(key=lambda p: p["level"], reverse=True)
         n_unpaired = len(unpaired_players)
         balanced_pairs = []
@@ -256,22 +307,22 @@ def fetch_playtomic_real_players(tournament_id, sede="Club Oficial", organizer="
                 "_p2": p_low
             })
             
-        all_combined_pairs = official_pairs + balanced_pairs
-        # Ordenar todas las parejas por nivel medio descendente para cruce equitativo
-        all_combined_pairs.sort(key=lambda fp: fp["avg_level"], reverse=True)
-        
-        for idx, fp in enumerate(all_combined_pairs):
-            court_num = (idx // 2) + 1
-            fp["current_court"] = court_num
-            fp["initial_court"] = court_num
-            fp["court"] = court_num
-            if "_p1" in fp:
-                fp["_p1"]["court"] = court_num
-            if "_p2" in fp:
-                fp["_p2"]["court"] = court_num
+            all_combined_pairs = official_pairs + balanced_pairs
+            # Ordenar todas las parejas por nivel medio descendente para cruce equitativo
+            all_combined_pairs.sort(key=lambda fp: fp["avg_level"], reverse=True)
             
-            fp_clean = {k: v for k, v in fp.items() if not k.startswith("_")}
-            fixed_pairs_list.append(fp_clean)
+            for idx, fp in enumerate(all_combined_pairs):
+                court_num = (idx // 2) + 1
+                fp["current_court"] = court_num
+                fp["initial_court"] = court_num
+                fp["court"] = court_num
+                if "_p1" in fp:
+                    fp["_p1"]["court"] = court_num
+                if "_p2" in fp:
+                    fp["_p2"]["court"] = court_num
+                
+                fp_clean = {k: v for k, v in fp.items() if not k.startswith("_")}
+                fixed_pairs_list.append(fp_clean)
             
     return all_players, fixed_pairs_list, is_pairs_tournament
 

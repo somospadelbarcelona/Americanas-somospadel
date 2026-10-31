@@ -378,8 +378,9 @@
         generatePozoRound(pairs, roundNumber, maxCourts) {
             console.log(`🔒 Generando Ronda ${roundNumber} Pozo Parejas Fijas (${pairs.length} parejas, ${maxCourts} pistas)...`);
 
-            // ⚖️ En Ronda 1: ordenar parejas por nivel medio para que la Pista 1 tenga el nivel más alto, etc.
-            if (parseInt(roundNumber) === 1) {
+            // ⚖️ En Ronda 1: si ya tienen pistas asignadas explícitamente (ej. cuadro oficial Playtomic), respetarlas
+            const hasAssignedCourts = pairs.length > 0 && pairs.every(p => p.current_court && parseInt(p.current_court) >= 1);
+            if (parseInt(roundNumber) === 1 && !hasAssignedCourts) {
                 const getPairAvg = (pair) => {
                     const l1 = parseFloat(pair.player1_level || pair.level || 3.5);
                     const l2 = parseFloat(pair.player2_level || pair.level || 3.5);

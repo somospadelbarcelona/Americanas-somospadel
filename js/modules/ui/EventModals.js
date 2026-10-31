@@ -979,7 +979,7 @@
                                 border-top: 1.5px solid #e2e8f0; background: #f8fafc;
                             ">
                                 <div style="display: flex; align-items: center; gap: 5px;">
-                                    <img src="img/logo_somospadel.png" style="width: 15px; height: 15px; border-radius: 50%; object-fit: cover;" onerror="this.style.display='none'">
+                                    <span style="width: 16px; height: 16px; border-radius: 50%; background: #CCFF00; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 950; color: #000; border: 1px solid #16a34a;">🎾</span>
                                     <span style="font-size: 0.58rem; color: #0f172a; font-weight: 950; letter-spacing: 0.6px;">SOMOSPADEL BCN</span>
                                 </div>
                                 <span style="font-size: 0.54rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;">
@@ -1113,10 +1113,222 @@
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = fileName;
+                a.target = '_blank';
+                a.rel = 'noopener';
                 document.body.appendChild(a);
                 a.click();
-                a.remove();
-                setTimeout(() => URL.revokeObjectURL(url), 5000);
+                setTimeout(() => {
+                    a.remove();
+                    URL.revokeObjectURL(url);
+                }, 10000);
+            };
+
+            // MOTOR NATIVO CANVAS 2D (INFALIBLE, 100% OFFLINE, ZERO NETWORK DEPENDENCIES)
+            const drawNativeFlyerCanvas = () => {
+                const W = 1080;
+                const H = 1920;
+                const c = document.createElement('canvas');
+                c.width = W;
+                c.height = H;
+                const ctx = c.getContext('2d');
+
+                const roundRect = (x, y, w, h, r, fill, stroke) => {
+                    ctx.beginPath();
+                    ctx.moveTo(x + r, y);
+                    ctx.lineTo(x + w - r, y);
+                    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+                    ctx.lineTo(x + w, y + h - r);
+                    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+                    ctx.lineTo(x + r, y + h);
+                    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+                    ctx.lineTo(x, y + r);
+                    ctx.quadraticCurveTo(x, y, x + r, y);
+                    ctx.closePath();
+                    if (fill) ctx.fill();
+                    if (stroke) ctx.stroke();
+                };
+
+                // 1. Fondo elegante deportivo perla/blanco
+                const bg = ctx.createLinearGradient(0, 0, W, H);
+                bg.addColorStop(0, '#ffffff');
+                bg.addColorStop(0.5, '#f8fafc');
+                bg.addColorStop(1, '#f1f5f9');
+                ctx.fillStyle = bg;
+                ctx.fillRect(0, 0, W, H);
+
+                // Marco perimetral SomosPadel verde
+                ctx.strokeStyle = '#22c55e';
+                ctx.lineWidth = 10;
+                roundRect(40, 40, W - 80, H - 80, 36, false, true);
+
+                // Glow radial suave
+                const g1 = ctx.createRadialGradient(250, 200, 20, 250, 200, 500);
+                g1.addColorStop(0, 'rgba(34, 197, 94, 0.08)');
+                g1.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                ctx.fillStyle = g1;
+                ctx.fillRect(0, 0, W, 800);
+
+                // 2. Cabecera SomosPadel BCN
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                // Pill top oficial
+                ctx.fillStyle = '#f0fdf4';
+                roundRect(310, 80, 460, 56, 28, true, false);
+                ctx.strokeStyle = '#86efac';
+                ctx.lineWidth = 2;
+                roundRect(310, 80, 460, 56, 28, false, true);
+
+                ctx.fillStyle = '#15803d';
+                ctx.font = '900 24px "Outfit", sans-serif';
+                ctx.fillText('⚡ SOMOSPÁDEL BCN • RESULTADO OFICIAL', W / 2, 108);
+
+                // Trofeo central
+                ctx.font = '96px sans-serif';
+                ctx.fillText('🏆', W / 2, 230);
+
+                // Titular del Evento
+                ctx.fillStyle = '#0f172a';
+                ctx.font = '900 54px "Outfit", sans-serif';
+                ctx.fillText((modalTitle || 'FIN DEL TORNEO').toUpperCase(), W / 2, 330);
+
+                // Subtítulo
+                ctx.fillStyle = '#64748b';
+                ctx.font = '800 28px sans-serif';
+                ctx.fillText((modalSubtitle || 'TORNEO COMPLETADO').toUpperCase(), W / 2, 390);
+
+                let currentY = 460;
+
+                // 3. SECCIÓN GRAN FINAL PISTA 1 (si existe)
+                if (hasValidP1Matches) {
+                    ctx.textAlign = 'left';
+                    ctx.fillStyle = '#0f172a';
+                    ctx.font = '900 26px "Outfit", sans-serif';
+                    ctx.fillText('👑 GRAN FINAL • PISTA 1', 90, currentY);
+
+                    currentY += 30;
+
+                    // Tarjeta Pareja Ganadora
+                    ctx.fillStyle = '#f7fee7';
+                    roundRect(80, currentY, W - 160, 140, 24, true, false);
+                    ctx.strokeStyle = '#84cc16';
+                    ctx.lineWidth = 3;
+                    roundRect(80, currentY, W - 160, 140, 24, false, true);
+
+                    // Badge Campeones
+                    ctx.fillStyle = '#84cc16';
+                    roundRect(105, currentY + 16, 260, 34, 8, true, false);
+                    ctx.fillStyle = '#365314';
+                    ctx.font = '900 18px sans-serif';
+                    ctx.fillText('👑 PAREJA GANADORA', 120, currentY + 38);
+
+                    // Marcador Win
+                    ctx.fillStyle = '#ecfccb';
+                    roundRect(W - 220, currentY + 16, 95, 42, 10, true, false);
+                    ctx.strokeStyle = '#84cc16';
+                    ctx.lineWidth = 2;
+                    roundRect(W - 220, currentY + 16, 95, 42, 10, false, true);
+                    ctx.fillStyle = '#365314';
+                    ctx.font = '900 26px "Outfit", sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(court1ScoreWin || 'VIC', W - 172, currentY + 41);
+
+                    // Nombres Ganadores
+                    ctx.textAlign = 'left';
+                    ctx.fillStyle = '#0f172a';
+                    ctx.font = '900 30px "Outfit", sans-serif';
+                    const winNames = court1WinnerNames ? court1WinnerNames.replace(/\s*\/\s*/g, ' & ') : 'Ganadores';
+                    ctx.fillText(winNames, 110, currentY + 95);
+
+                    currentY += 160;
+
+                    // Tarjeta Pareja Finalista
+                    ctx.fillStyle = '#f8fafc';
+                    roundRect(80, currentY, W - 160, 120, 20, true, false);
+                    ctx.strokeStyle = '#cbd5e1';
+                    ctx.lineWidth = 2;
+                    roundRect(80, currentY, W - 160, 120, 20, false, true);
+
+                    ctx.fillStyle = '#64748b';
+                    ctx.font = '900 18px sans-serif';
+                    ctx.fillText('🥈 FINALISTAS PISTA 1', 110, currentY + 36);
+
+                    // Marcador Loss
+                    ctx.fillStyle = '#f1f5f9';
+                    roundRect(W - 220, currentY + 16, 95, 42, 10, true, false);
+                    ctx.strokeStyle = '#cbd5e1';
+                    ctx.lineWidth = 1.5;
+                    roundRect(W - 220, currentY + 16, 95, 42, 10, false, true);
+                    ctx.fillStyle = '#475569';
+                    ctx.font = '900 26px "Outfit", sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(court1ScoreLoss || 'FIN', W - 172, currentY + 41);
+
+                    // Nombres Finalistas
+                    ctx.textAlign = 'left';
+                    ctx.fillStyle = '#334155';
+                    ctx.font = '900 28px "Outfit", sans-serif';
+                    const finNames = court1FinalistNames ? court1FinalistNames.replace(/\s*\/\s*/g, ' & ') : 'Finalistas';
+                    ctx.fillText(finNames, 110, currentY + 86);
+
+                    currentY += 150;
+                }
+
+                // 4. SECCIÓN PODIO DE HONOR
+                ctx.textAlign = 'left';
+                ctx.fillStyle = '#0f172a';
+                ctx.font = '900 26px "Outfit", sans-serif';
+                ctx.fillText('🏆 PODIO DE HONOR (TOP 3)', 90, currentY);
+
+                currentY += 35;
+
+                const medals = ['🥇', '🥈', '🥉'];
+                const podColors = [
+                    { bg: '#fffbeb', border: '#facc15', text: '#854d0e', badge: '1º PUESTO' },
+                    { bg: '#f8fafc', border: '#cbd5e1', text: '#334155', badge: '2º PUESTO' },
+                    { bg: '#fff7ed', border: '#fdba74', text: '#9a3412', badge: '3º PUESTO' }
+                ];
+
+                podiumList.slice(0, 3).forEach((p, idx) => {
+                    const col = podColors[idx] || podColors[1];
+                    ctx.fillStyle = col.bg;
+                    roundRect(80, currentY, W - 160, 115, 20, true, false);
+                    ctx.strokeStyle = col.border;
+                    ctx.lineWidth = 2.5;
+                    roundRect(80, currentY, W - 160, 115, 20, false, true);
+
+                    // Medalla
+                    ctx.font = '48px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(medals[idx] || '🏅', 135, currentY + 60);
+
+                    // Nombre y badge
+                    ctx.textAlign = 'left';
+                    ctx.fillStyle = col.text;
+                    ctx.font = '900 18px sans-serif';
+                    ctx.fillText(col.badge, 185, currentY + 38);
+
+                    ctx.fillStyle = '#0f172a';
+                    ctx.font = '900 28px "Outfit", sans-serif';
+                    ctx.fillText(p.name || 'Jugador', 185, currentY + 76);
+
+                    // Puntos / Victorias
+                    ctx.textAlign = 'right';
+                    ctx.fillStyle = col.text;
+                    ctx.font = '900 36px "Outfit", sans-serif';
+                    const scoreTxt = `${p.wins !== undefined ? p.wins : p.points} ${p.wins !== undefined ? 'VIC' : 'PTS'}`;
+                    ctx.fillText(scoreTxt, W - 120, currentY + 65);
+
+                    currentY += 135;
+                });
+
+                // 5. Watermark Footer Oficial
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#64748b';
+                ctx.font = '700 24px sans-serif';
+                ctx.fillText('SOMOSPÁDEL BCN • PÁDEL SOCIAL & COMPETITIVO', W / 2, H - 90);
+
+                return c;
             };
 
             const generateFlyerImage = async () => {
@@ -1128,40 +1340,69 @@
                 }
 
                 _generatingPromise = (async () => {
-                    await ensureHtml2Canvas();
+                    let canvas = null;
 
-                    const captureEl = document.getElementById('sp-flyer-capture-card');
-                    if (!captureEl) throw new Error('Flyer card element not found');
+                    // Intento 1: Renderizado HTML2Canvas con opciones seguras (allowTaint: false)
+                    try {
+                        await ensureHtml2Canvas();
+                        const captureEl = document.getElementById('sp-flyer-capture-card');
+                        if (!captureEl) throw new Error('Flyer card element not found');
 
-                    // Ultra-HD Retina scale (2.5x a 3x para calidad cristalina sin pixelación)
-                    const scale = Math.min(Math.max(window.devicePixelRatio || 2, 2.5), 3);
-
-                    const canvas = await window.html2canvas(captureEl, {
-                        scale,
-                        useCORS: true,
-                        allowTaint: true,
-                        backgroundColor: '#ffffff',
-                        logging: false,
-                        imageTimeout: 8000,
-                        scrollX: 0,
-                        scrollY: 0,
-                        onclone: (clonedDoc) => {
-                            const card = clonedDoc.getElementById('sp-flyer-capture-card');
-                            if (card) {
-                                card.style.transform = 'none';
-                                card.style.margin = '0';
-                                card.style.boxShadow = 'none';
-                                card.style.width = '100%';
-                                card.style.maxWidth = '440px';
+                        const scale = Math.min(Math.max(window.devicePixelRatio || 2, 2.5), 3);
+                        canvas = await window.html2canvas(captureEl, {
+                            scale,
+                            useCORS: true,
+                            allowTaint: false, // ¡CRUCIAL! true corrompe el canvas para toBlob
+                            backgroundColor: '#ffffff',
+                            logging: false,
+                            imageTimeout: 4000,
+                            scrollX: 0,
+                            scrollY: 0,
+                            onclone: (clonedDoc) => {
+                                const card = clonedDoc.getElementById('sp-flyer-capture-card');
+                                if (card) {
+                                    card.style.transform = 'none';
+                                    card.style.margin = '0';
+                                    card.style.boxShadow = 'none';
+                                    card.style.width = '100%';
+                                    card.style.maxWidth = '440px';
+                                }
+                                clonedDoc.querySelectorAll('img').forEach(img => {
+                                    if (!img.src.startsWith('data:')) img.remove();
+                                });
                             }
-                        }
-                    });
+                        });
+                    } catch (renderErr) {
+                        console.warn("HTML2Canvas no disponible o fallido. Usando motor nativo Canvas 2D:", renderErr);
+                        canvas = drawNativeFlyerCanvas();
+                    }
+
+                    // Si html2canvas no devolvió canvas válido, usar Canvas 2D nativo
+                    if (!canvas) {
+                        canvas = drawNativeFlyerCanvas();
+                    }
 
                     const blob = await new Promise((resolve, reject) => {
-                        canvas.toBlob((b) => {
-                            if (b) resolve(b);
-                            else reject(new Error('No se pudo generar el blob de la imagen'));
-                        }, 'image/png');
+                        try {
+                            canvas.toBlob((b) => {
+                                if (b) resolve(b);
+                                else {
+                                    // Fallback inmediato: intentar crear blob desde canvas nativo
+                                    const fallbackCanvas = drawNativeFlyerCanvas();
+                                    fallbackCanvas.toBlob((fb) => {
+                                        if (fb) resolve(fb);
+                                        else reject(new Error('No se pudo generar el blob de la imagen'));
+                                    }, 'image/png');
+                                }
+                            }, 'image/png');
+                        } catch (toBlobErr) {
+                            console.warn("toBlob falló en canvas principal, usando fallback nativo:", toBlobErr);
+                            const fallbackCanvas = drawNativeFlyerCanvas();
+                            fallbackCanvas.toBlob((fb) => {
+                                if (fb) resolve(fb);
+                                else reject(toBlobErr);
+                            }, 'image/png');
+                        }
                     });
 
                     const safeName = (americanaDoc?.name || (isEntreno ? 'Entreno' : 'Americana')).replace(/[^a-zA-Z0-9]/g, '_');
@@ -1210,7 +1451,7 @@
                     const shareText = generateOfficialText();
 
                     // Check mobile Web Share API for direct image share
-                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    if (navigator.canShare && file && navigator.canShare({ files: [file] })) {
                         try {
                             await navigator.share({
                                 files: [file],
@@ -1252,7 +1493,7 @@
 
                     const { blob, file, fileName } = await generateFlyerImage();
 
-                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    if (navigator.canShare && file && navigator.canShare({ files: [file] })) {
                         try {
                             await navigator.share({
                                 files: [file],
@@ -1301,9 +1542,23 @@
                 const origHtml = btn.innerHTML;
                 try {
                     btn.disabled = true;
-                    btn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> <span>LISTO...</span>`;
+                    btn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> <span>DESCARGANDO...</span>`;
 
-                    const { blob, fileName } = await generateFlyerImage();
+                    const { blob, file, fileName } = await generateFlyerImage();
+
+                    // Prioridad móvil: Web Share para guardar directo en el Carrete / Fotos
+                    if (navigator.canShare && file && navigator.canShare({ files: [file] })) {
+                        try {
+                            await navigator.share({
+                                files: [file],
+                                title: 'SomosPadel BCN'
+                            });
+                            return;
+                        } catch (sErr) {
+                            if (sErr.name === 'AbortError') return;
+                        }
+                    }
+
                     downloadBlobFile(blob, fileName);
 
                     if (window.NotificationService?.showToast) {
@@ -1311,7 +1566,22 @@
                     }
                 } catch (err) {
                     console.error("Error al descargar flyer:", err);
-                    alert("No se pudo descargar el flyer. Revisa tu conexión.");
+                    // Rescate extremo: Canvas 2D puro garantizado
+                    try {
+                        const fallbackCanvas = drawNativeFlyerCanvas();
+                        fallbackCanvas.toBlob((fbBlob) => {
+                            if (fbBlob) {
+                                downloadBlobFile(fbBlob, 'SomosPadel_Flyer_HD.png');
+                                if (window.NotificationService?.showToast) {
+                                    window.NotificationService.showToast('📸 Flyer HD guardado en tus descargas', 'success');
+                                }
+                            } else {
+                                alert("No se pudo descargar el flyer. Inténtalo de nuevo.");
+                            }
+                        }, 'image/png');
+                    } catch (finalErr) {
+                        alert("No se pudo descargar el flyer. Revisa los permisos de descarga de tu navegador.");
+                    }
                 } finally {
                     btn.disabled = false;
                     btn.innerHTML = origHtml;
