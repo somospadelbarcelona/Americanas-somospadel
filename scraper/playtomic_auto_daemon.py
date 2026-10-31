@@ -54,47 +54,59 @@ def get_playtomic_auth_token():
         return _TOKEN_CACHE["token"]
     return None
 
-def fetch_playtomic_real_players(tournament_id, sede="Club Oficial", organizer="Somospadel"):
-    """Descarga de forma 100% autónoma los nombres, fotos y niveles reales de los inscritos."""
+def fetch_playtomic_real_players(tournament_id, sede="Club Oficial", organizer="Somospadel", force_fixed=False):
+    """Descarga de forma 100% autónoma los nombres, fotos y niveles reales de los inscritos, respetando parejas oficiales y balanceando los libres."""
     token = get_playtomic_auth_token()
     if not token:
-        return []
+        return [], [], False
     res = fetch_tournament_participants(tournament_id, token)
     if not res.get("success"):
-        return []
+        return [], [], False
     
     teams = res["data"].get("teams", [])
     now_iso = datetime.now(timezone.utc).isoformat()
-    players_list = []
+    
+    has_teams_of_two = any(len(t.get("players", [])) == 2 for t in teams)
+    is_pairs_tournament = force_fixed or has_teams_of_two
+    
+    official_pairs = []
+    unpaired_players = []
+    all_players = []
     
     for t_idx, team in enumerate(teams, 1):
         team_players = team.get("players", [])
-        is_double = len(team_players) == 2
         team_id = team.get("team_id", f"t_{t_idx}")
-        pair_id = f"pair_{team_id[:8]}" if is_double else None
         
-        for p_idx, p in enumerate(team_players):
-            uid = p.get("user_id") or f"pt_{t_idx}_{p_idx+1}"
-            partner = team_players[1 - p_idx] if is_double else None
-            partner_name = partner.get("name") if partner else None
-            partner_id = f"pt_{partner.get('user_id')}" if partner else None
-            pos = "Drive" if p_idx % 2 == 0 else "Revés"
+        if len(team_players) == 2:
+            p1_raw = team_players[0]
+            p2_raw = team_players[1]
+            u1 = p1_raw.get("user_id") or f"{t_idx}_1"
+            u2 = p2_raw.get("user_id") or f"{t_idx}_2"
             
-            p_obj = {
-                "id": f"pt_{uid}",
-                "uid": f"pt_{uid}",
-                "user_id": str(uid),
-                "name": p.get("name") or f"Jugador #{len(players_list)+1}",
-                "display_name": p.get("name") or f"Jugador #{len(players_list)+1}",
-                "level": float(p.get("level_value") or 3.5),
-                "photoURL": p.get("picture"),
-                "photo_url": p.get("picture"),
-                "picture": p.get("picture"),
-                "gender": p.get("gender") or "?",
-                "position": pos,
+            p1_id = f"pt_{u1}"
+            p2_id = f"pt_{u2}"
+            pair_id = f"pair_pt_{str(team_id)[:8]}"
+            
+            p1_lvl = float(p1_raw.get("level_value") or 3.5)
+            p2_lvl = float(p2_raw.get("level_value") or 3.5)
+            p1_name = p1_raw.get("name") or f"Jugador #{len(all_players)+1}"
+            p2_name = p2_raw.get("name") or f"Jugador #{len(all_players)+2}"
+            
+            p1_obj = {
+                "id": p1_id,
+                "uid": p1_id,
+                "user_id": str(u1),
+                "name": p1_name,
+                "display_name": p1_name,
+                "level": p1_lvl,
+                "photoURL": p1_raw.get("picture"),
+                "photo_url": p1_raw.get("picture"),
+                "picture": p1_raw.get("picture"),
+                "gender": p1_raw.get("gender") or "?",
+                "position": "Drive",
                 "pair_id": pair_id,
-                "partner_name": partner_name,
-                "partner_id": partner_id,
+                "partner_name": p2_name,
+                "partner_id": p2_id,
                 "source": "playtomic",
                 "is_external": True,
                 "is_playtomic": True,
@@ -104,9 +116,148 @@ def fetch_playtomic_real_players(tournament_id, sede="Club Oficial", organizer="
                 "organizer": organizer,
                 "joinedAt": now_iso
             }
-            players_list.append(p_obj)
+            p2_obj = {
+                "id": p2_id,
+                "uid": p2_id,
+                "user_id": str(u2),
+                "name": p2_name,
+                "display_name": p2_name,
+                "level": p2_lvl,
+                "photoURL": p2_raw.get("picture"),
+                "photo_url": p2_raw.get("picture"),
+                "picture": p2_raw.get("picture"),
+                "gender": p2_raw.get("gender") or "?",
+                "position": "Revés",
+                "pair_id": pair_id,
+                "partner_name": p1_name,
+                "partner_id": p1_id,
+                "source": "playtomic",
+                "is_external": True,
+                "is_playtomic": True,
+                "playtomic_status": "confirmed",
+                "price_paid": 12.48,
+                "club": sede,
+                "organizer": organizer,
+                "joinedAt": now_iso
+            }
             
-    return players_list
+            all_players.extend([p1_obj, p2_obj])
+            avg_lvl = round((p1_lvl + p2_lvl) / 2.0, 2)
+            official_pairs.append({
+                "id": pair_id,
+                "pair_name": f"{p1_name} / {p2_name}",
+                "player1_id": p1_id,
+                "player1_name": p1_name,
+                "player1_photo": p1_raw.get("picture") or "",
+                "player1_level": p1_lvl,
+                "player2_id": p2_id,
+                "player2_name": p2_name,
+                "player2_photo": p2_raw.get("picture") or "",
+                "player2_level": p2_lvl,
+                "avg_level": avg_lvl,
+                "wins": 0,
+                "losses": 0,
+                "games_won": 0,
+                "games_lost": 0,
+                "points": 0,
+                "is_official_playtomic": True,
+                "_p1": p1_obj,
+                "_p2": p2_obj
+            })
+        elif len(team_players) == 1:
+            p_raw = team_players[0]
+            u = p_raw.get("user_id") or f"{t_idx}_1"
+            pid = f"pt_{u}"
+            lvl = float(p_raw.get("level_value") or 3.5)
+            pname = p_raw.get("name") or f"Jugador #{len(all_players)+1}"
+            
+            p_obj = {
+                "id": pid,
+                "uid": pid,
+                "user_id": str(u),
+                "name": pname,
+                "display_name": pname,
+                "level": lvl,
+                "photoURL": p_raw.get("picture"),
+                "photo_url": p_raw.get("picture"),
+                "picture": p_raw.get("picture"),
+                "gender": p_raw.get("gender") or "?",
+                "position": "Revés" if lvl > 3.6 else "Drive",
+                "pair_id": None,
+                "partner_name": None,
+                "partner_id": None,
+                "source": "playtomic",
+                "is_external": True,
+                "is_playtomic": True,
+                "playtomic_status": "confirmed",
+                "price_paid": 12.48,
+                "club": sede,
+                "organizer": organizer,
+                "joinedAt": now_iso
+            }
+            all_players.append(p_obj)
+            unpaired_players.append(p_obj)
+
+    fixed_pairs_list = []
+    if is_pairs_tournament:
+        # Agrupar compensativamente los jugadores libres por nivel (alto con bajo)
+        unpaired_players.sort(key=lambda p: p["level"], reverse=True)
+        n_unpaired = len(unpaired_players)
+        balanced_pairs = []
+        for i in range(n_unpaired // 2):
+            p_high = unpaired_players[i]
+            p_low = unpaired_players[n_unpaired - 1 - i]
+            b_pair_id = f"pair_pt_bal_{str(p_high.get('user_id', ''))[:6]}_{str(p_low.get('user_id', ''))[:6]}"
+            
+            p_high["pair_id"] = b_pair_id
+            p_high["partner_id"] = p_low["id"]
+            p_high["partner_name"] = p_low["name"]
+            
+            p_low["pair_id"] = b_pair_id
+            p_low["partner_id"] = p_high["id"]
+            p_low["partner_name"] = p_high["name"]
+            
+            avg_b = round((p_high["level"] + p_low["level"]) / 2.0, 2)
+            balanced_pairs.append({
+                "id": b_pair_id,
+                "pair_name": f"{p_high['name']} / {p_low['name']}",
+                "player1_id": p_high["id"],
+                "player1_name": p_high["name"],
+                "player1_photo": p_high.get("photoURL") or "",
+                "player1_level": p_high["level"],
+                "player2_id": p_low["id"],
+                "player2_name": p_low["name"],
+                "player2_photo": p_low.get("photoURL") or "",
+                "player2_level": p_low["level"],
+                "avg_level": avg_b,
+                "wins": 0,
+                "losses": 0,
+                "games_won": 0,
+                "games_lost": 0,
+                "points": 0,
+                "is_official_playtomic": False,
+                "_p1": p_high,
+                "_p2": p_low
+            })
+            
+        all_combined_pairs = official_pairs + balanced_pairs
+        # Ordenar todas las parejas por nivel medio descendente para cruce equitativo
+        all_combined_pairs.sort(key=lambda fp: fp["avg_level"], reverse=True)
+        
+        for idx, fp in enumerate(all_combined_pairs):
+            court_num = (idx // 2) + 1
+            fp["current_court"] = court_num
+            fp["initial_court"] = court_num
+            fp["court"] = court_num
+            if "_p1" in fp:
+                fp["_p1"]["court"] = court_num
+            if "_p2" in fp:
+                fp["_p2"]["court"] = court_num
+            
+            fp_clean = {k: v for k, v in fp.items() if not k.startswith("_")}
+            fixed_pairs_list.append(fp_clean)
+            
+    return all_players, fixed_pairs_list, is_pairs_tournament
 
 WORKSPACE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRAPER_DIR = os.path.join(WORKSPACE_DIR, "scraper")
@@ -312,15 +463,18 @@ def parse_playtomic_tournament(tournament_id):
     visible_snippet = (m_article.group(1) if m_article else "") + " " + name
     visible_lower = visible_snippet.lower()
 
-    is_fixed = False
-    if any(k in visible_lower for k in fixed_keywords):
-        is_fixed = True
+    is_fixed_candidate = False
+    if tournament_id == "46011a01-68b4-433f-b2e3-581ca5fabfdb" or "halloween" in name_lower:
+        is_fixed_candidate = True
+    elif any(k in visible_lower for k in fixed_keywords):
+        is_fixed_candidate = True
     elif any(k in visible_lower for k in twister_keywords):
-        is_fixed = False
+        is_fixed_candidate = False
     else:
         # Por defecto para Somos Pádel BCN y New Play Padel: Twister individual con rotación
-        is_fixed = False
+        is_fixed_candidate = False
 
+    is_fixed = is_fixed_candidate
     pair_mode = "fixed" if is_fixed else "twister"
     format_type = "fixed" if is_fixed else "twister"
     mode_label = "Pareja Fija" if is_fixed else "Twister individual (rotación por ronda)"
@@ -407,13 +561,21 @@ def parse_playtomic_tournament(tournament_id):
 
     # 8. Extraer JUGADORES REALES de Playtomic de forma 100% autónoma
     now_iso = datetime.now(timezone.utc).isoformat()
-    real_players = fetch_playtomic_real_players(tournament_id, sede, organizer)
+    real_players, fixed_pairs, detected_fixed = fetch_playtomic_real_players(
+        tournament_id, sede, organizer, force_fixed=is_fixed_candidate
+    )
+    
+    if detected_fixed or is_fixed_candidate:
+        is_fixed = True
+        pair_mode = "fixed"
+        format_type = "fixed"
+        mode_label = "Pareja Fija"
     
     if real_players:
         players_list = real_players
         occupied_spots = len(real_players)
         spots_left = max(0, total_spots - occupied_spots)
-        log(f"   🌟 [PLAYTOMIC AUTÓNOMO] {len(real_players)} jugadores REALES extraídos con éxito (con nombres, fotos y niveles)")
+        log(f"   🌟 [PLAYTOMIC AUTÓNOMO] {len(real_players)} jugadores REALES extraídos con éxito ({len(fixed_pairs)} parejas configuradas)")
     else:
         # Fallback resiliente si la API no estuviera disponible
         players_list = []
@@ -470,6 +632,8 @@ def parse_playtomic_tournament(tournament_id):
         "is_private": False,
         "organizer": organizer,
         "description": f"🎾 {name}\n📍 {sede}\n👤 Organizador: {organizer}\n📲 Inscripción oficial directa por Playtomic\n{desc_mode}\n⏱️ {time_str} - {time_end_str} h ({courts_count} Pistas)\n⚡ {occupied_spots} de {total_spots} plazas ocupadas ({urgency_tag})\n💶 Precio oficial: {price_val} €",
+        "fixed_pairs": fixed_pairs if is_fixed else [],
+        "fixedPairs": fixed_pairs if is_fixed else [],
         "players": players_list,
         "registeredPlayers": players_list,
         "updatedAt": now_iso
@@ -494,27 +658,52 @@ def sync_to_firestore(t_data):
 
     players_raw = []
     for p in t_data.get("players", []):
-        players_raw.append({
-            "mapValue": {
-                "fields": {
-                    "id": {"stringValue": p["id"]},
-                    "name": {"stringValue": p["name"]},
-                    "display_name": {"stringValue": p.get("display_name", p["name"])},
-                    "level": {"doubleValue": float(p.get("level", 3.5))},
-                    "position": {"stringValue": p.get("position", "Drive")},
-                    "photoURL": {"stringValue": str(p.get("photoURL") or "")},
-                    "photo_url": {"stringValue": str(p.get("photo_url") or "")},
-                    "pair_id": {"stringValue": str(p.get("pair_id") or "")},
-                    "partner_name": {"stringValue": str(p.get("partner_name") or "")},
-                    "source": {"stringValue": "playtomic"},
-                    "is_playtomic": {"booleanValue": True},
-                    "playtomic_status": {"stringValue": "confirmed"},
-                    "price_paid": {"doubleValue": float(p.get("price_paid", 12.48))},
-                    "club": {"stringValue": p.get("club", t_data["location"])},
-                    "organizer": {"stringValue": p.get("organizer", t_data["organizer"])}
-                }
-            }
-        })
+        p_fields = {
+            "id": {"stringValue": p["id"]},
+            "name": {"stringValue": p["name"]},
+            "display_name": {"stringValue": p.get("display_name", p["name"])},
+            "level": {"doubleValue": float(p.get("level", 3.5))},
+            "position": {"stringValue": p.get("position", "Drive")},
+            "photoURL": {"stringValue": str(p.get("photoURL") or "")},
+            "photo_url": {"stringValue": str(p.get("photo_url") or "")},
+            "pair_id": {"stringValue": str(p.get("pair_id") or "")},
+            "partner_name": {"stringValue": str(p.get("partner_name") or "")},
+            "partner_id": {"stringValue": str(p.get("partner_id") or "")},
+            "court": {"integerValue": str(p.get("court", 1))},
+            "source": {"stringValue": "playtomic"},
+            "is_playtomic": {"booleanValue": True},
+            "playtomic_status": {"stringValue": "confirmed"},
+            "price_paid": {"doubleValue": float(p.get("price_paid", 12.48))},
+            "club": {"stringValue": p.get("club", t_data["location"])},
+            "organizer": {"stringValue": p.get("organizer", t_data["organizer"])}
+        }
+        players_raw.append({"mapValue": {"fields": p_fields}})
+
+    fixed_pairs_raw = []
+    for fp in t_data.get("fixed_pairs", []):
+        fp_fields = {
+            "id": {"stringValue": str(fp.get("id", ""))},
+            "pair_name": {"stringValue": str(fp.get("pair_name", ""))},
+            "player1_id": {"stringValue": str(fp.get("player1_id", ""))},
+            "player1_name": {"stringValue": str(fp.get("player1_name", ""))},
+            "player1_photo": {"stringValue": str(fp.get("player1_photo", ""))},
+            "player1_level": {"doubleValue": float(fp.get("player1_level", 0.0))},
+            "player2_id": {"stringValue": str(fp.get("player2_id", ""))},
+            "player2_name": {"stringValue": str(fp.get("player2_name", ""))},
+            "player2_photo": {"stringValue": str(fp.get("player2_photo", ""))},
+            "player2_level": {"doubleValue": float(fp.get("player2_level", 0.0))},
+            "avg_level": {"doubleValue": float(fp.get("avg_level", 0.0))},
+            "current_court": {"integerValue": str(fp.get("current_court", 1))},
+            "initial_court": {"integerValue": str(fp.get("initial_court", 1))},
+            "court": {"integerValue": str(fp.get("current_court", 1))},
+            "wins": {"integerValue": str(fp.get("wins", 0))},
+            "losses": {"integerValue": str(fp.get("losses", 0))},
+            "games_won": {"integerValue": str(fp.get("games_won", 0))},
+            "games_lost": {"integerValue": str(fp.get("games_lost", 0))},
+            "points": {"integerValue": str(fp.get("points", 0))},
+            "is_official_playtomic": {"booleanValue": bool(fp.get("is_official_playtomic", True))}
+        }
+        fixed_pairs_raw.append({"mapValue": {"fields": fp_fields}})
 
     fields = {
         "name": {"stringValue": t_data["name"]},
@@ -526,6 +715,9 @@ def sync_to_firestore(t_data):
         "duration": {"stringValue": t_data["duration"]},
         "pair_mode": {"stringValue": t_data["pair_mode"]},
         "format": {"stringValue": t_data["format"]},
+        "category": {"stringValue": str(t_data.get("category", "open"))},
+        "fixed_pairs": {"arrayValue": {"values": fixed_pairs_raw}},
+        "fixedPairs": {"arrayValue": {"values": fixed_pairs_raw}},
         "price": {"stringValue": str(t_data["price"])},
         "price_members": {"stringValue": str(t_data["price_member"])},
         "price_external": {"stringValue": str(t_data["price_external"])},
@@ -551,7 +743,7 @@ def sync_to_firestore(t_data):
 
     req_data = json.dumps({"fields": fields}).encode('utf-8')
     req = urllib.request.Request(
-        f"{url}?key={FIREBASE_API_KEY}&updateMask.fieldPaths=name&updateMask.fieldPaths=location&updateMask.fieldPaths=sede&updateMask.fieldPaths=date&updateMask.fieldPaths=time&updateMask.fieldPaths=time_end&updateMask.fieldPaths=duration&updateMask.fieldPaths=pair_mode&updateMask.fieldPaths=format&updateMask.fieldPaths=price&updateMask.fieldPaths=price_members&updateMask.fieldPaths=price_external&updateMask.fieldPaths=max_players&updateMask.fieldPaths=occupied_players&updateMask.fieldPaths=spots_left&updateMask.fieldPaths=max_courts&updateMask.fieldPaths=courts&updateMask.fieldPaths=image_url&updateMask.fieldPaths=playtomic_id&updateMask.fieldPaths=playtomicUrl&updateMask.fieldPaths=playtomic_url&updateMask.fieldPaths=status&updateMask.fieldPaths=is_external&updateMask.fieldPaths=organizer&updateMask.fieldPaths=description&updateMask.fieldPaths=players&updateMask.fieldPaths=registeredPlayers&updateMask.fieldPaths=has_freed_spot&updateMask.fieldPaths=freed_spots_count&updateMask.fieldPaths=last_freed_spot_at",
+        f"{url}?key={FIREBASE_API_KEY}&updateMask.fieldPaths=name&updateMask.fieldPaths=location&updateMask.fieldPaths=sede&updateMask.fieldPaths=date&updateMask.fieldPaths=time&updateMask.fieldPaths=time_end&updateMask.fieldPaths=duration&updateMask.fieldPaths=pair_mode&updateMask.fieldPaths=format&updateMask.fieldPaths=price&updateMask.fieldPaths=price_members&updateMask.fieldPaths=price_external&updateMask.fieldPaths=max_players&updateMask.fieldPaths=occupied_players&updateMask.fieldPaths=spots_left&updateMask.fieldPaths=max_courts&updateMask.fieldPaths=courts&updateMask.fieldPaths=image_url&updateMask.fieldPaths=playtomic_id&updateMask.fieldPaths=playtomicUrl&updateMask.fieldPaths=playtomic_url&updateMask.fieldPaths=status&updateMask.fieldPaths=is_external&updateMask.fieldPaths=organizer&updateMask.fieldPaths=description&updateMask.fieldPaths=players&updateMask.fieldPaths=registeredPlayers&updateMask.fieldPaths=has_freed_spot&updateMask.fieldPaths=freed_spots_count&updateMask.fieldPaths=last_freed_spot_at&updateMask.fieldPaths=category&updateMask.fieldPaths=fixed_pairs&updateMask.fieldPaths=fixedPairs",
         data=req_data,
         headers={"Content-Type": "application/json"},
         method="PATCH"
