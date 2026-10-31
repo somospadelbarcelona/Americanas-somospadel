@@ -62,9 +62,12 @@
             document.body.appendChild(modal);
         }
 
+        const currentEvent = window.currentActiveEvent || window._currentEvent || null;
+        const playerObj = (currentEvent?.players || []).find(p => (p.id === playerId || p.uid === playerId || String(p.id).includes(String(playerId))));
+        const pName = playerObj?.name || playerObj?.display_name || 'Inscrito Playtomic';
+        const pPhoto = playerObj?.photoURL || playerObj?.photo_url || playerObj?.picture || '';
         const isP2 = String(playerId).endsWith('2') || String(playerId).includes('_2');
-        const pos = isP2 ? '⚡ Revés' : '🛡️ Drive';
-        const num = isP2 ? '2' : '1';
+        const pos = playerObj?.position || (isP2 ? '⚡ Revés' : '🛡️ Drive');
 
         modal.innerHTML = `
             <div style="background:#ffffff; border-radius:24px; max-width:420px; width:100%; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.35); border:1px solid #e2e8f0; font-family:'Outfit', sans-serif; animation:modalPopIn 0.25s cubic-bezier(0.16,1,0.3,1);">
@@ -74,14 +77,14 @@
                             style="position:absolute; top:14px; right:14px; background:rgba(0,0,0,0.2); border:none; color:#ffffff; width:30px; height:30px; border-radius:50%; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center;">
                         ✕
                     </button>
-                    <div style="width:68px; height:68px; border-radius:20px; background:#ffffff; margin:0 auto 12px; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 16px rgba(0,0,0,0.15); border:3px solid rgba(255,255,255,0.8);">
-                        <i class="fas fa-table-tennis" style="font-size:2rem; color:#0072FF;"></i>
+                    <div style="width:68px; height:68px; border-radius:20px; background:${pPhoto ? `#ffffff url('${pPhoto}') center/cover` : '#ffffff'}; margin:0 auto 12px; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 16px rgba(0,0,0,0.15); border:3px solid rgba(255,255,255,0.8);">
+                        ${pPhoto ? '' : '<i class="fas fa-table-tennis" style="font-size:2rem; color:#0072FF;"></i>'}
                     </div>
                     <span style="background:rgba(255,255,255,0.25); color:#ffffff; font-size:0.65rem; font-weight:900; letter-spacing:1px; padding:3px 10px; border-radius:20px; text-transform:uppercase; border:1px solid rgba(255,255,255,0.4);">
                         🎾 PLAYTOMIC OFICIAL
                     </span>
                     <h2 style="margin:10px 0 2px; font-size:1.35rem; font-weight:950; color:#ffffff;">
-                        Plaza Playtomic #${num}
+                        ${pName}
                     </h2>
                     <p style="margin:0; font-size:0.8rem; opacity:0.95; font-weight:600;">
                         Inscripción verificada desde Playtomic App
@@ -7527,7 +7530,7 @@
                 if (!player) return '';
                 const pid = player.id || player.uid;
                 const isPlaytomic = player.is_playtomic || player.source === 'playtomic' || (player.name && player.name.toLowerCase().includes('playtomic')) || (pid && String(pid).includes('playtomic'));
-                const photo = isPlaytomic ? 'img/logo_somospadel.png' : (player.photo_url || player.photoURL || 'img/logo_somospadel.png');
+                const photo = player.photo_url || player.photoURL || player.picture || 'img/logo_somospadel.png';
                 const level = parseFloat(player.level || 3.5).toFixed(2);
                 const teams = Array.isArray(player.team_somospadel) ? player.team_somospadel : (player.team_somospadel ? [player.team_somospadel] : []);
                 const position = player.position || (level > 3.6 ? 'Revés' : 'Drive');

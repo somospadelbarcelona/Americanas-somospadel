@@ -306,7 +306,22 @@ def extract_playtomic_tournament(url_or_id):
             print(f"⚠️ Error leyendo playtomic_jugadores.txt: {e}")
 
     players_list = []
-    if input_names:
+    if not input_names:
+        try:
+            try:
+                from scraper.playtomic_auto_daemon import fetch_playtomic_real_players
+            except ImportError:
+                from playtomic_auto_daemon import fetch_playtomic_real_players
+            auto_real = fetch_playtomic_real_players(tournament_id, sede, organizer)
+            if auto_real:
+                print(f"[*] 🌟 Extrayendo {len(auto_real)} jugadores REALES desde Playtomic con nombres, fotos y niveles...")
+                players_list = auto_real
+        except Exception as e_pt:
+            pass
+
+    if players_list:
+        pass
+    elif input_names:
         print(f"[*] Cruzando {len(input_names)} jugadores de Playtomic con la base de datos de Somos Pádel...")
         db_players = fetch_app_players_db()
         for cl_name in input_names:
