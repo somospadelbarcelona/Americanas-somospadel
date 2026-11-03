@@ -324,7 +324,7 @@ window.loadAdminView = async function (rawViewName) {
     // 🔒 RESTRICCIÓN ESTRICTA DE ACCESO PARA ORGANIZADORES:
     // Solo pueden ver y gestionar Americanas y Resultados de americanas
     if (isOrganizer) {
-        const allowedViews = ['americanas_mgmt', 'americanas_create', 'matches', 'simulator_empty', 'events'];
+        const allowedViews = ['americanas_mgmt', 'americanas_create', 'matches', 'simulator_empty', 'events', 'playtomic'];
         if (!allowedViews.includes(viewName)) {
             console.warn(`🔒 [Seguridad Organizador] Acceso restringido a "${viewName}". Redirigiendo a americanas_mgmt.`);
             viewName = 'americanas_mgmt';
@@ -421,6 +421,17 @@ window.loadAdminView = async function (rawViewName) {
         }
         else if (viewName === 'americanas_create' && window.AdminViews && window.AdminViews.americanas_create) {
             await window.AdminViews.americanas_create();
+        }
+        else if (viewName === 'playtomic') {
+            const titleEl = document.getElementById('page-title');
+            if (titleEl) titleEl.textContent = 'PLAYTOMIC SOMOSPADEL (EN VIVO)';
+            if (window.AdminViews && window.AdminViews.playtomic) {
+                await window.AdminViews.playtomic();
+            } else if (window.AdminPlaytomic && typeof window.AdminPlaytomic.render === 'function') {
+                await window.AdminPlaytomic.render();
+            } else {
+                throw new Error('AdminPlaytomic Module not loaded');
+            }
         }
 
         else if (viewName === 'network_pulse') {

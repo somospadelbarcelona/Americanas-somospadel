@@ -345,10 +345,18 @@
                 if (cached) {
                     const parsed = JSON.parse(cached);
                     if (Array.isArray(parsed) && parsed.length > 0) {
-                        initialAmericanas = parsed
+                        const now = new Date();
+                        const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+                        const activeParsed = parsed.filter(e => {
+                            const st = (e.status || '').toLowerCase().trim();
+                            if (st === 'finished' || st === 'cancelled' || st === 'finalizado') return false;
+                            const d = e.normDate || e.date;
+                            return !d || d >= todayStr;
+                        });
+                        initialAmericanas = activeParsed
                             .filter(e => e.type !== 'entreno' && !(e.name || e.title || '').toLowerCase().includes('entreno'))
                             .map(e => ({ ...e, type: 'americana' }));
-                        initialEntrenos = parsed
+                        initialEntrenos = activeParsed
                             .filter(e => e.type === 'entreno' || (e.name || e.title || '').toLowerCase().includes('entreno'))
                             .map(e => ({ ...e, type: 'entreno' }));
                     }
@@ -1089,16 +1097,34 @@
 
         isEventFinished(evt) {
             if (!evt) return false;
-            if (window.EventService && typeof window.EventService.isEventFinished === 'function') {
-                return window.EventService.isEventFinished(evt);
-            }
+            const todayStr = this.getTodayStr();
+
+            // 1. Estado explícito de finalizado o cancelado
             const st = (evt.status || '').toLowerCase().trim();
             if (st === 'finished' || st === 'finalizado' || st === 'completed' || st === 'cancelled') return true;
+
+            // 2. Comprobación directa de fecha: todo lo que sea del día anterior está finalizado
+            const dateStr = evt.normDate || evt.date || '';
+            let norm = dateStr;
+            if (norm && norm.includes('/')) {
+                const parts = norm.split('/').map(p => p.trim());
+                if (parts.length >= 2) {
+                    const d = parts[0].padStart(2, '0');
+                    const m = parts[1].padStart(2, '0');
+                    const y = parts[2] ? (parts[2].length === 2 ? '20' + parts[2] : parts[2]) : String(new Date().getFullYear());
+                    norm = `${y}-${m}-${d}`;
+                }
+            }
+            if (norm && norm < todayStr) return true;
+
+            // 3. Comprobación por horarios del día de hoy (si ya terminó, se marca finalizado)
             const times = this.getEventTimes(evt.date, evt.time, evt.time_end);
-            if (!times) return false;
-            const now = new Date();
-            const todayStr = this.getTodayStr();
-            return (times.normDate && times.normDate < todayStr) || (now >= times.end);
+            if (times) {
+                if (times.normDate && times.normDate < todayStr) return true;
+                const now = new Date();
+                if (now >= times.end) return true;
+            }
+            return false;
         }
 
         getAllSortedEvents() {
@@ -1128,11 +1154,89 @@
                 return name.includes('entreno') || name.includes('entrenamiento') || name.includes('pozo') || name.includes('clase') || format.includes('entreno') || format.includes('pozo');
             };
 
-            const allAms = (this.state.americanas || []).map(e => ({
-                ...e,
-                type: isEntrenoDoc(e) ? 'entreno' : 'americana',
-                normDate: normalize(e.date)
-            }));
+            // 🎾 FILTRO ESTRICTO OFICIAL SOMOSPADEL BARCELONA:
+            // 1) NEW Play Padel Pro Hospitalet -> Organizador: somospadel barcelona (somospadeleugestion@gmail.com)
+            // 2) Barcelona Pádel El Prat -> Organizador: eduard bainad puig (para somospadel barcelona)
+            // * EXCLUSIÓN ESTRICTA: NO poner americanas que no son de Somos Padel Barcelona ni de otros organizadores/marcas externas.
+            let deletedPlaytomicSet = new Set();
+            try {
+                const rawDel = localStorage.getItem('sp_deleted_playtomic_ids');
+                if (rawDel) {
+                    const parsedDel = JSON.parse(rawDel);
+                    if (Array.isArray(parsedDel)) {
+                        deletedPlaytomicSet = new Set(parsedDel.map(x => String(x).toLowerCase()));
+                    }
+                }
+            } catch (_) {}
+
+            const isSomosPadelAmericana = (e) => {
+                if (!e || e.is_deleted === true) return false;
+                const eid = String(e.id || e.doc_id || '').toLowerCase();
+                const ept = String(e.playtomic_id || '').toLowerCase();
+                if (eid && deletedPlaytomicSet.has(eid)) return false;
+                if (ept && (deletedPlaytomicSet.has(ept) || deletedPlaytomicSet.has(`pt_${ept.slice(0, 8)}`))) return false;
+
+                const name = (e.name || e.title || e.eventName || '').toLowerCase();
+                const loc = (e.location || e.sede || e.club || '').toLowerCase();
+                const org = (e.organizer || e.organizer_name || e.created_by || '').toLowerCase();
+                const desc = (e.description || '').toLowerCase();
+
+                // 1. Exclusión estricta de marcas y promotores ajenos (Crazyxpadel, Jaleo, Vibra, Siux, etc.)
+                const forbidden = [
+                    'crazyxpadel', 'crazy', 'jaleo', 'vibra', 'breakfast', 'saturday padel',
+                    'siux', 'grx', 'xpadelclass', 'xavi perea', 'revolution', 'beerpoint', 'mahou'
+                ];
+                if (forbidden.some(b => name.includes(b) || org.includes(b) || desc.includes(b))) {
+                    return false;
+                }
+
+                // 2. Club 1: NEW Play Padel Pro Hospitalet
+                // Organizador: somospadel barcelona (somospadeleugestion@gmail.com)
+                const isNewPlay = loc.includes('new play') || loc.includes('play padel pro') || loc.includes('hospitalet');
+                if (isNewPlay) {
+                    const isSomosPadelOrg = org.includes('somospadel') || org.includes('somos padel') || org.includes('somos pádel') || org.includes('somospadeleugestion');
+                    const isSomosPadelName = name.includes('somospadel') || name.includes('somos padel') || name.includes('somos pádel') || name.includes('americana mañanas') || name.includes('sabado party') || name.includes('americana sunday') || name.includes('americana domingo') || name.includes('halloween');
+                    if (isSomosPadelOrg || isSomosPadelName) return true;
+                    if (!e.is_external && (!org || org.includes('somospadel') || org.includes('bcn'))) return true;
+                    return false;
+                }
+
+                // 3. Club 2: Barcelona Pádel El Prat
+                // Organizador: eduard bainad puig (para Somos Padel Barcelona) o somospadel barcelona
+                const isElPrat = loc.includes('prat') || name.includes('prat');
+                if (isElPrat) {
+                    const isEduardBainad = org.includes('eduard bainad') || org.includes('bainad');
+                    const isSomosPadelOrg = org.includes('somospadel') || org.includes('somos padel') || org.includes('somos pádel') || org.includes('alex');
+                    const isSomosPadelName = name.includes('somospadel') || name.includes('somos padel') || name.includes('somos pádel');
+                    if (isEduardBainad && (isSomosPadelName || isSomosPadelOrg || desc.includes('somospadel') || desc.includes('somos padel') || desc.includes('somos pádel'))) {
+                        return true;
+                    }
+                    if (isSomosPadelOrg || isSomosPadelName) return true;
+                    if (!e.is_external && (!org || org.includes('somospadel') || org.includes('alex'))) return true;
+                    return false;
+                }
+
+                // 4. Cualquier otra sede / evento
+                if (org.includes('somospadel') || org.includes('somos padel') || org.includes('somos pádel') || name.includes('somospadel') || name.includes('somos padel') || name.includes('somos pádel')) {
+                    return true;
+                }
+                if (!e.is_external && (!org || org.includes('somospadel') || org.includes('bcn'))) {
+                    return true;
+                }
+
+                return false;
+            };
+
+            const allAms = (this.state.americanas || [])
+                .map(e => ({
+                    ...e,
+                    type: isEntrenoDoc(e) ? 'entreno' : 'americana',
+                    normDate: normalize(e.date)
+                }))
+                .filter(e => {
+                    if (e.type === 'entreno') return true;
+                    return isSomosPadelAmericana(e);
+                });
 
             const allEnts = (this.state.entrenos || []).map(e => ({
                 ...e,
@@ -2133,8 +2237,10 @@
                     const isEnt = e.type === 'entreno' || (e.name || e.title || '').toLowerCase().includes('entreno');
                     const isCorrectType = showBothTypes ? true : (onlyEntrenos ? isEnt : !isEnt);
 
-                    // Si el evento está finalizado o vencido por fecha/horario, no va en eventos activos
+                    // Si el evento está finalizado o vencido por fecha/horario (día anterior), no va en eventos activos
                     if (this.isEventFinished(e)) return false;
+                    const d = e.normDate || e.date;
+                    if (d && d < todayStr) return false;
 
                     return isCorrectType;
                 });

@@ -51,11 +51,32 @@ if _PARENT not in sys.path:
     sys.path.insert(0, _PARENT)
 
 try:
-    from scraper.playtomic_authenticated_fetcher import playtomic_login, fetch_tournament_participants
+    from scraper.playtomic_authenticated_fetcher import playtomic_login, fetch_tournament_participants, fetch_club_tournaments
 except ImportError:
-    from playtomic_authenticated_fetcher import playtomic_login, fetch_tournament_participants
+    from playtomic_authenticated_fetcher import playtomic_login, fetch_tournament_participants, fetch_club_tournaments
 
 _TOKEN_CACHE = {"token": None, "ts": 0}
+_API_TOURNAMENT_CACHE = {}
+
+def utc_iso_to_madrid(iso_str):
+    """Convierte fecha/hora ISO UTC de la API de Playtomic a hora local de Madrid (Europe/Madrid)."""
+    if not iso_str:
+        return None
+    try:
+        from datetime import timedelta
+        from zoneinfo import ZoneInfo
+        clean = str(iso_str).replace("Z", "").split(".")[0]
+        dt_utc = datetime.fromisoformat(clean).replace(tzinfo=timezone.utc)
+        return dt_utc.astimezone(ZoneInfo("Europe/Madrid"))
+    except Exception:
+        try:
+            from datetime import timedelta
+            clean = str(iso_str).replace("Z", "").split(".")[0]
+            dt_utc = datetime.fromisoformat(clean).replace(tzinfo=timezone.utc)
+            offset = 2 if 4 <= dt_utc.month <= 10 else 1
+            return dt_utc.astimezone(timezone(timedelta(hours=offset)))
+        except Exception:
+            return None
 
 def get_playtomic_auth_token():
     """Obtiene y cachea el token de sesión autenticada de Playtomic."""
@@ -70,16 +91,21 @@ def get_playtomic_auth_token():
         return _TOKEN_CACHE["token"]
     return None
 
-def fetch_playtomic_real_players(tournament_id, sede="Club Oficial", organizer="Somospadel", force_fixed=False):
+def fetch_playtomic_real_players(tournament_id, sede="Club Oficial", organizer="Somospadel", force_fixed=False, api_data=None):
     """Descarga de forma 100% autónoma los nombres, fotos y niveles reales de los inscritos, respetando parejas oficiales y balanceando los libres."""
-    token = get_playtomic_auth_token()
-    if not token:
-        return [], [], False
-    res = fetch_tournament_participants(tournament_id, token)
-    if not res.get("success"):
-        return [], [], False
+    if not api_data:
+        api_data = _API_TOURNAMENT_CACHE.get(str(tournament_id).lower())
+    if not api_data:
+        token = get_playtomic_auth_token()
+        if not token:
+            return [], [], False
+        res = fetch_tournament_participants(tournament_id, token)
+        if not res.get("success"):
+            return [], [], False
+        api_data = res["data"]
+        _API_TOURNAMENT_CACHE[str(tournament_id).lower()] = api_data
     
-    teams = res["data"].get("teams", [])
+    teams = api_data.get("teams", [])
     now_iso = datetime.now(timezone.utc).isoformat()
     
     has_teams_of_two = any(len(t.get("players", [])) == 2 for t in teams)
@@ -267,68 +293,69 @@ def fetch_playtomic_real_players(tournament_id, sede="Club Oficial", organizer="
                         'is_official_playtomic': m['ofic']
                     })
         else:
-            # Agrupar compensativamente los jugadores libres por nivel (alto con bajo)
-        unpaired_players.sort(key=lambda p: p["level"], reverse=True)
-        n_unpaired = len(unpaired_players)
-        balanced_pairs = []
-        for i in range(n_unpaired // 2):
-            p_high = unpaired_players[i]
-            p_low = unpaired_players[n_unpaired - 1 - i]
-            b_pair_id = f"pair_pt_bal_{str(p_high.get('user_id', ''))[:6]}_{str(p_low.get('user_id', ''))[:6]}"
-            
-            p_high["pair_id"] = b_pair_id
-            p_high["partner_id"] = p_low["id"]
-            p_high["partner_name"] = p_low["name"]
-            
-            p_low["pair_id"] = b_pair_id
-            p_low["partner_id"] = p_high["id"]
-            p_low["partner_name"] = p_high["name"]
-            
-            avg_b = round((p_high["level"] + p_low["level"]) / 2.0, 2)
-            balanced_pairs.append({
-                "id": b_pair_id,
-                "pair_name": f"{p_high['name']} / {p_low['name']}",
-                "player1_id": p_high["id"],
-                "player1_name": p_high["name"],
-                "player1_photo": p_high.get("photoURL") or "",
-                "player1_level": p_high["level"],
-                "player2_id": p_low["id"],
-                "player2_name": p_low["name"],
-                "player2_photo": p_low.get("photoURL") or "",
-                "player2_level": p_low["level"],
-                "avg_level": avg_b,
-                "wins": 0,
-                "losses": 0,
-                "games_won": 0,
-                "games_lost": 0,
-                "points": 0,
-                "is_official_playtomic": False,
-                "_p1": p_high,
-                "_p2": p_low
-            })
-            
-            all_combined_pairs = official_pairs + balanced_pairs
-            # Ordenar todas las parejas por nivel medio descendente para cruce equitativo
-            all_combined_pairs.sort(key=lambda fp: fp["avg_level"], reverse=True)
-            
-            for idx, fp in enumerate(all_combined_pairs):
-                court_num = (idx // 2) + 1
-                fp["current_court"] = court_num
-                fp["initial_court"] = court_num
-                fp["court"] = court_num
-                if "_p1" in fp:
-                    fp["_p1"]["court"] = court_num
-                if "_p2" in fp:
-                    fp["_p2"]["court"] = court_num
+                # Agrupar compensativamente los jugadores libres por nivel (alto con bajo)
+            unpaired_players.sort(key=lambda p: p["level"], reverse=True)
+            n_unpaired = len(unpaired_players)
+            balanced_pairs = []
+            for i in range(n_unpaired // 2):
+                p_high = unpaired_players[i]
+                p_low = unpaired_players[n_unpaired - 1 - i]
+                b_pair_id = f"pair_pt_bal_{str(p_high.get('user_id', ''))[:6]}_{str(p_low.get('user_id', ''))[:6]}"
                 
-                fp_clean = {k: v for k, v in fp.items() if not k.startswith("_")}
-                fixed_pairs_list.append(fp_clean)
-            
+                p_high["pair_id"] = b_pair_id
+                p_high["partner_id"] = p_low["id"]
+                p_high["partner_name"] = p_low["name"]
+                
+                p_low["pair_id"] = b_pair_id
+                p_low["partner_id"] = p_high["id"]
+                p_low["partner_name"] = p_high["name"]
+                
+                avg_b = round((p_high["level"] + p_low["level"]) / 2.0, 2)
+                balanced_pairs.append({
+                    "id": b_pair_id,
+                    "pair_name": f"{p_high['name']} / {p_low['name']}",
+                    "player1_id": p_high["id"],
+                    "player1_name": p_high["name"],
+                    "player1_photo": p_high.get("photoURL") or "",
+                    "player1_level": p_high["level"],
+                    "player2_id": p_low["id"],
+                    "player2_name": p_low["name"],
+                    "player2_photo": p_low.get("photoURL") or "",
+                    "player2_level": p_low["level"],
+                    "avg_level": avg_b,
+                    "wins": 0,
+                    "losses": 0,
+                    "games_won": 0,
+                    "games_lost": 0,
+                    "points": 0,
+                    "is_official_playtomic": False,
+                    "_p1": p_high,
+                    "_p2": p_low
+                })
+                
+                all_combined_pairs = official_pairs + balanced_pairs
+                # Ordenar todas las parejas por nivel medio descendente para cruce equitativo
+                all_combined_pairs.sort(key=lambda fp: fp["avg_level"], reverse=True)
+                
+                for idx, fp in enumerate(all_combined_pairs):
+                    court_num = (idx // 2) + 1
+                    fp["current_court"] = court_num
+                    fp["initial_court"] = court_num
+                    fp["court"] = court_num
+                    if "_p1" in fp:
+                        fp["_p1"]["court"] = court_num
+                    if "_p2" in fp:
+                        fp["_p2"]["court"] = court_num
+                    
+                    fp_clean = {k: v for k, v in fp.items() if not k.startswith("_")}
+                    fixed_pairs_list.append(fp_clean)
+                
     return all_players, fixed_pairs_list, is_pairs_tournament
 
 WORKSPACE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRAPER_DIR = os.path.join(WORKSPACE_DIR, "scraper")
 URLS_FILE = os.path.join(SCRAPER_DIR, "playtomic_tournaments_urls.txt")
+DELETED_FILE = os.path.join(SCRAPER_DIR, "playtomic_deleted_uuids.txt")
 OUTPUT_JSON = os.path.join(SCRAPER_DIR, "playtomic_extracted.json")
 LOG_FILE = os.path.join(SCRAPER_DIR, "playtomic_daemon.log")
 
@@ -405,8 +432,61 @@ def extract_tournament_uuids_from_browser():
     return discovered
 
 def extract_tournament_uuids_from_club_pages():
-    """Descubre de forma autónoma enlaces a torneos de las páginas públicas oficiales de ambos clubes."""
+    """Descubre de forma 100% autónoma todas las americanas oficiales directamente desde la API v2 de Playtomic Manager para ambos clubes."""
     discovered = set()
+    token = get_playtomic_auth_token()
+    external_brands = [
+        "vibra", "siux", "jaleo", "crazyxpadel", "crazy", "breakfast",
+        "grx", "beerpoint", "mahou", "cries padel", "padel amateur", "babolat", "vermouthera"
+    ]
+
+    if token:
+        clubs = [
+            ("Hospitalet", "bd2ea8dd-4c1d-4e64-98eb-3ff2ab9b2051"),
+            ("El Prat", "da77c69a-43b3-11e8-8674-52540049669c")
+        ]
+        for club_label, tid in clubs:
+            res = fetch_club_tournaments(tid, token, size=200)
+            if res.get("success"):
+                for item in res.get("data", []):
+                    t_uuid = str(item.get("tournament_id") or "").strip().lower()
+                    if not t_uuid:
+                        continue
+                    _API_TOURNAMENT_CACHE[t_uuid] = item
+                    if item.get("status") == "CANCELED":
+                        continue
+                    name_low = (item.get("name") or "").lower()
+                    if any(b in name_low for b in external_brands):
+                        continue
+                    rel = item.get("related_users") or []
+                    org_ids = [str(r.get("user_id")) for r in rel if r.get("type") == "ORGANIZER"]
+                    desc_low = ((item.get("metadata") or {}).get("description") or "").lower()
+
+                    if club_label == "Hospitalet":
+                        # En NEW Play Padel Pro Hospitalet: organizador somospadel barcelona (user_id 17701167)
+                        is_ours = ("17701167" in org_ids) or ("somos" in name_low) or ("somos" in desc_low)
+                    else:
+                        # En Barcelona Pádel El Prat: organizadas por Eduard Bainad Puig para Somos Pádel Barcelona
+                        is_ours = ("somos" in name_low) or ("somos" in desc_low)
+
+                    if is_ours:
+                        discovered.add(t_uuid)
+
+    # También revisar cola de sincronización en Firestore (enlaces pegados desde el Admin Web)
+    try:
+        q_url = f"https://firestore.googleapis.com/v1/projects/americanas-somospadel/databases/(default)/documents/playtomic_sync_queue?key={FIREBASE_API_KEY}"
+        req = urllib.request.Request(q_url)
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            q_data = json.loads(resp.read().decode("utf-8"))
+            for doc in q_data.get("documents", []):
+                f = doc.get("fields", {})
+                u_val = (f.get("uuid", {}).get("stringValue") or doc["name"].split("/")[-1]).strip().lower()
+                if re.match(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', u_val):
+                    discovered.add(u_val)
+    except Exception:
+        pass
+
+    # Fallback complementario desde páginas públicas
     club_urls = [
         "https://playtomic.io/clubs/new-play-padel-pro-hospitalet",
         "https://playtomic.io/clubs/padel-barcelona-el-prat"
@@ -419,8 +499,152 @@ def extract_tournament_uuids_from_club_pages():
                 discovered.add(m.lower())
     return discovered
 
+def get_deleted_uuids():
+    """Obtiene el conjunto de IDs y UUIDs eliminados permanentemente desde el Admin (local + Firestore)."""
+    deleted = set()
+    if os.path.exists(DELETED_FILE):
+        try:
+            with open(DELETED_FILE, "r", encoding="utf-8") as f:
+                for line in f:
+                    val = line.strip().lower()
+                    if val and not val.startswith("#"):
+                        deleted.add(val)
+                        if len(val) >= 8 and "-" in val:
+                            deleted.add(val[:8])
+                            deleted.add(f"pt_{val[:8]}")
+        except Exception:
+            pass
+    try:
+        del_url = f"https://firestore.googleapis.com/v1/projects/americanas-somospadel/databases/(default)/documents/playtomic_deleted?pageSize=200&key={FIREBASE_API_KEY}"
+        with urllib.request.urlopen(urllib.request.Request(del_url), timeout=6) as resp:
+            d_data = json.loads(resp.read().decode("utf-8"))
+            for doc in d_data.get("documents", []):
+                doc_name = doc["name"].split("/")[-1].strip().lower()
+                deleted.add(doc_name)
+                f = doc.get("fields", {})
+                u_val = (f.get("uuid", {}).get("stringValue") or "").strip().lower()
+                id_val = (f.get("doc_id", {}).get("stringValue") or "").strip().lower()
+                if u_val:
+                    deleted.add(u_val)
+                    deleted.add(u_val[:8])
+                    deleted.add(f"pt_{u_val[:8]}")
+                if id_val:
+                    deleted.add(id_val)
+                    if id_val.startswith("pt_"):
+                        deleted.add(id_val[3:])
+    except Exception:
+        pass
+    return deleted
+
+def mark_tournament_deleted(uuid_or_id, doc_id=None):
+    """Elimina totalmente una americana (local + Firestore) y la registra en la lista negra para que nunca vuelva a sincronizarse."""
+    clean_val = str(uuid_or_id or "").strip().lower()
+    clean_doc = str(doc_id or "").strip()
+    if not clean_doc and clean_val:
+        if clean_val.startswith("pt_") or len(clean_val) > 15:
+            clean_doc = clean_val if not ("-" in clean_val) else f"pt_{clean_val[:8]}"
+        else:
+            clean_doc = f"pt_{clean_val[:8]}"
+
+    # 1. Guardar en archivo local de eliminados
+    existing = set()
+    if os.path.exists(DELETED_FILE):
+        try:
+            with open(DELETED_FILE, "r", encoding="utf-8") as f:
+                existing = {l.strip().lower() for l in f if l.strip()}
+        except Exception:
+            pass
+    if clean_val:
+        existing.add(clean_val)
+    if clean_doc:
+        existing.add(clean_doc.lower())
+    try:
+        with open(DELETED_FILE, "w", encoding="utf-8") as f:
+            for item in sorted(existing):
+                f.write(item + "\n")
+    except Exception as e:
+        log(f"⚠️ Error guardando en {DELETED_FILE}: {e}")
+
+    # 2. Eliminar de playtomic_tournaments_urls.txt si estaba
+    if os.path.exists(URLS_FILE):
+        try:
+            with open(URLS_FILE, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+            prefix = clean_val[:8] if clean_val else "___"
+            kept = [l for l in lines if (clean_val not in l.lower() and prefix not in l.lower())]
+            with open(URLS_FILE, "w", encoding="utf-8") as f:
+                f.writelines(kept)
+        except Exception:
+            pass
+
+    # 3. Eliminar de playtomic_extracted.json si estaba
+    if os.path.exists(OUTPUT_JSON):
+        try:
+            with open(OUTPUT_JSON, "r", encoding="utf-8") as f:
+                arr = json.load(f)
+            filtered = [
+                x for x in arr
+                if str(x.get("playtomic_id") or "").lower() != clean_val
+                and str(x.get("doc_id") or "").lower() != clean_doc.lower()
+            ]
+            with open(OUTPUT_JSON, "w", encoding="utf-8") as f:
+                json.dump(filtered, f, indent=2, ensure_ascii=False)
+        except Exception:
+            pass
+
+    # 4. Registrar en Firestore playtomic_deleted
+    del_key = clean_val if clean_val else clean_doc
+    if del_key:
+        try:
+            fs_del_url = f"https://firestore.googleapis.com/v1/projects/americanas-somospadel/databases/(default)/documents/playtomic_deleted/{del_key}?key={FIREBASE_API_KEY}"
+            payload = json.dumps({
+                "fields": {
+                    "uuid": {"stringValue": clean_val},
+                    "doc_id": {"stringValue": clean_doc},
+                    "deletedAt": {"stringValue": datetime.now(timezone.utc).isoformat()}
+                }
+            }).encode("utf-8")
+            req = urllib.request.Request(fs_del_url, data=payload, headers={"Content-Type": "application/json"}, method="PATCH")
+            urllib.request.urlopen(req, timeout=8)
+        except Exception:
+            pass
+
+    # 5. Borrar documento de Firestore americanas
+    if clean_doc:
+        try:
+            fs_doc_url = f"{FIRESTORE_BASE}/{clean_doc}?key={FIREBASE_API_KEY}"
+            req = urllib.request.Request(fs_doc_url, method="DELETE")
+            urllib.request.urlopen(req, timeout=8)
+            log(f"🗑️ [ELIMINADO TOTALMENTE] Documento '{clean_doc}' ({clean_val}) borrado de Firestore y bloqueado.")
+        except Exception:
+            pass
+    return True
+
+def unmark_tournament_deleted(uuid_str):
+    """Si el admin vuelve a pegar manualmente el enlace de un torneo eliminado, lo rehabilita."""
+    clean_u = str(uuid_str or "").strip().lower()
+    if not clean_u:
+        return
+    prefix = clean_u[:8]
+    if os.path.exists(DELETED_FILE):
+        try:
+            with open(DELETED_FILE, "r", encoding="utf-8") as f:
+                lines = [l.strip() for l in f if l.strip()]
+            kept = [l for l in lines if l.lower() not in (clean_u, prefix, f"pt_{prefix}")]
+            with open(DELETED_FILE, "w", encoding="utf-8") as f:
+                for item in kept:
+                    f.write(item + "\n")
+        except Exception:
+            pass
+    for k in (clean_u, f"pt_{prefix}"):
+        try:
+            fs_del_url = f"https://firestore.googleapis.com/v1/projects/americanas-somospadel/databases/(default)/documents/playtomic_deleted/{k}?key={FIREBASE_API_KEY}"
+            urllib.request.urlopen(urllib.request.Request(fs_del_url, method="DELETE"), timeout=5)
+        except Exception:
+            pass
+
 def get_all_target_uuids(deep_discovery=False):
-    """Reúne los torneos Playtomic configurados y opcionalmente descubre nuevos en la web o navegador."""
+    """Reúne los torneos Playtomic configurados y opcionalmente descubre nuevos en la web o navegador, excluyendo los eliminados."""
     uuids = set()
     if os.path.exists(URLS_FILE):
         try:
@@ -435,7 +659,7 @@ def get_all_target_uuids(deep_discovery=False):
             log(f"⚠️ Error leyendo {URLS_FILE}: {e}")
 
     if deep_discovery:
-        # 1. Descubrir desde las páginas oficiales de los clubes
+        # 1. Descubrir desde la API v2 y páginas oficiales de los clubes
         club_uuids = extract_tournament_uuids_from_club_pages()
         for u in club_uuids:
             uuids.add(u)
@@ -445,7 +669,15 @@ def get_all_target_uuids(deep_discovery=False):
         for u in browser_uuids:
             uuids.add(u)
 
-    return sorted(list(uuids))
+    deleted_set = get_deleted_uuids()
+    final_uuids = [
+        u for u in uuids
+        if u.lower() not in deleted_set
+        and u.lower()[:8] not in deleted_set
+        and f"pt_{u.lower()[:8]}" not in deleted_set
+    ]
+
+    return sorted(list(set(final_uuids)))
 
 def extract_playtomic_datetime(html):
     """
@@ -517,8 +749,6 @@ def extract_playtomic_datetime(html):
                 
     if month_num and day_num:
         year = now.year
-        if int(month_num) < now.month:
-            year += 1
         date_str = f"{year}-{month_num}-{day_num}"
     else:
         day_match = re.search(r'(\d{1,2})', raw_datetime)
@@ -549,175 +779,250 @@ def extract_playtomic_datetime(html):
     return date_str, time_str, time_end_str
 
 def parse_playtomic_tournament(tournament_id):
-    """Parsea exhaustivamente todos los datos necesarios de una americana creada en Playtomic."""
-    url = f"https://app.playtomic.com/tournaments/{tournament_id}"
-    full_share_url = f"https://app.playtomic.com/tournaments/{tournament_id}?utm_source=app_android&utm_campaign=share"
-    
-    html = fetch_html(url)
-    if not html:
-        return None
+    """Parsea exhaustivamente todos los datos necesarios de una americana creada en Playtomic usando la API v2 autenticada (con fallback a HTML)."""
+    tid_clean = str(tournament_id).strip().lower()
+    url = f"https://app.playtomic.com/tournaments/{tid_clean}"
+    full_share_url = f"https://app.playtomic.com/tournaments/{tid_clean}?utm_source=app_android&utm_campaign=share"
+    configured_uuids = [u.lower() for u in get_configured_uuids()]
 
-    html_lower = html.lower()
-
-    # 1. Cartel Oficial HD de Playtomic (Cloudinary)
-    poster_url = None
-    poster_matches = re.findall(r'https://res\.cloudinary\.com/playtomic/image/upload/[^\s"\'<>]+\.(?:jpg|jpeg|png|webp)', html)
-    if poster_matches:
-        p_candidates = [p for p in poster_matches if f'poster_{tournament_id}' in p or 'tournaments' in p]
-        poster_url = p_candidates[0] if p_candidates else poster_matches[0]
-    if not poster_url:
-        poster_url = "img/padel-event.jpg"
-
-    # 2. Nombre del Torneo
-    name = "AMERICANA PLAYTOMIC"
-    m_name = re.search(r'"alt":"([^"]+)","src":"https://res\.cloudinary\.com/playtomic', html)
-    if not m_name:
-        m_name = re.search(r'<h1[^>]*>([^<]+)</h1>', html)
-    if m_name:
-        name = m_name.group(1).strip()
-
-    name_lower = name.lower()
-
-    # 3. Sede y Organizador Oficial
-    m_tenant = re.search(r'data-tracking-property-tenant-name="([^"]+)"', html)
-    tenant_name = m_tenant.group(1).strip() if m_tenant else ""
-    m_tenant_id = re.search(r'data-tracking-property-tenant-id="([^"]+)"', html)
-    tenant_id = m_tenant_id.group(1).strip() if m_tenant_id else ""
-
-    is_el_prat = (
-        "prat" in tenant_name.lower() or 
-        "bainad" in html_lower or 
-        "eduard" in html_lower or
-        "prat" in name_lower or
-        "el prat" in html_lower or
-        tenant_id == "da77c69a-43b3-11e8-8674-52540049669c"
-    )
-
-    # FILTRO DE MARCAS / PROMOTORES EXTERNOS:
-    # Excluir torneos de otras organizaciones que alquilan pistas en el club (CrazyxPadel, Saturday Breakfast, Vibra Pádel, Jaleo)
-    external_brands = ["vibra", "siux", "jaleo", "crazyxpadel", "crazy", "breakfast", "saturday", "grx"]
-    if any(b in name_lower for b in external_brands):
-        log(f"   ⛔ FILTRADO / DESCARTADO: '{name}' pertenece a una marca externa ajena a Somos Pádel.")
-        return None
-
-    if is_el_prat:
-        sede = "Barcelona Pádel El Prat"
-        organizer = "Eduard Bainad Puig"
-        # En El Prat, Eduard Bainad promociona torneos propios de Somos Pádel y torneos ajenos.
-        # Filtramos estrictamente para quedarnos solo con Somos Pádel.
-        is_somospadel_prat = (
-            tournament_id.lower() == "f25003a4-105e-440d-a0ed-930bf047bd94" or
-            any(k in name_lower for k in [
-                "somospadel", "somos padel", "somos pádel"
-            ])
-        )
-        if not is_somospadel_prat:
-            log(f"   ⛔ FILTRADO / DESCARTADO: '{name}' de Eduard Bainad Puig no pertenece a 'somospadel barcelona'.")
-            return None
-    else:
-        sede = "NEW Play Padel Pro Hospitalet"
-        organizer = "somospadeleugestion@gmail.com"
-        if any(b in name_lower for b in external_brands):
-            log(f"   ⛔ FILTRADO / DESCARTADO: '{name}' pertenece a una marca externa ajena a Somos Pádel.")
-            return None
-        # Validar pertenencia estricta a Somos Pádel
-        configured_uuids = [u.lower() for u in get_configured_uuids()]
-        is_somospadel = (
-            tournament_id.lower() in configured_uuids or
-            any(k in name_lower for k in [
-                "somospadel", "somos padel", "somos pádel", "americana mañanas", "americana halloween", "entrenamiento somospadel"
-            ])
-        )
-        if not is_somospadel:
-            log(f"   ⛔ FILTRADO / DESCARTADO: '{name}' en Hospitalet no pertenece a Somos Pádel.")
-            return None
-
-    # 4. Tipo de americana: Pareja Fija vs Twister Individual
-    # Analizamos únicamente el título y el contenido visible, evitando scripts JS
+    external_brands = [
+        "vibra", "siux", "jaleo", "crazyxpadel", "crazy", "breakfast",
+        "grx", "beerpoint", "mahou", "cries padel", "padel amateur", "babolat", "vermouthera"
+    ]
     fixed_keywords = ["pareja fija", "por parejas", "en pareja", "parejas fijas", "duplas", "inscripcion en pareja", "inscripción por parejas"]
     twister_keywords = ["twister", "individual", "rotacion", "rotación", "pozo", "americano", "mexicano", "sin pareja fija"]
 
-    # Extraer texto visible del artículo principal
-    m_article = re.search(r'<article[^>]*>(.*?)</article>', html, re.DOTALL)
-    visible_snippet = (m_article.group(1) if m_article else "") + " " + name
-    visible_lower = visible_snippet.lower()
+    # 1. Intentar obtener datos exactos desde la API v2 oficial de Playtomic Manager
+    api_data = _API_TOURNAMENT_CACHE.get(tid_clean)
+    if not api_data:
+        token = get_playtomic_auth_token()
+        if token:
+            res = fetch_tournament_participants(tid_clean, token)
+            if res.get("success") and res.get("data"):
+                api_data = res["data"]
+                _API_TOURNAMENT_CACHE[tid_clean] = api_data
 
-    is_fixed_candidate = False
-    if tournament_id == "46011a01-68b4-433f-b2e3-581ca5fabfdb" or "halloween" in name_lower:
-        is_fixed_candidate = True
-    elif any(k in visible_lower for k in fixed_keywords):
-        is_fixed_candidate = True
-    elif any(k in visible_lower for k in twister_keywords):
-        is_fixed_candidate = False
-    else:
-        # Por defecto para Somos Pádel BCN y New Play Padel: Twister individual con rotación
-        is_fixed_candidate = False
+    if api_data:
+        api_status = str(api_data.get("status") or "").upper()
+        if api_status == "CANCELED":
+            log(f"   ⛔ DESCARTADO: Torneo {tid_clean} está CANCELADO en Playtomic.")
+            return None
 
-    is_fixed = is_fixed_candidate
-    pair_mode = "fixed" if is_fixed else "twister"
-    format_type = "fixed" if is_fixed else "twister"
-    mode_label = "Pareja Fija" if is_fixed else "Twister individual (rotación por ronda)"
+        name = (api_data.get("name") or "AMERICANA PLAYTOMIC").strip()
+        name_lower = name.lower()
+        tenant = api_data.get("tenant") or {}
+        tenant_id = str(tenant.get("tenant_id") or "").strip()
+        tenant_name = str(tenant.get("tenant_name") or "").strip()
+        rel = api_data.get("related_users") or []
+        org_ids = [str(r.get("user_id")) for r in rel if r.get("type") == "ORGANIZER"]
+        desc_raw = str((api_data.get("metadata") or {}).get("description") or "")
+        desc_lower = desc_raw.lower()
 
-    # 5. Fecha y Horario
-    date_str, time_str, time_end_str = extract_playtomic_datetime(html)
+        if any(b in name_lower for b in external_brands):
+            log(f"   ⛔ FILTRADO / DESCARTADO: '{name}' pertenece a una marca externa ajena a Somos Pádel.")
+            return None
 
-    # 6. Plazas Reales y Pistas Reales
-    spots_left = 20
-    total_spots = 20
-    m_spots = re.search(r'(\d+)\s*(?:de|of)\s*(\d+)\s*(?:plazas|spots)', html, re.I)
-    if not m_spots:
-        m_spots = re.search(r'(\d+)\s*(?:de|of)\s*(\d+)', html)
-        
-    if m_spots:
-        spots_left = int(m_spots.group(1))
-        total_spots = int(m_spots.group(2))
+        is_el_prat = (
+            "prat" in tenant_name.lower() or
+            "prat" in name_lower or
+            "prat" in desc_lower or
+            tenant_id == "da77c69a-43b3-11e8-8674-52540049669c"
+        )
+
+        if is_el_prat:
+            sede = "Barcelona Pádel El Prat"
+            organizer = "Eduard Bainad Puig"
+            is_somospadel_prat = (
+                tid_clean in configured_uuids or
+                "somos" in name_lower or
+                "somos" in desc_lower
+            )
+            if not is_somospadel_prat:
+                log(f"   ⛔ FILTRADO / DESCARTADO: '{name}' en El Prat no pertenece a Somos Pádel Barcelona.")
+                return None
+        else:
+            sede = "NEW Play Padel Pro Hospitalet"
+            organizer = "somospadel barcelona"
+            is_somospadel_hosp = (
+                "17701167" in org_ids or
+                tid_clean in configured_uuids or
+                "somos" in name_lower or
+                "somos" in desc_lower
+            )
+            if not is_somospadel_hosp:
+                log(f"   ⛔ FILTRADO / DESCARTADO: '{name}' en Hospitalet no pertenece a Somos Pádel Barcelona.")
+                return None
+
+        # Fecha y Hora en zona horaria Europe/Madrid
+        dt_start = utc_iso_to_madrid(api_data.get("start_date"))
+        dt_end = utc_iso_to_madrid(api_data.get("end_date"))
+        if dt_start:
+            date_str = dt_start.strftime("%Y-%m-%d")
+            time_str = dt_start.strftime("%H:%M")
+        else:
+            date_str = datetime.now().strftime("%Y-%m-%d")
+            time_str = "18:00"
+
+        if dt_end:
+            time_end_str = dt_end.strftime("%H:%M")
+        else:
+            time_end_str = "20:00"
+
+        # Plazas y Pistas
+        reg_info = api_data.get("registration_info") or {}
+        total_spots = int(reg_info.get("max_players") or 20)
+        avail = api_data.get("available_places")
+        spots_left = int(avail) if avail is not None else total_spots
         occupied_spots = max(0, total_spots - spots_left)
+        courts_count = max(2, int(total_spots / 4))
+
+        # Precio Oficial (de configurations o descripción/título si el pago es en club)
+        price_val = None
+        for cfg in (reg_info.get("configurations") or []):
+            p_str = str(cfg.get("price") or "")
+            m_p = re.search(r'(\d+(?:[\.,]\d+)?)', p_str)
+            if m_p:
+                val_f = float(m_p.group(1).replace(",", "."))
+                if val_f > 0:
+                    if cfg.get("registration_type") == "SINGLE" or price_val is None:
+                        price_val = f"{val_f:.2f}".rstrip("0").rstrip(".")
+
+        if not price_val:
+            m_desc_p = re.search(r'(\d+(?:[\.,]\d+)?)\s*€', name + " " + desc_raw)
+            if m_desc_p:
+                val_f = float(m_desc_p.group(1).replace(",", "."))
+                price_val = f"{val_f:.2f}".rstrip("0").rstrip(".")
+            else:
+                price_val = "12"
+
+        # Cartel Oficial HD
+        poster_url = None
+        api_imgs = api_data.get("images") or []
+        if api_imgs:
+            first_img = api_imgs[0]
+            poster_url = first_img.get("url") if isinstance(first_img, dict) else str(first_img)
+        if not poster_url:
+            t_imgs = tenant.get("images") or []
+            if t_imgs:
+                poster_url = t_imgs[0]
+        if not poster_url:
+            poster_url = "img/padel-event.jpg"
+
+        # Tipo de americana (Pareja Fija vs Twister)
+        combined_text = (name_lower + " " + desc_lower)
+        is_fixed_candidate = False
+        if tid_clean == "46011a01-68b4-433f-b2e3-581ca5fabfdb" or "halloween" in name_lower:
+            is_fixed_candidate = True
+        elif any(k in combined_text for k in fixed_keywords) and "cambiar en cada ronda" not in combined_text:
+            is_fixed_candidate = True
+        elif any(k in combined_text for k in twister_keywords):
+            is_fixed_candidate = False
+
+        is_fixed = is_fixed_candidate
+        pair_mode = "fixed" if is_fixed else "twister"
+        format_type = "fixed" if is_fixed else "twister"
+
+        # Categoría
+        if "femenin" in name_lower:
+            category = "femenina"
+        elif "masculin" in name_lower:
+            category = "masculina"
+        elif "mixt" in name_lower:
+            category = "mixta"
+        else:
+            category = "open"
+
     else:
-        occupied_spots = 0
+        # Fallback HTML si la API no devolvió el torneo
+        html = fetch_html(url)
+        if not html:
+            return None
 
-    courts_count = max(2, int(total_spots / 4))
+        html_lower = html.lower()
+        poster_url = None
+        poster_matches = re.findall(r'https://res\.cloudinary\.com/playtomic/image/upload/[^\s"\'<>]+\.(?:jpg|jpeg|png|webp)', html)
+        if poster_matches:
+            p_candidates = [p for p in poster_matches if f'poster_{tid_clean}' in p or 'tournaments' in p]
+            poster_url = p_candidates[0] if p_candidates else poster_matches[0]
+        if not poster_url:
+            poster_url = "img/padel-event.jpg"
 
-    # 7. Precio Oficial de Playtomic
-    extracted_price = None
-    m_price = re.search(r'itemProp="price"\s*content="([^"]+)"', html)
-    if m_price:
-        try:
-            p_val = float(m_price.group(1).replace(',', '.'))
-            extracted_price = f"{p_val:.2f}".rstrip('0').rstrip('.')
-            if extracted_price == "": extracted_price = "0"
-        except Exception:
-            extracted_price = m_price.group(1).strip()
-    
-    if not extracted_price:
-        m_money = re.search(r'"moneyLiteral":"([^"]+)"', html)
-        if m_money:
-            m_val = re.search(r'(\d+[\.,]?\d*)', m_money.group(1))
-            if m_val: extracted_price = m_val.group(1).replace(',', '.')
+        name = "AMERICANA PLAYTOMIC"
+        m_name = re.search(r'"alt":"([^"]+)","src":"https://res\.cloudinary\.com/playtomic', html)
+        if not m_name:
+            m_name = re.search(r'<h1[^>]*>([^<]+)</h1>', html)
+        if m_name:
+            name = m_name.group(1).strip()
 
-    if extracted_price is not None:
-        price_val = extracted_price
-    else:
-        price_val = "12.48"
+        name_lower = name.lower()
+        m_tenant = re.search(r'data-tracking-property-tenant-name="([^"]+)"', html)
+        tenant_name = m_tenant.group(1).strip() if m_tenant else ""
+        m_tenant_id = re.search(r'data-tracking-property-tenant-id="([^"]+)"', html)
+        tenant_id = m_tenant_id.group(1).strip() if m_tenant_id else ""
+
+        is_el_prat = (
+            "prat" in tenant_name.lower() or
+            "bainad" in html_lower or
+            "eduard" in html_lower or
+            "prat" in name_lower or
+            "el prat" in html_lower or
+            tenant_id == "da77c69a-43b3-11e8-8674-52540049669c"
+        )
+
+        if any(b in name_lower for b in external_brands):
+            log(f"   ⛔ FILTRADO / DESCARTADO: '{name}' pertenece a una marca externa ajena a Somos Pádel.")
+            return None
+
+        if is_el_prat:
+            sede = "Barcelona Pádel El Prat"
+            organizer = "Eduard Bainad Puig"
+            if not (tid_clean in configured_uuids or "somos" in name_lower):
+                return None
+        else:
+            sede = "NEW Play Padel Pro Hospitalet"
+            organizer = "somospadel barcelona"
+            if not (tid_clean in configured_uuids or "somos" in name_lower or "americana" in name_lower):
+                return None
+
+        is_fixed_candidate = ("pareja fija" in html_lower or "halloween" in name_lower)
+        is_fixed = is_fixed_candidate
+        pair_mode = "fixed" if is_fixed else "twister"
+        format_type = "fixed" if is_fixed else "twister"
+        category = "femenina" if "femenin" in name_lower else "open"
+        date_str, time_str, time_end_str = extract_playtomic_datetime(html)
+        spots_left = 20
+        total_spots = 20
+        m_spots = re.search(r'(\d+)\s*(?:de|of)\s*(\d+)\s*(?:plazas|spots)', html, re.I)
+        if m_spots:
+            spots_left = int(m_spots.group(1))
+            total_spots = int(m_spots.group(2))
+            occupied_spots = max(0, total_spots - spots_left)
+        else:
+            occupied_spots = 0
+        courts_count = max(2, int(total_spots / 4))
+        price_val = "12"
+        api_status = "PENDING"
 
     # Doc ID coherente
-    if tournament_id == "46011a01-68b4-433f-b2e3-581ca5fabfdb":
+    if tid_clean == "46011a01-68b4-433f-b2e3-581ca5fabfdb" or "halloween" in name_lower:
+        date_str = "2026-10-31"
+    if tid_clean == "46011a01-68b4-433f-b2e3-581ca5fabfdb":
         doc_id = "pt_46011a01_halloween"
-    elif tournament_id == "f25003a4-105e-440d-a0ed-930bf047bd94":
+    elif tid_clean == "f25003a4-105e-440d-a0ed-930bf047bd94":
         doc_id = "HWAnrOcyb85pT0eklDnc"
     else:
-        doc_id = f"pt_{tournament_id[:8]}"
+        doc_id = f"pt_{tid_clean[:8]}"
 
     # 8. Extraer JUGADORES REALES de Playtomic de forma 100% autónoma
     now_iso = datetime.now(timezone.utc).isoformat()
     real_players, fixed_pairs, detected_fixed = fetch_playtomic_real_players(
-        tournament_id, sede, organizer, force_fixed=is_fixed_candidate
+        tid_clean, sede, organizer, force_fixed=is_fixed_candidate, api_data=api_data
     )
     
     if detected_fixed or is_fixed_candidate:
         is_fixed = True
         pair_mode = "fixed"
         format_type = "fixed"
-        mode_label = "Pareja Fija"
     
     if real_players:
         players_list = real_players
@@ -725,11 +1030,10 @@ def parse_playtomic_tournament(tournament_id):
         spots_left = max(0, total_spots - occupied_spots)
         log(f"   🌟 [PLAYTOMIC AUTÓNOMO] {len(real_players)} jugadores REALES extraídos con éxito ({len(fixed_pairs)} parejas configuradas)")
     else:
-        # Fallback resiliente si la API no estuviera disponible
         players_list = []
         for i in range(1, occupied_spots + 1):
             players_list.append({
-                "id": f"pt_playtomic_{tournament_id[:8]}_{i}",
+                "id": f"pt_playtomic_{tid_clean[:8]}_{i}",
                 "name": f"Plaza Playtomic #{i}",
                 "display_name": f"Plaza Playtomic #{i}",
                 "level": 3.5,
@@ -746,10 +1050,12 @@ def parse_playtomic_tournament(tournament_id):
 
     urgency_tag = f"¡ÚLTIMAS {spots_left} PLAZAS LIBRES!" if 0 < spots_left <= 4 else f"{occupied_spots}/{total_spots} Plazas"
     desc_mode = "👥 Sistema Pareja Fija (juegas con tu pareja)" if is_fixed else "🌪️ Sistema Twister individual (rotación por ronda, NO pareja fija)"
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    is_finished = (api_status == "PLAYED") or (date_str < today_str)
 
     tournament_data = {
         "doc_id": doc_id,
-        "playtomic_id": tournament_id,
+        "playtomic_id": tid_clean,
         "name": name,
         "location": sede,
         "sede": sede,
@@ -760,7 +1066,7 @@ def parse_playtomic_tournament(tournament_id):
         "duration": "2h",
         "pair_mode": pair_mode,
         "format": format_type,
-        "category": "open",
+        "category": category,
         "level_min": "0",
         "level_max": "7",
         "price": price_val,
@@ -775,7 +1081,7 @@ def parse_playtomic_tournament(tournament_id):
         "image_url": poster_url,
         "playtomicUrl": full_share_url,
         "playtomic_url": full_share_url,
-        "status": "open",
+        "status": ("finished" if is_finished else "open"),
         "is_external": True,
         "is_private": False,
         "organizer": organizer,
@@ -910,7 +1216,19 @@ def sync_to_firestore(t_data):
         log(f"   [FIRESTORE] ⚠️ Error: {e}")
         return False
 
-def run_sync_cycle(deep_discovery=False):
+def remember_tournament_uuid(uuid_str):
+    """Guarda un nuevo UUID de torneo verificado en URLS_FILE si no está ya presente."""
+    configured = [u.lower() for u in get_configured_uuids()]
+    clean_uuid = str(uuid_str).strip().lower()
+    if clean_uuid and clean_uuid not in configured:
+        try:
+            with open(URLS_FILE, "a", encoding="utf-8") as f:
+                f.write(f"\nhttps://app.playtomic.com/tournaments/{clean_uuid}?utm_source=app_android&utm_campaign=share\n")
+            log(f"   💾 [NUEVA AMERICANA REGISTRADA] Enlace guardado en {URLS_FILE}: {clean_uuid}")
+        except Exception as e:
+            log(f"   ⚠️ Error guardando UUID en {URLS_FILE}: {e}")
+
+def run_sync_cycle(deep_discovery=True):
     """Ejecuta una ronda de análisis y sincronización Playtomic en tiempo real."""
     mode_str = "COMPLETO (+ búsqueda de nuevos torneos)" if deep_discovery else "RÁPIDO EN TIEMPO REAL"
     log("==================================================================")
@@ -951,6 +1269,7 @@ def run_sync_cycle(deep_discovery=False):
             
             log(f"   🎾 {t_data['name']} [{t_data['location']}]: {t_data['occupied_players']}/{t_data['max_players']} plazas ({t_data['spots_left']} libres) • {t_data['courts']} pistas")
             sync_to_firestore(t_data)
+            remember_tournament_uuid(uid)
             results.append(t_data)
         else:
             log(f"   ⚠️ Torneo {uid} descartado o no accesible")
@@ -969,15 +1288,19 @@ def run_sync_cycle(deep_discovery=False):
 def main():
     parser = argparse.ArgumentParser(description="Automatismo Playtomic Somos Pádel")
     parser.add_argument("--once", action="store_true", help="Ejecutar una sola vez y salir")
+    parser.add_argument("--daily", action="store_true", help="Modo autónomo diario: ejecuta un ciclo cada 24h")
     parser.add_argument("--interval-hours", type=float, default=None, help="Intervalo en horas")
     parser.add_argument("--interval-minutes", type=float, default=2.0, help="Intervalo en minutos (por defecto 2 min)")
     args = parser.parse_args()
 
     if args.once:
-        run_sync_cycle(deep_discovery=False)
+        run_sync_cycle(deep_discovery=True)
         sys.exit(0)
 
-    if args.interval_hours is not None:
+    if args.daily:
+        sleep_secs = 24 * 3600
+        desc = "24 horas (DIARIO AUTÓNOMO)"
+    elif args.interval_hours is not None:
         sleep_secs = int(args.interval_hours * 3600)
         desc = f"{args.interval_hours} horas"
     else:
@@ -989,7 +1312,7 @@ def main():
     while True:
         try:
             deep = (cycle_count % 30 == 0)
-            run_sync_cycle(deep_discovery=False)
+            run_sync_cycle(deep_discovery=True)
             cycle_count += 1
         except Exception as e:
             log(f"❌ Error en ciclo daemon: {e}")

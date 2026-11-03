@@ -1732,9 +1732,10 @@
                             <button class="submenu-item nav-group-americana-sub" data-view="americanas_mgmt" onclick="loadAdminView('americanas_mgmt')">
                                 <span class="nav-text">Gestor de Americanas</span>
                             </button>
-                            <button class="submenu-item nav-group-americana-sub" onclick="window.openQuickPlaytomicSyncSelector()" style="background: rgba(0, 198, 255, 0.12); color: #00C6FF !important; font-weight: 900; border-radius: 8px; margin: 3px 0;">
-                                <span class="icon-box" style="color: #00C6FF;"><i class="fas fa-sync-alt"></i></span>
-                                <span class="nav-text">🎾 Sincronizar Playtomic</span>
+                            <button class="submenu-item nav-group-americana-sub btn-playtomic-sub" data-view="playtomic" onclick="loadAdminView('playtomic')" style="background: linear-gradient(135deg, rgba(0, 198, 255, 0.18) 0%, rgba(0, 114, 255, 0.14) 100%); color: #00C6FF !important; font-weight: 900; border: 1px solid rgba(0, 198, 255, 0.4); border-radius: 8px; margin: 3px 0; display: flex; align-items: center; gap: 8px;">
+                                <span class="icon-box" style="color: #00C6FF;"><i class="fas fa-bolt"></i></span>
+                                <span class="nav-text">🎾 Playtomic (En Vivo)</span>
+                                <span style="background: #00C6FF; color: #0f172a; font-size: 0.58rem; font-weight: 900; padding: 1px 6px; border-radius: 6px; margin-left: auto;">LIVE</span>
                             </button>
                             <button class="submenu-item nav-group-americana-sub" data-view="americanas_create" onclick="loadAdminView('americanas_create')">
                                 <span class="nav-text">Crear Americana</span>
@@ -2104,7 +2105,7 @@
                 </div>
                 <div class="top-actions" style="display:flex; align-items:center; gap:10px;">
                     <!-- BOTÓN PLAYTOMIC SYNC DESTACADO -->
-                    <button id="top-bar-playtomic-btn" type="button" class="haptic-feedback" onclick="window.openQuickPlaytomicSyncSelector()"
+                    <button id="top-bar-playtomic-btn" type="button" class="haptic-feedback" onclick="loadAdminView('playtomic')"
                         title="Sincronizar Jugadores de Playtomic"
                         style="background: linear-gradient(135deg, #00C6FF 0%, #0072FF 100%); color: #fff; border: 1.5px solid rgba(255,255,255,0.4); padding: 7px 14px; border-radius: 20px; font-weight: 900; font-size: 0.78rem; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; box-shadow: 0 2px 12px rgba(0, 198, 255, 0.45); white-space: nowrap;">
                         <i class="fas fa-sync-alt"></i> <span>🎾 PLAYTOMIC SYNC</span>
@@ -2948,7 +2949,7 @@
 
 
 <!-- Modal Sincronizador Playtomic -> Somos Pádel -->
-    <div id="playtomic-sync-modal" class="modal-overlay hidden" style="z-index: 10001;">
+    <div id="playtomic-sync-modal" class="modal-overlay hidden" style="display: none !important;" style="z-index: 10001;">
         <div class="modal-content" style="max-width: 720px; width: 95%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border: 1px solid rgba(0,198,255,0.3);">
             <!-- HEADER -->
             <div class="modal-header" style="background: linear-gradient(135deg, #091e3a 0%, #1e3c72 100%); padding: 18px 24px; border-bottom: 1px solid rgba(0,198,255,0.2); display: flex; justify-content: space-between; align-items: center;">
@@ -4110,9 +4111,10 @@
             { view: 'entrenos_results', label: 'Resultados', icon: 'fa-bullseye' },
             { view: 'entrenos_simulator', label: 'Simulador Entrenos', icon: 'fa-rotate' },
 
-            // 2. 🏆 AMERICANAS
+            // 2. 🏆 AMERICANAS & PLAYTOMIC
             { view: 'americanas_mgmt', label: 'Americanas', icon: 'fa-calendar-check', isPrimary: true },
-            { action: 'playtomic_sync', label: '🎾 Sync Playtomic', icon: 'fa-sync-alt', isPlaytomic: true },
+            { view: 'playtomic', label: '🎾 Playtomic', icon: 'fa-bolt', isPrimary: true },
+            { action: 'playtomic_sync', label: 'Sync Rápido', icon: 'fa-sync-alt', isPlaytomic: true },
             { view: 'americanas_create', label: '+ Crear Americana', icon: 'fa-plus' },
             { view: 'matches', label: 'Marcadores', icon: 'fa-trophy' },
             { view: 'simulator_empty', label: 'Simulador Rotaciones', icon: 'fa-dice' },
@@ -4163,7 +4165,7 @@
                 if (item.action === 'playtomic_sync') {
                     html += `
                         <button type="button" class="subnav-chip" style="background: linear-gradient(135deg, #00C6FF, #0072FF); color: #fff; font-weight: 900; border: none;" 
-                            onclick="window.openQuickPlaytomicSyncSelector()">
+                            onclick="loadAdminView('playtomic')">
                             <i class="fas fa-sync-alt"></i>
                             <span>🎾 Sync Playtomic</span>
                         </button>`;
@@ -4259,9 +4261,10 @@
         })();
     </script>
     <script src="js/modules/admin-notifications-manager.js?v=20260926_V2"></script>
+    <script src="js/modules/admin-playtomic.js?v=20261103_V2"></script>
 
     <!-- 🎾 BOTÓN FLOTANTE SINCRONIZAR PLAYTOMIC (SIEMPRE VISIBLE EN TODAS LAS VISTAS) -->
-    <button id="floating-playtomic-sync-fab" type="button" onclick="window.openQuickPlaytomicSyncSelector()" 
+    <button id="floating-playtomic-sync-fab" type="button" onclick="loadAdminView('playtomic')" 
         title="Sincronizar Jugadores de Playtomic"
         style="position: fixed; bottom: 22px; right: 22px; z-index: 999999; background: linear-gradient(135deg, #00C6FF 0%, #0072FF 100%); color: #ffffff; border: 2.5px solid #ffffff; border-radius: 50px; padding: 12px 22px; font-weight: 900; font-size: 0.92rem; font-family: 'Outfit', sans-serif; cursor: pointer; display: flex; align-items: center; gap: 10px; box-shadow: 0 8px 30px rgba(0, 198, 255, 0.7), 0 2px 8px rgba(0,0,0,0.3); transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1); outline: none;">
         <i class="fas fa-sync-alt fa-spin-hover" style="font-size: 1.1rem;"></i>

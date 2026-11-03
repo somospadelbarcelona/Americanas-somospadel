@@ -82,3 +82,28 @@ def fetch_tournament_participants(tournament_id, access_token):
     except Exception as e:
         return {"success": False, "error": str(e)}
 
+def fetch_club_tournaments(tenant_id, access_token, size=200):
+    """Obtiene todos los torneos/americanas publicados en un club desde la API v2 de Playtomic Manager."""
+    from datetime import datetime, timedelta
+    from_date = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%dT00:00:00")
+    url = f"{PLAYTOMIC_API_BASE}/v2/tournaments?tenant_id={tenant_id}&from_start_date={from_date}&size={size}"
+    req = urllib.request.Request(
+        url,
+        headers={
+            "Authorization": f"Bearer {access_token}",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "Accept": "application/json, text/plain, */*",
+            "x-requested-with": "com.playtomic.manager 1.328.0+build.5972"
+        }
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+            return {"success": True, "data": data if isinstance(data, list) else []}
+    except urllib.error.HTTPError as e:
+        body = e.read().decode('utf-8', errors='ignore')
+        return {"success": False, "code": e.code, "error": body}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+

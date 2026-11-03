@@ -1,30 +1,16 @@
 @echo off
-echo ========================================
-echo   INICIANDO AMERICANAS APP
-echo ========================================
-echo.
-echo Abriendo servidor y navegador...
-echo.
-
+chcp 65001 >nul
+title SOMOSPADEL BCN - SERVIDOR APP & PLAYTOMIC API
+color 0B
 cd /d "%~dp0"
 
-REM Iniciar servidor en segundo plano
-start /B python -m http.server 8000
-
-REM Esperar 2 segundos para que el servidor inicie
-timeout /t 2 /nobreak >nul
-
-REM Abrir navegador
-start http://localhost:8000
-
+echo ========================================================
+echo   🎾 INICIANDO SOMOSPADEL BCN (APP & PLAYTOMIC EN VIVO)
+echo ========================================================
 echo.
-echo ========================================
-echo   SERVIDOR ACTIVO EN http://localhost:8000
-echo ========================================
-echo.
-echo IMPORTANTE: NO CIERRES ESTA VENTANA
-echo Para detener, presiona Ctrl+C
+echo Abriendo navegador en http://localhost:8000...
 echo.
 
-REM Mantener ventana abierta
-python -m http.server 8000
+start "" cmd /c "timeout /t 2 /nobreak >nul && start http://localhost:8000"
+
+python server.py

@@ -203,8 +203,6 @@ def extract_playtomic_datetime(html):
                 
     if month_num and day_num:
         year = now.year
-        if int(month_num) < now.month:
-            year += 1
         date_str = f"{year}-{month_num}-{day_num}"
     else:
         day_match = re.search(r'(\d{1,2})', raw_datetime)
@@ -296,7 +294,7 @@ def extract_playtomic_tournament(url_or_id):
             return None
     else:
         sede = "NEW Play Padel Pro Hospitalet"
-        organizer = "somospadeleugestion@gmail.com"
+        organizer = "somospadel barcelona"
         if any(b in name_lower for b in external_brands):
             print(f"   ⛔ FILTRADO / DESCARTADO: '{name}' pertenece a una marca externa ajena a Somos Pádel.")
             return None
@@ -503,7 +501,7 @@ def extract_playtomic_tournament(url_or_id):
         "image_url": poster_url or "img/padel-event.jpg",
         "playtomicUrl": full_share_url,
         "playtomic_url": full_share_url,
-        "status": "open",
+        "status": ("finished" if date_str < datetime.now().strftime("%Y-%m-%d") else "open"),
         "is_external": True,
         "is_private": False,
         "organizer": organizer,
