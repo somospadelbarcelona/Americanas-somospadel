@@ -2698,15 +2698,15 @@
                         bar.classList.remove('subnav-theme-profile');
                         bar.classList.add('subnav-theme-community');
                         const isCampaignActive = window.SeasonCampaignService ? window.SeasonCampaignService.isCampaignActiveSync() : false;
+                        let effectiveTab = activeTab;
+                        if (['home', 'comunidad', 'community', 'community_home'].includes(effectiveTab)) {
+                            effectiveTab = 'teams';
+                        }
                         const subtabs = [
-                            { id: 'home', icon: 'fa-home', label: '1. INICIO', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('comunidad');" },
-                            { id: 'chat', icon: 'fa-comments', label: 'CHAT CLUB', badge: 'LIVE', isLive: true, action: "window.PlayerView?.haptic?.(15); window.ChatView?.openGeneralCommunityChat();" },
-                            { id: 'entrenos', icon: 'fa-table-tennis', label: '2. ENTRENOS', badge: 'CLINICS', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('entrenos');" },
-                            { id: 'teams', icon: 'fa-users', label: '3. EQUIPOS', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('equipos');" },
-                            { id: 'my_team', icon: 'fa-shield-alt', label: '4. MI EQUIPO', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('my_team');" },
-                            { id: 'inscriptions', icon: 'fa-edit', label: '5. INSCRIPCIONES', badge: isCampaignActive ? 'ABIERTA' : 'PRONTO', isSuccessBadge: isCampaignActive, action: "window.PlayerView?.haptic?.(15); window.Router.navigate('inscriptions');" },
-                            { id: 'agenda', icon: 'fa-calendar-alt', label: '6. MI AGENDA', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('agenda');" },
-                            { id: 'records', icon: 'fa-trophy', label: '7. RÉCORDS TEMPORADA', badge: 'TOP', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('records');" }
+                            { id: 'teams', icon: 'fa-shield-alt', label: 'EQUIPOS DEL CLUB', badge: '8 EQUIPOS', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('equipos');" },
+                            { id: 'my_team', icon: 'fa-user-shield', label: 'MI EQUIPO', badge: 'CONVOCATORIA', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('my_team');" },
+                            { id: 'jornada', icon: 'fa-calendar-check', label: 'SIGUIENTE JORNADA', badge: 'MATCHDAY', action: "window.PlayerView?.haptic?.(15); if (window.TeamView?.openNextMatchesSummaryModal) window.TeamView.openNextMatchesSummaryModal(); else window.Router.navigate('equipos');" },
+                            { id: 'records', icon: 'fa-trophy', label: 'RÉCORDS & STATS', badge: 'TOP', action: "window.PlayerView?.haptic?.(15); window.Router.navigate('records');" }
                         ];
 
                         bar.style.display = 'block';
@@ -2717,7 +2717,7 @@
                                 </button>
                                 <div class="community-submenu-pro-bar">
                                     ${subtabs.map(tab => {
-                                        const isActive = activeTab === tab.id;
+                                        const isActive = effectiveTab === tab.id;
                                         return `
                                             <button data-tab-id="${tab.id}" data-tab-active="${isActive ? 'true' : 'false'}"
                                                     class="esm-pro-btn ${isActive ? 'active' : 'inactive'}"
@@ -4724,12 +4724,12 @@
                 <span>Tienda</span>
             </div>
 
-            <!-- 6. COMUNIDAD SOMOSPADEL (1. INICIO COMUNIDAD POR DEFECTO) -->
+            <!-- 6. EQUIPOS SOMOSPADEL (LIGA & FEDERADOS) -->
             <div class="nav-item haptic-feedback" 
                 id="nav-community" 
-                onclick="window.PlayerView?.haptic?.(20); if (typeof window.closeCommunityMenu === 'function') window.closeCommunityMenu(); window.Router && window.Router.navigate('comunidad');">
-                <i class="fas fa-users"></i>
-                <span>Comunidad</span>
+                onclick="window.PlayerView?.haptic?.(20); if (typeof window.closeCommunityMenu === 'function') window.closeCommunityMenu(); window.Router && window.Router.navigate('equipos'); /* window.Router.navigate('comunidad') */">
+                <i class="fas fa-shield-alt"></i>
+                <span>Equipos</span>
             </div>
 
             <!-- 5. PERFIL (FUT Card, Stats y Ajustes) -->
@@ -6383,7 +6383,7 @@
     <script src="js/modules/teams/SeasonCampaignService.js?v=2.4" defer></script>
     <script src="js/modules/teams/SeasonCampaignView.js?v=GENDER_COLORS_v1" defer></script>
     <script src="js/modules/admin-season-campaign.js?v=2.2" defer></script>
-    <script src="js/modules/teams/TeamView.js?v=RESPONSIVE_ULTRA_v21" defer></script>
+    <script src="js/modules/teams/TeamView.js?v=20261109_v3" defer></script>
     <script src="js/modules/teams/TeamController.js?v=37" defer></script>
     <script src="js/modules/tournaments/TournamentView.js?v=21" defer></script>
     <script src="js/modules/tournaments/TournamentController.js?v=21" defer></script>

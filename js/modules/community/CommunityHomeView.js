@@ -198,6 +198,19 @@
                             El punto de encuentro oficial del club: convocatorias de entrenos, ligas federadas, vestuario y tercer tiempo.
                         </p>
 
+                        <!-- ACCIONES RÁPIDAS DIRECTAS Y MINIMALISTAS DE EQUIPOS -->
+                        <div class="ch-quick-teams-bar" style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 16px 0 10px;">
+                            <button type="button" onclick="window.Router ? window.Router.navigate('equipos') : (window.TeamController && window.TeamController.init())" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1.5px solid rgba(56, 189, 248, 0.4); padding: 8px 16px; border-radius: 14px; font-weight: 850; font-size: 0.75rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(56, 189, 248, 0.15); transition: all 0.2s ease;">
+                                <i class="fas fa-shield-alt"></i> Equipos de Liga
+                            </button>
+                            <button type="button" onclick="window.Router ? window.Router.navigate('my_team') : (window.TeamView && window.TeamView.renderMyTeam())" style="background: rgba(255, 94, 0, 0.15); color: #ff8c42; border: 1.5px solid rgba(255, 94, 0, 0.4); padding: 8px 16px; border-radius: 14px; font-weight: 850; font-size: 0.75rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(255, 94, 0, 0.15); transition: all 0.2s ease;">
+                                <i class="fas fa-user-shield"></i> Mi Equipo
+                            </button>
+                            <button type="button" onclick="window.TeamView?.openNextMatchesSummaryModal ? window.TeamView.openNextMatchesSummaryModal() : (window.Router && window.Router.navigate('equipos'))" style="background: rgba(204, 255, 0, 0.15); color: #ccff00; border: 1.5px solid rgba(204, 255, 0, 0.35); padding: 8px 16px; border-radius: 14px; font-weight: 850; font-size: 0.75rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(204, 255, 0, 0.15); transition: all 0.2s ease;">
+                                <i class="fas fa-calendar-check"></i> Próxima Jornada
+                            </button>
+                        </div>
+
                         <!-- QUICK STATS / KPIS (Compacto, elegante y equilibrado) -->
                         <div class="ch-stats-grid">
                             <div class="ch-stat-card" style="--accent-color: #a78bfa;">
@@ -372,8 +385,8 @@
                         </div>
                     </section>
 
-                    <!-- SECCIÓN 3: NOTICIAS & ACTUALIDAD DE LA COMUNIDAD -->
-                    <section class="ch-news-section">
+                    <!-- SECCIÓN 3: NOTICIAS & ACTUALIDAD DE LA COMUNIDAD (OCULTO - MINIMALISTA) -->
+                    <section class="ch-news-section" style="display: none !important;">
                         <div class="ch-section-header ch-news-header">
                             <div class="ch-section-badge-pill">
                                 <i class="fas fa-newspaper"></i> ACTUALIDAD

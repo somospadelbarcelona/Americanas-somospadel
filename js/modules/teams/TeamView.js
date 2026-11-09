@@ -411,6 +411,33 @@
                         </button>
                     </div>
  
+                    <!-- ⚡ SELECTOR RÁPIDO DE EQUIPOS (ACCESO MÓVIL DIRECTO) -->
+                    <div class="team-quick-jump-wrapper" style="margin-bottom: 22px;">
+                        <div style="font-size: 0.68rem; font-weight: 900; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+                            <span>⚡ Salto directo a tu equipo:</span>
+                            <span style="font-size: 0.62rem; color: #38bdf8; font-weight: 800;">Toca para abrir</span>
+                        </div>
+                        <div class="team-quick-jump-bar" style="display: flex; gap: 8px; overflow-x: auto; scroll-behavior: smooth; scrollbar-width: none; -ms-overflow-style: none; padding-bottom: 4px;">
+                            ${filteredTeams.map(t => {
+                                const isFav = t.id === favId;
+                                const shortName = t.name.replace(/SOMOS\s+P[AÁ]DEL\s*(BCN)?/i, '').trim() || t.name;
+                                return `
+                                    <button type="button" 
+                                            onclick="event.stopPropagation(); window.TeamView.focusTeam('${t.id}')"
+                                            style="background: ${isFav ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' : '#ffffff'}; 
+                                                   border: 1.5px solid ${isFav ? '#eab308' : '#e2e8f0'}; 
+                                                   color: ${isFav ? '#fde047' : '#0f172a'}; 
+                                                   border-radius: 14px; padding: 8px 13px; font-weight: 900; font-size: 0.74rem; 
+                                                   display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; cursor: pointer; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.03); transition: all 0.2s ease;">
+                                        ${isFav ? '<i class="fas fa-star" style="color: #eab308; font-size: 0.65rem;"></i>' : '<span style="width: 6px; height: 6px; border-radius: 50%; background: #38bdf8;"></span>'}
+                                        <span>${shortName}</span>
+                                        ${t.ranking ? `<span style="background: ${isFav ? 'rgba(255,255,255,0.15)' : '#f1f5f9'}; padding: 1px 6px; border-radius: 6px; font-size: 0.62rem; color: ${isFav ? '#ffffff' : '#64748b'};"><i class="fas fa-trophy" style="font-size:0.5rem;"></i> #${t.ranking}</span>` : ''}
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+
                     <!-- 🚀 MASTER TEAMS GRID -->
                     <div id="teams-list-grid" style="display: grid; gap: 20px;">
                         ${filteredTeams.length > 0 ? filteredTeams.map(team => this.renderTeamCard(team)).join('') : ''}
@@ -667,31 +694,39 @@
                     <div id="content-${team.id}" style="max-height: 0; opacity: 0; overflow: hidden; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);">
                         <div style="padding-top: 20px;" onclick="event.stopPropagation();">
                             
-                            <!-- 🎛️ HIGH-DENSITY MINI TABS BUTTONS -->
-                            <div style="display: flex; background: #f1f5f9; padding: 3px; border-radius: 12px; border: 1px solid #edf2f7; margin-bottom: 15px; overflow-x: auto;">
+                            <!-- 🎛️ TABS LIMPIAS Y ERGONÓMICAS (SIN SCROLLBAR GRIS) -->
+                            <div style="display: flex; background: #f1f5f9; padding: 4px; border-radius: 14px; border: 1px solid #edf2f7; margin-bottom: 12px; gap: 4px; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;">
                                 <button id="btn-${team.id}-class" onclick="window.TeamView.switchCardTab('${team.id}', 'class')" 
-                                        style="flex: 1; padding: 8px 4px; border-radius: 9px; background: #0f172a; color: #ffffff; border: none; font-weight: 900; font-size: 0.6rem; cursor: pointer; transition: all 0.2s; min-width: 60px;">
+                                        style="flex: 1; padding: 9px 6px; border-radius: 10px; background: #0f172a; color: #ffffff; border: none; font-weight: 900; font-size: 0.68rem; cursor: pointer; transition: all 0.2s; white-space: nowrap; text-align: center;">
                                     🏆 TABLA
                                 </button>
                                 <button id="btn-${team.id}-sched" onclick="window.TeamView.switchCardTab('${team.id}', 'sched')" 
-                                        style="flex: 1; padding: 8px 4px; border-radius: 9px; background: transparent; color: #64748b; border: none; font-weight: 800; font-size: 0.6rem; cursor: pointer; transition: all 0.2s; min-width: 70px;">
+                                        style="flex: 1; padding: 9px 6px; border-radius: 10px; background: transparent; color: #64748b; border: none; font-weight: 800; font-size: 0.68rem; cursor: pointer; transition: all 0.2s; white-space: nowrap; text-align: center;">
                                     📅 PARTIDOS
                                 </button>
                                 <button id="btn-${team.id}-rost" onclick="window.TeamView.switchCardTab('${team.id}', 'rost')" 
-                                        style="flex: 1; padding: 8px 4px; border-radius: 9px; background: transparent; color: #64748b; border: none; font-weight: 800; font-size: 0.6rem; cursor: pointer; transition: all 0.2s; min-width: 80px;">
+                                        style="flex: 1; padding: 9px 6px; border-radius: 10px; background: transparent; color: #64748b; border: none; font-weight: 800; font-size: 0.68rem; cursor: pointer; transition: all 0.2s; white-space: nowrap; text-align: center;">
                                     👥 JUGADORES
                                 </button>
                                 <button id="btn-${team.id}-stats" onclick="window.TeamView.switchCardTab('${team.id}', 'stats')" 
-                                        style="flex: 1; padding: 8px 4px; border-radius: 9px; background: transparent; color: #64748b; border: none; font-weight: 800; font-size: 0.6rem; cursor: pointer; transition: all 0.2s; min-width: 60px;">
+                                        style="flex: 1; padding: 9px 6px; border-radius: 10px; background: transparent; color: #64748b; border: none; font-weight: 800; font-size: 0.68rem; cursor: pointer; transition: all 0.2s; white-space: nowrap; text-align: center;">
                                     📊 STATS
                                 </button>
-                                <button id="btn-${team.id}-convo" onclick="event.stopPropagation(); window.TeamController.showTeamDetail('${team.id}', 'convocatoria')" 
-                                        style="flex: 1; padding: 8px 4px; border-radius: 9px; background: transparent; color: #0284c7; border: none; font-weight: 900; font-size: 0.6rem; cursor: pointer; transition: all 0.2s; min-width: 75px;">
-                                    📋 RSVP
+                            </div>
+
+                            <!-- ACCIONES TÁCTICAS DIRECTAS: CONVOCATORIA & PIZARRA -->
+                            <div style="display: flex; gap: 8px; margin-bottom: 14px;">
+                                <button onclick="event.stopPropagation(); window.TeamController.showTeamDetail('${team.id}', 'convocatoria')" 
+                                        style="flex: 1; padding: 9px 12px; background: rgba(2, 132, 199, 0.08); border: 1.5px solid rgba(2, 132, 199, 0.35); border-radius: 12px; color: #0284c7; font-weight: 900; font-size: 0.72rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;"
+                                        onmouseover="this.style.background='rgba(2, 132, 199, 0.16)'"
+                                        onmouseout="this.style.background='rgba(2, 132, 199, 0.08)'">
+                                    <i class="fas fa-clipboard-check"></i> Convocatoria & RSVP
                                 </button>
-                                <button id="btn-${team.id}-tactica" onclick="event.stopPropagation(); window.TeamController.showTeamDetail('${team.id}', 'tactica')" 
-                                        style="flex: 1; padding: 8px 4px; border-radius: 9px; background: transparent; color: #10b981; border: none; font-weight: 900; font-size: 0.6rem; cursor: pointer; transition: all 0.2s; min-width: 70px;">
-                                    📋 TÁCTICA
+                                <button onclick="event.stopPropagation(); window.TeamController.showTeamDetail('${team.id}', 'tactica')" 
+                                        style="padding: 9px 14px; background: rgba(16, 185, 129, 0.08); border: 1.5px solid rgba(16, 185, 129, 0.35); border-radius: 12px; color: #059669; font-weight: 900; font-size: 0.72rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;"
+                                        onmouseover="this.style.background='rgba(16, 185, 129, 0.16)'"
+                                        onmouseout="this.style.background='rgba(16, 185, 129, 0.08)'">
+                                    <i class="fas fa-shield-alt"></i> Táctica
                                 </button>
                             </div>
 
@@ -1031,6 +1066,37 @@
             if (window.navigator.vibrate) window.navigator.vibrate(8);
         }
 
+        focusTeam(teamId) {
+            const card = document.getElementById(`team-${teamId}`);
+            const content = document.getElementById(`content-${teamId}`);
+            const chevron = document.getElementById(`chevron-${teamId}`);
+            if (!card) return;
+
+            if (content) {
+                content.style.maxHeight = '1500px';
+                content.style.opacity = '1';
+            }
+            if (chevron) {
+                chevron.style.transform = 'rotate(180deg)';
+                chevron.style.color = '#38b000';
+            }
+
+            try {
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } catch(e) {}
+
+            card.style.borderColor = '#38b000';
+            card.style.boxShadow = '0 0 25px rgba(56, 176, 0, 0.4)';
+            setTimeout(() => {
+                const favId = localStorage.getItem('favTeam_somospadel');
+                const isFav = teamId === favId;
+                card.style.borderColor = isFav ? '#eab308' : '#e2e8f0';
+                card.style.boxShadow = isFav ? '0 10px 30px rgba(234,179,8,0.18)' : '0 6px 20px rgba(15,23,42,0.035)';
+            }, 1800);
+
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(20);
+        }
+
         toggleCard(teamId) {
             const content = document.getElementById(`content-${teamId}`);
             const chevron = document.getElementById(`chevron-${teamId}`);
@@ -1040,7 +1106,7 @@
 
             if (content.style.maxHeight === '0px' || !content.style.maxHeight) {
                 // Expandir
-                content.style.maxHeight = '650px';
+                content.style.maxHeight = '1500px';
                 content.style.opacity = '1';
                 if (chevron) {
                     chevron.style.transform = 'rotate(180deg)';
