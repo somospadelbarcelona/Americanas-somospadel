@@ -232,76 +232,37 @@
             ];
 
             this.container.innerHTML = `
-                <div class="teams-view-container animate-fade-in" style="padding: 24px; padding-bottom: 120px; background: #f8fafc; font-family: 'Outfit', sans-serif;">
+                <div class="teams-view-container animate-fade-in" style="padding: 16px 14px 120px; background: #f8fafc; font-family: 'Outfit', sans-serif;">
                     
-                    <!-- 💎 PRO GAME HUB HERO HEADER -->
-                    <div style="margin-bottom: 25px; background: linear-gradient(135deg, #0b1329 0%, #0f172a 60%, #162447 100%); padding: 26px 22px; border-radius: 28px; border: 1px solid rgba(255, 255, 255, 0.08); position: relative; overflow: hidden; box-shadow: 0 16px 36px rgba(11, 19, 41, 0.3), 0 0 35px rgba(204, 255, 0, 0.06);">
-                        <!-- Accent top line con degradado flúor -->
-                        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, #ccff00, #38bdf8, #a78bfa); border-radius: 28px 28px 0 0;"></div>
-                        
-                        <!-- Ambient glow orbs -->
-                        <div style="position: absolute; top: -40px; right: -40px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(204, 255, 0, 0.12) 0%, rgba(56, 176, 0, 0.03) 60%, transparent 80%); border-radius: 50%; pointer-events: none;"></div>
-                        <div style="position: absolute; bottom: -30px; left: -30px; width: 160px; height: 160px; background: radial-gradient(circle, rgba(56, 189, 248, 0.08) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+                    <!-- 🏆 HEADER MINIMALISTA & ATHLETIC (PRO COMPACT) -->
+                    <div style="margin-bottom: 16px; padding: 2px 2px; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px;">
+                        <div>
+                            <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.68rem; font-weight: 850; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px;">
+                                <span style="width: 7px; height: 7px; border-radius: 50%; background: #38bdf8;"></span>
+                                <span>LLIGA GUINOTPRUNERA • 2026</span>
+                            </div>
+                            <h1 style="color: #0f172a; font-weight: 950; font-size: 1.65rem; margin: 0; letter-spacing: -0.8px; line-height: 1.1;">
+                                Equipos SomosPádel
+                            </h1>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-top: 5px; font-size: 0.72rem; color: #64748b; font-weight: 700;">
+                                <span><strong style="color: #0f172a;">${totalTeamsCount}</strong> Equipos</span>
+                                <span>•</span>
+                                <span><strong style="color: #16a34a;">${totalWins}</strong> Victorias</span>
+                                <span>•</span>
+                                <span><strong style="color: #f59e0b;">${totalPointsCount}</strong> Pts Club</span>
+                            </div>
+                        </div>
 
-                        <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 2; gap: 12px;">
-                            <div>
-                                <div style="display: inline-flex; align-items: center; gap: 7px; background: rgba(204, 255, 0, 0.1); border: 1px solid rgba(204, 255, 0, 0.28); padding: 4px 10px; border-radius: 20px; margin-bottom: 8px;">
-                                    <span style="width: 6px; height: 6px; border-radius: 50%; background: #ccff00; box-shadow: 0 0 8px #ccff00; display: inline-block;"></span>
-                                    <span style="font-size: 0.63rem; color: #ccff00; font-weight: 900; letter-spacing: 1.2px; text-transform: uppercase;">LLIGA GUINOTPRUNERA • TEMPORADA 2026</span>
-                                </div>
-                                <h1 style="color: #ffffff; font-weight: 950; font-size: 2.2rem; margin: 0; letter-spacing: -1px; text-transform: uppercase; line-height: 1.05;">
-                                    EQUIPOS <br><span style="color: #ccff00; text-shadow: 0 0 24px rgba(204, 255, 0, 0.35);">SOMOS PÁDEL</span>
-                                </h1>
-                                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px;">
-                                    <button onclick="window.TeamView.openNextMatchesSummaryModal()" 
-                                            style="background: linear-gradient(135deg, rgba(204, 255, 0, 0.16) 0%, rgba(56, 176, 0, 0.24) 100%); 
-                                                   color: #ccff00; border: 1.5px solid #ccff00; padding: 8px 16px; border-radius: 14px; 
-                                                   font-size: 0.72rem; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; 
-                                                   gap: 7px; backdrop-filter: blur(8px); box-shadow: 0 4px 15px rgba(204, 255, 0, 0.2); 
-                                                   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);" 
-                                            onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 8px 22px rgba(204, 255, 0, 0.35)'; this.style.background='rgba(204, 255, 0, 0.26)';" 
-                                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(204, 255, 0, 0.2)'; this.style.background='linear-gradient(135deg, rgba(204, 255, 0, 0.16) 0%, rgba(56, 176, 0, 0.24) 100%)';">
-                                        <i class="fas fa-share-alt" style="color: #ccff00;"></i> RESUMEN SIG. JORNADA
-                                    </button>
-                                </div>
-                            </div>
-                            <img src="img/logo_somospadel.png" 
-                                 style="width: 66px; height: 66px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 0 16px rgba(204, 255, 0, 0.35)) drop-shadow(0 6px 14px rgba(0,0,0,0.5)); transition: transform 0.3s ease;"
-                                 onmouseover="this.style.transform='scale(1.08) rotate(3deg)';"
-                                 onmouseout="this.style.transform='scale(1) rotate(0deg)';">
-                        </div>
-                        
-                        <!-- 📊 4 KPIS DEL CLUB (GLASSMORPHISM MARCADOR DEPORTIVO) -->
-                        <div class="team-club-kpis" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 24px; position: relative; z-index: 2;">
-                            <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border-radius: 16px; padding: 12px 6px; text-align: center; transition: all 0.2s ease;">
-                                <div style="display: flex; align-items: center; justify-content: center; gap: 4px; margin-bottom: 3px;">
-                                    <i class="fas fa-shield-alt" style="color: #38bdf8; font-size: 0.75rem;"></i>
-                                    <span style="font-size: 0.53rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Equipos</span>
-                                </div>
-                                <div id="metric-teams-count" style="font-size: 1.35rem; color: #ffffff; font-weight: 950; line-height: 1.1;">${totalTeamsCount}</div>
-                            </div>
-                            <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border-radius: 16px; padding: 12px 6px; text-align: center; transition: all 0.2s ease;">
-                                <div style="display: flex; align-items: center; justify-content: center; gap: 4px; margin-bottom: 3px;">
-                                    <i class="fas fa-users" style="color: #a78bfa; font-size: 0.75rem;"></i>
-                                    <span style="font-size: 0.53rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Jugadores</span>
-                                </div>
-                                <div style="font-size: 1.35rem; color: #ffffff; font-weight: 950; line-height: 1.1;">${totalPlayersCount}</div>
-                            </div>
-                            <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(204, 255, 0, 0.25); backdrop-filter: blur(10px); border-radius: 16px; padding: 12px 6px; text-align: center; transition: all 0.2s ease;">
-                                <div style="display: flex; align-items: center; justify-content: center; gap: 4px; margin-bottom: 3px;">
-                                    <i class="fas fa-trophy" style="color: #ccff00; font-size: 0.75rem;"></i>
-                                    <span style="font-size: 0.53rem; color: #ccff00; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Victorias</span>
-                                </div>
-                                <div style="font-size: 1.35rem; color: #ccff00; font-weight: 950; text-shadow: 0 0 12px rgba(204,255,0,0.35); line-height: 1.1;">${totalWins}</div>
-                            </div>
-                            <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border-radius: 16px; padding: 12px 6px; text-align: center; transition: all 0.2s ease;">
-                                <div style="display: flex; align-items: center; justify-content: center; gap: 4px; margin-bottom: 3px;">
-                                    <i class="fas fa-bolt" style="color: #f59e0b; font-size: 0.75rem;"></i>
-                                    <span style="font-size: 0.53rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Pts Club</span>
-                                </div>
-                                <div style="font-size: 1.35rem; color: #fbbf24; font-weight: 950; line-height: 1.1;">${totalPointsCount}</div>
-                            </div>
-                        </div>
+                        <!-- Botón compacto Próxima Jornada -->
+                        <button type="button" 
+                                onclick="window.TeamView.openNextMatchesSummaryModal()" 
+                                style="background: #0f172a; color: #ccff00; border: none; padding: 10px 14px; border-radius: 14px; 
+                                       font-size: 0.72rem; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; 
+                                       gap: 6px; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2); white-space: nowrap; flex-shrink: 0; transition: all 0.2s ease;"
+                                onmouseover="this.style.background='#1e293b'; this.style.transform='translateY(-1px)';"
+                                onmouseout="this.style.background='#0f172a'; this.style.transform='translateY(0)';">
+                            <i class="fas fa-calendar-alt"></i> Próxima Jornada
+                        </button>
                     </div>
 
                     <!-- 🔍 SEARCH BAR -->
