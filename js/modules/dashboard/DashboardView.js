@@ -140,127 +140,123 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         </div>
                     </div>
 
-                    <!-- ════════ BLOQUE 2: ACCESOS RÁPIDOS CIRCULARES PLAYTOMIC CON MARCA SOMOSPADEL ════════ -->
+                    <!-- ════════ BLOQUE 2: ACCESOS RÁPIDOS CIRCULARES 3D PREMIUM SOMOSPADEL ════════ -->
                     <div class="sp-playtomic-quick-actions" style="
                         display: grid;
                         grid-template-columns: repeat(4, 1fr);
-                        gap: 6px;
+                        gap: 8px;
                         align-items: start;
                         text-align: center;
-                        margin-bottom: 20px;
-                        padding: 4px 0;
+                        margin-bottom: 22px;
+                        padding: 6px 0;
                         background: #ffffff;
                     ">
-                        <!-- 1. Americanas -->
+                        <!-- 1. Americanas (Trofeo 3D Neón) -->
                         <div class="sp-action-pod haptic-feedback"
                             onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('americanas');"
                             style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
                             <div style="
-                                width: 46px;
-                                height: 46px;
+                                width: 52px;
+                                height: 52px;
                                 border-radius: 50%;
-                                background: linear-gradient(135deg, #f7fee7 0%, #e4fc8c 50%, #CCFF00 100%);
-                                border: 2px solid #a3e635;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                box-shadow: 0 4px 12px rgba(163, 230, 53, 0.38), 0 2px 4px rgba(0,0,0,0.04);
+                                padding: 2px;
+                                background: linear-gradient(135deg, #a3e635 0%, #CCFF00 50%, #00d2ff 100%);
+                                box-shadow: 0 6px 16px rgba(163, 230, 53, 0.35), 0 2px 4px rgba(0,0,0,0.04);
                                 position: relative;
-                                transition: transform 0.18s ease, box-shadow 0.18s ease;
+                                transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
                             "
-                            onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 6px 16px rgba(163, 230, 53, 0.5)';"
-                            onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 12px rgba(163, 230, 53, 0.38), 0 2px 4px rgba(0,0,0,0.04)';">
-                                <i class="fas fa-trophy" style="font-size: 1.05rem; color: #0f172a;"></i>
-                                <span style="position: absolute; top: -2px; right: -2px; background: #ef4444; color: #ffffff; font-size: 0.44rem; font-weight: 900; padding: 1.5px 4px; border-radius: 6px; border: 1px solid #ffffff; box-shadow: 0 1px 4px rgba(239, 68, 68, 0.4); letter-spacing: 0.2px;">TOP</span>
+                            onmouseover="this.style.transform='scale(1.10)'; this.style.boxShadow='0 8px 20px rgba(163, 230, 53, 0.5)';"
+                            onmouseout="this.style.transform='none'; this.style.boxShadow='0 6px 16px rgba(163, 230, 53, 0.35), 0 2px 4px rgba(0,0,0,0.04)';">
+                                <div style="width: 100%; height: 100%; border-radius: 50%; overflow: hidden; background: #070d1e;">
+                                    <img src="img/icon_story_americanas.png?v=3" alt="Americanas" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+                                </div>
+                                <span style="position: absolute; top: -2px; right: -2px; background: linear-gradient(135deg, #ef4444, #dc2626); color: #ffffff; font-size: 0.44rem; font-weight: 950; padding: 1.5px 5px; border-radius: 6px; border: 1.5px solid #ffffff; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.5); letter-spacing: 0.3px;">TOP</span>
                             </div>
-                            <span style="margin-top: 6px; font-size: 0.72rem; font-weight: 850; color: #111827; line-height: 1.1;">
+                            <span style="margin-top: 7px; font-size: 0.74rem; font-weight: 900; color: #0F172A; line-height: 1.1; font-family: 'Outfit', sans-serif;">
                                 Americanas
                             </span>
-                            <span style="font-size: 0.58rem; color: #64748b; font-weight: 600; margin-top: 1px;">Torneos</span>
+                            <span style="font-size: 0.60rem; color: #64748b; font-weight: 600; margin-top: 1px;">Torneos</span>
                         </div>
 
-                        <!-- 2. Entrenos -->
+                        <!-- 2. Entrenos (Pala & Pista 3D) -->
                         <div class="sp-action-pod haptic-feedback"
                             onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('entrenos');"
                             style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
                             <div style="
-                                width: 46px;
-                                height: 46px;
+                                width: 52px;
+                                height: 52px;
                                 border-radius: 50%;
-                                background: linear-gradient(135deg, #f0f9ff 0%, #bae6fd 50%, #38bdf8 100%);
-                                border: 2px solid #0284c7;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                box-shadow: 0 4px 12px rgba(56, 189, 248, 0.38), 0 2px 4px rgba(0,0,0,0.04);
+                                padding: 2px;
+                                background: linear-gradient(135deg, #0284c7 0%, #38bdf8 50%, #00e5ff 100%);
+                                box-shadow: 0 6px 16px rgba(2, 132, 199, 0.35), 0 2px 4px rgba(0,0,0,0.04);
                                 position: relative;
-                                transition: transform 0.18s ease, box-shadow 0.18s ease;
+                                transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
                             "
-                            onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 6px 16px rgba(56, 189, 248, 0.5)';"
-                            onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 12px rgba(56, 189, 248, 0.38), 0 2px 4px rgba(0,0,0,0.04)';">
-                                <i class="fas fa-baseball" style="font-size: 1.05rem; color: #0284c7;"></i>
-                                <span style="position: absolute; top: -2px; right: -2px; background: #0284c7; color: #ffffff; font-size: 0.42rem; font-weight: 900; padding: 1.5px 4px; border-radius: 6px; border: 1px solid #ffffff; box-shadow: 0 1px 4px rgba(2, 132, 199, 0.4); letter-spacing: 0.2px;">PISTAS</span>
+                            onmouseover="this.style.transform='scale(1.10)'; this.style.boxShadow='0 8px 20px rgba(56, 189, 248, 0.5)';"
+                            onmouseout="this.style.transform='none'; this.style.boxShadow='0 6px 16px rgba(2, 132, 199, 0.35), 0 2px 4px rgba(0,0,0,0.04)';">
+                                <div style="width: 100%; height: 100%; border-radius: 50%; overflow: hidden; background: #021327;">
+                                    <img src="img/icon_story_entrenos.png?v=3" alt="Entrenos" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+                                </div>
+                                <span style="position: absolute; top: -2px; right: -2px; background: linear-gradient(135deg, #0284c7, #0369a1); color: #ffffff; font-size: 0.42rem; font-weight: 950; padding: 1.5px 5px; border-radius: 6px; border: 1.5px solid #ffffff; box-shadow: 0 2px 6px rgba(2, 132, 199, 0.5); letter-spacing: 0.3px;">PISTAS</span>
                             </div>
-                            <span style="margin-top: 6px; font-size: 0.72rem; font-weight: 850; color: #111827; line-height: 1.1;">
+                            <span style="margin-top: 7px; font-size: 0.74rem; font-weight: 900; color: #0F172A; line-height: 1.1; font-family: 'Outfit', sans-serif;">
                                 Entrenos
                             </span>
-                            <span style="font-size: 0.58rem; color: #64748b; font-weight: 600; margin-top: 1px;">Partidos</span>
+                            <span style="font-size: 0.60rem; color: #64748b; font-weight: 600; margin-top: 1px;">Partidos</span>
                         </div>
 
-                        <!-- 3. Ranking -->
+                        <!-- 3. Ranking (Medalla Oro 3D) -->
                         <div class="sp-action-pod haptic-feedback"
                             onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('ranking');"
                             style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
                             <div style="
-                                width: 46px;
-                                height: 46px;
+                                width: 52px;
+                                height: 52px;
                                 border-radius: 50%;
-                                background: linear-gradient(135deg, #fefce8 0%, #fde68a 50%, #fbbf24 100%);
-                                border: 2px solid #f59e0b;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                box-shadow: 0 4px 12px rgba(245, 158, 11, 0.38), 0 2px 4px rgba(0,0,0,0.04);
+                                padding: 2px;
+                                background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 50%, #fef08a 100%);
+                                box-shadow: 0 6px 16px rgba(245, 158, 11, 0.35), 0 2px 4px rgba(0,0,0,0.04);
                                 position: relative;
-                                transition: transform 0.18s ease, box-shadow 0.18s ease;
+                                transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
                             "
-                            onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 6px 16px rgba(245, 158, 11, 0.5)';"
-                            onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 12px rgba(245, 158, 11, 0.38), 0 2px 4px rgba(0,0,0,0.04)';">
-                                <i class="fas fa-medal" style="font-size: 1.05rem; color: #b45309;"></i>
-                                <span style="position: absolute; top: -2px; right: -2px; background: #f59e0b; color: #ffffff; font-size: 0.42rem; font-weight: 900; padding: 1.5px 4px; border-radius: 6px; border: 1px solid #ffffff; box-shadow: 0 1px 4px rgba(245, 158, 11, 0.4); letter-spacing: 0.2px;">ORO</span>
+                            onmouseover="this.style.transform='scale(1.10)'; this.style.boxShadow='0 8px 20px rgba(245, 158, 11, 0.5)';"
+                            onmouseout="this.style.transform='none'; this.style.boxShadow='0 6px 16px rgba(245, 158, 11, 0.35), 0 2px 4px rgba(0,0,0,0.04)';">
+                                <div style="width: 100%; height: 100%; border-radius: 50%; overflow: hidden; background: #1c1304;">
+                                    <img src="img/icon_story_ranking.png?v=3" alt="Ranking" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+                                </div>
+                                <span style="position: absolute; top: -2px; right: -2px; background: linear-gradient(135deg, #f59e0b, #d97706); color: #ffffff; font-size: 0.42rem; font-weight: 950; padding: 1.5px 5px; border-radius: 6px; border: 1.5px solid #ffffff; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.5); letter-spacing: 0.3px;">ORO</span>
                             </div>
-                            <span style="margin-top: 6px; font-size: 0.72rem; font-weight: 850; color: #111827; line-height: 1.1;">
+                            <span style="margin-top: 7px; font-size: 0.74rem; font-weight: 900; color: #0F172A; line-height: 1.1; font-family: 'Outfit', sans-serif;">
                                 Ranking
                             </span>
-                            <span style="font-size: 0.58rem; color: #64748b; font-weight: 600; margin-top: 1px;">Puntos</span>
+                            <span style="font-size: 0.60rem; color: #64748b; font-weight: 600; margin-top: 1px;">Puntos</span>
                         </div>
 
-                        <!-- 4. Mi Equipo -->
+                        <!-- 4. Mi Equipo (Insignia 3D) -->
                         <div class="sp-action-pod haptic-feedback"
                             onclick="window.PlayerView?.haptic?.(20); window.openMyTeam ? window.openMyTeam() : (window.Router && window.Router.navigate('my_team'));"
                             style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
                             <div style="
-                                width: 46px;
-                                height: 46px;
+                                width: 52px;
+                                height: 52px;
                                 border-radius: 50%;
-                                background: linear-gradient(135deg, #faf5ff 0%, #ddd6fe 50%, #c084fc 100%);
-                                border: 2px solid #8b5cf6;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                box-shadow: 0 4px 12px rgba(168, 85, 247, 0.38), 0 2px 4px rgba(0,0,0,0.04);
+                                padding: 2px;
+                                background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 50%, #ec4899 100%);
+                                box-shadow: 0 6px 16px rgba(139, 92, 246, 0.35), 0 2px 4px rgba(0,0,0,0.04);
                                 position: relative;
-                                transition: transform 0.18s ease, box-shadow 0.18s ease;
+                                transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
                             "
-                            onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 6px 16px rgba(168, 85, 247, 0.5)';"
-                            onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 12px rgba(168, 85, 247, 0.38), 0 2px 4px rgba(0,0,0,0.04)';">
-                                <i class="fas fa-users" style="font-size: 1.05rem; color: #581c87;"></i>
-                                <span style="position: absolute; top: -2px; right: -2px; background: #CCFF00; color: #000000; font-size: 0.42rem; font-weight: 900; padding: 1.5px 4px; border-radius: 6px; border: 1px solid #ffffff; box-shadow: 0 1px 4px rgba(204, 255, 0, 0.5); letter-spacing: 0.2px;">2027</span>
+                            onmouseover="this.style.transform='scale(1.10)'; this.style.boxShadow='0 8px 20px rgba(168, 85, 247, 0.5)';"
+                            onmouseout="this.style.transform='none'; this.style.boxShadow='0 6px 16px rgba(139, 92, 246, 0.35), 0 2px 4px rgba(0,0,0,0.04)';">
+                                <div style="width: 100%; height: 100%; border-radius: 50%; overflow: hidden; background: #130728;">
+                                    <img src="img/icon_story_equipo.png?v=3" alt="Mi Equipo" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+                                </div>
+                                <span style="position: absolute; top: -2px; right: -2px; background: #CCFF00; color: #000000; font-size: 0.42rem; font-weight: 950; padding: 1.5px 5px; border-radius: 6px; border: 1.5px solid #ffffff; box-shadow: 0 2px 6px rgba(204, 255, 0, 0.6); letter-spacing: 0.3px;">2027</span>
                             </div>
-                            <span style="margin-top: 6px; font-size: 0.72rem; font-weight: 850; color: #111827; line-height: 1.1;">
+                            <span style="margin-top: 7px; font-size: 0.74rem; font-weight: 900; color: #0F172A; line-height: 1.1; font-family: 'Outfit', sans-serif;">
                                 Mi Equipo
                             </span>
-                            <span style="font-size: 0.58rem; color: #64748b; font-weight: 600; margin-top: 1px;">Liga Summa</span>
+                            <span style="font-size: 0.60rem; color: #64748b; font-weight: 600; margin-top: 1px;">Liga Summa</span>
                         </div>
                     </div>
 
@@ -386,35 +382,100 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
 
                     <!-- ════════ BLOQUE 4: SECCIÓN AMERICANAS + CARRUSEL HORIZONTAL ════════ -->
                     <div class="sp-home-section" style="margin-bottom: 28px;">
-                        <div style="
+                        <div class="sp-section-header" style="
                             display: flex;
-                            align-items: baseline;
+                            align-items: center;
                             justify-content: space-between;
-                            margin-bottom: 12px;
+                            margin-bottom: 14px;
+                            gap: 12px;
                         ">
-                            <div>
-                                <h3 style="
-                                    margin: 0;
-                                    font-size: 1.20rem;
-                                    font-weight: 900;
-                                    color: #111827;
-                                    letter-spacing: -0.4px;
+                            <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+                                <div class="sp-section-icon-box" style="
+                                    width: 42px;
+                                    height: 42px;
+                                    border-radius: 13px;
+                                    background: linear-gradient(135deg, #0F172A 0%, #1e293b 100%);
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    color: #CCFF00;
+                                    font-size: 1.1rem;
+                                    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.15);
+                                    border: 1.5px solid rgba(204, 255, 0, 0.45);
+                                    flex-shrink: 0;
                                 ">
-                                    Americanas
-                                </h3>
-                                <div style="font-size: 0.74rem; color: #64748b; font-weight: 600; margin-top: 2px;">
-                                    Torneos non-stop de 2 horas con cambio de pista y puntos
+                                    <i class="fas fa-trophy"></i>
+                                </div>
+                                <div style="min-width: 0;">
+                                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                        <h3 style="
+                                            margin: 0;
+                                            font-size: 1.28rem;
+                                            font-weight: 950;
+                                            color: #0F172A;
+                                            letter-spacing: -0.4px;
+                                            font-family: 'Outfit', -apple-system, sans-serif;
+                                            line-height: 1.2;
+                                        ">
+                                            Americanas
+                                        </h3>
+                                        <span style="
+                                            display: inline-flex;
+                                            align-items: center;
+                                            gap: 4px;
+                                            background: rgba(204, 255, 0, 0.22);
+                                            color: #0F172A;
+                                            border: 1px solid rgba(204, 255, 0, 0.75);
+                                            padding: 2.5px 8px;
+                                            border-radius: 6px;
+                                            font-size: 0.62rem;
+                                            font-weight: 900;
+                                            letter-spacing: 0.6px;
+                                            text-transform: uppercase;
+                                            font-family: 'Montserrat', sans-serif;
+                                        ">
+                                            <i class="fas fa-bolt" style="color: #ea580c; font-size: 0.55rem;"></i>
+                                            NON-STOP 2H
+                                        </span>
+                                    </div>
+                                    <div style="font-size: 0.75rem; color: #64748b; font-weight: 600; margin-top: 3px; line-height: 1.3;">
+                                        Torneos continuos con rotación de pista y cómputo de puntos
+                                    </div>
                                 </div>
                             </div>
-                            <span onclick="window.Router && window.Router.navigate('americanas')" style="
-                                font-size: 0.80rem;
-                                font-weight: 800;
-                                color: #111827;
+                            <button type="button" onclick="window.Router && window.Router.navigate('americanas')" class="haptic-feedback" style="
+                                display: inline-flex;
+                                align-items: center;
+                                gap: 6px;
+                                padding: 6px 12px 6px 14px;
+                                border-radius: 99px;
+                                background: #f8fafc;
+                                border: 1.5px solid #e2e8f0;
+                                color: #0F172A;
+                                font-size: 0.74rem;
+                                font-weight: 850;
+                                font-family: 'Montserrat', sans-serif;
                                 cursor: pointer;
+                                transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+                                box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
                                 white-space: nowrap;
+                                flex-shrink: 0;
                             ">
-                                Ver todas →
-                            </span>
+                                <span>Ver todas</span>
+                                <span style="
+                                    width: 18px;
+                                    height: 18px;
+                                    border-radius: 50%;
+                                    background: #0F172A;
+                                    color: #CCFF00;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    font-size: 0.58rem;
+                                ">
+                                    <i class="fas fa-arrow-right"></i>
+                                </span>
+                            </button>
                         </div>
 
                         <!-- Carrusel swipe horizontal de Americanas -->
@@ -434,35 +495,100 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
 
                     <!-- ════════ BLOQUE 5: ENTRENOS ════════ -->
                     <div class="sp-home-section" style="margin-bottom: 28px;">
-                        <div style="
+                        <div class="sp-section-header" style="
                             display: flex;
-                            align-items: baseline;
+                            align-items: center;
                             justify-content: space-between;
-                            margin-bottom: 12px;
+                            margin-bottom: 14px;
+                            gap: 12px;
                         ">
-                            <div>
-                                <h3 style="
-                                    margin: 0;
-                                    font-size: 1.20rem;
-                                    font-weight: 900;
-                                    color: #111827;
-                                    letter-spacing: -0.4px;
+                            <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+                                <div class="sp-section-icon-box" style="
+                                    width: 42px;
+                                    height: 42px;
+                                    border-radius: 13px;
+                                    background: linear-gradient(135deg, #0F172A 0%, #1e293b 100%);
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    color: #00D2FF;
+                                    font-size: 1.1rem;
+                                    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.15);
+                                    border: 1.5px solid rgba(0, 210, 255, 0.45);
+                                    flex-shrink: 0;
                                 ">
-                                    Entrenos
-                                </h3>
-                                <div style="font-size: 0.74rem; color: #64748b; font-weight: 600; margin-top: 2px;">
-                                    Reserva tu plaza en entrenos de la comunidad
+                                    <i class="fas fa-bullseye"></i>
+                                </div>
+                                <div style="min-width: 0;">
+                                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                        <h3 style="
+                                            margin: 0;
+                                            font-size: 1.28rem;
+                                            font-weight: 950;
+                                            color: #0F172A;
+                                            letter-spacing: -0.4px;
+                                            font-family: 'Outfit', -apple-system, sans-serif;
+                                            line-height: 1.2;
+                                        ">
+                                            Entrenos
+                                        </h3>
+                                        <span style="
+                                            display: inline-flex;
+                                            align-items: center;
+                                            gap: 4px;
+                                            background: rgba(0, 210, 255, 0.15);
+                                            color: #0284c7;
+                                            border: 1px solid rgba(0, 210, 255, 0.55);
+                                            padding: 2.5px 8px;
+                                            border-radius: 6px;
+                                            font-size: 0.62rem;
+                                            font-weight: 900;
+                                            letter-spacing: 0.6px;
+                                            text-transform: uppercase;
+                                            font-family: 'Montserrat', sans-serif;
+                                        ">
+                                            <i class="fas fa-graduation-cap" style="font-size: 0.55rem;"></i>
+                                            ACADEMY PRO
+                                        </span>
+                                    </div>
+                                    <div style="font-size: 0.75rem; color: #64748b; font-weight: 600; margin-top: 3px; line-height: 1.3;">
+                                        Clínics técnicos y sesiones grupales guiadas por entrenadores
+                                    </div>
                                 </div>
                             </div>
-                            <span onclick="window.Router && window.Router.navigate('entrenos')" style="
-                                font-size: 0.80rem;
-                                font-weight: 800;
-                                color: #111827;
+                            <button type="button" onclick="window.Router && window.Router.navigate('entrenos')" class="haptic-feedback" style="
+                                display: inline-flex;
+                                align-items: center;
+                                gap: 6px;
+                                padding: 6px 12px 6px 14px;
+                                border-radius: 99px;
+                                background: #f8fafc;
+                                border: 1.5px solid #e2e8f0;
+                                color: #0F172A;
+                                font-size: 0.74rem;
+                                font-weight: 850;
+                                font-family: 'Montserrat', sans-serif;
                                 cursor: pointer;
+                                transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+                                box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
                                 white-space: nowrap;
+                                flex-shrink: 0;
                             ">
-                                Ver todos →
-                            </span>
+                                <span>Ver todos</span>
+                                <span style="
+                                    width: 18px;
+                                    height: 18px;
+                                    border-radius: 50%;
+                                    background: #0F172A;
+                                    color: #00D2FF;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    font-size: 0.58rem;
+                                ">
+                                    <i class="fas fa-arrow-right"></i>
+                                </span>
+                            </button>
                         </div>
 
                         <!-- Carrusel swipe horizontal de Entrenos y Partidas -->

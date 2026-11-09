@@ -111,6 +111,18 @@ async function runTests() {
         }
     });
 
+    test('css/notifications.css define .sp-new-event-popup-overlay.is-minimized y .sp-new-event-popup-mini', () => {
+        if (!cssCode.includes('.sp-new-event-popup-overlay.is-minimized') || !cssCode.includes('.sp-new-event-popup-mini')) {
+            throw new Error('Falta el estilo del dock minimizado/oculto en notifications.css');
+        }
+    });
+
+    test('css/notifications.css define .sp-new-event-popup-minimize', () => {
+        if (!cssCode.includes('.sp-new-event-popup-minimize')) {
+            throw new Error('Falta el estilo del botón de minimizar en notifications.css');
+        }
+    });
+
     test('css/notifications.css define .sp-new-event-popup-card', () => {
         if (!cssCode.includes('.sp-new-event-popup-card')) {
             throw new Error('No se encontró la regla .sp-new-event-popup-card en notifications.css');
@@ -132,6 +144,15 @@ async function runTests() {
     test('css/notifications.css incluye media query responsive para móviles (< 480px)', () => {
         if (!cssCode.includes('@media (max-width: 480px)') || !cssCode.includes('.sp-new-event-popup-card')) {
             throw new Error('No contiene adaptación responsive para pantallas pequeñas');
+        }
+    });
+
+    test('showNewEventPopup inicia minimizado por defecto con opción de maximizar y cerrar', () => {
+        if (!dashboardCode.includes('startMinimized') || !dashboardCode.includes('btn-maximize-new-event-popup') || !dashboardCode.includes('btn-close-mini-new-event-popup')) {
+            throw new Error('showNewEventPopup no implementa el arranque minimizado con controles de maximizar y cerrar');
+        }
+        if (!dashboardCode.includes('btn-minimize-new-event-popup')) {
+            throw new Error('Falta el botón para minimizar desde el modal maximizado');
         }
     });
 

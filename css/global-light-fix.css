@@ -126,9 +126,11 @@ input::placeholder, textarea::placeholder, .pro-input-micro::placeholder {
     padding: 12px 16px !important;
 }
 
-/* 8. FIX PARA EL TICKER (Debe ser legible & look broadcast) */
+/* 8. TICKER (Colores Oficiales SomosPadel: Azul Marino Profundo + Neón Bola #CCFF00) */
 .ticker-container {
-    background: #060913 !important; /* Pizarra deportiva OLED */
+    background: linear-gradient(90deg, #070d1e 0%, #0b1a3a 35%, #00224d 65%, #070d1e 100%) !important;
+    border-bottom: 2px solid #CCFF00 !important;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45), 0 1px 8px rgba(204, 255, 0, 0.3) !important;
 }
 .ticker-item {
     color: #ffffff !important;
@@ -140,10 +142,29 @@ input::placeholder, textarea::placeholder, .pro-input-micro::placeholder {
     color: #CCFF00 !important;
 }
 .ticker-body {
-    color: #cbd5e1 !important;
+    color: #e2e8f0 !important;
 }
 .tag-academy, .tag-protip, .tag-academy span, .tag-protip span {
     color: #050b14 !important;
+}
+
+/* MODAL TICKER (Fondo blanco estricto, texto negro) */
+.sp-ticker-modal-card {
+    background: #ffffff !important;
+    color: #0f172a !important;
+}
+.sp-ticker-modal-title {
+    color: #0f172a !important;
+}
+.sp-ticker-modal-body {
+    color: #334155 !important;
+}
+.sp-ticker-tactical-box {
+    background: #f8fafc !important;
+    border: 1.5px solid #e2e8f0 !important;
+}
+.sp-ticker-tactical-list li {
+    color: #1e293b !important;
 }
 
 /* 9. MODALES Y OVERLAYS */
