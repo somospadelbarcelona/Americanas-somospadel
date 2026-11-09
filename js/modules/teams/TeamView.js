@@ -1509,7 +1509,10 @@
             
             return text;
         }
-
+        /**
+         * 🏆 REVOLUCIONARIO MATCHDAY CENTER • PRÓXIMA JORNADA
+         * Cartelera interactiva de partidos, cartel oficial HD y compartir inteligente.
+         */
         openNextMatchesSummaryModal() {
             const teams = this.lastTeams || [];
             if (teams.length === 0) {
@@ -1517,192 +1520,418 @@
                 return;
             }
 
-            // Haptic
-            if (window.navigator.vibrate) window.navigator.vibrate(25);
+            // Haptic feedback
+            if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(25);
 
-            // Generar el texto del resumen con datos reales
+            // Extraer partidos de todos los equipos
+            const matchesData = [];
+            teams.forEach(team => {
+                let nextMatch = null;
+                if (team.schedule && team.schedule.length > 0) {
+                    const sortedMatches = [...team.schedule].sort((a, b) => parseInt(a.j) - parseInt(b.j));
+                    const pendingMatches = sortedMatches.filter(m => (m.status === 'pending' || m.status === 'scheduled' || m.status === 'upcoming') && m.opponent !== 'BYE' && !m.opponent.includes('BYE'));
+                    if (pendingMatches.length > 0) {
+                        nextMatch = pendingMatches[0];
+                    }
+                }
+                const teamShortName = team.name.replace('SOMOS PÁDEL BCN ', '').replace('SOMOS PÁDEL ', '').toUpperCase();
+                matchesData.push({
+                    team,
+                    teamShortName,
+                    nextMatch
+                });
+            });
+
+            const activeMatches = matchesData.filter(m => m.nextMatch !== null);
+            const homeMatches = activeMatches.filter(m => m.nextMatch.isHome);
+            const awayMatches = activeMatches.filter(m => !m.nextMatch.isHome);
+            const restingTeams = matchesData.filter(m => m.nextMatch === null);
             const whatsAppText = this.getSummaryWhatsAppText(teams);
+
+            // Generar tarjetas de partidos
+            const matchCardsHTML = activeMatches.map(item => {
+                const { team, teamShortName, nextMatch } = item;
+                const isHome = !!nextMatch.isHome;
+                const opponent = nextMatch.opponent || 'Rival';
+                const venue = nextMatch.venue || 'Club por confirmar';
+                const date = nextMatch.date || 'Fecha por confirmar';
+                const time = nextMatch.time || '';
+                const jornada = nextMatch.j || 'Próx.';
+                const category = team.category || 'Categoría';
+                const group = team.group || team.division || '';
+                const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venue)}`;
+
+                return `
+                    <div class="summary-match-card" data-is-home="${isHome}" style="
+                        background: linear-gradient(145deg, rgba(20, 27, 45, 0.75), rgba(11, 15, 25, 0.95));
+                        border: 1px solid rgba(255, 255, 255, 0.08);
+                        border-left: 4px solid ${isHome ? '#10b981' : '#38bdf8'};
+                        border-radius: 20px;
+                        padding: 16px;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 12px;
+                        box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+                        position: relative;
+                        overflow: hidden;
+                        transition: transform 0.2s ease, border-color 0.2s ease;
+                    ">
+                        <!-- Top status line -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span style="background: rgba(255,255,255,0.08); color: #94a3b8; font-size: 0.65rem; font-weight: 900; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    ${category}${group ? ' • ' + group : ''}
+                                </span>
+                                <span style="background: rgba(204,255,0,0.12); color: #ccff00; font-size: 0.65rem; font-weight: 950; padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(204,255,0,0.25);">
+                                    J${jornada}
+                                </span>
+                            </div>
+                            <span style="
+                                background: ${isHome ? 'rgba(16,185,129,0.15)' : 'rgba(56,189,248,0.15)'};
+                                color: ${isHome ? '#34d399' : '#38bdf8'};
+                                border: 1px solid ${isHome ? 'rgba(16,185,129,0.3)' : 'rgba(56,189,248,0.3)'};
+                                font-size: 0.62rem; font-weight: 950; padding: 3px 9px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;
+                                display: inline-flex; align-items: center; gap: 4px;
+                            ">
+                                <i class="fas ${isHome ? 'fa-home' : 'fa-plane'}"></i>
+                                ${isHome ? 'LOCAL' : 'VISITANTE'}
+                            </span>
+                        </div>
+
+                        <!-- Face-off Duel -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; background: rgba(0,0,0,0.25); padding: 10px 12px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.04);">
+                            <!-- Local / SomosPadel -->
+                            <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+                                <div style="width: 38px; height: 38px; border-radius: 50%; background: #000; border: 1.5px solid #ccff00; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 0 10px rgba(204,255,0,0.25);">
+                                    <img src="img/official_ball_logo.png" style="width: 28px; height: 28px; object-fit: contain;" alt="SomosPadel">
+                                </div>
+                                <div style="min-width: 0;">
+                                    <div style="font-size: 0.58rem; color: #94a3b8; font-weight: 850; letter-spacing: 0.5px; text-transform: uppercase;">SOMOS PÁDEL</div>
+                                    <div style="font-size: 0.95rem; font-weight: 950; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.3px;">
+                                        ${teamShortName}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- VS Badge -->
+                            <div style="
+                                width: 28px; height: 28px; border-radius: 50%;
+                                background: linear-gradient(135deg, rgba(204,255,0,0.2), rgba(56,176,0,0.1));
+                                border: 1px solid rgba(204,255,0,0.4);
+                                color: #ccff00; font-size: 0.65rem; font-weight: 950;
+                                display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+                            ">
+                                VS
+                            </div>
+
+                            <!-- Rival -->
+                            <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex: 1; min-width: 0; text-align: right;">
+                                <div style="min-width: 0;">
+                                    <div style="font-size: 0.58rem; color: #94a3b8; font-weight: 850; letter-spacing: 0.5px; text-transform: uppercase;">RIVAL</div>
+                                    <div style="font-size: 0.88rem; font-weight: 900; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.2px;">
+                                        ${opponent}
+                                    </div>
+                                </div>
+                                <div style="width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #cbd5e1; font-size: 0.9rem;">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Date, Time & Venue -->
+                        <div style="display: flex; flex-direction: column; gap: 5px; font-size: 0.72rem; color: #cbd5e1;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <i class="fas fa-calendar-alt" style="color: #ccff00; font-size: 0.8rem;"></i>
+                                    <span style="font-weight: 800; color: #fff;">${date}</span>
+                                    ${time ? `<span style="color: #64748b;">•</span> <i class="fas fa-clock" style="color: #38bdf8; font-size: 0.75rem;"></i> <strong style="color: #38bdf8;">${time}</strong>` : ''}
+                                </div>
+                                <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" style="
+                                    color: #94a3b8; text-decoration: none; font-size: 0.65rem; font-weight: 850;
+                                    display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 8px;
+                                    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); transition: all 0.2s;
+                                " onmouseover="this.style.color='#38bdf8'; this.style.borderColor='#38bdf8';" onmouseout="this.style.color='#94a3b8'; this.style.borderColor='rgba(255,255,255,0.08)';">
+                                    <i class="fas fa-directions" style="color: #38bdf8;"></i> Maps
+                                </a>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px; color: #94a3b8; font-size: 0.68rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                <i class="fas fa-map-marker-alt" style="color: #ef4444; font-size: 0.75rem; flex-shrink: 0;"></i>
+                                <span style="overflow: hidden; text-overflow: ellipsis;">${venue}</span>
+                            </div>
+                        </div>
+
+                        <!-- Card Action buttons -->
+                        <div style="display: grid; grid-template-columns: 1.5fr 1fr 42px; gap: 8px; margin-top: 4px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05);">
+                            <button onclick="window.TeamView.closeNextMatchesSummaryModal(); window.TeamController.openPlayerRsvpModal('${team.id}', '${jornada}');" style="
+                                background: #ccff00; color: #000000; border: none; padding: 10px 8px; border-radius: 12px;
+                                font-weight: 950; font-size: 0.72rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+                                box-shadow: 0 4px 12px rgba(204,255,0,0.25); text-transform: uppercase; transition: transform 0.15s;
+                            " onmouseover="this.style.transform='scale(1.02)';" onmouseout="this.style.transform='scale(1)';">
+                                <i class="fas fa-clipboard-check"></i>
+                                <span>RSVP</span>
+                            </button>
+
+                            <button onclick="window.TeamView.jumpToTeamFromModal('${team.id}');" style="
+                                background: rgba(255,255,255,0.06); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.12);
+                                padding: 10px 8px; border-radius: 12px; font-weight: 850; font-size: 0.7rem; cursor: pointer;
+                                display: flex; align-items: center; justify-content: center; gap: 5px; transition: all 0.15s;
+                            " onmouseover="this.style.background='rgba(255,255,255,0.12)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.06)'; this.style.color='#cbd5e1';">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>Equipo</span>
+                            </button>
+
+                            <button onclick="window.TeamView.shareSingleMatchWhatsApp('${team.id}', '${jornada}');" title="Compartir este partido por WhatsApp" style="
+                                background: #25D366; color: white; border: none; border-radius: 12px;
+                                font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+                                transition: transform 0.15s;
+                            " onmouseover="this.style.transform='scale(1.08)';" onmouseout="this.style.transform='scale(1)';">
+                                <i class="fab fa-whatsapp"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const restingHTML = restingTeams.length > 0 ? `
+                <div style="background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.08); border-radius: 16px; padding: 12px 16px; margin-top: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 8px; font-size: 0.72rem; color: #94a3b8; font-weight: 700;">
+                        <i class="fas fa-bed" style="color: #cbd5e1;"></i>
+                        <span>Equipos con descanso esta jornada:</span>
+                        <strong style="color: #fff;">${restingTeams.map(t => t.teamShortName).join(', ')}</strong>
+                    </div>
+                </div>
+            ` : '';
 
             // Create overlay
             const overlay = document.createElement('div');
             overlay.id = 'next-matches-summary-overlay';
             overlay.style.cssText = `
-                position: fixed; inset: 0; background: rgba(8, 8, 12, 0.85); z-index: 120000;
+                position: fixed; inset: 0; background: rgba(5, 7, 12, 0.88); z-index: 120000;
                 display: flex; align-items: center; justify-content: center;
                 font-family: 'Outfit', sans-serif; backdrop-filter: blur(25px);
-                -webkit-backdrop-filter: blur(25px); opacity: 0; transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-                padding: 15px; box-sizing: border-box; overflow-y: auto;
+                -webkit-backdrop-filter: blur(25px); opacity: 0; transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                padding: 12px; box-sizing: border-box; overflow-y: auto;
             `;
 
             overlay.innerHTML = `
                 <style>
                     #summary-modal-container {
-                        background: rgba(13, 13, 17, 0.95);
+                        background: radial-gradient(circle at 50% 0%, #151d30 0%, #0a0e17 100%);
                         border: 1.5px solid rgba(204, 255, 0, 0.25);
-                        border-radius: 32px;
+                        border-radius: 28px;
                         width: 100%;
-                        max-width: 920px;
+                        max-width: 900px;
                         display: flex;
                         flex-direction: column;
-                        gap: 20px;
-                        padding: 28px;
+                        padding: 24px;
                         box-sizing: border-box;
                         position: relative;
-                        box-shadow: 0 35px 80px rgba(0,0,0,0.8);
-                        transform: scale(0.9);
-                        transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                        box-shadow: 0 30px 80px rgba(0,0,0,0.9);
+                        transform: scale(0.92);
+                        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
                         max-height: 92vh;
                         overflow-y: auto;
-                        backdrop-filter: blur(15px);
-                        -webkit-backdrop-filter: blur(15px);
                     }
-
-                    #summary-inner-grid {
-                        display: grid;
-                        grid-template-columns: 1.2fr 1fr;
-                        gap: 30px;
-                        align-items: center;
+                    .summary-match-card:hover {
+                        border-color: rgba(204, 255, 0, 0.45) !important;
+                        transform: translateY(-2px);
                     }
-
-                    #summary-preview-column {
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: center;
-                        background: #090e1a;
-                        border: 1.5px dashed rgba(255,255,255,0.08);
-                        border-radius: 24px;
-                        padding: 24px;
-                        position: relative;
-                        overflow: hidden;
-                        min-height: 520px;
-                        box-shadow: inset 0 4px 20px rgba(0,0,0,0.6);
-                    }
-
-                    .summary-textarea {
-                        width: 100%;
-                        height: 150px;
-                        background: rgba(255,255,255,0.03);
-                        border: 1px solid rgba(255,255,255,0.1);
-                        border-radius: 16px;
-                        color: #cbd5e1;
-                        padding: 12px 15px;
-                        font-family: 'Outfit', monospace, sans-serif;
-                        font-size: 0.75rem;
-                        line-height: 1.45;
-                        resize: none;
-                        outline: none;
-                        transition: border-color 0.25s;
-                    }
-                    .summary-textarea:focus {
-                        border-color: #CCFF00;
-                    }
-
-                    @media (max-width: 992px) {
+                    @media (max-width: 768px) {
                         #summary-modal-container {
-                            padding: 20px !important;
-                            border-radius: 24px !important;
+                            padding: 16px !important;
+                            border-radius: 22px !important;
                             max-height: 95vh !important;
-                            gap: 15px !important;
                         }
-                        #summary-inner-grid {
+                        #summary-matches-grid {
                             grid-template-columns: 1fr !important;
-                            gap: 18px !important;
-                        }
-                        #summary-preview-column {
-                            min-height: auto !important;
-                            padding: 15px 10px !important;
-                            order: 2;
-                        }
-                        #summary-controls-column {
-                            order: 1;
-                        }
-                        #summary-helper-text {
-                            font-size: 0.6rem !important;
-                            padding: 6px 12px !important;
-                            position: relative !important;
-                            bottom: auto !important;
-                            margin-top: 10px !important;
                         }
                     }
                 </style>
 
                 <div id="summary-modal-container">
                     <!-- Glow effect -->
-                    <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: #CCFF00; filter: blur(80px); opacity: 0.12; pointer-events: none;"></div>
-
-                    <!-- Close button -->
-                    <button onclick="window.TeamView.closeNextMatchesSummaryModal()" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; font-size: 1.1rem; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; z-index: 10;" onmouseover="this.style.background='rgba(239, 68, 68, 0.2)'; this.style.color='white';" onmouseout="this.style.background='rgba(255,255,255,0.06)'; this.style.color='#cbd5e1';">
-                        <i class="fas fa-times"></i>
-                    </button>
+                    <div style="position: absolute; top: -50px; right: -50px; width: 180px; height: 180px; background: #CCFF00; filter: blur(90px); opacity: 0.12; pointer-events: none;"></div>
 
                     <!-- Header -->
-                    <div style="text-align: left; padding-right: 50px;">
-                        <span style="font-size: 0.7rem; color: #CCFF00; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;">PREMIUM SOCIAL SHARING</span>
-                        <h2 style="color: white; font-weight: 950; font-size: 1.5rem; margin: 4px 0 0; text-transform: uppercase; letter-spacing: -0.5px;">
-                            RESUMEN DE LA <span style="color: #38b000;">PRÓXIMA JORNADA</span>
-                        </h2>
+                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px;">
+                        <div>
+                            <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.68rem; font-weight: 900; color: #ccff00; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px;">
+                                <span style="width: 8px; height: 8px; border-radius: 50%; background: #ccff00; box-shadow: 0 0 8px #ccff00; display: inline-block;"></span>
+                                <span>MATCHDAY CENTER • SOMOSPÁDEL BCN</span>
+                            </div>
+                            <h2 style="color: #ffffff; font-weight: 950; font-size: 1.45rem; margin: 0; letter-spacing: -0.5px; line-height: 1.15;">
+                                Cartelera de la <span style="background: linear-gradient(135deg, #ccff00, #38b000); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Próxima Jornada</span>
+                            </h2>
+                            <div style="font-size: 0.72rem; color: #94a3b8; font-weight: 700; margin-top: 4px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                                <span><strong style="color: #fff;">${activeMatches.length}</strong> Partidos</span>
+                                <span>•</span>
+                                <span style="color: #34d399;"><strong style="color: #34d399;">${homeMatches.length}</strong> en Casa</span>
+                                <span>•</span>
+                                <span style="color: #38bdf8;"><strong style="color: #38bdf8;">${awayMatches.length}</strong> a Domicilio</span>
+                            </div>
+                        </div>
+
+                        <!-- Close button -->
+                        <button onclick="window.TeamView.closeNextMatchesSummaryModal()" style="
+                            background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1;
+                            width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+                            cursor: pointer; transition: all 0.2s; font-size: 1.05rem; flex-shrink: 0;
+                        " onmouseover="this.style.background='rgba(239,68,68,0.2)'; this.style.color='#ef4444';" onmouseout="this.style.background='rgba(255,255,255,0.06)'; this.style.color='#cbd5e1';">
+                            <i class="fas fa-times"></i>
+                        </button>
                     </div>
 
-                    <!-- Inner grid layout: preview + controls -->
-                    <div id="summary-inner-grid">
+                    <!-- Segmented tab selector -->
+                    <div style="display: flex; gap: 6px; background: rgba(0,0,0,0.4); padding: 4px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 16px;">
+                        <button id="summary-nav-btn-matches" onclick="window.TeamView.switchSummaryTab('matches')" style="
+                            flex: 1; padding: 10px 8px; border-radius: 12px; border: none; font-weight: 950; font-size: 0.74rem; cursor: pointer;
+                            display: flex; align-items: center; justify-content: center; gap: 6px; background: #ccff00; color: #000; box-shadow: 0 4px 15px rgba(204,255,0,0.3); transition: all 0.2s;
+                        ">
+                            <i class="fas fa-table-tennis"></i>
+                            <span>PARTIDOS (${activeMatches.length})</span>
+                        </button>
+                        <button id="summary-nav-btn-flyer" onclick="window.TeamView.switchSummaryTab('flyer')" style="
+                            flex: 1; padding: 10px 8px; border-radius: 12px; border: none; font-weight: 900; font-size: 0.74rem; cursor: pointer;
+                            display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(255,255,255,0.06); color: #94a3b8; transition: all 0.2s;
+                        ">
+                            <i class="fas fa-image"></i>
+                            <span>CARTEL HD</span>
+                        </button>
+                        <button id="summary-nav-btn-whatsapp" onclick="window.TeamView.switchSummaryTab('whatsapp')" style="
+                            flex: 1; padding: 10px 8px; border-radius: 12px; border: none; font-weight: 900; font-size: 0.74rem; cursor: pointer;
+                            display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(255,255,255,0.06); color: #94a3b8; transition: all 0.2s;
+                        ">
+                            <i class="fab fa-whatsapp"></i>
+                            <span>WHATSAPP</span>
+                        </button>
+                    </div>
 
-                        <!-- COLUMN 1: LIVE PREVIEW OF THE CROMO -->
-                        <div id="summary-preview-column">
+                    <!-- ──────────────────────────────────────────────────────────── -->
+                    <!-- TAB 1: PARTIDOS (CARDS INTERACTIVAS)                          -->
+                    <!-- ──────────────────────────────────────────────────────────── -->
+                    <div id="summary-panel-matches" style="display: block;">
+                        <!-- Filter Bar -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;">
+                            <div style="display: flex; gap: 6px;">
+                                <button id="summary-filter-all" onclick="window.TeamView.filterSummaryMatches('all')" style="
+                                    padding: 6px 12px; border-radius: 10px; border: 1.5px solid #ccff00; background: rgba(204,255,0,0.18);
+                                    color: #ccff00; font-weight: 900; font-size: 0.68rem; cursor: pointer; transition: all 0.2s;
+                                ">
+                                    Todos (${activeMatches.length})
+                                </button>
+                                <button id="summary-filter-home" onclick="window.TeamView.filterSummaryMatches('home')" style="
+                                    padding: 6px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05);
+                                    color: #94a3b8; font-weight: 850; font-size: 0.68rem; cursor: pointer; transition: all 0.2s;
+                                ">
+                                    🏠 Casa (${homeMatches.length})
+                                </button>
+                                <button id="summary-filter-away" onclick="window.TeamView.filterSummaryMatches('away')" style="
+                                    padding: 6px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05);
+                                    color: #94a3b8; font-weight: 850; font-size: 0.68rem; cursor: pointer; transition: all 0.2s;
+                                ">
+                                    ✈️ Fuera (${awayMatches.length})
+                                </button>
+                            </div>
+
+                            <button onclick="window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(window.TeamView.getSummaryWhatsAppText(window.TeamView.lastTeams || [])), '_blank')" style="
+                                background: #25D366; color: white; border: none; padding: 7px 12px; border-radius: 10px;
+                                font-size: 0.68rem; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(37,211,102,0.25);
+                            ">
+                                <i class="fab fa-whatsapp"></i> Compartir Todo
+                            </button>
+                        </div>
+
+                        <!-- Matches Grid -->
+                        <div id="summary-matches-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 14px;">
+                            ${matchCardsHTML}
+                        </div>
+                        ${restingHTML}
+                    </div>
+
+                    <!-- ──────────────────────────────────────────────────────────── -->
+                    <!-- TAB 2: CARTEL OFICIAL HD                                     -->
+                    <!-- ──────────────────────────────────────────────────────────── -->
+                    <div id="summary-panel-flyer" style="display: none;">
+                        <!-- Actions bar -->
+                        <div style="display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;">
+                            <button id="summary-dl-btn" onclick="window.TeamView.downloadSummaryImage('summary-dl-btn')" style="
+                                flex: 1.5; min-width: 220px; background: #CCFF00; color: #000000; border: none; padding: 14px; border-radius: 14px;
+                                font-weight: 950; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+                                box-shadow: 0 6px 18px rgba(204,255,0,0.25); text-transform: uppercase; transition: transform 0.15s;
+                            " onmouseover="this.style.transform='scale(1.02)';" onmouseout="this.style.transform='scale(1)';">
+                                <i class="fas fa-download"></i>
+                                <span>DESCARGAR FOTO EN ALTA DEFINICIÓN (PNG)</span>
+                            </button>
+
+                            <button id="summary-copy-img-btn" onclick="window.TeamView.copySummaryImageToClipboard('summary-copy-img-btn')" style="
+                                flex: 1; min-width: 160px; background: rgba(255,255,255,0.06); color: #fff; border: 1px solid rgba(255,255,255,0.12);
+                                padding: 14px; border-radius: 14px; font-weight: 850; font-size: 0.8rem; cursor: pointer;
+                                display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;
+                            " onmouseover="this.style.borderColor='#ccff00';" onmouseout="this.style.borderColor='rgba(255,255,255,0.12)';">
+                                <i class="far fa-clipboard" style="color: #ccff00;"></i>
+                                <span>COPIAR IMAGEN</span>
+                            </button>
+                        </div>
+
+                        <!-- Preview Column -->
+                        <div id="summary-preview-column" style="
+                            display: flex; flex-direction: column; align-items: center; justify-content: center;
+                            background: #080c14; border: 1.5px dashed rgba(255,255,255,0.1); border-radius: 20px;
+                            padding: 20px; position: relative; overflow: hidden; min-height: 480px; box-shadow: inset 0 4px 20px rgba(0,0,0,0.6);
+                        ">
                             <div id="summary-preview-sizer" style="position: relative; overflow: visible; display: flex; align-items: center; justify-content: center; transition: all 0.25s ease;">
                                 <div id="summary-preview-scale-wrapper" style="position: absolute; transform-origin: top left; width: 1080px; height: 1920px; display: flex; align-items: center; justify-content: center; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.6); background: #ffffff;">
                                     <div id="summary-preview-content" style="width: 100%; height: 100%;"></div>
                                 </div>
                             </div>
                             <div id="summary-helper-text" style="position: absolute; bottom: 12px; background: rgba(0,0,0,0.85); border: 1px solid rgba(255,255,255,0.1); padding: 8px 16px; border-radius: 30px; font-size: 0.65rem; color: rgba(255,255,255,0.85); font-weight: 800; pointer-events: none; display: flex; align-items: center; gap: 6px; z-index: 10;">
-                                <i class="fas fa-info-circle" style="color: #CCFF00;"></i> CARTELERA ALTA RESOLUCIÓN (9:16)
+                                <i class="fas fa-info-circle" style="color: #CCFF00;"></i> FORMATO OFICIAL STORY / CARTEL (9:16)
                             </div>
                         </div>
+                    </div>
 
-                        <!-- COLUMN 2: CONTROLS & ACTIONS -->
-                        <div style="display: flex; flex-direction: column; gap: 16px;" id="summary-controls-column">
-
-                            <!-- Tip -->
-                            <div style="background: rgba(204,255,0,0.04); border: 1px solid rgba(204,255,0,0.12); border-radius: 16px; padding: 12px 15px; display: flex; align-items: center; gap: 10px; font-size: 0.75rem; color: #cbd5e1; font-weight: 700; line-height: 1.35;">
-                                <i class="fas fa-lightbulb" style="color: #CCFF00; font-size: 1.1rem; flex-shrink: 0;"></i>
-                                <span><strong>Tip Premium:</strong> Descarga la cartelera en alta calidad y compártela en tus redes sociales o pégala en WhatsApp.</span>
-                            </div>
-
-                            <!-- WhatsApp Text Box -->
-                            <div style="display: flex; flex-direction: column; gap: 6px;">
-                                <span style="font-size: 0.65rem; color: #64748b; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">TEXTO PARA WHATSAPP</span>
-                                <textarea id="summary-text-box" class="summary-textarea" readonly>${whatsAppText}</textarea>
-                            </div>
-
-                            <!-- Actions Group -->
-                            <div style="display: flex; flex-direction: column; gap: 10px;">
-                                <span style="font-size: 0.65rem; color: #64748b; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">ACCIONES DE COMPARTIR</span>
-
-                                <!-- WhatsApp share -->
-                                <button onclick="window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(document.getElementById('summary-text-box').value), '_blank')" style="background: #25D366; color: white; border: none; padding: 16px; border-radius: 16px; font-weight: 950; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 25px rgba(37,211,102,0.25); text-transform: uppercase; transition: all 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='none';">
-                                    <i class="fab fa-whatsapp" style="font-size: 1.25rem;"></i> ENVIAR TEXTO A WHATSAPP
-                                </button>
-
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                                    <!-- Copy image to clipboard -->
-                                    <button id="summary-copy-img-btn" onclick="window.TeamView.copySummaryImageToClipboard('summary-copy-img-btn')" style="background: #0f172a; color: white; border: 1.5px solid rgba(255,255,255,0.15); padding: 16px; border-radius: 16px; font-weight: 900; font-size: 0.75rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;" onmouseover="this.style.borderColor='#CCFF00'; this.style.background='rgba(255,255,255,0.02)';" onmouseout="this.style.borderColor='rgba(255,255,255,0.15)'; this.style.background='#0f172a';">
-                                        <i class="far fa-clipboard" style="font-size: 1.2rem; color: #CCFF00;"></i>
-                                        <span>COPIAR IMAGEN</span>
-                                    </button>
-
-                                    <!-- Download image -->
-                                    <button id="summary-dl-btn" onclick="window.TeamView.downloadSummaryImage('summary-dl-btn')" style="background: #CCFF00; color: #000000; border: none; padding: 16px; border-radius: 16px; font-weight: 950; font-size: 0.75rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 6px 15px rgba(204,255,0,0.2); transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='none';">
-                                        <i class="fas fa-download" style="font-size: 1.1rem;"></i>
-                                        <span>DESCARGAR FOTO</span>
-                                    </button>
+                    <!-- ──────────────────────────────────────────────────────────── -->
+                    <!-- TAB 3: WHATSAPP INTELIGENTE                                   -->
+                    <!-- ──────────────────────────────────────────────────────────── -->
+                    <div id="summary-panel-whatsapp" style="display: none;">
+                        <div style="max-width: 620px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px;">
+                            <!-- Header simulation -->
+                            <div style="background: #005c4b; color: white; border-radius: 18px 18px 0 0; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="width: 34px; height: 34px; border-radius: 50%; background: #000; border: 1px solid #ccff00; display: flex; align-items: center; justify-content: center;">
+                                        <img src="img/official_ball_logo.png" style="width: 24px; height: 24px; object-fit: contain;">
+                                    </div>
+                                    <div>
+                                        <div style="font-weight: 900; font-size: 0.85rem;">SomosPádel BCN • Cartelera</div>
+                                        <div style="font-size: 0.65rem; color: #a7f3d0;">Lliga Guinotprunera Oficial</div>
+                                    </div>
                                 </div>
-
-                                <!-- Copy text -->
-                                <button id="summary-copy-txt-btn" onclick="window.TeamView.copySummaryToClipboard()" style="background: transparent; color: #cbd5e1; border: 1.5px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 16px; font-weight: 900; font-size: 0.7rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.25)';" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)';">
-                                    <i class="far fa-copy" style="color: #94a3b8;"></i> COPIAR TEXTO
-                                </button>
+                                <i class="fab fa-whatsapp" style="font-size: 1.5rem; color: #25D366;"></i>
                             </div>
 
+                            <!-- WhatsApp Message Preview -->
+                            <div style="background: #111b21; border-radius: 0 0 18px 18px; padding: 16px; border: 1px solid rgba(255,255,255,0.06); border-top: none; max-height: 320px; overflow-y: auto;">
+                                <div style="background: #005c4b; color: #e9edef; border-radius: 12px 12px 12px 2px; padding: 14px 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 0.78rem; line-height: 1.5; white-space: pre-wrap; word-break: break-word;">${whatsAppText}</div>
+                            </div>
+
+                            <!-- Actions -->
+                            <button onclick="window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(window.TeamView.getSummaryWhatsAppText(window.TeamView.lastTeams || [])), '_blank')" style="
+                                background: #25D366; color: white; border: none; padding: 16px; border-radius: 16px;
+                                font-weight: 950; font-size: 0.92rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+                                box-shadow: 0 8px 24px rgba(37,211,102,0.3); text-transform: uppercase; transition: transform 0.15s;
+                            " onmouseover="this.style.transform='scale(1.02)';" onmouseout="this.style.transform='scale(1)';">
+                                <i class="fab fa-whatsapp" style="font-size: 1.3rem;"></i>
+                                <span>ABRIR EN WHATSAPP Y ENVIAR MENSAJE</span>
+                            </button>
+
+                            <button id="summary-copy-txt-btn" onclick="window.TeamView.copySummaryToClipboard()" style="
+                                background: rgba(255,255,255,0.05); color: #cbd5e1; border: 1.5px solid rgba(255,255,255,0.12);
+                                padding: 12px; border-radius: 14px; font-weight: 850; font-size: 0.78rem; cursor: pointer;
+                                display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;
+                            ">
+                                <i class="far fa-copy"></i>
+                                <span>COPIAR TEXTO FORMATEADO</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -1710,18 +1939,18 @@
 
             document.body.appendChild(overlay);
 
-            // Render the preview cromo inside the preview column
+            // Renderizar flyer cromo en preview column
             const previewContent = document.getElementById('summary-preview-content');
             if (previewContent) {
                 previewContent.innerHTML = this.getNextMatchesSummaryStoryHTML(teams, false);
             }
 
-            // Adjust CSS responsively to scale the card
+            // Escala responsiva
             this.adjustSummaryPreviewScale();
             this._boundAdjustSummaryScale = () => this.adjustSummaryPreviewScale();
             window.addEventListener('resize', this._boundAdjustSummaryScale);
 
-            // Trigger animations
+            // Animación de entrada
             setTimeout(() => {
                 overlay.style.opacity = '1';
                 const container = document.getElementById('summary-modal-container');
@@ -1730,8 +1959,111 @@
         }
 
         /**
-         * Calcula y aplica la escala del cromo de resumen dentro de la columna de previsualización.
+         * Alterna entre pestañas del modal de resumen (Partidos, Cartel HD, WhatsApp).
          */
+        switchSummaryTab(tabName) {
+            const tabs = ['matches', 'flyer', 'whatsapp'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`summary-nav-btn-${t}`);
+                const panel = document.getElementById(`summary-panel-${t}`);
+                if (btn) {
+                    if (t === tabName) {
+                        btn.style.background = '#ccff00';
+                        btn.style.color = '#000000';
+                        btn.style.boxShadow = '0 4px 15px rgba(204,255,0,0.3)';
+                    } else {
+                        btn.style.background = 'rgba(255,255,255,0.06)';
+                        btn.style.color = '#94a3b8';
+                        btn.style.boxShadow = 'none';
+                    }
+                }
+                if (panel) {
+                    panel.style.display = (t === tabName) ? 'block' : 'none';
+                }
+            });
+
+            if (tabName === 'flyer') {
+                setTimeout(() => this.adjustSummaryPreviewScale(), 50);
+            }
+        }
+
+        /**
+         * Filtra los partidos de la cartelera entre Todos, En Casa y Fuera.
+         */
+        filterSummaryMatches(filterType) {
+            const filterBtns = ['all', 'home', 'away'];
+            filterBtns.forEach(f => {
+                const btn = document.getElementById(`summary-filter-${f}`);
+                if (btn) {
+                    if (f === filterType) {
+                        btn.style.background = 'rgba(204,255,0,0.18)';
+                        btn.style.color = '#ccff00';
+                        btn.style.borderColor = '#ccff00';
+                    } else {
+                        btn.style.background = 'rgba(255,255,255,0.05)';
+                        btn.style.color = '#94a3b8';
+                        btn.style.borderColor = 'rgba(255,255,255,0.1)';
+                    }
+                }
+            });
+
+            const cards = document.querySelectorAll('.summary-match-card');
+            cards.forEach(c => {
+                const isHome = c.getAttribute('data-is-home') === 'true';
+                if (filterType === 'all') {
+                    c.style.display = 'flex';
+                } else if (filterType === 'home') {
+                    c.style.display = isHome ? 'flex' : 'none';
+                } else if (filterType === 'away') {
+                    c.style.display = !isHome ? 'flex' : 'none';
+                }
+            });
+        }
+
+        /**
+         * Salta directamente a la ficha del equipo en el listado principal y cierra el modal.
+         */
+        jumpToTeamFromModal(teamId) {
+            this.closeNextMatchesSummaryModal();
+            setTimeout(() => {
+                const el = document.getElementById(`team-${teamId}`);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    el.style.transition = 'box-shadow 0.3s, transform 0.3s';
+                    el.style.boxShadow = '0 0 0 4px #ccff00, 0 12px 30px rgba(204,255,0,0.35)';
+                    el.style.transform = 'scale(1.02)';
+                    setTimeout(() => {
+                        el.style.boxShadow = '';
+                        el.style.transform = '';
+                    }, 2200);
+                }
+            }, 360);
+        }
+
+        /**
+         * Comparte un partido individual por WhatsApp para el grupo del equipo.
+         */
+        shareSingleMatchWhatsApp(teamId, jNum) {
+            const team = (this.lastTeams || []).find(t => t.id === teamId);
+            if (!team) return;
+            const match = (team.schedule || []).find(m => String(m.j) === String(jNum)) || {};
+            const teamShortName = team.name.replace('SOMOS PÁDEL BCN ', '').replace('SOMOS PÁDEL ', '').toUpperCase();
+            const isHome = !!match.isHome;
+            const homeAwayText = isHome ? '🏠 JUGAMOS EN CASA' : '✈️ JUGAMOS COMO VISITANTE';
+
+            let text = `🎾 *PARTIDAZO SOMOS PÁDEL BCN* 🎾\n\n`;
+            text += `🛡️ *${teamShortName}* (Jornada ${match.j || jNum})\n`;
+            text += `⚔️ *vs ${match.opponent || 'Rival'}*\n`;
+            text += `📅 *Fecha:* ${match.date || 'Por definir'}${match.time ? ' • ⏰ ' + match.time : ''}\n`;
+            text += `📍 *Club:* ${match.venue || 'Club por confirmar'}\n`;
+            text += `${homeAwayText}\n\n`;
+            text += `¡A darlo todo en la pista! 💪🔥\n`;
+            text += `📲 App Oficial: https://somospadelbarcelona.github.io/Americanas-somospadel/#teams`;
+
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+        }
+
+
         adjustSummaryPreviewScale() {
             const previewColumn = document.getElementById('summary-preview-column');
             const scaleWrapper = document.getElementById('summary-preview-scale-wrapper');
@@ -1777,8 +2109,7 @@
 
         async copySummaryToClipboard() {
             const btn = document.getElementById('summary-copy-txt-btn');
-            const textBox = document.getElementById('summary-text-box');
-            if (!textBox) return;
+            const text = this.getSummaryWhatsAppText(this.lastTeams || []);
 
             if (btn) {
                 btn.disabled = true;
@@ -1786,7 +2117,7 @@
             }
 
             try {
-                await navigator.clipboard.writeText(textBox.value);
+                await navigator.clipboard.writeText(text);
                 if (btn) {
                     btn.innerHTML = `<i class="fas fa-check"></i> ¡TEXTO COPIADO!`;
                     btn.style.borderColor = '#38b000';
