@@ -51,9 +51,9 @@
         }
 
         // =========================================================================
-        // 🚧 PANTALLA DE SECCIÓN EN CONSTRUCCIÓN (ACCESO CON CONTRASEÑA "PADEL21")
+        // 🔒 PANTALLA DE TIENDA TEMPORALMENTE EN PAUSA / MANTENIMIENTO
         // =========================================================================
-        renderUnderConstructionGate(containerId = 'content-area', errorMessage = '') {
+        renderStoreClosed(containerId = 'content-area', errorMessage = '') {
             const container = document.getElementById(containerId);
             if (!container) return;
 
@@ -64,14 +64,14 @@
                         
                         <!-- Acentos decorativos sutiles de la marca -->
                         <div style="position: absolute; top: -45px; right: -45px; width: 130px; height: 130px; background: rgba(204,255,0,0.28); border-radius: 50%; filter: blur(28px); pointer-events: none;"></div>
-                        <div style="position: absolute; bottom: -45px; left: -45px; width: 130px; height: 130px; background: rgba(16,185,129,0.18); border-radius: 50%; filter: blur(28px); pointer-events: none;"></div>
+                        <div style="position: absolute; bottom: -45px; left: -45px; width: 130px; height: 130px; background: rgba(2,132,199,0.15); border-radius: 50%; filter: blur(28px); pointer-events: none;"></div>
 
-                        <div style="width: 82px; height: 82px; margin: 0 auto 18px; background: #fef08a; border: 2.5px solid #0f172a; border-radius: 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 18px rgba(0,0,0,0.08);">
-                            <i class="fas fa-hammer" style="font-size: 2.3rem; color: #0f172a;"></i>
+                        <div style="width: 82px; height: 82px; margin: 0 auto 18px; background: #f8fafc; border: 2.5px solid #0f172a; border-radius: 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 18px rgba(0,0,0,0.06);">
+                            <i class="fas fa-store-slash" style="font-size: 2.2rem; color: #0f172a;"></i>
                         </div>
 
-                        <span style="display: inline-block; background: #fef08a; color: #713f12; font-size: 0.72rem; font-weight: 950; letter-spacing: 0.8px; padding: 4px 14px; border-radius: 20px; text-transform: uppercase; margin-bottom: 12px; border: 1px solid #fde047;">
-                            🚧 Sección en Construcción
+                        <span style="display: inline-block; background: #fee2e2; color: #991b1b; font-size: 0.72rem; font-weight: 950; letter-spacing: 0.8px; padding: 4px 14px; border-radius: 20px; text-transform: uppercase; margin-bottom: 12px; border: 1px solid #fecaca;">
+                            ⏸️ Tienda en Pausa Temporal
                         </span>
 
                         <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.7rem; font-weight: 950; margin: 0 0 10px; color: #0f172a; line-height: 1.2;">
@@ -79,68 +79,73 @@
                         </h2>
 
                         <p style="color: #334155; font-size: 0.92rem; line-height: 1.55; margin: 0 0 16px; font-weight: 500;">
-                            ¡Hola, jugador! 🎾 Estamos construyendo la <strong>Tienda Oficial de SomosPadel Barcelona</strong>.
+                            La tienda online se encuentra en pausa temporal por actualización de catálogo o inventario.
                         </p>
 
                         <div style="background: #f0fdf4; border: 1.5px solid #bbf7d0; border-radius: 14px; padding: 13px 16px; margin-bottom: 22px; display: flex; align-items: center; gap: 12px; text-align: left;">
-                            <i class="fas fa-clock" style="font-size: 1.4rem; color: #16a34a; flex-shrink: 0;"></i>
+                            <i class="fas fa-circle-info" style="font-size: 1.4rem; color: #16a34a; flex-shrink: 0;"></i>
                             <div style="font-size: 0.82rem; color: #166534; font-weight: 750; line-height: 1.45;">
-                                <strong>Pronto estará visible para todos los jugadores</strong> con palas oficiales, equipación técnica y ofertas exclusivas de colaboradores.
+                                <strong>Volveremos a abrir muy pronto</strong> con palas oficiales, equipación técnica y ofertas exclusivas de colaboradores.
                             </div>
                         </div>
 
-                        <!-- Formulario de Desbloqueo con Contraseña -->
-                        <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 18px; padding: 20px; text-align: left;">
-                            <div style="display: flex; align-items: center; gap: 7px; margin-bottom: 6px;">
-                                <i class="fas fa-key" style="color: #0f172a; font-size: 0.85rem;"></i>
-                                <span style="font-size: 0.78rem; font-weight: 900; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">
-                                    Acceso con Contraseña
-                                </span>
-                            </div>
-                            <p style="margin: 0 0 12px; font-size: 0.76rem; color: #64748b;">
-                                Si dispones de la clave de acceso anticipado o eres administrador, introdúcela para desbloquear:
-                            </p>
-
-                            ${errorMessage ? `
-                                <div style="background: #fef2f2; border: 1.5px solid #fecaca; color: #b91c1c; padding: 10px 12px; border-radius: 10px; font-size: 0.8rem; font-weight: 800; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                                    <i class="fas fa-circle-exclamation"></i>
-                                    <span>${errorMessage}</span>
-                                </div>
-                            ` : ''}
-
-                            <form onsubmit="window.TiendaController && window.TiendaController.handleGateLogin(event)" style="display: flex; flex-direction: column; gap: 12px;">
-                                <div style="position: relative;">
-                                    <input type="password" id="sp-tienda-gate-pass" required autofocus placeholder="Introduce la contraseña..." 
-                                        style="width: 100%; box-sizing: border-box; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 12px; padding: 12px 44px 12px 14px; color: #0f172a; font-size: 0.95rem; font-weight: 700; outline: none; transition: border-color 0.2s;"
-                                        onfocus="this.style.borderColor='#0f172a'" onblur="this.style.borderColor='#cbd5e1'">
-                                    <button type="button" onclick="window.TiendaController && window.TiendaController.toggleGatePasswordVisibility()" 
-                                        style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b; cursor: pointer; padding: 4px; font-size: 1rem;">
-                                        <i class="fas fa-eye" id="sp-tienda-gate-eye-icon"></i>
-                                    </button>
-                                </div>
-
-                                <button type="submit" 
-                                    style="width: 100%; background: #CCFF00; color: #000; border: 1.5px solid #000; padding: 13px; border-radius: 12px; font-weight: 950; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: transform 0.15s ease;"
-                                    onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
-                                    <i class="fas fa-unlock-keyhole"></i> DESBLOQUEAR TIENDA
-                                </button>
-                            </form>
-
+                        <!-- Botones de contacto y retorno para el jugador -->
+                        <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px;">
+                            <button type="button" onclick="window.TiendaController && window.TiendaController.consultWhatsApp()" 
+                                style="width: 100%; background: #25D366; color: #ffffff; border: none; padding: 12px; border-radius: 12px; font-weight: 900; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(37,211,102,0.25);">
+                                <i class="fab fa-whatsapp" style="font-size: 1.1rem;"></i> Consultar Pedidos por WhatsApp
+                            </button>
                             <button type="button" onclick="window.TiendaController && window.TiendaController.goBackToApp()" 
-                                style="margin-top: 10px; width: 100%; background: #ffffff; color: #334155; border: 1.5px solid #cbd5e1; padding: 11px; border-radius: 12px; font-weight: 850; font-size: 0.82rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: background 0.15s;">
-                                <i class="fas fa-arrow-left"></i> VOLVER AL INICIO
+                                style="width: 100%; background: #ffffff; color: #0f172a; border: 1.5px solid #cbd5e1; padding: 11px; border-radius: 12px; font-weight: 850; font-size: 0.82rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: background 0.15s;">
+                                <i class="fas fa-arrow-left"></i> Volver al Inicio de la App
                             </button>
                         </div>
 
-                        <div style="margin-top: 20px; padding-top: 14px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; font-size: 0.76rem;">
+                        <!-- Acceso Administrador (Opcional) -->
+                        <details style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px 14px; text-align: left; font-size: 0.78rem;">
+                            <summary style="cursor: pointer; font-weight: 850; color: #475569; display: flex; align-items: center; justify-content: space-between;">
+                                <span><i class="fas fa-key"></i> Acceso Administrador</span>
+                                <i class="fas fa-chevron-down" style="font-size: 0.7rem;"></i>
+                            </summary>
+
+                            <div style="padding-top: 12px;">
+                                ${errorMessage ? `
+                                    <div style="background: #fef2f2; border: 1.5px solid #fecaca; color: #b91c1c; padding: 8px 10px; border-radius: 8px; font-size: 0.76rem; font-weight: 800; margin-bottom: 10px;">
+                                        ${errorMessage}
+                                    </div>
+                                ` : ''}
+
+                                <form onsubmit="window.TiendaController && window.TiendaController.handleGateLogin(event)" style="display: flex; flex-direction: column; gap: 10px;">
+                                    <div style="position: relative;">
+                                        <input type="password" id="sp-tienda-gate-pass" required placeholder="Clave admin de tienda..." 
+                                            style="width: 100%; box-sizing: border-box; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 10px 40px 10px 12px; color: #0f172a; font-size: 0.88rem; font-weight: 700;">
+                                        <button type="button" onclick="window.TiendaController && window.TiendaController.toggleGatePasswordVisibility()" 
+                                            style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b; cursor: pointer; padding: 4px;">
+                                            <i class="fas fa-eye" id="sp-tienda-gate-eye-icon"></i>
+                                        </button>
+                                    </div>
+
+                                    <button type="submit" 
+                                        style="width: 100%; background: #CCFF00; color: #000; border: 1.5px solid #000; padding: 10px; border-radius: 10px; font-weight: 950; font-size: 0.84rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                        <i class="fas fa-unlock"></i> Desbloquear y Previsualizar
+                                    </button>
+                                </form>
+                            </div>
+                        </details>
+
+                        <div style="margin-top: 18px; padding-top: 12px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; font-size: 0.74rem;">
                             <a href="admin.html#tienda_admin" style="color: #0284c7; text-decoration: none; font-weight: 800; display: flex; align-items: center; gap: 5px;">
-                                <i class="fas fa-shield"></i> Ir al Admin de Tienda
+                                <i class="fas fa-shield"></i> Ir al Backoffice
                             </a>
                             <span style="color: #64748b; font-weight: 600;">SomosPadel Barcelona</span>
                         </div>
                     </div>
                 </div>
             `;
+        }
+
+        renderUnderConstructionGate(containerId = 'content-area', errorMessage = '') {
+            return this.renderStoreClosed(containerId, errorMessage);
         }
 
         renderPlatformSectionsBar() {
@@ -230,10 +235,6 @@
                             <span class="sp-cart-text-label">Mi Cesta</span>
                             <span class="sp-store-cart-badge" id="sp-header-cart-count">${summary.count || 0}</span>
                             <span class="sp-cart-total-amount" id="sp-header-cart-total">${(summary.total || 0).toFixed(2)}€</span>
-                        </button>
-
-                        <button type="button" onclick="window.TiendaController && window.TiendaController.lockStore()" class="sp-store-lock-btn" title="Bloquear tienda y activar modo en construcción">
-                            <i class="fas fa-lock"></i>
                         </button>
                     </div>
                 </header>
@@ -1519,18 +1520,48 @@
                                 </div>
                             </div>
                             <div>
-                                <label style="font-size: 0.75rem; color: #94a3b8; font-weight: 700;">Proveedor Asociado</label>
-                                <select name="partnerId" class="sp-shop-sort-select" style="width: 100%; height: 42px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                    <label style="font-size: 0.75rem; color: #94a3b8; font-weight: 700;">Proveedor Asociado</label>
+                                    <button type="button" onclick="window.TiendaController && window.TiendaController.toggleCustomPartner(true)" 
+                                        style="background: #334155; border: 1px solid #475569; color: #e2e8f0; font-size: 0.72rem; font-weight: 700; padding: 2px 7px; border-radius: 6px; cursor: pointer;">
+                                        + Nuevo
+                                    </button>
+                                </div>
+                                <select id="sp-view-partner-select" name="partnerId" class="sp-shop-sort-select" style="width: 100%; height: 42px;" onchange="window.TiendaController && window.TiendaController.handlePartnerSelectChange(this)">
                                     ${partners.map(p => `<option value="${p.id}" ${product.partnerId === p.id ? 'selected' : ''}>${p.name}</option>`).join('')}
+                                    ${product.partnerId && !partners.some(p => p.id === product.partnerId) ? `
+                                        <option value="${product.partnerId}" selected>${product.partnerName || product.partnerId}</option>
+                                    ` : ''}
+                                    <option value="__custom__" style="color: #60a5fa; font-weight: bold;">✍️ + Escribir otro proveedor...</option>
                                 </select>
+                                <div id="sp-view-custom-partner-wrap" style="display: none; margin-top: 8px; background: #1e293b; border: 1.5px solid #3b82f6; border-radius: 8px; padding: 10px 12px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                        <span style="font-size: 0.72rem; font-weight: 700; color: #93c5fd; text-transform: uppercase;">
+                                            Nombre del nuevo proveedor:
+                                        </span>
+                                        <button type="button" onclick="window.TiendaController && window.TiendaController.toggleCustomPartner(false)" style="background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 0.8rem; font-weight: bold; padding: 0;">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                    <input type="text" id="sp-view-custom-partner-input" name="customPartnerName" placeholder="Ej: Babolat, Adidas, Siux..." class="sp-shop-search-input" style="padding: 8px 12px; font-size: 0.85rem;">
+                                </div>
                             </div>
                             <div>
                                 <label style="font-size: 0.75rem; color: #94a3b8; font-weight: 700;">Enlace a Compra Externa</label>
                                 <input type="url" name="externalLink" required value="${this.escapeHtml(product.externalLink)}" class="sp-shop-search-input" style="padding: 10px 14px;">
                             </div>
                             <div>
-                                <label style="font-size: 0.75rem; color: #94a3b8; font-weight: 700;">URL Imagen Principal</label>
-                                <input type="url" name="image" required value="${this.escapeHtml(product.image)}" class="sp-shop-search-input" style="padding: 10px 14px;">
+                                <label style="font-size: 0.75rem; color: #94a3b8; font-weight: 700;">Foto Principal del Producto</label>
+                                <input type="file" id="sp-view-file-input" accept="image/*" style="display: none;" onchange="window.TiendaController && window.TiendaController.handleProductImageUpload(this)">
+                                <div style="display: flex; gap: 8px; margin-top: 4px;">
+                                    <input type="text" name="image" id="sp-view-product-img-input" required value="${this.escapeHtml(product.image)}" class="sp-shop-search-input" style="padding: 10px 14px; flex: 1;" placeholder="https://... o sube una foto" oninput="document.getElementById('sp-view-product-img-preview').src = this.value">
+                                    <button type="button" onclick="document.getElementById('sp-view-file-input').click()" style="background: #3b82f6; color: #ffffff; border: none; border-radius: 8px; padding: 0 14px; font-weight: 700; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 5px; white-space: nowrap;">
+                                        <i class="fas fa-folder-open"></i> Subir Foto
+                                    </button>
+                                </div>
+                                <div style="margin-top: 8px;">
+                                    <img id="sp-view-product-img-preview" src="${this.escapeHtml(product.image)}" style="width: 70px; height: 70px; object-fit: contain; border-radius: 8px; border: 1.5px solid #334155; background: #0f172a; display: ${product.image ? 'block' : 'none'};">
+                                </div>
                             </div>
                             <div>
                                 <label style="font-size: 0.75rem; color: #94a3b8; font-weight: 700;">Descripción</label>

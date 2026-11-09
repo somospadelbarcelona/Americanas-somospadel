@@ -1,3 +1,60 @@
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 🎾 HELPERS GLOBALES DE INSCRIPCIÓN Y NAVEGACIÓN A EVENTOS DESDE EL DASHBOARD
+// ═══════════════════════════════════════════════════════════════════════════
+if (typeof window !== 'undefined') {
+    window.handleEventJoin = async function (eventId, type = 'americana', playtomicUrl = '') {
+        try { window.PlayerView?.haptic?.(20); } catch (_) {}
+        if (playtomicUrl && playtomicUrl.trim().length > 0) {
+            window.open(playtomicUrl.trim(), '_blank');
+            return;
+        }
+        const currentUser = (window.Store ? window.Store.getState('currentUser') : null) || window.currentUser || (window.EventsController?.state?.currentUser);
+        if (!currentUser) {
+            if (window.PremiumModal?.alert) {
+                window.PremiumModal.alert({ title: "🔒 ACCESO", message: "Inicia sesión para inscribirte en el evento." });
+            } else {
+                alert("Inicia sesión para inscribirte en el evento.");
+            }
+            return;
+        }
+        if (window.EventsController && typeof window.EventsController.joinEvent === 'function') {
+            if (!window.EventsController.state.currentUser) {
+                window.EventsController.state.currentUser = currentUser;
+            }
+            await window.EventsController.joinEvent(eventId, type);
+        } else if (window.Router) {
+            window.Router.navigate(type === 'entreno' ? 'entrenos' : 'americanas');
+        }
+    };
+
+    window.handleEventCardClick = function (eventId, type = 'americana', playtomicUrl = '') {
+        try { window.PlayerView?.haptic?.(10); } catch (_) {}
+        if (window.EventsController && (window.EventsController.showInscritosModal || window.EventsController.openInscritosModal)) {
+            const fn = window.EventsController.showInscritosModal || window.EventsController.openInscritosModal;
+            fn.call(window.EventsController, eventId, type);
+        } else if (window.Router) {
+            window.Router.navigate(type === 'entreno' ? 'entrenos' : 'americanas');
+        }
+    };
+
+    window.handleEventWaitlist = async function (eventId, type = 'americana', playtomicUrl = '') {
+        try { window.PlayerView?.haptic?.(20); } catch (_) {}
+        if (playtomicUrl && playtomicUrl.trim().length > 0) {
+            window.open(playtomicUrl.trim(), '_blank');
+            return;
+        }
+        if (window.EventsController && typeof window.EventsController.joinWaitlist === 'function') {
+            const currentUser = (window.Store ? window.Store.getState('currentUser') : null) || window.currentUser;
+            if (currentUser && !window.EventsController.state.currentUser) {
+                window.EventsController.state.currentUser = currentUser;
+            }
+            await window.EventsController.joinWaitlist(eventId, type);
+        } else if (window.Router) {
+            window.Router.navigate(type === 'entreno' ? 'entrenos' : 'americanas');
+        }
+    };
+}
 (function () {
     // VISUAL VERIFICATION
     setTimeout(() => console.log("%c 🚀 DASHBOARD ENGINE V9: CLEAN MODE ", "background: #CCFF00; color: #000; font-size: 14px; padding: 4px; font-weight: bold;"), 1000);
@@ -5274,6 +5331,9 @@
          */
         renderAmericanaTrackCard(ev) {
             if (!ev) return '';
+            const evId = ev.id || ev.doc_id || ev.playtomic_id || '';
+            const playtomicLink = (ev.playtomicUrl || ev.playtomic_url || '').trim();
+            const safePlaytomicLink = playtomicLink.replace(/'/g, "\\'");
             const photo = this.getAmericanaPoster(ev);
             const dateStr = this.formatDateShort ? this.formatDateShort(ev.date) : (ev.date || 'Próximamente');
             const timeStr = ev.time || ev.hora || '19:30';
@@ -5292,7 +5352,7 @@
             let actionBtnHtml = '';
             if (isJoined) {
                 actionBtnHtml = `
-                    <button onclick="event.stopPropagation(); window.EventsController && (window.EventsController.showInscritosModal || window.EventsController.openInscritosModal) ? (window.EventsController.showInscritosModal ? window.EventsController.showInscritosModal('${ev.id}', 'americana') : window.EventsController.openInscritosModal('${ev.id}', 'americana')) : (window.Router && window.Router.navigate('entrenos'))" style="
+                    <button onclick="event.stopPropagation(); window.handleEventCardClick('${evId}', 'americana', '${safePlaytomicLink}')" style="
                         width: 100%;
                         background: #dcfce7;
                         color: #14532d;
@@ -5314,7 +5374,7 @@
                 `;
             } else if (spotsLeft <= 0) {
                 actionBtnHtml = `
-                    <button onclick="event.stopPropagation(); window.EventsController && window.EventsController.joinWaitlist ? window.EventsController.joinWaitlist('${ev.id}', 'americana') : (window.Router && window.Router.navigate('americanas'))" style="
+                    <button onclick="event.stopPropagation(); window.handleEventWaitlist('${evId}', 'americana', '${safePlaytomicLink}')" style="
                         width: 100%;
                         background: #fef08a;
                         color: #854d0e;
@@ -5332,9 +5392,31 @@
                         <i class="fas fa-bell"></i> Lista de espera
                     </button>
                 `;
+            } else if (playtomicLink) {
+                actionBtnHtml = `
+                    <button onclick="event.stopPropagation(); window.handleEventJoin('${evId}', 'americana', '${safePlaytomicLink}')" style="
+                        width: 100%;
+                        background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+                        color: #ffffff;
+                        border: none;
+                        border-radius: 10px;
+                        padding: 9px;
+                        font-size: 0.80rem;
+                        font-weight: 850;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 6px;
+                        box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
+                        transition: transform 0.15s, box-shadow 0.15s;
+                    " onmouseover="this.style.transform='scale(1.02)';" onmouseout="this.style.transform='scale(1)';">
+                        <i class="fas fa-external-link-alt"></i> Inscribirme (Playtomic)
+                    </button>
+                `;
             } else {
                 actionBtnHtml = `
-                    <button onclick="event.stopPropagation(); window.EventsController && window.EventsController.joinEvent ? window.EventsController.joinEvent('${ev.id}', 'americana') : (window.Router && window.Router.navigate('americanas'))" style="
+                    <button onclick="event.stopPropagation(); window.handleEventJoin('${evId}', 'americana', '')" style="
                         width: 100%;
                         background: #111827;
                         color: #ffffff;
@@ -5344,14 +5426,15 @@
                         font-size: 0.80rem;
                         font-weight: 800;
                         cursor: pointer;
-                    ">
+                        transition: transform 0.15s, background 0.15s;
+                    " onmouseover="this.style.background='#1f2937';" onmouseout="this.style.background='#111827';">
                         Inscribirme
                     </button>
                 `;
             }
 
             return `
-                <div onclick="window.EventsController && window.EventsController.openInscritosModal ? window.EventsController.openInscritosModal('${ev.id}', 'americana') : (window.Router && window.Router.navigate('americanas'))" style="
+                <div onclick="window.handleEventCardClick('${evId}', 'americana', '${safePlaytomicLink}')" style="
                     min-width: 260px;
                     max-width: 270px;
                     background: ${isJoined ? 'linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%)' : '#ffffff'};
@@ -5418,6 +5501,9 @@
          */
         renderEntrenoTrackCard(ev, idx = 0) {
             if (!ev) return '';
+            const evId = ev.id || ev.doc_id || ev.playtomic_id || '';
+            const playtomicLink = (ev.playtomicUrl || ev.playtomic_url || '').trim();
+            const safePlaytomicLink = playtomicLink.replace(/'/g, "\\'");
             const defaultEntrenoPhotos = ['img/entreno masculino prat.jpg', 'img/cem_tennis_hospitalet.png', 'img/entreno mixto prat.jpg', 'img/entreno femenino prat.jpg'];
             const customImg = (ev.image_url || ev.imageUrl || ev.poster || ev.posterUrl || '').trim();
             const photo = customImg || defaultEntrenoPhotos[idx % defaultEntrenoPhotos.length];
@@ -5428,7 +5514,7 @@
             const spotsLeft = Math.max(0, maxP - players.length);
             const cleanName = (ev.name || ev.title || 'Entreno').replace(/'/g, "\\'");
             const cleanSede = (ev.sede || ev.location || 'SomosPadel BCN').replace(/'/g, "\\'");
-            const safePhoto = photo.replace(/'/g, "\'");
+            const safePhoto = photo.replace(/'/g, "\\'");
             const levelDisplay = this.getEventLevelDisplay(ev);
             const isJoined = this.isUserRegisteredInEvent(ev);
 
@@ -5437,11 +5523,11 @@
             if (isJoined) {
                 const user = (window.Store && typeof window.Store.getState === 'function' ? window.Store.getState('currentUser') : null) || window.EventsController?.state?.currentUser;
                 const uid = user ? (user.uid || user.id) : null;
-                const cleanName = (user?.name || user?.displayName || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+                const cleanName = (user?.name || user?.displayName || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 
                 const myIdx = displayPlayers.findIndex(p => {
                     const pId = typeof p === 'object' ? (p.uid || p.id) : p;
-                    const pName = typeof p === 'object' ? (p.name || p.displayName || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() : '';
+                    const pName = typeof p === 'object' ? (p.name || p.displayName || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim() : '';
                     return (uid && pId && String(pId) === String(uid)) || (cleanName && pName && pName === cleanName);
                 });
                 if (myIdx > 0) {
@@ -5454,7 +5540,7 @@
             let actionBtnHtml = '';
             if (isJoined) {
                 actionBtnHtml = `
-                    <button onclick="event.stopPropagation(); window.EventsController && (window.EventsController.showInscritosModal || window.EventsController.openInscritosModal) ? (window.EventsController.showInscritosModal ? window.EventsController.showInscritosModal('${ev.id}', 'entreno') : window.EventsController.openInscritosModal('${ev.id}', 'entreno')) : (window.Router && window.Router.navigate('entrenos'))" style="
+                    <button onclick="event.stopPropagation(); window.handleEventCardClick('${evId}', 'entreno', '${safePlaytomicLink}')" style="
                         width: 100%;
                         background: #dcfce7;
                         color: #14532d;
@@ -5476,7 +5562,7 @@
                 `;
             } else if (spotsLeft <= 0) {
                 actionBtnHtml = `
-                    <button onclick="event.stopPropagation(); window.EventsController && window.EventsController.joinWaitlist ? window.EventsController.joinWaitlist('${ev.id}', 'entreno') : (window.Router && window.Router.navigate('entrenos'))" style="
+                    <button onclick="event.stopPropagation(); window.handleEventWaitlist('${evId}', 'entreno', '${safePlaytomicLink}')" style="
                         width: 100%;
                         background: #fef08a;
                         color: #854d0e;
@@ -5494,9 +5580,29 @@
                         <i class="fas fa-bell"></i> Lista de espera
                     </button>
                 `;
+            } else if (playtomicLink) {
+                actionBtnHtml = `
+                    <button onclick="event.stopPropagation(); window.handleEventJoin('${evId}', 'entreno', '${safePlaytomicLink}')" style="
+                        width: 100%;
+                        background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+                        color: #ffffff;
+                        border: none;
+                        border-radius: 10px;
+                        padding: 9px;
+                        font-size: 0.80rem;
+                        font-weight: 850;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 6px;
+                    ">
+                        <i class="fas fa-external-link-alt"></i> Reservar plaza (Playtomic)
+                    </button>
+                `;
             } else {
                 actionBtnHtml = `
-                    <button onclick="event.stopPropagation(); window.EventsController && window.EventsController.joinEvent ? window.EventsController.joinEvent('${ev.id}', 'entreno') : (window.Router && window.Router.navigate('entrenos'))" style="
+                    <button onclick="event.stopPropagation(); window.handleEventJoin('${evId}', 'entreno', '')" style="
                         width: 100%;
                         background: #CCFF00;
                         color: #111827;
@@ -5513,7 +5619,7 @@
             }
 
             return `
-                <div onclick="window.EventsController && window.EventsController.openInscritosModal ? window.EventsController.openInscritosModal('${ev.id}', 'entreno') : (window.Router && window.Router.navigate('entrenos'))" style="
+                <div onclick="window.handleEventCardClick('${evId}', 'entreno', '${safePlaytomicLink}')" style="
                     min-width: 260px;
                     max-width: 270px;
                     background: ${isJoined ? 'linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%)' : '#ffffff'};
@@ -5534,7 +5640,7 @@
                              onerror="this.onerror=null; this.src='img/entreno mixto prat.jpg';"
                              style="width: 100%; height: 100%; object-fit: cover;">
                         <div style="position: absolute; top: 10px; left: 10px; background: #111827; color: #CCFF00; font-size: 0.65rem; font-weight: 900; padding: 3px 8px; border-radius: 6px;">
-                            ⚡ ${dateStr} ${timeStr ? timeStr + 'H' : ''}
+                            🎾 ${dateStr} ${timeStr ? timeStr + 'H' : ''}
                         </div>
                         <div style="position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.95); color: #111827; font-size: 0.62rem; font-weight: 800; padding: 3px 7px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
                             ${levelDisplay}
@@ -5552,48 +5658,46 @@
                     </div>
                     <div style="padding: 14px;">
                         ${isJoined ? `<div style="display: inline-flex; align-items: center; gap: 5px; background: #dcfce7; color: #15803d; border: 1px solid #86efac; padding: 3px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 900; margin-bottom: 6px;"><i class="fas fa-user-check"></i> PLAZA CONFIRMADA</div>` : ''}
-                        <div style="font-size: 0.65rem; font-weight: 800; color: #16a34a; text-transform: uppercase; margin-bottom: 3px;">
-                            ENTRENO
+                        <div style="font-size: 0.65rem; font-weight: 800; color: #0284c7; text-transform: uppercase; margin-bottom: 3px;">
+                            CLINIC & ENTRENAMIENTO
                         </div>
                         <h4 style="margin: 0 0 6px; font-size: 0.95rem; font-weight: 900; color: #111827; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                            ${ev.name || ev.title || 'Entreno Táctico'}
+                            ${ev.name || ev.title || 'Entrenamiento Oficial'}
                         </h4>
-                        <div style="margin: 10px 0 14px;">
-                            <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; margin-bottom: 6px;">
-                                ${players.length} jugador${players.length === 1 ? '' : 'es'} (${isJoined ? '¡Tú incluido!' : (spotsLeft > 0 ? `${spotsLeft} huecos` : 'Completo')}):
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                ${displayPlayers.slice(0, 3).map((p, pIdx) => {
-                                    const pName = typeof p === 'object' ? (p.name || p.displayName || 'J') : 'J';
-                                    const isMe = isJoined && pIdx === 0;
-                                    if (isMe) {
-                                        return `
-                                            <div title="Tú (${pName})" style="width: 32px; height: 32px; border-radius: 50%; background: #dcfce7; color: #15803d; font-size: 0.70rem; font-weight: 900; display: flex; align-items: center; justify-content: center; border: 2px solid #16a34a; box-shadow: 0 0 8px rgba(22,163,74,0.35);">
-                                                <i class="fas fa-check" style="font-size: 0.65rem;"></i>
-                                            </div>
-                                        `;
-                                    }
-                                    const bgColors = ['#e0f2fe', '#fef3c7', '#dcfce7'];
-                                    const txtColors = ['#0369a1', '#b45309', '#15803d'];
-                                    return `
-                                        <div title="${pName}" style="width: 32px; height: 32px; border-radius: 50%; background: ${bgColors[pIdx % 3]}; color: ${txtColors[pIdx % 3]}; font-size: 0.70rem; font-weight: 900; display: flex; align-items: center; justify-content: center; border: 1.5px solid #ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.06);">
-                                            ${pName.charAt(0).toUpperCase()}
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                            <span style="font-size: 0.72rem; color: #64748b; font-weight: 600;">
+                                <i class="fas fa-users" style="color: #94a3b8; margin-right: 4px;"></i> ${players.length}/${maxP} inscritos
+                            </span>
+                            <span style="font-size: 0.72rem; font-weight: 800; color: ${isJoined ? '#16a34a' : (spotsLeft === 0 ? '#64748b' : '#16a34a')};">
+                                ${isJoined ? '¡Tienes plaza!' : (spotsLeft > 0 ? `${spotsLeft} libres` : 'Completo')}
+                            </span>
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                ${displayPlayers.slice(0, 4).map(p => {
+                                    const pImg = typeof p === 'object' ? (p.photoURL || p.photo_url || p.picture || p.photo) : null;
+                                    const pName = typeof p === 'object' ? (p.name || p.displayName || 'Jugador') : p;
+                                    return pImg ? `
+                                        <img src="${pImg}" alt="${pName}" title="${pName}"
+                                             onerror="this.onerror=null; this.src='img/player_fallback.png';"
+                                             style="width: 22px; height: 22px; border-radius: 50%; object-fit: cover; border: 1.5px solid #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                                    ` : `
+                                        <div title="${pName}" style="width: 22px; height: 22px; border-radius: 50%; background: #e2e8f0; color: #475569; font-size: 0.60rem; font-weight: 800; display: flex; align-items: center; justify-content: center; border: 1.5px solid #ffffff;">
+                                            ${(pName[0] || '?').toUpperCase()}
                                         </div>
                                     `;
                                 }).join('')}
-                                ${Array(Math.min(3, spotsLeft)).fill(0).map(() => `
-                                    <div title="Hueco libre" style="width: 32px; height: 32px; border-radius: 50%; border: 1.5px dashed #cbd5e1; background: #f8fafc; color: #64748b; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; justify-content: center;">
-                                        +
-                                    </div>
-                                `).join('')}
                             </div>
+                            <span style="font-size: 0.68rem; font-weight: 700; color: #94a3b8;">
+                                ${spotsLeft > 0 ? `Faltan ${spotsLeft}` : 'Completo'}
+                            </span>
                         </div>
                         ${actionBtnHtml}
                     </div>
                 </div>
             `;
         }
-
+        
         /**
          * 🔄 Actualización dinámica de carruseles swipe en Inicio (Americanas y Entrenos con datos 100% reales)
          */

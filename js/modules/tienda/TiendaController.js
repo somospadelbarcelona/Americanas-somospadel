@@ -43,9 +43,14 @@
         init(containerId = 'content-area') {
             this.containerId = containerId;
 
-            // Verificar si la tienda está desbloqueada por el administrador/clave
-            if (!TiendaService.isStoreAdminAuthenticated()) {
-                TiendaView.renderUnderConstructionGate(this.containerId);
+            // Comprobar si la tienda está abierta/activa públicamente
+            const isStoreActive = TiendaService && typeof TiendaService.isStoreActive === 'function'
+                ? TiendaService.isStoreActive()
+                : true;
+
+            // Si la tienda está pausada y no hay sesión de administrador, mostrar pantalla de mantenimiento/pausa
+            if (!isStoreActive && !TiendaService.isStoreAdminAuthenticated()) {
+                TiendaView.renderStoreClosed(this.containerId);
                 return;
             }
 
@@ -90,7 +95,7 @@
                 this.showToast('¡Acceso concedido a la Tienda! 🎾');
                 this.init(this.containerId);
             } else {
-                TiendaView.renderUnderConstructionGate(this.containerId, 'Contraseña incorrecta. Esta sección está en construcción.');
+                TiendaView.renderStoreClosed(this.containerId, 'Contraseña incorrecta. Por favor, compruébala.');
             }
         }
 
@@ -112,8 +117,8 @@
 
         lockStore() {
             TiendaService.logoutStoreAdmin();
-            this.showToast('Tienda bloqueada (Modo En Construcción activo) 🔒');
-            TiendaView.renderUnderConstructionGate(this.containerId);
+            this.showToast('Sesión de tienda cerrada 🔒');
+            TiendaView.renderStoreClosed(this.containerId);
         }
 
         goBackToApp() {
@@ -789,6 +794,24 @@
         saveProductForm(e, productId) {
             e.preventDefault();
             const form = e.target;
+
+            let partnerId = form.partnerId ? form.partnerId.value : '';
+            const customPartnerName = form.customPartnerName ? form.customPartnerName.value.trim() : '';
+
+            if (partnerId === '__custom__' || (customPartnerName && partnerId === '__custom__')) {
+                if (!customPartnerName) {
+                    alert('Por favor, introduce el nombre del nuevo proveedor.');
+                    const inp = document.getElementById('sp-view-custom-partner-input');
+                    if (inp) inp.focus();
+                    return;
+                }
+                const pt = TiendaService.getOrCreatePartner(customPartnerName);
+                partnerId = pt ? pt.id : partnerId;
+            } else if (customPartnerName && !partnerId) {
+                const pt = TiendaService.getOrCreatePartner(customPartnerName);
+                partnerId = pt ? pt.id : partnerId;
+            }
+
             const productData = {
                 id: productId || null,
                 name: form.name.value,
@@ -796,7 +819,7 @@
                 category: form.category.value,
                 originalPrice: parseFloat(form.originalPrice.value) || 0,
                 promoPrice: parseFloat(form.promoPrice.value) || 0,
-                partnerId: form.partnerId.value,
+                partnerId: partnerId,
                 externalLink: form.externalLink.value,
                 image: form.image.value,
                 description: form.description.value,
@@ -808,6 +831,55 @@
             this.closeModal();
             this.showToast('Producto guardado correctamente en la Tienda 🎾');
             TiendaView.render(this.containerId);
+        }
+
+        async handleProductImageUpload(inputEl, inputTargetId = 'sp-view-product-img-input', previewImgId = 'sp-view-product-img-preview') {
+            if (!inputEl.files || !inputEl.files[0]) return;
+            const file = inputEl.files[0];
+            if (!file.type.startsWith('image/')) {
+                alert('Por favor selecciona un archivo de imagen válido (JPG, PNG, WEBP).');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_DIM = 1000;
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > height) {
+                        if (width > MAX_DIM) {
+                            height = Math.round(height * (MAX_DIM / width));
+                            width = MAX_DIM;
+                        }
+                    } else {
+                        if (height > MAX_DIM) {
+                            width = Math.round(width * (MAX_DIM / height));
+                            height = MAX_DIM;
+                        }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, width, height);
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.84);
+                    const target = document.getElementById(inputTargetId);
+                    if (target) target.value = dataUrl;
+                    const preview = document.getElementById(previewImgId);
+                    if (preview) {
+                        preview.src = dataUrl;
+                        preview.style.display = 'block';
+                    }
+                    if (window.TiendaController) {
+                        window.TiendaController.showToast('📸 Foto optimizada y cargada');
+                    }
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
         }
 
         savePartnerForm(e, partnerId) {
@@ -831,6 +903,33 @@
             this.closeModal();
             this.showToast('Proveedor guardado correctamente');
             TiendaView.render(this.containerId);
+        }
+
+        handlePartnerSelectChange(selectEl) {
+            if (selectEl.value === '__custom__') {
+                this.toggleCustomPartner(true);
+            } else {
+                const wrap = document.getElementById('sp-view-custom-partner-wrap');
+                if (wrap) wrap.style.display = 'none';
+                const input = document.getElementById('sp-view-custom-partner-input');
+                if (input) input.value = '';
+            }
+        }
+
+        toggleCustomPartner(show) {
+            const wrap = document.getElementById('sp-view-custom-partner-wrap');
+            const input = document.getElementById('sp-view-custom-partner-input');
+            const select = document.getElementById('sp-view-partner-select');
+            if (wrap) {
+                wrap.style.display = show ? 'block' : 'none';
+                if (show) {
+                    if (select) select.value = '__custom__';
+                    if (input) setTimeout(() => input.focus(), 60);
+                } else {
+                    if (select && select.value === '__custom__') select.selectedIndex = 0;
+                    if (input) input.value = '';
+                }
+            }
         }
 
         simulateConversionPrompt() {

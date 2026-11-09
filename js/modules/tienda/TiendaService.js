@@ -923,6 +923,40 @@
             return partners.find(p => p.id === id) || null;
         }
 
+        getOrCreatePartner(name) {
+            if (!name || typeof name !== 'string' || !name.trim()) return null;
+            const cleanName = name.trim();
+            const partners = this.getPartners();
+            const existing = partners.find(p => p.name && p.name.trim().toLowerCase() === cleanName.toLowerCase());
+            if (existing) return existing;
+
+            // Generar siglas para el logotipo
+            const words = cleanName.split(/\s+/).filter(Boolean);
+            let logoText = 'SP';
+            if (words.length >= 2) {
+                logoText = (words[0][0] + words[1][0]).toUpperCase();
+            } else if (cleanName.length >= 2) {
+                logoText = cleanName.substring(0, 2).toUpperCase();
+            }
+
+            const newPartner = {
+                id: `partner-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+                name: cleanName,
+                logoText: logoText,
+                contactPerson: 'Responsable ' + cleanName,
+                email: '',
+                phone: '',
+                web: '',
+                agreementType: 'Proveedor / Marca Oficial',
+                agreedCommission: '10%',
+                renewalDate: '2027-12-31',
+                internalNotes: 'Proveedor añadido directamente desde el catálogo de productos.',
+                totalGeneratedSales: 0,
+                accumulatedCommission: 0
+            };
+            return this.savePartner(newPartner);
+        }
+
         savePartner(partnerData) {
             const partners = this.getPartners();
             const index = partners.findIndex(p => p.id === partnerData.id);
@@ -1104,6 +1138,27 @@
                 localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(updated));
             } catch (e) {}
             return updated;
+        }
+
+        // ==========================================
+        // 🏪 ESTADO PÚBLICO DE LA TIENDA (ONLINE / OFFLINE)
+        // ==========================================
+        isStoreActive() {
+            const settings = this.getSettings();
+            return settings.storeStatus !== 'closed' && settings.storeStatus !== 'maintenance';
+        }
+
+        setStoreStatus(status) {
+            const newStatus = status === 'closed' ? 'closed' : 'open';
+            this.saveSettings({ storeStatus: newStatus });
+            return newStatus === 'open';
+        }
+
+        toggleStoreStatus() {
+            const isCurrentlyActive = this.isStoreActive();
+            const newStatus = isCurrentlyActive ? 'closed' : 'open';
+            this.setStoreStatus(newStatus);
+            return newStatus === 'open';
         }
 
         // ==========================================

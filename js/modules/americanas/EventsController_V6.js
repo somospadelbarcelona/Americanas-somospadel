@@ -355,10 +355,10 @@
                         });
                         initialAmericanas = activeParsed
                             .filter(e => e.type !== 'entreno' && !(e.name || e.title || '').toLowerCase().includes('entreno'))
-                            .map(e => ({ ...e, type: 'americana' }));
+                            .map(e => ({ ...e, id: e.id || e.doc_id || e.playtomic_id, type: 'americana' }));
                         initialEntrenos = activeParsed
                             .filter(e => e.type === 'entreno' || (e.name || e.title || '').toLowerCase().includes('entreno'))
-                            .map(e => ({ ...e, type: 'entreno' }));
+                            .map(e => ({ ...e, id: e.id || e.doc_id || e.playtomic_id, type: 'entreno' }));
                     }
                 }
             } catch (_) {}
@@ -373,7 +373,7 @@
                 viewInitialized: false,
                 bgInitialized: false,
                 loadingResults: false,
-                currentUser: null,
+                currentUser: (typeof window !== 'undefined' && window.currentUser) || (typeof window !== 'undefined' && window.Store ? window.Store.getState('currentUser') : null) || null,
                 playerCache: {},
                 filters: {
                     month: 'all',
@@ -5949,8 +5949,41 @@
             return false;
         }
 
+        async findEventById(id, type = 'americana') {
+            if (!id) return null;
+            const events = type === 'entreno' ? (this.state.entrenos || []) : (this.state.americanas || []);
+            let evt = events.find(e => (e && (e.id === id || e.doc_id === id || e.playtomic_id === id)));
+            if (!evt && window.AmericanaService && Array.isArray(window.AmericanaService._cachedActiveEvents)) {
+                evt = window.AmericanaService._cachedActiveEvents.find(e => (e && (e.id === id || e.doc_id === id || e.playtomic_id === id)));
+            }
+            if (!evt) {
+                try {
+                    const cached = localStorage.getItem('sp_cached_active_events_v2');
+                    if (cached) {
+                        const parsed = JSON.parse(cached);
+                        if (Array.isArray(parsed)) {
+                            evt = parsed.find(e => (e && (e.id === id || e.doc_id === id || e.playtomic_id === id)));
+                        }
+                    }
+                } catch (_) {}
+            }
+            if (!evt && window.db) {
+                try {
+                    const col = type === 'entreno' ? 'entrenos' : 'americanas';
+                    const docSnap = await window.db.collection(col).doc(id).get();
+                    if (docSnap.exists) {
+                        evt = { id: docSnap.id, ...docSnap.data() };
+                    }
+                } catch (_) {}
+            }
+            return evt || null;
+        }
+
         async joinEvent(id, type = 'americana') {
             try {
+                if (!this.state.currentUser) {
+                    this.state.currentUser = (window.Store ? window.Store.getState('currentUser') : null) || window.currentUser || null;
+                }
                 if (!this.state.currentUser) {
                     window.PremiumModal.alert({ title: "🔒 ACCESO", message: "Inicia sesión para inscribirte." });
                     return;
@@ -5964,9 +5997,13 @@
                     return;
                 }
 
-                const events = type === 'entreno' ? this.state.entrenos : this.state.americanas;
-                const evt = events.find(e => e.id === id);
-                if (!evt) return;
+                const evt = await this.findEventById(id, type);
+                if (!evt) {
+                    if (window.Router) {
+                        window.Router.navigate(type === 'entreno' ? 'entrenos' : 'americanas');
+                    }
+                    return;
+                }
 
                 // Redirección directa a Playtomic si la americana está vinculada
                 const playtomicLink = evt.playtomicUrl || evt.playtomic_url;
@@ -6117,6 +6154,12 @@
                                 colors: ['#CCFF00', '#00E36D', '#ffffff']
                             });
                         }
+                        try {
+                            window.dispatchEvent(new CustomEvent('eventModified', { detail: { eventId: id, type } }));
+                            if (window.DashboardView && typeof window.DashboardView.refreshDynamicCarousels === 'function') {
+                                window.DashboardView.refreshDynamicCarousels(true);
+                            }
+                        } catch (_) {}
                     }
 
                     window.PremiumModal.alert({
@@ -6154,6 +6197,12 @@
                     
                     if (res.success) {
                         this.onDataUpdate(); // 🚀 REFRESH INSTANTÁNEO
+                        try {
+                            window.dispatchEvent(new CustomEvent('eventModified', { detail: { eventId: id, type } }));
+                            if (window.DashboardView && typeof window.DashboardView.refreshDynamicCarousels === 'function') {
+                                window.DashboardView.refreshDynamicCarousels(true);
+                            }
+                        } catch (_) {}
                     }
 
                     window.PremiumModal.alert({
@@ -6171,6 +6220,9 @@
         async joinWaitlist(id, type = 'americana') {
             try {
                 if (!this.state.currentUser) {
+                    this.state.currentUser = (window.Store ? window.Store.getState('currentUser') : null) || window.currentUser || null;
+                }
+                if (!this.state.currentUser) {
                     window.PremiumModal.alert({ title: "🔒 ACCESO", message: "Inicia sesión." });
                     return;
                 }
@@ -6183,9 +6235,13 @@
                     return;
                 }
 
-                const events = type === 'entreno' ? this.state.entrenos : this.state.americanas;
-                const evt = events?.find(e => e.id === id);
-                if (!evt) return;
+                const evt = await this.findEventById(id, type);
+                if (!evt) {
+                    if (window.Router) {
+                        window.Router.navigate(type === 'entreno' ? 'entrenos' : 'americanas');
+                    }
+                    return;
+                }
 
                 // 🛑 Comprobación estricta de género para lista de espera
                 const genderCheck = this.checkGenderEligibility(evt, this.state.currentUser);
@@ -6297,9 +6353,13 @@
             this._currentInscritosEventId = id;
             this._currentInscritosType = type;
 
-            const localEvents = type === 'entreno' ? this.state.entrenos : this.state.americanas;
-            let evt = localEvents.find(e => e.id === id);
-            if (!evt) return;
+            const evt = await this.findEventById(id, type);
+            if (!evt) {
+                if (window.Router) {
+                    window.Router.navigate(type === 'entreno' ? 'entrenos' : 'americanas');
+                }
+                return;
+            }
 
             if (!this.isAmericanaUnlocked(evt)) {
                 this.promptPrivatePassword(id, type, 'inscritos');

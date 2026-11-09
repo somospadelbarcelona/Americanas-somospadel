@@ -166,11 +166,21 @@
         }
 
         handleLogout() {
-            if (confirm('¿Deseas bloquear la sección de administración de la tienda? Se volverá a requerir la contraseña.')) {
+            if (confirm('¿Deseas salir del panel de administración de tienda? Se volverá a requerir la contraseña para acceder a la gestión.')) {
                 this.service.logoutStoreAdmin();
-                this.showToast('Sesión de administración de tienda bloqueada.');
+                this.showToast('Sesión de administración de tienda cerrada.');
                 this.renderLoginScreen();
             }
+        }
+
+        toggleStoreStatus() {
+            const isNowActive = this.service.toggleStoreStatus();
+            if (isNowActive) {
+                this.showToast('✅ ¡Tienda Online ACTIVADA! Abierta y visible para todos los jugadores.');
+            } else {
+                this.showToast('⏸️ Tienda Online DESACTIVADA (Modo pausa / mantenimiento activo).');
+            }
+            this.render();
         }
 
         // =========================================================================
@@ -189,6 +199,7 @@
             // Cálculos y Métricas
             const totalProducts = products.length;
             const totalOrders = orders.length;
+            const isStoreActive = this.service.isStoreActive ? this.service.isStoreActive() : (settings.storeStatus !== 'closed');
 
             container.innerHTML = `
                 <div class="fade-in" style="padding-bottom: 50px; font-family: 'Inter', -apple-system, sans-serif; color: #0f172a; background: #f8fafc; min-height: 80vh;">
@@ -200,9 +211,15 @@
                                 <span style="background: #CCFF00; color: #000; font-size: 0.7rem; font-weight: 950; padding: 4px 10px; border-radius: 8px; text-transform: uppercase; border: 1px solid #000;">
                                     🛍️ E-COMMERCE BACKOFFICE
                                 </span>
-                                <span style="background: #dcfce7; color: #166534; font-size: 0.7rem; font-weight: 800; padding: 4px 10px; border-radius: 8px; border: 1px solid #bbf7d0;">
-                                    <i class="fas fa-circle-check"></i> TIENDA ACTIVA
-                                </span>
+                                ${isStoreActive ? `
+                                    <span style="background: #dcfce7; color: #166534; font-size: 0.7rem; font-weight: 800; padding: 4px 10px; border-radius: 8px; border: 1px solid #bbf7d0; display: inline-flex; align-items: center; gap: 5px;">
+                                        <i class="fas fa-circle-check"></i> TIENDA ACTIVA (PÚBLICA)
+                                    </span>
+                                ` : `
+                                    <span style="background: #fee2e2; color: #991b1b; font-size: 0.7rem; font-weight: 800; padding: 4px 10px; border-radius: 8px; border: 1px solid #fecaca; display: inline-flex; align-items: center; gap: 5px;">
+                                        <i class="fas fa-circle-pause"></i> TIENDA DESACTIVADA (EN PAUSA)
+                                    </span>
+                                `}
                                 <span style="color: #64748b; font-size: 0.78rem; font-weight: 700;">SomosPadel BCN Official Store</span>
                             </div>
                             <h1 style="margin: 0; font-family: 'Outfit', sans-serif; font-size: 1.7rem; font-weight: 950; color: #0f172a; line-height: 1.2;">
@@ -218,14 +235,23 @@
                             <a href="tienda.html" target="_blank" style="background: #f8fafc; color: #0f172a; text-decoration: none; border: 1.5px solid #cbd5e1; padding: 9px 15px; border-radius: 12px; font-weight: 800; font-size: 0.82rem; display: flex; align-items: center; gap: 6px; transition: background 0.15s;">
                                 <i class="fas fa-arrow-up-right-from-square" style="color: #0284c7;"></i> Ver Tienda Pública
                             </a>
-                            <button onclick="window.AdminTienda.openCreateProductModal()" style="background: #CCFF00; color: #000; border: 1.5px solid #000; padding: 9px 16px; border-radius: 12px; font-weight: 950; font-size: 0.82rem; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+                            ${isStoreActive ? `
+                                <button onclick="window.AdminTienda.toggleStoreStatus()" title="Pausar o desactivar la tienda pública temporalmente para los jugadores" style="background: #fff1f2; color: #be123c; border: 1.5px solid #fecdd3; padding: 9px 15px; border-radius: 12px; font-weight: 950; font-size: 0.82rem; cursor: pointer; display: flex; align-items: center; gap: 7px; box-shadow: 0 2px 6px rgba(190,18,60,0.08); transition: transform 0.1s;">
+                                    <i class="fas fa-power-off" style="color: #e11d48;"></i> DESACTIVAR TIENDA
+                                </button>
+                            ` : `
+                                <button onclick="window.AdminTienda.toggleStoreStatus()" title="Activar la tienda pública para que todos los jugadores puedan comprar" style="background: #CCFF00; color: #000; border: 1.5px solid #000; padding: 9px 16px; border-radius: 12px; font-weight: 950; font-size: 0.82rem; cursor: pointer; display: flex; align-items: center; gap: 7px; box-shadow: 0 4px 14px rgba(204,255,0,0.4); transition: transform 0.1s;">
+                                    <i class="fas fa-circle-check"></i> ACTIVAR TIENDA ONLINE
+                                </button>
+                            `}
+                            <button onclick="window.AdminTienda.openCreateProductModal()" style="background: #f1f5f9; color: #0f172a; border: 1.5px solid #cbd5e1; padding: 9px 15px; border-radius: 12px; font-weight: 900; font-size: 0.82rem; cursor: pointer; display: flex; align-items: center; gap: 6px;">
                                 <i class="fas fa-plus"></i> NUEVO PRODUCTO
                             </button>
                             <button onclick="window.AdminTienda.openCreateOrderModal()" style="background: #f0fdf4; color: #166534; border: 1.5px solid #bbf7d0; padding: 9px 15px; border-radius: 12px; font-weight: 800; font-size: 0.82rem; cursor: pointer; display: flex; align-items: center; gap: 6px;">
                                 <i class="fas fa-cart-plus"></i> REGISTRAR PEDIDO
                             </button>
-                            <button onclick="window.AdminTienda.handleLogout()" title="Bloquear y salir del modo admin de tienda" style="background: #fef2f2; color: #b91c1c; border: 1.5px solid #fecaca; padding: 9px 14px; border-radius: 12px; font-weight: 800; font-size: 0.82rem; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                                <i class="fas fa-lock"></i> BLOQUEAR
+                            <button onclick="window.AdminTienda.handleLogout()" title="Cerrar sesión del panel de administración" style="background: #f8fafc; color: #475569; border: 1.5px solid #cbd5e1; padding: 9px 13px; border-radius: 12px; font-weight: 800; font-size: 0.82rem; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-lock"></i> SALIR ADMIN
                             </button>
                         </div>
                     </div>
@@ -872,10 +898,16 @@
                                             <div style="font-size: 0.72rem; color: #0284c7; font-weight: 800;">${pt.agreementType}</div>
                                         </div>
                                     </div>
-                                    <button onclick="window.AdminTienda.openEditPartnerModal('${pt.id}')" title="Editar acuerdo" 
-                                        style="background: #f8fafc; color: #0f172a; border: 1.5px solid #cbd5e1; width: 34px; height: 34px; border-radius: 8px; cursor: pointer;">
-                                        <i class="fas fa-pencil"></i>
-                                    </button>
+                                    <div style="display: flex; gap: 6px;">
+                                        <button onclick="window.AdminTienda.openEditPartnerModal('${pt.id}')" title="Editar acuerdo" 
+                                            style="background: #f8fafc; color: #0f172a; border: 1.5px solid #cbd5e1; width: 34px; height: 34px; border-radius: 8px; cursor: pointer;">
+                                            <i class="fas fa-pencil"></i>
+                                        </button>
+                                        <button onclick="window.AdminTienda.confirmDeletePartner('${pt.id}')" title="Eliminar proveedor" 
+                                            style="background: #fef2f2; color: #ef4444; border: 1.5px solid #fecaca; width: 34px; height: 34px; border-radius: 8px; cursor: pointer;">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; font-size: 0.8rem; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
@@ -928,6 +960,22 @@
                         </h3>
 
                         <form onsubmit="window.AdminTienda.saveSettingsForm(event)" style="display: flex; flex-direction: column; gap: 16px;">
+                            <!-- ESTADO DE LA TIENDA PÚBLICA -->
+                            <div style="background: #f8fafc; border: 1.5px solid ${settings.storeStatus === 'closed' ? '#fecaca' : '#bbf7d0'}; border-radius: 14px; padding: 16px 18px; display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap;">
+                                <div>
+                                    <label style="display: block; font-size: 0.8rem; font-weight: 950; color: #0f172a; margin-bottom: 3px; text-transform: uppercase;">
+                                        Estado Público de la Tienda Online
+                                    </label>
+                                    <span style="font-size: 0.78rem; color: #64748b;">
+                                        Controla si los jugadores pueden ver y comprar productos en la app o si ven aviso de pausa temporal.
+                                    </span>
+                                </div>
+                                <select name="storeStatus" style="background: #ffffff; border: 2px solid ${settings.storeStatus === 'closed' ? '#e11d48' : '#16a34a'}; border-radius: 10px; padding: 10px 14px; font-weight: 900; font-size: 0.85rem; color: #0f172a; cursor: pointer;">
+                                    <option value="open" ${settings.storeStatus !== 'closed' ? 'selected' : ''}>🟢 ABIERTA / ACTIVA (Visible para todos)</option>
+                                    <option value="closed" ${settings.storeStatus === 'closed' ? 'selected' : ''}>🔴 DESACTIVADA / EN PAUSA (Mantenimiento)</option>
+                                </select>
+                            </div>
+
                             <div>
                                 <label style="display: block; font-size: 0.75rem; font-weight: 850; color: #0f172a; margin-bottom: 6px; text-transform: uppercase;">
                                     Nombre Público de la Tienda
@@ -1036,6 +1084,14 @@
             const isEdit = !!product;
             const categories = this.service.getCategories();
             const partners = this.service.getPartners();
+            const currentImage = (isEdit && product.image) ? product.image : '';
+
+            // Inicializar la galería en edición
+            this._editingGallery = (isEdit && Array.isArray(product.gallery) && product.gallery.length > 0)
+                ? [...product.gallery]
+                : (currentImage ? [currentImage] : []);
+
+            const hasImage = Boolean(currentImage && currentImage.trim());
 
             root.innerHTML = `
                 <div style="position: fixed; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 100000; padding: 20px;">
@@ -1043,7 +1099,7 @@
                         
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1.5px solid #e2e8f0; padding-bottom: 14px;">
                             <h3 style="margin: 0; font-family: 'Outfit', sans-serif; font-size: 1.35rem; font-weight: 950; color: #0f172a;">
-                                ${isEdit ? 'Editar Producto' : 'Crear Nuevo Producto'}
+                                ${isEdit ? (product.name || 'Editar Producto') : 'Crear Nuevo Producto'}
                             </h3>
                             <button onclick="window.AdminTienda.closeModal()" style="background: none; border: none; color: #64748b; font-size: 1.3rem; cursor: pointer; padding: 4px;">
                                 <i class="fas fa-times"></i>
@@ -1056,7 +1112,7 @@
                                 <label style="display: block; font-size: 0.75rem; font-weight: 850; color: #0f172a; margin-bottom: 5px; text-transform: uppercase;">
                                     Nombre del Producto *
                                 </label>
-                                <input type="text" name="name" required value="${isEdit ? product.name : ''}" placeholder="Ej: Bullpadel Vertex 04 2026"
+                                <input type="text" name="name" required value="${isEdit ? (product.name || '') : ''}" placeholder="Ej: Bullpadel Vertex 04 2026"
                                     style="width: 100%; box-sizing: border-box; background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 11px 14px; color: #0f172a; font-size: 0.88rem; font-weight: 700;">
                             </div>
 
@@ -1065,7 +1121,7 @@
                                     <label style="display: block; font-size: 0.75rem; font-weight: 850; color: #0f172a; margin-bottom: 5px; text-transform: uppercase;">
                                         Marca *
                                     </label>
-                                    <input type="text" name="brand" required value="${isEdit ? product.brand : ''}" placeholder="Ej: Bullpadel, Nox, Head..."
+                                    <input type="text" name="brand" required value="${isEdit ? (product.brand || '') : ''}" placeholder="Ej: Bullpadel, Nox, Head..."
                                         style="width: 100%; box-sizing: border-box; background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 11px 14px; color: #0f172a; font-size: 0.88rem; font-weight: 700;">
                                 </div>
                                 <div>
@@ -1085,14 +1141,14 @@
                                     <label style="display: block; font-size: 0.75rem; font-weight: 850; color: #0f172a; margin-bottom: 5px; text-transform: uppercase;">
                                         Precio PVP (€) *
                                     </label>
-                                    <input type="number" step="0.01" name="originalPrice" required value="${isEdit ? product.originalPrice : ''}" placeholder="Ej: 320.00"
+                                    <input type="number" step="0.01" name="originalPrice" required value="${isEdit ? (product.originalPrice ?? '') : ''}" placeholder="Ej: 320.00"
                                         style="width: 100%; box-sizing: border-box; background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 11px 14px; color: #0f172a; font-size: 0.88rem; font-weight: 700;">
                                 </div>
                                 <div>
                                     <label style="display: block; font-size: 0.75rem; font-weight: 850; color: #0f172a; margin-bottom: 5px; text-transform: uppercase;">
                                         Precio Oferta (€) *
                                     </label>
-                                    <input type="number" step="0.01" name="promoPrice" required value="${isEdit ? product.promoPrice : ''}" placeholder="Ej: 249.00"
+                                    <input type="number" step="0.01" name="promoPrice" required value="${isEdit ? (product.promoPrice ?? '') : ''}" placeholder="Ej: 249.00"
                                         style="width: 100%; box-sizing: border-box; background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 11px 14px; color: #0f172a; font-size: 0.88rem; font-weight: 700;">
                                 </div>
                                 <div>
@@ -1106,14 +1162,43 @@
 
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                                 <div>
-                                    <label style="display: block; font-size: 0.75rem; font-weight: 850; color: #0f172a; margin-bottom: 5px; text-transform: uppercase;">
-                                        Proveedor / Marca Asociada
-                                    </label>
-                                    <select name="partnerId" style="width: 100%; box-sizing: border-box; background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 11px 14px; color: #0f172a; font-size: 0.88rem; font-weight: 800;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                        <label style="font-size: 0.75rem; font-weight: 850; color: #0f172a; text-transform: uppercase;">
+                                            Proveedor / Marca Asociada
+                                        </label>
+                                        <button type="button" onclick="window.AdminTienda.toggleCustomPartner(true)" 
+                                            style="background: #f1f5f9; border: 1px solid #cbd5e1; color: #0f172a; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px;"
+                                            title="Escribir un proveedor personalizado">
+                                            <i class="fas fa-plus-circle" style="color: #16a34a;"></i> + Nuevo
+                                        </button>
+                                    </div>
+                                    <select name="partnerId" id="sp-admin-partner-select" onchange="window.AdminTienda.handlePartnerSelectChange(this)"
+                                        style="width: 100%; box-sizing: border-box; background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 11px 14px; color: #0f172a; font-size: 0.88rem; font-weight: 800;">
                                         ${partners.map(pt => `
                                             <option value="${pt.id}" ${isEdit && product.partnerId === pt.id ? 'selected' : ''}>${pt.name}</option>
                                         `).join('')}
+                                        ${isEdit && product.partnerId && !partners.some(p => p.id === product.partnerId) ? `
+                                            <option value="${product.partnerId}" selected>${product.partnerName || product.partnerId}</option>
+                                        ` : ''}
+                                        <option value="__custom__" style="font-weight: 850; color: #2563eb;">✍️ + Escribir otro proveedor...</option>
                                     </select>
+
+                                    <!-- Campo para escribir proveedor personalizado -->
+                                    <div id="sp-admin-custom-partner-wrap" style="display: none; margin-top: 8px; background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 10px; padding: 10px 12px;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                            <span style="font-size: 0.72rem; font-weight: 850; color: #166534; text-transform: uppercase;">
+                                                <i class="fas fa-edit"></i> Nombre del proveedor:
+                                            </span>
+                                            <button type="button" onclick="window.AdminTienda.toggleCustomPartner(false)" style="background: none; border: none; color: #64748b; cursor: pointer; font-size: 0.8rem; font-weight: bold; padding: 0;" title="Volver al desplegable">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                        <input type="text" id="sp-admin-custom-partner-input" name="customPartnerName" placeholder="Ej: Adidas, Babolat, Siux, etc."
+                                            style="width: 100%; box-sizing: border-box; background: #ffffff; border: 1.5px solid #22c55e; border-radius: 8px; padding: 8px 12px; color: #0f172a; font-size: 0.88rem; font-weight: 700;">
+                                        <small style="display: block; font-size: 0.7rem; color: #15803d; font-weight: 600; margin-top: 4px;">
+                                            ✓ Se creará y asociará automáticamente a este producto y quedará guardado para futuros usos.
+                                        </small>
+                                    </div>
                                 </div>
                                 <div>
                                     <label style="display: block; font-size: 0.75rem; font-weight: 850; color: #0f172a; margin-bottom: 5px; text-transform: uppercase;">
@@ -1124,12 +1209,101 @@
                                 </div>
                             </div>
 
-                            <div>
-                                <label style="display: block; font-size: 0.75rem; font-weight: 850; color: #0f172a; margin-bottom: 5px; text-transform: uppercase;">
-                                    URL de la Imagen Principal *
-                                </label>
-                                <input type="url" name="image" required value="${isEdit ? product.image : ''}" placeholder="https://images.unsplash.com/..."
-                                    style="width: 100%; box-sizing: border-box; background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 11px 14px; color: #0f172a; font-size: 0.88rem; font-weight: 700;">
+                            <!-- SECCIÓN: FOTO PRINCIPAL Y GALERÍA CON SUBIDA DE ARCHIVOS -->
+                            <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 16px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                    <label style="display: block; font-size: 0.78rem; font-weight: 900; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">
+                                        📸 Foto Principal del Producto *
+                                    </label>
+                                    <span style="font-size: 0.72rem; color: #16a34a; font-weight: 800; background: #dcfce7; padding: 2px 8px; border-radius: 6px;">
+                                        ✓ Optimización automática
+                                    </span>
+                                </div>
+
+                                <!-- Inputs ocultos de tipo archivo -->
+                                <input type="file" id="sp-admin-product-file-input" accept="image/*" style="display: none;" onchange="window.AdminTienda.handleProductImageUpload(this)">
+                                <input type="file" id="sp-admin-gallery-file-input" accept="image/*" multiple style="display: none;" onchange="window.AdminTienda.handleGalleryUpload(this)">
+
+                                <!-- Dropzone interactivo para la foto principal -->
+                                <div id="sp-admin-main-img-dropzone" 
+                                    ondragover="event.preventDefault(); this.style.borderColor='#10b981'; this.style.background='#f0fdf4';"
+                                    ondragleave="this.style.borderColor='#cbd5e1'; this.style.background='#ffffff';"
+                                    ondrop="window.AdminTienda.handleProductDrop(event)"
+                                    style="background: #ffffff; border: 2px dashed ${hasImage ? '#0f172a' : '#cbd5e1'}; border-radius: 14px; padding: 14px; text-align: center; transition: all 0.2s; position: relative;">
+                                    ${hasImage ? `
+                                        <div style="display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap;">
+                                            <div style="position: relative; width: 100px; height: 100px; border-radius: 12px; overflow: hidden; border: 2.5px solid #0f172a; box-shadow: 0 4px 12px rgba(0,0,0,0.1); background: #f8fafc; flex-shrink: 0;">
+                                                <img id="sp-admin-main-img-preview" src="${currentImage}" alt="Preview" style="width: 100%; height: 100%; object-fit: contain;">
+                                            </div>
+                                            <div style="text-align: left;">
+                                                <div style="font-size: 0.85rem; font-weight: 900; color: #0f172a; margin-bottom: 3px; display: flex; align-items: center; gap: 6px;">
+                                                    <i class="fas fa-circle-check" style="color: #16a34a;"></i> Foto cargada correctamente
+                                                </div>
+                                                <div style="font-size: 0.74rem; color: #64748b; font-weight: 600; margin-bottom: 8px;">
+                                                    Lista para el catálogo oficial
+                                                </div>
+                                                <div style="display: flex; gap: 8px;">
+                                                    <button type="button" onclick="document.getElementById('sp-admin-product-file-input').click()"
+                                                        style="background: #0f172a; color: #CCFF00; border: none; padding: 7px 14px; border-radius: 8px; font-size: 0.78rem; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                                                        <i class="fas fa-camera"></i> Cambiar Foto
+                                                    </button>
+                                                    <button type="button" onclick="window.AdminTienda.removeMainImage()"
+                                                        style="background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; padding: 7px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+                                                        <i class="fas fa-trash-can"></i> Quitar
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ` : `
+                                        <div onclick="document.getElementById('sp-admin-product-file-input').click()" style="cursor: pointer; padding: 12px 6px;">
+                                            <div style="width: 52px; height: 52px; margin: 0 auto 10px; background: #f1f5f9; border: 2px dashed #94a3b8; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                                <i class="fas fa-cloud-arrow-up" style="font-size: 1.5rem; color: #0f172a;"></i>
+                                            </div>
+                                            <div style="font-size: 0.9rem; font-weight: 900; color: #0f172a; margin-bottom: 4px;">
+                                                📁 Haz clic aquí para subir una foto desde tu equipo o arrástrala
+                                            </div>
+                                            <div style="font-size: 0.74rem; color: #64748b; font-weight: 600;">
+                                                Soporta fotos desde tu móvil u ordenador (JPG, PNG, WEBP)
+                                            </div>
+                                        </div>
+                                    `}
+                                </div>
+
+                                <!-- Input de enlace/URL directo si se prefiere escribir -->
+                                <div style="margin-top: 12px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                        <span style="font-size: 0.72rem; font-weight: 800; color: #64748b; text-transform: uppercase;">
+                                            O introduce la URL directa de la imagen:
+                                        </span>
+                                    </div>
+                                    <div style="display: flex; gap: 8px;">
+                                        <input type="text" name="image" id="admin-product-image-input" required 
+                                            value="${currentImage}" 
+                                            placeholder="https://... o sube una foto con el botón"
+                                            oninput="window.AdminTienda.handleUrlChange(this.value)"
+                                            style="flex: 1; box-sizing: border-box; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 9px 12px; color: #0f172a; font-size: 0.82rem; font-weight: 700;">
+                                        <button type="button" onclick="document.getElementById('sp-admin-product-file-input').click()"
+                                            style="background: #0f172a; color: #ffffff; border: none; border-radius: 8px; padding: 0 16px; font-size: 0.82rem; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
+                                            <i class="fas fa-folder-open"></i> Subir Foto
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Galería de Fotos Adicionales -->
+                                <div style="margin-top: 14px; border-top: 1px solid #e2e8f0; padding-top: 12px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <label style="font-size: 0.74rem; font-weight: 850; color: #334155; text-transform: uppercase;">
+                                            🖼️ Galería de Fotos Adicionales (Opcional)
+                                        </label>
+                                        <button type="button" onclick="document.getElementById('sp-admin-gallery-file-input').click()"
+                                            style="background: #0f172a; color: #CCFF00; border: none; border-radius: 6px; padding: 5px 12px; font-size: 0.74rem; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+                                            <i class="fas fa-plus"></i> + Añadir Fotos
+                                        </button>
+                                    </div>
+                                    <div id="sp-admin-gallery-thumbs" style="display: flex; flex-wrap: wrap; gap: 8px; min-height: 42px; align-items: center;">
+                                        <!-- Miniaturas de la galería -->
+                                    </div>
+                                </div>
                             </div>
 
                             <div>
@@ -1165,11 +1339,283 @@
                     </div>
                 </div>
             `;
+
+            // Renderizar miniaturas de la galería después de insertar el modal
+            setTimeout(() => {
+                this.renderGalleryThumbnails();
+            }, 0);
+        }
+
+        // =========================================================================
+        // 📸 MÉTODOS DE SUBIDA Y OPTIMIZACIÓN DE FOTOS DE PRODUCTO
+        // =========================================================================
+
+        optimizeImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.84) {
+            return new Promise((resolve, reject) => {
+                if (!file || !file.type.startsWith('image/')) {
+                    return reject(new Error('El archivo no es una imagen válida'));
+                }
+                const reader = new FileReader();
+                reader.onerror = reject;
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onerror = reject;
+                    img.onload = () => {
+                        try {
+                            const canvas = document.createElement('canvas');
+                            let width = img.width;
+                            let height = img.height;
+
+                            if (width > height) {
+                                if (width > maxWidth) {
+                                    height = Math.round(height * (maxWidth / width));
+                                    width = maxWidth;
+                                }
+                            } else {
+                                if (height > maxHeight) {
+                                    width = Math.round(width * (maxHeight / height));
+                                    height = maxHeight;
+                                }
+                            }
+
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            // Fondo blanco para imágenes transparentes que se exportan a JPEG
+                            ctx.fillStyle = '#ffffff';
+                            ctx.fillRect(0, 0, width, height);
+                            ctx.drawImage(img, 0, 0, width, height);
+
+                            const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                            resolve(dataUrl);
+                        } catch (err) {
+                            reject(err);
+                        }
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async handleProductImageUpload(inputEl) {
+            if (!inputEl.files || !inputEl.files[0]) return;
+            const file = inputEl.files[0];
+            try {
+                this.showToast('Optimizando foto...');
+                const dataUrl = await this.optimizeImageFile(file);
+                this.setMainProductImage(dataUrl);
+                this.showToast('📸 Foto subida y optimizada con éxito');
+            } catch (err) {
+                console.error(err);
+                alert('No se pudo procesar la imagen seleccionada. Por favor prueba con otro archivo (JPG, PNG o WebP).');
+            } finally {
+                inputEl.value = '';
+            }
+        }
+
+        async handleProductDrop(event) {
+            event.preventDefault();
+            const dropzone = document.getElementById('sp-admin-main-img-dropzone');
+            if (dropzone) {
+                dropzone.style.borderColor = '#cbd5e1';
+                dropzone.style.background = '#ffffff';
+            }
+            if (!event.dataTransfer || !event.dataTransfer.files || !event.dataTransfer.files[0]) return;
+            const file = event.dataTransfer.files[0];
+            try {
+                this.showToast('Optimizando foto arrastrada...');
+                const dataUrl = await this.optimizeImageFile(file);
+                this.setMainProductImage(dataUrl);
+                this.showToast('📸 Foto subida y optimizada con éxito');
+            } catch (err) {
+                console.error(err);
+                alert('No se pudo procesar la imagen arrastrada.');
+            }
+        }
+
+        setMainProductImage(url) {
+            const input = document.getElementById('admin-product-image-input');
+            if (input) {
+                input.value = url;
+            }
+            this.updateMainImagePreview(url);
+            if (!this._editingGallery || this._editingGallery.length === 0) {
+                this._editingGallery = [url];
+            } else {
+                this._editingGallery[0] = url;
+            }
+            this.renderGalleryThumbnails();
+        }
+
+        updateMainImagePreview(url) {
+            const dropzone = document.getElementById('sp-admin-main-img-dropzone');
+            if (!dropzone) return;
+
+            if (url && url.trim()) {
+                dropzone.style.borderColor = '#0f172a';
+                dropzone.innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap;">
+                        <div style="position: relative; width: 100px; height: 100px; border-radius: 12px; overflow: hidden; border: 2.5px solid #0f172a; box-shadow: 0 4px 12px rgba(0,0,0,0.1); background: #f8fafc; flex-shrink: 0;">
+                            <img id="sp-admin-main-img-preview" src="${url}" alt="Preview" style="width: 100%; height: 100%; object-fit: contain;" onerror="this.src='https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=400&q=80'">
+                        </div>
+                        <div style="text-align: left;">
+                            <div style="font-size: 0.85rem; font-weight: 900; color: #0f172a; margin-bottom: 3px; display: flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-circle-check" style="color: #16a34a;"></i> Foto cargada correctamente
+                            </div>
+                            <div style="font-size: 0.74rem; color: #64748b; font-weight: 600; margin-bottom: 8px;">
+                                Lista para el catálogo oficial
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button type="button" onclick="document.getElementById('sp-admin-product-file-input').click()"
+                                    style="background: #0f172a; color: #CCFF00; border: none; padding: 7px 14px; border-radius: 8px; font-size: 0.78rem; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                                    <i class="fas fa-camera"></i> Cambiar Foto
+                                </button>
+                                <button type="button" onclick="window.AdminTienda.removeMainImage()"
+                                    style="background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; padding: 7px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+                                    <i class="fas fa-trash-can"></i> Quitar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                dropzone.style.borderColor = '#cbd5e1';
+                dropzone.innerHTML = `
+                    <div onclick="document.getElementById('sp-admin-product-file-input').click()" style="cursor: pointer; padding: 12px 6px;">
+                        <div style="width: 52px; height: 52px; margin: 0 auto 10px; background: #f1f5f9; border: 2px dashed #94a3b8; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-cloud-arrow-up" style="font-size: 1.5rem; color: #0f172a;"></i>
+                        </div>
+                        <div style="font-size: 0.9rem; font-weight: 900; color: #0f172a; margin-bottom: 4px;">
+                            📁 Haz clic aquí para subir una foto desde tu equipo o arrástrala
+                        </div>
+                        <div style="font-size: 0.74rem; color: #64748b; font-weight: 600;">
+                            Soporta fotos desde tu móvil u ordenador (JPG, PNG, WEBP)
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        removeMainImage() {
+            const input = document.getElementById('admin-product-image-input');
+            if (input) input.value = '';
+            this.updateMainImagePreview('');
+            if (this._editingGallery && this._editingGallery.length > 0) {
+                this._editingGallery.shift();
+                if (this._editingGallery.length > 0) {
+                    this.setMainProductImage(this._editingGallery[0]);
+                }
+            }
+            this.renderGalleryThumbnails();
+        }
+
+        handleUrlChange(val) {
+            this.updateMainImagePreview(val);
+            if (!this._editingGallery || this._editingGallery.length === 0) {
+                if (val && val.trim()) this._editingGallery = [val.trim()];
+            } else {
+                if (val && val.trim()) this._editingGallery[0] = val.trim();
+            }
+            this.renderGalleryThumbnails();
+        }
+
+        async handleGalleryUpload(inputEl) {
+            if (!inputEl.files || !inputEl.files.length) return;
+            const files = Array.from(inputEl.files);
+            this.showToast(`Procesando ${files.length} foto(s)...`);
+            
+            this._editingGallery = this._editingGallery || [];
+            let addedCount = 0;
+
+            for (const file of files) {
+                try {
+                    const dataUrl = await this.optimizeImageFile(file);
+                    this._editingGallery.push(dataUrl);
+                    addedCount++;
+                    // Si no había imagen principal todavía, asignar esta como principal
+                    const mainInput = document.getElementById('admin-product-image-input');
+                    if (mainInput && !mainInput.value) {
+                        this.setMainProductImage(dataUrl);
+                    }
+                } catch (e) {
+                    console.error("Error al procesar foto de galería:", e);
+                }
+            }
+            inputEl.value = '';
+            this.renderGalleryThumbnails();
+            this.showToast(`🖼️ ${addedCount} foto(s) añadidas a la galería`);
+        }
+
+        removeGalleryImage(index) {
+            if (!this._editingGallery || index < 0 || index >= this._editingGallery.length) return;
+            this._editingGallery.splice(index, 1);
+            this.renderGalleryThumbnails();
+            this.showToast('Foto eliminada de la galería');
+        }
+
+        renderGalleryThumbnails() {
+            const container = document.getElementById('sp-admin-gallery-thumbs');
+            if (!container) return;
+
+            const gallery = this._editingGallery || [];
+            if (gallery.length === 0) {
+                container.innerHTML = `
+                    <div style="font-size: 0.74rem; color: #94a3b8; font-style: italic; padding: 4px 0;">
+                        No hay fotos adicionales aún. Pulsa "+ Añadir Fotos" para incluir más fotos o ángulos.
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = gallery.map((imgUrl, idx) => `
+                <div style="position: relative; width: 62px; height: 62px; border-radius: 10px; overflow: hidden; border: 1.5px solid #cbd5e1; background: #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.06); flex-shrink: 0;">
+                    <img src="${imgUrl}" alt="Thumb ${idx + 1}" style="width: 100%; height: 100%; object-fit: contain;">
+                    <button type="button" onclick="window.AdminTienda.removeGalleryImage(${idx})"
+                        title="Eliminar esta foto de la galería"
+                        style="position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; background: rgba(220,38,38,0.9); color: white; border: none; border-radius: 50%; font-size: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    ${idx === 0 ? `
+                        <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(15,23,42,0.85); color: #CCFF00; font-size: 8px; font-weight: 900; text-align: center; padding: 1px 0;">
+                            PRINCIPAL
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
         }
 
         saveProductForm(e, productId) {
             e.preventDefault();
             const form = e.target;
+            const mainImg = form.image.value.trim();
+            const finalGallery = (this._editingGallery && this._editingGallery.length > 0)
+                ? [...this._editingGallery]
+                : (mainImg ? [mainImg] : []);
+
+            // Asegurar que la imagen principal esté al inicio de la galería
+            if (mainImg && (!finalGallery.length || finalGallery[0] !== mainImg)) {
+                const filtered = finalGallery.filter(g => g !== mainImg);
+                finalGallery.unshift(mainImg);
+            }
+
+            let partnerId = form.partnerId ? form.partnerId.value : '';
+            const customPartnerName = form.customPartnerName ? form.customPartnerName.value.trim() : '';
+
+            if (partnerId === '__custom__' || (customPartnerName && partnerId === '__custom__')) {
+                if (!customPartnerName) {
+                    alert('Por favor, escribe el nombre del nuevo proveedor.');
+                    const inp = document.getElementById('sp-admin-custom-partner-input');
+                    if (inp) inp.focus();
+                    return;
+                }
+                const pt = this.service.getOrCreatePartner(customPartnerName);
+                partnerId = pt ? pt.id : partnerId;
+            } else if (customPartnerName && !partnerId) {
+                const pt = this.service.getOrCreatePartner(customPartnerName);
+                partnerId = pt ? pt.id : partnerId;
+            }
+
             const productData = {
                 id: productId || null,
                 name: form.name.value.trim(),
@@ -1178,9 +1624,10 @@
                 originalPrice: parseFloat(form.originalPrice.value) || 0,
                 promoPrice: parseFloat(form.promoPrice.value) || 0,
                 stock: parseInt(form.stock.value, 10) || 0,
-                partnerId: form.partnerId.value,
+                partnerId: partnerId,
                 externalLink: form.externalLink.value.trim(),
-                image: form.image.value.trim(),
+                image: mainImg,
+                gallery: finalGallery,
                 description: form.description.value.trim(),
                 featured: form.featured.checked,
                 active: form.active.checked,
@@ -1691,6 +2138,47 @@
             this.render();
         }
 
+        confirmDeletePartner(partnerId) {
+            const pt = this.service.getPartnerById(partnerId);
+            if (!pt) return;
+            if (confirm(`¿Estás seguro de que deseas eliminar al proveedor "${pt.name}"? Los productos existentes mantendrán su información.`)) {
+                this.service.deletePartner(partnerId);
+                this.showToast(`Proveedor "${pt.name}" eliminado correctamente`);
+                this.render();
+            }
+        }
+
+        handlePartnerSelectChange(selectEl) {
+            if (selectEl.value === '__custom__') {
+                this.toggleCustomPartner(true);
+            } else {
+                const wrap = document.getElementById('sp-admin-custom-partner-wrap');
+                if (wrap) wrap.style.display = 'none';
+                const input = document.getElementById('sp-admin-custom-partner-input');
+                if (input) input.value = '';
+            }
+        }
+
+        toggleCustomPartner(show) {
+            const wrap = document.getElementById('sp-admin-custom-partner-wrap');
+            const input = document.getElementById('sp-admin-custom-partner-input');
+            const select = document.getElementById('sp-admin-partner-select');
+            if (wrap) {
+                wrap.style.display = show ? 'block' : 'none';
+                if (show) {
+                    if (select) select.value = '__custom__';
+                    if (input) {
+                        setTimeout(() => input.focus(), 60);
+                    }
+                } else {
+                    if (select && select.value === '__custom__') {
+                        select.selectedIndex = 0;
+                    }
+                    if (input) input.value = '';
+                }
+            }
+        }
+
         // =========================================================================
         // ⚙️ GUARDADO DE AJUSTES & EXPORTACIÓN
         // =========================================================================
@@ -1699,6 +2187,7 @@
             const form = e.target;
             const settingsData = {
                 storeName: form.storeName.value.trim(),
+                storeStatus: form.storeStatus ? form.storeStatus.value : (this.service.isStoreActive() ? 'open' : 'closed'),
                 whatsappPhone: form.whatsappPhone.value.trim(),
                 emailContact: form.emailContact.value.trim(),
                 freeShippingThreshold: parseFloat(form.freeShippingThreshold.value) || 50,

@@ -1066,7 +1066,7 @@
                                 { title: 'Inicio comunidad', desc: 'Novedades y actividad', icon: 'fas fa-newspaper', color: '#ff8c00', route: 'comunidad', action: "window.smartNavigate('comunidad', null)" },
                                 { title: 'Equipos del club', desc: 'Plantillas, capitanes y ligas', icon: 'fas fa-users', color: '#60a5fa', route: 'teams', action: "window.smartNavigate('teams', null)" },
                                 { title: 'Mi equipo', desc: 'Convocatorias y compañeros', icon: 'fas fa-shield-halved', color: '#CCFF00', route: 'my_team', action: "window.smartNavigate('my_team', null)" },
-                                { title: 'Tienda SomosPadel', desc: 'Material y ventajas de club', icon: 'fas fa-store', color: '#10B981', route: 'tienda', action: "window.smartNavigate('tienda', null)", badge: { text: 'PRONTO', tone: 'warning' } }
+                                { title: 'Tienda SomosPadel', desc: 'Material y ventajas de club', icon: 'fas fa-store', color: '#10B981', route: 'tienda', action: "window.smartNavigate('tienda', null)", badge: { text: 'ONLINE', tone: 'success' } }
                             ]
                         },
                         {

@@ -1,14 +1,14 @@
 /**
  * test-tienda-construction-gate-qa.js
- * Test de Validación Integral para el Muro de Acceso "En Construcción" con Contraseña "PADEL21"
- * en la Interfaz de Usuario / Jugador de TIENDA SOMOSPADEL BCN
+ * Test de Validación Integral para el Control de Estado (Activar/Desactivar) de Tienda Online
+ * y Eliminación del Muro de Construcción en la Interfaz de Jugador
  */
 
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 
-console.log("🚀 Iniciando Test de Integridad para MURO EN CONSTRUCCIÓN CON CONTRASEÑA EN TIENDA JUGADOR...");
+console.log("🚀 Iniciando Test de Integridad para ACTIVACIÓN / DESACTIVACIÓN DE TIENDA Y RETIRADA DE CONSTRUCCIÓN...");
 
 const ROOT_DIR = path.join(__dirname, '..');
 
@@ -78,42 +78,48 @@ global.TiendaView = TiendaView;
 const TiendaController = require(path.join(ROOT_DIR, 'js/modules/tienda/TiendaController.js'));
 global.TiendaController = TiendaController;
 
-// 2. Verificar estado inicial bloqueado
-assert.strictEqual(TiendaService.isStoreAdminAuthenticated(), false, 'Inicialmente la sesión no debe estar autenticada');
-
-// 3. Probar que init() carga el muro "En Construcción"
+// 2. Verificar estado inicial activo por defecto (SIN construcción ni clave requerida para jugadores)
+assert.strictEqual(TiendaService.isStoreActive(), true, 'La tienda debe estar activa por defecto');
 TiendaController.init('content-area');
-assert(renderedHtml.includes('Sección en Construcción') || renderedHtml.includes('Construcción'), 'Debe mostrar indicativo de Construcción');
-assert(renderedHtml.includes('Pronto estará visible para todos los jugadores') || renderedHtml.includes('Pronto estará visible'), 'Debe informar al jugador que pronto estará visible');
-assert(renderedHtml.includes('sp-tienda-gate-pass'), 'Debe contener el input de contraseña sp-tienda-gate-pass');
-assert(renderedHtml.includes('DESBLOQUEAR TIENDA'), 'Debe incluir botón de desbloqueo');
-console.log('✅ Verificado: Pantalla "En Construcción" con mensaje al jugador y formulario de clave mostrada correctamente.');
+assert(renderedHtml.includes('sp-tienda-container'), 'Debe renderizar la tienda comercial directamente');
+assert(!renderedHtml.includes('Sección en Construcción'), 'No debe mostrar ningún cartel de sección en construcción');
+console.log('✅ Verificado: Tienda activa por defecto, carga directa sin contraseña ni cartel de construcción.');
 
-// 4. Intentar acceder con contraseña errónea
+// 3. Simular que el Administrador desactiva la tienda desde el Backoffice
+TiendaService.setStoreStatus('closed');
+assert.strictEqual(TiendaService.isStoreActive(), false, 'La tienda debe figurar desactivada');
+TiendaController.init('content-area');
+assert(renderedHtml.includes('Tienda en Pausa Temporal') || renderedHtml.includes('pausa temporal'), 'Debe mostrar aviso de pausa temporal');
+assert(renderedHtml.includes('sp-tienda-gate-pass'), 'Debe incluir acceso con clave para admin');
+console.log('✅ Verificado: Al desactivar la tienda, se muestra pantalla de pausa/mantenimiento elegante.');
+
+// 4. Intentar acceder con clave errónea mientras está en pausa
 domMock.value = 'CLAVE_ERRONEA';
 TiendaController.handleGateLogin({ preventDefault: () => {} });
 assert.strictEqual(TiendaService.isStoreAdminAuthenticated(), false, 'Clave incorrecta no debe autenticar');
-assert(renderedHtml.includes('Contraseña incorrecta'), 'Debe mostrar advertencia de contraseña incorrecta');
-console.log('✅ Verificado: Contraseña incorrecta rechazada y advertencia visible.');
+assert(renderedHtml.includes('Contraseña incorrecta'), 'Debe mostrar aviso de clave incorrecta');
+console.log('✅ Verificado: Clave incorrecta rechazada.');
 
-// 5. Acceder con la contraseña correcta "PADEL21"
+// 5. Desbloquear con contraseña oficial de admin "PADEL21" mientras está en pausa
 domMock.value = 'PADEL21';
 TiendaController.handleGateLogin({ preventDefault: () => {} });
-assert.strictEqual(TiendaService.isStoreAdminAuthenticated(), true, 'PADEL21 debe autenticar con éxito');
-assert(renderedHtml.includes('sp-tienda-container'), 'Debe renderizar el contenedor de tienda tras login');
-assert(renderedHtml.includes('Escaparate & Catálogo') || renderedHtml.includes('TIENDA SOMOSPADEL BCN'), 'Debe mostrar el catálogo comercial');
-console.log('✅ Verificado: Desbloqueo exitoso con "PADEL21" y renderizado del catálogo completo.');
+assert.strictEqual(TiendaService.isStoreAdminAuthenticated(), true, 'PADEL21 debe autenticar');
+assert(renderedHtml.includes('sp-tienda-container'), 'Debe mostrar la tienda al admin autenticado');
+console.log('✅ Verificado: Admin puede previsualizar la tienda incluso en pausa con PADEL21.');
 
-// 6. Probar botón de Bloquear
-TiendaController.lockStore();
-assert.strictEqual(TiendaService.isStoreAdminAuthenticated(), false, 'lockStore debe cerrar sesión');
-assert(renderedHtml.includes('Sección en Construcción'), 'Tras bloquear debe volver a la pantalla de construcción');
-console.log('✅ Verificado: Bloqueo de tienda restablece el muro en construcción.');
+// 6. Reactivar la tienda desde el servicio
+TiendaService.logoutStoreAdmin();
+TiendaService.setStoreStatus('open');
+assert.strictEqual(TiendaService.isStoreActive(), true, 'La tienda vuelve a estar activa');
+TiendaController.init('content-area');
+assert(renderedHtml.includes('sp-tienda-container'), 'Jugadores acceden normalmente tras reactivación');
+console.log('✅ Verificado: Reactivación de tienda permite acceso directo a todos.');
 
-// 7. Verificar enlaces en index.html
+// 7. Verificar enlaces en index.html sin menciones a "construcción"
 const indexHtml = fs.readFileSync(path.join(ROOT_DIR, 'index.html'), 'utf8');
 assert(indexHtml.includes('id="nav-tienda"'), 'index.html debe tener nav-tienda');
-assert(indexHtml.includes('Tienda en construcción: ¡Pronto estará visible para todos los jugadores!'), 'HUD message debe anunciar construcción');
-console.log('✅ Verificado: index.html anuncia "Tienda en construcción: Pronto estará visible".');
+assert(!indexHtml.includes('Tienda en construcción: ¡Pronto estará visible'), 'No debe haber mensaje de tienda en construcción en index.html');
+assert(indexHtml.includes('Tienda Oficial SomosPadel: Material, palas y equipación'), 'HUD debe mostrar mensaje oficial de tienda');
+console.log('✅ Verificado: index.html limpio de avisos de construcción.');
 
-console.log("\n🎉 ¡TODOS LOS TESTS DEL MURO EN CONSTRUCCIÓN CON CONTRASEÑA PADEL21 HAN PASADO CON ÉXITO (100% OK)!\n");
+console.log("\n🎉 ¡TODOS LOS TESTS DE ACTIVACIÓN/DESACTIVACIÓN Y RETIRADA DE CONSTRUCCIÓN HAN PASADO CON ÉXITO (100% OK)!\n");

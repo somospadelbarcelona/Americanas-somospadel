@@ -326,9 +326,9 @@
                             const title = (e.name || e.title || e.eventName || '').toLowerCase();
                             const format = (e.format || e.mode || '').toLowerCase();
                             const isEnt = e.type === 'entreno' || title.includes('entreno') || title.includes('pozo') || title.includes('clase') || format.includes('entreno') || format.includes('pozo');
-                            return { ...e, type: isEnt ? 'entreno' : (e.type || 'americana') };
+                            return { ...e, id: e.id || e.doc_id || e.playtomic_id, type: isEnt ? 'entreno' : (e.type || 'americana') };
                         }),
-                        ...ents.map(e => ({ ...e, type: 'entreno' }))
+                        ...ents.map(e => ({ ...e, id: e.id || e.doc_id || e.playtomic_id, type: 'entreno' }))
                     ];
 
                     const isFinished = (e) => {
