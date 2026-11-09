@@ -1510,8 +1510,8 @@
             return text;
         }
         /**
-         * 🏆 REVOLUCIONARIO MATCHDAY CENTER • PRÓXIMA JORNADA
-         * Cartelera interactiva de partidos, cartel oficial HD y compartir inteligente.
+         * 🏆 REVOLUCIONARIO MATCHDAY CENTER • PRÓXIMA JORNADA (FONDO BLANCO & TEXTO EN NEGRO)
+         * Cartelera interactiva de partidos con alto contraste, cartel oficial HD y compartir inteligente.
          */
         openNextMatchesSummaryModal() {
             const teams = this.lastTeams || [];
@@ -1548,7 +1548,7 @@
             const restingTeams = matchesData.filter(m => m.nextMatch === null);
             const whatsAppText = this.getSummaryWhatsAppText(teams);
 
-            // Generar tarjetas de partidos
+            // Generar tarjetas de partidos en MODO CLARO (FONDO BLANCO / TEXTO NEGRO DE ALTO CONTRASTE)
             const matchCardsHTML = activeMatches.map(item => {
                 const { team, teamShortName, nextMatch } = item;
                 const isHome = !!nextMatch.isHome;
@@ -1563,51 +1563,51 @@
 
                 return `
                     <div class="summary-match-card" data-is-home="${isHome}" style="
-                        background: linear-gradient(145deg, rgba(20, 27, 45, 0.75), rgba(11, 15, 25, 0.95));
-                        border: 1px solid rgba(255, 255, 255, 0.08);
-                        border-left: 4px solid ${isHome ? '#10b981' : '#38bdf8'};
+                        background: #ffffff;
+                        border: 1.5px solid #e2e8f0;
+                        border-left: 5px solid ${isHome ? '#16a34a' : '#0284c7'};
                         border-radius: 20px;
                         padding: 16px;
                         display: flex;
                         flex-direction: column;
                         gap: 12px;
-                        box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+                        box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
                         position: relative;
                         overflow: hidden;
-                        transition: transform 0.2s ease, border-color 0.2s ease;
+                        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
                     ">
                         <!-- Top status line -->
                         <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
                             <div style="display: flex; align-items: center; gap: 6px;">
-                                <span style="background: rgba(255,255,255,0.08); color: #94a3b8; font-size: 0.65rem; font-weight: 900; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                <span style="background: #f1f5f9; color: #0f172a; border: 1px solid #e2e8f0; font-size: 0.65rem; font-weight: 900; padding: 4px 9px; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
                                     ${category}${group ? ' • ' + group : ''}
                                 </span>
-                                <span style="background: rgba(204,255,0,0.12); color: #ccff00; font-size: 0.65rem; font-weight: 950; padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(204,255,0,0.25);">
+                                <span style="background: #fef08a; color: #854d0e; border: 1px solid #fde047; font-size: 0.65rem; font-weight: 950; padding: 4px 8px; border-radius: 8px;">
                                     J${jornada}
                                 </span>
                             </div>
                             <span style="
-                                background: ${isHome ? 'rgba(16,185,129,0.15)' : 'rgba(56,189,248,0.15)'};
-                                color: ${isHome ? '#34d399' : '#38bdf8'};
-                                border: 1px solid ${isHome ? 'rgba(16,185,129,0.3)' : 'rgba(56,189,248,0.3)'};
-                                font-size: 0.62rem; font-weight: 950; padding: 3px 9px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;
-                                display: inline-flex; align-items: center; gap: 4px;
+                                background: ${isHome ? '#dcfce7' : '#e0f2fe'};
+                                color: ${isHome ? '#15803d' : '#0369a1'};
+                                border: 1.5px solid ${isHome ? '#86efac' : '#7dd3fc'};
+                                font-size: 0.64rem; font-weight: 950; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;
+                                display: inline-flex; align-items: center; gap: 5px;
                             ">
                                 <i class="fas ${isHome ? 'fa-home' : 'fa-plane'}"></i>
-                                ${isHome ? 'LOCAL' : 'VISITANTE'}
+                                ${isHome ? 'EN CASA' : 'VISITANTE'}
                             </span>
                         </div>
 
                         <!-- Face-off Duel -->
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; background: rgba(0,0,0,0.25); padding: 10px 12px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.04);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #f8fafc; padding: 12px 14px; border-radius: 14px; border: 1.5px solid #e2e8f0;">
                             <!-- Local / SomosPadel -->
                             <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
-                                <div style="width: 38px; height: 38px; border-radius: 50%; background: #000; border: 1.5px solid #ccff00; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 0 10px rgba(204,255,0,0.25);">
+                                <div style="width: 38px; height: 38px; border-radius: 50%; background: #0f172a; border: 2px solid #ccff00; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
                                     <img src="img/official_ball_logo.png" style="width: 28px; height: 28px; object-fit: contain;" alt="SomosPadel">
                                 </div>
                                 <div style="min-width: 0;">
-                                    <div style="font-size: 0.58rem; color: #94a3b8; font-weight: 850; letter-spacing: 0.5px; text-transform: uppercase;">SOMOS PÁDEL</div>
-                                    <div style="font-size: 0.95rem; font-weight: 950; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.3px;">
+                                    <div style="font-size: 0.6rem; color: #64748b; font-weight: 850; letter-spacing: 0.5px; text-transform: uppercase;">SOMOS PÁDEL</div>
+                                    <div style="font-size: 1.05rem; font-weight: 950; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.3px;">
                                         ${teamShortName}
                                     </div>
                                 </div>
@@ -1615,11 +1615,12 @@
 
                             <!-- VS Badge -->
                             <div style="
-                                width: 28px; height: 28px; border-radius: 50%;
-                                background: linear-gradient(135deg, rgba(204,255,0,0.2), rgba(56,176,0,0.1));
-                                border: 1px solid rgba(204,255,0,0.4);
-                                color: #ccff00; font-size: 0.65rem; font-weight: 950;
+                                width: 30px; height: 30px; border-radius: 50%;
+                                background: #0f172a;
+                                border: 1.5px solid #0f172a;
+                                color: #ccff00; font-size: 0.7rem; font-weight: 950;
                                 display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+                                box-shadow: 0 2px 6px rgba(15,23,42,0.25);
                             ">
                                 VS
                             </div>
@@ -1627,63 +1628,63 @@
                             <!-- Rival -->
                             <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex: 1; min-width: 0; text-align: right;">
                                 <div style="min-width: 0;">
-                                    <div style="font-size: 0.58rem; color: #94a3b8; font-weight: 850; letter-spacing: 0.5px; text-transform: uppercase;">RIVAL</div>
-                                    <div style="font-size: 0.88rem; font-weight: 900; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.2px;">
+                                    <div style="font-size: 0.6rem; color: #64748b; font-weight: 850; letter-spacing: 0.5px; text-transform: uppercase;">RIVAL</div>
+                                    <div style="font-size: 0.95rem; font-weight: 950; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.2px;">
                                         ${opponent}
                                     </div>
                                 </div>
-                                <div style="width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #cbd5e1; font-size: 0.9rem;">
+                                <div style="width: 38px; height: 38px; border-radius: 50%; background: #e2e8f0; border: 1.5px solid #cbd5e1; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #334155; font-size: 0.95rem;">
                                     <i class="fas fa-shield-alt"></i>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Date, Time & Venue -->
-                        <div style="display: flex; flex-direction: column; gap: 5px; font-size: 0.72rem; color: #cbd5e1;">
+                        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px;">
                             <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
                                 <div style="display: flex; align-items: center; gap: 6px;">
-                                    <i class="fas fa-calendar-alt" style="color: #ccff00; font-size: 0.8rem;"></i>
-                                    <span style="font-weight: 800; color: #fff;">${date}</span>
-                                    ${time ? `<span style="color: #64748b;">•</span> <i class="fas fa-clock" style="color: #38bdf8; font-size: 0.75rem;"></i> <strong style="color: #38bdf8;">${time}</strong>` : ''}
+                                    <i class="fas fa-calendar-alt" style="color: #16a34a; font-size: 0.85rem;"></i>
+                                    <span style="font-weight: 900; color: #0f172a; font-size: 0.78rem;">${date}</span>
+                                    ${time ? `<span style="color: #94a3b8;">•</span> <i class="fas fa-clock" style="color: #0284c7; font-size: 0.8rem;"></i> <strong style="color: #0284c7; font-size: 0.78rem;">${time}</strong>` : ''}
                                 </div>
                                 <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" style="
-                                    color: #94a3b8; text-decoration: none; font-size: 0.65rem; font-weight: 850;
-                                    display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 8px;
-                                    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); transition: all 0.2s;
-                                " onmouseover="this.style.color='#38bdf8'; this.style.borderColor='#38bdf8';" onmouseout="this.style.color='#94a3b8'; this.style.borderColor='rgba(255,255,255,0.08)';">
-                                    <i class="fas fa-directions" style="color: #38bdf8;"></i> Maps
+                                    color: #0284c7; text-decoration: none; font-size: 0.68rem; font-weight: 900;
+                                    display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 8px;
+                                    background: #f0f9ff; border: 1px solid #bae6fd; transition: all 0.2s;
+                                " onmouseover="this.style.background='#0284c7'; this.style.color='#ffffff';" onmouseout="this.style.background='#f0f9ff'; this.style.color='#0284c7';">
+                                    <i class="fas fa-directions"></i> Maps
                                 </a>
                             </div>
-                            <div style="display: flex; align-items: center; gap: 6px; color: #94a3b8; font-size: 0.68rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                <i class="fas fa-map-marker-alt" style="color: #ef4444; font-size: 0.75rem; flex-shrink: 0;"></i>
+                            <div style="display: flex; align-items: center; gap: 6px; color: #334155; font-size: 0.74rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                <i class="fas fa-map-marker-alt" style="color: #dc2626; font-size: 0.8rem; flex-shrink: 0;"></i>
                                 <span style="overflow: hidden; text-overflow: ellipsis;">${venue}</span>
                             </div>
                         </div>
 
                         <!-- Card Action buttons -->
-                        <div style="display: grid; grid-template-columns: 1.5fr 1fr 42px; gap: 8px; margin-top: 4px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05);">
+                        <div style="display: grid; grid-template-columns: 1.5fr 1fr 42px; gap: 8px; margin-top: 4px; padding-top: 8px; border-top: 1.5px solid #f1f5f9;">
                             <button onclick="window.TeamView.closeNextMatchesSummaryModal(); window.TeamController.openPlayerRsvpModal('${team.id}', '${jornada}');" style="
-                                background: #ccff00; color: #000000; border: none; padding: 10px 8px; border-radius: 12px;
-                                font-weight: 950; font-size: 0.72rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
-                                box-shadow: 0 4px 12px rgba(204,255,0,0.25); text-transform: uppercase; transition: transform 0.15s;
+                                background: #ccff00; color: #0f172a; border: 1.5px solid #bbf400; padding: 11px 8px; border-radius: 12px;
+                                font-weight: 950; font-size: 0.74rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+                                box-shadow: 0 4px 12px rgba(187,244,0,0.35); text-transform: uppercase; transition: transform 0.15s;
                             " onmouseover="this.style.transform='scale(1.02)';" onmouseout="this.style.transform='scale(1)';">
                                 <i class="fas fa-clipboard-check"></i>
                                 <span>RSVP</span>
                             </button>
 
                             <button onclick="window.TeamView.jumpToTeamFromModal('${team.id}');" style="
-                                background: rgba(255,255,255,0.06); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.12);
-                                padding: 10px 8px; border-radius: 12px; font-weight: 850; font-size: 0.7rem; cursor: pointer;
+                                background: #f8fafc; color: #0f172a; border: 1.5px solid #cbd5e1;
+                                padding: 11px 8px; border-radius: 12px; font-weight: 900; font-size: 0.72rem; cursor: pointer;
                                 display: flex; align-items: center; justify-content: center; gap: 5px; transition: all 0.15s;
-                            " onmouseover="this.style.background='rgba(255,255,255,0.12)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.06)'; this.style.color='#cbd5e1';">
-                                <i class="fas fa-shield-alt"></i>
+                            " onmouseover="this.style.background='#e2e8f0';" onmouseout="this.style.background='#f8fafc';">
+                                <i class="fas fa-shield-alt" style="color: #64748b;"></i>
                                 <span>Equipo</span>
                             </button>
 
                             <button onclick="window.TeamView.shareSingleMatchWhatsApp('${team.id}', '${jornada}');" title="Compartir este partido por WhatsApp" style="
                                 background: #25D366; color: white; border: none; border-radius: 12px;
-                                font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
-                                transition: transform 0.15s;
+                                font-size: 1.05rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+                                transition: transform 0.15s; box-shadow: 0 2px 8px rgba(37,211,102,0.25);
                             " onmouseover="this.style.transform='scale(1.08)';" onmouseout="this.style.transform='scale(1)';">
                                 <i class="fab fa-whatsapp"></i>
                             </button>
@@ -1693,11 +1694,11 @@
             }).join('');
 
             const restingHTML = restingTeams.length > 0 ? `
-                <div style="background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.08); border-radius: 16px; padding: 12px 16px; margin-top: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
-                    <div style="display: flex; align-items: center; gap: 8px; font-size: 0.72rem; color: #94a3b8; font-weight: 700;">
-                        <i class="fas fa-bed" style="color: #cbd5e1;"></i>
+                <div style="background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 16px; padding: 12px 16px; margin-top: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 8px; font-size: 0.74rem; color: #475569; font-weight: 750;">
+                        <i class="fas fa-bed" style="color: #64748b;"></i>
                         <span>Equipos con descanso esta jornada:</span>
-                        <strong style="color: #fff;">${restingTeams.map(t => t.teamShortName).join(', ')}</strong>
+                        <strong style="color: #0f172a;">${restingTeams.map(t => t.teamShortName).join(', ')}</strong>
                     </div>
                 </div>
             ` : '';
@@ -1706,18 +1707,18 @@
             const overlay = document.createElement('div');
             overlay.id = 'next-matches-summary-overlay';
             overlay.style.cssText = `
-                position: fixed; inset: 0; background: rgba(5, 7, 12, 0.88); z-index: 120000;
+                position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65); z-index: 120000;
                 display: flex; align-items: center; justify-content: center;
-                font-family: 'Outfit', sans-serif; backdrop-filter: blur(25px);
-                -webkit-backdrop-filter: blur(25px); opacity: 0; transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                font-family: 'Outfit', sans-serif; backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px); opacity: 0; transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                 padding: 12px; box-sizing: border-box; overflow-y: auto;
             `;
 
             overlay.innerHTML = `
                 <style>
                     #summary-modal-container {
-                        background: radial-gradient(circle at 50% 0%, #151d30 0%, #0a0e17 100%);
-                        border: 1.5px solid rgba(204, 255, 0, 0.25);
+                        background: #ffffff;
+                        border: 2px solid #e2e8f0;
                         border-radius: 28px;
                         width: 100%;
                         max-width: 900px;
@@ -1726,14 +1727,16 @@
                         padding: 24px;
                         box-sizing: border-box;
                         position: relative;
-                        box-shadow: 0 30px 80px rgba(0,0,0,0.9);
+                        box-shadow: 0 25px 60px rgba(15, 23, 42, 0.25);
                         transform: scale(0.92);
                         transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
                         max-height: 92vh;
                         overflow-y: auto;
+                        color: #0f172a;
                     }
                     .summary-match-card:hover {
-                        border-color: rgba(204, 255, 0, 0.45) !important;
+                        border-color: #cbd5e1 !important;
+                        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12) !important;
                         transform: translateY(-2px);
                     }
                     @media (max-width: 768px) {
@@ -1749,57 +1752,54 @@
                 </style>
 
                 <div id="summary-modal-container">
-                    <!-- Glow effect -->
-                    <div style="position: absolute; top: -50px; right: -50px; width: 180px; height: 180px; background: #CCFF00; filter: blur(90px); opacity: 0.12; pointer-events: none;"></div>
-
                     <!-- Header -->
                     <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px;">
                         <div>
-                            <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.68rem; font-weight: 900; color: #ccff00; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px;">
-                                <span style="width: 8px; height: 8px; border-radius: 50%; background: #ccff00; box-shadow: 0 0 8px #ccff00; display: inline-block;"></span>
+                            <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.68rem; font-weight: 900; color: #15803d; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px;">
+                                <span style="width: 8px; height: 8px; border-radius: 50%; background: #16a34a; box-shadow: 0 0 8px rgba(22,163,74,0.5); display: inline-block;"></span>
                                 <span>MATCHDAY CENTER • SOMOSPÁDEL BCN</span>
                             </div>
-                            <h2 style="color: #ffffff; font-weight: 950; font-size: 1.45rem; margin: 0; letter-spacing: -0.5px; line-height: 1.15;">
-                                Cartelera de la <span style="background: linear-gradient(135deg, #ccff00, #38b000); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Próxima Jornada</span>
+                            <h2 style="color: #0f172a; font-weight: 950; font-size: 1.5rem; margin: 0; letter-spacing: -0.6px; line-height: 1.15;">
+                                Cartelera de la <span style="color: #16a34a;">Próxima Jornada</span>
                             </h2>
-                            <div style="font-size: 0.72rem; color: #94a3b8; font-weight: 700; margin-top: 4px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                                <span><strong style="color: #fff;">${activeMatches.length}</strong> Partidos</span>
+                            <div style="font-size: 0.75rem; color: #475569; font-weight: 800; margin-top: 5px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                                <span><strong style="color: #0f172a;">${activeMatches.length}</strong> Partidos</span>
                                 <span>•</span>
-                                <span style="color: #34d399;"><strong style="color: #34d399;">${homeMatches.length}</strong> en Casa</span>
+                                <span style="color: #15803d;"><strong style="color: #15803d;">${homeMatches.length}</strong> en Casa</span>
                                 <span>•</span>
-                                <span style="color: #38bdf8;"><strong style="color: #38bdf8;">${awayMatches.length}</strong> a Domicilio</span>
+                                <span style="color: #0369a1;"><strong style="color: #0369a1;">${awayMatches.length}</strong> a Domicilio</span>
                             </div>
                         </div>
 
                         <!-- Close button -->
                         <button onclick="window.TeamView.closeNextMatchesSummaryModal()" style="
-                            background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1;
+                            background: #f1f5f9; border: 1.5px solid #cbd5e1; color: #0f172a;
                             width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
                             cursor: pointer; transition: all 0.2s; font-size: 1.05rem; flex-shrink: 0;
-                        " onmouseover="this.style.background='rgba(239,68,68,0.2)'; this.style.color='#ef4444';" onmouseout="this.style.background='rgba(255,255,255,0.06)'; this.style.color='#cbd5e1';">
+                        " onmouseover="this.style.background='#fee2e2'; this.style.color='#dc2626'; this.style.borderColor='#fca5a5';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#0f172a'; this.style.borderColor='#cbd5e1';">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
 
                     <!-- Segmented tab selector -->
-                    <div style="display: flex; gap: 6px; background: rgba(0,0,0,0.4); padding: 4px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 16px;">
+                    <div style="display: flex; gap: 6px; background: #f1f5f9; padding: 5px; border-radius: 16px; border: 1.5px solid #e2e8f0; margin-bottom: 16px;">
                         <button id="summary-nav-btn-matches" onclick="window.TeamView.switchSummaryTab('matches')" style="
                             flex: 1; padding: 10px 8px; border-radius: 12px; border: none; font-weight: 950; font-size: 0.74rem; cursor: pointer;
-                            display: flex; align-items: center; justify-content: center; gap: 6px; background: #ccff00; color: #000; box-shadow: 0 4px 15px rgba(204,255,0,0.3); transition: all 0.2s;
+                            display: flex; align-items: center; justify-content: center; gap: 6px; background: #0f172a; color: #ccff00; box-shadow: 0 4px 12px rgba(15,23,42,0.18); transition: all 0.2s;
                         ">
                             <i class="fas fa-table-tennis"></i>
                             <span>PARTIDOS (${activeMatches.length})</span>
                         </button>
                         <button id="summary-nav-btn-flyer" onclick="window.TeamView.switchSummaryTab('flyer')" style="
                             flex: 1; padding: 10px 8px; border-radius: 12px; border: none; font-weight: 900; font-size: 0.74rem; cursor: pointer;
-                            display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(255,255,255,0.06); color: #94a3b8; transition: all 0.2s;
+                            display: flex; align-items: center; justify-content: center; gap: 6px; background: transparent; color: #475569; transition: all 0.2s;
                         ">
                             <i class="fas fa-image"></i>
                             <span>CARTEL HD</span>
                         </button>
                         <button id="summary-nav-btn-whatsapp" onclick="window.TeamView.switchSummaryTab('whatsapp')" style="
                             flex: 1; padding: 10px 8px; border-radius: 12px; border: none; font-weight: 900; font-size: 0.74rem; cursor: pointer;
-                            display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(255,255,255,0.06); color: #94a3b8; transition: all 0.2s;
+                            display: flex; align-items: center; justify-content: center; gap: 6px; background: transparent; color: #475569; transition: all 0.2s;
                         ">
                             <i class="fab fa-whatsapp"></i>
                             <span>WHATSAPP</span>
@@ -1807,35 +1807,35 @@
                     </div>
 
                     <!-- ──────────────────────────────────────────────────────────── -->
-                    <!-- TAB 1: PARTIDOS (CARDS INTERACTIVAS)                          -->
+                    <!-- TAB 1: PARTIDOS (CARDS INTERACTIVAS - MODO CLARO)             -->
                     <!-- ──────────────────────────────────────────────────────────── -->
                     <div id="summary-panel-matches" style="display: block;">
                         <!-- Filter Bar -->
                         <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;">
                             <div style="display: flex; gap: 6px;">
                                 <button id="summary-filter-all" onclick="window.TeamView.filterSummaryMatches('all')" style="
-                                    padding: 6px 12px; border-radius: 10px; border: 1.5px solid #ccff00; background: rgba(204,255,0,0.18);
-                                    color: #ccff00; font-weight: 900; font-size: 0.68rem; cursor: pointer; transition: all 0.2s;
+                                    padding: 7px 14px; border-radius: 10px; border: 1.5px solid #0f172a; background: #0f172a;
+                                    color: #ffffff; font-weight: 950; font-size: 0.7rem; cursor: pointer; transition: all 0.2s;
                                 ">
                                     Todos (${activeMatches.length})
                                 </button>
                                 <button id="summary-filter-home" onclick="window.TeamView.filterSummaryMatches('home')" style="
-                                    padding: 6px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05);
-                                    color: #94a3b8; font-weight: 850; font-size: 0.68rem; cursor: pointer; transition: all 0.2s;
+                                    padding: 7px 14px; border-radius: 10px; border: 1.5px solid #cbd5e1; background: #ffffff;
+                                    color: #334155; font-weight: 900; font-size: 0.7rem; cursor: pointer; transition: all 0.2s;
                                 ">
                                     🏠 Casa (${homeMatches.length})
                                 </button>
                                 <button id="summary-filter-away" onclick="window.TeamView.filterSummaryMatches('away')" style="
-                                    padding: 6px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05);
-                                    color: #94a3b8; font-weight: 850; font-size: 0.68rem; cursor: pointer; transition: all 0.2s;
+                                    padding: 7px 14px; border-radius: 10px; border: 1.5px solid #cbd5e1; background: #ffffff;
+                                    color: #334155; font-weight: 900; font-size: 0.7rem; cursor: pointer; transition: all 0.2s;
                                 ">
                                     ✈️ Fuera (${awayMatches.length})
                                 </button>
                             </div>
 
                             <button onclick="window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(window.TeamView.getSummaryWhatsAppText(window.TeamView.lastTeams || [])), '_blank')" style="
-                                background: #25D366; color: white; border: none; padding: 7px 12px; border-radius: 10px;
-                                font-size: 0.68rem; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(37,211,102,0.25);
+                                background: #25D366; color: white; border: none; padding: 8px 14px; border-radius: 10px;
+                                font-size: 0.72rem; font-weight: 950; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(37,211,102,0.25);
                             ">
                                 <i class="fab fa-whatsapp"></i> Compartir Todo
                             </button>
@@ -1855,20 +1855,20 @@
                         <!-- Actions bar -->
                         <div style="display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;">
                             <button id="summary-dl-btn" onclick="window.TeamView.downloadSummaryImage('summary-dl-btn')" style="
-                                flex: 1.5; min-width: 220px; background: #CCFF00; color: #000000; border: none; padding: 14px; border-radius: 14px;
+                                flex: 1.5; min-width: 220px; background: #0f172a; color: #CCFF00; border: none; padding: 14px; border-radius: 14px;
                                 font-weight: 950; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
-                                box-shadow: 0 6px 18px rgba(204,255,0,0.25); text-transform: uppercase; transition: transform 0.15s;
+                                box-shadow: 0 4px 14px rgba(15,23,42,0.2); text-transform: uppercase; transition: transform 0.15s;
                             " onmouseover="this.style.transform='scale(1.02)';" onmouseout="this.style.transform='scale(1)';">
                                 <i class="fas fa-download"></i>
                                 <span>DESCARGAR FOTO EN ALTA DEFINICIÓN (PNG)</span>
                             </button>
 
                             <button id="summary-copy-img-btn" onclick="window.TeamView.copySummaryImageToClipboard('summary-copy-img-btn')" style="
-                                flex: 1; min-width: 160px; background: rgba(255,255,255,0.06); color: #fff; border: 1px solid rgba(255,255,255,0.12);
-                                padding: 14px; border-radius: 14px; font-weight: 850; font-size: 0.8rem; cursor: pointer;
+                                flex: 1; min-width: 160px; background: #ffffff; color: #0f172a; border: 1.5px solid #cbd5e1;
+                                padding: 14px; border-radius: 14px; font-weight: 900; font-size: 0.8rem; cursor: pointer;
                                 display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;
-                            " onmouseover="this.style.borderColor='#ccff00';" onmouseout="this.style.borderColor='rgba(255,255,255,0.12)';">
-                                <i class="far fa-clipboard" style="color: #ccff00;"></i>
+                            " onmouseover="this.style.background='#f1f5f9';" onmouseout="this.style.background='#ffffff';">
+                                <i class="far fa-clipboard" style="color: #0f172a;"></i>
                                 <span>COPIAR IMAGEN</span>
                             </button>
                         </div>
@@ -1876,15 +1876,15 @@
                         <!-- Preview Column -->
                         <div id="summary-preview-column" style="
                             display: flex; flex-direction: column; align-items: center; justify-content: center;
-                            background: #080c14; border: 1.5px dashed rgba(255,255,255,0.1); border-radius: 20px;
-                            padding: 20px; position: relative; overflow: hidden; min-height: 480px; box-shadow: inset 0 4px 20px rgba(0,0,0,0.6);
+                            background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 20px;
+                            padding: 20px; position: relative; overflow: hidden; min-height: 480px; box-shadow: inset 0 2px 10px rgba(0,0,0,0.03);
                         ">
                             <div id="summary-preview-sizer" style="position: relative; overflow: visible; display: flex; align-items: center; justify-content: center; transition: all 0.25s ease;">
-                                <div id="summary-preview-scale-wrapper" style="position: absolute; transform-origin: top left; width: 1080px; height: 1920px; display: flex; align-items: center; justify-content: center; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.6); background: #ffffff;">
+                                <div id="summary-preview-scale-wrapper" style="position: absolute; transform-origin: top left; width: 1080px; height: 1920px; display: flex; align-items: center; justify-content: center; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.2); background: #ffffff;">
                                     <div id="summary-preview-content" style="width: 100%; height: 100%;"></div>
                                 </div>
                             </div>
-                            <div id="summary-helper-text" style="position: absolute; bottom: 12px; background: rgba(0,0,0,0.85); border: 1px solid rgba(255,255,255,0.1); padding: 8px 16px; border-radius: 30px; font-size: 0.65rem; color: rgba(255,255,255,0.85); font-weight: 800; pointer-events: none; display: flex; align-items: center; gap: 6px; z-index: 10;">
+                            <div id="summary-helper-text" style="position: absolute; bottom: 12px; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 30px; font-size: 0.65rem; color: #ffffff; font-weight: 800; pointer-events: none; display: flex; align-items: center; gap: 6px; z-index: 10;">
                                 <i class="fas fa-info-circle" style="color: #CCFF00;"></i> FORMATO OFICIAL STORY / CARTEL (9:16)
                             </div>
                         </div>
@@ -1896,7 +1896,7 @@
                     <div id="summary-panel-whatsapp" style="display: none;">
                         <div style="max-width: 620px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px;">
                             <!-- Header simulation -->
-                            <div style="background: #005c4b; color: white; border-radius: 18px 18px 0 0; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between;">
+                            <div style="background: #075e54; color: white; border-radius: 18px 18px 0 0; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between;">
                                 <div style="display: flex; align-items: center; gap: 10px;">
                                     <div style="width: 34px; height: 34px; border-radius: 50%; background: #000; border: 1px solid #ccff00; display: flex; align-items: center; justify-content: center;">
                                         <img src="img/official_ball_logo.png" style="width: 24px; height: 24px; object-fit: contain;">
@@ -1909,9 +1909,9 @@
                                 <i class="fab fa-whatsapp" style="font-size: 1.5rem; color: #25D366;"></i>
                             </div>
 
-                            <!-- WhatsApp Message Preview -->
-                            <div style="background: #111b21; border-radius: 0 0 18px 18px; padding: 16px; border: 1px solid rgba(255,255,255,0.06); border-top: none; max-height: 320px; overflow-y: auto;">
-                                <div style="background: #005c4b; color: #e9edef; border-radius: 12px 12px 12px 2px; padding: 14px 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 0.78rem; line-height: 1.5; white-space: pre-wrap; word-break: break-word;">${whatsAppText}</div>
+                            <!-- WhatsApp Message Preview (Light mode authentic bubble) -->
+                            <div style="background: #efeae2; border-radius: 0 0 18px 18px; padding: 16px; border: 1.5px solid #e2e8f0; border-top: none; max-height: 320px; overflow-y: auto;">
+                                <div style="background: #d9fdd3; color: #111b21; border-radius: 12px 12px 12px 2px; padding: 14px 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 0.8rem; line-height: 1.55; white-space: pre-wrap; word-break: break-word; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #c1ecc0;">${whatsAppText}</div>
                             </div>
 
                             <!-- Actions -->
@@ -1925,10 +1925,10 @@
                             </button>
 
                             <button id="summary-copy-txt-btn" onclick="window.TeamView.copySummaryToClipboard()" style="
-                                background: rgba(255,255,255,0.05); color: #cbd5e1; border: 1.5px solid rgba(255,255,255,0.12);
-                                padding: 12px; border-radius: 14px; font-weight: 850; font-size: 0.78rem; cursor: pointer;
+                                background: #ffffff; color: #0f172a; border: 1.5px solid #cbd5e1;
+                                padding: 12px; border-radius: 14px; font-weight: 900; font-size: 0.78rem; cursor: pointer;
                                 display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;
-                            ">
+                            " onmouseover="this.style.background='#f1f5f9';" onmouseout="this.style.background='#ffffff';">
                                 <i class="far fa-copy"></i>
                                 <span>COPIAR TEXTO FORMATEADO</span>
                             </button>
@@ -1968,12 +1968,12 @@
                 const panel = document.getElementById(`summary-panel-${t}`);
                 if (btn) {
                     if (t === tabName) {
-                        btn.style.background = '#ccff00';
-                        btn.style.color = '#000000';
-                        btn.style.boxShadow = '0 4px 15px rgba(204,255,0,0.3)';
+                        btn.style.background = '#0f172a';
+                        btn.style.color = '#ccff00';
+                        btn.style.boxShadow = '0 4px 12px rgba(15,23,42,0.18)';
                     } else {
-                        btn.style.background = 'rgba(255,255,255,0.06)';
-                        btn.style.color = '#94a3b8';
+                        btn.style.background = 'transparent';
+                        btn.style.color = '#475569';
                         btn.style.boxShadow = 'none';
                     }
                 }
@@ -1996,13 +1996,13 @@
                 const btn = document.getElementById(`summary-filter-${f}`);
                 if (btn) {
                     if (f === filterType) {
-                        btn.style.background = 'rgba(204,255,0,0.18)';
-                        btn.style.color = '#ccff00';
-                        btn.style.borderColor = '#ccff00';
+                        btn.style.background = '#0f172a';
+                        btn.style.color = '#ffffff';
+                        btn.style.borderColor = '#0f172a';
                     } else {
-                        btn.style.background = 'rgba(255,255,255,0.05)';
-                        btn.style.color = '#94a3b8';
-                        btn.style.borderColor = 'rgba(255,255,255,0.1)';
+                        btn.style.background = '#ffffff';
+                        btn.style.color = '#334155';
+                        btn.style.borderColor = '#cbd5e1';
                     }
                 }
             });
@@ -2019,6 +2019,7 @@
                 }
             });
         }
+
 
         /**
          * Salta directamente a la ficha del equipo en el listado principal y cierra el modal.
