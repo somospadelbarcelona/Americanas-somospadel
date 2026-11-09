@@ -827,13 +827,15 @@
         }
 
         clearSearch() {
-            const input = document.getElementById('team-search-input');
-            if (input) {
-                input.value = '';
-            }
-            if (window.TeamView) {
-                window.TeamView.searchQuery = '';
-                window.TeamView.filterDOM();
+            if (window.TeamView && typeof window.TeamView.clearSearch === 'function') {
+                window.TeamView.clearSearch();
+            } else {
+                const input = document.getElementById('team-search-input');
+                if (input) input.value = '';
+                if (window.TeamView) {
+                    window.TeamView.searchQuery = '';
+                    window.TeamView.filterDOM();
+                }
             }
         }
 

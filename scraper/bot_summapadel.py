@@ -94,11 +94,13 @@ if os.path.exists(EXISTING_TEAMS_JS):
         
         json_match = re.search(r'window\.ClubTeamsData\s*=\s*(\[[\s\S]*?\])\s*;', js_content)
         if json_match:
-            raw_json = json_match.group(1)
-            raw_json = re.sub(r'([{,]\s*)([a-zA-Z0-9_]+)\s*:', r'\1"\2":', raw_json)
-            raw_json = raw_json.replace("'", '"')
-            raw_json = re.sub(r',\s*([\]}])', r'\1', raw_json)
-            existing_teams = json.loads(raw_json)
+            try:
+                existing_teams = json.loads(json_match.group(1))
+            except Exception:
+                raw_json = json_match.group(1)
+                raw_json = re.sub(r'([{,]\s*)([a-zA-Z0-9_]+)\s*:', r'\1"\2":', raw_json)
+                raw_json = re.sub(r',\s*([\]}])', r'\1', raw_json)
+                existing_teams = json.loads(raw_json)
             print(f"[FALLBACK] Cargados fallbacks de {len(existing_teams)} equipos de teams_data.js")
     except Exception as e:
         print(f"[AVISO] No se pudieron cargar los fallbacks estáticos: {e}")
@@ -615,7 +617,7 @@ async def main():
 
                 print(f"   Buscando division con keywords: {div_keywords}...")
                 
-                elements = await page.query_selector_all("li, .mbsc-lv-item")
+                elements = await page.query_selector_all(".evd-cat, .evd-cat-body, li, .mbsc-lv-item")
                 target_element = None
                 for el in elements:
                     if not await el.is_visible():
@@ -842,6 +844,22 @@ async def main():
 
     with open(OUTPUT_JS, "w", encoding="utf-8") as f:
         f.write(js_out)
+
+    # Actualizar también directamente js/modules/teams/teams_data.js manteniendo OFFICIAL_TEAM_STAFF
+    if os.path.exists(EXISTING_TEAMS_JS) and len(found_teams) > 0:
+        try:
+            with open(EXISTING_TEAMS_JS, "r", encoding="utf-8") as f_ex:
+                current_js = f_ex.read()
+            staff_idx = current_js.find('window.OFFICIAL_TEAM_STAFF')
+            staff_part = current_js[staff_idx:] if staff_idx != -1 else ''
+            new_teams_js = "/**\n * teams_data.js - Centralized Club Teams Data\n * Auto-updated by bot_summapadel\n */\n(function () {\n    window.ClubTeamsData = "
+            new_teams_js += json.dumps(found_teams, ensure_ascii=False, indent=2)
+            new_teams_js += ";\n\n    " + staff_part
+            with open(EXISTING_TEAMS_JS, "w", encoding="utf-8") as f_ex:
+                f_ex.write(new_teams_js)
+            print(f"[OK] {EXISTING_TEAMS_JS} actualizado directamente con los resultados oficiales!")
+        except Exception as e_ex:
+            print(f"[AVISO] No se pudo escribir en {EXISTING_TEAMS_JS}: {e_ex}")
 
     print(f"\n[OK] {OUTPUT_JS} guardado con exito. Listo para la sincro total sin duplicados!")
     print("=" * 60)

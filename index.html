@@ -696,16 +696,40 @@
             <div class="ticker-container" id="smart-ticker-container" role="region" aria-label="SomosPadel Live Broadcast Feed">
                 <div class="ticker-track" id="ticker-track">
                     <div class="ticker-item" data-index="0" onclick="if(window.SmartTicker&&window.SmartTicker.openDetailModal){window.SmartTicker.openDetailModal(0);}else if(window.Router){window.Router.navigate('americanas');}">
-                        <span class="ticker-label-tag tag-live"><i class="fas fa-bolt"></i> EN DIRECTO</span>
-                        <span class="ticker-text">¡Pistas Centrales activas! Reserva tu plaza en los próximos torneos.</span>
+                        <span class="ticker-label-tag tag-live">
+                            <span class="ticker-tag-icon"><i class="fas fa-bolt"></i></span>
+                            <span class="ticker-tag-label">EN DIRECTO</span>
+                        </span>
+                        <span class="ticker-text">
+                            <strong class="ticker-lead">Pistas Centrales</strong>
+                            <span class="ticker-slash">//</span>
+                            <span class="ticker-body">¡Activas ahora! Reserva tu plaza en los próximos torneos.</span>
+                        </span>
+                        <span class="ticker-item-hint"><i class="fas fa-arrow-up-right-from-square"></i></span>
                     </div>
                     <div class="ticker-item" data-index="1" onclick="if(window.SmartTicker&&window.SmartTicker.openDetailModal){window.SmartTicker.openDetailModal(1);}else if(window.Router){window.Router.navigate('ranking');}">
-                        <span class="ticker-label-tag tag-ranking"><i class="fas fa-trophy"></i> RANKING TOP</span>
-                        <span class="ticker-text">Alejandro lidera el ranking de esta semana. Consulta las posiciones.</span>
+                        <span class="ticker-label-tag tag-ranking">
+                            <span class="ticker-tag-icon"><i class="fas fa-trophy"></i></span>
+                            <span class="ticker-tag-label">RANKING TOP</span>
+                        </span>
+                        <span class="ticker-text">
+                            <strong class="ticker-lead">Líder Semanal</strong>
+                            <span class="ticker-slash">//</span>
+                            <span class="ticker-body">Alejandro lidera el ranking. Consulta las posiciones y puntos.</span>
+                        </span>
+                        <span class="ticker-item-hint"><i class="fas fa-arrow-up-right-from-square"></i></span>
                     </div>
                     <div class="ticker-item" data-index="2" onclick="if(window.SmartTicker&&window.SmartTicker.openDetailModal){window.SmartTicker.openDetailModal(2);}">
-                        <span class="ticker-label-tag tag-protip"><i class="fas fa-lightbulb"></i> PRO TIP</span>
-                        <span class="ticker-text">La Chiquita: Tira suave a los pies del rival cuando suba para forzar un globo cómodo.</span>
+                        <span class="ticker-label-tag tag-protip">
+                            <span class="ticker-tag-icon"><i class="fas fa-lightbulb"></i></span>
+                            <span class="ticker-tag-label">PRO TIP</span>
+                        </span>
+                        <span class="ticker-text">
+                            <strong class="ticker-lead">La Chiquita</strong>
+                            <span class="ticker-slash">//</span>
+                            <span class="ticker-body">Tira suave a los pies del rival al subir para forzar un globo cómodo.</span>
+                        </span>
+                        <span class="ticker-item-hint"><i class="fas fa-arrow-up-right-from-square"></i></span>
                     </div>
                 </div>
             </div>
@@ -6378,13 +6402,13 @@
     <script src="js/modules/community/CommunityHomeController.js" defer></script>
 
     <!-- Teams Module -->
-    <script src="js/modules/teams/teams_data.js?v=13" defer></script>
+    <script src="js/modules/teams/teams_data.js?v=14" defer></script>
     <script src="js/modules/teams/TeamConvocatoriaService.js?v=1.1" defer></script>
     <script src="js/modules/teams/SeasonCampaignService.js?v=2.4" defer></script>
     <script src="js/modules/teams/SeasonCampaignView.js?v=GENDER_COLORS_v1" defer></script>
     <script src="js/modules/admin-season-campaign.js?v=2.2" defer></script>
-    <script src="js/modules/teams/TeamView.js?v=20261109_v6" defer></script>
-    <script src="js/modules/teams/TeamController.js?v=37" defer></script>
+    <script src="js/modules/teams/TeamView.js?v=20261109_v10" defer></script>
+    <script src="js/modules/teams/TeamController.js?v=38" defer></script>
     <script src="js/modules/tournaments/TournamentView.js?v=21" defer></script>
     <script src="js/modules/tournaments/TournamentController.js?v=21" defer></script>
 

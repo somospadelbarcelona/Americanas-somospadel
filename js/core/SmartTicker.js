@@ -230,12 +230,14 @@
             badge.setAttribute('role', 'button');
             badge.setAttribute('tabindex', '0');
             badge.innerHTML = `
-                <span class="ticker-pulse-container">
-                    <span class="ticker-pulse-ring"></span>
-                    <span class="ticker-pulse-dot"></span>
-                </span>
-                <span class="ticker-badge-text-full">SP FEED</span>
-                <span class="ticker-badge-text-mobile">LIVE</span>
+                <div class="ticker-badge-inner">
+                    <span class="ticker-pulse-container">
+                        <span class="ticker-pulse-ring"></span>
+                        <span class="ticker-pulse-dot"></span>
+                    </span>
+                    <span class="ticker-badge-text-full"><span class="ticker-badge-accent">SP</span> LIVE</span>
+                    <span class="ticker-badge-text-mobile">LIVE</span>
+                </div>
             `;
 
             badge.onclick = (e) => {
@@ -711,13 +713,33 @@
                 const icon = msg.icon || 'fa-circle-info';
                 const tagClass = msg.class || 'tag-protip';
 
+                // Separación jerárquica estilo TV Broadcast
+                const textStr = msg.text || '';
+                let contentHtml = '';
+                const colonIdx = textStr.indexOf(': ');
+                if (colonIdx > 0 && colonIdx < 35) {
+                    const headline = textStr.substring(0, colonIdx).trim();
+                    const body = textStr.substring(colonIdx + 2).trim();
+                    contentHtml = `
+                        <strong class="ticker-lead">${headline}</strong>
+                        <span class="ticker-slash">//</span>
+                        <span class="ticker-body">${body}</span>
+                    `;
+                } else {
+                    contentHtml = `<span class="ticker-body">${textStr}</span>`;
+                }
+
                 return `
                     <div class="ticker-item" role="button" tabindex="0" data-ticker-index="${originalIndex}">
                         <span class="ticker-label-tag ${tagClass}">
-                            <i class="fas ${icon}"></i> ${msg.label}
+                            <span class="ticker-tag-icon"><i class="fas ${icon}"></i></span>
+                            <span class="ticker-tag-label">${msg.label}</span>
                         </span>
                         <span class="ticker-text">
-                            ${msg.text}
+                            ${contentHtml}
+                        </span>
+                        <span class="ticker-item-hint" title="Ver clave táctica">
+                            <i class="fas fa-arrow-up-right-from-square"></i>
                         </span>
                     </div>
                 `;

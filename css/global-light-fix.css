@@ -126,12 +126,24 @@ input::placeholder, textarea::placeholder, .pro-input-micro::placeholder {
     padding: 12px 16px !important;
 }
 
-/* 8. FIX PARA EL TICKER (Debe ser legible) */
+/* 8. FIX PARA EL TICKER (Debe ser legible & look broadcast) */
 .ticker-container {
-    background: #0f172a !important; /* Pizarra oscura */
+    background: #060913 !important; /* Pizarra deportiva OLED */
 }
-.ticker-item, .ticker-item span {
+.ticker-item {
     color: #ffffff !important;
+}
+.ticker-lead {
+    color: #ffffff !important;
+}
+.ticker-slash {
+    color: #CCFF00 !important;
+}
+.ticker-body {
+    color: #cbd5e1 !important;
+}
+.tag-academy, .tag-protip, .tag-academy span, .tag-protip span {
+    color: #050b14 !important;
 }
 
 /* 9. MODALES Y OVERLAYS */

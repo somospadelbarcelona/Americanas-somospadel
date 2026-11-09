@@ -187,11 +187,11 @@ body {
     position: absolute;
     left: 0;
     top: 0;
-    height: 100%;
-    padding: 0 14px;
-    background: linear-gradient(135deg, rgba(14, 21, 37, 0.96) 0%, rgba(8, 12, 22, 0.98) 100%);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    bottom: 0;
+    padding: 0 18px 0 14px;
+    background: linear-gradient(135deg, rgba(6, 10, 18, 0.98) 0%, rgba(13, 20, 36, 0.97) 100%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     color: #ffffff;
     display: flex;
     align-items: center;
@@ -199,20 +199,41 @@ body {
     gap: 8px;
     font-family: 'Montserrat', sans-serif;
     font-weight: 900;
-    font-size: 0.65rem;
-    letter-spacing: 1.8px;
-    z-index: 10;
-    border-right: 2px solid #CCFF00;
-    box-shadow: 6px 0 18px rgba(0, 0, 0, 0.6);
+    font-size: 0.68rem;
+    letter-spacing: 2px;
+    z-index: 12;
+    box-shadow: 8px 0 24px rgba(0, 0, 0, 0.85);
     text-transform: uppercase;
     user-select: none;
     cursor: pointer;
-    transition: background 0.2s, box-shadow 0.2s;
+    transition: all 0.25s ease;
+}
+
+.ticker-brand-badge::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, #CCFF00 0%, #00FF87 50%, #00e5ff 100%);
+    box-shadow: 0 0 12px rgba(204, 255, 0, 0.8), 0 0 4px #CCFF00;
 }
 
 .ticker-brand-badge:hover {
-    background: linear-gradient(135deg, rgba(20, 30, 52, 0.98) 0%, rgba(12, 18, 32, 1) 100%);
-    box-shadow: 8px 0 22px rgba(204, 255, 0, 0.25);
+    background: linear-gradient(135deg, rgba(14, 22, 40, 0.99) 0%, rgba(20, 32, 58, 0.98) 100%);
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.9), 0 0 20px rgba(204, 255, 0, 0.35);
+}
+
+.ticker-badge-inner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ticker-badge-accent {
+    color: #CCFF00;
+    margin-right: 1px;
 }
 
 .ticker-pulse-container {
@@ -220,25 +241,28 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 10px;
-    height: 10px;
+    width: 12px;
+    height: 12px;
 }
 
 .ticker-pulse-dot {
     width: 6px;
     height: 6px;
-    background: #ef4444;
+    background: #ff1744;
     border-radius: 50%;
-    box-shadow: 0 0 6px #ef4444;
+    box-shadow: 0 0 8px #ff1744, 0 0 16px rgba(255, 23, 68, 0.85);
+    position: relative;
+    z-index: 2;
 }
 
 .ticker-pulse-ring {
     position: absolute;
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
-    background: rgba(239, 68, 68, 0.45);
-    animation: livePulseRadar 1.8s infinite cubic-bezier(0.4, 0, 0.6, 1);
+    background: rgba(255, 23, 68, 0.35);
+    border: 1px solid rgba(255, 23, 68, 0.65);
+    animation: livePulseRadar 1.6s infinite cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 @keyframes livePulseRadar {
@@ -247,7 +271,7 @@ body {
         opacity: 1;
     }
     100% {
-        transform: scale(1.8);
+        transform: scale(2.2);
         opacity: 0;
     }
 }
@@ -260,14 +284,15 @@ body {
     display: inline-block;
     color: #ffffff;
     font-weight: 950;
+    font-style: italic;
 }
 
 @media (max-width: 640px) {
     .ticker-brand-badge {
-        padding: 0 9px;
+        padding: 0 11px 0 9px;
         gap: 6px;
-        font-size: 0.6rem;
-        letter-spacing: 1.2px;
+        font-size: 0.62rem;
+        letter-spacing: 1.4px;
     }
     .ticker-badge-text-full {
         display: none;
@@ -276,6 +301,7 @@ body {
         display: inline-block;
         color: #ffffff;
         font-weight: 950;
+        font-style: italic;
     }
 }
 
@@ -2016,99 +2042,168 @@ body {
 }
 
 .ticker-item::after {
-    content: '•';
-    color: rgba(204, 255, 0, 0.4);
-    margin-left: 24px;
-    font-size: 0.95rem;
-    line-height: 1;
+    content: '';
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    margin-left: 22px;
+    border-radius: 50%;
+    background: #CCFF00;
+    box-shadow: 0 0 8px #CCFF00;
+    opacity: 0.6;
 }
 
-/* CATEGORY TAGS - TV BROADCAST STANDARD */
+/* CATEGORY TAGS - CYBER-SPORT BROADCAST STANDARD */
 .ticker-label-tag {
-    padding: 2.5px 8.5px;
-    border-radius: 5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3.5px 10px 3.5px 8px;
+    border-radius: 6px;
     font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
     font-weight: 950;
     font-size: 0.62rem;
-    margin-right: 11px;
+    letter-spacing: 0.9px;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    white-space: nowrap;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+    margin-right: 12px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s ease;
+}
+
+.ticker-tag-icon {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    white-space: nowrap;
-    flex-shrink: 0;
-    transition: transform 0.15s ease;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.22);
+    font-size: 0.62rem;
+}
+
+.ticker-tag-label {
+    letter-spacing: 0.8px;
 }
 
 .ticker-item:hover .ticker-label-tag {
     transform: scale(1.05);
 }
 
+/* TEXT HIERARCHY - BROADCAST TITLE & SUBTITLE */
 .ticker-text {
-    color: #f8fafc !important;
-    font-weight: 700;
-    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 0.82rem;
     white-space: nowrap;
     letter-spacing: 0.2px;
-    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
 }
 
-.ticker-item:hover .ticker-text {
+.ticker-lead {
+    color: #ffffff !important;
+    font-weight: 850 !important;
+    letter-spacing: 0.3px;
+    text-transform: none;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
+.ticker-slash {
+    color: #CCFF00 !important;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 900 !important;
+    font-size: 0.72rem;
+    opacity: 0.85;
+    letter-spacing: 1px;
+    user-select: none;
+}
+
+.ticker-body {
+    color: #cbd5e1 !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.15px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.ticker-item:hover .ticker-body {
     color: #ffffff !important;
 }
 
-/* COLOR SCHEMES - BROADCAST PREMIUM */
+.ticker-item-hint {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 8px;
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: rgba(204, 255, 0, 0.75);
+    font-size: 0.55rem;
+    transition: all 0.2s ease;
+    opacity: 0.55;
+}
+
+.ticker-item:hover .ticker-item-hint {
+    opacity: 1;
+    background: rgba(204, 255, 0, 0.2);
+    border-color: #CCFF00;
+    color: #CCFF00;
+    transform: translateY(-1px);
+}
+
+/* COLOR PALETTES - TV BROADCAST PREMIUM */
 .tag-live {
-    background: #ef4444 !important;
+    background: linear-gradient(135deg, #ff1744 0%, #d50000 100%) !important;
     color: #ffffff !important;
-    box-shadow: 0 0 12px rgba(239, 68, 68, 0.45);
-    border-color: rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 0 14px rgba(255, 23, 68, 0.55), inset 0 1px 1px rgba(255, 255, 255, 0.45) !important;
+    border-color: rgba(255, 120, 140, 0.5) !important;
 }
 
 .tag-equipos, .tag-breaking {
-    background: linear-gradient(135deg, #ff5500, #ea580c) !important;
+    background: linear-gradient(135deg, #ff5500 0%, #ea580c 100%) !important;
     color: #ffffff !important;
-    box-shadow: 0 0 12px rgba(255, 85, 0, 0.45);
-    border-color: rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 0 14px rgba(255, 85, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.4) !important;
+    border-color: rgba(255, 160, 100, 0.45) !important;
 }
 
 .tag-academy, .tag-protip {
-    background: #CCFF00 !important;
+    background: linear-gradient(135deg, #CCFF00 0%, #99e600 100%) !important;
     color: #050b14 !important;
-    box-shadow: 0 0 12px rgba(204, 255, 0, 0.4);
-    border-color: rgba(0, 0, 0, 0.2) !important;
+    box-shadow: 0 0 14px rgba(204, 255, 0, 0.55), inset 0 1px 1px rgba(255, 255, 255, 0.8) !important;
+    border-color: rgba(255, 255, 255, 0.6) !important;
+}
+.tag-academy .ticker-tag-icon,
+.tag-protip .ticker-tag-icon {
+    background: rgba(5, 11, 20, 0.18) !important;
+    color: #050b14 !important;
 }
 
 .tag-ranking {
-    background: linear-gradient(135deg, #8b5cf6, #6d28d9) !important;
+    background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%) !important;
     color: #ffffff !important;
-    box-shadow: 0 0 12px rgba(139, 92, 246, 0.45);
-    border-color: rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 0 14px rgba(139, 92, 246, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.4) !important;
+    border-color: rgba(196, 181, 253, 0.45) !important;
 }
 
-.tag-clima {
-    background: linear-gradient(135deg, #0ea5e9, #0284c7) !important;
+.tag-clima, .tag-science, .tag-equipamiento {
+    background: linear-gradient(135deg, #06b6d4 0%, #0284c7 100%) !important;
     color: #ffffff !important;
-    box-shadow: 0 0 12px rgba(14, 165, 233, 0.45);
-    border-color: rgba(255, 255, 255, 0.3) !important;
-}
-
-.tag-science, .tag-equipamiento {
-    background: linear-gradient(135deg, #06b6d4, #0891b2) !important;
-    color: #ffffff !important;
-    box-shadow: 0 0 12px rgba(6, 182, 212, 0.45);
-    border-color: rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 0 14px rgba(6, 182, 212, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.4) !important;
+    border-color: rgba(103, 232, 249, 0.45) !important;
 }
 
 .tag-mindset, .tag-tactica {
-    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+    background: linear-gradient(135deg, #ff8c00 0%, #ea580c 50%, #c2410c 100%) !important;
     color: #ffffff !important;
-    box-shadow: 0 0 12px rgba(245, 158, 11, 0.45);
-    border-color: rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 0 15px rgba(249, 115, 22, 0.55), inset 0 1px 1px rgba(255, 255, 255, 0.5) !important;
+    border-color: rgba(254, 215, 170, 0.45) !important;
 }
 
 /* SMART TICKER MODAL & BOTTOM SHEET */
