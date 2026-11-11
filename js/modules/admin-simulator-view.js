@@ -7,14 +7,14 @@ window.AdminViews.simulator_empty = function () {
 
     if (titleEl) titleEl.textContent = 'Simulador de americanas';
     content.innerHTML = `
-        <div class="glass-card-enterprise" style="max-width: 800px; margin: 0 auto; text-align: center; padding: 3rem;">
+        <div class="glass-card-enterprise sim-empty-card" style="max-width: 800px; margin: 0 auto; text-align: center; padding: 3rem;">
             <div style="font-size: 4rem; margin-bottom: 2rem;">📝</div>
             <h2 style="color: var(--primary); margin-bottom: 1rem;">Simulador de americanas</h2>
             <p style="color: var(--text-muted); margin-bottom: 2.5rem;">Esta herramienta selecciona jugadores reales al azar, crea el evento y genera los cruces de las 6 rondas, pero deja los <strong>MARCADORES A 0</strong> y el estado <strong>PENDIENTE</strong>, listo para empezar a jugar.</p>
             
             <div style="margin-bottom: 2rem; background: rgba(255,255,255,0.03); padding: 2rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
                 <label style="color: var(--primary); font-weight: 800; display: block; margin-bottom: 1rem; letter-spacing: 1px;">⚙️ CONFIGURACIÓN DE ESCENARIO</label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                <div class="sim-grid-3" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
                     <div style="flex: 1;">
                         <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 5px;">NÚMERO DE PISTAS</label>
                         <select id="sim-courts-empty" class="pro-input" style="width: 100%; text-align: center;">
@@ -79,14 +79,14 @@ window.AdminViews.entrenos_simulator = function () {
 
     if (titleEl) titleEl.textContent = 'Simulador de Entrenos';
     content.innerHTML = `
-        <div class="glass-card-enterprise" style="max-width: 800px; margin: 0 auto; text-align: center; padding: 3rem;">
+        <div class="glass-card-enterprise sim-empty-card" style="max-width: 800px; margin: 0 auto; text-align: center; padding: 3rem;">
             <div style="font-size: 4rem; margin-bottom: 2rem;">🎓</div>
             <h2 style="color: var(--primary); margin-bottom: 1rem;">Simulador de Entrenos</h2>
             <p style="color: var(--text-muted); margin-bottom: 2.5rem;">Herramienta para generar entrenos de prueba con jugadores reales. Ideal para probar algoritmos de Pozo y Twister.</p>
             
             <div style="margin-bottom: 2rem; background: rgba(255,255,255,0.03); padding: 2rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
                 <label style="color: var(--primary); font-weight: 800; display: block; margin-bottom: 1rem; letter-spacing: 1px;">⚙️ CONFIGURACIÓN DE ESCENARIO</label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                <div class="sim-grid-3" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
                     <div style="flex: 1;">
                         <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 5px;">NÚMERO DE PISTAS</label>
                         <select id="sim-training-courts" class="pro-input" style="width: 100%; text-align: center;">

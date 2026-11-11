@@ -506,7 +506,7 @@ async function renderMatchesGrid(eventId, type, round) {
 
         let grid = container.querySelector('.smart-grid');
         if (!grid) {
-            container.insertAdjacentHTML('beforeend', `<div class="smart-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; animation: fadeIn 0.3s;"></div>`);
+            container.insertAdjacentHTML('beforeend', `<div class="smart-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 1.5rem; animation: fadeIn 0.3s;"></div>`);
             grid = container.querySelector('.smart-grid');
         }
 

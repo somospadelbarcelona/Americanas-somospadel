@@ -355,7 +355,7 @@
                     </div>
 
                     <!-- TEAMS GRID -->
-                    <div style="display:grid; grid-template-columns:1fr auto 1fr; gap:12px; align-items:center;">
+                    <div class="mrm-teams-grid" style="display:grid; grid-template-columns:1fr auto 1fr; gap:12px; align-items:center;">
                         
                         <!-- TEAM A -->
                         <div style="background:rgba(30,41,59,0.5); padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,0.05); display:flex; flex-direction:column; gap:8px;">

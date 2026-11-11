@@ -3494,50 +3494,490 @@
                         padding: 10px !important;
                     }
 
-                    /* Títulos compactos */
-                    h1,
-                    .page-title {
-                        font-size: 1.3rem !important;
-                        margin-bottom: 12px !important;
-                        line-height: 1.2 !important;
-                        word-wrap: break-word;
+                    .workspace-area {
+                        padding-bottom: 92px !important;
                     }
 
-                    /* MODAL MOBILE FIXES */
+                    /* Desbloquear altura fija en Gestor de Entrenos y Americanas para scroll fluido */
+                    .planning-area,
+                    #entrenos-planning-area,
+                    #americanas-planning-area {
+                        height: auto !important;
+                        min-height: 0 !important;
+                        display: flex !important;
+                        flex-direction: column !important;
+                    }
+
+                    .entreno-scroll-list,
+                    .americana-scroll-list,
+                    #entrenos-list-container,
+                    #americanas-list-container {
+                        overflow: visible !important;
+                        flex: none !important;
+                        padding-right: 0 !important;
+                    }
+
+                    /* Resultados: Sidebar debajo en tablet/móvil */
+                    #results-main-layout {
+                        grid-template-columns: 1fr !important;
+                        gap: 1.25rem !important;
+                    }
+
+                    /* Apilar columnas del modal de Entreno y Americana */
+                    #admin-entreno-modal .modal-body-grid,
+                    #admin-americana-modal .modal-body-grid {
+                        grid-template-columns: 1fr !important;
+                        display: flex !important;
+                        flex-direction: column !important;
+                    }
+
+                    #admin-entreno-modal .config-column,
+                    #admin-americana-modal .config-column {
+                        border-right: none !important;
+                        border-bottom: 1px solid #e2e8f0 !important;
+                        padding: 16px !important;
+                    }
+
+                    #admin-entreno-modal .participants-column,
+                    #admin-americana-modal .participants-column {
+                        border-left: none !important;
+                        padding: 16px !important;
+                    }
+                }
+
+                @media (max-width: 768px) {
+                    /* Top Bar & Floating FAB compactos en móvil */
+                    .top-bar {
+                        padding: 0 10px !important;
+                        height: 54px !important;
+                        gap: 8px !important;
+                    }
+
+                    #page-title.top-title {
+                        font-size: 0.92rem !important;
+                        letter-spacing: 0 !important;
+                        white-space: nowrap !important;
+                        overflow: hidden !important;
+                        text-overflow: ellipsis !important;
+                        max-width: 48vw !important;
+                    }
+
+                    #top-bar-playtomic-btn {
+                        padding: 6px 10px !important;
+                        font-size: 0.7rem !important;
+                        gap: 5px !important;
+                    }
+
+                    #floating-playtomic-sync-fab {
+                        bottom: 14px !important;
+                        right: 14px !important;
+                        padding: 9px 14px !important;
+                        font-size: 0.76rem !important;
+                        gap: 6px !important;
+                        box-shadow: 0 6px 20px rgba(0, 114, 255, 0.45) !important;
+                    }
+
+                    /* Cabeceras Gestor Entrenos / Americanas */
+                    .entreno-mgmt-header,
+                    .americana-mgmt-header {
+                        flex-direction: column !important;
+                        align-items: stretch !important;
+                        gap: 10px !important;
+                        margin-bottom: 12px !important;
+                    }
+
+                    .entreno-mgmt-header h2,
+                    .americana-mgmt-header h2 {
+                        font-size: 1.08rem !important;
+                    }
+
+                    .entreno-mgmt-header .btn-primary-pro,
+                    .americana-mgmt-actions {
+                        width: 100% !important;
+                        display: flex !important;
+                        flex-wrap: wrap !important;
+                        gap: 8px !important;
+                    }
+
+                    .americana-mgmt-actions button {
+                        flex: 1 1 calc(50% - 4px) !important;
+                        min-width: 140px !important;
+                        justify-content: center !important;
+                        text-align: center !important;
+                    }
+
+                    /* Barra de Filtros Gestor */
+                    .filter-bar-pro {
+                        background: #ffffff !important;
+                        border: 1px solid #cbd5e1 !important;
+                        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06) !important;
+                        padding: 12px !important;
+                        gap: 10px !important;
+                        grid-template-columns: 1fr !important;
+                        margin-bottom: 14px !important;
+                    }
+
+                    .filter-bar-pro #entreno-search-input,
+                    .filter-bar-pro #americana-search-input {
+                        background: #f8fafc !important;
+                        color: #0f172a !important;
+                        border: 1px solid #cbd5e1 !important;
+                    }
+
+                    .filter-bar-pro select {
+                        height: 40px !important;
+                        font-size: 0.82rem !important;
+                    }
+
+                    .filter-bar-pro .filter-actions-row {
+                        display: grid !important;
+                        grid-template-columns: 1fr 1fr !important;
+                        gap: 8px !important;
+                        width: 100% !important;
+                    }
+
+                    .filter-bar-pro .filter-actions-row select,
+                    .filter-bar-pro .filter-actions-row button {
+                        width: 100% !important;
+                        min-width: 0 !important;
+                        height: 40px !important;
+                    }
+
+                    /* Tarjetas de Entrenos y Americanas */
+                    .entreno-card-item,
+                    .americana-card-item {
+                        padding: 14px 12px !important;
+                        border-radius: 14px !important;
+                    }
+
+                    .entreno-card-top,
+                    .americana-card-top {
+                        flex-direction: row !important;
+                        flex-wrap: nowrap !important;
+                        align-items: flex-start !important;
+                        gap: 10px !important;
+                    }
+
+                    .entreno-preview-img,
+                    .americana-preview-img {
+                        width: 42px !important;
+                        height: 42px !important;
+                    }
+
+                    .entreno-card-title-row,
+                    .americana-card-title-row {
+                        flex-wrap: wrap !important;
+                        gap: 6px !important;
+                    }
+
+                    .entreno-card-title,
+                    .americana-card-title {
+                        white-space: normal !important;
+                        overflow: visible !important;
+                        text-overflow: unset !important;
+                        font-size: 1rem !important;
+                        line-height: 1.25 !important;
+                        flex: 1 1 100% !important;
+                    }
+
+                    .entreno-card-meta,
+                    .americana-card-meta {
+                        gap: 6px 10px !important;
+                        font-size: 0.78rem !important;
+                    }
+
+                    .entreno-card-meta > span,
+                    .americana-card-meta > span {
+                        padding: 4px 8px !important;
+                        background: #f8fafc !important;
+                        border-radius: 6px !important;
+                        border: 1px solid #e2e8f0 !important;
+                    }
+
+                    .entreno-card-footer,
+                    .americana-card-footer {
+                        flex-direction: column !important;
+                        align-items: stretch !important;
+                        gap: 10px !important;
+                        padding-top: 10px !important;
+                    }
+
+                    .entreno-card-status,
+                    .americana-card-status {
+                        width: 100% !important;
+                        min-width: 0 !important;
+                        height: 40px !important;
+                        font-size: 0.8rem !important;
+                    }
+
+                    .entreno-card-actions,
+                    .americana-card-actions {
+                        width: 100% !important;
+                        flex: none !important;
+                        flex-wrap: wrap !important;
+                        justify-content: flex-start !important;
+                        gap: 7px !important;
+                    }
+
+                    .entreno-card-actions > button,
+                    .americana-card-actions > button {
+                        width: 38px !important;
+                        height: 38px !important;
+                        min-width: 38px !important;
+                        flex: 0 0 auto !important;
+                        border-radius: 9px !important;
+                    }
+
+                    /* Formularios Creación Entrenos y Americanas */
+                    .compact-form-card {
+                        padding: 1.1rem !important;
+                        border-radius: 14px !important;
+                    }
+
+                    .entreno-create-grid,
+                    .americana-create-grid {
+                        grid-template-columns: 1fr !important;
+                        gap: 1.25rem !important;
+                    }
+
+                    .entreno-logistics-grid,
+                    .americana-logistics-grid {
+                        grid-template-columns: repeat(2, 1fr) !important;
+                        gap: 10px !important;
+                    }
+
+                    /* Modales generales y Modales Split (Entreno / Americana) */
                     .modal-content {
-                        max-height: 90vh !important;
+                        width: 96% !important;
+                        max-width: 96% !important;
+                        max-height: 92vh !important;
                         overflow-y: auto !important;
                         -webkit-overflow-scrolling: touch;
-                        padding-bottom: 50px !important;
+                        padding: 14px !important;
+                        margin: 8px auto !important;
+                        border-radius: 14px !important;
                     }
 
-                    /* Fix specific form layouts on mobile */
-                    .modal-content .form-group {
-                        margin-bottom: 10px;
-                    }
-
-                    /* Stack grids on mobile */
                     .modal-content div[style*="grid-template-columns"] {
                         grid-template-columns: 1fr !important;
                         gap: 10px !important;
                     }
+
+                    #admin-entreno-modal .modal-content,
+                    #admin-americana-modal .modal-content {
+                        width: 96vw !important;
+                        max-width: 96vw !important;
+                        max-height: 92vh !important;
+                        padding: 0 !important;
+                        overflow: hidden !important;
+                        display: flex !important;
+                        flex-direction: column !important;
+                    }
+
+                    #admin-entreno-modal .modal-header,
+                    #admin-americana-modal .modal-header {
+                        padding: 12px 14px !important;
+                        gap: 8px !important;
+                    }
+
+                    #admin-entreno-modal .modal-header h2,
+                    #admin-americana-modal .modal-header h2 {
+                        font-size: 1.05rem !important;
+                    }
+
+                    #admin-entreno-modal .modal-body-grid,
+                    #admin-americana-modal .modal-body-grid {
+                        flex: 1 1 auto !important;
+                        min-height: 0 !important;
+                        overflow-y: auto !important;
+                        -webkit-overflow-scrolling: touch !important;
+                    }
+
+                    #admin-entreno-modal .modal-footer,
+                    #admin-americana-modal .modal-footer {
+                        padding: 10px 14px !important;
+                        gap: 8px !important;
+                        flex-wrap: nowrap !important;
+                        justify-content: space-between !important;
+                    }
+
+                    #admin-entreno-modal .modal-footer button,
+                    #admin-americana-modal .modal-footer button {
+                        flex: 1 1 0 !important;
+                        padding: 10px 8px !important;
+                        font-size: 0.76rem !important;
+                        text-align: center !important;
+                    }
+
+                    /* Participantes y Parejas dentro de Modales */
+                    .player-row-pair,
+                    .player-row-single {
+                        flex-wrap: wrap !important;
+                        gap: 8px !important;
+                        padding: 10px !important;
+                    }
+
+                    .player-row-pair > div:first-child,
+                    .player-row-single > div:first-child {
+                        flex: 1 1 100% !important;
+                        min-width: 0 !important;
+                    }
+
+                    .player-row-pair select,
+                    .player-row-single select {
+                        flex: 1 1 110px !important;
+                        max-width: 100% !important;
+                        height: 36px !important;
+                    }
+
+                    .pairs-builder-row {
+                        flex-wrap: wrap !important;
+                        gap: 8px !important;
+                    }
+
+                    .pairs-builder-row select {
+                        flex: 1 1 calc(50% - 4px) !important;
+                        min-width: 120px !important;
+                    }
+
+                    .pairs-builder-row button {
+                        width: 100% !important;
+                        height: 40px !important;
+                    }
+
+                    /* Modal Playtomic Sync */
+                    #playtomic-sync-modal .modal-content {
+                        padding: 0 !important;
+                        overflow: hidden !important;
+                        display: flex !important;
+                        flex-direction: column !important;
+                    }
+
+                    /* Modal Ronda Manual */
+                    #manual-round-modal-overlay {
+                        padding: 6px !important;
+                    }
+
+                    #manual-round-modal-overlay .modal-content {
+                        width: 100% !important;
+                        max-width: 100% !important;
+                        max-height: 94vh !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                        overflow: hidden !important;
+                        display: flex !important;
+                        flex-direction: column !important;
+                    }
+
+                    #manual-round-modal-overlay #mrm-body {
+                        padding: 12px !important;
+                    }
+
+                    #manual-round-modal-overlay #mrm-available-panel {
+                        padding: 10px 12px !important;
+                        max-height: 115px !important;
+                    }
+
+                    #manual-round-modal-overlay .mrm-teams-grid {
+                        grid-template-columns: 1fr !important;
+                        gap: 8px !important;
+                    }
+
+                    #manual-round-modal-overlay #mrm-save-btn {
+                        padding: 9px 14px !important;
+                        font-size: 0.8rem !important;
+                    }
+
+                    #playtomic-sync-modal .modal-header,
+                    #playtomic-sync-modal .modal-body,
+                    #playtomic-sync-modal .modal-footer {
+                        padding: 14px !important;
+                    }
+
+                    #playtomic-sync-modal .modal-body {
+                        overflow-y: auto !important;
+                        flex: 1 1 auto !important;
+                    }
+
+                    /* Resultados y Marcadores */
+                    #round-tabs-container {
+                        gap: 6px !important;
+                        padding-bottom: 8px !important;
+                    }
+
+                    .smart-grid {
+                        grid-template-columns: minmax(0, 1fr) !important;
+                        gap: 1rem !important;
+                    }
+
+                    .match-card-pro,
+                    .match-card {
+                        padding: 12px !important;
+                    }
+
+                    /* Simulador y Playtomic grids */
+                    .sim-grid-3 {
+                        grid-template-columns: 1fr !important;
+                        gap: 10px !important;
+                    }
+
+                    .sim-empty-card {
+                        padding: 1.5rem 1rem !important;
+                    }
+
+                    .playtomic-grid {
+                        grid-template-columns: minmax(0, 1fr) !important;
+                        gap: 14px !important;
+                    }
+
+                    .pt-card-actions {
+                        flex-wrap: wrap !important;
+                    }
+
+                    .pt-btn-detail,
+                    .pt-btn-sync {
+                        flex: 1 1 calc(50% - 4px) !important;
+                        min-width: 120px !important;
+                    }
+
+                    /* Tablas responsivas */
+                    .table-container,
+                    .table-responsive,
+                    .datatable-wrapper {
+                        display: block !important;
+                        width: 100% !important;
+                        overflow-x: auto !important;
+                        -webkit-overflow-scrolling: touch;
+                    }
                 }
 
                 @media (max-width: 480px) {
-                    .modal-content {
-                        width: 95% !important;
-                        max-height: 90vh !important;
-                        overflow-y: auto !important;
-                        padding: 15px !important;
+                    #top-bar-playtomic-btn span {
+                        display: none !important;
                     }
 
-                    .modal-body {
-                        display: flex;
-                        flex-direction: column;
+                    #top-bar-playtomic-btn::after {
+                        content: 'PLAYTOMIC';
+                        font-size: 0.68rem;
+                        font-weight: 900;
                     }
 
-                    .modal-body>div {
-                        width: 100% !important;
+                    #page-title.top-title {
+                        font-size: 0.84rem !important;
+                        max-width: 44vw !important;
+                    }
+
+                    .entreno-logistics-grid,
+                    .americana-logistics-grid {
+                        grid-template-columns: 1fr 1fr !important;
+                    }
+
+                    .filter-bar-pro .filter-actions-row {
+                        grid-template-columns: 1fr !important;
+                    }
+
+                    .americana-mgmt-actions button {
+                        flex: 1 1 100% !important;
                     }
                 }
 
@@ -3587,133 +4027,6 @@
                     to {
                         opacity: 0.7;
                     }
-                }
-
-                h2,
-                h3,
-                .section-title {
-                    font-size: 1.1rem !important;
-                    margin-bottom: 10px !important;
-                }
-
-                p,
-                span,
-                label {
-                    font-size: 0.9rem !important;
-                    line-height: 1.3;
-                }
-
-                /* 2. Tarjetas y Contenedores */
-                .card,
-                .stat-card,
-                .dashboard-card {
-                    padding: 12px !important;
-                    margin-bottom: 12px !important;
-                    border-radius: 10px !important;
-                }
-
-                .modal-content {
-                    width: 94% !important;
-                    max-width: 94% !important;
-                    padding: 15px !important;
-                    margin: 10px auto !important;
-                    border-radius: 12px !important;
-                }
-
-                /* 3. Formularios: Vertical Stack */
-                .pro-form div[style*="grid-template-columns"],
-                .modal-content div[style*="grid-template-columns"] {
-                    display: flex !important;
-                    flex-direction: column !important;
-                    gap: 12px !important;
-                    grid-template-columns: 1fr !important;
-                }
-
-                .pro-input,
-                select.pro-input {
-                    font-size: 16px !important;
-                    /* Previene zoom iOS */
-                    height: 44px !important;
-                    padding: 8px 10px !important;
-                }
-
-                label {
-                    display: block;
-                    margin-bottom: 4px !important;
-                    font-size: 0.75rem !important;
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                    color: rgba(255, 255, 255, 0.7) !important;
-                }
-
-                /* 4. Tablas Inteligentes */
-                .table-container,
-                .table-responsive,
-                .datatable-wrapper {
-                    display: block !important;
-                    width: 100% !important;
-                    overflow-x: auto !important;
-                    -webkit-overflow-scrolling: touch;
-                    padding-bottom: 8px;
-                    margin-bottom: 15px;
-                    border: 1px solid rgba(255, 255, 255, 0.05);
-                    /* Borde sutil */
-                    border-radius: 8px;
-                }
-
-                table {
-                    width: 100% !important;
-                    min-width: 600px !important;
-                    border-collapse: collapse;
-                }
-
-                /* Celdas que respiran */
-                th {
-                    font-size: 0.7rem !important;
-                    text-transform: uppercase;
-                    padding: 8px 6px !important;
-                    white-space: nowrap !important;
-                    background: rgba(255, 255, 255, 0.03);
-                }
-
-                td {
-                    padding: 10px 6px !important;
-                    font-size: 0.8rem !important;
-                    white-space: normal !important;
-                    /* Permite wrap */
-                    word-break: break-word;
-                    vertical-align: middle;
-                    line-height: 1.2;
-                }
-
-                /* 5. Botones y Acciones */
-                .action-buttons {
-                    display: flex;
-                    gap: 5px;
-                    flex-wrap: wrap;
-                    /* Botones pasan a nueva línea si no caben */
-                }
-
-                .btn-icon {
-                    padding: 0 !important;
-                    width: 32px !important;
-                    height: 32px !important;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    border-radius: 6px !important;
-                }
-
-                .btn-primary,
-                .btn-primary-pro,
-                .btn-danger,
-                .btn-secondary {
-                    width: 100% !important;
-                    padding: 12px !important;
-                    margin-top: 8px;
-                    font-size: 0.95rem !important;
-                    font-weight: 600;
-                    border-radius: 8px !important;
                 }
             </style>
 
@@ -3926,36 +4239,46 @@
                     };
             </script>
             <style>
-                /* --- 🏳️ WHITE THEME: ENTRENO MODAL OVERRIDE (PURE BLACK EDITION) --- */
-                #admin-entreno-modal .modal-content {
+                /* --- 🏳️ WHITE THEME: ENTRENO & AMERICANA MODAL OVERRIDE (PURE BLACK EDITION) --- */
+                #admin-entreno-modal .modal-content,
+                #admin-americana-modal .modal-content {
                     background-color: #ffffff !important;
                     color: #000000 !important;
                     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
                 }
 
-                #admin-entreno-modal .modal-header {
+                #admin-entreno-modal .modal-header,
+                #admin-americana-modal .modal-header,
+                #admin-entreno-modal .modal-footer,
+                #admin-americana-modal .modal-footer {
                     background: #f8fafc !important;
-                    border-bottom: 1px solid #e2e8f0 !important;
+                    border-color: #e2e8f0 !important;
                 }
 
-                #admin-entreno-modal .modal-header h2 {
+                #admin-entreno-modal .modal-header h2,
+                #admin-americana-modal .modal-header h2 {
                     color: #000000 !important;
                     text-shadow: none !important;
                     font-weight: 900 !important;
                 }
 
-                #admin-entreno-modal .modal-header .close-modal-btn {
+                #admin-entreno-modal .modal-header .close-modal-btn,
+                #admin-americana-modal .modal-header .close-modal-btn {
                     color: #000000 !important;
                 }
 
-                #admin-entreno-modal .modal-header div {
+                #admin-entreno-modal .modal-header div,
+                #admin-americana-modal .modal-header div {
                     color: #333333 !important;
                 }
 
                 /* INPUTS & SELECTS - FORCE BLACK */
                 #admin-entreno-modal input,
                 #admin-entreno-modal select,
-                #admin-entreno-modal textarea {
+                #admin-entreno-modal textarea,
+                #admin-americana-modal input,
+                #admin-americana-modal select,
+                #admin-americana-modal textarea {
                     background-color: #ffffff !important;
                     border: 1px solid #cbd5e1 !important;
                     color: #000000 !important;
@@ -3966,28 +4289,34 @@
                 }
 
                 #admin-entreno-modal input:focus,
-                #admin-entreno-modal select:focus {
+                #admin-entreno-modal select:focus,
+                #admin-americana-modal input:focus,
+                #admin-americana-modal select:focus {
                     border-color: #000000 !important;
                     box-shadow: 0 0 0 1px #000000 !important;
                 }
 
-                #admin-entreno-modal input::placeholder {
+                #admin-entreno-modal input::placeholder,
+                #admin-americana-modal input::placeholder {
                     color: #94a3b8 !important;
                 }
 
-                #admin-entreno-modal select option {
+                #admin-entreno-modal select option,
+                #admin-americana-modal select option {
                     background: #ffffff !important;
                     color: #000000 !important;
                 }
 
                 /* LABELS & TEXT */
-                #admin-entreno-modal label {
+                #admin-entreno-modal label,
+                #admin-americana-modal label {
                     color: #000000 !important;
                     font-weight: 800 !important;
                     text-shadow: none !important;
                 }
 
-                #admin-entreno-modal h3 {
+                #admin-entreno-modal h3,
+                #admin-americana-modal h3 {
                     color: #000000 !important;
                     border-bottom: 1px solid #e2e8f0 !important;
                     text-shadow: none !important;
@@ -3995,59 +4324,67 @@
                 }
 
                 /* LAYOUT COLUMNS */
-                #admin-entreno-modal .config-column {
+                #admin-entreno-modal .config-column,
+                #admin-americana-modal .config-column {
                     background: #ffffff !important;
                     border-right: 1px solid #e2e8f0 !important;
                 }
 
-                #admin-entreno-modal .participants-column {
+                #admin-entreno-modal .participants-column,
+                #admin-americana-modal .participants-column {
                     background: #f8fafc !important;
                     border-left: 1px solid #e2e8f0 !important;
                 }
 
-                #admin-entreno-modal .participants-column h3 {
-                    color: #000000 !important;
-                }
-
-                #admin-entreno-modal .participants-column p {
+                #admin-entreno-modal .participants-column h3,
+                #admin-americana-modal .participants-column h3,
+                #admin-entreno-modal .participants-column p,
+                #admin-americana-modal .participants-column p {
                     color: #000000 !important;
                 }
 
                 /* DYNAMIC CONTENT OVERRIDES */
-                #admin-entreno-modal .player-row {
+                #admin-entreno-modal .player-row,
+                #admin-americana-modal .player-row {
                     border-bottom: 1px solid #e2e8f0 !important;
                 }
 
-                #admin-entreno-modal .player-row span {
+                #admin-entreno-modal .player-row span,
+                #admin-americana-modal .player-row span {
                     color: #000000 !important;
                     text-shadow: none !important;
                 }
 
                 /* Level Badge Background override */
-                #admin-entreno-modal .player-row div[style*="background:rgba(255,255,255,0.1)"] {
+                #admin-entreno-modal .player-row div[style*="background:rgba(255,255,255,0.1)"],
+                #admin-americana-modal .player-row div[style*="background:rgba(255,255,255,0.1)"] {
                     background: #e2e8f0 !important;
                     color: #000000 !important;
                     border: 1px solid #cbd5e1 !important;
                 }
 
                 /* "ADD PLAYER" header box */
-                #admin-entreno-modal div[style*="background:rgba(255,255,255,0.03)"] {
+                #admin-entreno-modal div[style*="background:rgba(255,255,255,0.03)"],
+                #admin-americana-modal div[style*="background:rgba(255,255,255,0.03)"] {
                     background: #ffffff !important;
                     border: 1px solid #e2e8f0 !important;
                 }
 
                 /* WAITLIST SECTION */
-                #admin-entreno-modal h4 {
+                #admin-entreno-modal h4,
+                #admin-americana-modal h4 {
                     color: #000000 !important;
                     font-weight: 900 !important;
                 }
 
-                #admin-entreno-modal #waitlist-entreno div {
+                #admin-entreno-modal #waitlist-entreno div,
+                #admin-americana-modal #waitlist-americana div {
                     color: #000000 !important;
                 }
 
                 /* ICONS */
-                #admin-entreno-modal i {
+                #admin-entreno-modal i,
+                #admin-americana-modal i {
                     color: #000000 !important;
                     text-shadow: none !important;
                 }
@@ -4055,13 +4392,18 @@
                 /* Exceptions */
                 #admin-entreno-modal .fa-trash-alt,
                 #admin-entreno-modal .fa-times,
-                #admin-entreno-modal .fa-trash {
+                #admin-entreno-modal .fa-trash,
+                #admin-americana-modal .fa-trash-alt,
+                #admin-americana-modal .fa-times,
+                #admin-americana-modal .fa-trash {
                     color: #dc2626 !important;
                     /* Keep trash red */
                 }
 
                 #admin-entreno-modal .fa-link,
-                #admin-entreno-modal .fa-handshake {
+                #admin-entreno-modal .fa-handshake,
+                #admin-americana-modal .fa-link,
+                #admin-americana-modal .fa-handshake {
                     color: #3b82f6 !important;
                     /* Keep connection blue */
                 }

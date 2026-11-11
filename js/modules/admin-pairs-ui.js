@@ -58,7 +58,7 @@ window.PairsUI = {
                     <div style="font-size:0.7rem; color:#cbd5e1; font-weight:700; margin-bottom:6px; text-transform:uppercase;">
                         👥 Formar Pareja desde Jugadores Inscritos:
                     </div>
-                    <div style="display:flex; gap:8px;">
+                    <div class="pairs-builder-row" style="display:flex; gap:8px;">
                          <select id="p1-${eventId}" class="pro-input" style="flex:1; font-size:0.75rem; padding:6px; color:#000 !important; background:#fff !important;"></select>
                          <select id="p2-${eventId}" class="pro-input" style="flex:1; font-size:0.75rem; padding:6px; color:#000 !important; background:#fff !important;"></select>
                          <button id="btn-add-pair-${eventId}" class="btn-primary-pro" title="Vincular Pareja" style="padding: 0 14px; font-weight:900; font-size:0.85rem; background:#CCFF00; color:#000; border:none; border-radius:6px; cursor:pointer;">➕</button>

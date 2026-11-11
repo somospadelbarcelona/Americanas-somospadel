@@ -88,8 +88,8 @@ window.AdminViews.entrenos_mgmt = async function () {
             <div class="planning-area" id="entrenos-planning-area" style="display: flex; flex-direction: column; height: calc(100vh - 140px);">
                 
                 <!-- ACTION HEADER BAR -->
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
-                    <div style="font-size: 1.1rem; font-weight: 900; color: #fff; display: flex; align-items: center; gap: 8px;">
+                <div class="entreno-mgmt-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
+                    <div style="font-size: 1.1rem; font-weight: 900; color: #0f172a; display: flex; align-items: center; gap: 8px;">
                         <i class="fas fa-dumbbell" style="color: var(--accent);"></i> ENTRENOS PROGRAMADOS
                     </div>
                     <button class="btn-primary-pro" onclick="window.WhatsAppService.openCarteleraModal()" style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); color: #fff; font-weight: 900; border: none; padding: 10px 18px; border-radius: 14px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4); font-size: 0.88rem;">
@@ -99,7 +99,7 @@ window.AdminViews.entrenos_mgmt = async function () {
 
                 <!-- FILTER BAR -->
                 <div class="filter-bar-pro" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1.5rem; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); align-items: center;">
-                    <div style="position:relative; grid-column: span 2;">
+                    <div style="position:relative; grid-column: 1 / -1;">
                         <i class="fas fa-search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:rgba(255,255,255,0.3); font-size:0.8rem;"></i>
                         <input type="text" id="entreno-search-input" placeholder="Buscar por nombre..."
                             style="padding-left:35px; height:45px; font-size:0.9rem; width:100%; border-radius:12px; background:rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
@@ -122,7 +122,7 @@ window.AdminViews.entrenos_mgmt = async function () {
                         <option value="mixed">MIXTO</option>
                         <option value="open">OPEN / TODOS</option>
                     </select>
-                    <div style="display:flex; gap: 8px;">
+                    <div class="filter-actions-row" style="display:flex; gap: 8px;">
                         <button class="btn-outline-pro" onclick="document.getElementById('entreno-search-input').value=''; document.getElementById('filter-month').value='all'; document.getElementById('filter-status').value='all'; document.getElementById('filter-category').value='all'; loadAdminView('entrenos_mgmt')" style="flex:1; height:45px; font-size: 0.7rem; padding: 0;">
                             <i class="fas fa-eraser"></i> LIMPIAR
                         </button>
@@ -165,7 +165,7 @@ window.AdminViews.entrenos_create = async function () {
 
     content.innerHTML = `
         <div style="max-width: 650px; margin: 0 auto;">
-            <div class="glass-card-enterprise fade-in" style="padding: 2.5rem;">
+            <div class="glass-card-enterprise fade-in compact-form-card" style="padding: 2.5rem;">
                 <h3 style="color: var(--primary); margin-bottom: 2rem; display: flex; align-items: center; gap: 12px; font-weight:800; font-size: 1.2rem;">
                     <i class="fas fa-plus-circle" style="font-size: 1.5rem; color: #CCFF00;"></i> CREAR NUEVO EVENTO DE ENTRENO
                 </h3>
@@ -189,7 +189,7 @@ window.AdminViews.entrenos_create = async function () {
                             style="font-weight: 800; font-size: 1rem;">
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 15px;">
+                    <div class="entreno-create-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 15px;">
                         <div class="form-group">
                             <label>FECHA</label>
                             <input type="date" name="date" class="pro-input" required>
@@ -204,7 +204,7 @@ window.AdminViews.entrenos_create = async function () {
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
+                    <div class="entreno-create-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
                         <div class="form-group">
                             <label>CATEGORÍA</label>
                             <select name="category" class="pro-input">
@@ -272,7 +272,7 @@ window.AdminViews.entrenos_create = async function () {
                         <i class="fas fa-cogs"></i> LOGÍSTICA
                     </h3>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                    <div class="entreno-logistics-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px;">
                         <div class="form-group">
                             <label>PISTAS</label>
                             <input type="number" name="max_courts" class="pro-input" value="4" placeholder="4">
@@ -391,15 +391,15 @@ function renderEntrenoCard(e) {
              data-category="${e.category || 'open'}"
              style="margin-bottom: 0.8rem; display: flex; flex-direction: column; padding: 0.8rem 1rem; border-left: 6px solid ${statusColor}; background: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 12px; gap: 0.6rem; color: #000000;">
             
-            <div style="display: flex; gap: 1.2rem; align-items: flex-start;">
+            <div class="entreno-card-top" style="display: flex; gap: 1rem; align-items: flex-start;">
                 <div class="entreno-preview-img" style="width: 48px; height: 48px; border-radius: 12px; background: url('${(e.image_url || '').replace(/ /g, '%20')}') center/cover; border: 1px solid rgba(0,0,0,0.1); position:relative; flex-shrink: 0;">
                     <div style="position:absolute; bottom:-5px; right:-5px; background:${statusColor}; width:12px; height:12px; border-radius:50%; border:2px solid #fff;"></div>
                 </div>
                 <div class="entreno-info-pro" style="flex: 1; min-width: 0;">
-                    <div style="font-weight: 950; font-size: 1.1rem; color: #000000; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
+                    <div class="entreno-card-title" style="font-weight: 950; font-size: 1.05rem; color: #000000; margin-bottom: 0.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.25;">
                         ${e.name.toUpperCase()}
                     </div>
-                    <div style="display: flex; gap: 0.8rem; font-size: 0.75rem; color: #333333; flex-wrap: wrap; align-items: center;">
+                    <div class="entreno-card-meta" style="display: flex; gap: 0.65rem; font-size: 0.75rem; color: #333333; flex-wrap: wrap; align-items: center;">
                          <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-calendar-alt" style="color: #60A5FA;"></i> <span style="color:#333; font-weight: 600;">${formatDate(e.date)}</span></span>
                          <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-clock" style="color: #A78BFA;"></i> <span style="color:#333; font-weight: 600;">${e.time ? (e.time_end && !e.time.includes('-') ? `${e.time} - ${e.time_end}` : e.time) : '10:00'}${durationText ? ` (${durationText})` : ''}</span></span>
                          <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-signal" style="color: #F59E0B;"></i> <span style="color:#333; font-weight: 700;">Niv. ${levelText}</span></span>
@@ -413,9 +413,9 @@ function renderEntrenoCard(e) {
                 </div>
             </div>
             
-            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-top: 0.3rem; border-top: 1px solid rgba(255,255,255,0.03);">
+            <div class="entreno-card-footer" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-top: 0.45rem; border-top: 1px solid rgba(15,23,42,0.08);">
                 <!-- Status Selector -->
-                <div style="position: relative; flex: 1; min-width: 120px;">
+                <div class="entreno-card-status" style="position: relative; flex: 1; min-width: 130px;">
                     <select onchange="window.updateEntrenoStatus('${e.id}', this.value)" 
                             style="
                                 width: 100%;
@@ -441,7 +441,7 @@ function renderEntrenoCard(e) {
                 </div>
 
                 <!-- Action Group -->
-                <div style="display: flex; gap: 8px; flex-shrink: 0; justify-content: flex-end; flex: 1;">
+                <div class="entreno-card-actions" style="display: flex; gap: 8px; flex-shrink: 0; justify-content: flex-end; flex: 1; flex-wrap: wrap;">
                     <button class="btn-micro" 
                             style="background: #10B981 !important; color: #fff !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
                             onclick='window.checkScheduledEventHealthPrompt(${JSON.stringify(e).replace(/'/g, "&#39;")}, "entreno")' 
@@ -1649,7 +1649,7 @@ window.loadEntrenoParticipantsUI = async (id, preloadedEvent = null) => {
                         const num2 = signupOrderMap.get(partnerId);
 
                         html += `
-                     <div class="player-row" style="display:flex; align-items:center; justify-content:space-between; padding:10px; border-bottom:1px solid #e2e8f0; background:rgba(59, 130, 246, 0.08); border-left: 4px solid #3b82f6;">
+                     <div class="player-row player-row-pair" style="display:flex; align-items:center; justify-content:space-between; padding:10px; border-bottom:1px solid #e2e8f0; background:rgba(59, 130, 246, 0.08); border-left: 4px solid #3b82f6;">
                          <!-- PAIR CONTAINER -->
                          <div style="display:flex; align-items:center; flex:1; flex-wrap:wrap; gap:5px;">
                             
@@ -1714,7 +1714,7 @@ window.loadEntrenoParticipantsUI = async (id, preloadedEvent = null) => {
                         const num = signupOrderMap.get(pid);
 
                         html += `
-                     <div class="player-row" style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #e2e8f0;">
+                     <div class="player-row player-row-single" style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #e2e8f0; gap: 8px;">
                         <div style="display:flex; align-items:center; gap:12px;">
                             <div style="width:24px; height:24px; border-radius:50%; background:#CCFF00 !important; color:#000 !important; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:900; border:1px solid rgba(0,0,0,0.2); box-shadow: 0 2px 5px rgba(0,0,0,0.2);">${num}</div>
                             <div style="width:32px; height:32px; border-radius:50%; background:${c}; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:800; color:#ffffff; border: 1px solid rgba(0,0,0,0.1); overflow:hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
