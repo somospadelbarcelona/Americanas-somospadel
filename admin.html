@@ -4498,7 +4498,13 @@
             const role = (window.AdminAuth?.user?.role || '').toString().toLowerCase().trim();
             const isOrganizer = ['organizer', 'organizador', 'organizadores', 'organizers'].includes(role);
 
-            let html = '';
+            // Botón chip "Menú" SIEMPRE el primero a la izquierda para abrir el menú completo lateral
+            let html = `
+                <button type="button" class="subnav-chip chip-menu-toggle" onclick="window.toggleAdminSidebar && window.toggleAdminSidebar(true)" title="Ver todas las secciones">
+                    <i class="fas fa-bars"></i>
+                    <span>Menú</span>
+                </button>`;
+
             window.ADMIN_ALL_MOBILE_SUBNAV.forEach(item => {
                 if (isOrganizer && item.view && !item.view.startsWith('americanas') && !item.view.startsWith('entrenos') && item.view !== 'dashboard_home') {
                     return;
@@ -4528,18 +4534,11 @@
                 }
             });
 
-            // Botón chip para abrir el menú completo lateral
-            html += `
-                <button type="button" class="subnav-chip chip-menu-toggle" onclick="window.toggleAdminSidebar && window.toggleAdminSidebar(true)" title="Ver todas las secciones">
-                    <i class="fas fa-bars"></i>
-                    <span>Menú</span>
-                </button>`;
-
             container.innerHTML = html;
 
             requestAnimationFrame(() => {
                 if (!activeView || activeView === 'entrenos_mgmt' || activeView === 'dashboard_home') {
-                    // Si es inicio o entrenos_mgmt, mantener ENTRENOS 100% visible a la izquierda
+                    // Si es inicio o entrenos_mgmt, mantener Menú y ENTRENOS visibles a la izquierda
                     container.scrollTo({ left: 0, behavior: 'smooth' });
                 } else {
                     const activeChip = container.querySelector('.subnav-chip.active');
