@@ -825,91 +825,126 @@ if (typeof window !== 'undefined') {
             // Header is updated globally by AppInstance in app.js on user change.
             // We just ensure we have visibility on the level here.
 
-            // 2. Render IMMEDIATE SHELL (Experience-Focused)
+            // 2. Render IMMEDIATE SHELL (Experience-Focused — Layered Surface Hierarchy)
             container.innerHTML = `
                 <!-- MAIN DASHBOARD SCROLL CONTENT -->
                 <div class="dashboard-v2-container fade-in full-width-mobile" style="
-                    background: #ffffff !important;
+                    background: #eef2f6 !important;
                     min-height: 100vh;
-                    padding: 14px 16px 48px !important;
+                    padding: 0 0 110px !important;
                     color: #111827;
                     font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
                 ">
 
-                    <!-- ════════ BLOQUE 1: SALUDO LIMPIO PLAYTOMIC ════════ -->
-                    <div class="sp-greeting-clean" style="
-                        display: flex;
-                        align-items: center;
-                        justify-content: space-between;
-                        padding: 4px 0 14px;
+                    <!-- ════════ CABECERA SUPERIOR UNIFICADA (SALUDO + CATEGORÍAS PRINCIPALES) ════════ -->
+                    <div class="sp-home-top-surface" style="
                         background: #ffffff;
+                        padding: 14px 16px 18px;
+                        border-radius: 0 0 26px 26px;
+                        border-bottom: 1px solid #dbe4ee;
+                        box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
+                        margin-bottom: 16px;
                     ">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <!-- Avatar circular estilizado SomosPadel Barcelona -->
-                            <div style="
-                                width: 44px;
-                                height: 44px;
-                                border-radius: 50%;
-                                background: linear-gradient(135deg, #CCFF00 0%, #00e5ff 100%);
-                                border: 2px solid #ffffff;
+                        <!-- ════════ BLOQUE 1: SALUDO LIMPIO ════════ -->
+                        <div class="sp-greeting-clean" style="
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                            padding: 2px 0 14px;
+                            border-bottom: 1px solid #f1f5f9;
+                            margin-bottom: 13px;
+                            background: transparent;
+                        ">
+                            <div style="display: flex; align-items: center; gap: 11px;">
+                                <!-- Avatar circular estilizado SomosPadel Barcelona -->
+                                <div style="
+                                    width: 42px;
+                                    height: 42px;
+                                    border-radius: 50%;
+                                    background: linear-gradient(135deg, #CCFF00 0%, #00e5ff 100%);
+                                    border: 2px solid #ffffff;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    color: #000000;
+                                    font-size: 1.1rem;
+                                    font-weight: 950;
+                                    box-shadow: 0 3px 10px rgba(0, 229, 255, 0.28), 0 2px 6px rgba(204, 255, 0, 0.32);
+                                    flex-shrink: 0;
+                                    text-shadow: 0 1px 1px rgba(255,255,255,0.6);
+                                ">
+                                    ${userFirstName.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                    <h1 style="
+                                        margin: 0;
+                                        font-size: 1.24rem;
+                                        font-weight: 950;
+                                        color: #0f172a;
+                                        letter-spacing: -0.4px;
+                                        line-height: 1.15;
+                                    ">
+                                        ¡Hola, <span id="sp-playtomic-user-name">${userFirstName}</span>! 👋
+                                    </h1>
+                                    <div style="font-size: 0.72rem; color: #64748b; font-weight: 600; margin-top: 2px;">
+                                        Tu club de pádel en Barcelona
+                                    </div>
+                                    <span id="user-level-val" style="display: none;">${userLevel}</span>
+                                </div>
+                            </div>
+                            <!-- Botón perfil / avatar compacto -->
+                            <div onclick="window.Router && window.Router.navigate('profile')" style="
+                                width: 38px;
+                                height: 38px;
+                                border-radius: 12px;
+                                background: #f8fafc;
+                                border: 1.5px solid #e2e8f0;
                                 display: flex;
                                 align-items: center;
                                 justify-content: center;
-                                color: #000000;
-                                font-size: 1.15rem;
-                                font-weight: 950;
-                                box-shadow: 0 3px 10px rgba(0, 229, 255, 0.30), 0 2px 6px rgba(204, 255, 0, 0.35);
-                                flex-shrink: 0;
-                                text-shadow: 0 1px 1px rgba(255,255,255,0.6);
-                            ">
-                                ${userFirstName.charAt(0).toUpperCase()}
-                            </div>
-                            <div>
-                                <h1 style="
-                                    margin: 0;
-                                    font-size: 1.30rem;
-                                    font-weight: 950;
-                                    color: #111827;
-                                    letter-spacing: -0.4px;
-                                    line-height: 1.15;
-                                ">
-                                    ¡Hola, <span id="sp-playtomic-user-name">${userFirstName}</span>! 👋
-                                </h1>
-                                <span id="user-level-val" style="display: none;">${userLevel}</span>
+                                cursor: pointer;
+                                color: #0f172a;
+                                box-shadow: 0 2px 6px rgba(15,23,42,0.04);
+                                transition: all 0.18s ease;
+                            "
+                            onmouseover="this.style.background='#f0fdf4'; this.style.borderColor='#CCFF00'; this.style.transform='scale(1.05)';"
+                            onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0'; this.style.transform='none';">
+                                <i class="far fa-user" style="font-size: 0.95rem; color: #0f172a;"></i>
                             </div>
                         </div>
-                        <!-- Botón perfil / avatar compacto -->
-                        <div onclick="window.Router && window.Router.navigate('profile')" style="
-                            width: 38px;
-                            height: 38px;
-                            border-radius: 11px;
-                            background: #ffffff;
-                            border: 1.5px solid #e2e8f0;
+
+                        <!-- Etiqueta sutil de Categorías Principales -->
+                        <div style="
                             display: flex;
                             align-items: center;
-                            justify-content: center;
-                            cursor: pointer;
-                            color: #111827;
-                            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-                            transition: all 0.18s ease;
-                        "
-                        onmouseover="this.style.background='#f0fdf4'; this.style.borderColor='#CCFF00'; this.style.transform='scale(1.05)';"
-                        onmouseout="this.style.background='#ffffff'; this.style.borderColor='#e2e8f0'; this.style.transform='none';">
-                            <i class="far fa-user" style="font-size: 0.95rem; color: #111827;"></i>
+                            justify-content: space-between;
+                            margin-bottom: 9px;
+                            padding: 0 2px;
+                        ">
+                            <span style="
+                                font-size: 0.63rem;
+                                font-weight: 900;
+                                letter-spacing: 0.9px;
+                                text-transform: uppercase;
+                                color: #64748b;
+                                font-family: 'Montserrat', sans-serif;
+                            ">Accesos rápidos</span>
+                            <span style="font-size: 0.62rem; font-weight: 700; color: #94a3b8;">Categorías</span>
                         </div>
-                    </div>
 
-                    <!-- ════════ BLOQUE 2: ACCESOS RÁPIDOS CIRCULARES 3D PREMIUM SOMOSPADEL ════════ -->
-                    <div class="sp-playtomic-quick-actions" style="
-                        display: grid;
-                        grid-template-columns: repeat(4, 1fr);
-                        gap: 8px;
-                        align-items: start;
-                        text-align: center;
-                        margin-bottom: 22px;
-                        padding: 6px 0;
-                        background: #ffffff;
-                    ">
+                        <!-- ════════ BLOQUE 2: ACCESOS RÁPIDOS CIRCULARES 3D PREMIUM SOMOSPADEL ════════ -->
+                        <div class="sp-playtomic-quick-actions" style="
+                            display: grid;
+                            grid-template-columns: repeat(4, 1fr);
+                            gap: 8px;
+                            align-items: start;
+                            text-align: center;
+                            margin-bottom: 0;
+                            padding: 10px 6px 8px;
+                            background: #f8fafc;
+                            border: 1px solid #e2e8f0;
+                            border-radius: 18px;
+                        ">
                         <!-- 1. Americanas (Trofeo 3D Neón) -->
                         <div class="sp-action-pod haptic-feedback"
                             onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('americanas');"
@@ -1017,7 +1052,11 @@ if (typeof window !== 'undefined') {
                             </span>
                             <span style="font-size: 0.60rem; color: #64748b; font-weight: 600; margin-top: 1px;">Liga Summa</span>
                         </div>
-                    </div>
+                        </div>
+                    </div><!-- /sp-home-top-surface -->
+
+                    <!-- ════════ CUERPO DEL FEED (SECCIONES EN CAPAS CONTRASTADAS) ════════ -->
+                    <div class="sp-home-feed-body" style="padding: 0 14px; display: flex; flex-direction: column; gap: 18px;">
 
                     <!-- Contenedor oculto de notificaciones push (gestión modal) -->
                     <div id="push-notification-promo-banner-root" style="display: none !important;"></div>
@@ -1140,41 +1179,50 @@ if (typeof window !== 'undefined') {
                     </div>
 
                     <!-- ════════ BLOQUE 4: SECCIÓN AMERICANAS + CARRUSEL HORIZONTAL ════════ -->
-                    <div class="sp-home-section" style="margin-bottom: 28px;">
+                    <div class="sp-home-section sp-section-card-americanas" style="
+                        background: #ffffff;
+                        border: 1px solid #dbe4ee;
+                        border-top: 3px solid #a3e635;
+                        border-radius: 22px;
+                        box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
+                        overflow: hidden;
+                    ">
                         <div class="sp-section-header" style="
                             display: flex;
                             align-items: center;
                             justify-content: space-between;
-                            margin-bottom: 14px;
-                            gap: 12px;
+                            padding: 14px 14px 12px;
+                            gap: 10px;
+                            background: linear-gradient(135deg, #f7fee7 0%, #ffffff 72%);
+                            border-bottom: 1px solid #ecfccb;
                         ">
-                            <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+                            <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
                                 <div class="sp-section-icon-box" style="
-                                    width: 42px;
-                                    height: 42px;
-                                    border-radius: 13px;
+                                    width: 40px;
+                                    height: 40px;
+                                    border-radius: 12px;
                                     background: linear-gradient(135deg, #0F172A 0%, #1e293b 100%);
                                     display: flex;
                                     align-items: center;
                                     justify-content: center;
                                     color: #CCFF00;
-                                    font-size: 1.1rem;
-                                    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.15);
-                                    border: 1.5px solid rgba(204, 255, 0, 0.45);
+                                    font-size: 1.05rem;
+                                    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.16);
+                                    border: 1.5px solid rgba(204, 255, 0, 0.55);
                                     flex-shrink: 0;
                                 ">
                                     <i class="fas fa-trophy"></i>
                                 </div>
                                 <div style="min-width: 0;">
-                                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                    <div style="display: flex; align-items: center; gap: 7px; flex-wrap: wrap;">
                                         <h3 style="
                                             margin: 0;
-                                            font-size: 1.28rem;
+                                            font-size: 1.18rem;
                                             font-weight: 950;
                                             color: #0F172A;
                                             letter-spacing: -0.4px;
                                             font-family: 'Outfit', -apple-system, sans-serif;
-                                            line-height: 1.2;
+                                            line-height: 1.15;
                                         ">
                                             Americanas
                                         </h3>
@@ -1182,23 +1230,23 @@ if (typeof window !== 'undefined') {
                                             display: inline-flex;
                                             align-items: center;
                                             gap: 4px;
-                                            background: rgba(204, 255, 0, 0.22);
-                                            color: #0F172A;
-                                            border: 1px solid rgba(204, 255, 0, 0.75);
-                                            padding: 2.5px 8px;
+                                            background: #ecfccb;
+                                            color: #365314;
+                                            border: 1px solid #bef264;
+                                            padding: 2px 7px;
                                             border-radius: 6px;
-                                            font-size: 0.62rem;
+                                            font-size: 0.58rem;
                                             font-weight: 900;
-                                            letter-spacing: 0.6px;
+                                            letter-spacing: 0.5px;
                                             text-transform: uppercase;
                                             font-family: 'Montserrat', sans-serif;
                                         ">
-                                            <i class="fas fa-bolt" style="color: #ea580c; font-size: 0.55rem;"></i>
+                                            <i class="fas fa-bolt" style="color: #ea580c; font-size: 0.52rem;"></i>
                                             NON-STOP 2H
                                         </span>
                                     </div>
-                                    <div style="font-size: 0.75rem; color: #64748b; font-weight: 600; margin-top: 3px; line-height: 1.3;">
-                                        Torneos continuos con rotación de pista y cómputo de puntos
+                                    <div style="font-size: 0.72rem; color: #475569; font-weight: 600; margin-top: 3px; line-height: 1.3;">
+                                        Torneos continuos con rotación de pista y puntos
                                     </div>
                                 </div>
                             </div>
@@ -1206,17 +1254,17 @@ if (typeof window !== 'undefined') {
                                 display: inline-flex;
                                 align-items: center;
                                 gap: 6px;
-                                padding: 6px 12px 6px 14px;
+                                padding: 6px 10px 6px 12px;
                                 border-radius: 99px;
-                                background: #f8fafc;
-                                border: 1.5px solid #e2e8f0;
+                                background: #ffffff;
+                                border: 1.5px solid #cbd5e1;
                                 color: #0F172A;
-                                font-size: 0.74rem;
+                                font-size: 0.70rem;
                                 font-weight: 850;
                                 font-family: 'Montserrat', sans-serif;
                                 cursor: pointer;
                                 transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-                                box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+                                box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
                                 white-space: nowrap;
                                 flex-shrink: 0;
                             ">
@@ -1230,7 +1278,7 @@ if (typeof window !== 'undefined') {
                                     display: flex;
                                     align-items: center;
                                     justify-content: center;
-                                    font-size: 0.58rem;
+                                    font-size: 0.56rem;
                                 ">
                                     <i class="fas fa-arrow-right"></i>
                                 </span>
@@ -1238,56 +1286,67 @@ if (typeof window !== 'undefined') {
                         </div>
 
                         <!-- Carrusel swipe horizontal de Americanas -->
-                        <div id="americanas-horizontal-track" style="
-                            display: flex;
-                            gap: 14px;
-                            overflow-x: auto;
-                            scroll-snap-type: x mandatory;
-                            padding: 4px 2px 14px;
-                            margin: 0 -4px;
-                            -webkit-overflow-scrolling: touch;
-                            scrollbar-width: none;
-                        ">
-                            ${this.getTrackInitialHtml('americana')}
+                        <div style="background: #f8fafc; padding: 12px 12px 4px;">
+                            <div id="americanas-horizontal-track" style="
+                                display: flex;
+                                gap: 12px;
+                                overflow-x: auto;
+                                scroll-snap-type: x mandatory;
+                                padding: 2px 2px 12px;
+                                margin: 0;
+                                -webkit-overflow-scrolling: touch;
+                                scrollbar-width: none;
+                            ">
+                                ${this.getTrackInitialHtml('americana')}
+                            </div>
                         </div>
                     </div>
 
                     <!-- ════════ BLOQUE 5: ENTRENOS ════════ -->
-                    <div class="sp-home-section" style="margin-bottom: 28px;">
+                    <div class="sp-home-section sp-section-card-entrenos" style="
+                        background: #ffffff;
+                        border: 1px solid #dbe4ee;
+                        border-top: 3px solid #0ea5e9;
+                        border-radius: 22px;
+                        box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
+                        overflow: hidden;
+                    ">
                         <div class="sp-section-header" style="
                             display: flex;
                             align-items: center;
                             justify-content: space-between;
-                            margin-bottom: 14px;
-                            gap: 12px;
+                            padding: 14px 14px 12px;
+                            gap: 10px;
+                            background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 72%);
+                            border-bottom: 1px solid #e0f2fe;
                         ">
-                            <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+                            <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
                                 <div class="sp-section-icon-box" style="
-                                    width: 42px;
-                                    height: 42px;
-                                    border-radius: 13px;
+                                    width: 40px;
+                                    height: 40px;
+                                    border-radius: 12px;
                                     background: linear-gradient(135deg, #0F172A 0%, #1e293b 100%);
                                     display: flex;
                                     align-items: center;
                                     justify-content: center;
                                     color: #00D2FF;
-                                    font-size: 1.1rem;
-                                    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.15);
-                                    border: 1.5px solid rgba(0, 210, 255, 0.45);
+                                    font-size: 1.05rem;
+                                    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.16);
+                                    border: 1.5px solid rgba(0, 210, 255, 0.55);
                                     flex-shrink: 0;
                                 ">
                                     <i class="fas fa-bullseye"></i>
                                 </div>
                                 <div style="min-width: 0;">
-                                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                    <div style="display: flex; align-items: center; gap: 7px; flex-wrap: wrap;">
                                         <h3 style="
                                             margin: 0;
-                                            font-size: 1.28rem;
+                                            font-size: 1.18rem;
                                             font-weight: 950;
                                             color: #0F172A;
                                             letter-spacing: -0.4px;
                                             font-family: 'Outfit', -apple-system, sans-serif;
-                                            line-height: 1.2;
+                                            line-height: 1.15;
                                         ">
                                             Entrenos
                                         </h3>
@@ -1295,23 +1354,23 @@ if (typeof window !== 'undefined') {
                                             display: inline-flex;
                                             align-items: center;
                                             gap: 4px;
-                                            background: rgba(0, 210, 255, 0.15);
-                                            color: #0284c7;
-                                            border: 1px solid rgba(0, 210, 255, 0.55);
-                                            padding: 2.5px 8px;
+                                            background: #e0f2fe;
+                                            color: #0369a1;
+                                            border: 1px solid #7dd3fc;
+                                            padding: 2px 7px;
                                             border-radius: 6px;
-                                            font-size: 0.62rem;
+                                            font-size: 0.58rem;
                                             font-weight: 900;
-                                            letter-spacing: 0.6px;
+                                            letter-spacing: 0.5px;
                                             text-transform: uppercase;
                                             font-family: 'Montserrat', sans-serif;
                                         ">
-                                            <i class="fas fa-graduation-cap" style="font-size: 0.55rem;"></i>
+                                            <i class="fas fa-graduation-cap" style="font-size: 0.52rem;"></i>
                                             ACADEMY PRO
                                         </span>
                                     </div>
-                                    <div style="font-size: 0.75rem; color: #64748b; font-weight: 600; margin-top: 3px; line-height: 1.3;">
-                                        Clínics técnicos y sesiones grupales guiadas por entrenadores
+                                    <div style="font-size: 0.72rem; color: #475569; font-weight: 600; margin-top: 3px; line-height: 1.3;">
+                                        Clínics técnicos y sesiones guiadas por coaches
                                     </div>
                                 </div>
                             </div>
@@ -1319,17 +1378,17 @@ if (typeof window !== 'undefined') {
                                 display: inline-flex;
                                 align-items: center;
                                 gap: 6px;
-                                padding: 6px 12px 6px 14px;
+                                padding: 6px 10px 6px 12px;
                                 border-radius: 99px;
-                                background: #f8fafc;
-                                border: 1.5px solid #e2e8f0;
+                                background: #ffffff;
+                                border: 1.5px solid #cbd5e1;
                                 color: #0F172A;
-                                font-size: 0.74rem;
+                                font-size: 0.70rem;
                                 font-weight: 850;
                                 font-family: 'Montserrat', sans-serif;
                                 cursor: pointer;
                                 transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-                                box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+                                box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
                                 white-space: nowrap;
                                 flex-shrink: 0;
                             ">
@@ -1343,7 +1402,7 @@ if (typeof window !== 'undefined') {
                                     display: flex;
                                     align-items: center;
                                     justify-content: center;
-                                    font-size: 0.58rem;
+                                    font-size: 0.56rem;
                                 ">
                                     <i class="fas fa-arrow-right"></i>
                                 </span>
@@ -1351,55 +1410,74 @@ if (typeof window !== 'undefined') {
                         </div>
 
                         <!-- Carrusel swipe horizontal de Entrenos -->
-                        <div id="entrenos-horizontal-track" style="
-                            display: flex;
-                            gap: 14px;
-                            overflow-x: auto;
-                            scroll-snap-type: x mandatory;
-                            padding: 4px 2px 14px;
-                            margin: 0 -4px;
-                            -webkit-overflow-scrolling: touch;
-                            scrollbar-width: none;
-                        ">
-                            ${this.getTrackInitialHtml('entreno')}
+                        <div style="background: #f8fafc; padding: 12px 12px 4px;">
+                            <div id="entrenos-horizontal-track" style="
+                                display: flex;
+                                gap: 12px;
+                                overflow-x: auto;
+                                scroll-snap-type: x mandatory;
+                                padding: 2px 2px 12px;
+                                margin: 0;
+                                -webkit-overflow-scrolling: touch;
+                                scrollbar-width: none;
+                            ">
+                                ${this.getTrackInitialHtml('entreno')}
+                            </div>
                         </div>
                     </div>
 
                     <!-- ⑤ ACTIVIDAD RECIENTE -->
                     <div id="activity-feed-root" style="
                         background: #ffffff;
-                        border: 1px solid #e5e7eb;
-                        border-radius: 20px;
-                        margin-bottom: 24px;
-                        padding: 18px;
-                        box-shadow: 0 4px 14px rgba(0,0,0,0.03);
+                        border: 1px solid #dbe4ee;
+                        border-top: 3px solid #10b981;
+                        border-radius: 22px;
+                        margin-bottom: 0;
+                        overflow: hidden;
+                        box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
                         animation: floatUp 0.6s ease-out forwards;
                     ">
                         <div style="
                             font-weight: 900;
-                            font-size: 0.85rem;
-                            color: #111827;
+                            font-size: 0.92rem;
+                            color: #0f172a;
                             letter-spacing: -0.2px;
                             display: flex;
                             align-items: center;
-                            gap: 8px;
-                            margin-bottom: 14px;
+                            gap: 9px;
+                            padding: 13px 16px;
+                            background: linear-gradient(135deg, #ecfdf5 0%, #ffffff 72%);
+                            border-bottom: 1px solid #d1fae5;
                         ">
-                            <i class="fas fa-rss" style="color: #16a34a; font-size: 0.95rem;"></i> Actividad de Jugadores
+                            <span style="
+                                width: 28px;
+                                height: 28px;
+                                border-radius: 9px;
+                                background: #0f172a;
+                                color: #34d399;
+                                display: inline-flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 0.78rem;
+                            ">
+                                <i class="fas fa-rss"></i>
+                            </span>
+                            <span>Actividad de Jugadores</span>
                         </div>
-                        <div id="activity-feed-content" style="display: flex; flex-direction: column; gap: 10px;"></div>
+                        <div id="activity-feed-content" style="display: flex; flex-direction: column; gap: 10px; padding: 14px 16px;"></div>
                     </div>
 
                     <!-- STORIES TRASLADADO AL HEADER -->
                     <div id="story-feed-root" style="display: none !important;"></div>
 
                     <!-- ⑨ POWER LEVEL -->
-                    <div id="power-level-root" style="margin-bottom: 24px; animation: floatUp 0.7s ease-out forwards;"></div>
+                    <div id="power-level-root" style="margin-bottom: 0; animation: floatUp 0.7s ease-out forwards;"></div>
 
                     <!-- 3.5 NEWS BLOG WIDGET -->
-                    <div id="blog-news-widget-root" style="margin-bottom: 24px; animation: floatUp 0.8s ease-out forwards;"></div>
+                    <div id="blog-news-widget-root" style="margin-bottom: 0; animation: floatUp 0.8s ease-out forwards;"></div>
 
-                    </div>
+                    </div><!-- /sp-home-feed-body -->
+                </div>
 
             <style>
                 @keyframes slowTicker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }

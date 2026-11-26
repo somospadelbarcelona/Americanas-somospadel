@@ -1596,8 +1596,9 @@
         // ==========================================
         getAbsolutePath(path) {
             if (!path) return 'https://somospadel.eu/img/logo_somospadel.png';
-            if (/^https?:\/\//i.test(path)) return path;
-            const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+            const trimmed = String(path).trim();
+            if (/^(https?:\/\/|data:|blob:)/i.test(trimmed)) return trimmed;
+            const cleanPath = trimmed.startsWith('/') ? trimmed.slice(1) : trimmed;
             const isLocal = typeof window !== 'undefined' && window.location && 
                 (window.location.origin.includes('localhost') || 
                  window.location.origin.includes('127.0.0.1') || 
@@ -1606,6 +1607,13 @@
                 ? window.location.origin
                 : 'https://somospadel.eu';
             return `${base}/${cleanPath}`;
+        }
+
+        getShareableImageUrl(path) {
+            if (!path) return null;
+            const trimmed = String(path).trim();
+            if (/^(data:|blob:)/i.test(trimmed)) return null;
+            return this.getAbsolutePath(trimmed);
         }
 
         async getProductImageFile(product) {
@@ -1645,15 +1653,16 @@
             }
 
             const productDeepLink = `${appBaseUrl}?producto=${product.id}#tienda?producto=${product.id}`;
-            const productImageUrl = this.getAbsolutePath(product.image);
+            const productImageUrl = this.getShareableImageUrl(product.image);
 
             const badgesText = (product.badges && product.badges.length) ? `🏷️ ${product.badges.join(' | ')}\n\n` : '';
+            const photoBlock = productImageUrl ? `📸 *Foto del producto:*\n${productImageUrl}\n\n` : '';
 
             const textWhatsApp = `🎾 *¡Mira este producto en la TIENDA SOMOSPADEL BCN!* 🎾\n\n` +
                 `⭐ *${product.brand} - ${product.name}*\n` +
                 `🔥 Precio Exclusivo Comunidad: *${product.promoPrice}€* (Antes ${product.originalPrice}€)\n` +
                 badgesText +
-                `📸 *Foto del producto:*\n${productImageUrl}\n\n` +
+                photoBlock +
                 `👉 Descúbrelo aquí con descuento exclusivo:\n${productDeepLink}\n\n` +
                 `_SomosPadel Barcelona - La mayor comunidad de pádel_`;
 
@@ -1680,30 +1689,60 @@
         // 🛒 CARRITO DE COMPRAS DE E-COMMERCE
         // ==========================================
         getCart() {
-            try {
-                const data = localStorage.getItem('sp_tienda_cart');
-                return data ? JSON.parse(data) : [];
-            } catch (e) {
-                return [];
+            let rawCart = null;
+            if (Array.isArray(this._memoryCart)) {
+                rawCart = this._memoryCart;
+            } else {
+                try {
+                    const data = localStorage.getItem('sp_tienda_cart');
+                    rawCart = data ? JSON.parse(data) : [];
+                    if (!Array.isArray(rawCart)) rawCart = [];
+                } catch (e) {
+                    rawCart = [];
+                }
+                this._memoryCart = rawCart;
             }
+
+            // Hidratar imagen desde el catálogo si se omitió en localStorage (ej. base64)
+            return rawCart.map(item => {
+                if (!item.image) {
+                    const liveProd = this.getProductById(item.id);
+                    if (liveProd && liveProd.image) {
+                        return { ...item, image: liveProd.image };
+                    }
+                }
+                return item;
+            });
         }
 
         saveCart(cart) {
+            const safeCart = Array.isArray(cart) ? cart : [];
+            // Evitar guardar imágenes base64 pesadas en localStorage (causan QuotaExceededError)
+            const lightweightCart = safeCart.map(item => ({
+                ...item,
+                image: (item.image && !/^data:/i.test(String(item.image))) ? item.image : ''
+            }));
+            this._memoryCart = lightweightCart;
             try {
-                localStorage.setItem('sp_tienda_cart', JSON.stringify(cart));
-            } catch (e) {}
+                localStorage.setItem('sp_tienda_cart', JSON.stringify(lightweightCart));
+            } catch (e) {
+                console.warn('[TiendaService] localStorage lleno al guardar cesta, usando memoria de sesión:', e);
+            }
         }
 
         addToCart(productId, qty = 1, variant = null) {
             const product = this.getProductById(productId);
             if (!product || product.active === false) return false;
-            const availableStock = typeof product.stock === 'number' ? product.stock : 12;
+            const parsedStock = (product.stock !== undefined && product.stock !== null && product.stock !== '')
+                ? Number(product.stock)
+                : 12;
+            const availableStock = Number.isFinite(parsedStock) ? parsedStock : 12;
             if (availableStock <= 0) return false;
 
             const activeVariant = variant || (Array.isArray(product.variants) && product.variants.length ? product.variants[0] : null);
             const variantId = activeVariant ? activeVariant.id : null;
             const variantName = activeVariant ? activeVariant.name : null;
-            const unitPrice = (activeVariant && typeof activeVariant.price === 'number') ? activeVariant.price : product.promoPrice;
+            const unitPrice = (activeVariant && activeVariant.price !== undefined) ? Number(activeVariant.price) : Number(product.promoPrice || 0);
             const cartKey = variantId ? `${product.id}__${variantId}` : product.id;
 
             const cart = this.getCart();
@@ -1714,6 +1753,7 @@
                 existing.stock = availableStock;
                 existing.price = unitPrice;
             } else {
+                const safeImg = (product.image && !/^data:/i.test(String(product.image))) ? product.image : '';
                 cart.push({
                     id: product.id,
                     cartKey: cartKey,
@@ -1722,7 +1762,7 @@
                     name: product.name,
                     brand: product.brand,
                     price: unitPrice,
-                    image: product.image,
+                    image: safeImg,
                     qty: Math.min(qty, availableStock),
                     stock: availableStock
                 });

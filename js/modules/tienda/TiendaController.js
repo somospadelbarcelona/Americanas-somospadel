@@ -253,7 +253,12 @@
                 window.SubnavManager.renderTienda('cesta');
             }
             TiendaView.checkoutStep = 'cart';
-            const cartRoot = document.getElementById('sp-tienda-cart-root');
+            let cartRoot = document.getElementById('sp-tienda-cart-root');
+            if (!cartRoot && typeof document !== 'undefined' && document.body) {
+                cartRoot = document.createElement('div');
+                cartRoot.id = 'sp-tienda-cart-root';
+                document.body.appendChild(cartRoot);
+            }
             if (cartRoot) {
                 cartRoot.innerHTML = TiendaView.renderCartModal();
             }
@@ -809,7 +814,9 @@
             const total = (unitPrice * qty).toFixed(2);
 
             const phone = this.getWhatsAppPhone();
-            const productImageUrl = TiendaService.getAbsolutePath(p.image);
+            const productImageUrl = typeof TiendaService.getShareableImageUrl === 'function'
+                ? TiendaService.getShareableImageUrl(p.image)
+                : null;
             const origin = (typeof window !== 'undefined' && window.location && window.location.origin && !window.location.origin.startsWith('file'))
                 ? window.location.origin
                 : 'https://somospadel.eu';
@@ -823,9 +830,11 @@
                 msg += `⚙️ *Opción/Formato:* ${variant.name}\n`;
             }
             msg += `🔢 *Cantidad:* ${qty} ud(s)\n`;
-            msg += `💰 *Precio Unitario:* ${unitPrice.toFixed(2)}€\n`;
+            msg += `💰 *Precio Unitario:* ${Number(unitPrice || 0).toFixed(2)}€\n`;
             msg += `💎 *TOTAL A PAGAR:* ${total}€\n\n`;
-            msg += `📸 *Foto del producto:*\n${productImageUrl}\n\n`;
+            if (productImageUrl) {
+                msg += `📸 *Foto del producto:*\n${productImageUrl}\n\n`;
+            }
             msg += `🔗 *Ver producto en Tienda:*\n${productDeepLink}\n\n`;
             msg += `¿Está disponible para recogida en mi próxima americana o para envío? ¡Gracias!`;
 

@@ -182,9 +182,9 @@ input::placeholder, textarea::placeholder, .pro-input-micro::placeholder {
     font-weight: 800;
 }
 
-/* 11. DASHBOARD SOMOSPADEL: FONDO BLANCO PURO Y CARRUSELES SWIPE */
+/* 11. DASHBOARD SOMOSPADEL: FONDO CONTRASTADO POR CAPAS Y CARRUSELES SWIPE */
 .dashboard-v2-container {
-    background-color: #ffffff !important;
+    background-color: #eef2f6 !important;
     background-image: none !important;
     color: #111827 !important;
 }
