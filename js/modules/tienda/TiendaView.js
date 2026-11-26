@@ -1106,7 +1106,10 @@
             if (appliedCoupon && appliedCoupon.rate) {
                 couponDiscount = Math.round(summary.subtotal * appliedCoupon.rate * 100) / 100;
             }
-            const effectiveShipping = (this.checkoutStep === 'checkout' && this.checkoutDelivery === 'club') ? 0 : summary.shippingCost;
+            const homeShippingCost = 4.95;
+            const effectiveShipping = this.checkoutStep === 'checkout'
+                ? (this.checkoutDelivery === 'home' ? homeShippingCost : 0)
+                : summary.shippingCost;
             const finalTotal = Math.max(0, Math.round((summary.subtotal - couponDiscount + effectiveShipping) * 100) / 100);
             const progressPercent = Math.min(100, Math.round((summary.subtotal / (summary.freeThreshold || 50)) * 100));
 
@@ -1153,107 +1156,181 @@
                 `;
             }
 
-            // Paso 2: Formulario Checkout en 1 paso
+            // Paso 2: Formulario Checkout Intuitivo por Bloques
             if (this.checkoutStep === 'checkout' && cart.length > 0) {
                 const currentUser = (typeof window !== 'undefined' && window.Store?.getState?.('currentUser')) || {};
                 const preName = currentUser.name || currentUser.displayName || '';
                 const prePhone = currentUser.phone || currentUser.telefono || '';
                 const preEmail = currentUser.email || '';
+                const selectedPayment = this.checkoutPayment || 'Bizum';
+                const paymentOptions = [
+                    { value: 'Bizum', icon: 'fa-mobile-screen-button', title: 'Bizum', sub: 'Al instante' },
+                    { value: 'Pago en Pista (Efectivo/Tarjeta)', icon: 'fa-hand-holding-dollar', title: 'En Pista', sub: 'Al recoger' },
+                    { value: 'Tarjeta de Crédito', icon: 'fa-credit-card', title: 'Tarjeta', sub: 'Débito / Crédito' },
+                    { value: 'Transferencia Bancaria', icon: 'fa-building-columns', title: 'Transferencia', sub: 'Bancaria' }
+                ];
 
                 return `
                     <div class="sp-cart-modal-backdrop" onclick="if(event.target === this) window.TiendaController && window.TiendaController.closeCart()">
-                        <div class="sp-cart-drawer">
+                        <div class="sp-cart-drawer sp-checkout-drawer">
                             <div class="sp-cart-drawer-header">
                                 <button type="button" class="sp-checkout-back-btn" onclick="window.TiendaController && window.TiendaController.goToCheckoutStep('cart')" title="Volver a la cesta">
                                     <i class="fas fa-arrow-left"></i>
                                 </button>
-                                <h2 class="sp-cart-drawer-title" style="flex: 1; margin-left: 8px;">
-                                    <i class="fas fa-clipboard-check" style="color: #15803d;"></i>
-                                    <span>Finalizar Pedido</span>
-                                </h2>
+                                <div style="flex: 1; margin-left: 10px;">
+                                    <h2 class="sp-cart-drawer-title" style="margin: 0; font-size: 1.05rem;">
+                                        <i class="fas fa-bag-shopping" style="color: #15803d;"></i>
+                                        <span>Finalizar Pedido</span>
+                                    </h2>
+                                    <div style="font-size: 0.7rem; color: #64748b; font-weight: 600; margin-top: 1px;">
+                                        Completa estos 3 pasos rápidos
+                                    </div>
+                                </div>
                                 <button type="button" class="sp-cart-drawer-close" onclick="window.TiendaController && window.TiendaController.closeCart()">
                                     <i class="fas fa-xmark"></i>
                                 </button>
                             </div>
 
+                            <!-- Mini Resumen de la Cesta -->
+                            <div class="sp-checkout-mini-cart">
+                                <div class="sp-checkout-mini-cart-head">
+                                    <span><i class="fas fa-box-open" style="color: #15803d;"></i> Tu pedido (${summary.count} ${summary.count === 1 ? 'artículo' : 'artículos'})</span>
+                                    <strong>${summary.subtotal.toFixed(2).replace('.', ',')}€</strong>
+                                </div>
+                                <div class="sp-checkout-mini-cart-items">
+                                    ${cart.map(item => `
+                                        <span class="sp-checkout-mini-pill">
+                                            ${item.qty || 1}x ${this.escapeHtml(item.name)}${item.variantName ? ` (${this.escapeHtml(item.variantName)})` : ''}
+                                        </span>
+                                    `).join('')}
+                                </div>
+                            </div>
+
                             <form id="sp-checkout-form" class="sp-checkout-form" onsubmit="window.TiendaController && window.TiendaController.submitCheckoutForm(event)">
-                                <div class="sp-checkout-field">
-                                    <label for="sp-co-name">Nombre y Apellidos *</label>
-                                    <input type="text" id="sp-co-name" name="customerName" required placeholder="Ej: Marc Soler" value="${this.escapeHtml(preName)}">
-                                </div>
-                                <div class="sp-checkout-row-2">
-                                    <div class="sp-checkout-field">
-                                        <label for="sp-co-phone">Teléfono WhatsApp *</label>
-                                        <input type="tel" id="sp-co-phone" name="customerPhone" required placeholder="+34 600 000 000" value="${this.escapeHtml(prePhone)}">
-                                    </div>
-                                    <div class="sp-checkout-field">
-                                        <label for="sp-co-email">Email (opcional)</label>
-                                        <input type="email" id="sp-co-email" name="customerEmail" placeholder="tu@email.com" value="${this.escapeHtml(preEmail)}">
-                                    </div>
-                                </div>
 
-                                <div class="sp-checkout-field">
-                                    <label>Modalidad de Entrega *</label>
-                                    <div class="sp-checkout-toggle-group">
-                                        <label class="sp-checkout-toggle-opt ${this.checkoutDelivery === 'club' ? 'active' : ''}">
+                                <!-- PASO 1: MODALIDAD DE ENTREGA -->
+                                <div class="sp-checkout-card">
+                                    <div class="sp-checkout-step-head">
+                                        <span class="sp-checkout-step-num">1</span>
+                                        <div>
+                                            <div class="sp-checkout-step-title">Modalidad de Entrega</div>
+                                            <div class="sp-checkout-step-sub">Elige dónde quieres recibir tu pedido</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="sp-checkout-delivery-grid">
+                                        <label class="sp-delivery-card ${this.checkoutDelivery === 'club' ? 'active' : ''}">
                                             <input type="radio" name="deliveryMethod" value="club" ${this.checkoutDelivery === 'club' ? 'checked' : ''} onchange="window.TiendaController && window.TiendaController.handleDeliveryMethodChange('club')">
-                                            <i class="fas fa-location-dot"></i>
-                                            <span>Recogida Club / Americana <strong>(GRATIS)</strong></span>
+                                            <div class="sp-delivery-icon"><i class="fas fa-location-dot"></i></div>
+                                            <div class="sp-delivery-info">
+                                                <div class="sp-delivery-name">Recogida Club</div>
+                                                <div class="sp-delivery-desc">Entrega en pistas o tu próxima americana</div>
+                                            </div>
+                                            <span class="sp-delivery-badge free">GRATIS</span>
                                         </label>
-                                        <label class="sp-checkout-toggle-opt ${this.checkoutDelivery === 'home' ? 'active' : ''}">
+
+                                        <label class="sp-delivery-card ${this.checkoutDelivery === 'home' ? 'active' : ''}">
                                             <input type="radio" name="deliveryMethod" value="home" ${this.checkoutDelivery === 'home' ? 'checked' : ''} onchange="window.TiendaController && window.TiendaController.handleDeliveryMethodChange('home')">
-                                            <i class="fas fa-truck-fast"></i>
-                                            <span>Envío a Domicilio <strong>(${summary.shippingCost === 0 ? 'GRATIS' : summary.shippingCost.toFixed(2) + '€'})</strong></span>
+                                            <div class="sp-delivery-icon home"><i class="fas fa-truck-fast"></i></div>
+                                            <div class="sp-delivery-info">
+                                                <div class="sp-delivery-name">Envío a domicilio</div>
+                                                <div class="sp-delivery-desc">Entrega directa en tu dirección (24/48h)</div>
+                                            </div>
+                                            <span class="sp-delivery-badge paid">4,95€</span>
                                         </label>
+                                    </div>
+
+                                    <div class="sp-checkout-field" style="margin-top: 10px;">
+                                        <label for="sp-co-address">${this.checkoutDelivery === 'club' ? 'Club o Americana de recogida *' : 'Dirección completa de envío *'}</label>
+                                        <input type="text" id="sp-co-address" name="deliveryAddress" required placeholder="${this.checkoutDelivery === 'club' ? 'Ej: Club Delfos / Americana viernes 21h' : 'Calle, número, piso, código postal y ciudad'}">
                                     </div>
                                 </div>
 
-                                <div class="sp-checkout-field">
-                                    <label for="sp-co-address">${this.checkoutDelivery === 'club' ? 'Club o Americana de recogida *' : 'Dirección completa de envío *'}</label>
-                                    <input type="text" id="sp-co-address" name="deliveryAddress" required placeholder="${this.checkoutDelivery === 'club' ? 'Ej: Club Delfos / Americana sábado 11h' : 'Calle, número, piso, CP y ciudad'}">
+                                <!-- PASO 2: TUS DATOS -->
+                                <div class="sp-checkout-card">
+                                    <div class="sp-checkout-step-head">
+                                        <span class="sp-checkout-step-num">2</span>
+                                        <div>
+                                            <div class="sp-checkout-step-title">Tus Datos de Contacto</div>
+                                            <div class="sp-checkout-step-sub">Para avisarte cuando esté listo</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="sp-checkout-field">
+                                        <label for="sp-co-name">Nombre y Apellidos *</label>
+                                        <input type="text" id="sp-co-name" name="customerName" required placeholder="Ej: Marc Soler" value="${this.escapeHtml(preName)}">
+                                    </div>
+                                    <div class="sp-checkout-row-2" style="margin-top: 8px;">
+                                        <div class="sp-checkout-field">
+                                            <label for="sp-co-phone">Teléfono WhatsApp *</label>
+                                            <input type="tel" id="sp-co-phone" name="customerPhone" required placeholder="+34 600 000 000" value="${this.escapeHtml(prePhone)}">
+                                        </div>
+                                        <div class="sp-checkout-field">
+                                            <label for="sp-co-email">Email (opcional)</label>
+                                            <input type="email" id="sp-co-email" name="customerEmail" placeholder="tu@email.com" value="${this.escapeHtml(preEmail)}">
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <div class="sp-checkout-field">
-                                    <label for="sp-co-payment">Método de Pago *</label>
-                                    <select id="sp-co-payment" name="paymentMethod" required>
-                                        <option value="Bizum">📱 Bizum (Confirmación instantánea)</option>
-                                        <option value="Pago en Pista (Efectivo/Tarjeta)">🎾 Pago en Pista al recoger</option>
-                                        <option value="Transferencia Bancaria">🏦 Transferencia Bancaria</option>
-                                        <option value="Tarjeta de Crédito">💳 Tarjeta de Crédito</option>
-                                    </select>
+                                <!-- PASO 3: MÉTODO DE PAGO Y NOTAS -->
+                                <div class="sp-checkout-card">
+                                    <div class="sp-checkout-step-head">
+                                        <span class="sp-checkout-step-num">3</span>
+                                        <div>
+                                            <div class="sp-checkout-step-title">Método de Pago</div>
+                                            <div class="sp-checkout-step-sub">Selecciona cómo prefieres abonar el pedido</div>
+                                        </div>
+                                    </div>
+
+                                    <input type="hidden" id="sp-co-payment" name="paymentMethod" value="${this.escapeHtml(selectedPayment)}">
+                                    <div class="sp-payment-grid">
+                                        ${paymentOptions.map(opt => `
+                                            <button type="button"
+                                                class="sp-payment-tile ${selectedPayment === opt.value ? 'active' : ''}"
+                                                onclick="window.TiendaController && window.TiendaController.handlePaymentMethodChange('${this.escapeHtml(opt.value)}', this)">
+                                                <i class="fas ${opt.icon}"></i>
+                                                <span class="sp-payment-tile-title">${opt.title}</span>
+                                                <span class="sp-payment-tile-sub">${opt.sub}</span>
+                                            </button>
+                                        `).join('')}
+                                    </div>
+
+                                    <div class="sp-checkout-field" style="margin-top: 10px;">
+                                        <label for="sp-co-notes">Notas adicionales (opcional)</label>
+                                        <textarea id="sp-co-notes" name="notes" rows="2" placeholder="Ej: Talla, horario preferido, color..."></textarea>
+                                    </div>
                                 </div>
 
-                                <div class="sp-checkout-field">
-                                    <label for="sp-co-notes">Notas adicionales (talla, horario, etc.)</label>
-                                    <textarea id="sp-co-notes" name="notes" rows="2" placeholder="Cualquier indicación para el equipo..."></textarea>
-                                </div>
-
-                                <div class="sp-cart-summary-box" style="margin-top: 8px;">
+                                <!-- RESUMEN Y BOTÓN DE CONFIRMACIÓN -->
+                                <div class="sp-cart-summary-box" style="margin-top: 4px;">
                                     <div class="sp-cart-summary-line">
                                         <span>Productos (${summary.count})</span>
-                                        <span>${summary.subtotal.toFixed(2)}€</span>
+                                        <span style="font-weight: 700;">${summary.subtotal.toFixed(2).replace('.', ',')}€</span>
                                     </div>
                                     ${couponDiscount > 0 ? `
                                         <div class="sp-cart-summary-line" style="color: #166534;">
                                             <span>Cupón (${appliedCoupon.code})</span>
-                                            <span>-${couponDiscount.toFixed(2)}€</span>
+                                            <span>-${couponDiscount.toFixed(2).replace('.', ',')}€</span>
                                         </div>
                                     ` : ''}
                                     <div class="sp-cart-summary-line">
-                                        <span>Envío</span>
-                                        <span style="color: ${effectiveShipping === 0 ? '#166534' : '#0f172a'}; font-weight: 800;">
-                                            ${effectiveShipping === 0 ? 'GRATIS' : `${effectiveShipping.toFixed(2)}€`}
+                                        <span>${this.checkoutDelivery === 'club' ? 'Recogida Club' : 'Envío a domicilio'}</span>
+                                        <span style="color: ${effectiveShipping === 0 ? '#15803d' : '#0f172a'}; font-weight: 900;">
+                                            ${effectiveShipping === 0 ? 'GRATIS' : '4,95€'}
                                         </span>
                                     </div>
                                     <div class="sp-cart-summary-total">
                                         <span>TOTAL A PAGAR</span>
-                                        <span>${finalTotal.toFixed(2)}€</span>
+                                        <span>${finalTotal.toFixed(2).replace('.', ',')}€</span>
                                     </div>
 
                                     <button type="submit" class="sp-btn-checkout-wa">
                                         <i class="fab fa-whatsapp" style="font-size: 1.25rem;"></i>
-                                        <span>CONFIRMAR PEDIDO Y ABRIR WHATSAPP</span>
+                                        <span>CONFIRMAR PEDIDO · ${finalTotal.toFixed(2).replace('.', ',')}€</span>
                                     </button>
+                                    <div style="text-align: center; font-size: 0.68rem; color: #64748b; margin-top: 7px; font-weight: 600;">
+                                        <i class="fas fa-shield-halved" style="color: #16a34a;"></i> Se abrirá WhatsApp con tu resumen listo para enviar
+                                    </div>
                                 </div>
                             </form>
                         </div>

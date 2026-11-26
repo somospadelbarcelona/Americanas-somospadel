@@ -1829,7 +1829,8 @@
             }
 
             const isClubPickup = checkoutData.deliveryMethod === 'club';
-            const shippingCost = isClubPickup ? 0 : summary.shippingCost;
+            const homeShippingCost = 4.95;
+            const shippingCost = isClubPickup ? 0 : homeShippingCost;
             const totalAmount = Math.max(0, Math.round((summary.subtotal - couponDiscount + shippingCost) * 100) / 100);
 
             // Calcular comisión estimada y descontar stock

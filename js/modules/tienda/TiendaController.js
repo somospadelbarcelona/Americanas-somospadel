@@ -289,8 +289,9 @@
                 const prevPhone = document.getElementById('sp-co-phone')?.value || '';
                 const prevEmail = document.getElementById('sp-co-email')?.value || '';
                 const prevAddr = document.getElementById('sp-co-address')?.value || '';
-                const prevPay = document.getElementById('sp-co-payment')?.value || 'Bizum';
+                const prevPay = document.getElementById('sp-co-payment')?.value || TiendaView.checkoutPayment || 'Bizum';
                 const prevNotes = document.getElementById('sp-co-notes')?.value || '';
+                TiendaView.checkoutPayment = prevPay;
 
                 cartRoot.innerHTML = TiendaView.renderCartModal();
 
@@ -301,6 +302,14 @@
                 if (document.getElementById('sp-co-payment')) document.getElementById('sp-co-payment').value = prevPay;
                 if (document.getElementById('sp-co-notes')) document.getElementById('sp-co-notes').value = prevNotes;
             }
+        }
+
+        handlePaymentMethodChange(method, btnEl = null) {
+            TiendaView.checkoutPayment = method || 'Bizum';
+            const hiddenInput = document.getElementById('sp-co-payment');
+            if (hiddenInput) hiddenInput.value = TiendaView.checkoutPayment;
+            document.querySelectorAll('.sp-payment-tile').forEach(tile => tile.classList.remove('active'));
+            if (btnEl) btnEl.classList.add('active');
         }
 
         addToCart(productId, qty = 1, variant = null, keepCartOpen = false) {

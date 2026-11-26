@@ -4062,6 +4062,203 @@ body.sp-modal-open {
     accent-color: #15803d;
 }
 
+/* Checkout Intuitivo por Bloques (v6) */
+.sp-checkout-drawer {
+    background: #f1f5f9 !important;
+}
+.sp-checkout-mini-cart {
+    background: #ffffff;
+    border: 1px solid #dbe4ee;
+    border-radius: 14px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+}
+.sp-checkout-mini-cart-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 6px;
+}
+.sp-checkout-mini-cart-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+.sp-checkout-mini-pill {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #334155;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 99px;
+    padding: 3px 9px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.sp-checkout-card {
+    background: #ffffff;
+    border: 1px solid #dbe4ee;
+    border-radius: 16px;
+    padding: 13px;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+}
+.sp-checkout-step-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 11px;
+    padding-bottom: 9px;
+    border-bottom: 1px solid #f1f5f9;
+}
+.sp-checkout-step-num {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #0f172a;
+    color: #CCFF00;
+    font-size: 0.75rem;
+    font-weight: 950;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.sp-checkout-step-title {
+    font-size: 0.86rem;
+    font-weight: 900;
+    color: #0f172a;
+    line-height: 1.15;
+}
+.sp-checkout-step-sub {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-top: 1px;
+}
+.sp-checkout-delivery-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.sp-delivery-card {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 12px;
+    border-radius: 13px;
+    border: 2px solid #e2e8f0;
+    background: #f8fafc;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    text-transform: none !important;
+}
+.sp-delivery-card input {
+    display: none;
+}
+.sp-delivery-card.active {
+    border-color: #84cc16;
+    background: #f7fee7;
+    box-shadow: 0 4px 12px rgba(132, 204, 22, 0.16);
+}
+.sp-delivery-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #0f172a;
+    color: #CCFF00;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+.sp-delivery-icon.home {
+    background: #0284c7;
+    color: #ffffff;
+}
+.sp-delivery-info {
+    flex: 1;
+    min-width: 0;
+}
+.sp-delivery-name {
+    font-size: 0.84rem;
+    font-weight: 900;
+    color: #0f172a;
+    line-height: 1.15;
+}
+.sp-delivery-desc {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-top: 2px;
+    line-height: 1.25;
+}
+.sp-delivery-badge {
+    font-size: 0.72rem;
+    font-weight: 950;
+    padding: 4px 9px;
+    border-radius: 8px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.sp-delivery-badge.free {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #86efac;
+}
+.sp-delivery-badge.paid {
+    background: #0f172a;
+    color: #ffffff;
+}
+.sp-payment-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+.sp-payment-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    padding: 10px 11px;
+    border-radius: 12px;
+    border: 1.5px solid #e2e8f0;
+    background: #f8fafc;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    transition: all 0.16s ease;
+}
+.sp-payment-tile i {
+    font-size: 0.95rem;
+    color: #475569;
+    margin-bottom: 3px;
+}
+.sp-payment-tile-title {
+    font-size: 0.78rem;
+    font-weight: 900;
+    color: #0f172a;
+}
+.sp-payment-tile-sub {
+    font-size: 0.64rem;
+    font-weight: 600;
+    color: #64748b;
+}
+.sp-payment-tile.active {
+    border-color: #84cc16;
+    background: #f7fee7;
+    box-shadow: 0 3px 10px rgba(132, 204, 22, 0.15);
+}
+.sp-payment-tile.active i {
+    color: #15803d;
+}
+
 /* ==========================================================================
    REVOLUCIÓN VISUAL FLAGSHIP 2026 - SOMOSPADEL BCN STORE
    Estética Boutique Deportiva Premium (contraste nítido, limpio y práctico)
