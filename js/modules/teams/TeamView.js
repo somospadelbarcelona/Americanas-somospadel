@@ -1,70 +1,259 @@
 /**
- * TeamView.js - Club Teams Premium Redesign (Broadcast Light Aesthetic)
- * Reestructuración Maestra e interactividad avanzada dentro de cada tarjeta.
+ * TeamView.js - Revolución Mobile-First (Broadcast Athletic Pro)
+ * Hub Radar del Club + Carrusel Matchday + Top Jugadores Liga + Ficha Full-Screen con Swipe.
  */
 (function () {
     class TeamView {
         constructor() {
             this.container = null;
             this.activeCategory = 'Todos';
+            this.activeHubMode = 'teams'; // 'teams' | 'players'
             this.searchQuery = '';
+            this.searchOpen = false;
             this.lastTeams = [];
-            this.chartsData = {}; // Para guardar la evolución de puntos
-            this.activeMyTeamIndex = 0; // Índice de equipo activo para pestaña 'Mi Equipo'
+            this.chartsData = {};
+            this.activeMyTeamIndex = 0;
+
+            // Estado de la Ficha Full-Screen
+            this.activeSheetTeamId = null;
+            this.activeSheetTab = 'resumen'; // 'resumen' | 'class' | 'sched' | 'rost' | 'stats'
+            this.activeSchedFilter = 'all'; // 'all' | 'pending' | 'completed'
+            this.rosterSearchQuery = '';
+            this.activeChartInstance = null;
+            this._touchStartX = 0;
+            this._touchStartY = 0;
+        }
+
+        // ==================================================
+        // 🧠 HELPERS DE DATOS Y ESTADÍSTICAS (BUGS CORREGIDOS)
+        // ==================================================
+
+        getMatchVenue(match) {
+            if (!match) return 'Club por definir';
+            const raw = match.location || match.venue || '';
+            const clean = String(raw).replace(/\s+\.$/, '').trim();
+            return clean || 'Club por definir';
         }
 
         getMatchResult(match) {
-            if (!match) return { valid: false };
-            
-            // Si no está completado, no es un resultado válido para las estadísticas de victoria/derrota
-            if (match.status !== 'completed') {
+            if (!match || match.status !== 'completed') {
                 return { valid: false };
             }
-            
+
             const scoreStr = match.score;
             if (!scoreStr || typeof scoreStr !== 'string') {
                 return { valid: false };
             }
-            
+
             const parts = scoreStr.split('-');
             if (parts.length !== 2) {
                 return { valid: false };
             }
-            
+
             const score1 = parseInt(parts[0].trim(), 10);
             const score2 = parseInt(parts[1].trim(), 10);
-            
             if (isNaN(score1) || isNaN(score2)) {
                 return { valid: false };
             }
-            
-            const isWin = score1 > score2;
-            const isLoss = score1 < score2;
-            
+
+            const isHome = match.isHome !== false;
+            let teamScore = isHome ? score1 : score2;
+            let oppScore = isHome ? score2 : score1;
+
+            let isWin;
+            let isLoss;
+            const resFlag = String(match.result || '').toUpperCase().trim();
+            if (resFlag === 'W' || resFlag === 'V') {
+                isWin = true;
+                isLoss = false;
+                if (teamScore < oppScore) {
+                    const tmp = teamScore;
+                    teamScore = oppScore;
+                    oppScore = tmp;
+                }
+            } else if (resFlag === 'L' || resFlag === 'D') {
+                isWin = false;
+                isLoss = true;
+                if (teamScore > oppScore) {
+                    const tmp = teamScore;
+                    teamScore = oppScore;
+                    oppScore = tmp;
+                }
+            } else {
+                isWin = teamScore > oppScore;
+                isLoss = teamScore < oppScore;
+            }
+
             return {
                 valid: true,
                 score1,
                 score2,
+                teamScore,
+                oppScore,
                 isWin,
-                isLoss
+                isLoss,
+                displayScore: `${teamScore} - ${oppScore}`
             };
         }
+
+        getShortTeamName(name) {
+            if (!name) return 'Equipo';
+            return String(name).replace(/SOMOS\s+P[AÁ]DEL\s*(BCN)?/i, '').trim() || name;
+        }
+
+        getCategoryStyle(category) {
+            const c = String(category || '').toLowerCase();
+            if (c.includes('masc')) {
+                return { accent: '#0284c7', bg: 'rgba(2, 132, 199, 0.12)', text: '#0369a1', label: 'Masculina' };
+            }
+            if (c.includes('fem')) {
+                return { accent: '#db2777', bg: 'rgba(219, 39, 119, 0.12)', text: '#be185d', label: 'Femenina' };
+            }
+            if (c.includes('mixt')) {
+                return { accent: '#9333ea', bg: 'rgba(147, 51, 234, 0.12)', text: '#7e22ce', label: 'Mixta' };
+            }
+            return { accent: '#10b981', bg: 'rgba(16, 185, 129, 0.12)', text: '#047857', label: category || 'Club' };
+        }
+
+        computeTeamMetrics(team) {
+            const schedule = Array.isArray(team.schedule) ? team.schedule : [];
+            const standings = Array.isArray(team.groupStandings) ? team.groupStandings : [];
+            const sortedMatches = [...schedule].sort((a, b) => (parseInt(a.j, 10) || 0) - (parseInt(b.j, 10) || 0));
+
+            const completedMatches = sortedMatches.filter(m => m.status === 'completed' && m.score);
+            const pendingMatches = sortedMatches.filter(m =>
+                (m.status === 'pending' || m.status === 'scheduled' || m.status === 'upcoming') &&
+                m.opponent && !String(m.opponent).toUpperCase().includes('BYE')
+            );
+
+            let homeWins = 0, homePlayed = 0;
+            let awayWins = 0, awayPlayed = 0;
+            const streak = [];
+            const chartLabels = ['J0'];
+            const chartPoints = [0];
+            let accPoints = 0;
+            const breakdown = { w30: 0, w21: 0, l12: 0, l03: 0 };
+
+            completedMatches.forEach(m => {
+                const res = this.getMatchResult(m);
+                if (!res.valid) return;
+
+                accPoints += res.teamScore;
+                chartLabels.push('J' + m.j);
+                chartPoints.push(accPoints);
+
+                if (m.isHome !== false) {
+                    homePlayed++;
+                    if (res.isWin) homeWins++;
+                } else {
+                    awayPlayed++;
+                    if (res.isWin) awayWins++;
+                }
+
+                streak.push(res.isWin ? 'W' : 'L');
+
+                if (res.teamScore >= 3 && res.oppScore === 0) breakdown.w30++;
+                else if (res.isWin) breakdown.w21++;
+                else if (res.teamScore >= 1) breakdown.l12++;
+                else breakdown.l03++;
+            });
+
+            const totalPlayed = (team.stats && team.stats.pj) ? team.stats.pj : (homePlayed + awayPlayed);
+            const totalWins = (team.stats && team.stats.pg !== undefined) ? team.stats.pg : (homeWins + awayWins);
+            const totalLosses = (team.stats && team.stats.pp !== undefined) ? team.stats.pp : Math.max(0, totalPlayed - totalWins);
+            const winRate = totalPlayed > 0 ? Math.round((totalWins / totalPlayed) * 100) : 0;
+
+            const homeWinRate = homePlayed > 0 ? Math.round((homeWins / homePlayed) * 100) : 0;
+            const awayWinRate = awayPlayed > 0 ? Math.round((awayWins / awayPlayed) * 100) : 0;
+
+            const pts = team.points || 0;
+            const leaderPts = standings.length > 0 ? (parseInt(standings[0].pts, 10) || 0) : pts;
+            const secondPts = standings.length > 1 ? (parseInt(standings[1].pts, 10) || 0) : pts;
+            const rank = parseInt(team.ranking || team.pos, 10) || 0;
+            const totalGroupTeams = standings.length || 8;
+            const diffToLeader = rank === 1 ? (pts - secondPts) : (pts - leaderPts);
+            const avgPts = totalPlayed > 0 ? (pts / totalPlayed).toFixed(1) : '0.0';
+
+            let zone = 'mid';
+            if (rank > 0 && rank <= 2) zone = 'top';
+            else if (rank > 0 && totalGroupTeams >= 5 && rank >= totalGroupTeams - 1) zone = 'low';
+
+            this.chartsData[team.id] = { labels: chartLabels, data: chartPoints };
+
+            return {
+                winRate,
+                totalPlayed,
+                totalWins,
+                totalLosses,
+                homeWins,
+                homePlayed,
+                homeWinRate,
+                awayWins,
+                awayPlayed,
+                awayWinRate,
+                streak: streak.slice(-5),
+                breakdown,
+                pendingMatch: pendingMatches[0] || null,
+                remainingMatches: pendingMatches.length,
+                leaderPts,
+                diffToLeader,
+                totalGroupTeams,
+                rank,
+                zone,
+                avgPts
+            };
+        }
+
+        detectUserHeroTeam(teams) {
+            if (!teams || teams.length === 0) return null;
+            const favId = localStorage.getItem('favTeam_somospadel');
+            if (favId) {
+                const favTeam = teams.find(t => t.id === favId);
+                if (favTeam) return { team: favTeam, reason: 'fav' };
+            }
+
+            // Intentar detectar por usuario logueado
+            let authUser = null;
+            try {
+                if (window.Store && typeof window.Store.getState === 'function') authUser = window.Store.getState('currentUser');
+                if (!authUser && window.currentUser) authUser = window.currentUser;
+                if (!authUser) {
+                    const raw = localStorage.getItem('currentUser');
+                    if (raw) authUser = JSON.parse(raw);
+                }
+            } catch (e) {}
+
+            const rawName = String(authUser?.name || authUser?.displayName || '').trim();
+            if (rawName.length >= 3) {
+                const norm = rawName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                const parts = norm.split(/\s+/).filter(Boolean);
+                const found = teams.find(t => (t.roster || []).some(p => {
+                    const pn = String(p.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    return pn === norm || (parts.length >= 2 && pn.includes(parts[0]) && pn.includes(parts[1]));
+                }));
+                if (found) return { team: found, reason: 'roster' };
+            }
+            return null;
+        }
+
+        // ==================================================
+        // ⚡ ACCIONES Y CONTROLES DEL HUB
+        // ==================================================
 
         toggleFavorite(teamId) {
             const currentFav = localStorage.getItem('favTeam_somospadel');
             if (currentFav === teamId) {
-                localStorage.removeItem('favTeam_somospadel'); // desmarcar
+                localStorage.removeItem('favTeam_somospadel');
             } else {
                 localStorage.setItem('favTeam_somospadel', teamId);
             }
             if (window.navigator.vibrate) window.navigator.vibrate(20);
-            this.render(this.lastTeams); // Re-render para reordenar
+            this.render(this.lastTeams);
+            if (this.activeSheetTeamId === teamId) {
+                this.renderTeamSheet(teamId, this.activeSheetTab);
+            }
         }
 
-        /**
-         * Limpia la caché de persistencia de Firestore y recarga la página.
-         * Se llama desde el botón inline para evitar problemas de comillas en onclick.
-         */
         syncData(btn) {
             if (btn) {
                 btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Limpiando...`;
@@ -73,10 +262,7 @@
             if (window.db && window.db.clearPersistence) {
                 window.db.clearPersistence()
                     .then(() => window.location.reload(true))
-                    .catch(err => {
-                        console.error('Error clearing persistence:', err);
-                        window.location.reload(true);
-                    });
+                    .catch(() => window.location.reload(true));
             } else {
                 window.location.reload(true);
             }
@@ -84,11 +270,32 @@
 
         setCategory(category) {
             this.activeCategory = category;
-            if (window.PlayerView?.haptic) window.PlayerView.haptic(20);
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(15);
             if (window.TeamController && window.TeamController.teams && window.TeamController.teams.length > 0) {
                 window.TeamController.render();
             } else {
                 this.render(this.lastTeams);
+            }
+        }
+
+        setHubMode(mode) {
+            this.activeHubMode = mode;
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(15);
+            this.render(this.lastTeams);
+        }
+
+        toggleSearchBar() {
+            this.searchOpen = !this.searchOpen;
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(10);
+            const wrap = document.getElementById('tp-search-wrap');
+            const btn = document.getElementById('tp-search-toggle-btn');
+            if (wrap) wrap.classList.toggle('open', this.searchOpen);
+            if (btn) btn.classList.toggle('active', this.searchOpen);
+            if (this.searchOpen) {
+                const input = document.getElementById('team-search-input');
+                if (input) setTimeout(() => input.focus(), 80);
+            } else if (this.searchQuery) {
+                this.clearSearch();
             }
         }
 
@@ -107,148 +314,41 @@
             }
         }
 
+        // Compatibilidad con llamadas antiguas
+        scrollCategories() {}
+        updateCategoryScrollButtons() {}
+        initCategoryScroll() {}
+        scrollToActiveCategory() {}
+
+        focusTeam(teamId) {
+            this.openTeamSheet(teamId, 'resumen');
+        }
+
+        toggleCard(teamId) {
+            this.openTeamSheet(teamId, 'resumen');
+        }
+
         focusPlayer(teamId, playerName) {
             if (window.PlayerView?.haptic) window.PlayerView.haptic(15);
-            
-            // 1. Asegurar que la tarjeta del equipo es visible
-            const card = document.getElementById('team-' + teamId);
-            if (card) {
-                card.style.display = 'block';
-            }
-            
-            // 2. Expandir la tarjeta
-            const content = document.getElementById('content-' + teamId);
-            const chevron = document.getElementById('chevron-' + teamId);
-            if (content) {
-                content.style.maxHeight = '2200px';
-                content.style.opacity = '1';
-                if (chevron) {
-                    chevron.style.transform = 'rotate(180deg)';
-                    chevron.style.color = '#38b000';
-                }
-            }
-            
-            // 3. Cambiar a la pestana de Jugadores (rost)
-            this.switchCardTab(teamId, 'rost');
-            
-            // 4. Scroll a la tarjeta
-            if (card) {
-                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-            
-            // 5. Resaltar la fila del jugador
-            setTimeout(() => {
-                const normTarget = (playerName || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
-                const playerRows = document.querySelectorAll('#pane-' + teamId + '-rost .player-roster-row');
-                playerRows.forEach(row => {
-                    const rName = (row.getAttribute('data-player-name') || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
-                    if (rName && (rName.includes(normTarget) || normTarget.includes(rName))) {
-                        row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                        row.style.transition = 'all 0.3s ease';
-                        row.style.background = '#fef08a';
-                        row.style.border = '2px solid #eab308';
-                        row.style.boxShadow = '0 0 16px rgba(234, 179, 8, 0.45)';
-                        setTimeout(() => {
-                            row.style.background = '#ecfdf5';
-                            row.style.borderColor = '#10b981';
-                            row.style.boxShadow = 'none';
-                        }, 2600);
-                    }
-                });
-            }, 320);
+            this.openTeamSheet(teamId, 'rost', playerName);
         }
 
-        scrollCategories(amount) {
-            const container = document.getElementById('cat-pills-container');
-            if (container) {
-                container.scrollBy({ left: amount, behavior: 'smooth' });
-                if (window.PlayerView?.haptic) window.PlayerView.haptic(10);
+        switchCardTab(teamId, tabName) {
+            if (this.activeSheetTeamId === teamId) {
+                this.switchSheetTab(tabName);
+            } else {
+                this.openTeamSheet(teamId, tabName);
             }
         }
 
-        updateCategoryScrollButtons() {
-            const container = document.getElementById('cat-pills-container');
-            const leftBtn = document.getElementById('cat-scroll-left');
-            const rightBtn = document.getElementById('cat-scroll-right');
-            if (!container || !leftBtn || !rightBtn) return;
-
-            const isStart = container.scrollLeft <= 4;
-            const isEnd = container.scrollLeft + container.clientWidth >= container.scrollWidth - 4;
-
-            leftBtn.style.opacity = isStart ? '0.35' : '1';
-            leftBtn.style.cursor = isStart ? 'default' : 'pointer';
-
-            rightBtn.style.opacity = isEnd ? '0.35' : '1';
-            rightBtn.style.cursor = isEnd ? 'default' : 'pointer';
+        openMapsForVenue(venue) {
+            const q = encodeURIComponent(venue || 'Padel Barcelona');
+            window.open(`https://www.google.com/maps/search/?api=1&query=${q}`, '_blank', 'noopener');
         }
 
-        initCategoryScroll() {
-            const container = document.getElementById('cat-pills-container');
-            if (!container) return;
-
-            const handleScroll = () => this.updateCategoryScrollButtons();
-            if (container._catScrollHandler) {
-                container.removeEventListener('scroll', container._catScrollHandler);
-            }
-            container._catScrollHandler = handleScroll;
-            container.addEventListener('scroll', handleScroll, { passive: true });
-
-            // Soporte drag horizontal suave con ratón para desktop
-            let isDown = false;
-            let startX = 0;
-            let scrollLeft = 0;
-            let hasDragged = false;
-
-            container.addEventListener('mousedown', (e) => {
-                isDown = true;
-                hasDragged = false;
-                startX = e.pageX - container.offsetLeft;
-                scrollLeft = container.scrollLeft;
-            });
-
-            const stopDrag = () => {
-                if (isDown) {
-                    isDown = false;
-                    if (container) container.style.cursor = '';
-                }
-            };
-            window.removeEventListener('mouseup', stopDrag);
-            window.addEventListener('mouseup', stopDrag);
-
-            container.addEventListener('mousemove', (e) => {
-                if (!isDown) return;
-                const x = e.pageX - container.offsetLeft;
-                const walk = x - startX;
-                if (Math.abs(walk) > 4) {
-                    hasDragged = true;
-                    e.preventDefault();
-                    container.scrollLeft = scrollLeft - walk;
-                }
-            });
-
-            container.addEventListener('click', (e) => {
-                if (hasDragged) {
-                    e.stopPropagation();
-                    e.preventDefault();
-                }
-            }, true);
-
-            const handleResize = () => this.updateCategoryScrollButtons();
-            window.removeEventListener('resize', handleResize);
-            window.addEventListener('resize', handleResize, { passive: true });
-
-            setTimeout(() => this.updateCategoryScrollButtons(), 50);
-        }
-
-        scrollToActiveCategory() {
-            setTimeout(() => {
-                const activeBtn = document.querySelector('.cat-pill-btn.active');
-                if (activeBtn && typeof activeBtn.scrollIntoView === 'function') {
-                    activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-                }
-                this.updateCategoryScrollButtons();
-            }, 60);
-        }
+        // ==================================================
+        // 🎨 RENDER PRINCIPAL: RADAR DEL CLUB (MOBILE-FIRST)
+        // ==================================================
 
         render(teams) {
             if (teams && teams.length > 0) {
@@ -256,238 +356,189 @@
             } else if (!this.lastTeams) {
                 this.lastTeams = [];
             }
-            const currentTeams = this.lastTeams;
+
+            const allTeams = this.lastTeams;
             this.container = document.getElementById('content-area');
             if (!this.container) return;
 
-            // Filtrar los equipos por categoría activa
+            // Filtrar por categoría
             let filteredTeams = this.activeCategory === 'Todos'
-                ? currentTeams
-                : currentTeams.filter(t => t.category === this.activeCategory);
+                ? [...allTeams]
+                : allTeams.filter(t => t.category === this.activeCategory);
 
             const favId = localStorage.getItem('favTeam_somospadel');
             filteredTeams.sort((a, b) => {
                 if (a.id === favId) return -1;
                 if (b.id === favId) return 1;
-                return 0;
+                return (parseInt(a.ranking || a.pos, 10) || 99) - (parseInt(b.ranking || b.pos, 10) || 99);
             });
 
-            // 📊 CÁLCULO DE ESTADÍSTICAS GLOBALES DEL CLUB
-            const allTeams = currentTeams;
+            // KPIs globales reales del club
             const totalTeamsCount = allTeams.length;
-            const totalPlayersCount = allTeams.reduce((acc, t) => acc + (t.roster ? t.roster.length : 0), 0);
-            const totalWins = allTeams.reduce((acc, t) => acc + (t.stats ? t.stats.pg : 0), 0);
-            const totalPointsCount = allTeams.reduce((acc, t) => acc + (t.points || 0), 0);
+            let clubPlayed = 0;
+            let clubWins = 0;
+            let top2Count = 0;
+            let totalPointsCount = 0;
+            const upcomingMatches = [];
 
-            // Conteos dinámicos por categoría
+            allTeams.forEach(t => {
+                const m = this.computeTeamMetrics(t);
+                clubPlayed += m.totalPlayed;
+                clubWins += m.totalWins;
+                totalPointsCount += (t.points || 0);
+                if (m.rank > 0 && m.rank <= 2) top2Count++;
+                if (m.pendingMatch) {
+                    upcomingMatches.push({ team: t, match: m.pendingMatch, metrics: m });
+                }
+            });
+
+            const clubWinRate = clubPlayed > 0 ? Math.round((clubWins / clubPlayed) * 100) : 0;
+
+            // Conteos categorías
             const countTodos = allTeams.length;
             const countMasc = allTeams.filter(t => (t.category || '').toLowerCase().includes('masc')).length;
             const countFem = allTeams.filter(t => (t.category || '').toLowerCase().includes('fem')).length;
             const countMixt = allTeams.filter(t => (t.category || '').toLowerCase().includes('mixt')).length;
 
             const categoryFilters = [
-                { key: 'Todos', label: `TODOS (${countTodos})` },
-                { key: 'Masculina', label: `MASCULINA (${countMasc})` },
-                { key: 'Femenina', label: `FEMENINA (${countFem})` },
-                { key: 'Mixta', label: `MIXTA (${countMixt})` }
+                { key: 'Todos', label: `Todos (${countTodos})` },
+                { key: 'Masculina', label: `Masc (${countMasc})` },
+                { key: 'Femenina', label: `Fem (${countFem})` },
+                { key: 'Mixta', label: `Mixta (${countMixt})` }
             ];
 
+            const heroInfo = this.detectUserHeroTeam(allTeams);
+
             this.container.innerHTML = `
-                <div class="teams-view-container animate-fade-in" style="padding: 16px 14px 120px; background: #f8fafc; font-family: 'Outfit', sans-serif;">
-                    
-                    <!-- 🏆 HEADER MINIMALISTA & ATHLETIC (PRO COMPACT) -->
-                    <div style="margin-bottom: 16px; padding: 2px 2px; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px;">
-                        <div>
-                            <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.68rem; font-weight: 850; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px;">
-                                <span style="width: 7px; height: 7px; border-radius: 50%; background: #38bdf8;"></span>
-                                <span>LLIGA GUINOTPRUNERA • 2026</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 12px;">
-                                <img src="img/logo_somospadel.png" 
-                                     alt="SomosPádel Barcelona" 
-                                     style="width: 44px; height: 44px; object-fit: contain; border-radius: 12px; background: #ffffff; padding: 2px; border: 1.5px solid #e2e8f0; box-shadow: 0 4px 12px rgba(15,23,42,0.06); flex-shrink: 0;"
+                <div class="tp-hub animate-fade-in">
+
+                    <!-- 🏆 CLUB HERO & KPIs DE LIGA -->
+                    <div class="tp-club-hero">
+                        <div class="tp-club-hero-top">
+                            <div class="tp-club-brand">
+                                <img src="img/logo_somospadel.png" alt="SomosPádel" class="tp-club-logo"
                                      onerror="this.onerror=null; this.src='img/official_ball_logo.png';">
-                                <h1 style="color: #0f172a; font-weight: 950; font-size: 1.65rem; margin: 0; letter-spacing: -0.8px; line-height: 1.1;">
-                                    SomosPádel Barcelona
-                                </h1>
+                                <div style="min-width:0;">
+                                    <div class="tp-league-pill">
+                                        <span class="tp-league-dot"></span>
+                                        <span>Lliga GuinotPrunera • 2026</span>
+                                    </div>
+                                    <h1 class="tp-club-title">Equipos del Club</h1>
+                                </div>
                             </div>
-                            <div style="display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 0.72rem; color: #64748b; font-weight: 700;">
-                                <span><strong id="header-teams-count" style="color: #0f172a;">${totalTeamsCount}</strong> Equipos</span>
-                                <span>•</span>
-                                <span><strong style="color: #16a34a;">${totalWins}</strong> Victorias</span>
-                                <span>•</span>
-                                <span><strong style="color: #f59e0b;">${totalPointsCount}</strong> Pts Club</span>
+                            <button type="button" class="tp-jornada-cta" onclick="window.TeamView.openNextMatchesSummaryModal()">
+                                <i class="fas fa-bolt"></i> Jornada
+                            </button>
+                        </div>
+
+                        <div class="tp-kpi-grid">
+                            <div class="tp-kpi-box">
+                                <div class="tp-kpi-val" id="header-teams-count">${totalTeamsCount}</div>
+                                <div class="tp-kpi-lbl">Equipos</div>
+                            </div>
+                            <div class="tp-kpi-box">
+                                <div class="tp-kpi-val accent-amber">${top2Count}</div>
+                                <div class="tp-kpi-lbl">En Top 2</div>
+                            </div>
+                            <div class="tp-kpi-box">
+                                <div class="tp-kpi-val accent-emerald">${clubWinRate}%</div>
+                                <div class="tp-kpi-lbl">Victorias</div>
+                            </div>
+                            <div class="tp-kpi-box">
+                                <div class="tp-kpi-val accent-lime">${totalPointsCount}</div>
+                                <div class="tp-kpi-lbl">Pts Club</div>
                             </div>
                         </div>
-
-                        <!-- Botón compacto Próxima Jornada -->
-                        <button type="button" 
-                                onclick="window.TeamView.openNextMatchesSummaryModal()" 
-                                style="background: #0f172a; color: #ccff00; border: none; padding: 10px 14px; border-radius: 14px; 
-                                       font-size: 0.72rem; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; 
-                                       gap: 6px; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2); white-space: nowrap; flex-shrink: 0; transition: all 0.2s ease;"
-                                onmouseover="this.style.background='#1e293b'; this.style.transform='translateY(-1px)';"
-                                onmouseout="this.style.background='#0f172a'; this.style.transform='translateY(0)';">
-                            <i class="fas fa-calendar-alt"></i> Próxima Jornada
-                        </button>
                     </div>
 
-                    <!-- 🔍 SEARCH BAR -->
-                    <div style="position: relative; margin-bottom: 20px; display: flex; align-items: center;">
-                        <i class="fas fa-search" style="position: absolute; left: 18px; color: #94a3b8; font-size: 0.95rem; pointer-events: none;"></i>
-                        <input type="text" 
-                               id="team-search-input" 
-                               value="${this.searchQuery || ''}" 
-                               oninput="window.TeamView ? window.TeamView.handleSearch(this.value) : (window.TeamController && window.TeamController.handleSearch(this.value))" 
-                               placeholder="Buscar equipo o jugador (ej: Mendez, Alex, Rosell)..." 
-                               style="width: 100%; padding: 14px 20px 14px 46px; border-radius: 20px; 
-                                      border: 1.5px solid #e2e8f0; font-family: 'Outfit', sans-serif; 
-                                      font-size: 0.88rem; font-weight: 700; color: #0f172a; 
-                                      background: #ffffff; box-shadow: 0 4px 18px rgba(15, 23, 42, 0.03); 
-                                      outline: none; transition: all 0.25s ease;"
-                               onfocus="this.style.borderColor='#38b000'; this.style.boxShadow='0 6px 20px rgba(56, 176, 0, 0.1)';"
-                               onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='0 4px 18px rgba(15, 23, 42, 0.03)';">
-                        <button id="clear-search-btn" 
-                                onclick="window.TeamView ? window.TeamView.clearSearch() : (window.TeamController && window.TeamController.clearSearch())" 
-                                style="position: absolute; right: 16px; background: none; border: none; 
-                                       color: #cbd5e1; cursor: pointer; display: ${this.searchQuery ? 'block' : 'none'}; 
-                                       padding: 6px; font-size: 1rem; transition: color 0.2s;"
-                                class="clear-btn-hover">
-                            <i class="fas fa-times-circle"></i>
-                        </button>
+                    ${heroInfo ? this.renderHeroFavoriteBanner(heroInfo.team, heroInfo.reason) : ''}
+
+                    ${upcomingMatches.length > 0 ? `
+                    <!-- 🔥 CARRUSEL HORIZONTAL PRÓXIMA JORNADA -->
+                    <div class="tp-section-head">
+                        <span class="tp-section-title"><i class="fas fa-fire" style="color:#f97316;"></i> Próximos Partidos (${upcomingMatches.length})</span>
+                        <button type="button" class="tp-section-link" onclick="window.TeamView.openNextMatchesSummaryModal()">Ver Cartel HD →</button>
                     </div>
-
-                    <!-- 👥 PANEL DE RESULTADOS DE BÚSQUEDA DE JUGADORES -->
-                    <div id="team-search-results-panel" style="display: none; margin-bottom: 20px;"></div>
-
-                    <!-- 🎛️ CATEGORY PILL FILTERS WITH LATERAL ARROWS -->
-                    <div class="category-nav-wrapper" style="display: flex; align-items: center; gap: 8px; margin-bottom: 25px; position: relative;">
-                        <!-- Botón navegación izquierda -->
-                        <button id="cat-scroll-left" 
-                                type="button" 
-                                aria-label="Desplazar categorías hacia la izquierda"
-                                onclick="window.TeamView.scrollCategories(-140)" 
-                                style="width: 34px; height: 34px; border-radius: 50%; background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: center; cursor: pointer; color: #0f172a; flex-shrink: 0; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); outline: none;"
-                                onmouseover="this.style.background='#f8fafc'; this.style.transform='scale(1.08)';" 
-                                onmouseout="this.style.background='#ffffff'; this.style.transform='scale(1)';"
-                                onmousedown="this.style.transform='scale(0.95)';">
-                            <i class="fas fa-chevron-left" style="font-size: 0.75rem;"></i>
-                        </button>
-
-                        <!-- Contenedor scrollable de categorías -->
-                        <div id="cat-pills-container" 
-                             class="cat-pills-container" 
-                             style="display: flex; gap: 10px; overflow-x: auto; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; padding: 4px 2px 8px 2px; flex: 1; min-width: 0;">
-                            <style>
-                                #cat-pills-container::-webkit-scrollbar {
-                                    height: 4px;
-                                    display: block;
-                                }
-                                #cat-pills-container::-webkit-scrollbar-track {
-                                    background: #f1f5f9;
-                                    border-radius: 10px;
-                                }
-                                #cat-pills-container::-webkit-scrollbar-thumb {
-                                    background: #cbd5e1;
-                                    border-radius: 10px;
-                                    transition: background 0.2s ease;
-                                }
-                                #cat-pills-container::-webkit-scrollbar-thumb:hover {
-                                    background: #94a3b8;
-                                }
-                                #cat-pills-container {
-                                    scrollbar-width: thin;
-                                    scrollbar-color: #cbd5e1 #f1f5f9;
-                                }
-                                .team-card:hover {
-                                    transform: translateY(-4px);
-                                    border-color: rgba(56, 176, 0, 0.45) !important;
-                                    box-shadow: 0 14px 32px rgba(15, 23, 42, 0.08) !important;
-                                }
-                                .clear-btn-hover:hover {
-                                    color: #ef4444 !important;
-                                }
-                            </style>
-                            ${categoryFilters.map(f => {
-                                const isActive = this.activeCategory === f.key;
-                                return `
-                                    <button id="cat-pill-${f.key.toLowerCase()}"
-                                            class="cat-pill-btn ${isActive ? 'active' : ''}"
-                                            onclick="window.TeamController ? window.TeamController.setCategory('${f.key}') : window.TeamView.setCategory('${f.key}')" 
-                                            style="padding: 10px 20px; border-radius: 16px;
-                                                   border: 1.5px solid ${isActive ? '#0f172a' : '#e2e8f0'}; 
-                                                   font-weight: 900; font-size: 0.74rem; cursor: pointer; white-space: nowrap; flex-shrink: 0;
-                                                   background: ${isActive ? '#0f172a' : '#ffffff'};
-                                                   color: ${isActive ? '#ccff00' : '#64748b'};
-                                                   box-shadow: ${isActive ? '0 6px 18px rgba(15, 23, 42, 0.25)' : '0 2px 6px rgba(0,0,0,0.02)'};
-                                                   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-                                                   display: inline-flex; align-items: center; gap: 6px;">
-                                         ${isActive ? '<span style="width: 6px; height: 6px; border-radius: 50%; background: #ccff00; box-shadow: 0 0 6px #ccff00;"></span>' : ''}
-                                         ${f.label}
-                                    </button>
-                                `;
-                            }).join('')}
-                        </div>
-
-                        <!-- Botón navegación derecha -->
-                        <button id="cat-scroll-right" 
-                                type="button" 
-                                aria-label="Desplazar categorías hacia la derecha"
-                                onclick="window.TeamView.scrollCategories(140)" 
-                                style="width: 34px; height: 34px; border-radius: 50%; background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: center; cursor: pointer; color: #0f172a; flex-shrink: 0; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); outline: none;"
-                                onmouseover="this.style.background='#f8fafc'; this.style.transform='scale(1.08)';" 
-                                onmouseout="this.style.background='#ffffff'; this.style.transform='scale(1)';"
-                                onmousedown="this.style.transform='scale(0.95)';">
-                            <i class="fas fa-chevron-right" style="font-size: 0.75rem;"></i>
-                        </button>
+                    <div class="tp-matchday-strip">
+                        ${upcomingMatches.map(({ team, match }) => {
+                            const isHome = match.isHome !== false;
+                            const venue = this.getMatchVenue(match);
+                            return `
+                                <div class="tp-md-card ${isHome ? 'home' : 'away'}" onclick="window.TeamView.openTeamSheet('${team.id}', 'resumen')">
+                                    <div class="tp-md-top">
+                                        <span class="tp-md-team">${this.getShortTeamName(team.name)} • J${match.j}</span>
+                                        <span class="tp-loc-pill ${isHome ? 'home' : 'away'}">${isHome ? '🏠 Casa' : '✈️ Fuera'}</span>
+                                    </div>
+                                    <div class="tp-md-opp">vs ${match.opponent}</div>
+                                    <div class="tp-md-meta">
+                                        <span><i class="far fa-calendar"></i> ${match.date || 'TBD'} • ${match.time || ''}</span>
+                                    </div>
+                                    <div class="tp-md-meta" style="color:#475569;">
+                                        <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><i class="fas fa-map-marker-alt" style="color:${isHome ? '#10b981' : '#3b82f6'};"></i> ${venue}</span>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
                     </div>
- 
-                    <!-- ⚡ SELECTOR RÁPIDO DE EQUIPOS (ACCESO MÓVIL DIRECTO) -->
-                    <div class="team-quick-jump-wrapper" style="margin-bottom: 22px;">
-                        <div style="font-size: 0.68rem; font-weight: 900; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
-                            <span>⚡ Salto directo a tu equipo:</span>
-                            <span style="font-size: 0.62rem; color: #38bdf8; font-weight: 800;">Toca para abrir</span>
-                        </div>
-                        <div class="team-quick-jump-bar" style="display: flex; gap: 8px; overflow-x: auto; scroll-behavior: smooth; scrollbar-width: none; -ms-overflow-style: none; padding-bottom: 4px;">
-                            ${filteredTeams.map(t => {
-                                const isFav = t.id === favId;
-                                const shortName = t.name.replace(/SOMOS\s+P[AÁ]DEL\s*(BCN)?/i, '').trim() || t.name;
-                                return `
-                                    <button type="button" 
-                                            class="team-quick-jump-btn"
-                                            data-team-id="${t.id}"
-                                            onclick="event.stopPropagation(); window.TeamView.focusTeam('${t.id}')"
-                                            style="background: ${isFav ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' : '#ffffff'}; 
-                                                   border: 1.5px solid ${isFav ? '#eab308' : '#e2e8f0'}; 
-                                                   color: ${isFav ? '#fde047' : '#0f172a'}; 
-                                                   border-radius: 14px; padding: 8px 13px; font-weight: 900; font-size: 0.74rem; 
-                                                   display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; cursor: pointer; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.03); transition: all 0.2s ease;">
-                                        ${isFav ? '<i class="fas fa-star" style="color: #eab308; font-size: 0.65rem;"></i>' : '<span style="width: 6px; height: 6px; border-radius: 50%; background: #38bdf8;"></span>'}
-                                        <span>${shortName}</span>
-                                        ${t.ranking ? `<span style="background: ${isFav ? 'rgba(255,255,255,0.15)' : '#f1f5f9'}; padding: 1px 6px; border-radius: 6px; font-size: 0.62rem; color: ${isFav ? '#ffffff' : '#64748b'};"><i class="fas fa-trophy" style="font-size:0.5rem;"></i> #${t.ranking}</span>` : ''}
-                                    </button>
-                                `;
-                            }).join('')}
-                        </div>
-                    </div>
+                    ` : ''}
 
-                    <!-- 🚀 MASTER TEAMS GRID -->
-                    <div id="teams-list-grid" style="display: grid; gap: 20px;">
-                        ${filteredTeams.length > 0 ? filteredTeams.map(team => this.renderTeamCard(team)).join('') : ''}
-                        
-                        <!-- Mensaje de no resultados (Buscador) -->
-                        <div id="no-results-message" style="display: none; padding: 60px 20px; text-align: center; background: #ffffff; border-radius: 28px; border: 1px dashed #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.01);">
-                            <i class="fas fa-search-minus" style="font-size: 2.5rem; color: #cbd5e1; margin-bottom: 15px;"></i>
-                            <p style="color: #0f172a; font-weight: 900; font-size: 1rem; margin: 0 0 4px;">No se encontraron resultados</p>
-                            <p style="color: #64748b; font-weight: 700; font-size: 0.8rem; margin: 0;">Prueba a buscar otro equipo o jugador del equipo.</p>
-                        </div>
-
-                        ${filteredTeams.length === 0 ? `
-                            <div style="padding: 80px 40px; text-align: center; background: #ffffff; border-radius: 28px; border: 1px dashed #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.01);">
-                                <i class="fas fa-users-slash" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 15px;"></i>
-                                <p style="color: #64748b; font-weight: 800; font-size: 1rem; margin: 0;">Aún no hay equipos activos en esta sección.</p>
+                    <!-- 🎛️ BARRA STICKY COMPACTA: MODO + CATEGORÍAS + LUPA -->
+                    <div class="tp-controls-sticky">
+                        <div class="tp-mode-row">
+                            <div class="tp-segmented">
+                                <button type="button" class="tp-seg-btn ${this.activeHubMode === 'teams' ? 'active' : ''}" onclick="window.TeamView.setHubMode('teams')">
+                                    <i class="fas fa-shield-alt"></i> Equipos (${filteredTeams.length})
+                                </button>
+                                <button type="button" class="tp-seg-btn ${this.activeHubMode === 'players' ? 'active' : ''}" onclick="window.TeamView.setHubMode('players')">
+                                    <i class="fas fa-medal"></i> Top Jugadores
+                                </button>
                             </div>
-                        ` : ''}
+                            <button type="button" id="tp-search-toggle-btn" class="tp-search-toggle ${this.searchOpen || this.searchQuery ? 'active' : ''}" onclick="window.TeamView.toggleSearchBar()" aria-label="Buscar">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+
+                        <div id="tp-search-wrap" class="tp-search-wrap ${this.searchOpen || this.searchQuery ? 'open' : ''}">
+                            <i class="fas fa-search" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:0.85rem;pointer-events:none;"></i>
+                            <input type="text"
+                                   id="team-search-input"
+                                   class="tp-search-input"
+                                   value="${this.searchQuery || ''}"
+                                   oninput="window.TeamView.handleSearch(this.value)"
+                                   placeholder="${this.activeHubMode === 'players' ? 'Buscar jugador de liga...' : 'Buscar equipo o jugador (ej: 3MA, Alex, Rosell)...'}">
+                            <button id="clear-search-btn"
+                                    type="button"
+                                    onclick="window.TeamView.clearSearch()"
+                                    style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:#94a3b8;cursor:pointer;display:${this.searchQuery ? 'block' : 'none'};padding:6px;">
+                                <i class="fas fa-times-circle"></i>
+                            </button>
+                        </div>
+
+                        <div class="tp-cat-strip">
+                            ${categoryFilters.map(f => `
+                                <button type="button"
+                                        class="tp-cat-chip ${this.activeCategory === f.key ? 'active' : ''}"
+                                        onclick="window.TeamController ? window.TeamController.setCategory('${f.key}') : window.TeamView.setCategory('${f.key}')">
+                                    ${f.label}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- 👥 RESULTADOS RÁPIDOS DE JUGADORES EN BÚSQUEDA -->
+                    <div id="team-search-results-panel" style="display:none;margin-bottom:12px;"></div>
+
+                    <!-- 🚀 CONTENIDO PRINCIPAL: EQUIPOS O TOP JUGADORES -->
+                    ${this.activeHubMode === 'teams' ? `
+                        <div id="teams-list-grid" class="tp-teams-grid">
+                            ${filteredTeams.map(team => this.renderTeamCard(team)).join('')}
+                        </div>
+                    ` : this.renderClubPlayersLeaderboard(filteredTeams)}
+
+                    <div id="no-results-message" style="display:none;padding:42px 20px;text-align:center;background:#ffffff;border-radius:20px;border:1px dashed #cbd5e1;margin-top:10px;">
+                        <i class="fas fa-search-minus" style="font-size:2rem;color:#cbd5e1;margin-bottom:10px;"></i>
+                        <p style="color:#0f172a;font-weight:900;font-size:0.95rem;margin:0 0 4px;">Sin resultados</p>
+                        <p style="color:#64748b;font-weight:700;font-size:0.78rem;margin:0;">Prueba con otro equipo o nombre de jugador.</p>
                     </div>
                 </div>
             `;
@@ -496,866 +547,825 @@
                 this.filterDOM();
             }
 
-            this.initCategoryScroll();
-            this.scrollToActiveCategory();
-
-            // 🌟 Asegurar que el submenú superior de Comunidad siempre aparezca en Equipos
             if (window.Router && typeof window.Router.attachCommunitySubmenu === 'function') {
                 window.Router.attachCommunitySubmenu('teams');
             }
         }
 
-        renderTeamCard(team) {
-            const next = team.nextMatch;
-            const standings = team.groupStandings || [];
-            const favId = localStorage.getItem('favTeam_somospadel');
-            const isFav = team.id === favId;
-            const officialLink = (team.link && team.link.startsWith('http') && team.link !== 'about:blank') ? team.link : 'https://summapadel.com/event/151';
-            
-            // Si el roster o standings vienen vacíos de forma corrupta, creamos un fallback elegante
-            const hasRoster = team.roster && team.roster.length > 0;
-            const hasStandings = standings && standings.length > 0;
-            const hasSchedule = team.schedule && team.schedule.length > 0;
-
-            const winCount = team.stats ? team.stats.pg : 0;
-            const pjCount = team.stats ? team.stats.pj : 0;
-            const ppCount = team.stats ? team.stats.pp : 0;
-
-            const cleanCap = window.getTeamCaptain ? window.getTeamCaptain(team) : (team.captain || 'Capitán por definir');
-                             
-            const cleanCapLower = cleanCap.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-            let maxPts = 0;
-            if (hasRoster) {
-                maxPts = Math.max(...team.roster.map(p => parseInt(p.pts) || 0));
-            }
-
-            // Nombre de la división sanitizado para quitar saltos de línea molestos
-            const cleanDiv = (team.division || '').replace(/\n/g, ' ').replace(/\s+/g, ' ');
-
-            // --- Advanced Stats Calculation (Opción B) ---
-            let winRate = 0;
-            let homeWins = 0, homePlayed = 0;
-            let awayWins = 0, awayPlayed = 0;
-            let streak = [];
-            let chartLabels = ['J0'];
-            let chartPoints = [0];
-            let accPoints = 0;
-            let pendingMatchInfo = null;
-            
-            if (hasSchedule) {
-                const sortedMatches = [...team.schedule].sort((a, b) => parseInt(a.j) - parseInt(b.j));
-                const completedMatches = sortedMatches.filter(m => m.status === 'completed' && m.score);
-                const pendingMatches = sortedMatches.filter(m => (m.status === 'pending' || m.status === 'scheduled' || m.status === 'upcoming') && m.opponent !== 'BYE' && !m.opponent.includes('BYE'));
-                
-                if (pendingMatches.length > 0) {
-                    pendingMatchInfo = pendingMatches[0];
-                }
-                
-                completedMatches.forEach(m => {
-                    const res = this.getMatchResult(m);
-                    if (!res.valid) return;
-                    
-                    accPoints += res.score1;
-                    chartLabels.push('J' + m.j);
-                    chartPoints.push(accPoints);
-                    
-                    if (m.isHome) {
-                        homePlayed++;
-                        if (res.isWin) homeWins++;
-                    } else {
-                        awayPlayed++;
-                        if (res.isWin) awayWins++;
-                    }
-                    
-                    streak.push(res.isWin ? 'W' : 'L');
-                });
-                
-                const totalPlayed = homePlayed + awayPlayed;
-                if (totalPlayed > 0) {
-                    winRate = Math.round(((homeWins + awayWins) / totalPlayed) * 100);
-                }
-                
-                if (streak.length > 5) {
-                    streak = streak.slice(-5);
-                }
-            }
-            
-            this.chartsData[team.id] = { labels: chartLabels, data: chartPoints };
-            
-            const homeWinRate = homePlayed > 0 ? Math.round((homeWins/homePlayed)*100) : 0;
-            const awayWinRate = awayPlayed > 0 ? Math.round((awayWins/awayPlayed)*100) : 0;
-            const sf = team.stats ? team.stats.sf : 0;
-            const sc = team.stats ? team.stats.sc : 0;
-            const setDiff = sf - sc;
-            const setDiffColor = setDiff > 0 ? '#38b000' : (setDiff < 0 ? '#ef4444' : '#64748b');
-
-            const cleanCategory = (team.category || '').toLowerCase();
-            let catAccentColor = '#10b981';
-            let catBadgeBg = 'rgba(16, 185, 129, 0.1)';
-            let catBadgeText = '#10b981';
-
-            if (cleanCategory.includes('masc')) {
-                catAccentColor = '#0284c7';
-                catBadgeBg = 'rgba(2, 132, 199, 0.1)';
-                catBadgeText = '#0284c7';
-            } else if (cleanCategory.includes('fem')) {
-                catAccentColor = '#db2777';
-                catBadgeBg = 'rgba(219, 39, 119, 0.1)';
-                catBadgeText = '#db2777';
-            } else if (cleanCategory.includes('mixt')) {
-                catAccentColor = '#9333ea';
-                catBadgeBg = 'rgba(147, 51, 234, 0.1)';
-                catBadgeText = '#9333ea';
-            }
-
-            const isHome = pendingMatchInfo ? (
-                pendingMatchInfo.isHome !== undefined 
-                    ? !!pendingMatchInfo.isHome 
-                    : (pendingMatchInfo.venue && (
-                        pendingMatchInfo.venue.toLowerCase().includes('somos') || 
-                        pendingMatchInfo.venue.toLowerCase().includes('casa') ||
-                        pendingMatchInfo.venue.toLowerCase().includes('indoor')
-                      ))
-            ) : false;
-
+        renderHeroFavoriteBanner(team, reason) {
+            const m = this.computeTeamMetrics(team);
+            const nextJ = m.pendingMatch ? m.pendingMatch.j : '1';
             return `
-                <div class="team-card" 
-                     id="team-${team.id}"
-                     onclick="window.TeamView.toggleCard('${team.id}')"
-                     style="background: #ffffff; 
-                            border: ${isFav ? '2px solid #eab308' : '1px solid #e2e8f0'}; 
-                            border-top: 4px solid ${isFav ? '#eab308' : catAccentColor}; 
-                            border-radius: 24px; padding: 18px; 
-                            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; 
-                            cursor: pointer; box-shadow: ${isFav ? '0 10px 30px rgba(234,179,8,0.18)' : '0 6px 20px rgba(15,23,42,0.035)'};">
-                    
-                    <!-- Top Ribbon Badge -->
-                    <div style="position: absolute; top: 0; right: 0; background: linear-gradient(135deg, ${catAccentColor} 0%, #0f172a 160%); color: #ffffff; padding: 5px 16px; border-bottom-left-radius: 14px; font-weight: 900; font-size: 0.62rem; letter-spacing: 0.6px; text-transform: uppercase; box-shadow: 0 2px 8px rgba(0,0,0,0.12);">
-                        ${cleanDiv}
-                    </div>
-
-                    <!-- Favorite Button -->
-                    <div onclick="event.stopPropagation(); window.TeamView.toggleFavorite('${team.id}')" 
-                         style="position: absolute; top: 10px; left: 10px; z-index: 10; color: ${isFav ? '#eab308' : '#cbd5e1'}; font-size: 1.25rem; cursor: pointer; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); transition: transform 0.2s;"
-                         title="${isFav ? 'Desmarcar como favorito' : 'Marcar como equipo favorito'}"
-                         onmouseover="this.style.transform='scale(1.2)';"
-                         onmouseout="this.style.transform='scale(1)';">
-                        <i class="fas fa-star"></i>
-                    </div>
-
-                    <!-- 1. HEADER (ALWAYS VISIBLE) -->
-                    <div class="team-card-header-cluster" style="display: flex; align-items: center; gap: 14px; margin-top: 8px;">
-                        <!-- Logo Sphere -->
-                        <div style="width: 54px; height: 54px; border-radius: 18px; background: #f8fafc; border: 1.5px solid #edf2f7; padding: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
-                            <img src="${team.logo || 'img/logo_somospadel.png'}" style="width: 100%; height: 100%; object-fit: contain;">
-                            ${team.ranking ? `
-                                <div style="position: absolute; -top: 4px; -left: 4px; background: #0f172a; color: #fff; width: 20px; height: 20px; border-radius: 50%; font-size: 0.58rem; font-weight: 900; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; bottom: -5px; right: -5px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);">
-                                    #${team.ranking}
-                                </div>
-                            ` : ''}
-                        </div>
-
-                        <!-- Core Team Info -->
-                        <div style="flex: 1; min-width: 0;">
-                            <h3 style="color: #0f172a; margin: 0; font-size: 1.35rem; font-weight: 950; letter-spacing: -0.6px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 65px;">
+                <div class="tp-myteam-banner">
+                    <div class="tp-myteam-top">
+                        <div style="min-width:0;">
+                            <span class="tp-myteam-badge">
+                                <i class="fas ${reason === 'fav' ? 'fa-star' : 'fa-user-check'}"></i>
+                                ${reason === 'fav' ? 'Tu Equipo Favorito' : 'Tu Equipo Detectado'}
+                            </span>
+                            <div style="font-size:1.05rem;font-weight:950;color:#0f172a;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                                 ${team.name}
-                            </h3>
-                            <div style="display: flex; align-items: center; gap: 8px; margin-top: 6px; flex-wrap: wrap;">
-                                <span style="font-size: 0.78rem; color: #0f172a; font-weight: 850; background: #f1f5f9; padding: 4px 10px; border-radius: 8px; display: inline-flex; align-items: center; gap: 5px; border: 1px solid #e2e8f0;">
-                                    <i class="fas fa-crown" style="font-size: 0.7rem; color: #f59e0b;"></i> ${cleanCap}
-                                </span>
-                                <span style="font-size: 0.74rem; color: ${catBadgeText}; font-weight: 950; background: ${catBadgeBg}; padding: 4px 10px; border-radius: 8px; text-transform: uppercase;">
-                                    Grupo ${team.group ? team.group.split(' ').pop() : (team.category || 'A')}
-                                </span>
-                                <span style="font-size: 0.74rem; color: #334155; font-weight: 900; background: #f8fafc; padding: 4px 10px; border-radius: 8px; border: 1.5px solid #e2e8f0;">
-                                    ${winCount} Victorias • ${ppCount} Derrotas
-                                </span>
+                            </div>
+                            <div style="font-size:0.72rem;color:#475569;font-weight:750;">
+                                Pos #${m.rank || '-'} • ${team.points || 0} pts • ${m.totalWins}V-${m.totalLosses}D (${m.winRate}%)
                             </div>
                         </div>
-
-                        <!-- Interactive Indicator -->
-                        <div id="chevron-${team.id}" style="color: #64748b; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); width: 34px; height: 34px; border-radius: 50%; background: #f8fafc; border: 1.5px solid #edf2f7; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-                            <i class="fas fa-chevron-down" style="font-size: 0.75rem;"></i>
+                        <div class="tp-streak-dots">
+                            ${m.streak.map(r => `<span class="tp-dot ${r === 'W' ? 'w' : 'l'}">${r === 'W' ? 'V' : 'D'}</span>`).join('')}
                         </div>
                     </div>
-
-                    ${pendingMatchInfo ? `
-                    <!-- 🎾 MATCH DAY CARD / PRÓXIMO PARTIDO (ESTILO DEPORTIVO LIMPIO) -->
-                    <div style="margin-top: 14px; padding: 12px 14px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 16px; border: 1px solid #e2e8f0; border-left: 4px solid ${isHome ? '#10b981' : '#3b82f6'}; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(15,23,42,0.04); gap: 12px;">
-                        <div style="flex: 1; min-width: 0;">
-                            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 4px;">
-                                <span style="font-size: 0.62rem; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px;">Próximo Partido • J${pendingMatchInfo.j}</span>
-                                ${isHome ? `
-                                    <span style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; padding: 2px 7px; border-radius: 6px; font-size: 0.58rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">🏠 CASA</span>
-                                ` : `
-                                    <span style="background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; padding: 2px 7px; border-radius: 6px; font-size: 0.58rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">✈️ FUERA</span>
-                                `}
-                            </div>
-                            <div style="font-size: 0.95rem; color: #0f172a; font-weight: 900; display: flex; align-items: center; gap: 8px; line-height: 1.25;">
-                                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">vs ${pendingMatchInfo.opponent}</span>
-                                ${pendingMatchInfo.opponent !== 'BYE' ? `
-                                    <span onclick="event.stopPropagation(); window.TeamController.showRivalScouting('${team.id}', '${pendingMatchInfo.opponent}')" 
-                                          style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #ffffff; color: #475569; border: 1px solid #cbd5e1; font-size: 0.65rem; cursor: pointer; transition: all 0.2s; flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" 
-                                          title="Scouting y estadísticas del rival"
-                                          onmouseover="this.style.background='#0f172a'; this.style.color='#ffffff'; this.style.borderColor='#0f172a';"
-                                          onmouseout="this.style.background='#ffffff'; this.style.color='#475569'; this.style.borderColor='#cbd5e1';">
-                                        <i class="fas fa-chart-line"></i>
-                                    </span>
-                                ` : ''}
-                            </div>
-                            <div style="font-size: 0.72rem; color: #64748b; font-weight: 600; margin-top: 4px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                                <span style="display: inline-flex; align-items: center; gap: 4px;"><i class="far fa-calendar-alt" style="color: #94a3b8;"></i> ${pendingMatchInfo.date}</span>
-                                <span style="color: #cbd5e1;">•</span>
-                                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 190px; display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-map-marker-alt" style="color: #94a3b8; font-size: 0.65rem;"></i> ${pendingMatchInfo.venue}</span>
-                            </div>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
-                            <button onclick="event.stopPropagation(); window.TeamController.openPlayerRsvpModal('${team.id}', '${pendingMatchInfo.j}')" 
-                                    style="background: #0f172a; color: #ffffff; font-weight: 800; border: none; box-shadow: 0 2px 8px rgba(15,23,42,0.15); padding: 8px 14px; border-radius: 12px; font-size: 0.74rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;"
-                                    title="Responder Convocatoria RSVP"
-                                    onmouseover="this.style.background='#1e293b'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(15,23,42,0.25)';" 
-                                    onmouseout="this.style.background='#0f172a'; this.style.transform='none'; this.style.boxShadow='0 2px 8px rgba(15,23,42,0.15)';">
-                                <i class="fas fa-clipboard-check" style="color: #38bdf8;"></i> RSVP
-                            </button>
-                        </div>
-                    </div>
-                    ` : ''}
-
-                    <!-- 2. HIGH-DENSITY INTERACTIVE TABS CONTAINER (EXPANDABLE) -->
-                    <div id="content-${team.id}" style="max-height: 0; opacity: 0; overflow: hidden; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);">
-                        <div style="padding-top: 22px;" onclick="event.stopPropagation();">
-                            
-                            <!-- 🎛️ TABS PRINCIPALES (AMPLIAS, NÍTIDAS Y LEGIBLES) -->
-                            <div style="display: flex; background: #f1f5f9; padding: 6px; border-radius: 18px; border: 1.5px solid #e2e8f0; margin-bottom: 16px; gap: 6px; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;">
-                                <button id="btn-${team.id}-class" onclick="window.TeamView.switchCardTab('${team.id}', 'class')" 
-                                        style="flex: 1; padding: 12px 10px; border-radius: 14px; background: #0f172a; color: #ccff00; border: none; font-weight: 950; font-size: 0.88rem; cursor: pointer; transition: all 0.2s; white-space: nowrap; text-align: center; box-shadow: 0 4px 12px rgba(15,23,42,0.18); display: flex; align-items: center; justify-content: center; gap: 6px;">
-                                    <i class="fas fa-trophy" style="font-size: 0.82rem;"></i> TABLA
-                                </button>
-                                <button id="btn-${team.id}-sched" onclick="window.TeamView.switchCardTab('${team.id}', 'sched')" 
-                                        style="flex: 1; padding: 12px 10px; border-radius: 14px; background: transparent; color: #64748b; border: none; font-weight: 850; font-size: 0.88rem; cursor: pointer; transition: all 0.2s; white-space: nowrap; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                                    <i class="far fa-calendar-alt" style="font-size: 0.82rem;"></i> PARTIDOS
-                                </button>
-                                <button id="btn-${team.id}-rost" onclick="window.TeamView.switchCardTab('${team.id}', 'rost')" 
-                                        style="flex: 1; padding: 12px 10px; border-radius: 14px; background: transparent; color: #64748b; border: none; font-weight: 850; font-size: 0.88rem; cursor: pointer; transition: all 0.2s; white-space: nowrap; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                                    <i class="fas fa-users" style="font-size: 0.82rem;"></i> SQUAD
-                                </button>
-                                <button id="btn-${team.id}-stats" onclick="window.TeamView.switchCardTab('${team.id}', 'stats')" 
-                                        style="flex: 1; padding: 12px 10px; border-radius: 14px; background: transparent; color: #64748b; border: none; font-weight: 850; font-size: 0.88rem; cursor: pointer; transition: all 0.2s; white-space: nowrap; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                                    <i class="fas fa-chart-pie" style="font-size: 0.82rem;"></i> STATS
-                                </button>
-                            </div>
-
-                            <!-- ⚡ SUBSECCIONES / ACCIONES TÁCTICAS DIRECTAS -->
-                            <div style="display: flex; gap: 10px; margin-bottom: 18px;">
-                                <button onclick="event.stopPropagation(); window.TeamController.showTeamDetail('${team.id}', 'convocatoria')" 
-                                        style="flex: 1; padding: 13px 16px; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); border: none; border-radius: 16px; color: #ffffff; font-weight: 950; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.25); transition: all 0.2s;"
-                                        onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 18px rgba(2, 132, 199, 0.35)';"
-                                        onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 14px rgba(2, 132, 199, 0.25)';">
-                                    <i class="fas fa-clipboard-check" style="color: #7dd3fc; font-size: 1rem;"></i> <span>Convocatoria & RSVP</span>
-                                </button>
-                                <button onclick="event.stopPropagation(); window.TeamController.showTeamDetail('${team.id}', 'tactica')" 
-                                        style="padding: 13px 18px; background: #ffffff; border: 2px solid #10b981; border-radius: 16px; color: #059669; font-weight: 950; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1); transition: all 0.2s;"
-                                        onmouseover="this.style.background='#ecfdf5'; this.style.transform='translateY(-1px)';"
-                                        onmouseout="this.style.background='#ffffff'; this.style.transform='none';">
-                                    <i class="fas fa-shield-alt" style="color: #10b981; font-size: 1rem;"></i> <span>Táctica</span>
-                                </button>
-                            </div>
-
-                            <!-- 📦 TAB CONTENT: STANDINGS / CLASIFICACIÓN (TABLA AMPLIA & NÍTIDA) -->
-                            <div id="pane-${team.id}-class" style="display: block; animation: tabFadeIn 0.3s ease-out;">
-                                ${hasStandings ? `
-                                <div style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 20px; padding: 14px; box-shadow: 0 4px 16px rgba(15,23,42,0.03); overflow-x: auto;">
-                                    <table style="width: 100%; border-collapse: separate; border-spacing: 0 8px;">
-                                        <thead>
-                                            <tr style="color: #64748b; font-weight: 950; text-transform: uppercase; font-size: 0.78rem; letter-spacing: 0.7px;">
-                                                <th style="padding: 8px 12px; text-align: left;">Equipo</th>
-                                                <th style="padding: 8px 10px; color: #16a34a; text-align: center; font-size: 0.85rem;">PTS</th>
-                                                <th style="padding: 8px 10px; text-align: center;">PJ</th>
-                                                <th style="padding: 8px 10px; text-align: center;">PG</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            ${standings.map((s, idx) => {
-                                                const posNum = parseInt(s.pos) || (idx + 1);
-                                                const posBadgeBg = posNum === 1 ? '#eab308' : (posNum === 2 ? '#94a3b8' : (posNum === 3 ? '#d97706' : '#f1f5f9'));
-                                                const posBadgeColor = posNum <= 3 ? '#ffffff' : '#64748b';
-                                                const isCurrent = !!s.isCurrent;
-                                                
-                                                return `
-                                                <tr style="background: ${isCurrent ? 'linear-gradient(90deg, #ecfdf5 0%, #f0fdf4 100%)' : (idx % 2 === 0 ? '#f8fafc' : '#ffffff')}; 
-                                                           border: ${isCurrent ? '2px solid #10b981' : '1px solid #edf2f7'}; 
-                                                           box-shadow: ${isCurrent ? '0 4px 14px rgba(16,185,129,0.15)' : 'none'};
-                                                           border-radius: 14px; transition: transform 0.15s ease;">
-                                                    <td style="padding: 12px 14px; text-align: left; border-top-left-radius: 14px; border-bottom-left-radius: 14px; border-left: ${isCurrent ? '5px solid #10b981' : 'none'};">
-                                                        <div style="display: flex; align-items: center; gap: 10px;">
-                                                            <span style="min-width: 28px; height: 28px; border-radius: 9px; background: ${posBadgeBg}; color: ${posBadgeColor}; font-weight: 950; font-size: 0.85rem; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.06);">
-                                                                ${posNum}
-                                                            </span>
-                                                            <div style="min-width: 0;">
-                                                                <div style="font-size: 0.95rem; font-weight: ${isCurrent ? '950' : '850'}; color: ${isCurrent ? '#047857' : '#0f172a'}; line-height: 1.25; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                                                                    <span>${s.team}</span>
-                                                                    ${isCurrent ? '<span style="background: #10b981; color: white; font-size: 0.62rem; font-weight: 950; padding: 2px 8px; border-radius: 6px; letter-spacing: 0.4px;">TU EQUIPO</span>' : ''}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td style="padding: 12px 10px; font-weight: 950; color: ${isCurrent ? '#059669' : '#0f172a'}; font-size: 1.18rem; text-align: center;">
-                                                        <span style="background: ${isCurrent ? 'rgba(16,185,129,0.2)' : 'rgba(15,23,42,0.05)'}; padding: 4px 10px; border-radius: 10px; display: inline-block; min-width: 38px;">
-                                                            ${s.pts}
-                                                        </span>
-                                                    </td>
-                                                    <td style="padding: 12px 10px; font-weight: 850; color: #334155; font-size: 0.98rem; text-align: center;">
-                                                        ${s.pj}
-                                                    </td>
-                                                    <td style="padding: 12px 14px; font-weight: 850; color: #334155; font-size: 0.98rem; text-align: center; border-top-right-radius: 14px; border-bottom-right-radius: 14px;">
-                                                        ${s.pg}
-                                                    </td>
-                                                </tr>
-                                                `;
-                                            }).join('')}
-                                        </tbody>
-                                    </table>
-                                </div>
-                                ` : `
-                                <div style="padding: 36px; text-align: center; color: #94a3b8; font-size: 0.85rem; background: #ffffff; border-radius: 20px; border: 1.5px dashed #cbd5e1;">
-                                    <i class="fas fa-exclamation-circle" style="font-size: 2rem; margin-bottom: 10px; color: #cbd5e1;"></i>
-                                    <p style="margin: 0; font-weight: 800; font-size: 0.95rem; color: #0f172a;">Clasificación en proceso de sincronización</p>
-                                    <p style="margin: 4px 0 0; color: #64748b;">Los resultados de este grupo se están actualizando con SummaPádel.</p>
-                                </div>
-                                `}
-                            </div>
-
-                            <!-- 📦 TAB CONTENT: SCHEDULE / PARTIDOS (AMPLIO & DETALLADO) -->
-                            <div id="pane-${team.id}-sched" style="display: none; animation: tabFadeIn 0.3s ease-out;">
-                                ${hasSchedule ? `
-                                <div style="max-height: 400px; overflow-y: auto; padding-right: 4px;">
-                                    ${team.schedule.map(m => {
-                                        const res = this.getMatchResult(m);
-                                        const isLive = m.status === 'live' || m.status === 'in_progress' || m.status === 'playing';
-                                        
-                                        const isCompleted = res.valid;
-                                        const isWin = isCompleted && res.isWin;
-                                        const isLoss = isCompleted && res.isLoss;
-                                        
-                                        const badgeBg = isLive ? 'rgba(16, 185, 129, 0.15)' : (!isCompleted ? '#edf2f7' : (isWin ? 'rgba(16,185,129,0.12)' : (isLoss ? 'rgba(239,68,68,0.12)' : '#edf2f7')));
-                                        const badgeText = isLive ? '#059669' : (!isCompleted ? '#475569' : (isWin ? '#059669' : (isLoss ? '#dc2626' : '#475569')));
-
-                                        return `
-                                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: #f8fafc; border-radius: 18px; border: 1.5px solid #edf2f7; margin-bottom: 10px; transition: all 0.2s;">
-                                                <div style="min-width: 0; flex: 1;">
-                                                    <div style="font-size: 0.95rem; font-weight: 950; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 8px;">
-                                                         <span>J${m.j}: vs ${m.opponent}</span>
-                                                         ${m.status !== 'completed' && m.opponent !== 'BYE' ? `
-                                                             <span onclick="event.stopPropagation(); window.TeamController.showRivalScouting('${team.id}', '${m.opponent}')" 
-                                                                   style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; font-size: 0.65rem; cursor: pointer; transition: 0.2s;" 
-                                                                   title="Scouting del Rival">
-                                                                 <i class="fas fa-chart-line"></i>
-                                                             </span>
-                                                         ` : ''}
-                                                    </div>
-                                                    <div style="font-size: 0.78rem; color: #64748b; font-weight: 750; margin-top: 4px; display: flex; align-items: center; gap: 6px;">
-                                                        <i class="far fa-calendar-alt" style="font-size: 0.75rem;"></i>
-                                                        <span>${m.date}</span>
-                                                        <span>•</span>
-                                                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px;"><i class="fas fa-map-marker-alt" style="font-size: 0.7rem;"></i> ${m.venue}</span>
-                                                    </div>
-                                                </div>
-                                                <span style="font-size: 0.88rem; font-weight: 950; background: ${badgeBg}; color: ${badgeText}; padding: 6px 14px; border-radius: 12px; flex-shrink: 0; margin-left: 12px; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
-                                                    ${isLive ? `<span style="display:inline-block; width:8px; height:8px; background:#10b981; border-radius:50%; animation: pulseGlow 1.5s infinite;"></span> ${m.score.toUpperCase()}` : (m.status === 'completed' ? m.score : 'PENDIENTE')}
-                                                </span>
-                                            </div>
-                                        `;
-                                    }).join('')}
-                                </div>
-                                ` : `
-                                <div style="padding: 36px; text-align: center; color: #94a3b8; font-size: 0.85rem; background: #ffffff; border-radius: 20px; border: 1.5px dashed #cbd5e1;">
-                                    <i class="fas fa-calendar-times" style="font-size: 2rem; margin-bottom: 10px; color: #cbd5e1;"></i>
-                                    <p style="margin: 0; font-weight: 800; font-size: 0.95rem; color: #0f172a;">No hay partidos programados</p>
-                                </div>
-                                `}
-                            </div>
-
-                            <!-- 📦 TAB CONTENT: ROSTER / PLANTILLA (AMPLIA & LEGIBLE) -->
-                            <div id="pane-${team.id}-rost" style="display: none; animation: tabFadeIn 0.3s ease-out;">
-                                ${hasRoster ? `
-                                <div style="display: flex; flex-direction: column; gap: 10px; max-height: 420px; overflow-y: auto; padding-right: 4px; padding-bottom: 10px;">
-                                    ${team.roster.map((player) => {
-                                        const pNameLower = (player.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                                        const isCap = pNameLower.includes(cleanCapLower) && cleanCapLower.length > 3;
-                                        const isMVP = (parseInt(player.pts) === maxPts) && maxPts > 0;
-                                        const initial = player.name ? player.name.charAt(0).toUpperCase() : '?';
-                                        const bgColors = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#6366f1'];
-                                        const bg = bgColors[(player.name || '').length % bgColors.length];
-
-                                        return `
-                                        <div class="player-roster-row" 
-                                             data-player-name="${player.name}"
-                                             style="background: #f8fafc; border: 1.5px solid #edf2f7; border-radius: 16px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; position: relative; transition: all 0.2s;">
-                                            <div style="display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1;">
-                                                <!-- Avatar -->
-                                                <div style="width: 44px; height: 44px; border-radius: 50%; background: ${bg}; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; font-weight: 950; box-shadow: 0 3px 8px rgba(0,0,0,0.1); position: relative; flex-shrink: 0;">
-                                                    ${initial}
-                                                    ${isCap ? `<div style="position:absolute; bottom:-2px; right:-2px; background:#0f172a; border: 2px solid #fff; color:#ccff00; font-size:0.55rem; font-weight:950; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow: 0 1px 4px rgba(0,0,0,0.2);" title="Capitán">C</div>` : ''}
-                                                </div>
-                                                <!-- Nombre & Badges -->
-                                                <div style="min-width: 0;">
-                                                    <div style="font-size: 0.98rem; color: #0f172a; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">
-                                                        ${player.name}
-                                                    </div>
-                                                    <div style="display: flex; align-items: center; gap: 6px; margin-top: 3px; flex-wrap: wrap;">
-                                                        ${isCap ? '<span style="background: #0f172a; color: #ccff00; font-size: 0.62rem; font-weight: 950; padding: 2px 7px; border-radius: 6px;">CAPITÁN</span>' : ''}
-                                                        ${isMVP ? '<span style="background:#eab308; color:#fff; font-size:0.62rem; font-weight:950; padding:2px 7px; border-radius:6px; box-shadow:0 1px 4px rgba(234,179,8,0.25);"><i class="fas fa-fire"></i> MVP</span>' : ''}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <!-- Puntos -->
-                                            <div style="background: rgba(16,185,129,0.12); color: #059669; font-size: 0.85rem; font-weight: 950; padding: 6px 14px; border-radius: 12px; white-space: nowrap; margin-left: 10px; flex-shrink: 0; border: 1px solid rgba(16,185,129,0.25);">
-                                                ${player.pts} PTS
-                                            </div>
-                                        </div>
-                                        `;
-                                    }).join('')}
-                                </div>
-                                ` : `
-                                <div style="padding: 36px; text-align: center; color: #94a3b8; font-size: 0.85rem; background: #ffffff; border-radius: 20px; border: 1.5px dashed #cbd5e1;">
-                                    <i class="fas fa-user-slash" style="font-size: 2rem; margin-bottom: 10px; color: #cbd5e1;"></i>
-                                    <p style="margin: 0; font-weight: 800; font-size: 0.95rem; color: #0f172a;">Plantilla en proceso de actualización</p>
-                                </div>
-                                `}
-                            </div>
-
-                            <!-- 📦 TAB CONTENT: STATS / ESTADÍSTICAS -->
-                            <div id="pane-${team.id}-stats" style="display: none; animation: tabFadeIn 0.3s ease-out;">
-                                <div style="display: flex; flex-direction: column; gap: 14px; padding: 4px;">
-                                    
-                                    <!-- Evolution Chart -->
-                                    <div style="background: #ffffff; border: 1.5px solid #edf2f7; border-radius: 20px; padding: 16px; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
-                                        <div style="font-size: 0.78rem; color: #64748b; font-weight: 950; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">Evolución de Puntos</div>
-                                        <div style="height: 110px; width: 100%;">
-                                            <canvas id="chart-${team.id}"></canvas>
-                                        </div>
-                                    </div>
-
-                                    <!-- Win Rate & Sets -->
-                                    <div style="display: flex; gap: 12px;">
-                                        <div style="flex: 1; background: #f8fafc; border: 1.5px solid #edf2f7; border-radius: 18px; padding: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden;">
-                                            <div style="font-size: 0.75rem; color: #64748b; font-weight: 900; text-transform: uppercase; margin-bottom: 6px;">Win Rate</div>
-                                            <div style="font-size: 2.1rem; font-weight: 950; color: #0f172a; line-height: 1;">${winRate}%</div>
-                                            <div style="position: absolute; bottom: 0; left: 0; height: 5px; background: ${winRate >= 50 ? '#10b981' : '#ef4444'}; width: ${winRate}%;"></div>
-                                        </div>
-                                        <div style="flex: 1; background: #f8fafc; border: 1.5px solid #edf2f7; border-radius: 18px; padding: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                                            <div style="font-size: 0.75rem; color: #64748b; font-weight: 900; text-transform: uppercase; margin-bottom: 6px;">Dif. Parejas</div>
-                                            <div style="font-size: 2.1rem; font-weight: 950; color: ${setDiffColor}; line-height: 1;">${setDiff > 0 ? '+'+setDiff : setDiff}</div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Home / Away Performance -->
-                                    <div style="background: #f8fafc; border: 1.5px solid #edf2f7; border-radius: 18px; padding: 18px;">
-                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                            <span style="font-size: 0.82rem; font-weight: 900; color: #0f172a;"><i class="fas fa-home" style="color: #64748b; margin-right: 6px;"></i>Local</span>
-                                            <span style="font-size: 0.88rem; font-weight: 950; color: #059669;">${homeWinRate}% <span style="font-size: 0.72rem; color: #64748b; font-weight: 800;">(${homeWins}V - ${homePlayed - homeWins}D)</span></span>
-                                        </div>
-                                        <div style="width: 100%; background: #e2e8f0; height: 8px; border-radius: 4px; margin-bottom: 16px; overflow: hidden;">
-                                            <div style="width: ${homeWinRate}%; background: #10b981; height: 100%; border-radius: 4px;"></div>
-                                        </div>
-
-                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                            <span style="font-size: 0.82rem; font-weight: 900; color: #0f172a;"><i class="fas fa-bus" style="color: #64748b; margin-right: 6px;"></i>Visitante</span>
-                                            <span style="font-size: 0.88rem; font-weight: 950; color: ${awayWinRate >= 50 ? '#059669' : '#dc2626'};">${awayWinRate}% <span style="font-size: 0.72rem; color: #64748b; font-weight: 800;">(${awayWins}V - ${awayPlayed - awayWins}D)</span></span>
-                                        </div>
-                                        <div style="width: 100%; background: #e2e8f0; height: 8px; border-radius: 4px; overflow: hidden;">
-                                            <div style="width: ${awayWinRate}%; background: ${awayWinRate >= 50 ? '#10b981' : '#ef4444'}; height: 100%; border-radius: 4px;"></div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Form / Streak -->
-                                    <div style="background: #f8fafc; border: 1.5px solid #edf2f7; border-radius: 18px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;">
-                                        <span style="font-size: 0.82rem; font-weight: 950; color: #64748b; text-transform: uppercase;">Forma (Últimos 5)</span>
-                                        <div style="display: flex; gap: 6px;">
-                                            ${streak.length > 0 ? streak.map(res => `
-                                                <div style="width: 26px; height: 26px; border-radius: 50%; background: ${res === 'W' ? '#10b981' : '#ef4444'}; color: white; font-size: 0.72rem; font-weight: 950; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-                                                    ${res === 'W' ? 'V' : 'D'}
-                                                </div>
-                                            `).join('') : '<span style="font-size: 0.82rem; color: #94a3b8; font-weight: 800;">Sin datos</span>'}
-                                        </div>
-                                    </div>
-
-                                </div>
-                            </div>
-
-                            <!-- 📲 FOOTER ACTION ROW (BOTONES AMPLIOS Y DEFINIDOS) -->
-                            <div style="display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap;">
-                                <button id="share-btn-${team.id}" onclick="window.TeamView.openShareModal('${team.id}', 'class')" 
-                                        style="flex: 1.3; min-width: 170px; background: #25D366; color: white; border: none; padding: 14px 18px; border-radius: 16px; font-weight: 950; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(37,211,102,0.2); transition: all 0.2s ease;"
-                                        onmouseover="this.style.transform='translateY(-1px)';"
-                                        onmouseout="this.style.transform='none';">
-                                    <i class="fab fa-whatsapp" style="font-size: 1.1rem;"></i> <span>COMPARTIR TABLA</span>
-                                </button>
-                                <a href="${officialLink}" target="_blank" onclick="event.stopPropagation();" 
-                                   style="background: #0f172a; color: white; border: none; padding: 14px 20px; border-radius: 16px; font-weight: 900; font-size: 0.82rem; text-decoration: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; box-shadow: 0 2px 8px rgba(15,23,42,0.1);"
-                                   onmouseover="this.style.background='#1e293b';"
-                                   onmouseout="this.style.background='#0f172a';">
-                                    <span>WEB OFICIAL</span> <i class="fas fa-external-link-alt" style="font-size: 0.75rem; color:#ccff00;"></i>
-                                </a>
-                            </div>
-
-                        </div>
+                    <div class="tp-myteam-actions">
+                        <button type="button" class="tp-btn-rsvp" onclick="window.TeamController.openPlayerRsvpModal('${team.id}', '${nextJ}')">
+                            <i class="fas fa-check-circle"></i> Confirmar J${nextJ}
+                        </button>
+                        <button type="button" class="tp-btn-outline" onclick="window.TeamView.openTeamSheet('${team.id}', 'resumen')">
+                            Ver Ficha →
+                        </button>
                     </div>
                 </div>
-                
-                <style>
-                    @keyframes tabFadeIn {
-                        from { opacity: 0; transform: translateY(4px); }
-                        to { opacity: 1; transform: translateY(0); }
-                    }
-                    @keyframes pulseGlow {
-                        0% { opacity: 0.3; }
-                        50% { opacity: 1; }
-                        100% { opacity: 0.3; }
-                    }
-                </style>
             `;
         }
 
-        switchCardTab(teamId, tabName) {
-            const panes = ['class', 'sched', 'rost', 'stats'];
-            
-            // Ocultar todos los paneles de esta tarjeta y reiniciar estilos de botones
-            panes.forEach(pane => {
-                const paneEl = document.getElementById(`pane-${teamId}-${pane}`);
-                const btnEl = document.getElementById(`btn-${teamId}-${pane}`);
-                if (paneEl) paneEl.style.display = 'none';
-                if (btnEl) {
-                    btnEl.style.background = 'transparent';
-                    btnEl.style.color = '#64748b';
-                    btnEl.style.fontWeight = '800';
-                }
+        renderTeamCard(team) {
+            const favId = localStorage.getItem('favTeam_somospadel');
+            const isFav = team.id === favId;
+            const m = this.computeTeamMetrics(team);
+            const catStyle = this.getCategoryStyle(team.category);
+            const cleanCap = window.getTeamCaptain ? window.getTeamCaptain(team) : (team.captain || 'Por definir');
+            const shortName = this.getShortTeamName(team.name);
+            const posClass = m.rank === 1 ? 'pos-1' : (m.rank === 2 ? 'pos-2' : (m.rank === 3 ? 'pos-3' : ''));
+
+            let nextText = `Temporada: ${m.totalWins}V - ${m.totalLosses}D`;
+            if (m.pendingMatch) {
+                nextText = `${m.pendingMatch.isHome !== false ? '🏠' : '✈️'} J${m.pendingMatch.j} vs ${m.pendingMatch.opponent}`;
+            }
+
+            return `
+                <div class="tp-team-card team-card ${isFav ? 'is-fav' : ''}"
+                     id="team-${team.id}"
+                     data-team-id="${team.id}"
+                     onclick="window.TeamView.openTeamSheet('${team.id}', 'resumen')">
+                    <div class="tp-zone-bar zone-${m.zone}"></div>
+
+                    <div class="tp-card-main">
+                        <div class="tp-rank-badge ${posClass}">
+                            <span class="tp-rank-num">#${m.rank || '-'}</span>
+                            <span class="tp-rank-sub">POS</span>
+                        </div>
+
+                        <div class="tp-card-info">
+                            <div class="tp-card-title-row">
+                                <h3 class="tp-card-name">${shortName}</h3>
+                                <span class="tp-cat-tag" style="background:${catStyle.bg};color:${catStyle.text};">${catStyle.label}</span>
+                            </div>
+                            <div class="tp-card-sub">
+                                ${(team.division || '').replace(/\n/g, ' ')} • <i class="fas fa-crown" style="color:#f59e0b;font-size:0.65rem;"></i> ${cleanCap}
+                            </div>
+                        </div>
+
+                        <div class="tp-card-pts">
+                            <div class="tp-pts-big">${team.points || 0}<span style="font-size:0.65rem;color:#64748b;font-weight:800;"> pts</span></div>
+                            <div class="tp-pts-sub">${m.totalWins}V-${m.totalLosses}D • ${m.winRate}%</div>
+                        </div>
+                    </div>
+
+                    <div class="tp-card-foot">
+                        <div class="tp-streak-dots" title="Últimos 5 partidos">
+                            ${m.streak.length > 0
+                                ? m.streak.map(r => `<span class="tp-dot ${r === 'W' ? 'w' : 'l'}">${r === 'W' ? 'V' : 'D'}</span>`).join('')
+                                : '<span class="tp-dot empty">-</span>'}
+                        </div>
+
+                        <div class="tp-next-mini">${nextText}</div>
+
+                        <button type="button"
+                                class="tp-fav-btn ${isFav ? 'active' : ''}"
+                                onclick="event.stopPropagation(); window.TeamView.toggleFavorite('${team.id}')"
+                                aria-label="Favorito">
+                            <i class="fas fa-star"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        renderClubPlayersLeaderboard(teams) {
+            const playerMap = new Map();
+            teams.forEach(t => {
+                const shortT = this.getShortTeamName(t.name);
+                (t.roster || []).forEach(p => {
+                    const name = String(p.name || '').trim();
+                    if (!name) return;
+                    const key = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    const pts = parseFloat(p.pts) || 0;
+                    if (!playerMap.has(key)) {
+                        playerMap.set(key, {
+                            name,
+                            pts,
+                            teams: [{ id: t.id, shortName: shortT, category: t.category }]
+                        });
+                    } else {
+                        const existing = playerMap.get(key);
+                        existing.pts = Math.max(existing.pts, pts);
+                        if (!existing.teams.some(x => x.id === t.id)) {
+                            existing.teams.push({ id: t.id, shortName: shortT, category: t.category });
+                        }
+                    }
+                });
             });
 
-            // Mostrar y colorear el seleccionado
-            const activePane = document.getElementById(`pane-${teamId}-${tabName}`);
-            const activeBtn = document.getElementById(`btn-${teamId}-${tabName}`);
-            
-            if (activePane) activePane.style.display = 'block';
-            if (activeBtn) {
-                activeBtn.style.background = '#0f172a';
-                activeBtn.style.color = '#ccff00';
-                activeBtn.style.fontWeight = '950';
-                activeBtn.style.boxShadow = '0 4px 12px rgba(15,23,42,0.18)';
+            const list = Array.from(playerMap.values()).sort((a, b) => b.pts - a.pts || a.name.localeCompare(b.name, 'es'));
+            const bgColors = ['#0284c7', '#7c3aed', '#db2777', '#d97706', '#059669', '#4f46e5'];
+
+            return `
+                <div id="tp-players-leaderboard" class="tp-players-list">
+                    ${list.map((p, idx) => {
+                        const rank = idx + 1;
+                        const rCls = rank === 1 ? 'top1' : (rank === 2 ? 'top2' : (rank === 3 ? 'top3' : ''));
+                        const initial = p.name.charAt(0).toUpperCase();
+                        const bg = bgColors[p.name.length % bgColors.length];
+                        const primaryTeamId = p.teams[0].id;
+                        const safeName = p.name.replace(/'/g, "\\'");
+                        return `
+                            <div class="tp-player-card tp-leaderboard-row"
+                                 data-search-name="${p.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')}"
+                                 onclick="window.TeamView.focusPlayer('${primaryTeamId}', '${safeName}')">
+                                <div class="tp-player-rank ${rCls}">#${rank}</div>
+                                <div class="tp-avatar" style="background:${bg};">${initial}</div>
+                                <div style="flex:1;min-width:0;">
+                                    <div style="font-size:0.9rem;font-weight:900;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</div>
+                                    <div class="tp-player-badges">
+                                        ${p.teams.map(tm => `<span class="tp-team-pill">${tm.shortName}</span>`).join('')}
+                                    </div>
+                                </div>
+                                <div class="tp-pts-pill">${Math.round(p.pts)} pts</div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        // ==================================================
+        // 📱 FICHA FULL-SCREEN DE EQUIPO (ESTILO FOTMOB / SOFASCORE)
+        // ==================================================
+
+        openTeamSheet(teamId, initialTab = 'resumen', highlightPlayer = null) {
+            const team = this.lastTeams.find(t => t.id === teamId) || (window.ClubTeamsData || []).find(t => t.id === teamId);
+            if (!team) return;
+
+            this.activeSheetTeamId = team.id;
+            this.activeSheetTab = initialTab || 'resumen';
+            this.activeSchedFilter = 'all';
+            this.rosterSearchQuery = '';
+
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(15);
+            this.renderTeamSheet(team.id, this.activeSheetTab, highlightPlayer);
+        }
+
+        closeTeamSheet() {
+            const existing = document.getElementById('team-hub-sheet');
+            if (existing) existing.remove();
+            if (this.activeChartInstance) {
+                try { this.activeChartInstance.destroy(); } catch (e) {}
+                this.activeChartInstance = null;
             }
+            this.activeSheetTeamId = null;
+            document.body.style.overflow = '';
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(10);
+        }
 
-            // Actualizar dinámicamente el botón de compartir inferior
-            const shareBtn = document.getElementById(`share-btn-${teamId}`);
-            if (shareBtn) {
-                let label = 'COMPARTIR TABLA';
-                if (tabName === 'class') label = 'COMPARTIR TABLA';
-                else if (tabName === 'sched') label = 'COMPARTIR PARTIDOS';
-                else if (tabName === 'rost') label = 'COMPARTIR SQUAD';
-                else if (tabName === 'stats') label = 'COMPARTIR ESTADÍSTICAS';
-                
-                shareBtn.innerHTML = `<i class="fab fa-whatsapp" style="font-size: 0.9rem;"></i> ${label}`;
-                shareBtn.setAttribute('onclick', `window.TeamView.openShareModal('${teamId}', '${tabName}')`);
-            }
+        navigateSheetTeam(delta) {
+            const list = this.activeCategory === 'Todos'
+                ? this.lastTeams
+                : this.lastTeams.filter(t => t.category === this.activeCategory);
+            if (!list || list.length <= 1) return;
 
-            // Chart Rendering
-            if (tabName === 'stats') {
-                const ctx = document.getElementById(`chart-${teamId}`);
-                if (ctx && !ctx.dataset.rendered) {
-                    let retries = 0;
-                    const renderChartInstance = () => {
-                        if (typeof Chart === 'undefined') {
-                            retries++;
-                            if (retries > 20) {
-                                console.warn("⚠️ [TeamView] Chart.js could not be loaded. Showing fallback UI.");
-                                ctx.parentNode.innerHTML = `<div style="color: #64748b; font-size: 0.7rem; font-weight: 700; height: 180px; display: flex; align-items: center; justify-content: center; padding: 20px; text-align: center;">Gráfico de equipo no disponible (sin conexión)</div>`;
-                                return;
-                            }
-                            setTimeout(renderChartInstance, 100);
-                            return;
-                        }
-                        ctx.dataset.rendered = 'true';
-                        const chartData = this.chartsData[teamId];
-                        if (chartData && chartData.labels.length > 1) {
-                            new Chart(ctx, {
-                                type: 'line',
-                                data: {
-                                    labels: chartData.labels,
-                                    datasets: [{
-                                        label: 'Puntos Totales',
-                                        data: chartData.data,
-                                        borderColor: '#38b000',
-                                        backgroundColor: 'rgba(56, 176, 0, 0.1)',
-                                        borderWidth: 3,
-                                        pointBackgroundColor: '#ffffff',
-                                        pointBorderColor: '#38b000',
-                                        pointBorderWidth: 2,
-                                        pointRadius: 4,
-                                        pointHoverRadius: 6,
-                                        tension: 0.3,
-                                        fill: true
-                                    }]
-                                },
-                                options: {
-                                    responsive: true,
-                                    maintainAspectRatio: false,
-                                    plugins: { legend: { display: false } },
-                                    scales: {
-                                        y: { 
-                                            beginAtZero: true, 
-                                            ticks: { 
-                                                stepSize: 1, 
-                                                precision: 0,
-                                                font: { size: 10, family: 'Outfit' } 
-                                            }, 
-                                            grid: { borderDash: [4, 4] } 
-                                        },
-                                        x: { ticks: { font: { size: 10, family: 'Outfit' } }, grid: { display: false } }
-                                    },
-                                    animation: { duration: 800, easing: 'easeOutQuart' }
-                                }
-                            });
-                        }
-                    };
+            const idx = list.findIndex(t => t.id === this.activeSheetTeamId);
+            const nextIdx = (idx + delta + list.length) % list.length;
+            this.openTeamSheet(list[nextIdx].id, this.activeSheetTab);
+        }
 
-                    if (window.loadExternalScript) {
-                        window.loadExternalScript('https://cdn.jsdelivr.net/npm/chart.js', 'Chart')
-                            .then(() => renderChartInstance())
-                            .catch(err => console.error("❌ Error al cargar Chart.js en TeamView:", err));
-                    } else {
-                        renderChartInstance();
+        switchSheetTab(tabName) {
+            this.activeSheetTab = tabName;
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(10);
+            this.renderTeamSheet(this.activeSheetTeamId, tabName);
+        }
+
+        setSheetSchedFilter(filter) {
+            this.activeSchedFilter = filter;
+            this.renderTeamSheet(this.activeSheetTeamId, 'sched');
+        }
+
+        filterSheetRoster(val) {
+            this.rosterSearchQuery = val || '';
+            const norm = this.rosterSearchQuery.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+            document.querySelectorAll('#tp-sheet-roster-list .player-roster-row').forEach(row => {
+                const rn = (row.getAttribute('data-player-name') || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                row.style.display = (!norm || rn.includes(norm)) ? 'flex' : 'none';
+            });
+        }
+
+        renderTeamSheet(teamId, activeTab = 'resumen', highlightPlayer = null) {
+            const team = this.lastTeams.find(t => t.id === teamId) || (window.ClubTeamsData || []).find(t => t.id === teamId);
+            if (!team) return;
+
+            const m = this.computeTeamMetrics(team);
+            const favId = localStorage.getItem('favTeam_somospadel');
+            const isFav = team.id === favId;
+            const shortName = this.getShortTeamName(team.name);
+            const cleanCap = window.getTeamCaptain ? window.getTeamCaptain(team) : (team.captain || 'Por definir');
+            const officialLink = (team.link && team.link.startsWith('http') && team.link !== 'about:blank') ? team.link : 'https://summapadel.com/event/151';
+
+            let sheet = document.getElementById('team-hub-sheet');
+            if (!sheet) {
+                sheet = document.createElement('div');
+                sheet.id = 'team-hub-sheet';
+                sheet.className = 'tp-sheet-overlay tp-sheet';
+                document.body.appendChild(sheet);
+                document.body.style.overflow = 'hidden';
+
+                // Swipe lateral táctil entre equipos
+                sheet.addEventListener('touchstart', (e) => {
+                    if (e.touches && e.touches.length === 1) {
+                        this._touchStartX = e.touches[0].clientX;
+                        this._touchStartY = e.touches[0].clientY;
                     }
-                }
+                }, { passive: true });
+                sheet.addEventListener('touchend', (e) => {
+                    if (!e.changedTouches || e.changedTouches.length !== 1) return;
+                    if (e.target && e.target.closest('.tp-sheet-tabs, table')) return;
+                    const dx = e.changedTouches[0].clientX - this._touchStartX;
+                    const dy = e.changedTouches[0].clientY - this._touchStartY;
+                    if (Math.abs(dx) > 75 && Math.abs(dy) < 45) {
+                        this.navigateSheetTeam(dx < 0 ? 1 : -1);
+                    }
+                }, { passive: true });
             }
 
-            // Haptic
-            if (window.navigator.vibrate) window.navigator.vibrate(8);
+            const tabs = [
+                { id: 'resumen', icon: 'fa-bolt', label: 'Resumen' },
+                { id: 'class', icon: 'fa-trophy', label: 'Tabla' },
+                { id: 'sched', icon: 'fa-calendar-alt', label: 'Partidos' },
+                { id: 'rost', icon: 'fa-users', label: `Plantilla (${(team.roster || []).length})` },
+                { id: 'stats', icon: 'fa-chart-line', label: 'Stats' }
+            ];
+
+            const shareTabParam = activeTab === 'resumen' ? 'class' : activeTab;
+
+            let bodyHtml = '';
+            if (activeTab === 'resumen') bodyHtml = this.renderSheetResumen(team, m, cleanCap);
+            else if (activeTab === 'class') bodyHtml = this.renderSheetStandings(team, m);
+            else if (activeTab === 'sched') bodyHtml = this.renderSheetSchedule(team, m);
+            else if (activeTab === 'rost') bodyHtml = this.renderSheetRoster(team, cleanCap);
+            else if (activeTab === 'stats') bodyHtml = this.renderSheetStats(team, m);
+
+            sheet.innerHTML = `
+                <div class="tp-sheet-header">
+                    <div class="tp-sheet-nav">
+                        <button type="button" class="tp-icon-btn" onclick="window.TeamView.closeTeamSheet()" aria-label="Volver">
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+
+                        <div class="tp-switcher">
+                            <button type="button" onclick="window.TeamView.navigateSheetTeam(-1)" aria-label="Equipo anterior"><i class="fas fa-chevron-left"></i></button>
+                            <span>${shortName}</span>
+                            <button type="button" onclick="window.TeamView.navigateSheetTeam(1)" aria-label="Equipo siguiente"><i class="fas fa-chevron-right"></i></button>
+                        </div>
+
+                        <div style="display:flex;gap:6px;">
+                            <button type="button" class="tp-icon-btn ${isFav ? 'fav-on' : ''}" onclick="window.TeamView.toggleFavorite('${team.id}')" aria-label="Favorito">
+                                <i class="fas fa-star"></i>
+                            </button>
+                            <a href="${officialLink}" target="_blank" rel="noopener" class="tp-icon-btn" title="Web Oficial SummaPádel">
+                                <i class="fas fa-external-link-alt"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="tp-sheet-title-block">
+                        <div style="min-width:0;">
+                            <h2 class="tp-sheet-team-name">${team.name}</h2>
+                            <div class="tp-sheet-sub">${(team.division || '').replace(/\n/g, ' ')} • ${team.group || team.category} • 👑 ${cleanCap}</div>
+                        </div>
+                        <div class="tp-sheet-pos-pill">
+                            <div style="font-size:1.1rem;font-weight:950;line-height:1;">#${m.rank || '-'}</div>
+                            <div style="font-size:0.62rem;font-weight:900;margin-top:2px;">${team.points || 0} PTS</div>
+                        </div>
+                    </div>
+
+                    <div class="tp-sheet-tabs">
+                        ${tabs.map(t => `
+                            <button type="button" class="tp-sheet-tab ${activeTab === t.id ? 'active' : ''}" onclick="window.TeamView.switchSheetTab('${t.id}')">
+                                <i class="fas ${t.icon}"></i> ${t.label}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div class="tp-sheet-body" id="tp-sheet-scroll-body">
+                    ${bodyHtml}
+                </div>
+
+                <div class="tp-sheet-footer">
+                    <button type="button" class="tp-foot-btn primary" onclick="window.TeamController.showTeamDetail('${team.id}', 'convocatoria')">
+                        <i class="fas fa-clipboard-check"></i> Convocatoria & RSVP
+                    </button>
+                    <button type="button" class="tp-foot-btn tactic" onclick="window.TeamController.showTeamDetail('${team.id}', 'tactica')">
+                        <i class="fas fa-chess"></i> Táctica
+                    </button>
+                    <button type="button" class="tp-foot-btn whatsapp" onclick="window.TeamView.openShareModal('${team.id}', '${shareTabParam}')" aria-label="Compartir por WhatsApp">
+                        <i class="fab fa-whatsapp" style="font-size:1.15rem;"></i>
+                    </button>
+                </div>
+            `;
+
+            if (activeTab === 'stats') {
+                setTimeout(() => this.renderSheetChart(team.id), 60);
+            }
+
+            if (activeTab === 'rost' && highlightPlayer) {
+                setTimeout(() => {
+                    const normTarget = highlightPlayer.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+                    const rows = document.querySelectorAll('#tp-sheet-roster-list .player-roster-row');
+                    rows.forEach(row => {
+                        const rn = (row.getAttribute('data-player-name') || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+                        if (rn && (rn.includes(normTarget) || normTarget.includes(rn))) {
+                            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            row.style.background = '#fef08a';
+                            row.style.borderColor = '#eab308';
+                            setTimeout(() => {
+                                row.style.background = '#ecfdf5';
+                                row.style.borderColor = '#10b981';
+                            }, 2200);
+                        }
+                    });
+                }, 120);
+            }
         }
 
-        focusTeam(teamId) {
-            const card = document.getElementById(`team-${teamId}`);
-            const content = document.getElementById(`content-${teamId}`);
-            const chevron = document.getElementById(`chevron-${teamId}`);
-            if (!card) return;
+        renderSheetResumen(team, m, cleanCap) {
+            const topPlayers = [...(team.roster || [])].sort((a, b) => (parseFloat(b.pts) || 0) - (parseFloat(a.pts) || 0)).slice(0, 3);
+            const diffLabel = m.rank === 1
+                ? (m.diffToLeader > 0 ? `+${m.diffToLeader} al 2º` : 'Empate líder')
+                : `${m.diffToLeader} del 1º`;
 
-            if (content) {
-                content.style.maxHeight = '1500px';
-                content.style.opacity = '1';
-            }
-            if (chevron) {
-                chevron.style.transform = 'rotate(180deg)';
-                chevron.style.color = '#38b000';
-            }
+            const next = m.pendingMatch;
+            const nextVenue = next ? this.getMatchVenue(next) : '';
+            const safeVenue = nextVenue.replace(/'/g, "\\'");
 
-            try {
-                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            } catch(e) {}
+            return `
+                <!-- KPIs rápidos del equipo -->
+                <div class="tp-panel-card">
+                    <div class="tp-panel-title">
+                        <span><i class="fas fa-tachometer-alt"></i> Situación en Liga</span>
+                        <span style="color:${m.rank === 1 ? '#059669' : '#0284c7'};">${diffLabel}</span>
+                    </div>
+                    <div class="tp-stat-grid-4">
+                        <div class="tp-stat-mini">
+                            <strong>${team.points || 0}</strong>
+                            <span>Puntos</span>
+                        </div>
+                        <div class="tp-stat-mini">
+                            <strong style="color:#059669;">${m.totalWins}-${m.totalLosses}</strong>
+                            <span>Bal. G-P</span>
+                        </div>
+                        <div class="tp-stat-mini">
+                            <strong>${m.winRate}%</strong>
+                            <span>Win Rate</span>
+                        </div>
+                        <div class="tp-stat-mini">
+                            <strong>${m.remainingMatches}</strong>
+                            <span>Quedan</span>
+                        </div>
+                    </div>
+                </div>
 
-            card.style.borderColor = '#38b000';
-            card.style.boxShadow = '0 0 25px rgba(56, 176, 0, 0.4)';
-            setTimeout(() => {
-                const favId = localStorage.getItem('favTeam_somospadel');
-                const isFav = teamId === favId;
-                card.style.borderColor = isFav ? '#eab308' : '#e2e8f0';
-                card.style.boxShadow = isFav ? '0 10px 30px rgba(234,179,8,0.18)' : '0 6px 20px rgba(15,23,42,0.035)';
-            }, 1800);
+                <!-- Próximo partido o Estado de temporada -->
+                ${next ? `
+                <div class="tp-panel-card" style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);color:#ffffff;border:none;">
+                    <div class="tp-panel-title" style="color:#94a3b8;">
+                        <span>🎾 Próximo Partido • Jornada ${next.j}</span>
+                        <span class="tp-loc-pill ${next.isHome !== false ? 'home' : 'away'}">${next.isHome !== false ? '🏠 Casa' : '✈️ Fuera'}</span>
+                    </div>
+                    <div style="font-size:1.12rem;font-weight:950;margin-bottom:8px;">vs ${next.opponent}</div>
+                    <div style="font-size:0.78rem;color:#cbd5e1;font-weight:700;display:flex;flex-direction:column;gap:4px;margin-bottom:12px;">
+                        <div><i class="far fa-calendar-alt" style="color:#ccff00;width:18px;"></i> ${next.date || 'Por definir'} • ${next.time || 'TBD'}</div>
+                        <div><i class="fas fa-map-marker-alt" style="color:#ccff00;width:18px;"></i> ${nextVenue}</div>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <button type="button" class="tp-btn-rsvp" onclick="window.TeamController.openPlayerRsvpModal('${team.id}', '${next.j}')">
+                            <i class="fas fa-check-circle"></i> Responder RSVP
+                        </button>
+                        <button type="button" class="tp-btn-outline" style="background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.2);" onclick="window.TeamView.openMapsForVenue('${safeVenue}')">
+                            <i class="fas fa-directions"></i> Mapa
+                        </button>
+                        <button type="button" class="tp-btn-outline" style="background:rgba(255,255,255,0.1);color:#ccff00;border-color:rgba(204,255,0,0.35);" onclick="window.TeamController.showRivalScouting('${team.id}', '${String(next.opponent || '').replace(/'/g, "\\'")}')">
+                            <i class="fas fa-binoculars"></i>
+                        </button>
+                    </div>
+                </div>
+                ` : `
+                <div class="tp-panel-card" style="background:#f0fdf4;border-color:#bbf7d0;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <span style="font-size:1.5rem;">🏁</span>
+                        <div>
+                            <div style="font-size:0.9rem;font-weight:950;color:#065f46;">Fase Regular Completada</div>
+                            <div style="font-size:0.75rem;color:#047857;font-weight:700;">Balance final: ${m.totalWins} victorias y ${m.totalLosses} derrotas (${team.points || 0} pts).</div>
+                        </div>
+                    </div>
+                </div>
+                `}
 
-            if (window.PlayerView?.haptic) window.PlayerView.haptic(20);
+                <!-- Racha últimos 5 -->
+                <div class="tp-panel-card">
+                    <div class="tp-panel-title">
+                        <span><i class="fas fa-fire" style="color:#f97316;"></i> Racha Reciente (Últimos 5)</span>
+                        <span>Media: ${m.avgPts} pts/j</span>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                        <div class="tp-streak-dots" style="gap:7px;">
+                            ${m.streak.length > 0
+                                ? m.streak.map(r => `<span class="tp-dot ${r === 'W' ? 'w' : 'l'}" style="width:30px;height:30px;font-size:0.78rem;border-radius:9px;">${r === 'W' ? 'V' : 'D'}</span>`).join('')
+                                : '<span style="font-size:0.78rem;color:#64748b;font-weight:700;">Sin partidos completados</span>'}
+                        </div>
+                        <button type="button" class="tp-section-link" onclick="window.TeamView.switchSheetTab('stats')">Ver Stats →</button>
+                    </div>
+                </div>
+
+                <!-- Top 3 Jugadores MVP del equipo -->
+                ${topPlayers.length > 0 ? `
+                <div class="tp-panel-card">
+                    <div class="tp-panel-title">
+                        <span><i class="fas fa-medal" style="color:#eab308;"></i> Top Jugadores del Equipo</span>
+                        <button type="button" class="tp-section-link" onclick="window.TeamView.switchSheetTab('rost')">Ver todos (${(team.roster || []).length}) →</button>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:8px;">
+                        ${topPlayers.map((p, i) => `
+                            <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 11px;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;">
+                                <div style="display:flex;align-items:center;gap:9px;min-width:0;">
+                                    <span style="font-weight:950;font-size:0.85rem;color:${i === 0 ? '#eab308' : '#64748b'};width:22px;">#${i + 1}</span>
+                                    <span style="font-size:0.85rem;font-weight:850;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</span>
+                                </div>
+                                <span class="tp-pts-pill">${Math.round(parseFloat(p.pts) || 0)} pts</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+            `;
         }
 
-        toggleCard(teamId) {
-            const content = document.getElementById(`content-${teamId}`);
-            const chevron = document.getElementById(`chevron-${teamId}`);
-            const card = document.getElementById(`team-${teamId}`);
-            
-            if (!content) return;
+        renderSheetStandings(team, m) {
+            const standings = team.groupStandings || [];
+            if (standings.length === 0) {
+                return `
+                    <div class="tp-panel-card" style="text-align:center;padding:32px 16px;">
+                        <i class="fas fa-trophy" style="font-size:2rem;color:#cbd5e1;margin-bottom:8px;"></i>
+                        <div style="font-weight:900;color:#0f172a;">Clasificación sincronizándose</div>
+                        <div style="font-size:0.78rem;color:#64748b;margin-top:4px;">Pronto verás la tabla actualizada de SummaPádel.</div>
+                    </div>
+                `;
+            }
 
-            if (content.style.maxHeight === '0px' || !content.style.maxHeight) {
-                // Expandir
-                content.style.maxHeight = '1500px';
-                content.style.opacity = '1';
-                if (chevron) {
-                    chevron.style.transform = 'rotate(180deg)';
-                    chevron.style.color = '#38b000';
+            const leaderPts = parseInt(standings[0].pts, 10) || 0;
+            const totalRows = standings.length;
+
+            return `
+                <div class="tp-panel-card" style="padding:12px 10px;">
+                    <div class="tp-panel-title" style="padding:0 4px;">
+                        <span><i class="fas fa-list-ol"></i> ${team.group || 'Clasificación de Grupo'}</span>
+                        <span style="font-size:0.62rem;color:#0284c7;">Toca un rival para Scouting</span>
+                    </div>
+                    <table class="tp-standings-table">
+                        <thead>
+                            <tr>
+                                <th>Equipo</th>
+                                <th>PJ</th>
+                                <th>G-P</th>
+                                <th>PTS</th>
+                                <th>DIF</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${standings.map((s, idx) => {
+                                const pos = parseInt(s.pos, 10) || (idx + 1);
+                                const isMe = !!s.isCurrent;
+                                const pts = parseInt(s.pts, 10) || 0;
+                                const diff = idx === 0 ? 'Líder' : `${pts - leaderPts}`;
+                                const zoneColor = pos <= 2 ? '#10b981' : (totalRows >= 5 && pos >= totalRows - 1 ? '#ef4444' : 'transparent');
+                                const safeRival = String(s.team || '').replace(/'/g, "\\'");
+                                return `
+                                    <tr class="tp-standings-row ${isMe ? 'is-me' : ''}"
+                                        onclick="${isMe ? '' : `window.TeamController.showRivalScouting('${team.id}', '${safeRival}')`}">
+                                        <td style="border-left:4px solid ${zoneColor};">
+                                            <div style="display:flex;align-items:center;gap:8px;">
+                                                <span style="font-weight:950;color:${pos === 1 ? '#ca8a04' : '#64748b'};min-width:18px;">${pos}</span>
+                                                <span style="font-weight:${isMe ? '950' : '800'};color:${isMe ? '#047857' : '#0f172a'};line-height:1.2;">${s.team}</span>
+                                            </div>
+                                        </td>
+                                        <td>${s.pj}</td>
+                                        <td style="white-space:nowrap;">${s.pg}-${s.pp !== undefined ? s.pp : Math.max(0, (s.pj || 0) - (s.pg || 0))}</td>
+                                        <td><strong style="color:${isMe ? '#059669' : '#0f172a'};font-size:0.92rem;">${pts}</strong></td>
+                                        <td style="font-size:0.7rem;color:${idx === 0 ? '#059669' : '#64748b'};font-weight:900;">${diff}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                    <div style="display:flex;gap:12px;margin-top:10px;padding:0 4px;font-size:0.65rem;font-weight:800;color:#64748b;">
+                        <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#10b981;margin-right:4px;"></span>Zona Top / Ascenso</span>
+                        <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#ef4444;margin-right:4px;"></span>Zona Baja</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        renderSheetSchedule(team) {
+            const schedule = Array.isArray(team.schedule) ? [...team.schedule].sort((a, b) => (parseInt(a.j, 10) || 0) - (parseInt(b.j, 10) || 0)) : [];
+            const filtered = schedule.filter(m => {
+                if (this.activeSchedFilter === 'pending') return m.status !== 'completed';
+                if (this.activeSchedFilter === 'completed') return m.status === 'completed';
+                return true;
+            });
+
+            return `
+                <div style="display:flex;gap:6px;margin-bottom:12px;">
+                    <button type="button" class="tp-cat-chip ${this.activeSchedFilter === 'all' ? 'active' : ''}" onclick="window.TeamView.setSheetSchedFilter('all')">Todos (${schedule.length})</button>
+                    <button type="button" class="tp-cat-chip ${this.activeSchedFilter === 'pending' ? 'active' : ''}" onclick="window.TeamView.setSheetSchedFilter('pending')">Pendientes</button>
+                    <button type="button" class="tp-cat-chip ${this.activeSchedFilter === 'completed' ? 'active' : ''}" onclick="window.TeamView.setSheetSchedFilter('completed')">Jugados</button>
+                </div>
+
+                ${filtered.length > 0 ? filtered.map(m => {
+                    const isBye = String(m.opponent || '').toUpperCase().includes('BYE');
+                    const res = this.getMatchResult(m);
+                    const isHome = m.isHome !== false;
+                    const venue = this.getMatchVenue(m);
+                    const scoreCls = res.valid ? (res.isWin ? 'win' : 'loss') : 'pending';
+                    const scoreTxt = res.valid ? `${res.isWin ? 'V' : 'D'} ${res.displayScore}` : (isBye ? 'DESCANSO' : 'PENDIENTE');
+                    const safeOpp = String(m.opponent || '').replace(/'/g, "\\'");
+
+                    return `
+                        <div class="tp-match-row">
+                            <div style="min-width:0;flex:1;">
+                                <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap;">
+                                    <span style="font-size:0.65rem;font-weight:950;background:#0f172a;color:#ccff00;padding:2px 6px;border-radius:6px;">J${m.j}</span>
+                                    ${!isBye ? `<span class="tp-loc-pill ${isHome ? 'home' : 'away'}">${isHome ? 'Casa' : 'Fuera'}</span>` : ''}
+                                    <span style="font-size:0.7rem;color:#64748b;font-weight:750;">${m.date || ''} ${m.time ? '• ' + m.time : ''}</span>
+                                </div>
+                                <div style="font-size:0.9rem;font-weight:900;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                    ${isBye ? 'Jornada de Descanso (BYE)' : `vs ${m.opponent}`}
+                                </div>
+                                ${!isBye ? `
+                                <div style="font-size:0.72rem;color:#64748b;font-weight:700;margin-top:2px;display:flex;align-items:center;gap:8px;">
+                                    <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><i class="fas fa-map-marker-alt" style="font-size:0.65rem;"></i> ${venue}</span>
+                                    <button type="button" onclick="window.TeamController.showRivalScouting('${team.id}', '${safeOpp}')" style="background:none;border:none;color:#0284c7;font-weight:850;font-size:0.68rem;padding:0;cursor:pointer;flex-shrink:0;">Scouting</button>
+                                </div>
+                                ` : ''}
+                            </div>
+                            <div class="tp-match-score ${scoreCls}">${scoreTxt}</div>
+                        </div>
+                    `;
+                }).join('') : `
+                    <div class="tp-panel-card" style="text-align:center;padding:28px;color:#64748b;font-weight:700;">
+                        No hay partidos en este filtro.
+                    </div>
+                `}
+            `;
+        }
+
+        renderSheetRoster(team, cleanCap) {
+            const roster = [...(team.roster || [])].sort((a, b) => (parseFloat(b.pts) || 0) - (parseFloat(a.pts) || 0));
+            const maxPts = roster.length > 0 ? Math.max(...roster.map(p => parseFloat(p.pts) || 0)) : 0;
+            const cleanCapLower = cleanCap.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const bgColors = ['#0284c7', '#7c3aed', '#db2777', '#d97706', '#059669', '#4f46e5'];
+
+            return `
+                <div style="position:relative;margin-bottom:12px;">
+                    <i class="fas fa-search" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:0.8rem;"></i>
+                    <input type="text" class="tp-search-input" value="${this.rosterSearchQuery}" oninput="window.TeamView.filterSheetRoster(this.value)" placeholder="Filtrar jugador de ${this.getShortTeamName(team.name)}...">
+                </div>
+
+                <div id="tp-sheet-roster-list" style="display:flex;flex-direction:column;gap:8px;">
+                    ${roster.map((p, idx) => {
+                        const pName = p.name || 'Jugador';
+                        const pPts = Math.round(parseFloat(p.pts) || 0);
+                        const pct = maxPts > 0 ? Math.round((pPts / maxPts) * 100) : 0;
+                        const norm = pName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                        const isCap = cleanCapLower.length > 3 && norm.includes(cleanCapLower);
+                        const isMVP = maxPts > 0 && pPts === Math.round(maxPts);
+                        const bg = bgColors[pName.length % bgColors.length];
+
+                        return `
+                            <div class="tp-player-card player-roster-row" data-player-name="${pName}" style="cursor:default;">
+                                <div class="tp-player-rank ${idx === 0 ? 'top1' : ''}">#${idx + 1}</div>
+                                <div class="tp-avatar" style="background:${bg};">${pName.charAt(0).toUpperCase()}</div>
+                                <div style="flex:1;min-width:0;">
+                                    <div style="font-size:0.9rem;font-weight:900;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${pName}</div>
+                                    <div style="display:flex;align-items:center;gap:5px;margin-top:3px;">
+                                        ${isCap ? '<span style="background:#0f172a;color:#ccff00;font-size:0.56rem;font-weight:950;padding:1px 6px;border-radius:5px;">CAPITÁN</span>' : ''}
+                                        ${isMVP ? '<span style="background:#eab308;color:#fff;font-size:0.56rem;font-weight:950;padding:1px 6px;border-radius:5px;">MVP</span>' : ''}
+                                        <div style="flex:1;height:5px;background:#e2e8f0;border-radius:4px;overflow:hidden;max-width:90px;">
+                                            <div style="width:${pct}%;height:100%;background:#10b981;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tp-pts-pill">${pPts} pts</div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        renderSheetStats(team, m) {
+            return `
+                <!-- Evolución de puntos -->
+                <div class="tp-panel-card">
+                    <div class="tp-panel-title">
+                        <span><i class="fas fa-chart-area" style="color:#10b981;"></i> Evolución de Puntos por Jornada</span>
+                        <span>Media: ${m.avgPts} pts/j</span>
+                    </div>
+                    <div style="height:155px;width:100%;">
+                        <canvas id="tp-sheet-chart-${team.id}"></canvas>
+                    </div>
+                </div>
+
+                <!-- Desglose de marcadores -->
+                <div class="tp-panel-card">
+                    <div class="tp-panel-title">
+                        <span><i class="fas fa-layer-group"></i> Desglose de Eliminatorias</span>
+                        <span>${m.totalPlayed} jugadas</span>
+                    </div>
+                    <div class="tp-breakdown-grid">
+                        <div class="tp-bd-box w30">
+                            <div style="font-size:1.25rem;font-weight:950;">${m.breakdown.w30}</div>
+                            <div style="font-size:0.64rem;font-weight:900;">3-0 Win</div>
+                        </div>
+                        <div class="tp-bd-box w21">
+                            <div style="font-size:1.25rem;font-weight:950;">${m.breakdown.w21}</div>
+                            <div style="font-size:0.64rem;font-weight:900;">2-1 Win</div>
+                        </div>
+                        <div class="tp-bd-box l12">
+                            <div style="font-size:1.25rem;font-weight:950;">${m.breakdown.l12}</div>
+                            <div style="font-size:0.64rem;font-weight:900;">1-2 Loss</div>
+                        </div>
+                        <div class="tp-bd-box l03">
+                            <div style="font-size:1.25rem;font-weight:950;">${m.breakdown.l03}</div>
+                            <div style="font-size:0.64rem;font-weight:900;">0-3 Loss</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Local vs Visitante -->
+                <div class="tp-panel-card">
+                    <div class="tp-panel-title">
+                        <span><i class="fas fa-balance-scale"></i> Rendimiento Casa vs Fuera</span>
+                        <span>Win Rate: ${m.winRate}%</span>
+                    </div>
+
+                    <div style="margin-bottom:14px;">
+                        <div style="display:flex;justify-content:space-between;font-size:0.8rem;font-weight:850;margin-bottom:6px;">
+                            <span>🏠 En Casa</span>
+                            <span style="color:#059669;">${m.homeWinRate}% <span style="color:#64748b;font-size:0.72rem;">(${m.homeWins}V - ${m.homePlayed - m.homeWins}D)</span></span>
+                        </div>
+                        <div style="height:9px;background:#e2e8f0;border-radius:6px;overflow:hidden;">
+                            <div style="width:${m.homeWinRate}%;height:100%;background:linear-gradient(90deg,#10b981,#34d399);"></div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div style="display:flex;justify-content:space-between;font-size:0.8rem;font-weight:850;margin-bottom:6px;">
+                            <span>✈️ Visitante</span>
+                            <span style="color:${m.awayWinRate >= 50 ? '#059669' : '#dc2626'};">${m.awayWinRate}% <span style="color:#64748b;font-size:0.72rem;">(${m.awayWins}V - ${m.awayPlayed - m.awayWins}D)</span></span>
+                        </div>
+                        <div style="height:9px;background:#e2e8f0;border-radius:6px;overflow:hidden;">
+                            <div style="width:${m.awayWinRate}%;height:100%;background:${m.awayWinRate >= 50 ? 'linear-gradient(90deg,#0284c7,#38bdf8)' : 'linear-gradient(90deg,#ef4444,#f87171)'};"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        renderSheetChart(teamId) {
+            const ctx = document.getElementById(`tp-sheet-chart-${teamId}`);
+            if (!ctx) return;
+
+            const draw = () => {
+                if (typeof Chart === 'undefined') return;
+                if (this.activeChartInstance) {
+                    try { this.activeChartInstance.destroy(); } catch (e) {}
                 }
-                if (card) {
-                    card.style.boxShadow = '0 12px 30px rgba(15,23,42,0.08)';
+                const chartData = this.chartsData[teamId];
+                if (!chartData || chartData.labels.length < 2) {
+                    ctx.parentNode.innerHTML = '<div style="height:120px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:0.78rem;font-weight:700;">Aún no hay suficientes jornadas completadas</div>';
+                    return;
                 }
-                if (window.PlayerView?.haptic) window.PlayerView.haptic(15);
+                this.activeChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: chartData.labels,
+                        datasets: [{
+                            label: 'Puntos Acumulados',
+                            data: chartData.data,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.14)',
+                            borderWidth: 3,
+                            pointBackgroundColor: '#0f172a',
+                            pointBorderColor: '#ccff00',
+                            pointBorderWidth: 2,
+                            pointRadius: 4,
+                            tension: 0.32,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, ticks: { precision: 0, font: { size: 10, family: 'Outfit' } }, grid: { color: '#f1f5f9' } },
+                            x: { ticks: { font: { size: 10, family: 'Outfit' } }, grid: { display: false } }
+                        }
+                    }
+                });
+            };
+
+            if (typeof Chart === 'undefined' && window.loadExternalScript) {
+                window.loadExternalScript('https://cdn.jsdelivr.net/npm/chart.js', 'Chart').then(draw).catch(() => {});
             } else {
-                // Colapsar
-                content.style.maxHeight = '0px';
-                content.style.opacity = '0';
-                if (chevron) {
-                    chevron.style.transform = 'rotate(0deg)';
-                    chevron.style.color = '#64748b';
-                }
-                if (card) {
-                    card.style.boxShadow = '0 6px 20px rgba(15,23,42,0.035)';
-                }
+                draw();
             }
         }
+
+        // ==================================================
+        // 🔍 FILTRADO INSTANTÁNEO (EQUIPOS Y JUGADORES)
+        // ==================================================
 
         filterDOM() {
             const queryRaw = (this.searchQuery || '').trim();
-            const query = queryRaw.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            
-            // 1. Mostrar/ocultar el botón de limpiar
+            const query = queryRaw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
             const clearBtn = document.getElementById('clear-search-btn');
-            if (clearBtn) {
-                clearBtn.style.display = query ? 'block' : 'none';
-            }
+            if (clearBtn) clearBtn.style.display = query ? 'block' : 'none';
 
-            const grid = document.getElementById('teams-list-grid');
-            if (!grid) return;
-
-            const cards = grid.getElementsByClassName('team-card');
             const resultsPanel = document.getElementById('team-search-results-panel');
             const noResultsMsg = document.getElementById('no-results-message');
-            const quickJumpButtons = document.querySelectorAll('.team-quick-jump-btn');
 
-            // --- ESTADO 1: SIN BÚSQUEDA (RESTAURAR NORMAL) ---
-            if (!query) {
-                if (resultsPanel) {
-                    resultsPanel.style.display = 'none';
-                    resultsPanel.innerHTML = '';
-                }
-                if (noResultsMsg) noResultsMsg.style.display = 'none';
-
-                // Restaurar visibilidad según pestaña de categoría activa
-                const activeCat = this.activeCategory || 'Todos';
-                let visibleCount = 0;
-                for (let card of cards) {
-                    const idAttr = card.id;
-                    if (!idAttr) continue;
-                    const teamId = idAttr.replace('team-', '');
-                    const team = (this.lastTeams || []).find(t => t.id === teamId);
-                    if (!team) {
-                        card.style.display = 'none';
-                        continue;
-                    }
-                    const inCategory = (activeCat === 'Todos') || (team.category === activeCat);
-                    card.style.display = inCategory ? 'block' : 'none';
-                    if (inCategory) visibleCount++;
-
-                    // Limpiar badges temporales de búsqueda en tarjetas
-                    const matchBadge = card.querySelector('.team-card-search-match-badge');
-                    if (matchBadge) matchBadge.remove();
-                }
-
-                // Restaurar botones de salto rápido
-                quickJumpButtons.forEach(btn => {
-                    btn.style.display = 'inline-flex';
-                    btn.style.opacity = '1';
-                    btn.style.borderColor = '#e2e8f0';
+            // Modo Top Jugadores
+            if (this.activeHubMode === 'players') {
+                if (resultsPanel) resultsPanel.style.display = 'none';
+                const rows = document.querySelectorAll('.tp-leaderboard-row');
+                let visible = 0;
+                rows.forEach(row => {
+                    const name = row.getAttribute('data-search-name') || '';
+                    const show = !query || name.includes(query);
+                    row.style.display = show ? 'flex' : 'none';
+                    if (show) visible++;
                 });
-
-                // Restaurar contador de cabecera
-                const headerCount = document.getElementById('header-teams-count');
-                if (headerCount) {
-                    const totalTeams = (this.lastTeams || []).length;
-                    headerCount.innerText = totalTeams;
-                }
+                if (noResultsMsg) noResultsMsg.style.display = visible === 0 ? 'block' : 'none';
                 return;
             }
 
-            // --- ESTADO 2: BÚSQUEDA ACTIVA (JUGADORES + EQUIPOS) ---
+            // Modo Equipos
             const allTeams = this.lastTeams || [];
+            const cards = document.querySelectorAll('#teams-list-grid .team-card');
+            let visibleCount = 0;
             const foundPlayers = [];
-            const matchingTeamIds = new Set();
-            const teamMatchesPlayerMap = new Map(); // teamId -> Array de jugadores coincidentes
 
-            allTeams.forEach(team => {
-                const teamName = (team.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                const captain = (window.getTeamCaptain ? window.getTeamCaptain(team) : (team.captain || '')).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                const subcaptain = (window.getTeamSubcaptain ? window.getTeamSubcaptain(team) : (team.subcaptain || '')).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                const div = (team.division || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                const group = (team.group || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-                const teamMatchedByName = teamName.includes(query) || div.includes(query) || group.includes(query) || captain.includes(query) || subcaptain.includes(query);
-
-                // Buscar jugadores en el roster del equipo
-                const matchedInThisTeam = [];
-                if (team.roster && Array.isArray(team.roster)) {
-                    team.roster.forEach(player => {
-                        const pName = (typeof player === 'string' ? player : (player.name || '')).trim();
-                        const normPName = pName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                        
-                        if (normPName.includes(query)) {
-                            const isCap = captain.includes(normPName) || (normPName.includes(captain) && captain.length > 3);
-                            const isSubcap = subcaptain.includes(normPName) || (normPName.includes(subcaptain) && subcaptain.length > 3);
-                            const pts = (typeof player === 'object' && player.pts !== undefined) ? player.pts : 0;
-                            
-                            const playerItem = {
-                                name: pName,
-                                pts: pts,
-                                isCaptain: isCap,
-                                isSubcaptain: isSubcap,
-                                teamId: team.id,
-                                teamName: team.name,
-                                category: team.category,
-                                division: team.division
-                            };
-                            matchedInThisTeam.push(playerItem);
-                            foundPlayers.push(playerItem);
+            if (query.length >= 2) {
+                allTeams.forEach(t => {
+                    (t.roster || []).forEach(p => {
+                        const pn = String(p.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                        if (pn.includes(query)) {
+                            foundPlayers.push({ player: p, team: t });
                         }
                     });
-                }
+                });
+            }
 
-                if (teamMatchedByName || matchedInThisTeam.length > 0) {
-                    matchingTeamIds.add(team.id);
-                }
-                if (matchedInThisTeam.length > 0) {
-                    teamMatchesPlayerMap.set(team.id, matchedInThisTeam);
-                }
-            });
-
-            // 2. Renderizar el Panel Reactivo de Jugadores Encontrados
             if (resultsPanel) {
                 if (foundPlayers.length > 0) {
                     resultsPanel.style.display = 'block';
                     resultsPanel.innerHTML = `
-                        <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 20px; padding: 16px; border: 1.5px solid #38bdf8; box-shadow: 0 10px 25px rgba(15,23,42,0.18); color: #ffffff;">
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <span style="width: 28px; height: 28px; border-radius: 50%; background: #38bdf8; color: #0f172a; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 900;">
-                                        <i class="fas fa-users"></i>
-                                    </span>
-                                    <span style="font-size: 0.85rem; font-weight: 900; letter-spacing: 0.3px;">
-                                        Jugadores Encontrados (${foundPlayers.length})
-                                    </span>
-                                </div>
-                                <span style="font-size: 0.65rem; color: #94a3b8; font-weight: 700;">Toca para abrir en su equipo</span>
+                        <div class="tp-panel-card" style="margin-bottom:0;background:#f0fdf4;border-color:#86efac;">
+                            <div class="tp-panel-title" style="color:#047857;margin-bottom:8px;">
+                                <span><i class="fas fa-user-check"></i> Jugadores encontrados (${foundPlayers.length})</span>
                             </div>
-                            <div style="display: flex; flex-direction: column; gap: 8px; max-height: 260px; overflow-y: auto; padding-right: 4px;">
-                                ${foundPlayers.map(p => `
-                                    <div onclick="window.TeamView.focusPlayer('${p.teamId}', '${p.name.replace(/'/g, "\\'")}')" 
-                                         style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s;"
-                                         onmouseover="this.style.background='rgba(56,189,248,0.15)'; this.style.borderColor='#38bdf8';"
-                                         onmouseout="this.style.background='rgba(255,255,255,0.06)'; this.style.borderColor='rgba(255,255,255,0.12)';">
-                                        <div style="display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1;">
-                                            <div style="width: 34px; height: 34px; border-radius: 50%; background: #38bdf8; color: #0f172a; font-weight: 900; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                                ${p.name.charAt(0).toUpperCase()}
+                            <div style="display:flex;flex-direction:column;gap:6px;">
+                                ${foundPlayers.slice(0, 6).map(({ player, team }) => {
+                                    const safeName = String(player.name || '').replace(/'/g, "\\'");
+                                    return `
+                                        <div onclick="window.TeamView.focusPlayer('${team.id}', '${safeName}')"
+                                             style="display:flex;align-items:center;justify-content:space-between;background:#ffffff;padding:9px 11px;border-radius:12px;border:1px solid #dcfce7;cursor:pointer;">
+                                            <div style="min-width:0;">
+                                                <div style="font-size:0.84rem;font-weight:900;color:#0f172a;">${player.name}</div>
+                                                <div style="font-size:0.68rem;font-weight:800;color:#059669;">${this.getShortTeamName(team.name)} • ${team.category}</div>
                                             </div>
-                                            <div style="min-width: 0;">
-                                                <div style="font-size: 0.85rem; font-weight: 900; color: #ffffff; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                                                    <span>${p.name}</span>
-                                                    ${p.isCaptain ? '<span style="background: #eab308; color: #000; font-size: 0.55rem; font-weight: 900; padding: 1px 6px; border-radius: 6px;">CAPITÁN</span>' : ''}
-                                                    ${p.isSubcaptain ? '<span style="background: #38bdf8; color: #000; font-size: 0.55rem; font-weight: 900; padding: 1px 6px; border-radius: 6px;">SUBCAPITÁN</span>' : ''}
-                                                </div>
-                                                <div style="font-size: 0.68rem; color: #94a3b8; font-weight: 700; margin-top: 2px;">
-                                                    ${p.teamName} • ${p.category}
-                                                </div>
-                                            </div>
+                                            <span class="tp-pts-pill">${Math.round(parseFloat(player.pts) || 0)} pts</span>
                                         </div>
-                                        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; margin-left: 8px;">
-                                            <span style="background: rgba(204,255,0,0.15); color: #ccff00; font-size: 0.68rem; font-weight: 900; padding: 3px 8px; border-radius: 8px; border: 1px solid rgba(204,255,0,0.3);">
-                                                ${p.pts} PTS
-                                            </span>
-                                            <i class="fas fa-chevron-right" style="color: #38bdf8; font-size: 0.75rem;"></i>
-                                        </div>
-                                    </div>
-                                `).join('')}
+                                    `;
+                                }).join('')}
                             </div>
                         </div>
                     `;
@@ -1365,93 +1375,26 @@
                 }
             }
 
-            // 3. Filtrar las tarjetas de equipos en el grid
-            let visibleCount = 0;
-            for (let card of cards) {
-                const idAttr = card.id;
-                if (!idAttr) continue;
-                const teamId = idAttr.replace('team-', '');
-                const isMatch = matchingTeamIds.has(teamId);
+            cards.forEach(card => {
+                const tid = card.getAttribute('data-team-id');
+                const team = allTeams.find(t => t.id === tid);
+                if (!team) return;
 
-                // Limpiar badge anterior
-                const oldBadge = card.querySelector('.team-card-search-match-badge');
-                if (oldBadge) oldBadge.remove();
+                const hay = [
+                    team.name, team.category, team.division, team.group, team.captain,
+                    ...(team.roster || []).map(p => p.name)
+                ].join(' ').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
-                if (isMatch) {
-                    card.style.display = 'block';
-                    visibleCount++;
-
-                    // Añadir badge si coincide con jugadores
-                    const playersInTeam = teamMatchesPlayerMap.get(teamId);
-                    if (playersInTeam && playersInTeam.length > 0) {
-                        const badgeContainer = document.createElement('div');
-                        badgeContainer.className = 'team-card-search-match-badge';
-                        badgeContainer.style.cssText = 'margin-top: 10px; background: #ecfdf5; border: 1px solid #10b981; border-radius: 12px; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 0.74rem; color: #065f46; font-weight: 800;';
-                        badgeContainer.innerHTML = `
-                            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                                <i class="fas fa-user-check" style="color: #10b981;"></i>
-                                <span>Jugador coincidente: <strong>${playersInTeam.map(p => p.name).join(', ')}</strong></span>
-                            </div>
-                            <span style="color: #059669; font-size: 0.68rem; text-decoration: underline; white-space: nowrap;">Toca para abrir</span>
-                        `;
-                        const cardHeader = card.querySelector('.team-card-header-cluster') || card.children[2] || card;
-                        cardHeader.parentNode.insertBefore(badgeContainer, cardHeader.nextSibling);
-
-                        // Si hay 1 o 2 equipos coincidentes, auto-expandir y poner la pestaña de Jugadores
-                        if (matchingTeamIds.size <= 2) {
-                            const content = document.getElementById(`content-${teamId}`);
-                            const chevron = document.getElementById(`chevron-${teamId}`);
-                            if (content) {
-                                content.style.maxHeight = '2200px';
-                                content.style.opacity = '1';
-                                if (chevron) {
-                                    chevron.style.transform = 'rotate(180deg)';
-                                    chevron.style.color = '#38b000';
-                                }
-                            }
-                            this.switchCardTab(teamId, 'rost');
-                        }
-                    }
-                } else {
-                    card.style.display = 'none';
-                }
-            }
-
-            // 4. Filtrar botones de salto rápido
-            quickJumpButtons.forEach(btn => {
-                const btnTeamId = btn.getAttribute('data-team-id');
-                if (btnTeamId) {
-                    if (matchingTeamIds.has(btnTeamId)) {
-                        btn.style.display = 'inline-flex';
-                        btn.style.opacity = '1';
-                        btn.style.borderColor = '#10b981';
-                    } else {
-                        btn.style.display = 'none';
-                    }
-                }
+                const show = !query || hay.includes(query);
+                card.style.display = show ? 'block' : 'none';
+                if (show) visibleCount++;
             });
 
-            // 5. Mensaje de no resultados
             if (noResultsMsg) {
-                if (visibleCount === 0 && foundPlayers.length === 0) {
-                    noResultsMsg.style.display = 'block';
-                    noResultsMsg.innerHTML = `
-                        <i class="fas fa-search-minus" style="font-size: 2.5rem; color: #cbd5e1; margin-bottom: 15px;"></i>
-                        <p style="color: #0f172a; font-weight: 900; font-size: 1rem; margin: 0 0 4px;">No se encontraron resultados para "${this.searchQuery}"</p>
-                        <p style="color: #64748b; font-weight: 700; font-size: 0.8rem; margin: 0;">Prueba a buscar otro nombre de jugador (ej: Mendez, Alex, Rosell) o código de equipo.</p>
-                    `;
-                } else {
-                    noResultsMsg.style.display = 'none';
-                }
-            }
-
-            // 6. Actualizar contador en la cabecera
-            const headerCount = document.getElementById('header-teams-count');
-            if (headerCount) {
-                headerCount.innerText = `${visibleCount} de ${allTeams.length}`;
+                noResultsMsg.style.display = (visibleCount === 0 && foundPlayers.length === 0) ? 'block' : 'none';
             }
         }
-        
+
         // ==================================================
         // 💎 PREMIUM NEXT MATCHES SUMMARY MODAL ("WOW" SYSTEM)
         // ==================================================
