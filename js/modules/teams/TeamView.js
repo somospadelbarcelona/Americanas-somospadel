@@ -1396,1154 +1396,399 @@
         }
 
         // ==================================================
-        // 💎 PREMIUM NEXT MATCHES SUMMARY MODAL ("WOW" SYSTEM)
+        // 💎 PREMIUM NEXT MATCHES SUMMARY MODAL (REVOLUCIÓN HD)
         // ==================================================
 
-        /**
-         * Genera el HTML del cromo de resumen de la próxima jornada (1080x1920).
-         * Se usa tanto para la previsualización como para la captura con html2canvas.
-         */
-        getNextMatchesSummaryStoryHTML(teams, isForCapture = false) {
-            const now = new Date();
-            const dateStr = now.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
-
-            // Recopilar el próximo partido de cada equipo
-            const teamMatchesRaw = teams.map(team => {
-                let nextMatch = null;
-                if (team.schedule && team.schedule.length > 0) {
-                    const sortedMatches = [...team.schedule].sort((a, b) => parseInt(a.j) - parseInt(b.j));
-                    const pendingMatches = sortedMatches.filter(m => (m.status === 'pending' || m.status === 'scheduled' || m.status === 'upcoming') && m.opponent !== 'BYE' && !m.opponent.includes('BYE'));
-                    if (pendingMatches.length > 0) {
-                        nextMatch = pendingMatches[0];
-                    }
-                }
-                return { team, nextMatch };
-            });
-
-            // ──────────────────────────────────────────────────
-            // 🏅 ORDENAR POR CATEGORÍA: Masculina → Femenina → Mixta
-            // ──────────────────────────────────────────────────
-            const categoryOrder = { 'Masculina': 0, 'Femenina': 1, 'Mixta': 2 };
-            const teamMatches = [...teamMatchesRaw].sort((a, b) => {
-                const catA = categoryOrder[a.team.category] ?? 99;
-                const catB = categoryOrder[b.team.category] ?? 99;
-                return catA - catB;
-            });
-
-            // ──────────────────────────────────────────────────
-            // 🎨 PALETA DE COLORES POR CATEGORÍA
-            // ──────────────────────────────────────────────────
-            const categoryStyles = {
-                'Masculina': {
-                    accent:      '#0284c7',
-                    accentDark:  '#0369a1',
-                    cardBg:      '#f0f9ff',
-                    border:      '#bae6fd',
-                    gradient:    'linear-gradient(180deg, #0284c7 0%, #0369a1 100%)',
-                    teamColor:   '#0284c7',
-                    emoji:       '👨',
-                    label:       'MASCULINA',
-                    headerBg:    'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)',
-                },
-                'Femenina': {
-                    accent:      '#db2777',
-                    accentDark:  '#be185d',
-                    cardBg:      '#fdf2f8',
-                    border:      '#fbcfe8',
-                    gradient:    'linear-gradient(180deg, #db2777 0%, #be185d 100%)',
-                    teamColor:   '#db2777',
-                    emoji:       '👩',
-                    label:       'FEMENINA',
-                    headerBg:    'linear-gradient(135deg, #db2777 0%, #f472b6 100%)',
-                },
-                'Mixta': {
-                    accent:      '#7c3aed',
-                    accentDark:  '#6d28d9',
-                    cardBg:      '#f5f3ff',
-                    border:      '#ddd6fe',
-                    gradient:    'linear-gradient(180deg, #7c3aed 0%, #6d28d9 100%)',
-                    teamColor:   '#7c3aed',
-                    emoji:       '👥',
-                    label:       'MIXTA',
-                    headerBg:    'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)',
-                },
-            };
-            const defaultStyle = {
-                accent: '#38b000', accentDark: '#007200', cardBg: '#f8fafc',
-                border: '#e2e8f0', gradient: 'linear-gradient(180deg, #38b000 0%, #007200 100%)',
-                teamColor: '#38b000', emoji: '🏓', label: '', headerBg: 'linear-gradient(135deg, #38b000, #70e000)',
-            };
-
-            // Determinar dimensiones según la cantidad de equipos para que quepan todos en 1920px de alto
-            const count = teams.length;
-            let sizes = {
-                containerPadding: '50px 46px',
-                headerMarginBottom: '32px',
-                headerTitleFontSize: '52px',
-                headerBannerPadding: '16px 50px',
-                headerBannerFontSize: '40px',
-                rowGap: '14px',
-                catHeaderFontSize: '22px',
-                catHeaderPadding: '10px 20px',
-                catHeaderMarginBottom: '8px',
-                cardPadding: '22px 28px',
-                cardGap: '8px',
-                teamNameFontSize: '30px',
-                homeAwayFontSize: '20px',
-                homeAwayPadding: '7px 16px',
-                vsFontSize: '34px',
-                detailsFontSize: '24px',
-                jornadaFontSize: '20px',
-                footerMarginTop: '32px',
-                footerPaddingTop: '24px',
-                footerLine1FontSize: '28px',
-                footerLine2FontSize: '20px',
-                noMatchPadding: '20px 28px',
-                noMatchFontSize: '28px',
-                noMatchTextFontSize: '24px'
-            };
-
-            if (count === 5) {
-                sizes = {
-                    containerPadding: '44px 40px',
-                    headerMarginBottom: '26px',
-                    headerTitleFontSize: '46px',
-                    headerBannerPadding: '14px 44px',
-                    headerBannerFontSize: '36px',
-                    rowGap: '12px',
-                    catHeaderFontSize: '20px',
-                    catHeaderPadding: '8px 18px',
-                    catHeaderMarginBottom: '6px',
-                    cardPadding: '18px 24px',
-                    cardGap: '6px',
-                    teamNameFontSize: '28px',
-                    homeAwayFontSize: '18px',
-                    homeAwayPadding: '6px 14px',
-                    vsFontSize: '30px',
-                    detailsFontSize: '22px',
-                    jornadaFontSize: '18px',
-                    footerMarginTop: '26px',
-                    footerPaddingTop: '20px',
-                    footerLine1FontSize: '24px',
-                    footerLine2FontSize: '18px',
-                    noMatchPadding: '16px 22px',
-                    noMatchFontSize: '26px',
-                    noMatchTextFontSize: '22px'
-                };
-            } else if (count === 6) {
-                sizes = {
-                    containerPadding: '36px 34px',
-                    headerMarginBottom: '20px',
-                    headerTitleFontSize: '42px',
-                    headerBannerPadding: '12px 38px',
-                    headerBannerFontSize: '32px',
-                    rowGap: '10px',
-                    catHeaderFontSize: '18px',
-                    catHeaderPadding: '7px 16px',
-                    catHeaderMarginBottom: '5px',
-                    cardPadding: '14px 20px',
-                    cardGap: '5px',
-                    teamNameFontSize: '24px',
-                    homeAwayFontSize: '16px',
-                    homeAwayPadding: '5px 12px',
-                    vsFontSize: '27px',
-                    detailsFontSize: '20px',
-                    jornadaFontSize: '16px',
-                    footerMarginTop: '20px',
-                    footerPaddingTop: '16px',
-                    footerLine1FontSize: '22px',
-                    footerLine2FontSize: '16px',
-                    noMatchPadding: '12px 18px',
-                    noMatchFontSize: '22px',
-                    noMatchTextFontSize: '19px'
-                };
-            } else if (count >= 7) {
-                sizes = {
-                    containerPadding: '28px 26px',
-                    headerMarginBottom: '14px',
-                    headerTitleFontSize: '36px',
-                    headerBannerPadding: '8px 28px',
-                    headerBannerFontSize: '28px',
-                    rowGap: '9px',
-                    catHeaderFontSize: '16px',
-                    catHeaderPadding: '6px 14px',
-                    catHeaderMarginBottom: '4px',
-                    cardPadding: '12px 16px',
-                    cardGap: '4px',
-                    teamNameFontSize: '22px',
-                    homeAwayFontSize: '14px',
-                    homeAwayPadding: '4px 10px',
-                    vsFontSize: '24px',
-                    detailsFontSize: '18px',
-                    jornadaFontSize: '14px',
-                    footerMarginTop: '14px',
-                    footerPaddingTop: '12px',
-                    footerLine1FontSize: '20px',
-                    footerLine2FontSize: '14px',
-                    noMatchPadding: '10px 14px',
-                    noMatchFontSize: '20px',
-                    noMatchTextFontSize: '17px'
-                };
-            }
-
-            const cardStyle = isForCapture ? 'width: 1080px; height: 1920px;' : 'width: 100%; height: 100%;';
-
-            // ──────────────────────────────────────────────────
-            // 🏟️ CONSTRUIR LAS FILAS AGRUPADAS POR CATEGORÍA
-            // ──────────────────────────────────────────────────
-            let lastCategory = null;
-            const teamRows = teamMatches.map((tm) => {
-                const { team, nextMatch } = tm;
-                const teamShortName = team.name.replace('SOMOS PÁDEL BCN ', '').replace('SOMOS PÁDEL ', '');
-                const cat = team.category || '';
-                const cs = categoryStyles[cat] || defaultStyle;
-
-                // Cabecera de sección si es una nueva categoría
-                let catHeader = '';
-                if (cat !== lastCategory) {
-                    lastCategory = cat;
-                    if (cat) {
-                        catHeader = `
-                            <div style="display: flex; align-items: center; gap: 12px; margin-top: ${lastCategory === cat ? '0' : sizes.rowGap}; margin-bottom: ${sizes.catHeaderMarginBottom};">
-                                <div style="flex: 1; height: 2px; background: ${cs.gradient}; border-radius: 2px; opacity: 0.5;"></div>
-                                <div style="background: ${cs.headerBg}; color: #ffffff; padding: ${sizes.catHeaderPadding}; border-radius: 30px; font-size: ${sizes.catHeaderFontSize}; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; white-space: nowrap; box-shadow: 0 4px 12px ${cs.accent}33;">
-                                    ${cs.emoji} ${cs.label}
-                                </div>
-                                <div style="flex: 1; height: 2px; background: ${cs.gradient}; border-radius: 2px; opacity: 0.5;"></div>
-                            </div>
-                        `;
-                    }
-                }
-
-                let cardHTML = '';
-                if (nextMatch) {
-                    const isHome = nextMatch.isHome;
-                    const homeAwayBg = isHome ? `${cs.accent}18` : 'rgba(37, 99, 235, 0.1)';
-                    const homeAwayColor = isHome ? cs.accentDark : '#1d4ed8';
-                    const homeAwayText = isHome ? '🏠 LOCAL' : '✈️ VISIT.';
-                    cardHTML = `
-                        <div style="background: ${cs.cardBg}; border: 1.5px solid ${cs.border}; border-radius: 20px; padding: ${sizes.cardPadding}; display: flex; flex-direction: column; gap: ${sizes.cardGap}; position: relative; overflow: hidden; box-shadow: 0 8px 20px ${cs.accent}12;">
-                            <div style="position: absolute; top: 0; left: 0; width: 6px; height: 100%; background: ${cs.gradient}; border-radius: 6px 0 0 6px;"></div>
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 6px;">
-                                <div style="font-size: ${sizes.teamNameFontSize}; font-weight: 950; color: ${cs.teamColor}; text-transform: uppercase; letter-spacing: 0.5px;">${teamShortName}</div>
-                                <div style="background: ${homeAwayBg}; color: ${homeAwayColor}; padding: ${sizes.homeAwayPadding}; border-radius: 30px; font-size: ${sizes.homeAwayFontSize}; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">${homeAwayText}</div>
-                            </div>
-                            <div style="font-size: ${sizes.vsFontSize}; font-weight: 800; color: #0f172a; margin: 2px 0 2px; padding-left: 6px;">vs ${nextMatch.opponent}</div>
-                            <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap; padding-left: 6px;">
-                                <div style="display: flex; align-items: center; gap: 8px; color: #475569; font-size: ${sizes.detailsFontSize}; font-weight: 700;">📅 ${nextMatch.date}${nextMatch.time ? ' · ' + nextMatch.time : ''} &nbsp; 📍 ${nextMatch.venue}</div>
-                            </div>
-                            <div style="color: ${cs.accent}; font-size: ${sizes.jornadaFontSize}; font-weight: 700; padding-left: 6px;">Jornada ${nextMatch.j} · ${team.group || team.division}</div>
-                        </div>
-                    `;
-                } else {
-                    cardHTML = `
-                        <div style="background: ${cs.cardBg}; border: 1.5px solid ${cs.border}; border-radius: 20px; padding: ${sizes.noMatchPadding}; display: flex; align-items: center; gap: 16px; opacity: 0.7; box-shadow: 0 4px 12px ${cs.accent}08; position: relative; overflow: hidden;">
-                            <div style="position: absolute; top: 0; left: 0; width: 6px; height: 100%; background: ${cs.gradient}; border-radius: 6px 0 0 6px;"></div>
-                            <div style="font-size: ${sizes.noMatchFontSize}; font-weight: 950; color: ${cs.teamColor}; text-transform: uppercase; padding-left: 6px;">${teamShortName}</div>
-                            <div style="color: #64748b; font-size: ${sizes.noMatchTextFontSize}; font-weight: 700;">— Sin partidos pendientes</div>
-                        </div>
-                    `;
-                }
-                return catHeader + cardHTML;
-            }).join('');
-
-            return `
-                <div style="${cardStyle} background: linear-gradient(180deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%); font-family: 'Outfit', sans-serif; display: flex; flex-direction: column; position: relative; overflow: hidden; box-sizing: border-box; padding: ${sizes.containerPadding};">
-                    <!-- Background glow effects sutiles -->
-                    <div style="position: absolute; top: -120px; right: -80px; width: 450px; height: 450px; background: radial-gradient(circle, rgba(56,176,0,0.04), transparent 70%); pointer-events: none;"></div>
-                    <div style="position: absolute; bottom: -120px; left: -80px; width: 400px; height: 400px; background: radial-gradient(circle, rgba(56,176,0,0.03), transparent 70%); pointer-events: none;"></div>
-
-                    <!-- Header with Club Logo -->
-                    <div style="text-align: center; margin-bottom: ${sizes.headerMarginBottom}; flex-shrink: 0; display: flex; flex-direction: column; align-items: center;">
-                        <div style="margin-bottom: 20px; display: flex; justify-content: center; align-items: center; flex-shrink: 0;">
-                            <img src="img/official_ball_logo.png" style="height: 100px; width: auto; object-fit: contain;" alt="Somos Pádel BCN">
-                        </div>
-                        <div style="font-size: 20px; font-weight: 900; color: #475569; letter-spacing: 5px; text-transform: uppercase; margin-bottom: 14px;">LLIGA GUINOTPRUNERA 2025-2026</div>
-                        <div style="display: inline-block; background: linear-gradient(135deg, #CCFF00 0%, #38b000 100%); padding: ${sizes.headerBannerPadding}; border-radius: 50px; margin-bottom: 18px; box-shadow: 0 8px 30px rgba(56,176,0,0.15);">
-                            <span style="font-size: ${sizes.headerBannerFontSize}; font-weight: 950; color: #000; text-transform: uppercase; letter-spacing: 3px;">⚡ PRÓXIMA JORNADA ⚡</span>
-                        </div>
-                        <div style="font-size: ${sizes.headerTitleFontSize}; font-weight: 950; color: #0f172a; text-transform: uppercase; letter-spacing: -0.5px; line-height: 1.15;">EQUIPOS <span style="background: linear-gradient(135deg, #38b000, #007200); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">SOMOS PÁDEL BCN</span></div>
-                        <div style="width: 100px; height: 4px; background: linear-gradient(90deg, #38b000, #007200); margin: 20px auto 0; border-radius: 4px;"></div>
-                    </div>
-
-                    <!-- Team cards -->
-                    <div style="display: flex; flex-direction: column; gap: ${sizes.rowGap}; flex: 1; justify-content: center;">
-                        ${teamRows}
-                    </div>
-
-                    <!-- Footer -->
-                    <div style="text-align: center; margin-top: ${sizes.footerMarginTop}; padding-top: ${sizes.footerPaddingTop}; border-top: 1px solid #e2e8f0; flex-shrink: 0;">
-                        <div style="font-size: ${sizes.footerLine1FontSize}; font-weight: 800; color: #0f172a;">🎾 ¡Vamos equipo! Apoya a nuestros jugadores 💪🔥</div>
-                        <div style="font-size: ${sizes.footerLine2FontSize}; color: #475569; font-weight: 700; margin-top: 12px;">${dateStr} • somospadel.es</div>
-                    </div>
-                </div>
-            `;
-        }
-
-        /**
-         * Retorna la URL oficial de producción para compartir.
-         */
         getCleanShareUrl() {
-            return 'https://somospadelbarcelona.github.io/Americanas-somospadel/';
+            const loc = window.location;
+            return `${loc.origin}${loc.pathname}`;
         }
 
-        /**
-         * Genera el texto formateado para WhatsApp con los datos reales de la próxima jornada.
-         */
-        getSummaryWhatsAppText(teams) {
-            let text = `🏆 *PRÓXIMA JORNADA – SOMOS PÁDEL BCN* 🏆\n`;
-            text += `🔥 _¡El espectáculo de la Lliga Guinotprunera no se detiene!_ 🔥\n\n`;
-            text += `🎾 Apoya a nuestros equipos y no te pierdas ningún partidazo de esta jornada. ¡A darlo todo en la pista! 💪💥\n\n`;
-            text += `───────────────────\n`;
-            text += `⚔️ *NUESTROS ENFRENTAMIENTOS* ⚔️\n`;
-            text += `───────────────────\n\n`;
+        getSummaryWhatsAppText(teams, mode = null) {
+            const list = (teams && teams.length > 0) ? teams : (this.lastTeams || window.ClubTeamsData || []);
+            const engine = window.MatchdayPosterEngine;
+            const collected = engine
+                ? engine.collectEntries(list, mode || this._posterMode || 'upcoming')
+                : { effectiveMode: 'upcoming', entries: [] };
 
-            teams.forEach(team => {
-                const teamShortName = team.name.replace('SOMOS PÁDEL BCN ', '').replace('SOMOS PÁDEL ', '').toUpperCase();
-                
-                let nextMatch = null;
-                if (team.schedule && team.schedule.length > 0) {
-                    const sortedMatches = [...team.schedule].sort((a, b) => parseInt(a.j) - parseInt(b.j));
-                    const pendingMatches = sortedMatches.filter(m => (m.status === 'pending' || m.status === 'scheduled' || m.status === 'upcoming') && m.opponent !== 'BYE' && !m.opponent.includes('BYE'));
-                    if (pendingMatches.length > 0) {
-                        nextMatch = pendingMatches[0];
-                    }
-                }
+            const isResults = collected.effectiveMode === 'results';
+            let text = isResults
+                ? `🏆 *RESULTADOS DE LIGA — SOMOS PÁDEL BARCELONA*\n🎾 _Lliga GuinotPrunera 2026_\n\n`
+                : `🔥 *CARTELERA OFICIAL — SOMOS PÁDEL BARCELONA*\n🎾 _Lliga GuinotPrunera 2026_\n\n`;
 
-                if (nextMatch) {
-                    const homeAwayIcon = nextMatch.isHome ? '🏠' : '✈️';
-                    const homeAwayLabel = nextMatch.isHome ? 'LOCAL' : 'VISITANTE';
-                    
-                    text += `🟢 *${teamShortName}* (Jornada ${nextMatch.j})\n`;
-                    text += `   🆚 *${nextMatch.opponent}*\n`;
-                    text += `   📅 ${nextMatch.date} ${nextMatch.time ? '• ⏰ ' + nextMatch.time : ''}\n`;
-                    text += `   📍 Club: _${nextMatch.venue}_\n`;
-                    text += `   ${homeAwayIcon} _Jugamos como ${homeAwayLabel}_\n\n`;
+            collected.entries.forEach(({ team, match }) => {
+                const shortT = this.getShortTeamName(team.name);
+                const venue = this.getMatchVenue(match);
+                const locIcon = match.isHome !== false ? '🏠 CASA' : '✈️ FUERA';
+                if (isResults) {
+                    const res = this.getMatchResult(match);
+                    const badge = res.valid ? (res.isWin ? `✅ VICTORIA ${res.displayScore}` : `❌ DERROTA ${res.displayScore}`) : (match.score || 'Final');
+                    text += `• *${shortT}* (J${match.j}): ${badge} vs ${match.opponent}\n`;
                 } else {
-                    text += `⚪ *${teamShortName}*\n`;
-                    text += `   🏁 _Sin partidos programados esta jornada_\n\n`;
+                    text += `• *${shortT}* (J${match.j}) [${locIcon}]\n  🆚 ${match.opponent}\n  📅 ${match.date || 'Por definir'} ${match.time ? '• ' + match.time : ''}\n  📍 ${venue}\n\n`;
                 }
             });
 
-            text += `───────────────────\n`;
-            text += `📢 *¡SÍGUENOS Y COMPARTE!* 📢\n`;
-            text += `───────────────────\n`;
-            text += `📸 Instagram: *@somospadelbarcelona_* ❤️🎾\n\n`;
-            text += `🌐 Marcadores y clasificaciones en tiempo real:\n`;
-            
-            const appUrl = this.getCleanShareUrl();
-            text += `📲 Haz click aquí: ${appUrl}#teams 🚀🔥`;
-            
+            text += `\n💪 ¡AÚPA SOMOS PÁDEL! 🎾🔥\n📲 ${this.getCleanShareUrl()}`;
             return text;
         }
-        /**
-         * 🏆 REVOLUCIONARIO MATCHDAY CENTER • PRÓXIMA JORNADA (FONDO BLANCO & TEXTO EN NEGRO)
-         * Cartelera interactiva de partidos con alto contraste, cartel oficial HD y compartir inteligente.
-         */
+
         openNextMatchesSummaryModal() {
-            const teams = this.lastTeams || [];
-            if (teams.length === 0) {
-                alert("No hay equipos cargados.");
-                return;
-            }
+            const teams = (this.lastTeams && this.lastTeams.length > 0) ? this.lastTeams : (window.ClubTeamsData || []);
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(20);
 
-            // Haptic feedback
-            if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(25);
+            this._posterTab = 'poster'; // 'poster' | 'matches'
+            this._posterFormat = this._posterFormat || 'whatsapp'; // 'whatsapp' | 'story'
+            this._posterTheme = this._posterTheme || 'neon'; // 'neon' | 'light' | 'gold'
+            this._posterMode = this._posterMode || 'upcoming'; // 'upcoming' | 'results'
+            this._posterMatchFilter = 'all'; // 'all' | 'home' | 'away'
+            this._lastPosterResult = null;
 
-            // Extraer partidos de todos los equipos
-            const matchesData = [];
-            teams.forEach(team => {
-                let nextMatch = null;
-                if (team.schedule && team.schedule.length > 0) {
-                    const sortedMatches = [...team.schedule].sort((a, b) => parseInt(a.j) - parseInt(b.j));
-                    const pendingMatches = sortedMatches.filter(m => (m.status === 'pending' || m.status === 'scheduled' || m.status === 'upcoming') && m.opponent !== 'BYE' && !m.opponent.includes('BYE'));
-                    if (pendingMatches.length > 0) {
-                        nextMatch = pendingMatches[0];
-                    }
-                }
-                const teamShortName = team.name.replace('SOMOS PÁDEL BCN ', '').replace('SOMOS PÁDEL ', '').toUpperCase();
-                matchesData.push({
-                    team,
-                    teamShortName,
-                    nextMatch
-                });
-            });
+            const existing = document.getElementById('next-matches-summary-overlay');
+            if (existing) existing.remove();
 
-            const activeMatches = matchesData.filter(m => m.nextMatch !== null);
-            const homeMatches = activeMatches.filter(m => m.nextMatch.isHome);
-            const awayMatches = activeMatches.filter(m => !m.nextMatch.isHome);
-            const restingTeams = matchesData.filter(m => m.nextMatch === null);
-            const whatsAppText = this.getSummaryWhatsAppText(teams);
-
-            // Generar tarjetas de partidos en MODO CLARO (FONDO BLANCO / TEXTO NEGRO DE ALTO CONTRASTE)
-            const matchCardsHTML = activeMatches.map(item => {
-                const { team, teamShortName, nextMatch } = item;
-                const isHome = !!nextMatch.isHome;
-                const opponent = nextMatch.opponent || 'Rival';
-                const venue = nextMatch.venue || 'Club por confirmar';
-                const date = nextMatch.date || 'Fecha por confirmar';
-                const time = nextMatch.time || '';
-                const jornada = nextMatch.j || 'Próx.';
-                const category = team.category || 'Categoría';
-                const group = team.group || team.division || '';
-                const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venue)}`;
-
-                return `
-                    <div class="summary-match-card" data-is-home="${isHome}" style="
-                        background: #ffffff;
-                        border: 1.5px solid #e2e8f0;
-                        border-left: 5px solid ${isHome ? '#16a34a' : '#0284c7'};
-                        border-radius: 20px;
-                        padding: 16px;
-                        display: flex;
-                        flex-direction: column;
-                        gap: 12px;
-                        box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
-                        position: relative;
-                        overflow: hidden;
-                        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-                    ">
-                        <!-- Top status line -->
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <span style="background: #f1f5f9; color: #0f172a; border: 1px solid #e2e8f0; font-size: 0.65rem; font-weight: 900; padding: 4px 9px; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
-                                    ${category}${group ? ' • ' + group : ''}
-                                </span>
-                                <span style="background: #fef08a; color: #854d0e; border: 1px solid #fde047; font-size: 0.65rem; font-weight: 950; padding: 4px 8px; border-radius: 8px;">
-                                    J${jornada}
-                                </span>
-                            </div>
-                            <span style="
-                                background: ${isHome ? '#dcfce7' : '#e0f2fe'};
-                                color: ${isHome ? '#15803d' : '#0369a1'};
-                                border: 1.5px solid ${isHome ? '#86efac' : '#7dd3fc'};
-                                font-size: 0.64rem; font-weight: 950; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;
-                                display: inline-flex; align-items: center; gap: 5px;
-                            ">
-                                <i class="fas ${isHome ? 'fa-home' : 'fa-plane'}"></i>
-                                ${isHome ? 'EN CASA' : 'VISITANTE'}
-                            </span>
-                        </div>
-
-                        <!-- Face-off Duel -->
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #f8fafc; padding: 12px 14px; border-radius: 14px; border: 1.5px solid #e2e8f0;">
-                            <!-- Local / SomosPadel -->
-                            <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
-                                <div style="width: 38px; height: 38px; border-radius: 50%; background: #0f172a; border: 2px solid #ccff00; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
-                                    <img src="img/official_ball_logo.png" style="width: 28px; height: 28px; object-fit: contain;" alt="SomosPadel">
-                                </div>
-                                <div style="min-width: 0;">
-                                    <div style="font-size: 0.6rem; color: #64748b; font-weight: 850; letter-spacing: 0.5px; text-transform: uppercase;">SOMOS PÁDEL</div>
-                                    <div style="font-size: 1.05rem; font-weight: 950; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.3px;">
-                                        ${teamShortName}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- VS Badge -->
-                            <div style="
-                                width: 30px; height: 30px; border-radius: 50%;
-                                background: #0f172a;
-                                border: 1.5px solid #0f172a;
-                                color: #ccff00; font-size: 0.7rem; font-weight: 950;
-                                display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-                                box-shadow: 0 2px 6px rgba(15,23,42,0.25);
-                            ">
-                                VS
-                            </div>
-
-                            <!-- Rival -->
-                            <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex: 1; min-width: 0; text-align: right;">
-                                <div style="min-width: 0;">
-                                    <div style="font-size: 0.6rem; color: #64748b; font-weight: 850; letter-spacing: 0.5px; text-transform: uppercase;">RIVAL</div>
-                                    <div style="font-size: 0.95rem; font-weight: 950; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.2px;">
-                                        ${opponent}
-                                    </div>
-                                </div>
-                                <div style="width: 38px; height: 38px; border-radius: 50%; background: #e2e8f0; border: 1.5px solid #cbd5e1; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #334155; font-size: 0.95rem;">
-                                    <i class="fas fa-shield-alt"></i>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Date, Time & Venue -->
-                        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px;">
-                            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
-                                <div style="display: flex; align-items: center; gap: 6px;">
-                                    <i class="fas fa-calendar-alt" style="color: #16a34a; font-size: 0.85rem;"></i>
-                                    <span style="font-weight: 900; color: #0f172a; font-size: 0.78rem;">${date}</span>
-                                    ${time ? `<span style="color: #94a3b8;">•</span> <i class="fas fa-clock" style="color: #0284c7; font-size: 0.8rem;"></i> <strong style="color: #0284c7; font-size: 0.78rem;">${time}</strong>` : ''}
-                                </div>
-                                <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" style="
-                                    color: #0284c7; text-decoration: none; font-size: 0.68rem; font-weight: 900;
-                                    display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 8px;
-                                    background: #f0f9ff; border: 1px solid #bae6fd; transition: all 0.2s;
-                                " onmouseover="this.style.background='#0284c7'; this.style.color='#ffffff';" onmouseout="this.style.background='#f0f9ff'; this.style.color='#0284c7';">
-                                    <i class="fas fa-directions"></i> Maps
-                                </a>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 6px; color: #334155; font-size: 0.74rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                <i class="fas fa-map-marker-alt" style="color: #dc2626; font-size: 0.8rem; flex-shrink: 0;"></i>
-                                <span style="overflow: hidden; text-overflow: ellipsis;">${venue}</span>
-                            </div>
-                        </div>
-
-                        <!-- Card Action buttons -->
-                        <div style="display: grid; grid-template-columns: 1.5fr 1fr 42px; gap: 8px; margin-top: 4px; padding-top: 8px; border-top: 1.5px solid #f1f5f9;">
-                            <button onclick="window.TeamView.closeNextMatchesSummaryModal(); window.TeamController.openPlayerRsvpModal('${team.id}', '${jornada}');" style="
-                                background: #ccff00; color: #0f172a; border: 1.5px solid #bbf400; padding: 11px 8px; border-radius: 12px;
-                                font-weight: 950; font-size: 0.74rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
-                                box-shadow: 0 4px 12px rgba(187,244,0,0.35); text-transform: uppercase; transition: transform 0.15s;
-                            " onmouseover="this.style.transform='scale(1.02)';" onmouseout="this.style.transform='scale(1)';">
-                                <i class="fas fa-clipboard-check"></i>
-                                <span>RSVP</span>
-                            </button>
-
-                            <button onclick="window.TeamView.jumpToTeamFromModal('${team.id}');" style="
-                                background: #f8fafc; color: #0f172a; border: 1.5px solid #cbd5e1;
-                                padding: 11px 8px; border-radius: 12px; font-weight: 900; font-size: 0.72rem; cursor: pointer;
-                                display: flex; align-items: center; justify-content: center; gap: 5px; transition: all 0.15s;
-                            " onmouseover="this.style.background='#e2e8f0';" onmouseout="this.style.background='#f8fafc';">
-                                <i class="fas fa-shield-alt" style="color: #64748b;"></i>
-                                <span>Equipo</span>
-                            </button>
-
-                            <button onclick="window.TeamView.shareSingleMatchWhatsApp('${team.id}', '${jornada}');" title="Compartir este partido por WhatsApp" style="
-                                background: #25D366; color: white; border: none; border-radius: 12px;
-                                font-size: 1.05rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
-                                transition: transform 0.15s; box-shadow: 0 2px 8px rgba(37,211,102,0.25);
-                            " onmouseover="this.style.transform='scale(1.08)';" onmouseout="this.style.transform='scale(1)';">
-                                <i class="fab fa-whatsapp"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            const restingHTML = restingTeams.length > 0 ? `
-                <div style="background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 16px; padding: 12px 16px; margin-top: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
-                    <div style="display: flex; align-items: center; gap: 8px; font-size: 0.74rem; color: #475569; font-weight: 750;">
-                        <i class="fas fa-bed" style="color: #64748b;"></i>
-                        <span>Equipos con descanso esta jornada:</span>
-                        <strong style="color: #0f172a;">${restingTeams.map(t => t.teamShortName).join(', ')}</strong>
-                    </div>
-                </div>
-            ` : '';
-
-            // Create overlay
             const overlay = document.createElement('div');
             overlay.id = 'next-matches-summary-overlay';
-            overlay.style.cssText = `
-                position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65); z-index: 120000;
-                display: flex; align-items: center; justify-content: center;
-                font-family: 'Outfit', sans-serif; backdrop-filter: blur(20px);
-                -webkit-backdrop-filter: blur(20px); opacity: 0; transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                padding: 12px; box-sizing: border-box; overflow-y: auto;
-            `;
+            overlay.className = 'tp-poster-sheet';
+            document.body.appendChild(overlay);
+            document.body.style.overflow = 'hidden';
+
+            this._renderPosterModal(teams);
+        }
+
+        _renderPosterModal(teams) {
+            const overlay = document.getElementById('next-matches-summary-overlay');
+            if (!overlay) return;
+
+            const list = (teams && teams.length > 0) ? teams : (this.lastTeams || window.ClubTeamsData || []);
+            const engine = window.MatchdayPosterEngine;
+            const collected = engine
+                ? engine.collectEntries(list, this._posterMode)
+                : { effectiveMode: 'upcoming', entries: [] };
+
+            const effectiveMode = collected.effectiveMode;
+            const entries = collected.entries;
+
+            const filteredEntries = entries.filter(e => {
+                if (this._posterMatchFilter === 'home') return e.match.isHome !== false;
+                if (this._posterMatchFilter === 'away') return e.match.isHome === false;
+                return true;
+            });
 
             overlay.innerHTML = `
-                <style>
-                    #summary-modal-container {
-                        background: #ffffff;
-                        border: 2px solid #e2e8f0;
-                        border-radius: 28px;
-                        width: 100%;
-                        max-width: 900px;
-                        display: flex;
-                        flex-direction: column;
-                        padding: 24px;
-                        box-sizing: border-box;
-                        position: relative;
-                        box-shadow: 0 25px 60px rgba(15, 23, 42, 0.25);
-                        transform: scale(0.92);
-                        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                        max-height: 92vh;
-                        overflow-y: auto;
-                        color: #0f172a;
-                    }
-                    .summary-match-card:hover {
-                        border-color: #cbd5e1 !important;
-                        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12) !important;
-                        transform: translateY(-2px);
-                    }
-                    @media (max-width: 768px) {
-                        #summary-modal-container {
-                            padding: 16px !important;
-                            border-radius: 22px !important;
-                            max-height: 95vh !important;
-                        }
-                        #summary-matches-grid {
-                            grid-template-columns: 1fr !important;
-                        }
-                    }
-                </style>
-
-                <div id="summary-modal-container">
-                    <!-- Header -->
-                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px;">
-                        <div>
-                            <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.68rem; font-weight: 900; color: #15803d; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px;">
-                                <span style="width: 8px; height: 8px; border-radius: 50%; background: #16a34a; box-shadow: 0 0 8px rgba(22,163,74,0.5); display: inline-block;"></span>
-                                <span>MATCHDAY CENTER • SOMOSPÁDEL BCN</span>
-                            </div>
-                            <h2 style="color: #0f172a; font-weight: 950; font-size: 1.5rem; margin: 0; letter-spacing: -0.6px; line-height: 1.15;">
-                                Cartelera de la <span style="color: #16a34a;">Próxima Jornada</span>
-                            </h2>
-                            <div style="font-size: 0.75rem; color: #475569; font-weight: 800; margin-top: 5px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                                <span><strong style="color: #0f172a;">${activeMatches.length}</strong> Partidos</span>
-                                <span>•</span>
-                                <span style="color: #15803d;"><strong style="color: #15803d;">${homeMatches.length}</strong> en Casa</span>
-                                <span>•</span>
-                                <span style="color: #0369a1;"><strong style="color: #0369a1;">${awayMatches.length}</strong> a Domicilio</span>
-                            </div>
+                <div class="tp-poster-header">
+                    <div class="tp-sheet-nav" style="margin-bottom:8px;">
+                        <button type="button" class="tp-icon-btn" onclick="window.TeamView.closeNextMatchesSummaryModal()" aria-label="Cerrar">
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+                        <div style="text-align:center;">
+                            <div style="font-size:0.62rem;font-weight:900;color:#ccff00;letter-spacing:0.8px;text-transform:uppercase;">Cartelera Oficial HD</div>
+                            <div style="font-size:1.05rem;font-weight:950;color:#ffffff;">${effectiveMode === 'upcoming' ? 'Próxima Jornada' : 'Últimos Resultados'}</div>
                         </div>
-
-                        <!-- Close button -->
-                        <button onclick="window.TeamView.closeNextMatchesSummaryModal()" style="
-                            background: #f1f5f9; border: 1.5px solid #cbd5e1; color: #0f172a;
-                            width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-                            cursor: pointer; transition: all 0.2s; font-size: 1.05rem; flex-shrink: 0;
-                        " onmouseover="this.style.background='#fee2e2'; this.style.color='#dc2626'; this.style.borderColor='#fca5a5';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#0f172a'; this.style.borderColor='#cbd5e1';">
-                            <i class="fas fa-times"></i>
+                        <button type="button" class="tp-icon-btn" onclick="window.TeamView.downloadSummaryImage('summary-dl-btn')" aria-label="Descargar PNG">
+                            <i class="fas fa-download" style="color:#ccff00;"></i>
                         </button>
                     </div>
 
-                    <!-- Segmented tab selector -->
-                    <div style="display: flex; gap: 6px; background: #f1f5f9; padding: 5px; border-radius: 16px; border: 1.5px solid #e2e8f0; margin-bottom: 16px;">
-                        <button id="summary-nav-btn-matches" onclick="window.TeamView.switchSummaryTab('matches')" style="
-                            flex: 1; padding: 10px 8px; border-radius: 12px; border: none; font-weight: 950; font-size: 0.74rem; cursor: pointer;
-                            display: flex; align-items: center; justify-content: center; gap: 6px; background: #0f172a; color: #ccff00; box-shadow: 0 4px 12px rgba(15,23,42,0.18); transition: all 0.2s;
-                        ">
-                            <i class="fas fa-table-tennis"></i>
-                            <span>PARTIDOS (${activeMatches.length})</span>
+                    <div class="tp-sheet-tabs">
+                        <button type="button" class="tp-sheet-tab ${this._posterTab === 'poster' ? 'active' : ''}" onclick="window.TeamView.switchSummaryTab('poster')">
+                            <i class="fas fa-image"></i> Cartel HD
                         </button>
-                        <button id="summary-nav-btn-flyer" onclick="window.TeamView.switchSummaryTab('flyer')" style="
-                            flex: 1; padding: 10px 8px; border-radius: 12px; border: none; font-weight: 900; font-size: 0.74rem; cursor: pointer;
-                            display: flex; align-items: center; justify-content: center; gap: 6px; background: transparent; color: #475569; transition: all 0.2s;
-                        ">
-                            <i class="fas fa-image"></i>
-                            <span>CARTEL HD</span>
-                        </button>
-                        <button id="summary-nav-btn-whatsapp" onclick="window.TeamView.switchSummaryTab('whatsapp')" style="
-                            flex: 1; padding: 10px 8px; border-radius: 12px; border: none; font-weight: 900; font-size: 0.74rem; cursor: pointer;
-                            display: flex; align-items: center; justify-content: center; gap: 6px; background: transparent; color: #475569; transition: all 0.2s;
-                        ">
-                            <i class="fab fa-whatsapp"></i>
-                            <span>WHATSAPP</span>
+                        <button type="button" class="tp-sheet-tab ${this._posterTab === 'matches' ? 'active' : ''}" onclick="window.TeamView.switchSummaryTab('matches')">
+                            <i class="fas fa-list-ul"></i> Partidos (${entries.length})
                         </button>
                     </div>
+                </div>
 
-                    <!-- ──────────────────────────────────────────────────────────── -->
-                    <!-- TAB 1: PARTIDOS (CARDS INTERACTIVAS - MODO CLARO)             -->
-                    <!-- ──────────────────────────────────────────────────────────── -->
-                    <div id="summary-panel-matches" style="display: block;">
-                        <!-- Filter Bar -->
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;">
-                            <div style="display: flex; gap: 6px;">
-                                <button id="summary-filter-all" onclick="window.TeamView.filterSummaryMatches('all')" style="
-                                    padding: 7px 14px; border-radius: 10px; border: 1.5px solid #0f172a; background: #0f172a;
-                                    color: #ffffff; font-weight: 950; font-size: 0.7rem; cursor: pointer; transition: all 0.2s;
-                                ">
-                                    Todos (${activeMatches.length})
+                <div class="tp-poster-body">
+                    ${this._posterTab === 'poster' ? `
+                        <!-- Controles rápidos de diseño -->
+                        <div class="tp-poster-controls">
+                            <div class="tp-poster-row">
+                                <button type="button" class="tp-poster-pill ${this._posterFormat === 'whatsapp' ? 'active' : ''}" onclick="window.TeamView.setPosterOption('format','whatsapp')">
+                                    <i class="fab fa-whatsapp"></i> WhatsApp 4:5
                                 </button>
-                                <button id="summary-filter-home" onclick="window.TeamView.filterSummaryMatches('home')" style="
-                                    padding: 7px 14px; border-radius: 10px; border: 1.5px solid #cbd5e1; background: #ffffff;
-                                    color: #334155; font-weight: 900; font-size: 0.7rem; cursor: pointer; transition: all 0.2s;
-                                ">
-                                    🏠 Casa (${homeMatches.length})
-                                </button>
-                                <button id="summary-filter-away" onclick="window.TeamView.filterSummaryMatches('away')" style="
-                                    padding: 7px 14px; border-radius: 10px; border: 1.5px solid #cbd5e1; background: #ffffff;
-                                    color: #334155; font-weight: 900; font-size: 0.7rem; cursor: pointer; transition: all 0.2s;
-                                ">
-                                    ✈️ Fuera (${awayMatches.length})
+                                <button type="button" class="tp-poster-pill ${this._posterFormat === 'story' ? 'active' : ''}" onclick="window.TeamView.setPosterOption('format','story')">
+                                    <i class="fab fa-instagram"></i> Stories 9:16
                                 </button>
                             </div>
-
-                            <button onclick="window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(window.TeamView.getSummaryWhatsAppText(window.TeamView.lastTeams || [])), '_blank')" style="
-                                background: #25D366; color: white; border: none; padding: 8px 14px; border-radius: 10px;
-                                font-size: 0.72rem; font-weight: 950; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(37,211,102,0.25);
-                            ">
-                                <i class="fab fa-whatsapp"></i> Compartir Todo
-                            </button>
-                        </div>
-
-                        <!-- Matches Grid -->
-                        <div id="summary-matches-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 14px;">
-                            ${matchCardsHTML}
-                        </div>
-                        ${restingHTML}
-                    </div>
-
-                    <!-- ──────────────────────────────────────────────────────────── -->
-                    <!-- TAB 2: CARTEL OFICIAL HD                                     -->
-                    <!-- ──────────────────────────────────────────────────────────── -->
-                    <div id="summary-panel-flyer" style="display: none;">
-                        <!-- Actions bar -->
-                        <div style="display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;">
-                            <button id="summary-dl-btn" onclick="window.TeamView.downloadSummaryImage('summary-dl-btn')" style="
-                                flex: 1.5; min-width: 220px; background: #0f172a; color: #ffffff; border: none; padding: 14px; border-radius: 14px;
-                                font-weight: 950; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
-                                box-shadow: 0 4px 14px rgba(15,23,42,0.2); text-transform: uppercase; transition: all 0.15s;
-                            " onmouseover="this.style.background='#1e293b'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#0f172a'; this.style.transform='none';">
-                                <i class="fas fa-download" style="color: #38bdf8;"></i>
-                                <span>DESCARGAR FOTO EN ALTA DEFINICIÓN (PNG)</span>
-                            </button>
-
-                            <button id="summary-copy-img-btn" onclick="window.TeamView.copySummaryImageToClipboard('summary-copy-img-btn')" style="
-                                flex: 1; min-width: 160px; background: #ffffff; color: #0f172a; border: 1.5px solid #cbd5e1;
-                                padding: 14px; border-radius: 14px; font-weight: 900; font-size: 0.8rem; cursor: pointer;
-                                display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;
-                            " onmouseover="this.style.background='#f1f5f9';" onmouseout="this.style.background='#ffffff';">
-                                <i class="far fa-clipboard" style="color: #0f172a;"></i>
-                                <span>COPIAR IMAGEN</span>
-                            </button>
-                        </div>
-
-                        <!-- Preview Column -->
-                        <div id="summary-preview-column" style="
-                            display: flex; flex-direction: column; align-items: center; justify-content: center;
-                            background: #f1f5f9; border: 1.5px dashed #cbd5e1; border-radius: 20px;
-                            padding: 24px 12px; position: relative; overflow: hidden; min-height: 480px; box-shadow: inset 0 2px 10px rgba(0,0,0,0.03);
-                        ">
-                            <!-- Container Sizer con posición relativa fija para albergar el lienzo escalado -->
-                            <div id="summary-preview-sizer" style="position: relative; width: 270px; height: 480px; overflow: visible; margin: 0 auto; transition: width 0.2s ease, height 0.2s ease;">
-                                <div id="summary-preview-scale-wrapper" style="position: absolute; top: 0; left: 0; transform-origin: 0 0; width: 1080px; height: 1920px; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 50px rgba(15,23,42,0.18); background: #ffffff;">
-                                    <div id="summary-preview-content" style="width: 1080px; height: 1920px;"></div>
-                                </div>
+                            <div class="tp-poster-row">
+                                <button type="button" class="tp-poster-pill ${this._posterTheme === 'neon' ? 'active' : ''}" onclick="window.TeamView.setPosterOption('theme','neon')">
+                                    ⚡ Neón Pro
+                                </button>
+                                <button type="button" class="tp-poster-pill ${this._posterTheme === 'light' ? 'active' : ''}" onclick="window.TeamView.setPosterOption('theme','light')">
+                                    ☀️ Blanco Club
+                                </button>
+                                <button type="button" class="tp-poster-pill ${this._posterTheme === 'gold' ? 'active' : ''}" onclick="window.TeamView.setPosterOption('theme','gold')">
+                                    🏆 Oro Élite
+                                </button>
                             </div>
-                            <div id="summary-helper-text" style="position: absolute; bottom: 12px; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 30px; font-size: 0.65rem; color: #ffffff; font-weight: 800; pointer-events: none; display: flex; align-items: center; gap: 6px; z-index: 10;">
-                                <i class="fas fa-info-circle" style="color: #38bdf8;"></i> FORMATO OFICIAL STORY / CARTEL (9:16)
+                            <div class="tp-poster-row">
+                                <button type="button" class="tp-poster-pill ${effectiveMode === 'upcoming' ? 'active' : ''}" onclick="window.TeamView.setPosterOption('mode','upcoming')">
+                                    📅 Próxima Jornada
+                                </button>
+                                <button type="button" class="tp-poster-pill ${effectiveMode === 'results' ? 'active' : ''}" onclick="window.TeamView.setPosterOption('mode','results')">
+                                    🏅 Últimos Resultados
+                                </button>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- ──────────────────────────────────────────────────────────── -->
-                    <!-- TAB 3: WHATSAPP INTELIGENTE                                   -->
-                    <!-- ──────────────────────────────────────────────────────────── -->
-                    <div id="summary-panel-whatsapp" style="display: none;">
-                        <div style="max-width: 620px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px;">
-                            <!-- Header simulation -->
-                            <div style="background: #075e54; color: white; border-radius: 18px 18px 0 0; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between;">
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <div style="width: 34px; height: 34px; border-radius: 50%; background: #000; border: 1px solid #ccff00; display: flex; align-items: center; justify-content: center;">
-                                        <img src="img/official_ball_logo.png" style="width: 24px; height: 24px; object-fit: contain;">
+                        <!-- Previsualización REAL de la imagen HD -->
+                        <div class="tp-poster-stage" id="tp-poster-stage">
+                            <div style="padding:40px 20px;text-align:center;color:#94a3b8;font-size:0.82rem;font-weight:800;">
+                                <i class="fas fa-circle-notch fa-spin" style="font-size:1.5rem;color:#ccff00;margin-bottom:10px;display:block;"></i>
+                                Renderizando cartel en Alta Definición...
+                            </div>
+                        </div>
+
+                        <div id="tp-poster-feedback" style="display:none;margin-top:10px;padding:10px 12px;border-radius:12px;background:rgba(16,185,129,0.18);border:1px solid rgba(52,211,153,0.4);color:#6ee7b7;font-size:0.75rem;font-weight:800;text-align:center;"></div>
+                    ` : `
+                        <!-- Pestaña Partidos Interactivos -->
+                        <div class="tp-poster-row" style="margin-bottom:12px;">
+                            <button type="button" class="tp-poster-pill ${this._posterMatchFilter === 'all' ? 'active' : ''}" onclick="window.TeamView.filterSummaryMatches('all')">Todos (${entries.length})</button>
+                            <button type="button" class="tp-poster-pill ${this._posterMatchFilter === 'home' ? 'active' : ''}" onclick="window.TeamView.filterSummaryMatches('home')">🏠 Casa</button>
+                            <button type="button" class="tp-poster-pill ${this._posterMatchFilter === 'away' ? 'active' : ''}" onclick="window.TeamView.filterSummaryMatches('away')">✈️ Fuera</button>
+                        </div>
+
+                        ${filteredEntries.map(({ team, match, type }) => {
+                            const isHome = match.isHome !== false;
+                            const venue = this.getMatchVenue(match);
+                            const safeVenue = venue.replace(/'/g, "\\'");
+                            const res = type === 'results' ? this.getMatchResult(match) : { valid: false };
+                            return `
+                                <div class="tp-poster-match-card">
+                                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
+                                        <span style="font-size:0.8rem;font-weight:950;color:#ccff00;">${this.getShortTeamName(team.name)} • J${match.j}</span>
+                                        ${res.valid
+                                            ? `<span class="tp-loc-pill ${res.isWin ? 'home' : 'away'}" style="${res.isWin ? '' : 'background:rgba(239,68,68,0.2);color:#fca5a5;border-color:rgba(239,68,68,0.4);'}">${res.isWin ? 'VICTORIA' : 'DERROTA'} ${res.displayScore}</span>`
+                                            : `<span class="tp-loc-pill ${isHome ? 'home' : 'away'}">${isHome ? '🏠 Casa' : '✈️ Fuera'}</span>`
+                                        }
                                     </div>
-                                    <div>
-                                        <div style="font-weight: 900; font-size: 0.85rem;">SomosPádel BCN • Cartelera</div>
-                                        <div style="font-size: 0.65rem; color: #a7f3d0;">Lliga Guinotprunera Oficial</div>
+                                    <div style="font-size:1rem;font-weight:950;color:#ffffff;margin-bottom:6px;">vs ${match.opponent}</div>
+                                    <div style="font-size:0.74rem;color:#cbd5e1;font-weight:700;margin-bottom:10px;">
+                                        <div><i class="far fa-calendar-alt" style="color:#ccff00;width:16px;"></i> ${match.date || 'Por definir'} ${match.time ? '• ' + match.time : ''}</div>
+                                        <div style="margin-top:2px;"><i class="fas fa-map-marker-alt" style="color:#38bdf8;width:16px;"></i> ${venue}</div>
+                                    </div>
+                                    <div style="display:flex;gap:6px;">
+                                        <button type="button" class="tp-poster-pill active" style="flex:1;" onclick="window.TeamView.closeNextMatchesSummaryModal(); window.TeamController.openPlayerRsvpModal('${team.id}', '${match.j}')">
+                                            <i class="fas fa-check-circle"></i> RSVP
+                                        </button>
+                                        <button type="button" class="tp-poster-pill" onclick="window.TeamView.openMapsForVenue('${safeVenue}')">
+                                            <i class="fas fa-directions"></i> Mapa
+                                        </button>
+                                        <button type="button" class="tp-poster-pill" onclick="window.TeamView.jumpToTeamFromModal('${team.id}')">
+                                            <i class="fas fa-shield-alt"></i> Ficha
+                                        </button>
+                                        <button type="button" class="tp-poster-pill" style="background:rgba(37,211,102,0.2);border-color:#25D366;color:#4ade80;" onclick="window.TeamView.shareSingleMatchWhatsApp('${team.id}', '${match.j}')">
+                                            <i class="fab fa-whatsapp"></i>
+                                        </button>
                                     </div>
                                 </div>
-                                <i class="fab fa-whatsapp" style="font-size: 1.5rem; color: #25D366;"></i>
-                            </div>
+                            `;
+                        }).join('')}
+                    `}
+                </div>
 
-                            <!-- WhatsApp Message Preview (Light mode authentic bubble) -->
-                            <div style="background: #efeae2; border-radius: 0 0 18px 18px; padding: 16px; border: 1.5px solid #e2e8f0; border-top: none; max-height: 320px; overflow-y: auto;">
-                                <div style="background: #d9fdd3; color: #111b21; border-radius: 12px 12px 12px 2px; padding: 14px 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 0.8rem; line-height: 1.55; white-space: pre-wrap; word-break: break-word; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #c1ecc0;">${whatsAppText}</div>
-                            </div>
-
-                            <!-- Actions -->
-                            <button onclick="window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(window.TeamView.getSummaryWhatsAppText(window.TeamView.lastTeams || [])), '_blank')" style="
-                                background: #25D366; color: white; border: none; padding: 16px; border-radius: 16px;
-                                font-weight: 950; font-size: 0.92rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
-                                box-shadow: 0 8px 24px rgba(37,211,102,0.3); text-transform: uppercase; transition: transform 0.15s;
-                            " onmouseover="this.style.transform='scale(1.02)';" onmouseout="this.style.transform='scale(1)';">
-                                <i class="fab fa-whatsapp" style="font-size: 1.3rem;"></i>
-                                <span>ABRIR EN WHATSAPP Y ENVIAR MENSAJE</span>
-                            </button>
-
-                            <button id="summary-copy-txt-btn" onclick="window.TeamView.copySummaryToClipboard()" style="
-                                background: #ffffff; color: #0f172a; border: 1.5px solid #cbd5e1;
-                                padding: 12px; border-radius: 14px; font-weight: 900; font-size: 0.78rem; cursor: pointer;
-                                display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;
-                            " onmouseover="this.style.background='#f1f5f9';" onmouseout="this.style.background='#ffffff';">
-                                <i class="far fa-copy"></i>
-                                <span>COPIAR TEXTO FORMATEADO</span>
-                            </button>
-                        </div>
+                <div class="tp-poster-footer">
+                    <button type="button" id="summary-wa-img-btn" class="tp-poster-btn-wa" onclick="window.TeamView.shareSummaryWhatsAppImage('summary-wa-img-btn')">
+                        <i class="fab fa-whatsapp" style="font-size:1.25rem;"></i>
+                        <span>COMPARTIR EN WHATSAPP CON IMAGEN HD</span>
+                    </button>
+                    <div class="tp-poster-sub-actions">
+                        <button type="button" id="summary-dl-btn" class="tp-poster-btn-dl" onclick="window.TeamView.downloadSummaryImage('summary-dl-btn')">
+                            <i class="fas fa-download"></i> <span>DESCARGAR PNG HD</span>
+                        </button>
+                        <button type="button" id="summary-copy-txt-btn" class="tp-poster-btn-copy" onclick="window.TeamView.copySummaryToClipboard()">
+                            <i class="far fa-copy"></i> <span>COPIAR TEXTO</span>
+                        </button>
                     </div>
                 </div>
             `;
 
-            document.body.appendChild(overlay);
-
-            // Renderizar flyer cromo en preview column
-            const previewContent = document.getElementById('summary-preview-content');
-            if (previewContent) {
-                previewContent.innerHTML = this.getNextMatchesSummaryStoryHTML(teams, false);
+            if (this._posterTab === 'poster') {
+                this._generatePosterPreview(list);
             }
-
-            // Escala responsiva
-            this.adjustSummaryPreviewScale();
-            this._boundAdjustSummaryScale = () => this.adjustSummaryPreviewScale();
-            window.addEventListener('resize', this._boundAdjustSummaryScale);
-
-            // Animación de entrada
-            setTimeout(() => {
-                overlay.style.opacity = '1';
-                const container = document.getElementById('summary-modal-container');
-                if (container) container.style.transform = 'scale(1)';
-            }, 50);
         }
 
-        /**
-         * Alterna entre pestañas del modal de resumen (Partidos, Cartel HD, WhatsApp).
-         */
+        async _generatePosterPreview(teams) {
+            const stage = document.getElementById('tp-poster-stage');
+            if (!stage || !window.MatchdayPosterEngine) return;
+
+            try {
+                const res = await window.MatchdayPosterEngine.renderPoster(teams, {
+                    format: this._posterFormat,
+                    theme: this._posterTheme,
+                    mode: this._posterMode
+                });
+                this._lastPosterResult = res;
+
+                stage.innerHTML = `
+                    <img src="${res.dataUrl}" alt="Cartelera Oficial SomosPádel" class="tp-poster-img">
+                    <div style="margin-top:8px;font-size:0.68rem;color:#94a3b8;font-weight:750;">
+                        Resolución real: ${res.width}×${res.height}px PNG HD • ${res.count} equipos
+                    </div>
+                `;
+            } catch (err) {
+                console.error('Error generando cartel HD:', err);
+                stage.innerHTML = `<div style="padding:30px;color:#f87171;font-weight:800;text-align:center;">No se pudo renderizar el cartel. Inténtalo de nuevo.</div>`;
+            }
+        }
+
+        setPosterOption(key, value) {
+            if (key === 'format') this._posterFormat = value;
+            if (key === 'theme') this._posterTheme = value;
+            if (key === 'mode') this._posterMode = value;
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(12);
+            this._renderPosterModal(this.lastTeams);
+        }
+
         switchSummaryTab(tabName) {
-            const tabs = ['matches', 'flyer', 'whatsapp'];
-            tabs.forEach(t => {
-                const btn = document.getElementById(`summary-nav-btn-${t}`);
-                const panel = document.getElementById(`summary-panel-${t}`);
-                if (btn) {
-                    if (t === tabName) {
-                        btn.style.background = '#0f172a';
-                        btn.style.color = '#ccff00';
-                        btn.style.boxShadow = '0 4px 12px rgba(15,23,42,0.18)';
-                    } else {
-                        btn.style.background = 'transparent';
-                        btn.style.color = '#475569';
-                        btn.style.boxShadow = 'none';
-                    }
-                }
-                if (panel) {
-                    panel.style.display = (t === tabName) ? 'block' : 'none';
-                }
-            });
-
-            if (tabName === 'flyer') {
-                const previewContent = document.getElementById('summary-preview-content');
-                if (previewContent && (!previewContent.innerHTML || previewContent.innerHTML.trim() === '')) {
-                    const teams = (this.lastTeams && this.lastTeams.length > 0) ? this.lastTeams : (window.ClubTeamsData || []);
-                    previewContent.innerHTML = this.getNextMatchesSummaryStoryHTML(teams, false);
-                }
-                this.adjustSummaryPreviewScale();
-                requestAnimationFrame(() => this.adjustSummaryPreviewScale());
-                setTimeout(() => this.adjustSummaryPreviewScale(), 80);
-            }
+            this._posterTab = tabName;
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(12);
+            this._renderPosterModal(this.lastTeams);
         }
 
-        /**
-         * Filtra los partidos de la cartelera entre Todos, En Casa y Fuera.
-         */
         filterSummaryMatches(filterType) {
-            const filterBtns = ['all', 'home', 'away'];
-            filterBtns.forEach(f => {
-                const btn = document.getElementById(`summary-filter-${f}`);
-                if (btn) {
-                    if (f === filterType) {
-                        btn.style.background = '#0f172a';
-                        btn.style.color = '#ffffff';
-                        btn.style.borderColor = '#0f172a';
-                    } else {
-                        btn.style.background = '#ffffff';
-                        btn.style.color = '#334155';
-                        btn.style.borderColor = '#cbd5e1';
-                    }
-                }
-            });
-
-            const cards = document.querySelectorAll('.summary-match-card');
-            cards.forEach(c => {
-                const isHome = c.getAttribute('data-is-home') === 'true';
-                if (filterType === 'all') {
-                    c.style.display = 'flex';
-                } else if (filterType === 'home') {
-                    c.style.display = isHome ? 'flex' : 'none';
-                } else if (filterType === 'away') {
-                    c.style.display = !isHome ? 'flex' : 'none';
-                }
-            });
+            this._posterMatchFilter = filterType;
+            this._renderPosterModal(this.lastTeams);
         }
 
-
-        /**
-         * Salta directamente a la ficha del equipo en el listado principal y cierra el modal.
-         */
         jumpToTeamFromModal(teamId) {
             this.closeNextMatchesSummaryModal();
-            setTimeout(() => {
-                const el = document.getElementById(`team-${teamId}`);
-                if (el) {
-                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    el.style.transition = 'box-shadow 0.3s, transform 0.3s';
-                    el.style.boxShadow = '0 0 0 4px #ccff00, 0 12px 30px rgba(204,255,0,0.35)';
-                    el.style.transform = 'scale(1.02)';
-                    setTimeout(() => {
-                        el.style.boxShadow = '';
-                        el.style.transform = '';
-                    }, 2200);
-                }
-            }, 360);
+            this.openTeamSheet(teamId, 'resumen');
         }
 
-        /**
-         * Comparte un partido individual por WhatsApp para el grupo del equipo.
-         */
         shareSingleMatchWhatsApp(teamId, jNum) {
-            const team = (this.lastTeams || []).find(t => t.id === teamId);
+            const teams = (this.lastTeams && this.lastTeams.length > 0) ? this.lastTeams : (window.ClubTeamsData || []);
+            const team = teams.find(t => t.id === teamId);
             if (!team) return;
-            const match = (team.schedule || []).find(m => String(m.j) === String(jNum)) || {};
-            const teamShortName = team.name.replace('SOMOS PÁDEL BCN ', '').replace('SOMOS PÁDEL ', '').toUpperCase();
-            const isHome = !!match.isHome;
-            const homeAwayText = isHome ? '🏠 JUGAMOS EN CASA' : '✈️ JUGAMOS COMO VISITANTE';
-
-            let text = `🎾 *PARTIDAZO SOMOS PÁDEL BCN* 🎾\n\n`;
-            text += `🛡️ *${teamShortName}* (Jornada ${match.j || jNum})\n`;
-            text += `⚔️ *vs ${match.opponent || 'Rival'}*\n`;
-            text += `📅 *Fecha:* ${match.date || 'Por definir'}${match.time ? ' • ⏰ ' + match.time : ''}\n`;
-            text += `📍 *Club:* ${match.venue || 'Club por confirmar'}\n`;
-            text += `${homeAwayText}\n\n`;
-            text += `¡A darlo todo en la pista! 💪🔥\n`;
-            text += `📲 App Oficial: https://somospadelbarcelona.github.io/Americanas-somospadel/#teams`;
-
-            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
-        }
-
-
-        /**
-         * Asegura la carga asíncrona de html2canvas con soporte y fallback.
-         */
-        async ensureHtml2Canvas() {
-            if (typeof window.html2canvas === 'function') {
-                return window.html2canvas;
-            }
-            return new Promise((resolve, reject) => {
-                const script = document.createElement('script');
-                script.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
-                script.onload = () => resolve(window.html2canvas);
-                script.onerror = () => {
-                    const fallback = document.createElement('script');
-                    fallback.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-                    fallback.onload = () => resolve(window.html2canvas);
-                    fallback.onerror = () => reject(new Error('No se pudo cargar la librería html2canvas'));
-                    document.head.appendChild(fallback);
-                };
-                document.head.appendChild(script);
-            });
-        }
-
-        adjustSummaryPreviewScale() {
-            const previewColumn = document.getElementById('summary-preview-column');
-            const scaleWrapper = document.getElementById('summary-preview-scale-wrapper');
-            const sizer = document.getElementById('summary-preview-sizer');
-            if (!previewColumn || !scaleWrapper || !sizer) return;
-
-            const padding = 24;
-            const containerWidth = previewColumn.clientWidth - padding;
-            if (containerWidth <= 0) return;
-
-            const isMobile = window.innerWidth <= 768;
-            const maxAvailableHeight = isMobile 
-                ? Math.min(window.innerHeight * 0.48, 440) 
-                : Math.min(window.innerHeight * 0.68, 640);
-
-            const cardWidth = 1080;
-            const cardHeight = 1920;
-
-            const scaleX = containerWidth / cardWidth;
-            const scaleY = maxAvailableHeight / cardHeight;
-            const finalScale = Math.min(scaleX, scaleY);
-
-            scaleWrapper.style.transform = `scale(${finalScale})`;
-            sizer.style.width = `${Math.round(cardWidth * finalScale)}px`;
-            sizer.style.height = `${Math.round(cardHeight * finalScale)}px`;
+            const match = (team.schedule || []).find(m => String(m.j) === String(jNum));
+            if (!match) return;
+            const venue = this.getMatchVenue(match);
+            const locTxt = match.isHome !== false ? '🏠 CASA' : '✈️ FUERA';
+            const text = `🎾 *${team.name}* • Jornada ${match.j} (${locTxt})\n🆚 ${match.opponent}\n📅 ${match.date || 'Por definir'} • ${match.time || 'TBD'}\n📍 ${venue}\n\n💪 ¡Aúpa Somos Pádel!\n📲 ${this.getCleanShareUrl()}`;
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
         }
 
         closeNextMatchesSummaryModal() {
             const overlay = document.getElementById('next-matches-summary-overlay');
             if (overlay) {
-                if (this._boundAdjustSummaryScale) {
-                    window.removeEventListener('resize', this._boundAdjustSummaryScale);
+                overlay.remove();
+            }
+            document.body.style.overflow = '';
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(10);
+        }
+
+        async _ensurePosterReady() {
+            if (this._lastPosterResult && this._lastPosterResult.dataUrl) {
+                return this._lastPosterResult;
+            }
+            const teams = (this.lastTeams && this.lastTeams.length > 0) ? this.lastTeams : (window.ClubTeamsData || []);
+            const res = await window.MatchdayPosterEngine.renderPoster(teams, {
+                format: this._posterFormat || 'whatsapp',
+                theme: this._posterTheme || 'neon',
+                mode: this._posterMode || 'upcoming'
+            });
+            this._lastPosterResult = res;
+            return res;
+        }
+
+        _showPosterFeedback(msg) {
+            const fb = document.getElementById('tp-poster-feedback');
+            if (!fb) return;
+            fb.textContent = msg;
+            fb.style.display = 'block';
+            setTimeout(() => { fb.style.display = 'none'; }, 4500);
+        }
+
+        async shareSummaryWhatsAppImage(btnId) {
+            const btn = document.getElementById(btnId);
+            const origHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> <span>PREPARANDO IMAGEN HD...</span>`;
+            }
+
+            try {
+                const teams = (this.lastTeams && this.lastTeams.length > 0) ? this.lastTeams : (window.ClubTeamsData || []);
+                const poster = await this._ensurePosterReady();
+                const text = this.getSummaryWhatsAppText(teams, poster.effectiveMode);
+                const outcome = await window.MatchdayPosterEngine.shareImageWithWhatsApp(
+                    poster.blob,
+                    poster.dataUrl,
+                    poster.filename,
+                    text
+                );
+
+                if (outcome.method === 'native_share_file') {
+                    this._showPosterFeedback('✅ Imagen HD lista para enviar en WhatsApp.');
+                } else if (outcome.method === 'fallback_download_whatsapp') {
+                    this._showPosterFeedback(outcome.copiedImg
+                        ? '✅ Imagen HD descargada y copiada. Pégala (Ctrl+V) o adjúntala en WhatsApp.'
+                        : '✅ Imagen HD descargada. Adjúntala en el chat de WhatsApp que se ha abierto.');
                 }
-                overlay.style.opacity = '0';
-                const container = document.getElementById('summary-modal-container');
-                if (container) container.style.transform = 'scale(0.9)';
-                setTimeout(() => overlay.remove(), 350);
+            } catch (err) {
+                console.error('Error compartiendo imagen WhatsApp:', err);
+                this._showPosterFeedback('⚠️ No se pudo compartir automáticamente. Pulsa "Descargar PNG HD".');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = origHtml;
+                }
+            }
+        }
+
+        async downloadSummaryImage(btnId) {
+            const btn = document.getElementById(btnId);
+            const origHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> <span>GENERANDO...</span>`;
+            }
+
+            try {
+                const poster = await this._ensurePosterReady();
+                window.MatchdayPosterEngine.triggerDownload(poster.blob, poster.dataUrl, poster.filename);
+                this._showPosterFeedback(`✅ Cartel guardado en alta definición (${poster.width}×${poster.height}px).`);
+
+                if (btn) {
+                    btn.innerHTML = `<i class="fas fa-check"></i> <span>¡GUARDADA!</span>`;
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.innerHTML = origHtml;
+                    }, 2200);
+                }
+            } catch (err) {
+                console.error('Error descargando cartel HD:', err);
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = origHtml;
+                }
             }
         }
 
         async copySummaryToClipboard() {
             const btn = document.getElementById('summary-copy-txt-btn');
             const teams = (this.lastTeams && this.lastTeams.length > 0) ? this.lastTeams : (window.ClubTeamsData || []);
-            const text = this.getSummaryWhatsAppText(teams);
-
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> COPIANDO...`;
-            }
+            const text = this.getSummaryWhatsAppText(teams, this._posterMode);
 
             try {
                 await navigator.clipboard.writeText(text);
+                this._showPosterFeedback('✅ Texto de la jornada copiado al portapapeles.');
                 if (btn) {
-                    btn.innerHTML = `<i class="fas fa-check"></i> ¡TEXTO COPIADO!`;
-                    btn.style.borderColor = '#15803d';
-                    btn.style.color = '#15803d';
-                    setTimeout(() => {
-                        btn.disabled = false;
-                        btn.style.borderColor = 'rgba(255,255,255,0.1)';
-                        btn.style.color = '#cbd5e1';
-                        btn.innerHTML = `<i class="far fa-copy" style="color: #94a3b8;"></i> COPIAR TEXTO`;
-                    }, 2500);
+                    const orig = btn.innerHTML;
+                    btn.innerHTML = `<i class="fas fa-check"></i> <span>¡COPIADO!</span>`;
+                    setTimeout(() => { btn.innerHTML = orig; }, 2200);
                 }
             } catch (err) {
-                console.error("Error copying text:", err);
-                alert("No se pudo copiar el texto automáticamente.");
-                if (btn) {
-                    btn.disabled = false;
-                    btn.style.borderColor = 'rgba(255,255,255,0.1)';
-                    btn.style.color = '#cbd5e1';
-                    btn.innerHTML = `<i class="far fa-copy" style="color: #94a3b8;"></i> COPIAR TEXTO`;
-                }
+                console.error('Error copiando texto:', err);
             }
         }
 
-        /**
-         * Descarga la cartelera de la próxima jornada como imagen PNG en alta calidad.
-         */
-        async downloadSummaryImage(btnId) {
-            const btn = document.getElementById(btnId);
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> GENERANDO...`;
-            }
-
-            const teams = (this.lastTeams && this.lastTeams.length > 0) ? this.lastTeams : (window.ClubTeamsData || []);
-
-            try {
-                const h2c = await this.ensureHtml2Canvas();
-
-                // Render a full 1080x1920 container off-screen for capture
-                const container = document.createElement('div');
-                container.style.cssText = "position: fixed; top: -9999px; left: -9999px; width: 1080px; height: 1920px; overflow: hidden; z-index: -9999;";
-                container.innerHTML = this.getNextMatchesSummaryStoryHTML(teams, true);
-                document.body.appendChild(container);
-
-                // Esperar a que carguen imágenes
-                const imgs = Array.from(container.querySelectorAll('img'));
-                await Promise.all(imgs.map(img => {
-                    if (img.complete) return Promise.resolve();
-                    return new Promise(r => { img.onload = r; img.onerror = r; });
-                }));
-                await new Promise(resolve => setTimeout(resolve, 300));
-
-                const canvas = await h2c(container, {
-                    scale: 2,
-                    useCORS: true,
-                    allowTaint: false,
-                    backgroundColor: '#ffffff',
-                    logging: false
-                });
-
-                document.body.removeChild(container);
-
-                const dataUrl = canvas.toDataURL('image/png', 1.0);
-                const link = document.createElement('a');
-                link.download = `SomosPadel_ProximaJornada_${new Date().toISOString().slice(0,10)}.png`;
-                link.href = dataUrl;
-                link.click();
-
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerHTML = `<i class="fas fa-check"></i> ¡FOTO GUARDADA!`;
-                    btn.style.background = '#15803d';
-                    btn.style.color = '#ffffff';
-                    setTimeout(() => {
-                        btn.style.background = '#0f172a';
-                        btn.style.color = '#ffffff';
-                        btn.innerHTML = `<i class="fas fa-download" style="color: #38bdf8;"></i> <span>DESCARGAR FOTO EN ALTA DEFINICIÓN (PNG)</span>`;
-                    }, 2500);
-                }
-            } catch (err) {
-                console.error("Error downloading summary image:", err);
-                alert("Error al generar la imagen. Por favor, reintenta.");
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerHTML = `<i class="fas fa-exclamation-triangle"></i> REINTENTAR`;
-                }
-            }
-        }
-
-        /**
-         * Copia la cartelera de la próxima jornada al portapapeles como imagen.
-         */
         async copySummaryImageToClipboard(btnId) {
-            const btn = document.getElementById(btnId);
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> PREPARANDO...`;
-            }
-
-            const teams = (this.lastTeams && this.lastTeams.length > 0) ? this.lastTeams : (window.ClubTeamsData || []);
-
-            try {
-                const h2c = await this.ensureHtml2Canvas();
-
-                const container = document.createElement('div');
-                container.style.cssText = "position: fixed; top: -9999px; left: -9999px; width: 1080px; height: 1920px; overflow: hidden; z-index: -9999;";
-                container.innerHTML = this.getNextMatchesSummaryStoryHTML(teams, true);
-                document.body.appendChild(container);
-
-                const imgs = Array.from(container.querySelectorAll('img'));
-                await Promise.all(imgs.map(img => {
-                    if (img.complete) return Promise.resolve();
-                    return new Promise(r => { img.onload = r; img.onerror = r; });
-                }));
-                await new Promise(resolve => setTimeout(resolve, 300));
-
-                const canvas = await h2c(container, {
-                    scale: 1.5,
-                    useCORS: true,
-                    allowTaint: false,
-                    backgroundColor: '#ffffff',
-                    logging: false
-                });
-
-                document.body.removeChild(container);
-
-                canvas.toBlob(async (blob) => {
-                    if (!blob) {
-                        throw new Error("No se pudo crear el blob de la imagen.");
-                    }
-                    try {
-                        const item = new ClipboardItem({ "image/png": blob });
-                        await navigator.clipboard.write([item]);
-
-                        if (btn) {
-                            btn.disabled = false;
-                            btn.innerHTML = `<i class="fas fa-check"></i> ¡IMAGEN COPIADA!`;
-                            btn.style.borderColor = '#15803d';
-                            btn.style.color = '#15803d';
-                            setTimeout(() => {
-                                btn.style.borderColor = '#cbd5e1';
-                                btn.style.color = '#0f172a';
-                                btn.innerHTML = `<i class="far fa-clipboard" style="color: #0f172a;"></i> <span>COPIAR IMAGEN</span>`;
-                            }, 2500);
-                        }
-                    } catch (clipErr) {
-                        console.warn("Clipboard API blocked, fallback to direct download:", clipErr);
-                        const dataUrl = canvas.toDataURL('image/png', 1.0);
-                        const link = document.createElement('a');
-                        link.download = `SomosPadel_ProximaJornada_${new Date().toISOString().slice(0,10)}.png`;
-                        link.href = dataUrl;
-                        link.click();
-                        if (btn) {
-                            btn.disabled = false;
-                            btn.innerHTML = `<i class="fas fa-download"></i> ¡DESCARGADA!`;
-                            setTimeout(() => {
-                                btn.innerHTML = `<i class="far fa-clipboard"></i> <span>COPIAR IMAGEN</span>`;
-                            }, 2500);
-                        }
-                    }
-                }, 'image/png');
-            } catch (err) {
-                console.error("Error copying summary image:", err);
-                alert("Error al procesar la imagen. Por favor, reintenta.");
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerHTML = `<i class="fas fa-exclamation-triangle"></i> REINTENTAR`;
-                }
-            }
+            return this.shareSummaryWhatsAppImage(btnId);
         }
+
 
                 // ==========================================
         // 💎 PREMIUM TEAM SHARE MODAL ("WOW" SYSTEM)

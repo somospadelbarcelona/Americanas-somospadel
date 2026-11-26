@@ -1142,3 +1142,177 @@
     from { transform: translateY(-6px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
 }
+
+/* ── CARTELERA OFICIAL HD (MODAL FULL-SCREEN MOBILE-FIRST) ── */
+.tp-poster-sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: #0b1120;
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+    animation: tpSlideUp 0.24s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    overflow: hidden;
+}
+
+.tp-poster-header {
+    background: linear-gradient(145deg, #0f172a 0%, #172554 100%);
+    padding: 12px 14px 10px;
+    padding-top: max(12px, env(safe-area-inset-top));
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+}
+
+.tp-poster-body {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 12px 14px 130px;
+}
+
+.tp-poster-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.tp-poster-row {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.tp-poster-row::-webkit-scrollbar {
+    display: none;
+}
+
+.tp-poster-pill {
+    flex: 1 0 auto;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.06);
+    color: #cbd5e1;
+    font-family: inherit;
+    font-size: 0.72rem;
+    font-weight: 850;
+    padding: 8px 11px;
+    border-radius: 11px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+.tp-poster-pill.active {
+    background: #ccff00;
+    color: #0f172a;
+    border-color: #ccff00;
+    font-weight: 950;
+}
+
+.tp-poster-stage {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 280px;
+}
+
+.tp-poster-img {
+    width: 100%;
+    max-width: 430px;
+    height: auto;
+    border-radius: 14px;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.55);
+    display: block;
+}
+
+.tp-poster-footer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100000;
+    background: rgba(15, 23, 42, 0.96);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 10px 14px max(12px, env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.tp-poster-btn-wa {
+    width: 100%;
+    background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 14px;
+    padding: 13px 16px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 950;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(37, 211, 102, 0.35);
+}
+
+.tp-poster-sub-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.tp-poster-btn-dl {
+    flex: 1.2;
+    background: #ccff00;
+    color: #0f172a;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 0.76rem;
+    font-weight: 950;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.tp-poster-btn-copy {
+    flex: 0.8;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 0.76rem;
+    font-weight: 850;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.tp-poster-match-card {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    padding: 13px;
+    margin-bottom: 10px;
+}
