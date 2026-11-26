@@ -28,8 +28,9 @@
         emailContact: 'tienda@somospadelbcn.com',
         freeShippingThreshold: 50,
         shippingCost: 4.95,
-        announcementBanner: '🎾 ¡Envíos express en 24/48h y 15% DTO exclusivo con tu ficha SomosPadel!',
+        announcementBanner: '🎾 Envíos express 24/48h · Recogida GRATIS en tu club o próxima Americana',
         announcementActive: true,
+        couponsEnabled: false,
         storeStatus: 'open',
         currency: '€'
     };
@@ -1341,6 +1342,10 @@
                 if (!digits || digits === '34623456789' || digits === '623456789' || digits === '34600000000' || digits === '600000000') {
                     merged.whatsappPhone = DEFAULT_SETTINGS.whatsappPhone;
                 }
+                if (typeof merged.announcementBanner === 'string' && merged.announcementBanner.includes('15% DTO')) {
+                    merged.announcementBanner = DEFAULT_SETTINGS.announcementBanner;
+                }
+                merged.couponsEnabled = false;
                 return merged;
             } catch (e) {
                 return { ...DEFAULT_SETTINGS };

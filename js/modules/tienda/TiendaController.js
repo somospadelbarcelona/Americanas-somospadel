@@ -345,26 +345,13 @@
         }
 
         applyCoupon(code) {
-            const res = TiendaService.validateCoupon ? TiendaService.validateCoupon(code) : null;
-            if (!res || !res.valid) {
-                this.showToast((res && res.reason) || 'Cupón no válido o expirado ⚠️');
-                return;
-            }
-            TiendaView.appliedCoupon = { code: res.code, rate: res.rate, title: res.title };
-            this.showToast(`¡Cupón "${res.code}" (-${Math.round(res.rate * 100)}%) aplicado con éxito! 🎟️`);
-            const cartRoot = document.getElementById('sp-tienda-cart-root');
-            if (cartRoot) {
-                cartRoot.innerHTML = TiendaView.renderCartModal();
-            }
+            // Cupones deshabilitados temporalmente por dirección
+            TiendaView.appliedCoupon = null;
+            this.showToast('Los cupones promocionales no están activos en este momento.');
         }
 
         removeCoupon() {
             TiendaView.appliedCoupon = null;
-            this.showToast('Cupón eliminado');
-            const cartRoot = document.getElementById('sp-tienda-cart-root');
-            if (cartRoot) {
-                cartRoot.innerHTML = TiendaView.renderCartModal();
-            }
         }
 
         submitCheckoutForm(e) {
@@ -500,6 +487,32 @@
             const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(text)}`;
             window.open(url, '_blank');
             this.showToast('Conectando por WhatsApp 💬');
+        }
+
+        orderProductWhatsApp(productId) {
+            const p = TiendaService.getProductById(productId);
+            if (!p) {
+                this.consultWhatsApp();
+                return;
+            }
+            TiendaService.recordClick(productId);
+            const phone = this.getWhatsAppPhone();
+            const origin = (typeof window !== 'undefined' && window.location && window.location.origin && !window.location.origin.startsWith('file'))
+                ? window.location.origin
+                : 'https://somospadel.eu';
+            const productDeepLink = `${origin}/tienda.html?producto=${p.id}`;
+
+            let msg = `🎾 *CONSULTA / PEDIDO - TIENDA SOMOSPADEL BCN* 🎾\n\n`;
+            msg += `¡Hola! Me interesa este producto de la tienda:\n\n`;
+            msg += `📦 *Producto:* ${p.name}\n`;
+            msg += `🏷️ *Marca:* ${p.brand}\n`;
+            msg += `💰 *Precio:* ${Number(p.promoPrice || 0).toFixed(2)}€\n`;
+            msg += `🔗 *Ver producto:* ${productDeepLink}\n\n`;
+            msg += `¿Está disponible? ¡Gracias!`;
+
+            const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(msg)}`;
+            window.open(url, '_blank');
+            this.showToast('Abriendo WhatsApp de la tienda 💬');
         }
 
         handleRoleChange(role) {

@@ -183,8 +183,8 @@
             return `
                 <div class="sp-store-ticker" aria-label="Información de envíos y garantías">
                     <div class="sp-store-ticker-item">
-                        <i class="fas fa-ticket"></i>
-                        <span><strong>CUPÓN 15% DTO:</strong> SOMOSPADEL15</span>
+                        <i class="fas fa-location-dot"></i>
+                        <span><strong>RECOGIDA GRATIS</strong> en club y Americanas</span>
                     </div>
                     <span class="sp-store-ticker-divider">•</span>
                     <div class="sp-store-ticker-item">
@@ -194,17 +194,12 @@
                     <span class="sp-store-ticker-divider">•</span>
                     <div class="sp-store-ticker-item">
                         <i class="fas fa-bolt"></i>
-                        <span>Entrega rápida <strong>24/48 horas</strong> a domicilio o en club</span>
+                        <span>Entrega rápida <strong>24/48 horas</strong></span>
                     </div>
                     <span class="sp-store-ticker-divider">•</span>
                     <div class="sp-store-ticker-item">
                         <i class="fas fa-shield-halved"></i>
                         <span>Garantía Oficial <strong>3 Años</strong></span>
-                    </div>
-                    <span class="sp-store-ticker-divider">•</span>
-                    <div class="sp-store-ticker-item">
-                        <i class="fab fa-whatsapp"></i>
-                        <span><strong>¿Dudas? Habla con nosotros</strong></span>
                     </div>
                 </div>
             `;
@@ -347,25 +342,39 @@
         }
 
         renderHeroBanner() {
+            const settings = TiendaService.getSettings ? TiendaService.getSettings() : {};
+            const freeThreshold = settings.freeShippingThreshold || 50;
             return `
-                <div class="sp-store-hero" id="sp-store-hero-banner">
-                    <div class="sp-store-hero-left">
-                        <span class="sp-store-hero-badge"><i class="fas fa-bolt"></i> -15% DTO</span>
-                        <div class="sp-store-hero-title">
-                            Usa el cupón oficial <span>SOMOSPADEL15</span> en tu cesta
+                <section class="sp-hero-flagship" id="sp-store-hero-banner" aria-label="Escaparate Oficial SomosPadel BCN">
+                    <div class="sp-hero-flagship-glow-1"></div>
+                    <div class="sp-hero-flagship-glow-2"></div>
+                    <div class="sp-hero-flagship-inner">
+                        <div class="sp-hero-flagship-copy">
+                            <span class="sp-hero-eyebrow">
+                                <i class="fas fa-bolt"></i> COLECCIÓN OFICIAL 2026 · SOMOSPADEL BCN
+                            </span>
+                            <h2 class="sp-hero-headline">
+                                Equipación <span>Pro</span> para dominar cada pista
+                            </h2>
+                            <p class="sp-hero-subcopy">
+                                Palas de competición, pelotas oficiales de nuestras Americanas, zapatillas clay y packs ahorro seleccionados por nuestros monitores.
+                            </p>
+                            <div class="sp-hero-perks">
+                                <span class="sp-hero-perk"><i class="fas fa-location-dot"></i> Recogida gratis en Club</span>
+                                <span class="sp-hero-perk"><i class="fas fa-truck-fast"></i> Envío gratis +${freeThreshold}€</span>
+                                <span class="sp-hero-perk"><i class="fas fa-shield-halved"></i> Garantía 3 años</span>
+                            </div>
                         </div>
-                        <span class="sp-store-hero-desc">(Descuento exclusivo en palas, zapatillas y material oficial)</span>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <div class="sp-store-coupon-pill" onclick="window.TiendaController && window.TiendaController.copyCoupon('SOMOSPADEL15')" title="Clic para copiar cupón">
-                            <span class="sp-store-coupon-code">SOMOSPADEL15</span>
-                            <span class="sp-store-coupon-label"><i class="fas fa-copy"></i> Copiar</span>
+                        <div class="sp-hero-flagship-actions">
+                            <button type="button" class="sp-hero-cta-primary" onclick="window.TiendaController && window.TiendaController.handleTag('Top ventas')">
+                                <i class="fas fa-fire"></i> Ver Top Ventas
+                            </button>
+                            <button type="button" class="sp-hero-cta-secondary" onclick="window.TiendaController && window.TiendaController.consultWhatsApp()">
+                                <i class="fab fa-whatsapp"></i> Asesoramiento Monitor
+                            </button>
                         </div>
-                        <button type="button" onclick="document.getElementById('sp-store-hero-banner')?.remove()" style="background: none; border: none; color: #94a3b8; font-size: 0.85rem; cursor: pointer; padding: 4px;" title="Ocultar aviso">
-                            <i class="fas fa-xmark"></i>
-                        </button>
                     </div>
-                </div>
+                </section>
             `;
         }
 
@@ -489,50 +498,58 @@
                         </div>`;
                 }
 
+                const primaryBadge = (p.badges || []).find(b => !b.includes('Oferta')) || null;
+                let primaryBadgeClass = 'sp-badge-recommended';
+                if (primaryBadge) {
+                    if (primaryBadge.includes('oficial')) primaryBadgeClass = 'sp-badge-official';
+                    else if (primaryBadge.includes('Top')) primaryBadgeClass = 'sp-badge-top';
+                }
+
                 return `
-                    <div class="sp-product-card ${isOutOfStock ? 'sp-product-card-out' : ''}" id="card-${p.id}">
-                        <div class="sp-product-badge-wrap">
-                            ${discount > 0 ? `<span class="sp-product-badge sp-badge-offer">-${discount}% DTO</span>` : ''}
-                            ${(p.badges || []).map(b => {
-                                let bClass = 'sp-badge-recommended';
-                                if (b.includes('Oferta')) bClass = 'sp-badge-offer';
-                                else if (b.includes('oficial')) bClass = 'sp-badge-official';
-                                else if (b.includes('Top')) bClass = 'sp-badge-top';
-                                return `<span class="sp-product-badge ${bClass}">${b}</span>`;
-                            }).join('')}
+                    <article class="sp-product-card ${isOutOfStock ? 'sp-product-card-out' : ''}" id="card-${p.id}">
+                        <div class="sp-product-media-box">
+                            <div class="sp-product-badge-wrap">
+                                ${discount > 0 ? `<span class="sp-product-badge sp-badge-offer">-${discount}%</span>` : ''}
+                                ${primaryBadge ? `<span class="sp-product-badge ${primaryBadgeClass}">${primaryBadge}</span>` : ''}
+                            </div>
+
+                            <button type="button" id="sp-card-fav-${p.id}" class="sp-card-fav-btn ${isFav ? 'is-fav' : ''}"
+                                onclick="event.stopPropagation(); window.TiendaController && window.TiendaController.toggleFavorite('${p.id}')"
+                                title="${isFav ? 'Quitar de favoritos' : 'Guardar en favoritos'}" aria-label="Favorito">
+                                <i class="${isFav ? 'fas fa-heart' : 'far fa-heart'}"></i>
+                            </button>
+
+                            <div class="sp-product-image-container" onclick="window.TiendaController && window.TiendaController.openProductModal('${p.id}')" style="cursor: pointer;">
+                                <img src="${p.image}" alt="${this.escapeHtml(p.name)}" class="sp-product-image" loading="lazy" onerror="window.TiendaView && window.TiendaView.handleImgError(this, '${this.escapeHtml(p.name)}')">
+                                <span class="sp-card-quick-hint"><i class="fas fa-eye"></i> Ver ficha</span>
+                            </div>
                         </div>
 
-                        <button type="button" id="sp-card-fav-${p.id}" class="sp-card-fav-btn ${isFav ? 'is-fav' : ''}"
-                            onclick="event.stopPropagation(); window.TiendaController && window.TiendaController.toggleFavorite('${p.id}')"
-                            title="${isFav ? 'Quitar de favoritos' : 'Guardar en favoritos'}" aria-label="Favorito">
-                            <i class="${isFav ? 'fas fa-heart' : 'far fa-heart'}"></i>
-                        </button>
+                        <div class="sp-product-card-body">
+                            <div class="sp-product-meta-top">
+                                <span class="sp-product-brand-tag">${this.escapeHtml(p.brand)}</span>
+                                <span class="sp-rating-compact" title="Valoración media de jugadores">
+                                    <i class="fas fa-star"></i> 4.9 <small>(${reviewCount})</small>
+                                </span>
+                            </div>
 
-                        <div class="sp-product-image-container" onclick="window.TiendaController && window.TiendaController.openProductModal('${p.id}')" style="cursor: pointer;">
-                            <img src="${p.image}" alt="${this.escapeHtml(p.name)}" class="sp-product-image" loading="lazy" onerror="window.TiendaView && window.TiendaView.handleImgError(this, '${this.escapeHtml(p.name)}')">
-                        </div>
-
-                        <div>
-                            <div class="sp-product-brand-tag">${this.escapeHtml(p.brand)}</div>
                             <h3 class="sp-product-title" onclick="window.TiendaController && window.TiendaController.openProductModal('${p.id}')" style="cursor: pointer;" title="${this.escapeHtml(p.name)}">
                                 ${this.escapeHtml(p.name)}
                             </h3>
 
-                            <div class="sp-rating-row">
-                                <span class="sp-stars-yellow">★★★★★</span>
-                                <span class="sp-rating-score">4.9</span>
-                                <span class="sp-rating-count">(${reviewCount} opiniones)</span>
-                            </div>
+                            <p class="sp-product-desc-short">${this.escapeHtml(p.description)}</p>
 
                             ${stockBadgeHtml}
 
-                            <p class="sp-product-desc-short">${this.escapeHtml(p.description)}</p>
-
                             <div class="sp-product-pricing">
-                                <span class="sp-product-price-promo">${p.promoPrice.toFixed(2)}€</span>
+                                <div class="sp-price-stack">
+                                    <span class="sp-product-price-promo">${p.promoPrice.toFixed(2)}€</span>
+                                    ${p.originalPrice > p.promoPrice ? `
+                                        <span class="sp-product-price-original">${p.originalPrice.toFixed(2)}€</span>
+                                    ` : ''}
+                                </div>
                                 ${p.originalPrice > p.promoPrice ? `
-                                    <span class="sp-product-price-original">${p.originalPrice.toFixed(2)}€</span>
-                                    <span class="sp-product-discount-pill">-${discount}% DTO</span>
+                                    <span class="sp-product-discount-pill">Ahorras ${(p.originalPrice - p.promoPrice).toFixed(0)}€</span>
                                 ` : ''}
                             </div>
                         </div>
@@ -548,17 +565,14 @@
                                 </button>
                             ` : `
                                 <button type="button" class="sp-btn-add-cart" onclick="window.TiendaController && window.TiendaController.addToCart('${p.id}', 1)" title="Añadir directamente a mi cesta de compra">
-                                    <i class="fas fa-cart-shopping"></i> Añadir a Cesta
+                                    <i class="fas fa-cart-plus"></i> Añadir a la Cesta
                                 </button>
                             `)}
-                            <button type="button" class="sp-btn-view-quick" onclick="window.TiendaController && window.TiendaController.openProductModal('${p.id}')" title="Ver ficha técnica completa">
-                                <i class="fas fa-eye"></i> Ficha
-                            </button>
-                            <button type="button" class="sp-btn-share-mini" onclick="window.TiendaController && window.TiendaController.shareWhatsApp('${p.id}')" title="Compartir este producto por WhatsApp">
+                            <button type="button" class="sp-btn-share-mini" onclick="window.TiendaController && window.TiendaController.orderProductWhatsApp('${p.id}')" title="Consultar o pedir este producto por WhatsApp (649 219 350)" aria-label="Consultar o pedir por WhatsApp">
                                 <i class="fab fa-whatsapp"></i>
                             </button>
                         </div>
-                    </div>
+                    </article>
                 `;
             }).join('');
         }
@@ -1339,34 +1353,14 @@
                             ` : ''}
                         </div>
 
-                        <!-- Parte Inferior: Cupón y Checkout -->
+                        <!-- Parte Inferior: Resumen y Checkout (Cupones deshabilitados) -->
                         ${cart.length > 0 ? `
                             <div class="sp-cart-summary-box">
-                                <!-- Formulario de Cupón -->
-                                <div class="sp-cart-coupon-form">
-                                    <input type="text" id="sp-cart-coupon-input" class="sp-cart-coupon-input" placeholder="CÓDIGO CUPÓN (EJ: SOMOSPADEL15)" value="${appliedCoupon ? appliedCoupon.code : ''}">
-                                    <button type="button" class="sp-cart-coupon-btn" onclick="window.TiendaController && window.TiendaController.applyCoupon(document.getElementById('sp-cart-coupon-input').value)">
-                                        Aplicar
-                                    </button>
-                                </div>
-                                ${appliedCoupon ? `
-                                    <div style="font-size: 0.72rem; color: #166534; font-weight: 800; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; background: #f0fdf4; padding: 4px 8px; border-radius: 6px;">
-                                        <span><i class="fas fa-tag"></i> Cupón "${appliedCoupon.code}" aplicado (-${Math.round(appliedCoupon.rate * 100)}%)</span>
-                                        <button type="button" onclick="window.TiendaController && window.TiendaController.removeCoupon()" style="background: none; border: none; color: #dc2626; cursor: pointer; font-weight: 900;">✕</button>
-                                    </div>
-                                ` : ''}
-
                                 <!-- Desglose Económico -->
                                 <div class="sp-cart-summary-line">
                                     <span>Subtotal (${summary.count} productos)</span>
                                     <span style="font-weight: 800; color: #0f172a;">${summary.subtotal.toFixed(2)}€</span>
                                 </div>
-                                ${couponDiscount > 0 ? `
-                                    <div class="sp-cart-summary-line" style="color: #166534;">
-                                        <span>Descuento cupón (${appliedCoupon.code})</span>
-                                        <span style="font-weight: 850;">-${couponDiscount.toFixed(2)}€</span>
-                                    </div>
-                                ` : ''}
                                 <div class="sp-cart-summary-line">
                                     <span>Gastos de envío</span>
                                     <span style="font-weight: 800; color: ${summary.shippingCost === 0 ? '#166534' : '#0f172a'};">
@@ -1375,7 +1369,7 @@
                                 </div>
                                 <div class="sp-cart-summary-total">
                                     <span>TOTAL A PAGAR</span>
-                                    <span style="color: #0f172a;">${finalTotal.toFixed(2)}€</span>
+                                    <span style="color: #0f172a;">${summary.total.toFixed(2)}€</span>
                                 </div>
 
                                 <!-- Botón Principal Checkout en 1 paso -->
