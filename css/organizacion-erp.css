@@ -2325,4 +2325,63 @@ body.erp-body {
     .erp-kpi-val, .erp-card-title, h1, h2, h3, h4 {
         color: #000000 !important;
     }
+
+    .erp-col-filter-row,
+    .erp-playtomic-filterbar,
+    .erp-table th:last-child,
+    .erp-table td:last-child {
+        display: none !important;
+    }
+
+    .erp-table-responsive {
+        overflow: visible !important;
+    }
+
+    .erp-table {
+        width: 100% !important;
+        font-size: 9.5px !important;
+    }
+}
+
+/* ==========================================================================
+   FILTROS POR COLUMNA EN TABLA DE TRAZABILIDAD PLAYTOMIC
+   ========================================================================== */
+.erp-col-filter-row th {
+    background: #f8fafc !important;
+    padding: 6px 8px !important;
+    border-bottom: 2px solid #cbd5e1 !important;
+    vertical-align: middle;
+}
+
+.erp-col-filter-input,
+.erp-col-filter-select {
+    width: 100%;
+    min-width: 68px;
+    height: 30px;
+    padding: 3px 7px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #0f172a;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.erp-col-filter-input:focus,
+.erp-col-filter-select:focus {
+    border-color: #0284c7;
+    box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
+}
+
+.erp-th-sortable {
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.erp-th-sortable:hover {
+    color: #0284c7;
 }

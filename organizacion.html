@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <!-- Estilos Especializados del ERP -->
-    <link rel="stylesheet" href="css/organizacion-erp.css?v=20261005">
+    <link rel="stylesheet" href="css/organizacion-erp.css?v=20261111_3">
 </head>
 
 <body class="erp-body">
@@ -43,23 +43,15 @@
                 </button>
             </div>
 
-            <!-- NAVEGACIÓN PRINCIPAL: 5 MÓDULOS DIRECTIVOS PROFESIONALES -->
+            <!-- NAVEGACIÓN PRINCIPAL: TRAZABILIDAD PLAYTOMIC & MÓDULOS DIRECTIVOS -->
             <nav class="erp-nav-scroll">
-                <div class="erp-nav-group-title">PLAN & SOCIOS</div>
+                <div class="erp-nav-group-title">OPERATIVA & PLAYTOMIC BCN</div>
 
-                <button class="erp-nav-item active" data-tab="pactometro" onclick="window.OrganizacionERP.navigateTo('pactometro')">
-                    <span class="erp-nav-icon"><i class="fas fa-handshake"></i></span>
-                    <span>Reparto de Socios & Simulador</span>
-                    <span class="erp-nav-badge badge-neon">5 PISTAS NPP</span>
+                <button class="erp-nav-item active" data-tab="playtomic" onclick="window.OrganizacionERP.navigateTo('playtomic')">
+                    <span class="erp-nav-icon"><i class="fas fa-link" style="color: #0284c7;"></i></span>
+                    <span>Trazabilidad Playtomic</span>
+                    <span class="erp-nav-badge badge-cyan">2 CUENTAS</span>
                 </button>
-
-                <button class="erp-nav-item" data-tab="clubs" onclick="window.OrganizacionERP.navigateTo('clubs')">
-                    <span class="erp-nav-icon"><i class="fas fa-building"></i></span>
-                    <span>Sedes & Negociación</span>
-                    <span class="erp-nav-badge badge-amber">NEW PADEL PRO (5P)</span>
-                </button>
-
-                <div class="erp-nav-group-title">OPERATIVA & AGENDA</div>
 
                 <button class="erp-nav-item" data-tab="events" onclick="window.OrganizacionERP.navigateTo('events')">
                     <span class="erp-nav-icon"><i class="fas fa-table-tennis-paddle-ball"></i></span>
@@ -70,6 +62,20 @@
                 <button class="erp-nav-item" data-tab="calendar" onclick="window.OrganizacionERP.navigateTo('calendar')">
                     <span class="erp-nav-icon"><i class="fas fa-calendar-days"></i></span>
                     <span>Calendario & Agenda</span>
+                </button>
+
+                <div class="erp-nav-group-title">PLAN & SOCIOS (SIMULADOR)</div>
+
+                <button class="erp-nav-item" data-tab="clubs" onclick="window.OrganizacionERP.navigateTo('clubs')">
+                    <span class="erp-nav-icon"><i class="fas fa-building"></i></span>
+                    <span>Sedes & Negociación</span>
+                    <span class="erp-nav-badge badge-amber">2 CLUBES</span>
+                </button>
+
+                <button class="erp-nav-item" data-tab="pactometro" onclick="window.OrganizacionERP.navigateTo('pactometro')">
+                    <span class="erp-nav-icon"><i class="fas fa-handshake"></i></span>
+                    <span>Simulador Reparto Socios</span>
+                    <span class="erp-nav-badge badge-neon">TEÓRICO 5P</span>
                 </button>
 
                 <div class="erp-nav-group-title">DIRECCIÓN & FINANZAS</div>
@@ -125,8 +131,8 @@
                         <i class="fas fa-bars"></i>
                     </button>
                     <div class="erp-view-title-wrap">
-                        <h2 id="erp-topbar-title">Dashboard Ejecutivo</h2>
-                        <p id="erp-topbar-desc">Control de rentabilidad, KPIs y visión estratégica</p>
+                        <h2 id="erp-topbar-title">Trazabilidad Total Playtomic ⇄ SomosPadel</h2>
+                        <p id="erp-topbar-desc">Auditoría cronológica completa de todas las americanas en las 2 cuentas oficiales de Playtomic Barcelona</p>
                     </div>
                 </div>
 
@@ -350,12 +356,8 @@
                             <i class="fas fa-map-marker-alt" style="color: #0284c7;"></i> SEDE / CLUB
                         </label>
                         <select name="location" id="new-evt-club" class="financial-input" style="text-align:left; width:100%; height:42px; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 700;">
-                            <option value="New Padel Pro" selected>New Padel Pro (5 Pistas)</option>
-                            <option value="Padel Indoor Hospitalet">Padel Indoor Hospitalet</option>
-                            <option value="Vall Parc Barcelona">Vall Parc Barcelona</option>
-                            <option value="Badalona Padel Club">Badalona Padel Club</option>
-                            <option value="Artós Sports Club">Artós Sports Club</option>
-                            <option value="Padel Blau Cornellà">Padel Blau Cornellà</option>
+                            <option value="New Padel Pro" selected>NEW Play Padel Pro Hospitalet (somospadeleugestion@gmail.com)</option>
+                            <option value="Barcelona Pádel El Prat">Barcelona Pádel El Prat (Eduard Bainad Puig • SomosPadel)</option>
                         </select>
                     </div>
                 </div>
@@ -707,8 +709,9 @@
     <script src="js/modules/core/Constants.js"></script>
     <script src="js/modules/common/EventService.js"></script>
 
-    <!-- Módulo ERP de Organización y Control de Eventos -->
-    <script src="js/modules/organizacion-erp.js?v=20261005"></script>
+    <!-- Snapshot Playtomic (2 cuentas oficiales BCN) + Módulo ERP de Organización -->
+    <script src="js/data/playtomic-snapshot.js?v=20261111_3"></script>
+    <script src="js/modules/organizacion-erp.js?v=20261111_3"></script>
 
 </body>
 </html>

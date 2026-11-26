@@ -69,14 +69,43 @@ window.OrganizacionERP = (function () {
         }
     };
 
-    // Directorio de Clubes Registrados Base (Única Sede Oficial en Análisis: New Padel Pro)
+    // Cuentas Oficiales de Playtomic vinculadas a SomosPadel Barcelona
+    const PLAYTOMIC_ACCOUNTS = {
+        new_play: {
+            key: 'new_play',
+            clubCanonical: 'New Padel Pro',
+            clubDisplay: 'NEW Play Padel Pro Hospitalet',
+            accountEmail: 'somospadeleugestion@gmail.com',
+            organizerName: 'somospadel barcelona',
+            badgeColor: '#0284c7',
+            badgeBg: '#e0f2fe',
+            shortTag: 'New Play • somospadeleugestion@gmail.com',
+            scopeText: 'Todas las americanas y eventos SomosPadel en New Play Padel Pro'
+        },
+        el_prat: {
+            key: 'el_prat',
+            clubCanonical: 'Barcelona Pádel El Prat',
+            clubDisplay: 'Barcelona Pádel El Prat',
+            accountEmail: 'Cuenta Playtomic: Eduard Bainad Puig',
+            organizerName: 'Eduard Bainad Puig',
+            badgeColor: '#059669',
+            badgeBg: '#dcfce7',
+            shortTag: 'El Prat • Eduard Bainad Puig (SomosPadel)',
+            scopeText: 'Solo americanas de SomosPadel Barcelona dentro de su cuenta'
+        }
+    };
+
+    // Directorio de Clubes Oficiales vinculados a las 2 Cuentas Playtomic
     const DEFAULT_REGISTERED_CLUBS = {
         'New Padel Pro': {
             id: 'new_padel_pro',
             name: 'New Padel Pro',
-            location: 'Barcelona / Área Metropolitana',
+            playtomicKey: 'new_play',
+            playtomicAccount: 'somospadeleugestion@gmail.com',
+            playtomicOrganizer: 'somospadel barcelona',
+            location: 'NEW Play Padel Pro Hospitalet',
             courts: 5,
-            contact: 'Dirección Deportiva New Padel Pro',
+            contact: 'somospadeleugestion@gmail.com (Cuenta Oficial Playtomic)',
             tariffs: {
                 morning: 12,
                 evening: 32,    // Tarifa Tardes (hora punta 17h a 21h)
@@ -86,7 +115,28 @@ window.OrganizacionERP = (function () {
                 durationMin: 90,
                 defaultPrice: 6
             },
-            notes: 'Sede Oficial SomosPadel BCN. Horarios pactados: Miércoles mañanas (10:00 - 11:30) y Viernes noche (20:30 - 22:30). Consumo en bar para el club. Total: 5 pistas.',
+            notes: 'Cuenta Playtomic somospadeleugestion@gmail.com (somospadel barcelona). Incluye todas las americanas y nivelaciones realizadas en New Play Padel Pro (5 pistas).',
+            status: 'active'
+        },
+        'Barcelona Pádel El Prat': {
+            id: 'barcelona_padel_el_prat',
+            name: 'Barcelona Pádel El Prat',
+            playtomicKey: 'el_prat',
+            playtomicAccount: 'Eduard Bainad Puig',
+            playtomicOrganizer: 'Eduard Bainad Puig (SomosPadel BCN)',
+            location: 'El Prat de Llobregat (Barcelona)',
+            courts: 14,
+            contact: 'Eduard Bainad Puig • Cuenta Playtomic El Prat',
+            tariffs: {
+                morning: 12,
+                evening: 24,
+                afternoon: 24,
+                night: 12,
+                weekend: 16,
+                durationMin: 120,
+                defaultPrice: 12
+            },
+            notes: 'Cuenta Playtomic de Eduard Bainad Puig en Barcelona Pádel El Prat. Vinculación estricta únicamente de las americanas oficiales de SomosPadel Barcelona.',
             status: 'active'
         }
     };
@@ -103,6 +153,8 @@ window.OrganizacionERP = (function () {
                     delete parsed['Padel Indoor Hospitalet'];
                     if (parsed['New Padel Pro']) {
                         parsed['New Padel Pro'].courts = 5;
+                        parsed['New Padel Pro'].playtomicKey = 'new_play';
+                        parsed['New Padel Pro'].playtomicAccount = 'somospadeleugestion@gmail.com';
                         if (!parsed['New Padel Pro'].tariffs) {
                             parsed['New Padel Pro'].tariffs = { ...DEFAULT_REGISTERED_CLUBS['New Padel Pro'].tariffs };
                         } else {
@@ -134,13 +186,28 @@ window.OrganizacionERP = (function () {
     // Estado en memoria
     const state = {
         currentUser: null,
-        activeTab: 'pactometro', // Mostrar por defecto el Pactómetro & Simulador Estratégico (New Padel Pro)
+        activeTab: 'playtomic', // Mostrar por defecto Trazabilidad Total Playtomic (2 cuentas oficiales SomosPadel BCN)
         activeClubTab: 'New Padel Pro', // Por defecto mostrar la pestaña de New Padel Pro
         dashboardSubTab: 'overview', // Sub-pestaña por defecto en Contabilidad (overview, hiring, reports, future)
         eventsSubTab: 'mgmt', // Sub-pestaña en Americanas & Pistas ('mgmt': Gestor de Americanas, 'create': Crear Americana)
         americanaSearchQuery: '',
         americanaFilterStatus: 'all',
         americanaFilterCategory: 'all',
+        playtomicAccountFilter: 'all', // 'all' | 'new_play' | 'el_prat'
+        playtomicStatusFilter: 'all',  // 'all' | 'active' | 'finished'
+        playtomicSearchQuery: '',
+        playtomicColFilters: {
+            date: '',
+            title: '',
+            occupation: 'all',
+            minIncome: '',
+            maxExpense: '',
+            netSign: 'all'
+        },
+        playtomicSort: { key: 'date', dir: 'desc' },
+        lastPlaytomicSync: null,
+        syncingPlaytomic: false,
+        rawUnlinkedCount: 0,
         events: [],
         clubs: {},
         registeredClubs: loadRegisteredClubs(),
@@ -210,7 +277,7 @@ window.OrganizacionERP = (function () {
             hideAuthModal();
             updateUserUI();
             await loadEventsData();
-            renderActiveTab();
+            navigateTo(state.activeTab || 'playtomic');
         }
 
         bindGlobalEvents();
@@ -267,7 +334,7 @@ window.OrganizacionERP = (function () {
         hideAuthModal();
         updateUserUI();
         await loadEventsData();
-        renderActiveTab();
+        navigateTo(state.activeTab || 'playtomic');
 
         return user;
     }
@@ -351,8 +418,18 @@ window.OrganizacionERP = (function () {
     // ==========================================================================
     function calculateEventFinancials(event) {
         const p = event || {};
-        const registeredCount = Array.isArray(p.players) ? p.players.length : (parseInt(p.registered_players_count) || parseInt(p.max_players) || 20);
-        const pricePerPlayer = parseFloat(p.price || p.price_members || p.price_per_player || 12) || 12;
+        const playersArrCount = Array.isArray(p.players) ? p.players.length : 0;
+        const explicitOcc = (p.occupied_players !== undefined && p.occupied_players !== null)
+            ? parseInt(p.occupied_players, 10)
+            : (p.registered_players_count !== undefined && p.registered_players_count !== null
+                ? parseInt(p.registered_players_count, 10)
+                : (p.registeredCount !== undefined && p.registeredCount !== null
+                    ? parseInt(p.registeredCount, 10)
+                    : null));
+        const registeredCount = Array.isArray(p.players)
+            ? Math.max(playersArrCount, Number.isFinite(explicitOcc) ? explicitOcc : 0)
+            : (Number.isFinite(explicitOcc) ? explicitOcc : (parseInt(p.max_players) || 20));
+        const pricePerPlayer = parseFloat(p.price || p.price_members || p.price_member || p.price_per_player || 12) || 12;
         const courtsCount = parseInt(p.courts || p.max_courts || 5) || 5;
 
         const fin = p.financials || {};
@@ -366,13 +443,13 @@ window.OrganizacionERP = (function () {
 
         const totalIncome = incomeRegistrations + incomeExtras + incomeSponsorship + incomeOther;
 
-        const defaultCourtCost = courtsCount * (pricePerPlayer > 10 ? 24 : 12);
+        const defaultCourtCost = registeredCount > 0 ? (courtsCount * (pricePerPlayer > 10 ? 24 : 12)) : 0;
         const expenseCourts = (fin.expense_courts !== undefined && fin.expense_courts !== null) 
             ? parseFloat(fin.expense_courts) 
             : defaultCourtCost;
         const expenseBalls = (fin.expense_balls !== undefined && fin.expense_balls !== null) 
             ? parseFloat(fin.expense_balls) 
-            : 5;
+            : (registeredCount > 0 ? 5 : 0);
         const expensePrizes = (fin.expense_prizes !== undefined && fin.expense_prizes !== null) 
             ? parseFloat(fin.expense_prizes) 
             : 0;
@@ -429,59 +506,253 @@ window.OrganizacionERP = (function () {
     }
 
     // ==========================================================================
-    // 3. CARGA DE DATOS & EVENTOS REPRESENTATIVOS (INCLUYE NEW PADEL PRO)
+    // 3. CARGA DE DATOS & TRAZABILIDAD PLAYTOMIC (2 CUENTAS SOMOSPADEL BCN)
     // ==========================================================================
-    async function loadEventsData() {
-        let rawEvents = [];
+    function normalizePlaytomicDateStr(d) {
+        if (!d) return '';
+        if (String(d).includes('/')) {
+            const parts = String(d).split('/').map(p => p.trim());
+            if (parts.length >= 2) {
+                const day = parts[0].padStart(2, '0');
+                const month = parts[1].padStart(2, '0');
+                const year = parts[2] ? (parts[2].length === 2 ? '20' + parts[2] : parts[2]) : String(new Date().getFullYear());
+                return `${year}-${month}-${day}`;
+            }
+        }
+        return String(d).trim();
+    }
+
+    function classifyPlaytomicEvent(t) {
+        if (!t) return null;
+        if (t.is_deleted === true || (t.status || '').toLowerCase() === 'deleted') return null;
+
+        const name = (t.name || t.title || '').toLowerCase();
+        const loc = (t.location || t.sede || t.club || '').toLowerCase();
+        const org = (t.organizer || t.created_by || '').toLowerCase();
+        const desc = (t.description || '').toLowerCase();
+        const ptUrl = (t.playtomicUrl || t.playtomic_url || '').toLowerCase();
+
+        // Excluir marcas ajenas y CEM
+        const forbidden = [
+            'cem', 'crazyxpadel', 'crazy', 'jaleo', 'vibra', 'breakfast', 'saturday padel',
+            'siux', 'grx', 'xpadelclass', 'xavi perea', 'revolution', 'beerpoint', 'mahou'
+        ];
+        if (forbidden.some(b => name.includes(b) || loc.includes(b) || org.includes(b) || desc.includes(b))) {
+            return null;
+        }
+
+        // Cuenta 1: NEW Play Padel Pro Hospitalet -> somospadeleugestion@gmail.com (somospadel barcelona)
+        const isNewPlay = loc.includes('new play') || loc.includes('new padel') || loc.includes('play padel pro') || loc.includes('hospitalet') || name.includes('new padel');
+        if (isNewPlay) {
+            const isSomosOrg = org.includes('somospadel') || org.includes('somos padel') || org.includes('somospadeleugestion') || org.includes('alex');
+            const isSomosName = name.includes('somospadel') || name.includes('somos padel') || name.includes('americana') || name.includes('nivelacion') || name.includes('nivelación') || name.includes('entrenamiento') || name.includes('sabado party');
+            if (isSomosOrg || isSomosName || ptUrl.includes('playtomic')) {
+                return PLAYTOMIC_ACCOUNTS.new_play;
+            }
+            return null;
+        }
+
+        // Cuenta 2: Barcelona Pádel El Prat -> Eduard Bainad Puig (SOLO americanas de SomosPadel Barcelona)
+        const isElPrat = loc.includes('prat') || name.includes('prat') || org.includes('eduard bainad') || org.includes('bainad');
+        if (isElPrat) {
+            const isEduard = org.includes('eduard bainad') || org.includes('bainad');
+            const hasSomosBrand = name.includes('somospadel') || name.includes('somos padel') || name.includes('somos pádel') ||
+                org.includes('somospadel') || org.includes('somos padel') || org.includes('somospadeleugestion') ||
+                desc.includes('somospadel') || desc.includes('somos padel') || desc.includes('somos pádel');
+            const isAlexOwn = org.includes('alex coscol');
+            if ((isEduard && hasSomosBrand) || hasSomosBrand || isAlexOwn) {
+                return PLAYTOMIC_ACCOUNTS.el_prat;
+            }
+            return null;
+        }
+
+        return null;
+    }
+
+    async function fetchFirestoreRestAmericanas() {
         try {
-            if (window.EventService && typeof window.EventService.getAll === 'function') {
-                rawEvents = await window.EventService.getAll('americana');
-            } else if (window.db) {
+            const FIRESTORE_BASE = "https://firestore.googleapis.com/v1/projects/americanas-somospadel/databases/(default)/documents/americanas";
+            const FIREBASE_API_KEY = "AIzaSyBCy8nN4wKL2Cqvxp_mkmYpsA923N1g5iE";
+            const res = await fetch(`${FIRESTORE_BASE}?pageSize=150&key=${FIREBASE_API_KEY}&t=${Date.now()}`);
+            if (!res.ok) return [];
+            const data = await res.json();
+            const parseVal = (v) => {
+                if (!v) return null;
+                if (v.stringValue !== undefined) return v.stringValue;
+                if (v.integerValue !== undefined) return parseInt(v.integerValue, 10);
+                if (v.doubleValue !== undefined) return parseFloat(v.doubleValue);
+                if (v.booleanValue !== undefined) return v.booleanValue;
+                if (v.arrayValue !== undefined) return (v.arrayValue.values || []).map(parseVal);
+                if (v.mapValue !== undefined) {
+                    const obj = {};
+                    for (const k in v.mapValue.fields) obj[k] = parseVal(v.mapValue.fields[k]);
+                    return obj;
+                }
+                return null;
+            };
+            return (data.documents || []).map(doc => {
+                const id = doc.name.split('/').pop();
+                const item = { id };
+                const f = doc.fields || {};
+                for (const k in f) item[k] = parseVal(f[k]);
+                return item;
+            });
+        } catch (e) {
+            return [];
+        }
+    }
+
+    async function loadEventsData() {
+        let firestoreEvents = [];
+        let snapshotEvents = [];
+
+        try {
+            if (window.db) {
                 const snap = await window.db.collection('americanas').get();
-                snap.forEach(doc => {
-                    rawEvents.push({ id: doc.id, ...doc.data() });
-                });
+                if (snap && !snap.empty) {
+                    snap.forEach(doc => {
+                        firestoreEvents.push({ id: doc.id, doc_id: doc.id, ...doc.data() });
+                    });
+                }
+            } else if (window.EventService && typeof window.EventService.getAll === 'function') {
+                firestoreEvents = await window.EventService.getAll('americana');
             }
         } catch (e) {
             console.warn("Aviso Firebase:", e.message);
         }
 
-        // 1. Filtrar y eliminar explícitamente cualquier evento del CEM
-        rawEvents = (rawEvents || []).filter(e => {
-            const txt = `${e.club || ''} ${e.location || ''} ${e.title || ''} ${e.name || ''}`.toLowerCase();
-            return !txt.includes('cem');
-        });
-
-        // 2. Si no hay eventos de New Padel Pro cargados, añadir los dos eventos piloto del plan de negocio
-        const hasNpp = rawEvents.some(e => {
-            const txt = `${e.club || ''} ${e.location || ''} ${e.name || ''} ${e.title || ''}`.toLowerCase();
-            return txt.includes('new padel pro');
-        });
-
-        if (!hasNpp) {
-            const pilotEvents = generateSampleEventsWithNewPadelPro();
-            rawEvents = [...rawEvents, ...pilotEvents];
+        if (!firestoreEvents || firestoreEvents.length === 0) {
+            firestoreEvents = await fetchFirestoreRestAmericanas();
         }
 
-        state.events = rawEvents.map(evt => {
-            const financials = calculateEventFinancials(evt);
-            const clubName = evt.club || evt.location || 'New Padel Pro';
-            return {
+        // Snapshot completo oficial extraído de las 2 cuentas Playtomic (bundle desplegable + archivo local si existe)
+        if (Array.isArray(window.PLAYTOMIC_EXTRACTED_SNAPSHOT)) {
+            snapshotEvents = window.PLAYTOMIC_EXTRACTED_SNAPSHOT;
+        }
+        try {
+            if (typeof window !== 'undefined' && window.location && window.location.protocol !== 'file:') {
+                const snapRes = await fetch(`scraper/playtomic_extracted.json?v=${Date.now()}`);
+                if (snapRes.ok) {
+                    const localData = await snapRes.json();
+                    if (Array.isArray(localData) && localData.length > 0) {
+                        snapshotEvents = localData;
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn("Aviso leyendo snapshot Playtomic local:", e.message);
+        }
+
+        // Fusión inteligente por clave única (playtomic_id o doc_id/id) conservando la trazabilidad completa
+        const mergedMap = new Map();
+        const getMergeKey = (item) => {
+            const ptId = (item.playtomic_id || '').toString().trim().toLowerCase();
+            if (ptId) return `pt:${ptId}`;
+            const did = (item.doc_id || item.id || '').toString().trim().toLowerCase();
+            return did ? `id:${did}` : `tmp:${Math.random()}`;
+        };
+
+        // Primero cargamos snapshot histórico/Playtomic y luego enriquecemos/actualizamos con Firestore en vivo
+        snapshotEvents.forEach(loc => {
+            const k = getMergeKey(loc);
+            mergedMap.set(k, { ...loc, id: loc.id || loc.doc_id, _sourceOrigin: 'playtomic_snapshot' });
+        });
+
+        (firestoreEvents || []).forEach(fsEvt => {
+            const k = getMergeKey(fsEvt);
+            const prev = mergedMap.get(k);
+            if (prev) {
+                const mergedPlayers = (Array.isArray(fsEvt.players) && fsEvt.players.length > 0)
+                    ? fsEvt.players
+                    : (Array.isArray(prev.players) ? prev.players : []);
+                mergedMap.set(k, {
+                    ...prev,
+                    ...fsEvt,
+                    id: fsEvt.id || prev.id || prev.doc_id,
+                    players: mergedPlayers,
+                    occupied_players: Math.max(
+                        parseInt(fsEvt.occupied_players || 0, 10) || 0,
+                        parseInt(prev.occupied_players || 0, 10) || 0,
+                        mergedPlayers.length
+                    ),
+                    playtomic_id: fsEvt.playtomic_id || prev.playtomic_id,
+                    playtomicUrl: fsEvt.playtomicUrl || fsEvt.playtomic_url || prev.playtomicUrl || prev.playtomic_url,
+                    _sourceOrigin: 'firestore+playtomic'
+                });
+            } else {
+                mergedMap.set(k, { ...fsEvt, _sourceOrigin: 'firestore_live' });
+            }
+        });
+
+        const combinedRaw = Array.from(mergedMap.values());
+        let discardedCount = 0;
+
+        let linkedRaw = [];
+        combinedRaw.forEach(evt => {
+            const account = classifyPlaytomicEvent(evt);
+            if (!account) {
+                discardedCount++;
+                return;
+            }
+            linkedRaw.push({ evt, account });
+        });
+
+        // Fallback de seguridad solo si no hay absolutamente ningún dato disponible
+        if (linkedRaw.length === 0) {
+            generateSampleEventsWithNewPadelPro().forEach(evt => {
+                linkedRaw.push({ evt, account: PLAYTOMIC_ACCOUNTS.new_play });
+            });
+        }
+
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        state.rawUnlinkedCount = discardedCount;
+        state.lastPlaytomicSync = new Date();
+        state.events = linkedRaw.map(({ evt, account }) => {
+            const normalizedDate = normalizePlaytomicDateStr(evt.normDate || evt.date);
+            const enriched = {
                 ...evt,
+                date: normalizedDate || evt.date || '',
+                club: account.clubCanonical,
+                location: account.clubDisplay
+            };
+            const financials = calculateEventFinancials(enriched);
+            const ptId = evt.playtomic_id || '';
+            const ptUrl = evt.playtomicUrl || evt.playtomic_url || (ptId ? `https://app.playtomic.com/tournaments/${ptId}` : '');
+            const stRaw = (evt.status || '').toLowerCase().trim();
+            const isPast = stRaw === 'finished' || stRaw === 'finalizado' || stRaw === 'completed' || (normalizedDate && normalizedDate < todayStr);
+
+            return {
+                ...enriched,
+                id: evt.id || evt.doc_id || `evt_${ptId || Math.random().toString(36).slice(2, 8)}`,
                 title: evt.title || evt.name || 'Americana SomosPadel',
                 name: evt.name || evt.title || 'Americana SomosPadel',
-                club: clubName,
-                location: clubName,
-                courts: parseInt(evt.courts || evt.max_courts || 4) || 4,
-                max_courts: parseInt(evt.max_courts || evt.courts || 4) || 4,
+                club: account.clubCanonical,
+                canonicalClub: account.clubCanonical,
+                location: account.clubDisplay,
+                organizer: account.key === 'el_prat' ? (evt.organizer || account.organizerName) : (evt.organizer || account.organizerName),
+                playtomicKey: account.key,
+                playtomicAccount: account.accountEmail,
+                playtomicAccountObj: account,
+                playtomic_id: ptId,
+                playtomicUrl: ptUrl,
+                isPastEvent: isPast,
+                statusNormalized: isPast ? 'finished' : (stRaw || 'open'),
+                courts: parseInt(evt.courts || evt.max_courts || 5, 10) || 5,
+                max_courts: parseInt(evt.max_courts || evt.courts || 5, 10) || 5,
                 calculatedFin: financials
             };
         });
 
-        state.events.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+        state.events.sort((a, b) => {
+            const da = `${a.date || '0000-00-00'} ${a.time || '00:00'}`;
+            const db = `${b.date || '0000-00-00'} ${b.time || '00:00'}`;
+            return db.localeCompare(da);
+        });
+
         computeClubsAnalytics();
 
-        // 3. Sincronización en vivo: escuchar eventos creados o modificados desde Admin o ERP
+        // Sincronización en vivo: escuchar eventos creados o modificados desde Admin o ERP
         if (!window._erpEventModifiedBound) {
             window._erpEventModifiedBound = true;
             window.addEventListener('eventModified', async (evt) => {
@@ -489,6 +760,28 @@ window.OrganizacionERP = (function () {
                 await loadEventsData();
                 renderActiveTab();
             });
+        }
+    }
+
+    async function syncPlaytomicLive() {
+        if (state.syncingPlaytomic) return;
+        state.syncingPlaytomic = true;
+        renderActiveTab();
+        try {
+            const endpoints = ['http://localhost:8000/api/sync-playtomic', '/api/sync-playtomic'];
+            for (const ep of endpoints) {
+                try {
+                    const ctrl = new AbortController();
+                    const tid = setTimeout(() => ctrl.abort(), 8000);
+                    const r = await fetch(ep, { method: 'POST', signal: ctrl.signal });
+                    clearTimeout(tid);
+                    if (r.ok) break;
+                } catch (_) {}
+            }
+            await loadEventsData();
+        } finally {
+            state.syncingPlaytomic = false;
+            renderActiveTab();
         }
     }
 
@@ -575,10 +868,16 @@ window.OrganizacionERP = (function () {
             };
         });
 
-        // 2. Acumular eventos únicamente si pertenecen a los clubes autorizados
+        // 2. Acumular eventos vinculados a las 2 Cuentas Oficiales Playtomic / Sedes autorizadas
         state.events.forEach(evt => {
-            const clubName = (evt.club || evt.location || 'New Padel Pro').trim();
-            const targetClub = clubsMap[clubName] || clubsMap['New Padel Pro'];
+            const rawClub = (evt.canonicalClub || evt.club || evt.location || '').toLowerCase();
+            let targetKey = 'New Padel Pro';
+            if (evt.playtomicKey === 'el_prat' || rawClub.includes('prat')) {
+                targetKey = 'Barcelona Pádel El Prat';
+            } else if (clubsMap[(evt.club || '').trim()]) {
+                targetKey = (evt.club || '').trim();
+            }
+            const targetClub = clubsMap[targetKey] || clubsMap['New Padel Pro'];
             if (!targetClub) return;
 
             const fin = evt.calculatedFin;
@@ -722,10 +1021,11 @@ window.OrganizacionERP = (function () {
 
         const titles = {
             pactometro: { title: 'Pactómetro & Simulador Estratégico', desc: 'Previsión de mayorías, simulador 5 pistas (New Padel Pro), reparto de socios y combinaciones rápidas' },
-            clubs: { title: 'Sedes & Negociación de Pistas', desc: 'Ficha oficial de New Padel Pro, acuerdos cerrados, red consolidada de Barcelona y alta de sedes' },
-            events: { title: 'Americanas & Gestión de Pistas', desc: 'Operativa en directo, inscripciones, costes reales y balance económico por evento' },
-            calendar: { title: 'Calendario & Planificación de Agenda', desc: 'Agenda integral de eventos, asignación de pistas, turnos y organizadores' },
-            dashboard: { title: 'Contabilidad & Dirección Financiera', desc: 'KPIs globales, semáforo de rentabilidad por club, simulador de personal (break-even) e informes Excel/PDF' }
+            clubs: { title: 'Sedes & Negociación de Pistas', desc: 'Cuentas oficiales Playtomic: New Play Padel Pro (somospadeleugestion@gmail.com) y Barcelona Pádel El Prat (Eduard Bainad Puig)' },
+            playtomic: { title: 'Trazabilidad Total Playtomic ⇄ SomosPadel', desc: 'Auditoría cronológica completa de todas las americanas en las 2 cuentas oficiales de Playtomic Barcelona' },
+            events: { title: 'Americanas & Gestión de Pistas', desc: 'Todas las americanas vinculadas a Playtomic, inscripciones reales, costes y balance por evento' },
+            calendar: { title: 'Calendario & Planificación de Agenda', desc: 'Agenda histórica y futura vinculada a las 2 cuentas oficiales de Playtomic' },
+            dashboard: { title: 'Contabilidad & Dirección Financiera', desc: 'KPIs globales, semáforo de rentabilidad por sede Playtomic e informes Excel/PDF' }
         };
 
         const currentMeta = titles[state.activeTab] || { title: 'Organización & Eventos', desc: 'Centro de control' };
@@ -757,6 +1057,9 @@ window.OrganizacionERP = (function () {
             case 'clubs':
                 container.innerHTML = renderClubsView();
                 break;
+            case 'playtomic':
+                container.innerHTML = renderPlaytomicTraceabilityView();
+                break;
             case 'events':
                 container.innerHTML = renderEventsView();
                 break;
@@ -770,8 +1073,8 @@ window.OrganizacionERP = (function () {
                 }
                 break;
             default:
-                state.activeTab = 'pactometro';
-                container.innerHTML = renderPactometroDashboardView();
+                state.activeTab = 'playtomic';
+                container.innerHTML = renderPlaytomicTraceabilityView();
                 break;
         }
     }
@@ -2270,6 +2573,27 @@ window.OrganizacionERP = (function () {
             return (state.clubs[b].marginPct || 0) - (state.clubs[a].marginPct || 0);
         });
 
+        // Resumen real en vivo desde Playtomic para distinguir claramente entre datos reales vs simulador
+        const realNpCount = state.events.filter(e => e.playtomicKey === 'new_play').length;
+        const realPratCount = state.events.filter(e => e.playtomicKey === 'el_prat').length;
+        const realIncomeSum = state.events.reduce((acc, e) => acc + (e.calculatedFin?.results?.totalIncome || 0), 0);
+        const realPlayersSum = state.events.reduce((acc, e) => acc + (e.calculatedFin?.registeredCount || 0), 0);
+
+        const realPlaytomicNoticeBanner = `
+            <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; padding:12px 16px; margin-bottom:0.85rem; border-radius:12px; background:linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color:#ffffff; border:1.5px solid #0284c7;">
+                <div style="display:flex; flex-direction:column; gap:3px;">
+                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                        <span class="traffic-badge cyan" style="background:#0284c7; color:#ffffff; font-size:0.68rem;">SIMULADOR TEÓRICO DE ACUERDO</span>
+                        <strong style="font-size:0.88rem; color:#ccff00;">Datos Reales Playtomic Cargados: ${state.events.length} eventos (${realNpCount} New Play · ${realPratCount} El Prat) • ${realPlayersSum} plazas • ${realIncomeSum.toLocaleString('es-ES', { maximumFractionDigits: 0 })} €</strong>
+                    </div>
+                    <span style="font-size:0.75rem; color:#cbd5e1;">Este módulo muestra proyecciones teóricas de reparto entre socios. Para auditar los torneos reales extraídos de las 2 cuentas de Playtomic entra en <strong>Trazabilidad Playtomic</strong>.</span>
+                </div>
+                <button class="btn-erp btn-erp-primary" style="background:#ccff00; color:#0f172a; font-weight:900; border:none;" onclick="window.OrganizacionERP.navigateTo('playtomic')">
+                    <i class="fas fa-link"></i> Ver Datos Reales Playtomic (${state.events.length})
+                </button>
+            </div>
+        `;
+
         // 1. Pestañas de clubes arriba (Sedes diferenciadas + Consolidada)
         const tabsBarHtml = `
             <div class="club-tabs-nav" style="margin-bottom:0.45rem;">
@@ -2302,10 +2626,10 @@ window.OrganizacionERP = (function () {
 
         // Si el usuario tiene seleccionada 'Vista Consolidada' o un club que no es New Padel Pro
         if (state.activeClubTab === 'all') {
-            return tabsBarHtml + renderAllClubsConsolidatedView();
+            return realPlaytomicNoticeBanner + tabsBarHtml + renderAllClubsConsolidatedView();
         } else if (state.activeClubTab !== 'New Padel Pro') {
             const selectedClub = state.clubs[state.activeClubTab] || Object.values(state.clubs)[0];
-            return tabsBarHtml + renderClubDetailView(selectedClub);
+            return realPlaytomicNoticeBanner + tabsBarHtml + renderClubDetailView(selectedClub);
         }
 
         // Renderizado del Pactómetro Interactivo Oficial de New Padel Pro
@@ -2497,7 +2821,7 @@ window.OrganizacionERP = (function () {
             }
         }
 
-        return tabsBarHtml + `
+        return realPlaytomicNoticeBanner + tabsBarHtml + `
             <div class="pactometro-one-page">
                 <!-- HEADER DE CONTROL ESTRATÉGICO DE SOCIOS -->
                 <div class="pactometro-header-card">
@@ -3041,6 +3365,32 @@ window.OrganizacionERP = (function () {
     // ==========================================================================
     // 6. DASHBOARD GENERAL, EVENTOS, CLUBES, PERSONAL Y CALENDARIO
     // ==========================================================================
+    function renderRealEventsBreakdownView() {
+        const filtered = getPlaytomicFilteredList();
+        return `
+            <div class="erp-card" style="margin-bottom:1.5rem;">
+                <div class="erp-card-header" style="flex-wrap:wrap; gap:10px;">
+                    <div>
+                        <h3 class="erp-card-title"><i class="fas fa-link" style="color:#0284c7;"></i> Detalle Real Americana por Americana (2 Cuentas Playtomic)</h3>
+                        <p class="erp-card-subtitle">Datos reales cargados de <strong>somospadeleugestion@gmail.com</strong> (New Play) y <strong>Eduard Bainad Puig</strong> (El Prat SomosPadel) — ${state.events.length} eventos totales</p>
+                    </div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button class="btn-erp btn-erp-secondary" onclick="window.OrganizacionERP.navigateTo('playtomic')">
+                            <i class="fas fa-filter"></i> Ir a Trazabilidad Playtomic
+                        </button>
+                        <button class="btn-erp btn-erp-secondary" onclick="window.OrganizacionERP.printPlaytomicPdf()">
+                            <i class="fas fa-file-pdf" style="color:#e11d48;"></i> Imprimir en PDF
+                        </button>
+                        <button class="btn-erp btn-erp-primary" onclick="window.OrganizacionERP.exportToExcel(true)">
+                            <i class="fas fa-file-excel"></i> Exportar a Excel
+                        </button>
+                    </div>
+                </div>
+                ${renderPlaytomicTraceTableCard(filtered, false)}
+            </div>
+        `;
+    }
+
     function renderDashboardView() {
         const subTab = state.dashboardSubTab || 'overview';
 
@@ -3077,7 +3427,7 @@ window.OrganizacionERP = (function () {
             return subTabsNav + renderPactometroDashboardView();
         }
         if (subTab === 'perevent') {
-            return subTabsNav + renderPactometroDashboardView();
+            return subTabsNav + renderRealEventsBreakdownView();
         }
         if (subTab === 'hiring') {
             return subTabsNav + renderHiringSimulatorView();
@@ -3243,6 +3593,7 @@ window.OrganizacionERP = (function () {
         if (type === 'club') state.filters.club = val;
         if (type === 'status') state.americanaFilterStatus = val;
         if (type === 'category') state.americanaFilterCategory = val;
+        if (type === 'playtomicAccount') state.playtomicAccountFilter = val;
         const tbody = document.getElementById('erp-events-table-body');
         if (tbody) {
             tbody.innerHTML = getFilteredEvents().map(evt => renderEventRow(evt)).join('');
@@ -3251,20 +3602,23 @@ window.OrganizacionERP = (function () {
 
     function getFilteredEvents() {
         return state.events.filter(evt => {
+            if (state.playtomicAccountFilter && state.playtomicAccountFilter !== 'all') {
+                if (evt.playtomicKey !== state.playtomicAccountFilter) return false;
+            }
             if (state.filters.club !== 'all') {
-                const c = (evt.club || evt.location || '').toLowerCase();
+                const c = (evt.canonicalClub || evt.club || evt.location || '').toLowerCase();
                 if (c !== state.filters.club.toLowerCase()) return false;
             }
             if (state.americanaFilterStatus && state.americanaFilterStatus !== 'all') {
-                if ((evt.status || 'open') !== state.americanaFilterStatus) return false;
+                if ((evt.statusNormalized || evt.status || 'open') !== state.americanaFilterStatus) return false;
             }
             if (state.americanaFilterCategory && state.americanaFilterCategory !== 'all') {
                 const cat = (evt.category || '').toLowerCase();
-                if (cat !== state.americanaFilterCategory.toLowerCase()) return false;
+                if (!cat.includes(state.americanaFilterCategory.toLowerCase())) return false;
             }
             if (state.americanaSearchQuery) {
                 const query = state.americanaSearchQuery;
-                const txt = `${evt.title || ''} ${evt.name || ''} ${evt.club || ''} ${evt.location || ''} ${evt.organizer || ''} ${evt.category || ''}`.toLowerCase();
+                const txt = `${evt.title || ''} ${evt.name || ''} ${evt.club || ''} ${evt.location || ''} ${evt.organizer || ''} ${evt.playtomicAccount || ''} ${evt.playtomic_id || ''} ${evt.category || ''}`.toLowerCase();
                 if (!txt.includes(query)) return false;
             }
             return true;
@@ -3429,19 +3783,9 @@ window.OrganizacionERP = (function () {
                                     <i class="fas fa-map-marker-alt" style="color: #0284c7;"></i> SEDE / CLUB
                                 </label>
                                 <select name="location" id="new-evt-club" class="financial-input" style="width:100%; text-align:left; height:42px; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 700;">
-                                    <optgroup label="⭐ CLUBES COLABORADORES (FAVORITOS)">
-                                        <option value="Barcelona Pádel el Prat">⭐ Barcelona Pádel el Prat (14 Pistas)</option>
-                                        <option value="Delfos Cornellà">⭐ Delfos Cornellà (8 Pistas)</option>
-                                        <option value="New Play Pádel Pro" selected>⭐ New Play Pádel Pro (5 Pistas)</option>
-                                        <option value="CEM Tennis Hospitalet">⭐ CEM Tennis Hospitalet (4 Pistas)</option>
-                                    </optgroup>
-                                    <optgroup label="📍 OTRAS SEDES Y CLUBES">
-                                        <option value="Padel Indoor Hospitalet">Padel Indoor Hospitalet</option>
-                                        <option value="Aurial Cornellà">Aurial Cornellà</option>
-                                        <option value="PELL Cornellà Pádel">PELL Cornellà Pádel</option>
-                                        <option value="CEM Estruch El Prat">CEM Estruch El Prat</option>
-                                        <option value="CT Pádel El Prat">CT Pádel El Prat</option>
-                                        <option value="Padelarium Gavá">Padelarium Gavá</option>
+                                    <optgroup label="⭐ CUENTAS OFICIALES PLAYTOMIC SOMOSPADEL BCN">
+                                        <option value="New Padel Pro" selected>⭐ NEW Play Padel Pro Hospitalet (somospadeleugestion@gmail.com)</option>
+                                        <option value="Barcelona Pádel El Prat">⭐ Barcelona Pádel El Prat (Eduard Bainad Puig • SomosPadel)</option>
                                     </optgroup>
                                 </select>
                             </div>
@@ -3594,11 +3938,11 @@ window.OrganizacionERP = (function () {
         const filteredList = getFilteredEvents();
 
         return `
-            <!-- BARRA DE FILTROS Y BÚSQUEDA AVANZADA (IDÉNTICA A GESTOR DE AMERICANAS) -->
+            <!-- BARRA DE FILTROS Y BÚSQUEDA VINCULADA A PLAYTOMIC -->
             <div style="display:flex; gap:10px; margin-bottom:1.5rem; flex-wrap:wrap; align-items:center; background:#ffffff; padding:12px; border-radius:12px; border:1px solid var(--erp-border);">
                 <div style="flex:1; min-width:220px;">
                     <div style="position:relative;">
-                        <input type="text" class="financial-input" placeholder="🔍 Buscar americana, sede, organizador..." 
+                        <input type="text" class="financial-input" placeholder="🔍 Buscar americana, sede, Playtomic ID u organizador..." 
                             value="${escapeHtml(state.americanaSearchQuery)}"
                             oninput="window.OrganizacionERP.onAmericanaSearch(this.value)"
                             style="width:100%; text-align:left; height:38px; padding-left:32px;">
@@ -3607,6 +3951,12 @@ window.OrganizacionERP = (function () {
                 </div>
 
                 <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <select class="financial-input" style="width:230px; height:38px; text-align:left;" onchange="window.OrganizacionERP.onAmericanaFilterChange('playtomicAccount', this.value)">
+                        <option value="all" ${state.playtomicAccountFilter === 'all' ? 'selected' : ''}>Todas las Cuentas Playtomic (2)</option>
+                        <option value="new_play" ${state.playtomicAccountFilter === 'new_play' ? 'selected' : ''}>New Play • somospadeleugestion@gmail.com</option>
+                        <option value="el_prat" ${state.playtomicAccountFilter === 'el_prat' ? 'selected' : ''}>El Prat • Eduard Bainad Puig (SomosPadel)</option>
+                    </select>
+
                     <select class="financial-input" style="width:160px; height:38px; text-align:left;" onchange="window.OrganizacionERP.onAmericanaFilterChange('club', this.value)">
                         <option value="all" ${state.filters.club === 'all' ? 'selected' : ''}>Todos los Clubes</option>
                         ${Object.keys(state.clubs).map(c => `<option value="${escapeHtml(c)}" ${state.filters.club === c ? 'selected' : ''}>${escapeHtml(c)}</option>`).join('')}
@@ -3614,9 +3964,9 @@ window.OrganizacionERP = (function () {
 
                     <select class="financial-input" style="width:140px; height:38px; text-align:left;" onchange="window.OrganizacionERP.onAmericanaFilterChange('category', this.value)">
                         <option value="all" ${state.americanaFilterCategory === 'all' ? 'selected' : ''}>Categorías</option>
-                        <option value="male" ${state.americanaFilterCategory === 'male' ? 'selected' : ''}>Masculino</option>
-                        <option value="female" ${state.americanaFilterCategory === 'female' ? 'selected' : ''}>Femenino</option>
-                        <option value="mixed" ${state.americanaFilterCategory === 'mixed' ? 'selected' : ''}>Mixto</option>
+                        <option value="masc" ${state.americanaFilterCategory === 'masc' ? 'selected' : ''}>Masculino</option>
+                        <option value="fem" ${state.americanaFilterCategory === 'fem' ? 'selected' : ''}>Femenino</option>
+                        <option value="mix" ${state.americanaFilterCategory === 'mix' ? 'selected' : ''}>Mixto</option>
                         <option value="open" ${state.americanaFilterCategory === 'open' ? 'selected' : ''}>Open</option>
                     </select>
 
@@ -3634,17 +3984,17 @@ window.OrganizacionERP = (function () {
                 <table class="erp-table">
                     <thead>
                         <tr>
-                            <th>Nombre Americana</th>
+                            <th>Nombre Americana & Playtomic</th>
                             <th>Fecha & Hora</th>
-                            <th>Club / Sede</th>
-                            <th>Organizador</th>
+                            <th>Sede / Cuenta Playtomic</th>
+                            <th>Estado</th>
                             <th>Pistas</th>
                             <th>Jugadores</th>
                             <th>Ingresos</th>
                             <th>Costes</th>
                             <th>Beneficio</th>
                             <th>Margen</th>
-                            <th>Acciones</th>
+                            <th>Trazabilidad</th>
                         </tr>
                     </thead>
                     <tbody id="erp-events-table-body">
@@ -3660,24 +4010,39 @@ window.OrganizacionERP = (function () {
 
     function renderEventRow(evt) {
         const f = evt.calculatedFin;
+        const acc = evt.playtomicAccountObj || PLAYTOMIC_ACCOUNTS.new_play;
+        const maxPl = parseInt(evt.max_players || evt.maxPlayers || (f.courtsCount * 4), 10) || (f.courtsCount * 4);
+        const isFin = evt.isPastEvent || evt.statusNormalized === 'finished';
+        const ptLink = evt.playtomicUrl
+            ? `<a href="${escapeHtml(evt.playtomicUrl)}" target="_blank" rel="noopener" style="font-size:0.68rem; color:#0284c7; font-weight:800; text-decoration:none; display:inline-flex; align-items:center; gap:3px;" title="Abrir torneo oficial en Playtomic"><i class="fas fa-external-link-alt"></i> Playtomic</a>`
+            : `<span style="font-size:0.66rem; color:#94a3b8;">Interno App</span>`;
+
         return `
             <tr>
                 <td>
-                    <strong style="color:var(--erp-text-main); font-size:0.88rem;">${evt.title || evt.name || 'Americana'}</strong>
-                    <div style="font-size:0.7rem; color:var(--erp-text-dim);">${evt.category || 'Categoría General'} • ${evt.level || ''}</div>
+                    <strong style="color:var(--erp-text-main); font-size:0.88rem;">${escapeHtml(evt.title || evt.name || 'Americana')}</strong>
+                    <div style="font-size:0.7rem; color:var(--erp-text-dim); display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:2px;">
+                        <span>${escapeHtml(evt.category || 'Open')} • ${parseFloat(f.pricePerPlayer || 12).toFixed(0)}€/jug.</span>
+                        ${ptLink}
+                    </div>
                 </td>
                 <td>
-                    <div>${evt.date || 'Pendiente'}</div>
-                    <div style="font-size:0.7rem; color:var(--erp-text-muted);">${evt.time || ''}</div>
+                    <div style="font-weight:700;">${escapeHtml(evt.date || 'Pendiente')}</div>
+                    <div style="font-size:0.7rem; color:var(--erp-text-muted);">${escapeHtml(evt.time || '')}${evt.time_end && !String(evt.time || '').includes('-') ? ' - ' + escapeHtml(evt.time_end) : ''}</div>
                 </td>
                 <td>
-                    <strong>${evt.club || evt.location || 'Sede'}</strong>
+                    <strong style="display:block; font-size:0.82rem;">${escapeHtml(evt.location || evt.club || 'Sede')}</strong>
+                    <span style="display:inline-block; margin-top:3px; padding:2px 7px; border-radius:999px; font-size:0.65rem; font-weight:800; background:${acc.badgeBg}; color:${acc.badgeColor};">
+                        ${escapeHtml(acc.shortTag)}
+                    </span>
                 </td>
                 <td>
-                    <div style="font-size:0.78rem; font-weight:700;">${evt.organizer || 'Alex Coscolín'}</div>
+                    <span class="traffic-badge ${isFin ? 'green' : 'yellow'}" style="padding:3px 8px; font-size:0.65rem;">
+                        ${isFin ? '🏁 Finalizada' : '🟢 Activa'}
+                    </span>
                 </td>
                 <td style="text-align:center;">${f.courtsCount}</td>
-                <td style="text-align:center;">${f.registeredCount}</td>
+                <td style="text-align:center; font-weight:700;">${f.registeredCount}<span style="color:#94a3b8; font-weight:500;">/${maxPl}</span></td>
                 <td class="erp-money">${f.results.totalIncome.toFixed(2)} €</td>
                 <td class="erp-money negative">${f.results.totalExpense.toFixed(2)} €</td>
                 <td class="erp-money positive"><strong>${f.results.netProfit.toFixed(2)} €</strong></td>
@@ -3687,8 +4052,11 @@ window.OrganizacionERP = (function () {
                     </span>
                 </td>
                 <td>
-                    <div style="display:flex; gap:6px;">
-                        <button class="erp-btn-micro" title="Ficha Económica y Costes" onclick="window.OrganizacionERP.openFinancialModal('${evt.id}')">
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <button class="erp-btn-micro" title="Ver Jugadores Inscritos y Trazabilidad Playtomic" onclick="window.OrganizacionERP.openPlayersTraceModal('${escapeHtml(evt.id)}')">
+                            <i class="fas fa-users" style="color:#059669;"></i> Jug.
+                        </button>
+                        <button class="erp-btn-micro" title="Ficha Económica y Costes" onclick="window.OrganizacionERP.openFinancialModal('${escapeHtml(evt.id)}')">
                             <i class="fas fa-coins" style="color:#0284c7;"></i> Finanzas
                         </button>
                     </div>
@@ -4707,25 +5075,515 @@ window.OrganizacionERP = (function () {
         if (breakEvenNumEl) breakEvenNumEl.textContent = breakEven.toFixed(1);
     }
 
+    function updatePlaytomicTraceDOM() {
+        const filtered = getPlaytomicFilteredList();
+        const tbody = document.getElementById('erp-playtomic-trace-body');
+        if (tbody) {
+            tbody.innerHTML = renderPlaytomicTraceRows(filtered);
+        }
+        const summaryEl = document.getElementById('erp-playtomic-filter-summary');
+        if (summaryEl) {
+            const totalInc = filtered.reduce((a, e) => a + (e.calculatedFin?.results?.totalIncome || 0), 0);
+            const totalNet = filtered.reduce((a, e) => a + (e.calculatedFin?.results?.netProfit || 0), 0);
+            const totalPl = filtered.reduce((a, e) => a + (e.calculatedFin?.registeredCount || 0), 0);
+            summaryEl.innerHTML = `Mostrando <strong>${filtered.length}</strong> de ${state.events.length} eventos • <strong>${totalPl}</strong> jugadores • Facturación: <strong>${totalInc.toFixed(2)} €</strong> • Neto: <strong style="color:#16a34a;">+${totalNet.toFixed(2)} €</strong>`;
+        }
+    }
+
+    function setPlaytomicFilter(key, val) {
+        if (key === 'account') state.playtomicAccountFilter = val;
+        if (key === 'status') state.playtomicStatusFilter = val;
+        if (key === 'search') {
+            state.playtomicSearchQuery = val || '';
+            updatePlaytomicTraceDOM();
+            return;
+        }
+        renderActiveTab();
+    }
+
+    function setPlaytomicColFilter(colKey, val) {
+        if (colKey === 'account') {
+            state.playtomicAccountFilter = val || 'all';
+            renderActiveTab();
+            return;
+        }
+        if (colKey === 'status') {
+            state.playtomicStatusFilter = val || 'all';
+            renderActiveTab();
+            return;
+        }
+        if (!state.playtomicColFilters) {
+            state.playtomicColFilters = { date: '', title: '', occupation: 'all', minIncome: '', maxExpense: '', netSign: 'all' };
+        }
+        state.playtomicColFilters[colKey] = val;
+        updatePlaytomicTraceDOM();
+    }
+
+    function resetPlaytomicFilters() {
+        state.playtomicAccountFilter = 'all';
+        state.playtomicStatusFilter = 'all';
+        state.playtomicSearchQuery = '';
+        state.playtomicColFilters = {
+            date: '',
+            title: '',
+            occupation: 'all',
+            minIncome: '',
+            maxExpense: '',
+            netSign: 'all'
+        };
+        state.playtomicSort = { key: 'date', dir: 'desc' };
+        renderActiveTab();
+    }
+
+    function togglePlaytomicSort(colKey) {
+        if (!state.playtomicSort) state.playtomicSort = { key: 'date', dir: 'desc' };
+        if (state.playtomicSort.key === colKey) {
+            state.playtomicSort.dir = state.playtomicSort.dir === 'asc' ? 'desc' : 'asc';
+        } else {
+            state.playtomicSort.key = colKey;
+            state.playtomicSort.dir = colKey === 'date' ? 'desc' : 'asc';
+        }
+        renderActiveTab();
+    }
+
+    function printPlaytomicPdf() {
+        if (typeof window !== 'undefined' && typeof window.print === 'function') {
+            window.print();
+        }
+    }
+
+    function getPlaytomicFilteredList() {
+        const q = (state.playtomicSearchQuery || '').toLowerCase().trim();
+        const cf = state.playtomicColFilters || {};
+        const fDate = (cf.date || '').toLowerCase().trim();
+        const fTitle = (cf.title || '').toLowerCase().trim();
+        const fOcc = cf.occupation || 'all';
+        const fMinInc = cf.minIncome !== '' && cf.minIncome !== undefined ? parseFloat(cf.minIncome) : NaN;
+        const fMaxExp = cf.maxExpense !== '' && cf.maxExpense !== undefined ? parseFloat(cf.maxExpense) : NaN;
+        const fNetSign = cf.netSign || 'all';
+
+        const list = state.events.filter(evt => {
+            if (state.playtomicAccountFilter !== 'all' && evt.playtomicKey !== state.playtomicAccountFilter) return false;
+            if (state.playtomicStatusFilter === 'finished' && !evt.isPastEvent) return false;
+            if (state.playtomicStatusFilter === 'active' && evt.isPastEvent) return false;
+
+            if (fDate) {
+                const dateStr = `${evt.date || ''} ${evt.time || ''} ${evt.time_end || ''}`.toLowerCase();
+                if (!dateStr.includes(fDate)) return false;
+            }
+
+            if (fTitle) {
+                const fin = evt.calculatedFin || {};
+                const titleStr = `${evt.title || ''} ${evt.playtomic_id || ''} ${fin.courtsCount || ''} ${fin.pricePerPlayer || ''}`.toLowerCase();
+                if (!titleStr.includes(fTitle)) return false;
+            }
+
+            const f = evt.calculatedFin || { registeredCount: 0, courtsCount: 5, results: { totalIncome: 0, totalExpense: 0, netProfit: 0 } };
+            const maxPl = parseInt(evt.max_players || evt.maxPlayers || (f.courtsCount * 4), 10) || (f.courtsCount * 4);
+            const occPct = maxPl > 0 ? Math.round((f.registeredCount / maxPl) * 100) : 0;
+
+            if (fOcc === 'full' && occPct < 90) return false;
+            if (fOcc === 'with_players' && f.registeredCount <= 0) return false;
+            if (fOcc === 'empty' && f.registeredCount > 0) return false;
+
+            if (!isNaN(fMinInc) && f.results.totalIncome < fMinInc) return false;
+            if (!isNaN(fMaxExp) && f.results.totalExpense > fMaxExp) return false;
+
+            if (fNetSign === 'positive' && f.results.netProfit <= 0) return false;
+            if (fNetSign === 'zero_or_neg' && f.results.netProfit > 0) return false;
+
+            if (q) {
+                const txt = `${evt.title || ''} ${evt.location || ''} ${evt.organizer || ''} ${evt.playtomicAccount || ''} ${evt.playtomic_id || ''} ${(evt.players || []).map(p => p.name || '').join(' ')}`.toLowerCase();
+                if (!txt.includes(q)) return false;
+            }
+            return true;
+        });
+
+        const sort = state.playtomicSort || { key: 'date', dir: 'desc' };
+        const mul = sort.dir === 'asc' ? 1 : -1;
+        list.sort((a, b) => {
+            switch (sort.key) {
+                case 'title':
+                    return mul * (a.title || '').localeCompare(b.title || '', 'es');
+                case 'account':
+                    return mul * (a.location || '').localeCompare(b.location || '', 'es');
+                case 'status':
+                    return mul * ((a.isPastEvent ? 1 : 0) - (b.isPastEvent ? 1 : 0));
+                case 'players':
+                    return mul * ((a.calculatedFin?.registeredCount || 0) - (b.calculatedFin?.registeredCount || 0));
+                case 'income':
+                    return mul * ((a.calculatedFin?.results?.totalIncome || 0) - (b.calculatedFin?.results?.totalIncome || 0));
+                case 'expense':
+                    return mul * ((a.calculatedFin?.results?.totalExpense || 0) - (b.calculatedFin?.results?.totalExpense || 0));
+                case 'net':
+                    return mul * ((a.calculatedFin?.results?.netProfit || 0) - (b.calculatedFin?.results?.netProfit || 0));
+                case 'date':
+                default: {
+                    const da = `${a.date || '0000-00-00'} ${a.time || '00:00'}`;
+                    const db = `${b.date || '0000-00-00'} ${b.time || '00:00'}`;
+                    return mul * da.localeCompare(db);
+                }
+            }
+        });
+        return list;
+    }
+
+    function renderPlaytomicTraceTableCard(filtered, wrapInCard = true) {
+        const cf = state.playtomicColFilters || {};
+        const sort = state.playtomicSort || { key: 'date', dir: 'desc' };
+        const sortIcon = (k) => sort.key === k ? (sort.dir === 'asc' ? ' ▲' : ' ▼') : '';
+        const totalInc = filtered.reduce((a, e) => a + (e.calculatedFin?.results?.totalIncome || 0), 0);
+        const totalNet = filtered.reduce((a, e) => a + (e.calculatedFin?.results?.netProfit || 0), 0);
+        const totalPl = filtered.reduce((a, e) => a + (e.calculatedFin?.registeredCount || 0), 0);
+
+        const innerHtml = `
+            <div id="erp-playtomic-filter-summary" style="font-size:0.78rem; color:#475569; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                <span>Mostrando <strong>${filtered.length}</strong> de ${state.events.length} eventos • <strong>${totalPl}</strong> jugadores • Facturación: <strong>${totalInc.toFixed(2)} €</strong> • Neto: <strong style="color:#16a34a;">+${totalNet.toFixed(2)} €</strong></span>
+            </div>
+            <div class="erp-table-responsive">
+                <table class="erp-table">
+                    <thead>
+                        <tr>
+                            <th class="erp-th-sortable" onclick="window.OrganizacionERP.togglePlaytomicSort('date')">Fecha / Hora${sortIcon('date')}</th>
+                            <th class="erp-th-sortable" onclick="window.OrganizacionERP.togglePlaytomicSort('title')">Americana & Enlace Playtomic${sortIcon('title')}</th>
+                            <th class="erp-th-sortable" onclick="window.OrganizacionERP.togglePlaytomicSort('account')">Cuenta / Organizador Oficial${sortIcon('account')}</th>
+                            <th class="erp-th-sortable" onclick="window.OrganizacionERP.togglePlaytomicSort('status')">Estado${sortIcon('status')}</th>
+                            <th class="erp-th-sortable" onclick="window.OrganizacionERP.togglePlaytomicSort('players')">Ocupación Real${sortIcon('players')}</th>
+                            <th class="erp-th-sortable" onclick="window.OrganizacionERP.togglePlaytomicSort('income')">Ingresos${sortIcon('income')}</th>
+                            <th class="erp-th-sortable" onclick="window.OrganizacionERP.togglePlaytomicSort('expense')">Costes${sortIcon('expense')}</th>
+                            <th class="erp-th-sortable" onclick="window.OrganizacionERP.togglePlaytomicSort('net')">Neto${sortIcon('net')}</th>
+                            <th>Auditoría</th>
+                        </tr>
+                        <tr class="erp-col-filter-row">
+                            <th>
+                                <input type="text" class="erp-col-filter-input" placeholder="Año/Mes..." value="${escapeHtml(cf.date || '')}" oninput="window.OrganizacionERP.setPlaytomicColFilter('date', this.value)" title="Filtrar columna Fecha/Hora (ej: 2026-11)">
+                            </th>
+                            <th>
+                                <input type="text" class="erp-col-filter-input" placeholder="Filtrar evento/ID..." value="${escapeHtml(cf.title || '')}" oninput="window.OrganizacionERP.setPlaytomicColFilter('title', this.value)" title="Filtrar por nombre, precio o ID Playtomic">
+                            </th>
+                            <th>
+                                <select class="erp-col-filter-select" onchange="window.OrganizacionERP.setPlaytomicColFilter('account', this.value)" title="Filtrar por Cuenta Playtomic">
+                                    <option value="all" ${state.playtomicAccountFilter === 'all' ? 'selected' : ''}>Todas (2 cuentas)</option>
+                                    <option value="new_play" ${state.playtomicAccountFilter === 'new_play' ? 'selected' : ''}>New Play (somospadel)</option>
+                                    <option value="el_prat" ${state.playtomicAccountFilter === 'el_prat' ? 'selected' : ''}>El Prat (Eduard Bainad)</option>
+                                </select>
+                            </th>
+                            <th>
+                                <select class="erp-col-filter-select" onchange="window.OrganizacionERP.setPlaytomicColFilter('status', this.value)" title="Filtrar por Estado">
+                                    <option value="all" ${state.playtomicStatusFilter === 'all' ? 'selected' : ''}>Todos</option>
+                                    <option value="finished" ${state.playtomicStatusFilter === 'finished' ? 'selected' : ''}>🏁 Celebradas</option>
+                                    <option value="active" ${state.playtomicStatusFilter === 'active' ? 'selected' : ''}>🟢 Activas</option>
+                                </select>
+                            </th>
+                            <th>
+                                <select class="erp-col-filter-select" onchange="window.OrganizacionERP.setPlaytomicColFilter('occupation', this.value)" title="Filtrar por Ocupación">
+                                    <option value="all" ${(cf.occupation || 'all') === 'all' ? 'selected' : ''}>Todas</option>
+                                    <option value="full" ${cf.occupation === 'full' ? 'selected' : ''}>Completa (≥90%)</option>
+                                    <option value="with_players" ${cf.occupation === 'with_players' ? 'selected' : ''}>Con jugadores (&gt;0)</option>
+                                    <option value="empty" ${cf.occupation === 'empty' ? 'selected' : ''}>Sin plazas (0)</option>
+                                </select>
+                            </th>
+                            <th>
+                                <input type="number" class="erp-col-filter-input" placeholder="Mín €" value="${escapeHtml(cf.minIncome !== undefined ? String(cf.minIncome) : '')}" oninput="window.OrganizacionERP.setPlaytomicColFilter('minIncome', this.value)" title="Ingresos mínimos (€)">
+                            </th>
+                            <th>
+                                <input type="number" class="erp-col-filter-input" placeholder="Máx €" value="${escapeHtml(cf.maxExpense !== undefined ? String(cf.maxExpense) : '')}" oninput="window.OrganizacionERP.setPlaytomicColFilter('maxExpense', this.value)" title="Costes máximos (€)">
+                            </th>
+                            <th>
+                                <select class="erp-col-filter-select" onchange="window.OrganizacionERP.setPlaytomicColFilter('netSign', this.value)" title="Filtrar por Neto">
+                                    <option value="all" ${(cf.netSign || 'all') === 'all' ? 'selected' : ''}>Todos</option>
+                                    <option value="positive" ${cf.netSign === 'positive' ? 'selected' : ''}>Positivo (&gt;0€)</option>
+                                    <option value="zero_or_neg" ${cf.netSign === 'zero_or_neg' ? 'selected' : ''}>≤ 0 €</option>
+                                </select>
+                            </th>
+                            <th>
+                                <button type="button" class="erp-btn-micro" onclick="window.OrganizacionERP.resetPlaytomicFilters()" title="Limpiar filtros de columnas" style="width:100%; justify-content:center;">
+                                    <i class="fas fa-eraser"></i> Limpiar
+                                </button>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="erp-playtomic-trace-body">
+                        ${renderPlaytomicTraceRows(filtered)}
+                    </tbody>
+                </table>
+            </div>
+        `;
+        return wrapInCard ? `<div class="erp-card">${innerHtml}</div>` : innerHtml;
+    }
+
+    function renderPlaytomicTraceRows(list) {
+        if (!list || list.length === 0) {
+            return `<tr><td colspan="9" style="text-align:center; padding:2.5rem; color:var(--erp-text-muted);">No hay eventos que coincidan con el filtro de trazabilidad.</td></tr>`;
+        }
+        return list.map(evt => {
+            const f = evt.calculatedFin;
+            const acc = evt.playtomicAccountObj || PLAYTOMIC_ACCOUNTS.new_play;
+            const maxPl = parseInt(evt.max_players || evt.maxPlayers || (f.courtsCount * 4), 10) || (f.courtsCount * 4);
+            const occPct = maxPl > 0 ? Math.min(100, Math.round((f.registeredCount / maxPl) * 100)) : 0;
+            const playersArr = Array.isArray(evt.players) ? evt.players : [];
+            const ptCount = playersArr.filter(p => p.source === 'playtomic' || p.is_playtomic).length;
+            const statusBadge = evt.isPastEvent
+                ? `<span class="traffic-badge green" style="font-size:0.64rem; padding:3px 7px;">🏁 Celebrada</span>`
+                : `<span class="traffic-badge yellow" style="font-size:0.64rem; padding:3px 7px;">🟢 Activa / Próxima</span>`;
+
+            return `
+                <tr>
+                    <td>
+                        <div style="font-weight:800; color:#0f172a;">${escapeHtml(evt.date || 'Sin fecha')}</div>
+                        <div style="font-size:0.7rem; color:#64748b;">${escapeHtml(evt.time || '')}${evt.time_end && !String(evt.time || '').includes('-') ? ' - ' + escapeHtml(evt.time_end) : ''}</div>
+                    </td>
+                    <td>
+                        <div style="font-weight:900; color:#0f172a; font-size:0.86rem;">${escapeHtml(evt.title)}</div>
+                        <div style="font-size:0.68rem; color:#64748b; display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:2px;">
+                            <span>${f.courtsCount} pistas • ${parseFloat(f.pricePerPlayer || 12).toFixed(0)}€/jug.</span>
+                            ${evt.playtomic_id ? `<span style="font-family:monospace; background:#f1f5f9; padding:1px 5px; border-radius:4px;">PT:${escapeHtml(String(evt.playtomic_id).slice(0, 8))}</span>` : ''}
+                            ${evt.playtomicUrl ? `<a href="${escapeHtml(evt.playtomicUrl)}" target="_blank" rel="noopener" style="color:#0284c7; font-weight:800; text-decoration:none;"><i class="fas fa-external-link-alt"></i> Ver en Playtomic</a>` : ''}
+                        </div>
+                    </td>
+                    <td>
+                        <div style="font-weight:800; font-size:0.78rem; color:${acc.badgeColor};">${escapeHtml(acc.clubDisplay)}</div>
+                        <div style="font-size:0.7rem; color:#334155; font-weight:700;">${escapeHtml(evt.organizer || acc.organizerName)}</div>
+                        <div style="font-size:0.65rem; color:#64748b;">${escapeHtml(acc.accountEmail)}</div>
+                    </td>
+                    <td>${statusBadge}</td>
+                    <td>
+                        <div style="font-weight:800; font-size:0.8rem;">${f.registeredCount} / ${maxPl} <span style="color:#64748b; font-weight:600;">(${occPct}%)</span></div>
+                        <div style="width:90px; height:5px; background:#e2e8f0; border-radius:99px; overflow:hidden; margin-top:3px;">
+                            <div style="width:${occPct}%; height:100%; background:${occPct >= 85 ? '#16a34a' : '#0284c7'};"></div>
+                        </div>
+                        ${ptCount > 0 ? `<div style="font-size:0.63rem; color:#0284c7; font-weight:700; margin-top:2px;">📲 ${ptCount} vía Playtomic</div>` : ''}
+                    </td>
+                    <td class="erp-money">${f.results.totalIncome.toFixed(2)} €</td>
+                    <td class="erp-money negative">${f.results.totalExpense.toFixed(2)} €</td>
+                    <td class="erp-money positive"><strong>+${f.results.netProfit.toFixed(2)} €</strong></td>
+                    <td>
+                        <div style="display:flex; gap:5px; flex-wrap:wrap;">
+                            <button class="erp-btn-micro" onclick="window.OrganizacionERP.openPlayersTraceModal('${escapeHtml(evt.id)}')" title="Auditar lista exacta de jugadores">
+                                <i class="fas fa-users" style="color:#059669;"></i> Jugadores (${playersArr.length || f.registeredCount})
+                            </button>
+                            <button class="erp-btn-micro" onclick="window.OrganizacionERP.openFinancialModal('${escapeHtml(evt.id)}')" title="Editar ingresos y costes">
+                                <i class="fas fa-coins" style="color:#0284c7;"></i> Finanzas
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function renderPlaytomicTraceabilityView() {
+        const newPlayEvts = state.events.filter(e => e.playtomicKey === 'new_play');
+        const elPratEvts = state.events.filter(e => e.playtomicKey === 'el_prat');
+
+        const summarize = (arr) => {
+            let players = 0, income = 0, profit = 0, finished = 0, upcoming = 0;
+            arr.forEach(e => {
+                const f = e.calculatedFin;
+                players += f.registeredCount;
+                income += f.results.totalIncome;
+                profit += f.results.netProfit;
+                if (e.isPastEvent) finished++;
+                else upcoming++;
+            });
+            return { total: arr.length, finished, upcoming, players, income, profit };
+        };
+
+        const sNp = summarize(newPlayEvts);
+        const sPrat = summarize(elPratEvts);
+        const filtered = getPlaytomicFilteredList();
+        const syncTimeStr = state.lastPlaytomicSync
+            ? state.lastPlaytomicSync.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+            : '--:--';
+
+        return `
+            <div class="club-header-banner" style="margin-bottom:1.25rem;">
+                <div>
+                    <span style="font-size:0.72rem; font-weight:800; color:#0284c7; text-transform:uppercase; letter-spacing:0.5px;">VINCULACIÓN OFICIAL PLAYTOMIC ⇄ SOMOSPADEL BARCELONA</span>
+                    <h3 style="font-family:var(--erp-font-title); font-size:1.35rem; font-weight:900; color:var(--erp-text-main); margin:4px 0;">
+                        Trazabilidad Total de Americanas y Cuentas Playtomic
+                    </h3>
+                    <p style="font-size:0.8rem; color:var(--erp-text-muted); margin:0;">
+                        Histórico completo + calendario vivo de nuestras 2 cuentas oficiales. Se excluyen automáticamente torneos externos o no SomosPadel (${state.rawUnlinkedCount} descartados).
+                    </p>
+                </div>
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <span style="font-size:0.72rem; color:#64748b; font-weight:700;">Última carga: ${syncTimeStr}</span>
+                    <button class="btn-erp btn-erp-primary" onclick="window.OrganizacionERP.syncPlaytomicLive()" ${state.syncingPlaytomic ? 'disabled' : ''}>
+                        <i class="fas fa-sync-alt ${state.syncingPlaytomic ? 'fa-spin' : ''}"></i> ${state.syncingPlaytomic ? 'Sincronizando...' : 'Actualizar Playtomic'}
+                    </button>
+                    <button class="btn-erp btn-erp-secondary" onclick="window.OrganizacionERP.printPlaytomicPdf()" title="Imprimir informe en PDF (respeta los filtros de columna)">
+                        <i class="fas fa-file-pdf" style="color:#e11d48;"></i> Imprimir en PDF
+                    </button>
+                    <button class="btn-erp btn-erp-secondary" onclick="window.OrganizacionERP.exportToExcel(true)" title="Exportar tabla filtrada a Excel (.csv)">
+                        <i class="fas fa-file-excel" style="color:#16a34a;"></i> Exportar a Excel
+                    </button>
+                </div>
+            </div>
+
+            <!-- LAS 2 CUENTAS OFICIALES PLAYTOMIC -->
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:1rem; margin-bottom:1.5rem;">
+                <div class="erp-card" style="border-top:4px solid #0284c7; cursor:pointer; ${state.playtomicAccountFilter === 'new_play' ? 'box-shadow:0 0 0 2px #0284c7;' : ''}" onclick="window.OrganizacionERP.setPlaytomicFilter('account', '${state.playtomicAccountFilter === 'new_play' ? 'all' : 'new_play'}')">
+                    <div class="erp-card-header" style="margin-bottom:8px;">
+                        <div>
+                            <span style="font-size:0.68rem; font-weight:900; color:#0284c7; text-transform:uppercase;">CUENTA PLAYTOMIC 1 • TODAS LAS AMERICANAS</span>
+                            <h4 class="erp-card-title" style="font-size:1.05rem; margin-top:2px;">NEW Play Padel Pro Hospitalet</h4>
+                            <div style="font-size:0.75rem; font-weight:800; color:#0f172a; margin-top:2px;">📧 somospadeleugestion@gmail.com</div>
+                            <div style="font-size:0.72rem; color:#64748b;">Organizador: <strong>somospadel barcelona</strong></div>
+                        </div>
+                        <span class="traffic-badge green" style="font-size:0.68rem;">${sNp.total} eventos</span>
+                    </div>
+                    <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; background:#f8fafc; padding:10px; border-radius:10px; border:1px solid #e2e8f0; text-align:center;">
+                        <div><div style="font-size:0.62rem; color:#64748b;">HISTÓRICO</div><strong style="font-size:0.95rem;">${sNp.finished}</strong></div>
+                        <div><div style="font-size:0.62rem; color:#64748b;">ACTIVAS</div><strong style="font-size:0.95rem; color:#0284c7;">${sNp.upcoming}</strong></div>
+                        <div><div style="font-size:0.62rem; color:#64748b;">JUGADORES</div><strong style="font-size:0.95rem;">${sNp.players}</strong></div>
+                        <div><div style="font-size:0.62rem; color:#64748b;">FACTURADO</div><strong style="font-size:0.95rem; color:#16a34a;">${sNp.income.toFixed(0)} €</strong></div>
+                    </div>
+                </div>
+
+                <div class="erp-card" style="border-top:4px solid #059669; cursor:pointer; ${state.playtomicAccountFilter === 'el_prat' ? 'box-shadow:0 0 0 2px #059669;' : ''}" onclick="window.OrganizacionERP.setPlaytomicFilter('account', '${state.playtomicAccountFilter === 'el_prat' ? 'all' : 'el_prat'}')">
+                    <div class="erp-card-header" style="margin-bottom:8px;">
+                        <div>
+                            <span style="font-size:0.68rem; font-weight:900; color:#059669; text-transform:uppercase;">CUENTA PLAYTOMIC 2 • SOLO SOMOSPADEL BCN</span>
+                            <h4 class="erp-card-title" style="font-size:1.05rem; margin-top:2px;">Barcelona Pádel El Prat</h4>
+                            <div style="font-size:0.75rem; font-weight:800; color:#0f172a; margin-top:2px;">👤 Eduard Bainad Puig</div>
+                            <div style="font-size:0.72rem; color:#64748b;">Filtro estricto: <strong>Solo americanas SomosPadel Barcelona</strong></div>
+                        </div>
+                        <span class="traffic-badge green" style="font-size:0.68rem;">${sPrat.total} eventos</span>
+                    </div>
+                    <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; background:#f8fafc; padding:10px; border-radius:10px; border:1px solid #e2e8f0; text-align:center;">
+                        <div><div style="font-size:0.62rem; color:#64748b;">HISTÓRICO</div><strong style="font-size:0.95rem;">${sPrat.finished}</strong></div>
+                        <div><div style="font-size:0.62rem; color:#64748b;">ACTIVAS</div><strong style="font-size:0.95rem; color:#059669;">${sPrat.upcoming}</strong></div>
+                        <div><div style="font-size:0.62rem; color:#64748b;">JUGADORES</div><strong style="font-size:0.95rem;">${sPrat.players}</strong></div>
+                        <div><div style="font-size:0.62rem; color:#64748b;">FACTURADO</div><strong style="font-size:0.95rem; color:#16a34a;">${sPrat.income.toFixed(0)} €</strong></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FILTROS DE TRAZABILIDAD -->
+            <div class="erp-playtomic-filterbar" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; margin-bottom:1rem; background:#fff; padding:12px; border-radius:12px; border:1px solid var(--erp-border);">
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button class="club-tab-pill ${state.playtomicStatusFilter === 'all' ? 'active' : ''}" onclick="window.OrganizacionERP.setPlaytomicFilter('status', 'all')">Todo el Historial (${state.events.length})</button>
+                    <button class="club-tab-pill ${state.playtomicStatusFilter === 'finished' ? 'active' : ''}" onclick="window.OrganizacionERP.setPlaytomicFilter('status', 'finished')">🏁 Celebradas (${sNp.finished + sPrat.finished})</button>
+                    <button class="club-tab-pill ${state.playtomicStatusFilter === 'active' ? 'active' : ''}" onclick="window.OrganizacionERP.setPlaytomicFilter('status', 'active')">🟢 Activas / Próximas (${sNp.upcoming + sPrat.upcoming})</button>
+                </div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; flex:1; justify-content:flex-end; min-width:240px;">
+                    <input type="text" class="financial-input" placeholder="🔍 Búsqueda global (americana, jugador o ID Playtomic)..." value="${escapeHtml(state.playtomicSearchQuery)}" oninput="window.OrganizacionERP.setPlaytomicFilter('search', this.value)" style="text-align:left; flex:1; max-width:360px; height:38px;">
+                    ${state.playtomicAccountFilter !== 'all' ? `<button class="btn-erp btn-erp-secondary" onclick="window.OrganizacionERP.setPlaytomicFilter('account', 'all')">Ver 2 cuentas</button>` : ''}
+                </div>
+            </div>
+
+            <!-- TABLA DE TRAZABILIDAD CRONOLÓGICA CON FILTROS POR COLUMNA -->
+            ${renderPlaytomicTraceTableCard(filtered, true)}
+        `;
+    }
+
+    function openPlayersTraceModal(eventId) {
+        const evt = state.events.find(e => e.id === eventId);
+        if (!evt) return;
+
+        const modal = document.getElementById('erp-club-modal');
+        const titleEl = document.getElementById('erp-club-modal-title');
+        const bodyEl = document.getElementById('erp-club-modal-body');
+        if (!modal || !bodyEl) return;
+
+        const acc = evt.playtomicAccountObj || PLAYTOMIC_ACCOUNTS.new_play;
+        const players = Array.isArray(evt.players) ? evt.players : [];
+
+        if (titleEl) titleEl.textContent = `Trazabilidad de Jugadores: ${evt.title}`;
+        bodyEl.innerHTML = `
+            <div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; background:#f8fafc; padding:12px; border-radius:10px; border:1px solid var(--erp-border); margin-bottom:14px; font-size:0.78rem;">
+                <div><strong>Fecha:</strong> ${escapeHtml(evt.date || 'N/A')} ${escapeHtml(evt.time || '')}</div>
+                <div><strong>Sede:</strong> ${escapeHtml(acc.clubDisplay)}</div>
+                <div><strong>Cuenta:</strong> <span style="color:${acc.badgeColor}; font-weight:800;">${escapeHtml(acc.accountEmail)}</span></div>
+                ${evt.playtomicUrl ? `<a href="${escapeHtml(evt.playtomicUrl)}" target="_blank" rel="noopener" style="color:#0284c7; font-weight:800;"><i class="fas fa-external-link-alt"></i> Playtomic</a>` : ''}
+            </div>
+            ${players.length > 0 ? `
+                <div class="erp-table-responsive" style="max-height:360px; overflow-y:auto;">
+                    <table class="erp-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Jugador</th>
+                                <th>Nivel</th>
+                                <th>Origen</th>
+                                <th>Pago</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${players.map((p, idx) => `
+                                <tr>
+                                    <td>${idx + 1}</td>
+                                    <td><strong>${escapeHtml(p.name || p.display_name || 'Jugador')}</strong></td>
+                                    <td>${p.level !== undefined && p.level !== null ? escapeHtml(String(p.level)) : '-'}</td>
+                                    <td><span class="traffic-badge ${p.is_playtomic || p.source === 'playtomic' ? 'green' : 'yellow'}" style="font-size:0.65rem;">${p.is_playtomic || p.source === 'playtomic' ? '📲 Playtomic' : 'App SomosPadel'}</span></td>
+                                    <td>${p.price_paid ? `${Number(p.price_paid).toFixed(2)} €` : `${Number(evt.calculatedFin.pricePerPlayer || 12).toFixed(0)} €`}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            ` : `
+                <div style="text-align:center; padding:1.75rem; background:#f8fafc; border-radius:10px; color:#64748b; font-size:0.85rem;">
+                    Plazas ocupadas registradas: <strong>${evt.calculatedFin.registeredCount} / ${evt.max_players || (evt.courts * 4)}</strong>.<br>
+                    Todavía no hay listado nominal descargado para este evento en el snapshot o aún está abierto a inscripciones.
+                </div>
+            `}
+            <div style="display:flex; justify-content:flex-end; margin-top:1rem;">
+                <button class="btn-erp btn-erp-secondary" onclick="window.OrganizacionERP.closeModal('erp-club-modal')">Cerrar</button>
+            </div>
+        `;
+        modal.classList.add('open');
+    }
+
+    function setCalendarMonth(year, month) {
+        state.calendarYear = parseInt(year, 10);
+        state.calendarMonth = parseInt(month, 10);
+        renderActiveTab();
+    }
+
     function renderCalendarView() {
         const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
         const curM = state.calendarMonth;
         const curY = state.calendarYear;
 
         const monthEvents = state.events.filter(e => {
+            if (state.playtomicAccountFilter !== 'all' && e.playtomicKey !== state.playtomicAccountFilter) return false;
             const d = new Date(e.date);
             return !isNaN(d.getTime()) && d.getMonth() === curM && d.getFullYear() === curY;
         });
 
+        // Meses con actividad histórica/futura para salto en 1 clic
+        const activeMonthsSet = new Set();
+        state.events.forEach(e => {
+            const d = new Date(e.date);
+            if (!isNaN(d.getTime())) {
+                activeMonthsSet.add(`${d.getFullYear()}-${String(d.getMonth()).padStart(2, '0')}`);
+            }
+        });
+        const monthQuickBtns = Array.from(activeMonthsSet).sort().map(ym => {
+            const [y, m] = ym.split('-').map(Number);
+            const isSel = y === curY && m === curM;
+            return `<button class="club-tab-pill ${isSel ? 'active' : ''}" style="font-size:0.72rem; padding:5px 10px;" onclick="window.OrganizacionERP.setCalendarMonth(${y}, ${m})">${months[m].slice(0, 3)} ${y}</button>`;
+        }).join('');
+
         return `
-            <div class="calendar-view-header">
-                <div style="display:flex; align-items:center; gap:12px;">
+            <div class="calendar-view-header" style="flex-wrap:wrap; gap:10px;">
+                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
                     <button class="btn-erp btn-erp-secondary" onclick="window.OrganizacionERP.changeMonth(-1)"><i class="fas fa-chevron-left"></i></button>
                     <h3 style="font-family:var(--erp-font-title); font-size:1.25rem; font-weight:900; color:var(--erp-text-main);">
                         ${months[curM].toUpperCase()} ${curY}
                     </h3>
                     <button class="btn-erp btn-erp-secondary" onclick="window.OrganizacionERP.changeMonth(1)"><i class="fas fa-chevron-right"></i></button>
-                    <span style="font-size:0.75rem; color:var(--erp-text-muted); margin-left:8px;">${monthEvents.length} eventos programados</span>
+                    <span style="font-size:0.75rem; color:var(--erp-text-muted); margin-left:4px;">${monthEvents.length} eventos vinculados</span>
+                </div>
+                <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+                    <select class="financial-input" style="height:34px; width:215px; font-size:0.74rem; text-align:left;" onchange="window.OrganizacionERP.setPlaytomicFilter('account', this.value)">
+                        <option value="all" ${state.playtomicAccountFilter === 'all' ? 'selected' : ''}>Todas las Cuentas Playtomic</option>
+                        <option value="new_play" ${state.playtomicAccountFilter === 'new_play' ? 'selected' : ''}>New Play (somospadeleugestion)</option>
+                        <option value="el_prat" ${state.playtomicAccountFilter === 'el_prat' ? 'selected' : ''}>El Prat (Eduard Bainad)</option>
+                    </select>
+                    ${monthQuickBtns}
                 </div>
             </div>
 
@@ -4759,9 +5617,10 @@ window.OrganizacionERP = (function () {
                     <div class="calendar-day-num">${d}</div>
                     ${dayEvts.map(evt => {
                         const net = evt.calculatedFin.results.netProfit;
+                        const isPrat = evt.playtomicKey === 'el_prat';
                         return `
-                            <div class="calendar-event-tag profitable" onclick="window.OrganizacionERP.openFinancialModal('${evt.id}')">
-                                🎾 ${evt.title || 'Americana'} (+${net.toFixed(0)}€)
+                            <div class="calendar-event-tag profitable" style="border-left:3px solid ${isPrat ? '#059669' : '#0284c7'};" onclick="window.OrganizacionERP.openFinancialModal('${escapeHtml(evt.id)}')" title="${escapeHtml((evt.playtomicAccountObj?.shortTag) || '')}">
+                                ${isPrat ? '🟢' : '🔵'} ${escapeHtml(evt.title || 'Americana')} (${net >= 0 ? '+' : ''}${net.toFixed(0)}€)
                             </div>
                         `;
                     }).join('')}
@@ -4786,10 +5645,10 @@ window.OrganizacionERP = (function () {
             <div class="erp-card" style="margin-bottom:2rem;">
                 <div class="erp-card-header">
                     <div>
-                        <h3 class="erp-card-title"><i class="fas fa-file-invoice-dollar"></i> Generador de Informes de Negocio</h3>
-                        <p class="erp-card-subtitle">Balances contables, facturación y márgenes para reuniones de directiva y socios</p>
+                        <h3 class="erp-card-title"><i class="fas fa-file-invoice-dollar"></i> Generador de Informes de Negocio (Trazabilidad Playtomic)</h3>
+                        <p class="erp-card-subtitle">Balances contables, facturación y márgenes vinculados a las 2 cuentas oficiales de Playtomic</p>
                     </div>
-                    <div style="display:flex; gap:10px;">
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
                         <button class="btn-erp btn-erp-primary" onclick="window.OrganizacionERP.exportToExcel()">
                             <i class="fas fa-file-excel"></i> Descargar Excel (.CSV)
                         </button>
@@ -4805,7 +5664,8 @@ window.OrganizacionERP = (function () {
                             <tr>
                                 <th>Fecha</th>
                                 <th>Evento</th>
-                                <th>Club</th>
+                                <th>Sede / Cuenta Playtomic</th>
+                                <th>Jugadores</th>
                                 <th>Inscripciones</th>
                                 <th>Extras/Sponsors</th>
                                 <th>Coste Pistas</th>
@@ -4817,11 +5677,19 @@ window.OrganizacionERP = (function () {
                         <tbody>
                             ${state.events.map(evt => {
                                 const f = evt.calculatedFin;
+                                const acc = evt.playtomicAccountObj || PLAYTOMIC_ACCOUNTS.new_play;
                                 return `
                                     <tr>
-                                        <td>${evt.date}</td>
-                                        <td><strong>${evt.title || 'Americana'}</strong></td>
-                                        <td>${evt.club || evt.location}</td>
+                                        <td>${escapeHtml(evt.date)}</td>
+                                        <td>
+                                            <strong>${escapeHtml(evt.title || 'Americana')}</strong>
+                                            ${evt.playtomicUrl ? `<div style="font-size:0.65rem;"><a href="${escapeHtml(evt.playtomicUrl)}" target="_blank" rel="noopener" style="color:#0284c7;">Playtomic ↗</a></div>` : ''}
+                                        </td>
+                                        <td>
+                                            <div>${escapeHtml(evt.location || evt.club)}</div>
+                                            <div style="font-size:0.66rem; color:${acc.badgeColor}; font-weight:700;">${escapeHtml(acc.organizerName)} (${escapeHtml(acc.accountEmail)})</div>
+                                        </td>
+                                        <td style="text-align:center;">${f.registeredCount}</td>
                                         <td class="erp-money">${f.incomes.registrations.toFixed(2)} €</td>
                                         <td class="erp-money">${(f.incomes.extras + f.incomes.sponsorship).toFixed(2)} €</td>
                                         <td class="erp-money negative">${f.expenses.courts.toFixed(2)} €</td>
@@ -4891,12 +5759,15 @@ window.OrganizacionERP = (function () {
         if (titleEl) titleEl.textContent = `Ficha Económica: ${evt.title || 'Americana'}`;
 
         if (contentEl) {
+            const acc = evt.playtomicAccountObj || PLAYTOMIC_ACCOUNTS.new_play;
             contentEl.innerHTML = `
-                <div style="margin-bottom:1rem; padding:10px 14px; background:#f8fafc; border-radius:10px; font-size:0.8rem; display:flex; justify-content:space-between; border:1px solid var(--erp-border);">
-                    <span><strong>Fecha:</strong> ${evt.date}</span>
-                    <span><strong>Club:</strong> ${evt.club || evt.location}</span>
+                <div style="margin-bottom:1rem; padding:10px 14px; background:#f8fafc; border-radius:10px; font-size:0.8rem; display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; border:1px solid var(--erp-border);">
+                    <span><strong>Fecha:</strong> ${escapeHtml(evt.date)}</span>
+                    <span><strong>Club:</strong> ${escapeHtml(evt.location || evt.club)}</span>
+                    <span><strong>Cuenta:</strong> <span style="color:${acc.badgeColor}; font-weight:800;">${escapeHtml(acc.accountEmail)}</span></span>
                     <span><strong>Pistas:</strong> ${f.courtsCount}</span>
                     <span><strong>Jugadores:</strong> ${f.registeredCount}</span>
+                    ${evt.playtomicUrl ? `<a href="${escapeHtml(evt.playtomicUrl)}" target="_blank" rel="noopener" style="color:#0284c7; font-weight:800;"><i class="fas fa-external-link-alt"></i> Playtomic</a>` : ''}
                 </div>
 
                 <div class="financial-split-grid">
@@ -5405,21 +6276,27 @@ window.OrganizacionERP = (function () {
         if (modal) modal.classList.remove('open');
     }
 
-    function exportToExcel() {
+    function exportToExcel(onlyFiltered = false) {
         const separator = ';';
-        const headers = ['Fecha', 'Evento', 'Club', 'Pistas', 'Jugadores', 'Facturacion', 'Costes', 'Beneficio Neto', 'Margen %'];
-        const rows = state.events.map(evt => {
+        const sourceEvents = onlyFiltered ? getPlaytomicFilteredList() : state.events;
+        const headers = ['Fecha', 'Evento', 'Sede', 'Cuenta Playtomic', 'Organizador', 'Estado', 'Pistas', 'Jugadores', 'Facturacion', 'Costes', 'Beneficio Neto', 'Margen %', 'Playtomic URL'];
+        const rows = sourceEvents.map(evt => {
             const f = evt.calculatedFin;
+            const acc = evt.playtomicAccountObj || PLAYTOMIC_ACCOUNTS.new_play;
             return [
                 evt.date || '',
                 `"${(evt.title || '').replace(/"/g, '""')}"`,
-                `"${(evt.club || evt.location || '').replace(/"/g, '""')}"`,
+                `"${(evt.location || evt.club || '').replace(/"/g, '""')}"`,
+                `"${(acc.accountEmail || '').replace(/"/g, '""')}"`,
+                `"${(evt.organizer || acc.organizerName || '').replace(/"/g, '""')}"`,
+                evt.isPastEvent ? 'Finalizada' : 'Activa',
                 f.courtsCount,
                 f.registeredCount,
                 f.results.totalIncome.toFixed(2).replace('.', ','),
                 f.results.totalExpense.toFixed(2).replace('.', ','),
                 f.results.netProfit.toFixed(2).replace('.', ','),
-                f.results.marginPct.toFixed(1).replace('.', ',')
+                f.results.marginPct.toFixed(1).replace('.', ','),
+                `"${(evt.playtomicUrl || '').replace(/"/g, '""')}"`
             ].join(separator);
         });
 
@@ -5541,7 +6418,15 @@ window.OrganizacionERP = (function () {
         handleAmericanaImageUpload,
         onAmericanaSearch,
         onAmericanaFilterChange,
-        setViewDetailMode
+        setViewDetailMode,
+        setPlaytomicFilter,
+        setPlaytomicColFilter,
+        resetPlaytomicFilters,
+        togglePlaytomicSort,
+        printPlaytomicPdf,
+        syncPlaytomicLive,
+        openPlayersTraceModal,
+        setCalendarMonth
     };
 })();
 

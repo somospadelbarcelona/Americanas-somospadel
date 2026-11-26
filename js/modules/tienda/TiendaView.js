@@ -23,6 +23,10 @@
             this.selectedPeriod = 'monthly';
             this.modalProduct = null;
             this.appliedCoupon = null;
+            this.onlyFavorites = false;
+            this.checkoutStep = 'cart'; // 'cart' | 'checkout' | 'success'
+            this.checkoutDelivery = 'club'; // 'club' | 'home'
+            this.lastCreatedOrder = null;
         }
 
         render(containerId = 'content-area') {
@@ -277,7 +281,11 @@
         // ==========================================
         renderCatalogTab() {
             const products = this.getFilteredProducts();
+            const favCount = TiendaService.getFavorites ? TiendaService.getFavorites().length : 0;
+            const settings = TiendaService.getSettings ? TiendaService.getSettings() : {};
+
             return `
+                ${settings.announcementActive !== false ? this.renderHeroBanner() : ''}
                 ${this.renderBrandsBar()}
                 
                 <div class="sp-shop-filter-bar">
@@ -288,7 +296,20 @@
                                 placeholder="Buscar por pala, zapatilla, overgrip, marca (Bullpadel, Nox, Head)..." 
                                 value="${this.escapeHtml(this.searchQuery)}"
                                 oninput="window.TiendaController && window.TiendaController.handleSearch(this.value)">
+                            <button type="button" id="sp-search-clear-btn" class="sp-search-clear-btn"
+                                style="display: ${this.searchQuery ? 'flex' : 'none'};"
+                                onclick="window.TiendaController && window.TiendaController.clearSearch()" title="Limpiar búsqueda">
+                                <i class="fas fa-xmark"></i>
+                            </button>
                         </div>
+
+                        <select id="sp-sort-select" class="sp-shop-sort-select" aria-label="Ordenar productos"
+                            onchange="window.TiendaController && window.TiendaController.handleSort(this.value)">
+                            <option value="popular" ${this.sortBy === 'popular' ? 'selected' : ''}>🔥 Más populares</option>
+                            <option value="price-asc" ${this.sortBy === 'price-asc' ? 'selected' : ''}>💶 Precio: menor a mayor</option>
+                            <option value="price-desc" ${this.sortBy === 'price-desc' ? 'selected' : ''}>💎 Precio: mayor a menor</option>
+                            <option value="discount" ${this.sortBy === 'discount' ? 'selected' : ''}>🏷️ Mayor descuento</option>
+                        </select>
                     </div>
 
                     <!-- Pills de Categorías (11 Tipos Requeridos) -->
@@ -302,10 +323,11 @@
                         `).join('')}
                     </div>
 
-                    <!-- Filtros por Etiquetas Rápidas y Contador -->
+                    <!-- Filtros por Etiquetas Rápidas, Favoritos y Contador -->
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                         <div class="sp-tag-filters">
-                            <button class="sp-tag-pill ${this.selectedTag === 'todos' ? 'active' : ''}" onclick="window.TiendaController && window.TiendaController.handleTag('todos')">Todas las Etiquetas</button>
+                            <button class="sp-tag-pill ${this.selectedTag === 'todos' && !this.onlyFavorites ? 'active' : ''}" onclick="window.TiendaController && window.TiendaController.handleTag('todos')">Todas las Etiquetas</button>
+                            <button class="sp-tag-pill sp-tag-fav ${this.onlyFavorites ? 'active' : ''}" id="sp-filter-favs-btn" onclick="window.TiendaController && window.TiendaController.toggleFavoritesFilter()">❤️ Mis Favoritos (<span id="sp-fav-count-pill">${favCount}</span>)</button>
                             <button class="sp-tag-pill ${this.selectedTag === 'Recomendado por SomosPadel' ? 'active' : ''}" onclick="window.TiendaController && window.TiendaController.handleTag('Recomendado por SomosPadel')">⭐ Recomendado por SomosPadel</button>
                             <button class="sp-tag-pill ${this.selectedTag === 'Oferta' ? 'active' : ''}" onclick="window.TiendaController && window.TiendaController.handleTag('Oferta')">🔥 Ofertas Especiales</button>
                             <button class="sp-tag-pill ${this.selectedTag === 'Producto oficial' ? 'active' : ''}" onclick="window.TiendaController && window.TiendaController.handleTag('Producto oficial')">🏆 Producto Oficial</button>
@@ -370,7 +392,13 @@
         }
 
         getFilteredProducts() {
-            let products = TiendaService.getProducts();
+            let products = TiendaService.getProducts().filter(p => p.active !== false);
+
+            // Filtrar solo favoritos
+            if (this.onlyFavorites) {
+                const favs = TiendaService.getFavorites ? TiendaService.getFavorites() : [];
+                products = products.filter(p => favs.includes(p.id));
+            }
 
             // Filtrar marca
             if (this.selectedBrand && this.selectedBrand !== 'Todas') {
@@ -436,12 +464,36 @@
             return products.map(p => {
                 const discount = p.originalPrice > p.promoPrice ? Math.round(((p.originalPrice - p.promoPrice) / p.originalPrice) * 100) : 0;
                 const reviewCount = Math.floor((p.views || 100) / 4) + 12;
+                const isFav = TiendaService.isFavorite ? TiendaService.isFavorite(p.id) : false;
+                const stock = typeof p.stock === 'number' ? p.stock : 12;
+                const isOutOfStock = stock <= 0;
+                const isLowStock = stock > 0 && stock <= 3;
+                const hasVariants = Array.isArray(p.variants) && p.variants.length > 0;
+
+                let stockBadgeHtml = `
+                    <div class="sp-stock-badge">
+                        <span class="sp-stock-dot"></span>
+                        <span>En stock · Entrega 24/48h</span>
+                    </div>`;
+                if (isOutOfStock) {
+                    stockBadgeHtml = `
+                        <div class="sp-stock-badge sp-stock-out">
+                            <span class="sp-stock-dot"></span>
+                            <span>Agotado temporalmente</span>
+                        </div>`;
+                } else if (isLowStock) {
+                    stockBadgeHtml = `
+                        <div class="sp-stock-badge sp-stock-low">
+                            <span class="sp-stock-dot"></span>
+                            <span>¡Últimas ${stock} ud${stock > 1 ? 's' : ''}!</span>
+                        </div>`;
+                }
 
                 return `
-                    <div class="sp-product-card" id="card-${p.id}">
+                    <div class="sp-product-card ${isOutOfStock ? 'sp-product-card-out' : ''}" id="card-${p.id}">
                         <div class="sp-product-badge-wrap">
                             ${discount > 0 ? `<span class="sp-product-badge sp-badge-offer">-${discount}% DTO</span>` : ''}
-                            ${p.badges.map(b => {
+                            ${(p.badges || []).map(b => {
                                 let bClass = 'sp-badge-recommended';
                                 if (b.includes('Oferta')) bClass = 'sp-badge-offer';
                                 else if (b.includes('oficial')) bClass = 'sp-badge-official';
@@ -450,8 +502,14 @@
                             }).join('')}
                         </div>
 
+                        <button type="button" id="sp-card-fav-${p.id}" class="sp-card-fav-btn ${isFav ? 'is-fav' : ''}"
+                            onclick="event.stopPropagation(); window.TiendaController && window.TiendaController.toggleFavorite('${p.id}')"
+                            title="${isFav ? 'Quitar de favoritos' : 'Guardar en favoritos'}" aria-label="Favorito">
+                            <i class="${isFav ? 'fas fa-heart' : 'far fa-heart'}"></i>
+                        </button>
+
                         <div class="sp-product-image-container" onclick="window.TiendaController && window.TiendaController.openProductModal('${p.id}')" style="cursor: pointer;">
-                            <img src="${p.image}" alt="${this.escapeHtml(p.name)}" class="sp-product-image" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=700&q=80'">
+                            <img src="${p.image}" alt="${this.escapeHtml(p.name)}" class="sp-product-image" loading="lazy" onerror="window.TiendaView && window.TiendaView.handleImgError(this, '${this.escapeHtml(p.name)}')">
                         </div>
 
                         <div>
@@ -466,10 +524,7 @@
                                 <span class="sp-rating-count">(${reviewCount} opiniones)</span>
                             </div>
 
-                            <div class="sp-stock-badge">
-                                <span class="sp-stock-dot"></span>
-                                <span>En stock · Entrega 24/48h</span>
-                            </div>
+                            ${stockBadgeHtml}
 
                             <p class="sp-product-desc-short">${this.escapeHtml(p.description)}</p>
 
@@ -483,9 +538,19 @@
                         </div>
 
                         <div class="sp-card-action-bar">
-                            <button type="button" class="sp-btn-add-cart" onclick="window.TiendaController && window.TiendaController.addToCart('${p.id}', 1)" title="Añadir directamente a mi cesta de compra">
-                                <i class="fas fa-cart-shopping"></i> Añadir a Cesta
-                            </button>
+                            ${isOutOfStock ? `
+                                <button type="button" class="sp-btn-add-cart sp-btn-disabled" disabled title="Producto agotado">
+                                    <i class="fas fa-ban"></i> Agotado
+                                </button>
+                            ` : (hasVariants ? `
+                                <button type="button" class="sp-btn-add-cart" onclick="window.TiendaController && window.TiendaController.openProductModal('${p.id}')" title="Seleccionar talla, peso o formato">
+                                    <i class="fas fa-sliders"></i> Elegir opción
+                                </button>
+                            ` : `
+                                <button type="button" class="sp-btn-add-cart" onclick="window.TiendaController && window.TiendaController.addToCart('${p.id}', 1)" title="Añadir directamente a mi cesta de compra">
+                                    <i class="fas fa-cart-shopping"></i> Añadir a Cesta
+                                </button>
+                            `)}
                             <button type="button" class="sp-btn-view-quick" onclick="window.TiendaController && window.TiendaController.openProductModal('${p.id}')" title="Ver ficha técnica completa">
                                 <i class="fas fa-eye"></i> Ficha
                             </button>
@@ -1016,7 +1081,7 @@
         }
 
         // ==========================================
-        // 🛒 MODAL / DRAWER DEL CARRITO DE COMPRA
+        // 🛒 MODAL / DRAWER DEL CARRITO + CHECKOUT EN 1 PASO
         // ==========================================
         renderCartModal() {
             const summary = TiendaService.getCartSummary ? TiendaService.getCartSummary() : { cart: [], count: 0, subtotal: 0, total: 0, freeThreshold: 50, remainingForFree: 50, shippingCost: 0 };
@@ -1027,8 +1092,165 @@
             if (appliedCoupon && appliedCoupon.rate) {
                 couponDiscount = Math.round(summary.subtotal * appliedCoupon.rate * 100) / 100;
             }
-            const finalTotal = Math.max(0, Math.round((summary.subtotal - couponDiscount + summary.shippingCost) * 100) / 100);
+            const effectiveShipping = (this.checkoutStep === 'checkout' && this.checkoutDelivery === 'club') ? 0 : summary.shippingCost;
+            const finalTotal = Math.max(0, Math.round((summary.subtotal - couponDiscount + effectiveShipping) * 100) / 100);
             const progressPercent = Math.min(100, Math.round((summary.subtotal / (summary.freeThreshold || 50)) * 100));
+
+            // Paso 3: Confirmación de pedido registrado
+            if (this.checkoutStep === 'success' && this.lastCreatedOrder) {
+                const ord = this.lastCreatedOrder;
+                return `
+                    <div class="sp-cart-modal-backdrop" onclick="if(event.target === this) window.TiendaController && window.TiendaController.closeCart()">
+                        <div class="sp-cart-drawer">
+                            <div class="sp-cart-drawer-header">
+                                <h2 class="sp-cart-drawer-title">
+                                    <i class="fas fa-circle-check" style="color: #16a34a;"></i>
+                                    <span>¡Pedido Registrado!</span>
+                                </h2>
+                                <button type="button" class="sp-cart-drawer-close" onclick="window.TiendaController && window.TiendaController.closeCart()">
+                                    <i class="fas fa-xmark"></i>
+                                </button>
+                            </div>
+                            <div style="text-align: center; padding: 24px 10px;">
+                                <div style="width: 68px; height: 68px; margin: 0 auto 14px; border-radius: 50%; background: #dcfce7; color: #16a34a; display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <div style="display: inline-block; background: #0f172a; color: #CCFF00; padding: 4px 12px; border-radius: 8px; font-family: monospace; font-weight: 900; font-size: 0.9rem; margin-bottom: 10px;">
+                                    ${this.escapeHtml(ord.id)}
+                                </div>
+                                <h3 style="margin: 0 0 8px; font-size: 1.2rem; color: #0f172a; font-weight: 900;">¡Gracias, ${this.escapeHtml(ord.customerName)}!</h3>
+                                <p style="font-size: 0.84rem; color: #475569; margin: 0 0 18px; line-height: 1.45;">
+                                    Tu pedido por <strong>${Number(ord.totalAmount || 0).toFixed(2)}€</strong> ha quedado guardado en el sistema de SomosPadel BCN. Pulsa abajo si necesitas reabrir el mensaje de confirmación por WhatsApp.
+                                </p>
+                                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; text-align: left; font-size: 0.78rem; color: #334155; margin-bottom: 18px;">
+                                    <div><strong>Entrega:</strong> ${this.escapeHtml(ord.shippingMethod)}</div>
+                                    <div style="margin-top: 4px;"><strong>Pago:</strong> ${this.escapeHtml(ord.paymentMethod)}</div>
+                                </div>
+                                <button type="button" class="sp-btn-checkout-wa" onclick="window.TiendaController && window.TiendaController.openWhatsAppForOrder()">
+                                    <i class="fab fa-whatsapp" style="font-size: 1.2rem;"></i>
+                                    <span>ENVIAR CONFIRMACIÓN POR WHATSAPP</span>
+                                </button>
+                                <button type="button" class="sp-btn-details" onclick="window.TiendaController && window.TiendaController.closeCart()" style="width: 100%; margin-top: 10px;">
+                                    Seguir explorando la tienda
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Paso 2: Formulario Checkout en 1 paso
+            if (this.checkoutStep === 'checkout' && cart.length > 0) {
+                const currentUser = (typeof window !== 'undefined' && window.Store?.getState?.('currentUser')) || {};
+                const preName = currentUser.name || currentUser.displayName || '';
+                const prePhone = currentUser.phone || currentUser.telefono || '';
+                const preEmail = currentUser.email || '';
+
+                return `
+                    <div class="sp-cart-modal-backdrop" onclick="if(event.target === this) window.TiendaController && window.TiendaController.closeCart()">
+                        <div class="sp-cart-drawer">
+                            <div class="sp-cart-drawer-header">
+                                <button type="button" class="sp-checkout-back-btn" onclick="window.TiendaController && window.TiendaController.goToCheckoutStep('cart')" title="Volver a la cesta">
+                                    <i class="fas fa-arrow-left"></i>
+                                </button>
+                                <h2 class="sp-cart-drawer-title" style="flex: 1; margin-left: 8px;">
+                                    <i class="fas fa-clipboard-check" style="color: #15803d;"></i>
+                                    <span>Finalizar Pedido</span>
+                                </h2>
+                                <button type="button" class="sp-cart-drawer-close" onclick="window.TiendaController && window.TiendaController.closeCart()">
+                                    <i class="fas fa-xmark"></i>
+                                </button>
+                            </div>
+
+                            <form id="sp-checkout-form" class="sp-checkout-form" onsubmit="window.TiendaController && window.TiendaController.submitCheckoutForm(event)">
+                                <div class="sp-checkout-field">
+                                    <label for="sp-co-name">Nombre y Apellidos *</label>
+                                    <input type="text" id="sp-co-name" name="customerName" required placeholder="Ej: Marc Soler" value="${this.escapeHtml(preName)}">
+                                </div>
+                                <div class="sp-checkout-row-2">
+                                    <div class="sp-checkout-field">
+                                        <label for="sp-co-phone">Teléfono WhatsApp *</label>
+                                        <input type="tel" id="sp-co-phone" name="customerPhone" required placeholder="+34 600 000 000" value="${this.escapeHtml(prePhone)}">
+                                    </div>
+                                    <div class="sp-checkout-field">
+                                        <label for="sp-co-email">Email (opcional)</label>
+                                        <input type="email" id="sp-co-email" name="customerEmail" placeholder="tu@email.com" value="${this.escapeHtml(preEmail)}">
+                                    </div>
+                                </div>
+
+                                <div class="sp-checkout-field">
+                                    <label>Modalidad de Entrega *</label>
+                                    <div class="sp-checkout-toggle-group">
+                                        <label class="sp-checkout-toggle-opt ${this.checkoutDelivery === 'club' ? 'active' : ''}">
+                                            <input type="radio" name="deliveryMethod" value="club" ${this.checkoutDelivery === 'club' ? 'checked' : ''} onchange="window.TiendaController && window.TiendaController.handleDeliveryMethodChange('club')">
+                                            <i class="fas fa-location-dot"></i>
+                                            <span>Recogida Club / Americana <strong>(GRATIS)</strong></span>
+                                        </label>
+                                        <label class="sp-checkout-toggle-opt ${this.checkoutDelivery === 'home' ? 'active' : ''}">
+                                            <input type="radio" name="deliveryMethod" value="home" ${this.checkoutDelivery === 'home' ? 'checked' : ''} onchange="window.TiendaController && window.TiendaController.handleDeliveryMethodChange('home')">
+                                            <i class="fas fa-truck-fast"></i>
+                                            <span>Envío a Domicilio <strong>(${summary.shippingCost === 0 ? 'GRATIS' : summary.shippingCost.toFixed(2) + '€'})</strong></span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="sp-checkout-field">
+                                    <label for="sp-co-address">${this.checkoutDelivery === 'club' ? 'Club o Americana de recogida *' : 'Dirección completa de envío *'}</label>
+                                    <input type="text" id="sp-co-address" name="deliveryAddress" required placeholder="${this.checkoutDelivery === 'club' ? 'Ej: Club Delfos / Americana sábado 11h' : 'Calle, número, piso, CP y ciudad'}">
+                                </div>
+
+                                <div class="sp-checkout-field">
+                                    <label for="sp-co-payment">Método de Pago *</label>
+                                    <select id="sp-co-payment" name="paymentMethod" required>
+                                        <option value="Bizum">📱 Bizum (Confirmación instantánea)</option>
+                                        <option value="Pago en Pista (Efectivo/Tarjeta)">🎾 Pago en Pista al recoger</option>
+                                        <option value="Transferencia Bancaria">🏦 Transferencia Bancaria</option>
+                                        <option value="Tarjeta de Crédito">💳 Tarjeta de Crédito</option>
+                                    </select>
+                                </div>
+
+                                <div class="sp-checkout-field">
+                                    <label for="sp-co-notes">Notas adicionales (talla, horario, etc.)</label>
+                                    <textarea id="sp-co-notes" name="notes" rows="2" placeholder="Cualquier indicación para el equipo..."></textarea>
+                                </div>
+
+                                <div class="sp-cart-summary-box" style="margin-top: 8px;">
+                                    <div class="sp-cart-summary-line">
+                                        <span>Productos (${summary.count})</span>
+                                        <span>${summary.subtotal.toFixed(2)}€</span>
+                                    </div>
+                                    ${couponDiscount > 0 ? `
+                                        <div class="sp-cart-summary-line" style="color: #166534;">
+                                            <span>Cupón (${appliedCoupon.code})</span>
+                                            <span>-${couponDiscount.toFixed(2)}€</span>
+                                        </div>
+                                    ` : ''}
+                                    <div class="sp-cart-summary-line">
+                                        <span>Envío</span>
+                                        <span style="color: ${effectiveShipping === 0 ? '#166534' : '#0f172a'}; font-weight: 800;">
+                                            ${effectiveShipping === 0 ? 'GRATIS' : `${effectiveShipping.toFixed(2)}€`}
+                                        </span>
+                                    </div>
+                                    <div class="sp-cart-summary-total">
+                                        <span>TOTAL A PAGAR</span>
+                                        <span>${finalTotal.toFixed(2)}€</span>
+                                    </div>
+
+                                    <button type="submit" class="sp-btn-checkout-wa">
+                                        <i class="fab fa-whatsapp" style="font-size: 1.25rem;"></i>
+                                        <span>CONFIRMAR PEDIDO Y ABRIR WHATSAPP</span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Paso 1: Vista de Cesta con variantes y Upselling
+            const upsellItems = (cart.length > 0 && summary.remainingForFree > 0 && TiendaService.getUpsellProducts)
+                ? TiendaService.getUpsellProducts(summary.remainingForFree, 2)
+                : [];
 
             return `
                 <div class="sp-cart-modal-backdrop" onclick="if(event.target === this) window.TiendaController && window.TiendaController.closeCart()">
@@ -1070,25 +1292,51 @@
                                             Explorar Catálogo
                                         </button>
                                     </div>
-                                ` : cart.map(item => `
+                                ` : cart.map(item => {
+                                    const itemKey = this.escapeHtml(item.cartKey || item.id);
+                                    return `
                                     <div class="sp-cart-item-row">
-                                        <img src="${item.image}" alt="${this.escapeHtml(item.name)}" class="sp-cart-item-img" onerror="this.src='https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=200&q=80'">
+                                        <img src="${item.image}" alt="${this.escapeHtml(item.name)}" class="sp-cart-item-img" onerror="window.TiendaView && window.TiendaView.handleImgError(this, '${this.escapeHtml(item.name)}')">
                                         <div class="sp-cart-item-details">
                                             <span class="sp-cart-item-brand">${this.escapeHtml(item.brand)}</span>
                                             <h4 class="sp-cart-item-title" title="${this.escapeHtml(item.name)}">${this.escapeHtml(item.name)}</h4>
+                                            ${item.variantName ? `<div class="sp-cart-item-variant"><i class="fas fa-sliders"></i> ${this.escapeHtml(item.variantName)}</div>` : ''}
                                             <div class="sp-cart-item-price">${(item.price * (item.qty || 1)).toFixed(2)}€</div>
                                         </div>
                                         <div class="sp-cart-qty-ctrl">
-                                            <button type="button" class="sp-cart-qty-btn" onclick="window.TiendaController && window.TiendaController.updateCartQty('${item.id}', ${(item.qty || 1) - 1})">-</button>
+                                            <button type="button" class="sp-cart-qty-btn" onclick="window.TiendaController && window.TiendaController.updateCartQty('${itemKey}', ${(item.qty || 1) - 1})">-</button>
                                             <span class="sp-cart-qty-val">${item.qty || 1}</span>
-                                            <button type="button" class="sp-cart-qty-btn" onclick="window.TiendaController && window.TiendaController.updateCartQty('${item.id}', ${(item.qty || 1) + 1})">+</button>
+                                            <button type="button" class="sp-cart-qty-btn" onclick="window.TiendaController && window.TiendaController.updateCartQty('${itemKey}', ${(item.qty || 1) + 1})">+</button>
                                         </div>
-                                        <button type="button" class="sp-cart-item-remove" onclick="window.TiendaController && window.TiendaController.removeFromCart('${item.id}')" title="Eliminar">
+                                        <button type="button" class="sp-cart-item-remove" onclick="window.TiendaController && window.TiendaController.removeFromCart('${itemKey}')" title="Eliminar">
                                             <i class="fas fa-trash-can"></i>
                                         </button>
                                     </div>
-                                `).join('')}
+                                `;}).join('')}
                             </div>
+
+                            <!-- Upselling inteligente para alcanzar Envío Gratis -->
+                            ${upsellItems.length > 0 ? `
+                                <div class="sp-cart-upsell-box">
+                                    <div class="sp-cart-upsell-title">
+                                        <i class="fas fa-sparkles"></i> Completa tu pedido para ENVÍO GRATIS
+                                    </div>
+                                    <div class="sp-cart-upsell-list">
+                                        ${upsellItems.map(u => `
+                                            <div class="sp-cart-upsell-item">
+                                                <img src="${u.image}" alt="${this.escapeHtml(u.name)}" class="sp-cart-upsell-img" onerror="window.TiendaView && window.TiendaView.handleImgError(this, '${this.escapeHtml(u.name)}')">
+                                                <div class="sp-cart-upsell-info">
+                                                    <div class="sp-cart-upsell-name">${this.escapeHtml(u.name)}</div>
+                                                    <div class="sp-cart-upsell-price">${u.promoPrice.toFixed(2)}€</div>
+                                                </div>
+                                                <button type="button" class="sp-cart-upsell-add" onclick="window.TiendaController && window.TiendaController.addToCart('${u.id}', 1, null, true)">
+                                                    <i class="fas fa-plus"></i> Añadir
+                                                </button>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
                         </div>
 
                         <!-- Parte Inferior: Cupón y Checkout -->
@@ -1130,13 +1378,17 @@
                                     <span style="color: #0f172a;">${finalTotal.toFixed(2)}€</span>
                                 </div>
 
-                                <!-- Botón WhatsApp Checkout -->
-                                <button type="button" class="sp-btn-checkout-wa" onclick="window.TiendaController && window.TiendaController.checkoutWhatsApp()">
-                                    <i class="fab fa-whatsapp" style="font-size: 1.3rem;"></i>
-                                    <span>FINALIZAR PEDIDO POR WHATSAPP</span>
+                                <!-- Botón Principal Checkout en 1 paso -->
+                                <button type="button" class="sp-btn-checkout-primary" onclick="window.TiendaController && window.TiendaController.goToCheckoutStep('checkout')">
+                                    <span>CONTINUAR AL PEDIDO</span>
+                                    <i class="fas fa-arrow-right"></i>
+                                </button>
+                                <button type="button" class="sp-btn-checkout-wa-secondary" onclick="window.TiendaController && window.TiendaController.checkoutWhatsApp()">
+                                    <i class="fab fa-whatsapp"></i>
+                                    <span>Pedido rápido directo por WhatsApp</span>
                                 </button>
                                 <div style="text-align: center; margin-top: 8px; font-size: 0.68rem; color: #64748b;">
-                                    <i class="fas fa-lock"></i> Pedido tramitado y confirmado directamente por la dirección del club
+                                    <i class="fas fa-lock"></i> Recogida gratis en pistas o envío 24/48h · Confirmación directa
                                 </div>
                             </div>
                         ` : ''}

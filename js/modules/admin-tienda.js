@@ -61,8 +61,15 @@
                 return;
             }
 
-            // Si está autenticado, renderizar el panel e-commerce
+            // Si está autenticado, renderizar el panel e-commerce y sincronizar nube
             this.render();
+            if (typeof this.service.syncFromCloud === 'function') {
+                this.service.syncFromCloud().then((changed) => {
+                    if (changed && document.getElementById(this.containerId)) {
+                        this.render();
+                    }
+                }).catch(() => {});
+            }
         }
 
         // =========================================================================

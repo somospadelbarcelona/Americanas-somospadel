@@ -37,7 +37,29 @@
                         }
                     }
                 });
+                window.addEventListener('sp-tienda-synced', () => {
+                    // Refrescar catálogo si estamos en la tienda y no hay modal ni input activo
+                    const container = document.getElementById(this.containerId);
+                    const activeEl = document.activeElement;
+                    const isTyping = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
+                    if (container && container.querySelector('.sp-tienda-container') && !this.isModalOpen && !isTyping) {
+                        const cartRoot = document.getElementById('sp-tienda-cart-root');
+                        const cartOpen = cartRoot && cartRoot.innerHTML.trim().length > 0;
+                        if (!cartOpen) {
+                            TiendaView.render(this.containerId);
+                        }
+                    }
+                });
             }
+        }
+
+        getWhatsAppPhone() {
+            const raw = (TiendaService.getSettings && TiendaService.getSettings().whatsappPhone) || '34649219350';
+            const clean = String(raw).replace(/[^\d]/g, '');
+            if (!clean || clean === '34623456789' || clean === '623456789' || clean === '34600000000' || clean === '600000000') {
+                return '34649219350';
+            }
+            return clean.length === 9 ? '34' + clean : clean;
         }
 
         init(containerId = 'content-area') {
@@ -150,10 +172,16 @@
 
         handleTag(tag) {
             TiendaView.selectedTag = tag;
+            if (tag === 'todos') TiendaView.onlyFavorites = false;
             TiendaView.render(this.containerId);
             if (typeof window !== 'undefined' && window.SubnavManager && typeof window.SubnavManager.renderTienda === 'function') {
                 window.SubnavManager.renderTienda(tag === 'Oferta' ? 'ofertas' : (TiendaView.selectedCategory || 'todos'));
             }
+        }
+
+        toggleFavoritesFilter() {
+            TiendaView.onlyFavorites = !TiendaView.onlyFavorites;
+            TiendaView.render(this.containerId);
         }
 
         handleSearch(query) {
@@ -162,6 +190,24 @@
             if (grid) {
                 grid.innerHTML = TiendaView.renderProductCards();
             }
+            const countEl = document.getElementById('sp-products-count');
+            if (countEl) {
+                countEl.textContent = TiendaView.getFilteredProducts().length;
+            }
+            const clearBtn = document.getElementById('sp-search-clear-btn');
+            if (clearBtn) {
+                clearBtn.style.display = query && query.length > 0 ? 'flex' : 'none';
+            }
+        }
+
+        clearSearch() {
+            TiendaView.searchQuery = '';
+            const input = document.getElementById('sp-search-input');
+            if (input) {
+                input.value = '';
+                input.focus();
+            }
+            this.handleSearch('');
         }
 
         handleSort(sortBy) {
@@ -176,6 +222,7 @@
             TiendaView.activeTab = 'catalogo';
             TiendaView.selectedCategory = 'todos';
             TiendaView.selectedTag = 'todos';
+            TiendaView.onlyFavorites = false;
             const partner = TiendaService.getPartnerById(partnerId);
             if (partner) {
                 TiendaView.searchQuery = partner.name.split(' ')[0];
@@ -192,7 +239,9 @@
             TiendaView.selectedCategory = 'todos';
             TiendaView.selectedBrand = 'Todas';
             TiendaView.selectedTag = 'todos';
+            TiendaView.onlyFavorites = false;
             TiendaView.searchQuery = '';
+            TiendaView.sortBy = 'popular';
             TiendaView.render(this.containerId);
         }
 
@@ -203,6 +252,7 @@
             if (typeof window !== 'undefined' && window.SubnavManager && typeof window.SubnavManager.renderTienda === 'function') {
                 window.SubnavManager.renderTienda('cesta');
             }
+            TiendaView.checkoutStep = 'cart';
             const cartRoot = document.getElementById('sp-tienda-cart-root');
             if (cartRoot) {
                 cartRoot.innerHTML = TiendaView.renderCartModal();
@@ -210,27 +260,65 @@
         }
 
         closeCart() {
+            TiendaView.checkoutStep = 'cart';
             const cartRoot = document.getElementById('sp-tienda-cart-root');
             if (cartRoot) {
                 cartRoot.innerHTML = '';
             }
         }
 
-        addToCart(productId, qty = 1) {
-            const ok = TiendaService.addToCart(productId, qty);
-            if (ok) {
-                const product = TiendaService.getProductById(productId);
-                const pName = product ? product.name : 'Producto';
-                this.showToast(`¡${pName} añadido a tu cesta! 🛒`);
-                this.updateHeaderCartBadge();
-                this.openCart();
-            } else {
-                this.showToast('No se pudo añadir el producto a la cesta');
+        goToCheckoutStep(step = 'checkout') {
+            TiendaView.checkoutStep = step;
+            const cartRoot = document.getElementById('sp-tienda-cart-root');
+            if (cartRoot) {
+                cartRoot.innerHTML = TiendaView.renderCartModal();
             }
         }
 
-        updateCartQty(productId, qty) {
-            TiendaService.updateCartQty(productId, qty);
+        handleDeliveryMethodChange(method) {
+            TiendaView.checkoutDelivery = method === 'home' ? 'home' : 'club';
+            const cartRoot = document.getElementById('sp-tienda-cart-root');
+            if (cartRoot) {
+                // Conservar valores ya escritos antes de re-renderizar
+                const prevName = document.getElementById('sp-co-name')?.value || '';
+                const prevPhone = document.getElementById('sp-co-phone')?.value || '';
+                const prevEmail = document.getElementById('sp-co-email')?.value || '';
+                const prevAddr = document.getElementById('sp-co-address')?.value || '';
+                const prevPay = document.getElementById('sp-co-payment')?.value || 'Bizum';
+                const prevNotes = document.getElementById('sp-co-notes')?.value || '';
+
+                cartRoot.innerHTML = TiendaView.renderCartModal();
+
+                if (document.getElementById('sp-co-name')) document.getElementById('sp-co-name').value = prevName;
+                if (document.getElementById('sp-co-phone')) document.getElementById('sp-co-phone').value = prevPhone;
+                if (document.getElementById('sp-co-email')) document.getElementById('sp-co-email').value = prevEmail;
+                if (document.getElementById('sp-co-address')) document.getElementById('sp-co-address').value = prevAddr;
+                if (document.getElementById('sp-co-payment')) document.getElementById('sp-co-payment').value = prevPay;
+                if (document.getElementById('sp-co-notes')) document.getElementById('sp-co-notes').value = prevNotes;
+            }
+        }
+
+        addToCart(productId, qty = 1, variant = null, keepCartOpen = false) {
+            const ok = TiendaService.addToCart(productId, qty, variant);
+            if (ok) {
+                const product = TiendaService.getProductById(productId);
+                const pName = product ? product.name : 'Producto';
+                const varTxt = variant && variant.name ? ` (${variant.name})` : '';
+                this.showToast(`¡${pName}${varTxt} añadido a tu cesta! 🛒`);
+                this.updateHeaderCartBadge();
+                if (keepCartOpen) {
+                    const cartRoot = document.getElementById('sp-tienda-cart-root');
+                    if (cartRoot) cartRoot.innerHTML = TiendaView.renderCartModal();
+                } else {
+                    this.openCart();
+                }
+            } else {
+                this.showToast('Este producto está agotado o no disponible actualmente');
+            }
+        }
+
+        updateCartQty(cartKey, qty) {
+            TiendaService.updateCartQty(cartKey, qty);
             this.updateHeaderCartBadge();
             const cartRoot = document.getElementById('sp-tienda-cart-root');
             if (cartRoot && cartRoot.innerHTML.trim()) {
@@ -238,8 +326,8 @@
             }
         }
 
-        removeFromCart(productId) {
-            TiendaService.removeFromCart(productId);
+        removeFromCart(cartKey) {
+            TiendaService.removeFromCart(cartKey);
             this.updateHeaderCartBadge();
             this.showToast('Producto eliminado de la cesta');
             const cartRoot = document.getElementById('sp-tienda-cart-root');
@@ -257,21 +345,13 @@
         }
 
         applyCoupon(code) {
-            if (!code || !code.trim()) {
-                this.showToast('Introduce un código de cupón');
+            const res = TiendaService.validateCoupon ? TiendaService.validateCoupon(code) : null;
+            if (!res || !res.valid) {
+                this.showToast((res && res.reason) || 'Cupón no válido o expirado ⚠️');
                 return;
             }
-            const cleanCode = code.trim().toUpperCase();
-            if (cleanCode === 'SOMOSPADEL15') {
-                TiendaView.appliedCoupon = { code: 'SOMOSPADEL15', rate: 0.15 };
-                this.showToast('¡Cupón del 15% de descuento aplicado con éxito! 🎟️');
-            } else if (cleanCode === 'SEMANAPADEL') {
-                TiendaView.appliedCoupon = { code: 'SEMANAPADEL', rate: 0.10 };
-                this.showToast('¡Cupón de la semana aplicado (-10%)! 🎟️');
-            } else {
-                this.showToast('Cupón no válido o expirado ⚠️');
-                return;
-            }
+            TiendaView.appliedCoupon = { code: res.code, rate: res.rate, title: res.title };
+            this.showToast(`¡Cupón "${res.code}" (-${Math.round(res.rate * 100)}%) aplicado con éxito! 🎟️`);
             const cartRoot = document.getElementById('sp-tienda-cart-root');
             if (cartRoot) {
                 cartRoot.innerHTML = TiendaView.renderCartModal();
@@ -285,6 +365,84 @@
             if (cartRoot) {
                 cartRoot.innerHTML = TiendaView.renderCartModal();
             }
+        }
+
+        submitCheckoutForm(e) {
+            if (e && e.preventDefault) e.preventDefault();
+            const form = e.target;
+            const customerName = form.customerName ? form.customerName.value.trim() : '';
+            const customerPhone = form.customerPhone ? form.customerPhone.value.trim() : '';
+            const customerEmail = form.customerEmail ? form.customerEmail.value.trim() : '';
+            const deliveryMethod = form.deliveryMethod ? form.deliveryMethod.value : 'club';
+            const deliveryAddress = form.deliveryAddress ? form.deliveryAddress.value.trim() : '';
+            const paymentMethod = form.paymentMethod ? form.paymentMethod.value : 'Bizum';
+            const notes = form.notes ? form.notes.value.trim() : '';
+
+            if (!customerName || !customerPhone) {
+                this.showToast('Por favor, completa tu nombre y teléfono');
+                return;
+            }
+
+            const order = TiendaService.createCheckoutOrder({
+                customerName,
+                customerPhone,
+                customerEmail,
+                deliveryMethod,
+                deliveryAddress,
+                paymentMethod,
+                notes,
+                coupon: TiendaView.appliedCoupon || null
+            });
+
+            if (!order) {
+                this.showToast('Tu cesta está vacía');
+                return;
+            }
+
+            TiendaView.appliedCoupon = null;
+            TiendaView.lastCreatedOrder = order;
+            TiendaView.checkoutStep = 'success';
+            this.updateHeaderCartBadge();
+
+            // Refrescar grid por si cambió el stock de algún producto
+            const grid = document.getElementById('sp-products-grid');
+            if (grid) grid.innerHTML = TiendaView.renderProductCards();
+
+            const cartRoot = document.getElementById('sp-tienda-cart-root');
+            if (cartRoot) cartRoot.innerHTML = TiendaView.renderCartModal();
+
+            this.openWhatsAppForOrder(order);
+        }
+
+        openWhatsAppForOrder(orderObj = null) {
+            const ord = orderObj || TiendaView.lastCreatedOrder;
+            if (!ord) return;
+
+            const lines = [];
+            lines.push(`🎾 *PEDIDO CONFIRMADO ${ord.id} - TIENDA SOMOSPADEL BCN* 🎾\n`);
+            lines.push(`👤 *Cliente:* ${ord.customerName}`);
+            lines.push(`📱 *Teléfono:* ${ord.customerPhone}`);
+            if (ord.customerEmail) lines.push(`📧 *Email:* ${ord.customerEmail}`);
+            lines.push(`🚚 *Entrega:* ${ord.shippingMethod}`);
+            lines.push(`💳 *Pago:* ${ord.paymentMethod}`);
+            if (ord.notes) lines.push(`📝 *Notas:* ${ord.notes}`);
+            lines.push(`\n*Artículos:*`);
+            (ord.products || []).forEach((item, idx) => {
+                lines.push(`${idx + 1}. *${item.name}*`);
+                lines.push(`   Cantidad: ${item.qty} ud(s) · ${(item.price * item.qty).toFixed(2)}€`);
+            });
+            lines.push(`\n---------------------------------`);
+            if (ord.couponCode && ord.couponDiscount > 0) {
+                lines.push(`🎟️ Cupón (${ord.couponCode}): *-${Number(ord.couponDiscount).toFixed(2)}€*`);
+            }
+            lines.push(`🚚 Envío: *${ord.shippingCost === 0 ? 'GRATIS' : `${Number(ord.shippingCost).toFixed(2)}€`}*`);
+            lines.push(`💰 *TOTAL A PAGAR: ${Number(ord.totalAmount).toFixed(2)}€*`);
+            lines.push(`---------------------------------`);
+
+            const phone = this.getWhatsAppPhone();
+            const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(lines.join('\n'))}`;
+            window.open(url, '_blank');
+            this.showToast(`¡Pedido ${ord.id} registrado! Abriendo WhatsApp 🎾`);
         }
 
         checkoutWhatsApp() {
@@ -307,7 +465,8 @@
             lines.push(`¡Hola equipo de SomosPadel Barcelona! Deseo tramitar el siguiente pedido:\n`);
 
             cart.forEach((item, idx) => {
-                lines.push(`${idx + 1}. *${item.name}* (${item.brand})`);
+                const varSuffix = item.variantName ? ` [${item.variantName}]` : '';
+                lines.push(`${idx + 1}. *${item.name}${varSuffix}* (${item.brand})`);
                 lines.push(`   Cantidad: ${item.qty} ud(s) · ${(item.price * item.qty).toFixed(2)}€`);
             });
 
@@ -325,7 +484,7 @@
             lines.push(`- Recogida en pistas o dirección: `);
 
             const msgText = lines.join('\n');
-            const phone = '34600000000';
+            const phone = this.getWhatsAppPhone();
             const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(msgText)}`;
 
             window.open(url, '_blank');
@@ -337,7 +496,7 @@
             if (productName) {
                 text = `¡Hola! 🎾 Tengo dudas sobre el producto: *${productName}*. ¿Me podéis asesorar?`;
             }
-            const phone = '34600000000';
+            const phone = this.getWhatsAppPhone();
             const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(text)}`;
             window.open(url, '_blank');
             this.showToast('Conectando por WhatsApp 💬');
@@ -575,19 +734,34 @@
                     favBtn.innerHTML = '<i class="fas fa-heart text-danger"></i>';
                     favBtn.classList.add('heart-bounce');
                     setTimeout(() => favBtn.classList.remove('heart-bounce'), 600);
-                    this.showToast('¡Guardado en tus favoritos de SomosPadel! ❤️');
                 } else {
                     favBtn.classList.remove('is-fav');
                     favBtn.innerHTML = '<i class="far fa-heart"></i>';
-                    this.showToast('Eliminado de tus favoritos');
                 }
             }
+            const cardBtn = document.getElementById(`sp-card-fav-${productId}`);
+            if (cardBtn) {
+                cardBtn.classList.toggle('is-fav', isFav);
+                cardBtn.innerHTML = isFav ? '<i class="fas fa-heart"></i>' : '<i class="far fa-heart"></i>';
+            }
+            const countPill = document.getElementById('sp-fav-count-pill');
+            if (countPill && TiendaService.getFavorites) {
+                countPill.textContent = TiendaService.getFavorites().length;
+            }
+            if (TiendaView.onlyFavorites) {
+                const grid = document.getElementById('sp-products-grid');
+                if (grid) grid.innerHTML = TiendaView.renderProductCards();
+                const countEl = document.getElementById('sp-products-count');
+                if (countEl) countEl.textContent = TiendaView.getFilteredProducts().length;
+            }
+            this.showToast(isFav ? '¡Guardado en tus favoritos de SomosPadel! ❤️' : 'Eliminado de tus favoritos');
         }
 
         addModalToCart() {
             if (!this.currentModalProduct) return;
             const qty = this.currentModalQty || 1;
-            const ok = TiendaService.addToCart(this.currentModalProduct.id, qty);
+            const variant = this.currentModalVariant || null;
+            const ok = TiendaService.addToCart(this.currentModalProduct.id, qty, variant);
             if (ok) {
                 const btn = document.getElementById('sp-btn-add-modal');
                 if (btn) {
@@ -606,7 +780,10 @@
                     const s = TiendaService.getCartSummary();
                     detailBadge.textContent = s.count || 0;
                 }
-                this.showToast(`¡${this.currentModalProduct.name} añadido a tu cesta! 🛒`);
+                const varTxt = variant && variant.name ? ` (${variant.name})` : '';
+                this.showToast(`¡${this.currentModalProduct.name}${varTxt} añadido a tu cesta! 🛒`);
+            } else {
+                this.showToast('Este producto está agotado temporalmente');
             }
         }
 
@@ -618,7 +795,7 @@
             const unitPrice = variant ? variant.price : p.promoPrice;
             const total = (unitPrice * qty).toFixed(2);
 
-            const phone = (TiendaService.getSettings() && TiendaService.getSettings().whatsappPhone) || '34623456789';
+            const phone = this.getWhatsAppPhone();
             const productImageUrl = TiendaService.getAbsolutePath(p.image);
             const origin = (typeof window !== 'undefined' && window.location && window.location.origin && !window.location.origin.startsWith('file'))
                 ? window.location.origin

@@ -295,6 +295,19 @@ service cloud.firestore {
       }
     }
 
+    // ==========================================
+    // TIENDA ONLINE SOMOSPADEL BCN
+    // ==========================================
+    match /tienda_store/{docId} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+
+    match /tienda_orders/{orderId} {
+      allow read, update, delete: if isStaff();
+      allow create: if request.resource.data.keys().hasAll(['customerName', 'products', 'totalAmount']);
+    }
+
     // Regla global de cierre: solo Staff
     match /{allPaths=**} {
       allow read, write: if isStaff();

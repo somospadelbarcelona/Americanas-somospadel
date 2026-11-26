@@ -27,7 +27,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <!-- Estilos de la Tienda -->
-    <link rel="stylesheet" href="css/tienda.css?v=20261007_v2">
+    <link rel="stylesheet" href="css/tienda.css?v=20261126_v3">
 
     <style>
         body {
@@ -142,15 +142,15 @@
 
         <div class="sp-quick-actions">
             <a href="index.html" class="sp-btn-back-app" title="Volver a la App del Jugador">
-                <i class="fas fa-mobile-screen"></i> Jugador
+                <i class="fas fa-mobile-screen"></i> Volver a la App
             </a>
-            <a href="admin.html#tienda_admin" class="sp-btn-back-app sp-btn-admin-tienda" title="Panel de Administración de Tienda (Clave PADEL21)">
+            <a href="admin.html#tienda_admin" id="sp-nav-admin-tienda" class="sp-btn-back-app sp-btn-admin-tienda" style="display: none;" title="Panel de Administración de Tienda">
                 <i class="fas fa-lock"></i> Admin Tienda
             </a>
-            <a href="admin.html" class="sp-btn-back-app" title="Panel de Administración General">
+            <a href="admin.html" id="sp-nav-admin-general" class="sp-btn-back-app" style="display: none;" title="Panel de Administración General">
                 <i class="fas fa-shield"></i> Admin
             </a>
-            <a href="organizacion.html" class="sp-btn-back-app" title="Organización ERP">
+            <a href="organizacion.html" id="sp-nav-org" class="sp-btn-back-app" style="display: none;" title="Organización ERP">
                 <i class="fas fa-chart-line"></i> Organización
             </a>
         </div>
@@ -169,10 +169,17 @@
         </div>
     </main>
 
+    <!-- Firebase SDK (v10 Compat) para sincronización en tiempo real con Firestore -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/firebase-init.js?v=20261126_v3"></script>
+
     <!-- Scripts de la Tienda -->
-    <script src="js/modules/tienda/TiendaService.js?v=20261007_v2"></script>
-    <script src="js/modules/tienda/TiendaView.js?v=20261007_v2"></script>
-    <script src="js/modules/tienda/TiendaController.js?v=20261007_v2"></script>
+    <script src="js/modules/tienda/TiendaService.js?v=20261126_v3"></script>
+    <script src="js/modules/tienda/TiendaView.js?v=20261126_v3"></script>
+    <script src="js/modules/tienda/TiendaController.js?v=20261126_v3"></script>
 
     <script>
         if (!window.SubnavManager) {
@@ -286,6 +293,18 @@
         }
 
         document.addEventListener('DOMContentLoaded', function () {
+            // Mostrar accesos administrativos únicamente a administradores autenticados
+            try {
+                const isAdmin = window.TiendaService && typeof window.TiendaService.isStoreAdminAuthenticated === 'function'
+                    && window.TiendaService.isStoreAdminAuthenticated();
+                if (isAdmin) {
+                    ['sp-nav-admin-tienda', 'sp-nav-admin-general', 'sp-nav-org'].forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.style.display = 'flex';
+                    });
+                }
+            } catch (e) {}
+
             updateProductOpenGraph();
             if (window.SubnavManager) {
                 window.SubnavManager.renderTienda('todos');

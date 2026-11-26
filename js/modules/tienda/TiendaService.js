@@ -24,7 +24,7 @@
 
     const DEFAULT_SETTINGS = {
         storeName: 'Tienda Oficial SomosPadel Barcelona',
-        whatsappPhone: '34623456789',
+        whatsappPhone: '34649219350',
         emailContact: 'tienda@somospadelbcn.com',
         freeShippingThreshold: 50,
         shippingCost: 4.95,
@@ -186,7 +186,7 @@
             logoText: 'SP',
             contactPerson: 'Álex Coscolín (Dirección)',
             email: 'direccion@somospadelbcn.com',
-            phone: '+34 600 000 000',
+            phone: '+34 649 219 350',
             web: 'https://somospadelbcn.com',
             agreementType: 'Marca Propia & Merchandising Club',
             agreedCommission: '100%',
@@ -763,11 +763,160 @@
                     localStorage.setItem(STORAGE_KEY_PROMOS, JSON.stringify(DEFAULT_PROMOTIONS));
                 }
                 if (!localStorage.getItem(STORAGE_KEY_ROLE)) {
-                    localStorage.setItem(STORAGE_KEY_ROLE, 'SuperAdmin');
+                    localStorage.setItem(STORAGE_KEY_ROLE, 'Jugador');
                 }
             } catch (e) {
                 console.warn('[TiendaService] Error accediendo a localStorage:', e);
             }
+
+            // Sincronización automática en segundo plano con Firebase Firestore si está disponible
+            if (typeof window !== 'undefined') {
+                setTimeout(() => {
+                    this.syncFromCloud().catch(() => {});
+                }, 450);
+            }
+        }
+
+        // ==========================================
+        // ☁️ SINCRONIZACIÓN CON FIREBASE FIRESTORE
+        // ==========================================
+        _getFirestore() {
+            try {
+                if (typeof window !== 'undefined' && window.db) return window.db;
+                if (typeof firebase !== 'undefined' && firebase.firestore) return firebase.firestore();
+            } catch (e) {}
+            return null;
+        }
+
+        _isCloudStaffWriteAllowed() {
+            try {
+                if (this.isStoreAdminAuthenticated()) return true;
+                const u = window.Store?.getState?.('currentUser');
+                const role = String(u?.role || '').toLowerCase();
+                return ['admin', 'admin_player', 'super_admin', 'superadmin', 'organizador', 'organizer', 'organizador_bcn'].includes(role);
+            } catch (e) {
+                return false;
+            }
+        }
+
+        async _pushDocToCloud(docId, data) {
+            const db = this._getFirestore();
+            if (!db) return false;
+            try {
+                await db.collection('tienda_store').doc(docId).set({
+                    payload: data,
+                    updatedAt: new Date().toISOString()
+                }, { merge: true });
+                return true;
+            } catch (e) {
+                // Silencioso si no hay permisos staff o sin conexión (localStorage ya guardó)
+                return false;
+            }
+        }
+
+        async _pushOrderToCloud(order) {
+            const db = this._getFirestore();
+            if (!db || !order || !order.id) return false;
+            try {
+                await db.collection('tienda_orders').doc(order.id).set({
+                    ...order,
+                    updatedAt: new Date().toISOString()
+                }, { merge: true });
+                return true;
+            } catch (e) {
+                console.warn('[TiendaService] Pedido guardado en local; pendiente de nube:', e?.message || e);
+                return false;
+            }
+        }
+
+        async _deleteOrderFromCloud(orderId) {
+            const db = this._getFirestore();
+            if (!db || !orderId) return false;
+            try {
+                await db.collection('tienda_orders').doc(orderId).delete();
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        async syncFromCloud() {
+            if (this._isSyncingCloud) return false;
+            const db = this._getFirestore();
+            if (!db) return false;
+
+            this._isSyncingCloud = true;
+            let changed = false;
+            try {
+                const col = db.collection('tienda_store');
+                const [catSnap, partSnap, promoSnap, setSnap] = await Promise.all([
+                    col.doc('catalog').get().catch(() => null),
+                    col.doc('partners').get().catch(() => null),
+                    col.doc('promotions').get().catch(() => null),
+                    col.doc('settings').get().catch(() => null)
+                ]);
+
+                if (catSnap && catSnap.exists && Array.isArray(catSnap.data()?.payload)) {
+                    const remoteProds = catSnap.data().payload;
+                    if (remoteProds.length > 0) {
+                        localStorage.setItem(STORAGE_KEY_PRODS, JSON.stringify(remoteProds));
+                        changed = true;
+                    }
+                }
+                if (partSnap && partSnap.exists && Array.isArray(partSnap.data()?.payload)) {
+                    localStorage.setItem(STORAGE_KEY_PARTNERS, JSON.stringify(partSnap.data().payload));
+                    changed = true;
+                }
+                if (promoSnap && promoSnap.exists && Array.isArray(promoSnap.data()?.payload)) {
+                    localStorage.setItem(STORAGE_KEY_PROMOS, JSON.stringify(promoSnap.data().payload));
+                    changed = true;
+                }
+                if (setSnap && setSnap.exists && setSnap.data()?.payload && typeof setSnap.data().payload === 'object') {
+                    localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify({ ...DEFAULT_SETTINGS, ...setSnap.data().payload }));
+                    changed = true;
+                }
+
+                // Sincronizar pedidos solo si es staff/admin autenticado
+                if (this._isCloudStaffWriteAllowed()) {
+                    const ordersSnap = await db.collection('tienda_orders').get().catch(() => null);
+                    if (ordersSnap && !ordersSnap.empty) {
+                        const remoteOrders = [];
+                        ordersSnap.forEach(doc => {
+                            const d = doc.data();
+                            if (d && d.id) remoteOrders.push(d);
+                        });
+                        if (remoteOrders.length > 0) {
+                            // Mezclar remotos con locales sin duplicados
+                            const localOrders = this.getOrders();
+                            const byId = new Map();
+                            localOrders.forEach(o => byId.set(o.id, o));
+                            remoteOrders.forEach(o => byId.set(o.id, o));
+                            const merged = Array.from(byId.values()).sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+                            localStorage.setItem(STORAGE_KEY_ORDERS, JSON.stringify(merged));
+                            changed = true;
+                        }
+                    }
+                }
+
+                if (changed && typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+                    window.dispatchEvent(new CustomEvent('sp-tienda-synced'));
+                }
+            } catch (e) {
+                console.warn('[TiendaService] Error sincronizando con Firestore:', e?.message || e);
+            } finally {
+                this._isSyncingCloud = false;
+            }
+            return changed;
+        }
+
+        async pushAllToCloud() {
+            const results = await Promise.all([
+                this._pushDocToCloud('catalog', this.getProducts()),
+                this._pushDocToCloud('partners', this.getPartners()),
+                this._pushDocToCloud('promotions', this.getPromotions()),
+                this._pushDocToCloud('settings', this.getSettings())
+            ]);
+            return results.every(Boolean);
         }
 
         // ==========================================
@@ -808,14 +957,19 @@
         // ==========================================
         getCurrentRole() {
             try {
+                if (this.isStoreAdminAuthenticated()) return 'SuperAdmin';
                 // Verificar si hay rol en Store global de la app
                 const currentUser = window.Store?.getState?.('currentUser');
-                if (currentUser && currentUser.tiendaRole) {
-                    return currentUser.tiendaRole;
+                if (currentUser) {
+                    if (currentUser.tiendaRole) return currentUser.tiendaRole;
+                    const r = String(currentUser.role || '').toLowerCase();
+                    if (['admin', 'admin_player', 'super_admin', 'superadmin'].includes(r)) return 'SuperAdmin';
+                    if (['organizador', 'organizer', 'organizador_bcn'].includes(r)) return 'Organizador SomosPadel BCN';
                 }
-                return localStorage.getItem(STORAGE_KEY_ROLE) || 'SuperAdmin';
+                const saved = localStorage.getItem(STORAGE_KEY_ROLE);
+                return saved || 'Jugador';
             } catch (e) {
-                return 'SuperAdmin';
+                return 'Jugador';
             }
         }
 
@@ -891,6 +1045,7 @@
             }
             try {
                 localStorage.setItem(STORAGE_KEY_PRODS, JSON.stringify(products));
+                this._pushDocToCloud('catalog', products);
             } catch (e) {
                 console.error('[TiendaService] Error guardando producto:', e);
             }
@@ -902,6 +1057,7 @@
             products = products.filter(p => p.id !== id);
             try {
                 localStorage.setItem(STORAGE_KEY_PRODS, JSON.stringify(products));
+                this._pushDocToCloud('catalog', products);
             } catch (e) {}
             return true;
         }
@@ -970,6 +1126,7 @@
             }
             try {
                 localStorage.setItem(STORAGE_KEY_PARTNERS, JSON.stringify(partners));
+                this._pushDocToCloud('partners', partners);
             } catch (e) {}
             return partnerData;
         }
@@ -979,6 +1136,7 @@
             partners = partners.filter(p => p.id !== id);
             try {
                 localStorage.setItem(STORAGE_KEY_PARTNERS, JSON.stringify(partners));
+                this._pushDocToCloud('partners', partners);
             } catch (e) {}
             return true;
         }
@@ -1006,6 +1164,7 @@
             }
             try {
                 localStorage.setItem(STORAGE_KEY_PROMOS, JSON.stringify(promos));
+                this._pushDocToCloud('promotions', promos);
             } catch (e) {}
             return promoData;
         }
@@ -1015,8 +1174,54 @@
             promos = promos.filter(p => p.id !== id);
             try {
                 localStorage.setItem(STORAGE_KEY_PROMOS, JSON.stringify(promos));
+                this._pushDocToCloud('promotions', promos);
             } catch (e) {}
             return true;
+        }
+
+        validateCoupon(code) {
+            const cleanCode = String(code || '').trim().toUpperCase();
+            if (!cleanCode) return { valid: false, reason: 'Introduce un código de cupón.' };
+
+            const promos = this.getPromotions();
+            const matched = promos.find(pr => String(pr.code || '').trim().toUpperCase() === cleanCode);
+            if (matched) {
+                // Comprobar caducidad si existe validUntil (formato YYYY-MM-DD)
+                if (matched.validUntil) {
+                    const expDate = new Date(matched.validUntil + 'T23:59:59');
+                    if (!isNaN(expDate.getTime()) && expDate < new Date()) {
+                        return { valid: false, reason: `El cupón "${cleanCode}" caducó el ${matched.validUntil}.` };
+                    }
+                }
+                let rate = typeof matched.discountRate === 'number' ? matched.discountRate : null;
+                if (rate === null) {
+                    const text = `${matched.discountText || ''} ${matched.title || ''} ${matched.description || ''}`;
+                    const pctMatch = text.match(/(\d{1,2})\s*%/);
+                    if (pctMatch) {
+                        rate = Math.min(0.8, Math.max(0.01, parseInt(pctMatch[1], 10) / 100));
+                    } else if (cleanCode === 'SOMOSPADEL15') {
+                        rate = 0.15;
+                    } else {
+                        rate = 0.10;
+                    }
+                }
+                return {
+                    valid: true,
+                    code: cleanCode,
+                    rate,
+                    title: matched.title || matched.discountText || cleanCode,
+                    promoId: matched.id
+                };
+            }
+
+            // Fallback de compatibilidad si las promos por defecto fueron borradas
+            if (cleanCode === 'SOMOSPADEL15') {
+                return { valid: true, code: 'SOMOSPADEL15', rate: 0.15, title: 'Descuento Exclusivo Jugadores' };
+            }
+            if (cleanCode === 'SEMANAPADEL') {
+                return { valid: true, code: 'SEMANAPADEL', rate: 0.10, title: 'Oferta de la Semana' };
+            }
+            return { valid: false, reason: 'Cupón no válido o expirado.' };
         }
 
         // ==========================================
@@ -1035,6 +1240,7 @@
 
             try {
                 localStorage.setItem(STORAGE_KEY_PRODS, JSON.stringify(products));
+                this._pushDocToCloud('catalog', products);
             } catch (e) {}
             return p;
         }
@@ -1047,6 +1253,7 @@
             p.active = !p.active;
             try {
                 localStorage.setItem(STORAGE_KEY_PRODS, JSON.stringify(products));
+                this._pushDocToCloud('catalog', products);
             } catch (e) {}
             return p;
         }
@@ -1059,6 +1266,7 @@
             p.featured = !p.featured;
             try {
                 localStorage.setItem(STORAGE_KEY_PRODS, JSON.stringify(products));
+                this._pushDocToCloud('catalog', products);
             } catch (e) {}
             return p;
         }
@@ -1092,6 +1300,7 @@
             }
             try {
                 localStorage.setItem(STORAGE_KEY_ORDERS, JSON.stringify(orders));
+                this._pushOrderToCloud(orderData);
             } catch (e) {
                 console.error('[TiendaService] Error guardando pedido:', e);
             }
@@ -1106,6 +1315,7 @@
             order.status = newStatus;
             try {
                 localStorage.setItem(STORAGE_KEY_ORDERS, JSON.stringify(orders));
+                this._pushOrderToCloud(order);
             } catch (e) {}
             return order;
         }
@@ -1115,6 +1325,7 @@
             orders = orders.filter(o => o.id !== orderId);
             try {
                 localStorage.setItem(STORAGE_KEY_ORDERS, JSON.stringify(orders));
+                this._deleteOrderFromCloud(orderId);
             } catch (e) {}
             return true;
         }
@@ -1125,9 +1336,14 @@
         getSettings() {
             try {
                 const data = localStorage.getItem(STORAGE_KEY_SETTINGS);
-                return data ? { ...DEFAULT_SETTINGS, ...JSON.parse(data) } : DEFAULT_SETTINGS;
+                const merged = data ? { ...DEFAULT_SETTINGS, ...JSON.parse(data) } : { ...DEFAULT_SETTINGS };
+                const digits = String(merged.whatsappPhone || '').replace(/[^\d]/g, '');
+                if (!digits || digits === '34623456789' || digits === '623456789' || digits === '34600000000' || digits === '600000000') {
+                    merged.whatsappPhone = DEFAULT_SETTINGS.whatsappPhone;
+                }
+                return merged;
             } catch (e) {
-                return DEFAULT_SETTINGS;
+                return { ...DEFAULT_SETTINGS };
             }
         }
 
@@ -1136,6 +1352,7 @@
             const updated = { ...current, ...settingsData };
             try {
                 localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(updated));
+                this._pushDocToCloud('settings', updated);
             } catch (e) {}
             return updated;
         }
@@ -1472,24 +1689,37 @@
             } catch (e) {}
         }
 
-        addToCart(productId, qty = 1) {
+        addToCart(productId, qty = 1, variant = null) {
             const product = this.getProductById(productId);
-            if (!product) return false;
+            if (!product || product.active === false) return false;
+            const availableStock = typeof product.stock === 'number' ? product.stock : 12;
+            if (availableStock <= 0) return false;
+
+            const activeVariant = variant || (Array.isArray(product.variants) && product.variants.length ? product.variants[0] : null);
+            const variantId = activeVariant ? activeVariant.id : null;
+            const variantName = activeVariant ? activeVariant.name : null;
+            const unitPrice = (activeVariant && typeof activeVariant.price === 'number') ? activeVariant.price : product.promoPrice;
+            const cartKey = variantId ? `${product.id}__${variantId}` : product.id;
 
             const cart = this.getCart();
-            const existing = cart.find(item => item.id === productId);
+            const existing = cart.find(item => (item.cartKey || item.id) === cartKey);
 
             if (existing) {
-                existing.qty = Math.min((existing.qty || 1) + qty, product.stock || 99);
+                existing.qty = Math.min((existing.qty || 1) + qty, availableStock);
+                existing.stock = availableStock;
+                existing.price = unitPrice;
             } else {
                 cart.push({
                     id: product.id,
+                    cartKey: cartKey,
+                    variantId: variantId,
+                    variantName: variantName,
                     name: product.name,
                     brand: product.brand,
-                    price: product.promoPrice,
+                    price: unitPrice,
                     image: product.image,
-                    qty: qty,
-                    stock: product.stock || 12
+                    qty: Math.min(qty, availableStock),
+                    stock: availableStock
                 });
             }
 
@@ -1497,23 +1727,26 @@
             return true;
         }
 
-        updateCartQty(productId, qty) {
+        updateCartQty(cartKeyOrProductId, qty) {
             let cart = this.getCart();
-            const item = cart.find(i => i.id === productId);
+            const item = cart.find(i => (i.cartKey || i.id) === cartKeyOrProductId);
             if (item) {
                 if (qty <= 0) {
-                    cart = cart.filter(i => i.id !== productId);
+                    cart = cart.filter(i => (i.cartKey || i.id) !== cartKeyOrProductId);
                 } else {
-                    item.qty = Math.min(qty, item.stock || 99);
+                    const liveProd = this.getProductById(item.id);
+                    const maxStock = liveProd && typeof liveProd.stock === 'number' ? liveProd.stock : (item.stock || 99);
+                    item.qty = Math.min(qty, Math.max(1, maxStock));
+                    item.stock = maxStock;
                 }
                 this.saveCart(cart);
             }
             return cart;
         }
 
-        removeFromCart(productId) {
+        removeFromCart(cartKeyOrProductId) {
             let cart = this.getCart();
-            cart = cart.filter(i => i.id !== productId);
+            cart = cart.filter(i => (i.cartKey || i.id) !== cartKeyOrProductId);
             this.saveCart(cart);
             return cart;
         }
@@ -1521,6 +1754,83 @@
         clearCart() {
             this.saveCart([]);
             return [];
+        }
+
+        getUpsellProducts(remainingAmount = 50, limit = 2) {
+            const cartIds = new Set(this.getCart().map(i => i.id));
+            const candidates = this.getProducts()
+                .filter(p => p.active !== false && (p.stock || 0) > 0 && !cartIds.has(p.id));
+
+            // Priorizar accesorios, pelotas, overgrips, protectores o productos de precio accesible
+            const preferredCats = new Set(['pelotas', 'overgrips', 'protectores', 'accesorios', 'textil']);
+            candidates.sort((a, b) => {
+                const aPref = preferredCats.has(a.category) ? 0 : 1;
+                const bPref = preferredCats.has(b.category) ? 0 : 1;
+                if (aPref !== bPref) return aPref - bPref;
+                return (a.promoPrice || 0) - (b.promoPrice || 0);
+            });
+            return candidates.slice(0, limit);
+        }
+
+        createCheckoutOrder(checkoutData = {}) {
+            const summary = this.getCartSummary();
+            const cart = summary.cart || [];
+            if (cart.length === 0) return null;
+
+            const coupon = checkoutData.coupon || null;
+            let couponDiscount = 0;
+            if (coupon && coupon.rate) {
+                couponDiscount = Math.round(summary.subtotal * coupon.rate * 100) / 100;
+            }
+
+            const isClubPickup = checkoutData.deliveryMethod === 'club';
+            const shippingCost = isClubPickup ? 0 : summary.shippingCost;
+            const totalAmount = Math.max(0, Math.round((summary.subtotal - couponDiscount + shippingCost) * 100) / 100);
+
+            // Calcular comisión estimada y descontar stock
+            let estimatedCommission = 0;
+            const orderProducts = cart.map(item => {
+                const prod = this.getProductById(item.id);
+                const rate = prod && typeof prod.commissionRate === 'number' ? prod.commissionRate : 0.12;
+                const lineTotal = (item.price || 0) * (item.qty || 1);
+                estimatedCommission += lineTotal * rate;
+
+                // Descontar stock y registrar conversión
+                this.updateProductStock(item.id, -(item.qty || 1), true);
+                this.recordConversion(item.id, lineTotal);
+
+                return {
+                    id: item.id,
+                    name: item.variantName ? `${item.name} (${item.variantName})` : item.name,
+                    variantId: item.variantId || null,
+                    variantName: item.variantName || null,
+                    brand: item.brand || '',
+                    qty: item.qty || 1,
+                    price: item.price || 0
+                };
+            });
+
+            const order = this.saveOrder({
+                customerName: String(checkoutData.customerName || 'Cliente Tienda').trim(),
+                customerPhone: String(checkoutData.customerPhone || '').trim(),
+                customerEmail: String(checkoutData.customerEmail || '').trim(),
+                products: orderProducts,
+                subtotal: summary.subtotal,
+                couponCode: coupon ? coupon.code : null,
+                couponDiscount: couponDiscount,
+                shippingCost: shippingCost,
+                totalAmount: totalAmount,
+                commission: Math.round(estimatedCommission * 100) / 100,
+                paymentMethod: checkoutData.paymentMethod || 'Bizum',
+                shippingMethod: isClubPickup
+                    ? `Recogida en Club / Americana${checkoutData.deliveryAddress ? ' (' + checkoutData.deliveryAddress.trim() + ')' : ''}`
+                    : `Envío a Domicilio${checkoutData.deliveryAddress ? ' (' + checkoutData.deliveryAddress.trim() + ')' : ''}`,
+                status: 'Pendiente',
+                notes: String(checkoutData.notes || '').trim()
+            });
+
+            this.clearCart();
+            return order;
         }
 
         getCartSummary() {
