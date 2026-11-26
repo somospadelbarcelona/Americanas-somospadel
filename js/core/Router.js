@@ -14,6 +14,8 @@
                 'americanas': () => this.handleControllerTab('EventsController', 'events'),
                 'events': () => this.handleControllerTab('EventsController', 'events'),
                 'finished_americanas': () => this.handleControllerTab('EventsController', 'finished_americanas'),
+                'fidelity_americanas': () => this.handleControllerTab('EventsController', 'fidelity_americanas'),
+                'fidelidad': () => this.handleControllerTab('EventsController', 'fidelity_americanas'),
                 'agenda_americanas': () => this.handleControllerTab('EventsController', 'agenda_americanas'),
                 'help_americanas': () => this.handleControllerTab('EventsController', 'help_americanas'),
                 'finished': () => this.handleControllerTab('EventsController', 'finished'),
