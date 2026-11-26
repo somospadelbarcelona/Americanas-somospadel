@@ -2524,6 +2524,7 @@
                 return;
             }
 
+            const baseUrl = `${window.location.origin}${window.location.pathname}`;
             const catEmoji = { male: '🔵', female: '🩷', mixed: '🟠', open: '🟢' };
             const catName = { male: 'Masculino', female: 'Femenino', mixed: 'Mixto', open: 'Open' };
 
@@ -2551,10 +2552,17 @@
                 const free = Math.max(0, maxP - count);
                 const spotText = free === 0 ? `🔴 *COMPLETA* (Lista espera)` : (free <= 2 ? `🔥 *¡ÚLTIMAS ${free} PLAZAS!*` : `🟢 *${free} plazas libres* (${count}/${maxP})`);
                 const sede = evt.sede || evt.location || 'SomosPadel BCN';
+                const playtomicLink = evt.playtomicUrl || evt.playtomic_url || evt.registration_url || evt.external_url || '';
+                const appDirectLink = `${baseUrl}?event=${encodeURIComponent(evt.id)}#americanas`;
 
                 lines.push(`${catEmoji[cat] || '🎾'} *${(evt.name || 'Americana').toUpperCase()}*`);
                 lines.push(`   📅 ${dLabel} · 🕒 ${tLabel} · ${catName[cat] || 'Open'}`);
                 lines.push(`   📍 ${sede} · ${spotText}`);
+                if (playtomicLink) {
+                    lines.push(`   🔗 Playtomic: ${playtomicLink}`);
+                } else {
+                    lines.push(`   🔗 Inscripción: ${appDirectLink}`);
+                }
                 lines.push(``);
             });
 
@@ -2563,7 +2571,6 @@
                 lines.push(``);
             }
 
-            const baseUrl = `${window.location.origin}${window.location.pathname}`;
             lines.push(`━━━━━━━━━━━━━━━━━━━━`);
             lines.push(`🎁 *¡Juega americanas y sube en el TOP 3 de Fidelidad con premios!*`);
             lines.push(`📲 Apúntate en 1 clic aquí:`);
