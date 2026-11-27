@@ -1086,14 +1086,8 @@
                 </div>
 
                 <div class="tp-sheet-footer">
-                    <button type="button" class="tp-foot-btn primary" onclick="window.TeamController.showTeamDetail('${team.id}', 'convocatoria')">
-                        <i class="fas fa-clipboard-check"></i> Convocatoria & RSVP
-                    </button>
-                    <button type="button" class="tp-foot-btn tactic" onclick="window.TeamController.showTeamDetail('${team.id}', 'tactica')">
-                        <i class="fas fa-chess"></i> Táctica
-                    </button>
-                    <button type="button" class="tp-foot-btn whatsapp" onclick="window.TeamView.openShareModal('${team.id}', '${shareTabParam}')" aria-label="Compartir por WhatsApp">
-                        <i class="fab fa-whatsapp" style="font-size:1.15rem;"></i>
+                    <button type="button" class="tp-foot-btn whatsapp" style="flex:1;width:100%;" onclick="window.TeamView.openShareModal('${team.id}', '${shareTabParam}')" aria-label="Compartir por WhatsApp">
+                        <i class="fab fa-whatsapp" style="font-size:1.15rem;"></i> Compartir por WhatsApp
                     </button>
                 </div>
             `;
@@ -1172,10 +1166,7 @@
                         <div><i class="fas fa-map-marker-alt" style="color:#ccff00;width:18px;"></i> ${nextVenue}</div>
                     </div>
                     <div style="display:flex;gap:8px;">
-                        <button type="button" class="tp-btn-rsvp" onclick="window.TeamController.openPlayerRsvpModal('${team.id}', '${next.j}')">
-                            <i class="fas fa-check-circle"></i> Responder RSVP
-                        </button>
-                        <button type="button" class="tp-btn-outline" style="background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.2);" onclick="window.TeamView.openMapsForVenue('${safeVenue}')">
+                        <button type="button" class="tp-btn-outline" style="flex:1;background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.2);" onclick="window.TeamView.openMapsForVenue('${safeVenue}')">
                             <i class="fas fa-directions"></i> Mapa
                         </button>
                         <button type="button" class="tp-btn-outline" style="background:rgba(255,255,255,0.1);color:#ccff00;border-color:rgba(204,255,0,0.35);" onclick="window.TeamController.showRivalScouting('${team.id}', '${String(next.opponent || '').replace(/'/g, "\\'")}')">

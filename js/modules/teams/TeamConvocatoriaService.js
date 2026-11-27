@@ -129,8 +129,8 @@
          * Clave de localStorage para una convocatoria específica.
          * @private
          */
-        _getStorageKey(teamId, jornada) {
-            const id = this.normalizeId(teamId, jornada);
+        _getStorageKey(teamId, jornada, seasonId = null) {
+            const id = this.normalizeId(teamId, jornada, seasonId);
             return `${CONFIG.STORAGE_PREFIX}${id}`;
         }
 
@@ -239,14 +239,14 @@
          * @param {string|number} jornada - Número de jornada
          * @returns {Promise<Object|null>} Objeto de convocatoria o null si no existe
          */
-        async getConvocatoria(teamId, jornada) {
+        async getConvocatoria(teamId, jornada, seasonId = null) {
             if (!teamId || jornada === undefined || jornada === null) {
                 console.warn('⚠️ [TeamConvocatoriaService.getConvocatoria] teamId y jornada requeridos.');
                 return null;
             }
 
-            const convoId = this.normalizeId(teamId, jornada);
-            const storageKey = this._getStorageKey(teamId, jornada);
+            const convoId = this.normalizeId(teamId, jornada, seasonId);
+            const storageKey = this._getStorageKey(teamId, jornada, seasonId);
             const db = this._getDb();
             const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
 
@@ -381,7 +381,7 @@
          * @param {string} [note=''] - Nota u observación opcional del jugador
          * @returns {Promise<{success: boolean, data: Object, playerResponse: Object}>}
          */
-        async submitPlayerResponse(teamId, jornada, playerName, status, note = '') {
+        async submitPlayerResponse(teamId, jornada, playerName, status, note = '', seasonId = null) {
             if (!playerName || !String(playerName).trim()) {
                 throw new Error('El nombre del jugador es requerido para responder.');
             }
@@ -390,13 +390,15 @@
             const normalizedStatus = this._normalizePlayerStatus(status);
             const cleanNote = String(note || '').trim();
 
-            // Cargar o inicializar la convocatoria
-            let convo = await this.getConvocatoria(teamId, jornada);
+            // Cargar o inicializar la convocatoria de la temporada correcta
+            let convo = await this.getConvocatoria(teamId, jornada, seasonId);
 
             if (!convo) {
                 convo = {
+                    id: this.normalizeId(teamId, jornada, seasonId),
                     teamId: teamId,
                     jornada: jornada,
+                    seasonId: seasonId || undefined,
                     opponent: 'Por definir',
                     matchDate: 'Por definir',
                     venue: 'Por definir',
@@ -404,6 +406,8 @@
                     responses: {},
                     createdAt: new Date().toISOString()
                 };
+            } else if (!convo.id) {
+                convo.id = this.normalizeId(teamId, jornada, seasonId);
             }
 
             // Validar si la convocatoria está cerrada
@@ -429,6 +433,125 @@
                 isOffline: saveResult.isOffline,
                 data: saveResult.data,
                 playerResponse: playerResponse
+            };
+        }
+
+        /**
+         * Elimina la respuesta de un jugador para devolverlo al estado "Sin votar" (pendiente).
+         *
+         * @param {string} teamId - ID del equipo
+         * @param {string|number} jornada - Jornada
+         * @param {string} playerName - Nombre completo del jugador
+         * @param {string|null} [seasonId=null] - ID de temporada opcional
+         * @param {Function|null} [matchFn=null] - Comparador opcional (keyName, targetName) => boolean
+         * @returns {Promise<{success: boolean, isOffline: boolean, data: Object|null}>}
+         */
+        async clearPlayerResponse(teamId, jornada, playerName, seasonId = null, matchFn = null) {
+            if (!playerName || !String(playerName).trim()) {
+                throw new Error('El nombre del jugador es requerido para quitar el voto.');
+            }
+
+            const cleanPlayerName = String(playerName).trim();
+            const convoId = this.normalizeId(teamId, jornada, seasonId);
+            const storageKey = this._getStorageKey(teamId, jornada, seasonId);
+
+            let convo = await this.getConvocatoria(teamId, jornada, seasonId);
+            if (!convo) {
+                return { success: true, isOffline: false, data: null };
+            }
+
+            if (convo.status === CONFIG.STATUS.CLOSED) {
+                throw new Error('La convocatoria para esta jornada ha sido cerrada por el capitán.');
+            }
+
+            const normalizeText = (s) => String(s || '')
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+
+            const targetNorm = normalizeText(cleanPlayerName);
+            const responses = convo.responses && typeof convo.responses === 'object' ? { ...convo.responses } : {};
+            const keysToRemove = [];
+
+            Object.entries(responses).forEach(([key, val]) => {
+                const entryName = (typeof val === 'object' && val && val.name) ? val.name : key;
+                const entryNorm = normalizeText(entryName);
+                const matched = key === cleanPlayerName
+                    || entryNorm === targetNorm
+                    || (typeof matchFn === 'function' && matchFn(entryName, cleanPlayerName));
+                if (matched) {
+                    keysToRemove.push(key);
+                }
+            });
+
+            if (keysToRemove.length === 0) {
+                keysToRemove.push(cleanPlayerName);
+            }
+
+            keysToRemove.forEach((k) => { delete responses[k]; });
+
+            const nowIso = new Date().toISOString();
+            const updatedConvo = {
+                ...convo,
+                id: convoId,
+                responses,
+                updatedAt: nowIso
+            };
+
+            // 1. Persistir inmediatamente en localStorage
+            this._saveToLocalStorage(storageKey, updatedConvo);
+
+            // 2. Notificar a la UI
+            if (typeof window !== 'undefined' && window.dispatchEvent) {
+                try {
+                    window.dispatchEvent(new CustomEvent('somospadel:convocatoria_updated', {
+                        detail: { convoId, data: updatedConvo }
+                    }));
+                } catch (e) {}
+            }
+
+            // 3. Persistir eliminación en Firestore
+            const db = this._getDb();
+            const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+
+            if (db && isOnline) {
+                try {
+                    const FieldValue = (typeof window !== 'undefined' && window.firebase && window.firebase.firestore && window.firebase.firestore.FieldValue)
+                        ? window.firebase.firestore.FieldValue
+                        : null;
+                    const responsesPatch = {};
+                    keysToRemove.forEach((k) => {
+                        responsesPatch[k] = (FieldValue && typeof FieldValue.delete === 'function')
+                            ? FieldValue.delete()
+                            : { status: 'pending', note: '', updatedAt: nowIso };
+                    });
+                    await db.collection(CONFIG.COLLECTION).doc(convoId).set({
+                        responses: responsesPatch,
+                        updatedAt: nowIso
+                    }, { merge: true });
+
+                    return {
+                        success: true,
+                        isOffline: false,
+                        data: updatedConvo
+                    };
+                } catch (fsErr) {
+                    console.warn(`⚠️ [TeamConvocatoriaService] No se pudo limpiar voto en Firestore (${convoId}):`, fsErr.message);
+                    return {
+                        success: true,
+                        isOffline: true,
+                        data: updatedConvo,
+                        warning: 'Guardado localmente. Se sincronizará al conectar.'
+                    };
+                }
+            }
+
+            return {
+                success: true,
+                isOffline: true,
+                data: updatedConvo
             };
         }
 

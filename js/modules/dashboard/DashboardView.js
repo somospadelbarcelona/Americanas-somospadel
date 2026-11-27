@@ -112,6 +112,14 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
 
         async render(data) {
             console.log("📊 [DashboardView] Rendering started...", data);
+            if (window.TeamConvocatoriaProUI && typeof window.TeamConvocatoriaProUI.checkAndShowWeeklyConvoPopup === 'function') {
+                clearTimeout(this._convoPopupTimer);
+                this._convoPopupTimer = setTimeout(() => {
+                    if (!window.Router || !window.Router.currentRoute || window.Router.currentRoute === 'dashboard') {
+                        window.TeamConvocatoriaProUI.checkAndShowWeeklyConvoPopup({ force: false });
+                    }
+                }, 380);
+            }
             const container = document.getElementById('content-area');
             if (!container) return;
 
