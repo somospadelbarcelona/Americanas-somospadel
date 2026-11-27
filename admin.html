@@ -1832,6 +1832,13 @@
                         <span class="nav-text">Equipos Temporada 2027</span>
                         <span class="nav-badge badge-season">OCT-NOV</span>
                     </button>
+
+                    <!-- Histórico y Gestión de Temporadas -->
+                    <button class="nav-item-pro btn-season-campaign" data-view="team_seasons" onclick="loadAdminView('team_seasons')">
+                        <span class="icon-box" style="color:#059669;"><i class="fas fa-layer-group"></i></span>
+                        <span class="nav-text">Temporadas & Plantillas</span>
+                        <span class="nav-badge" style="background:rgba(16,185,129,0.16);color:#047857;border:1px solid rgba(16,185,129,0.4);">2027</span>
+                    </button>
                 </div>
 
                 <!-- ========================================== -->
@@ -1966,26 +1973,27 @@
                                         return;
                                     }
 
-                                    textSpan.innerText = 'LIMPIANDO NUBE...';
-                                    const db = window.db || firebase.firestore();
-
+                                    textSpan.innerText = 'SUBIENDO TEMPORADA ACTIVA...';
                                     try {
-                                        const snapshot = await db.collection('club_teams').get();
-                                        const batch = db.batch();
-                                        snapshot.docs.forEach(doc => batch.delete(doc.ref));
-                                        await batch.commit();
+                                        if (window.TeamSeasonService) {
+                                            const res = await window.TeamSeasonService.syncBotDataToSeason(window.ExtractedTeamsData);
+                                            alert(`✅ ¡SINCRO EXITOSA LOCAL!\nSe han actualizado ${res.count} equipos en la Temporada ${res.seasonId} (las temporadas archivadas permanecen protegidas).`);
+                                        } else {
+                                            const db = window.db || firebase.firestore();
+                                            const snapshot = await db.collection('club_teams').get();
+                                            const batch = db.batch();
+                                            snapshot.docs.forEach(doc => batch.delete(doc.ref));
+                                            await batch.commit();
+                                            let count = 0;
+                                            for (const equipo of window.ExtractedTeamsData) {
+                                                await db.collection('club_teams').doc(equipo.id).set(equipo);
+                                                count++;
+                                            }
+                                            alert(`✅ ¡SINCRO EXITOSA LOCAL!\nSe han actualizado ${count} equipos en Firebase sin duplicados.`);
+                                        }
                                     } catch (err) {
-                                        console.warn("Aviso: Falló la limpieza previa:", err);
+                                        alert('❌ Error en sincronización: ' + err.message);
                                     }
-
-                                    textSpan.innerText = 'SUBIENDO NUBE...';
-                                    let count = 0;
-                                    for (const equipo of window.ExtractedTeamsData) {
-                                        await db.collection('club_teams').doc(equipo.id).set(equipo);
-                                        count++;
-                                    }
-
-                                    alert(`✅ ¡SINCRO EXITOSA LOCAL!\nSe han actualizado ${count} equipos en Firebase sin duplicados.`);
                                     resetBtn();
                                 };
 
@@ -2029,26 +2037,27 @@
                                         }
                                         
                                         const parsedData = JSON.parse(jsonMatch[1]);
-                                        textSpan.innerText = 'LIMPIANDO NUBE...';
-                                        const db = window.db || firebase.firestore();
-                                        
-                                        try {
-                                            const snapshot = await db.collection('club_teams').get();
-                                            const batch = db.batch();
-                                            snapshot.docs.forEach(doc => batch.delete(doc.ref));
-                                            await batch.commit();
-                                        } catch (err) {
-                                            console.warn("Aviso: Falló la limpieza previa:", err);
+                                        textSpan.innerText = 'SUBIENDO TEMPORADA ACTIVA...';
+                                        if (window.TeamSeasonService) {
+                                            const res = await window.TeamSeasonService.syncBotDataToSeason(parsedData);
+                                            alert(`✅ ¡SINCRO EXITOSA ONLINE!\nSe han actualizado ${res.count} equipos en la Temporada ${res.seasonId} (histórico protegido).`);
+                                        } else {
+                                            const db = window.db || firebase.firestore();
+                                            try {
+                                                const snapshot = await db.collection('club_teams').get();
+                                                const batch = db.batch();
+                                                snapshot.docs.forEach(doc => batch.delete(doc.ref));
+                                                await batch.commit();
+                                            } catch (err) {
+                                                console.warn("Aviso: Falló la limpieza previa:", err);
+                                            }
+                                            let count = 0;
+                                            for (const equipo of parsedData) {
+                                                await db.collection('club_teams').doc(equipo.id).set(equipo);
+                                                count++;
+                                            }
+                                            alert(`✅ ¡SINCRO EXITOSA ONLINE!\nSe han actualizado ${count} equipos en Firebase directamente.`);
                                         }
-
-                                        textSpan.innerText = 'SUBIENDO NUBE...';
-                                        let count = 0;
-                                        for (const equipo of parsedData) {
-                                            await db.collection('club_teams').doc(equipo.id).set(equipo);
-                                            count++;
-                                        }
-                                        
-                                        alert(`✅ ¡SINCRO EXITOSA ONLINE!\nSe han actualizado ${count} equipos en Firebase directamente.`);
                                         resetBtn();
                                     } catch (err) {
                                         alert("❌ Error al procesar el archivo seleccionado: " + err.message);
@@ -3186,7 +3195,7 @@
             <!-- SERVICES & AUTH (Session Management) -->
             <script src="js/core/AuthService.js?v=1101"></script>
             <script src="js/modules/admin-dashboard.js?v=20260927_V1"></script>
-            <script src="js/admin.js?v=20260926_EMERGENCY_V6"></script>
+            <script src="js/admin.js?v=20261127_SEASONS_V1"></script>
 
             <!-- Module Logic -->
             <script src="js/modules/ui/PlayerAutocomplete.js"></script>
@@ -3287,8 +3296,12 @@
             <script src="js/modules/admin/AdminTournaments.js?v=1"></script>
 
             <!-- 🚀 Campaña Nueva Temporada Octubre-Noviembre -->
+            <script src="js/modules/teams/teams_data_2026.js?v=1"></script>
+            <script src="js/modules/teams/teams_data.js?v=14"></script>
+            <script src="js/modules/teams/TeamSeasonService.js?v=1.4"></script>
             <script src="js/modules/teams/SeasonCampaignService.js?v=2.3"></script>
             <script src="js/modules/admin-season-campaign.js?v=2.1"></script>
+            <script src="js/modules/admin-team-seasons.js?v=1.3"></script>
 
             <!-- 🚨 Convocatorias, Suplentes SOS & Mensajería Masiva -->
             <script src="js/modules/common/SosSubstitutesService.js?v=2.2"></script>
@@ -4470,6 +4483,7 @@
             { view: 'users', label: 'Jugadores', icon: 'fa-users', isPrimary: true },
             { view: 'sos_substitutes', label: 'SOS Suplentes', icon: 'fa-user-clock' },
             { view: 'season_campaign', label: 'Equipos 2027', icon: 'fa-shield-halved' },
+            { view: 'team_seasons', label: 'Temporadas & Plantillas', icon: 'fa-layer-group' },
 
             // 5. 📈 MARKETING, TIENDA & BLOG
             { view: 'marketing', label: 'Marketing Hub', icon: 'fa-bullhorn', isPrimary: true },

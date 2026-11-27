@@ -408,6 +408,13 @@
             ];
 
             const heroInfo = this.detectUserHeroTeam(allTeams);
+            const seasonSvc = window.TeamSeasonService;
+            const seasonsList = seasonSvc ? seasonSvc.getSeasonsSync() : [{ id: '2026', label: 'Temporada 2026', shortLabel: '2026', period: 'Ene 2026 – Nov 2026', leagueName: 'Lliga GuinotPrunera', status: 'archived' }];
+            const selectedSeasonId = this.currentSeasonId || (seasonSvc ? seasonSvc.getSelectedSeasonId() : '2026');
+            const currentSeason = seasonsList.find(s => String(s.id) === String(selectedSeasonId)) || seasonsList[0];
+            const isArchivedSeason = currentSeason && currentSeason.status === 'archived';
+            const seasonYearLabel = (currentSeason && (currentSeason.shortLabel || currentSeason.id)) || '2026';
+            const leagueLabel = (currentSeason && currentSeason.leagueName) || 'Lliga GuinotPrunera';
 
             this.container.innerHTML = `
                 <div class="tp-hub animate-fade-in">
@@ -420,15 +427,37 @@
                                      onerror="this.onerror=null; this.src='img/official_ball_logo.png';">
                                 <div style="min-width:0;">
                                     <div class="tp-league-pill">
-                                        <span class="tp-league-dot"></span>
-                                        <span>Lliga GuinotPrunera • 2026</span>
+                                        <span class="tp-league-dot" style="${isArchivedSeason ? 'background:#f59e0b;box-shadow:0 0 8px #f59e0b;' : ''}"></span>
+                                        <span>${leagueLabel} • ${seasonYearLabel}</span>
                                     </div>
                                     <h1 class="tp-club-title">Equipos del Club</h1>
                                 </div>
                             </div>
-                            <button type="button" class="tp-jornada-cta" onclick="window.TeamView.openNextMatchesSummaryModal()">
-                                <i class="fas fa-bolt"></i> Jornada
-                            </button>
+                            ${!isArchivedSeason ? `
+                                <button type="button" class="tp-jornada-cta" onclick="window.TeamView.openNextMatchesSummaryModal()">
+                                    <i class="fas fa-bolt"></i> Jornada
+                                </button>
+                            ` : `
+                                <span class="tp-archived-pill"><i class="fas fa-box-archive"></i> Histórico</span>
+                            `}
+                        </div>
+
+                        <!-- 📅 SELECTOR MULTI-TEMPORADA -->
+                        <div class="tp-season-bar">
+                            ${seasonsList.map(s => {
+                                const activeSel = String(s.id) === String(selectedSeasonId);
+                                const isArch = s.status === 'archived';
+                                const isDraft = s.status === 'draft';
+                                return `
+                                    <button type="button"
+                                            class="tp-season-pill ${activeSel ? 'active' : ''}"
+                                            onclick="window.TeamController && window.TeamController.switchSeason('${s.id}')">
+                                        <span class="tp-season-dot ${isArch ? 'archived' : (isDraft ? 'draft' : 'live')}"></span>
+                                        <span>${s.label || ('Temporada ' + s.id)}</span>
+                                        <span class="tp-season-tag">${isArch ? 'Finalizada' : (isDraft ? 'Borrador' : 'En curso')}</span>
+                                    </button>
+                                `;
+                            }).join('')}
                         </div>
 
                         <div class="tp-kpi-grid">
@@ -451,7 +480,14 @@
                         </div>
                     </div>
 
-                    ${heroInfo ? this.renderHeroFavoriteBanner(heroInfo.team, heroInfo.reason) : ''}
+                    ${isArchivedSeason ? `
+                        <div class="tp-archived-banner">
+                            <i class="fas fa-clock-rotate-left"></i>
+                            <span>Archivo histórico oficial de <strong>${currentSeason.label}</strong>${currentSeason.period ? ` (${currentSeason.period})` : ''} — Temporada finalizada.</span>
+                        </div>
+                    ` : ''}
+
+                    ${heroInfo ? this.renderHeroFavoriteBanner(heroInfo.team, heroInfo.reason, isArchivedSeason) : ''}
 
                     ${upcomingMatches.length > 0 ? `
                     <!-- 🔥 CARRUSEL HORIZONTAL PRÓXIMA JORNADA -->
@@ -492,6 +528,9 @@
                                 <button type="button" class="tp-seg-btn ${this.activeHubMode === 'players' ? 'active' : ''}" onclick="window.TeamView.setHubMode('players')">
                                     <i class="fas fa-medal"></i> Top Jugadores
                                 </button>
+                                <button type="button" class="tp-seg-btn ${this.activeHubMode === 'movements' ? 'active' : ''}" onclick="window.TeamView.setHubMode('movements')">
+                                    <i class="fas fa-users-line"></i> Plantillas
+                                </button>
                             </div>
                             <button type="button" id="tp-search-toggle-btn" class="tp-search-toggle ${this.searchOpen || this.searchQuery ? 'active' : ''}" onclick="window.TeamView.toggleSearchBar()" aria-label="Buscar">
                                 <i class="fas fa-search"></i>
@@ -528,12 +567,14 @@
                     <!-- 👥 RESULTADOS RÁPIDOS DE JUGADORES EN BÚSQUEDA -->
                     <div id="team-search-results-panel" style="display:none;margin-bottom:12px;"></div>
 
-                    <!-- 🚀 CONTENIDO PRINCIPAL: EQUIPOS O TOP JUGADORES -->
+                    <!-- 🚀 CONTENIDO PRINCIPAL: EQUIPOS, TOP JUGADORES O REGISTRO DE PLANTILLAS -->
                     ${this.activeHubMode === 'teams' ? `
                         <div id="teams-list-grid" class="tp-teams-grid">
                             ${filteredTeams.map(team => this.renderTeamCard(team)).join('')}
                         </div>
-                    ` : this.renderClubPlayersLeaderboard(filteredTeams)}
+                    ` : (this.activeHubMode === 'movements'
+                        ? this.renderSeasonMovementsHub(allTeams, currentSeason)
+                        : this.renderClubPlayersLeaderboard(filteredTeams))}
 
                     <div id="no-results-message" style="display:none;padding:42px 20px;text-align:center;background:#ffffff;border-radius:20px;border:1px dashed #cbd5e1;margin-top:10px;">
                         <i class="fas fa-search-minus" style="font-size:2rem;color:#cbd5e1;margin-bottom:10px;"></i>
@@ -552,7 +593,7 @@
             }
         }
 
-        renderHeroFavoriteBanner(team, reason) {
+        renderHeroFavoriteBanner(team, reason, isArchivedSeason = false) {
             const m = this.computeTeamMetrics(team);
             const nextJ = m.pendingMatch ? m.pendingMatch.j : '1';
             return `
@@ -575,12 +616,108 @@
                         </div>
                     </div>
                     <div class="tp-myteam-actions">
-                        <button type="button" class="tp-btn-rsvp" onclick="window.TeamController.openPlayerRsvpModal('${team.id}', '${nextJ}')">
-                            <i class="fas fa-check-circle"></i> Confirmar J${nextJ}
-                        </button>
-                        <button type="button" class="tp-btn-outline" onclick="window.TeamView.openTeamSheet('${team.id}', 'resumen')">
+                        ${!isArchivedSeason ? `
+                            <button type="button" class="tp-btn-rsvp" onclick="window.TeamController.openPlayerRsvpModal('${team.id}', '${nextJ}')">
+                                <i class="fas fa-check-circle"></i> Confirmar J${nextJ}
+                            </button>
+                        ` : ''}
+                        <button type="button" class="tp-btn-outline" style="${isArchivedSeason ? 'flex:1;' : ''}" onclick="window.TeamView.openTeamSheet('${team.id}', 'resumen')">
                             Ver Ficha →
                         </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        renderSeasonMovementsHub(allTeams, currentSeason) {
+            const svc = window.TeamSeasonService;
+            const m = this.seasonMovements || (svc ? svc.computeSeasonMovements(allTeams, []) : { hasPrevious: false, global: { totalCurrent: 0, stayedCount: 0, joinedCount: 0, switchedCount: 0, leftCount: 0, retentionRate: 100 }, players: [] });
+            const g = m.global || {};
+            const filter = this.movementStatusFilter || 'all';
+            const q = (this.searchQuery || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+
+            const list = (m.players || []).filter(p => {
+                if (filter !== 'all' && p.status !== filter) return false;
+                if (q) {
+                    const hay = `${p.name} ${(p.currentTeams || []).join(' ')} ${(p.previousTeams || []).join(' ')}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    if (!hay.includes(q)) return false;
+                }
+                return true;
+            });
+
+            const badgeInfo = {
+                renovado: { label: 'Renovado', cls: 'st-renovado' },
+                fichaje: { label: 'Nuevo Fichaje', cls: 'st-fichaje' },
+                cambio_equipo: { label: 'Cambio Equipo', cls: 'st-cambio' },
+                baja: { label: 'Baja', cls: 'st-baja' },
+                participante: { label: 'Participante', cls: 'st-part' }
+            };
+
+            const chips = m.hasPrevious
+                ? [
+                    { k: 'all', l: `Todos (${m.players.length})` },
+                    { k: 'renovado', l: `Renovados (${g.stayedCount || 0})` },
+                    { k: 'fichaje', l: `Nuevos (${g.joinedCount || 0})` },
+                    { k: 'cambio_equipo', l: `Cambios (${g.switchedCount || 0})` },
+                    { k: 'baja', l: `Bajas (${g.leftCount || 0})` }
+                ]
+                : [{ k: 'all', l: `Participantes (${m.players.length})` }];
+
+            return `
+                <div class="tp-mov-hub">
+                    <div class="tp-mov-summary">
+                        <div class="tp-mov-head">
+                            <div>
+                                <div style="font-size:0.68rem;font-weight:900;color:#059669;text-transform:uppercase;letter-spacing:0.6px;">
+                                    REGISTRO OFICIAL • ${currentSeason ? currentSeason.label : 'TEMPORADA'}
+                                </div>
+                                <div style="font-size:1rem;font-weight:950;color:#0f172a;margin-top:2px;">
+                                    Jugadores Participantes ${m.hasPrevious && this.previousSeasonId ? `(vs Temp. ${this.previousSeasonId})` : ''}
+                                </div>
+                            </div>
+                            ${m.hasPrevious ? `<span class="tp-ret-pill">${g.retentionRate || 0}% retención</span>` : ''}
+                        </div>
+
+                        <div class="tp-mov-kpis">
+                            <div class="tp-mov-kpi"><strong>${g.totalCurrent || 0}</strong><span>Activos</span></div>
+                            <div class="tp-mov-kpi k-green"><strong>${g.stayedCount || 0}</strong><span>${m.hasPrevious ? 'Siguen' : 'Plantilla'}</span></div>
+                            <div class="tp-mov-kpi k-blue"><strong>${g.joinedCount || 0}</strong><span>Nuevos</span></div>
+                            <div class="tp-mov-kpi k-red"><strong>${g.leftCount || 0}</strong><span>Bajas</span></div>
+                        </div>
+
+                        <div class="tp-cat-strip" style="margin-top:10px;">
+                            ${chips.map(c => `
+                                <button type="button" class="tp-cat-chip ${filter === c.k ? 'active' : ''}"
+                                        onclick="window.TeamView.movementStatusFilter='${c.k}'; window.TeamView.render(window.TeamView.lastTeams);">
+                                    ${c.l}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
+                        ${list.length === 0 ? `
+                            <div style="padding:28px 16px;text-align:center;background:#fff;border-radius:16px;border:1px dashed #cbd5e1;color:#64748b;font-weight:700;font-size:0.82rem;">
+                                No hay jugadores en este filtro.
+                            </div>
+                        ` : list.map(p => {
+                            const bi = badgeInfo[p.status] || badgeInfo.participante;
+                            const currTxt = (p.currentTeams || []).map(n => this.getShortTeamName(n)).join(', ');
+                            const prevTxt = (p.previousTeams || []).map(n => this.getShortTeamName(n)).join(', ');
+                            return `
+                                <div class="tp-player-card" style="cursor:default;">
+                                    <div class="tp-avatar" style="background:#0f172a;color:#ccff00;">${(p.name || 'J').charAt(0).toUpperCase()}</div>
+                                    <div style="flex:1;min-width:0;">
+                                        <div style="font-size:0.88rem;font-weight:900;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</div>
+                                        <div style="font-size:0.72rem;color:#64748b;font-weight:700;margin-top:2px;">
+                                            ${currTxt ? `<span>Equipo: <strong style="color:#0f172a;">${currTxt}</strong></span>` : ''}
+                                            ${prevTxt && p.status !== 'renovado' ? `<span>${currTxt ? ' • ' : ''}Antes: <strong>${prevTxt}</strong></span>` : ''}
+                                        </div>
+                                    </div>
+                                    <span class="tp-mov-badge ${bi.cls}">${bi.label}</span>
+                                </div>
+                            `;
+                        }).join('')}
                     </div>
                 </div>
             `;
@@ -1139,6 +1276,14 @@
             const maxPts = roster.length > 0 ? Math.max(...roster.map(p => parseFloat(p.pts) || 0)) : 0;
             const cleanCapLower = cleanCap.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
             const bgColors = ['#0284c7', '#7c3aed', '#db2777', '#d97706', '#059669', '#4f46e5'];
+            const teamMov = (this.seasonMovements && this.seasonMovements.hasPrevious && this.seasonMovements.byTeam)
+                ? this.seasonMovements.byTeam[team.id]
+                : null;
+            const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
+            const joinedSet = new Set((teamMov?.joined || []).map(x => norm(x.name)));
+            const switchedInSet = new Set((teamMov?.switchedIn || []).map(x => norm(x.name)));
+            const stayedSet = new Set((teamMov?.stayed || []).map(x => norm(x.name)));
+            const departures = [...(teamMov?.left || []), ...(teamMov?.switchedOut || [])];
 
             return `
                 <div style="position:relative;margin-bottom:12px;">
@@ -1151,10 +1296,15 @@
                         const pName = p.name || 'Jugador';
                         const pPts = Math.round(parseFloat(p.pts) || 0);
                         const pct = maxPts > 0 ? Math.round((pPts / maxPts) * 100) : 0;
-                        const norm = pName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-                        const isCap = cleanCapLower.length > 3 && norm.includes(cleanCapLower);
+                        const pNorm = norm(pName);
+                        const isCap = cleanCapLower.length > 3 && pNorm.includes(cleanCapLower);
                         const isMVP = maxPts > 0 && pPts === Math.round(maxPts);
                         const bg = bgColors[pName.length % bgColors.length];
+                        const movTag = teamMov
+                            ? (joinedSet.has(pNorm) ? '<span class="tp-mov-badge st-fichaje" style="font-size:0.55rem;padding:1px 6px;">NUEVO</span>'
+                                : (switchedInSet.has(pNorm) ? '<span class="tp-mov-badge st-cambio" style="font-size:0.55rem;padding:1px 6px;">CAMBIO</span>'
+                                    : (stayedSet.has(pNorm) ? '<span class="tp-mov-badge st-renovado" style="font-size:0.55rem;padding:1px 6px;">RENOVADO</span>' : '')))
+                            : '';
 
                         return `
                             <div class="tp-player-card player-roster-row" data-player-name="${pName}" style="cursor:default;">
@@ -1162,9 +1312,10 @@
                                 <div class="tp-avatar" style="background:${bg};">${pName.charAt(0).toUpperCase()}</div>
                                 <div style="flex:1;min-width:0;">
                                     <div style="font-size:0.9rem;font-weight:900;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${pName}</div>
-                                    <div style="display:flex;align-items:center;gap:5px;margin-top:3px;">
+                                    <div style="display:flex;align-items:center;gap:5px;margin-top:3px;flex-wrap:wrap;">
                                         ${isCap ? '<span style="background:#0f172a;color:#ccff00;font-size:0.56rem;font-weight:950;padding:1px 6px;border-radius:5px;">CAPITÁN</span>' : ''}
                                         ${isMVP ? '<span style="background:#eab308;color:#fff;font-size:0.56rem;font-weight:950;padding:1px 6px;border-radius:5px;">MVP</span>' : ''}
+                                        ${movTag}
                                         <div style="flex:1;height:5px;background:#e2e8f0;border-radius:4px;overflow:hidden;max-width:90px;">
                                             <div style="width:${pct}%;height:100%;background:#10b981;"></div>
                                         </div>
@@ -1175,6 +1326,21 @@
                         `;
                     }).join('')}
                 </div>
+
+                ${departures.length > 0 ? `
+                    <div style="margin-top:16px;padding:12px;background:#fff1f2;border:1px solid #fecdd3;border-radius:14px;">
+                        <div style="font-size:0.72rem;font-weight:900;color:#be123c;text-transform:uppercase;margin-bottom:8px;">
+                            <i class="fas fa-user-minus"></i> Bajas / Salidas respecto a Temporada ${this.previousSeasonId || 'anterior'} (${departures.length})
+                        </div>
+                        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                            ${departures.map(d => `
+                                <span style="background:#ffffff;border:1px solid #fda4af;color:#9f1239;font-size:0.72rem;font-weight:800;padding:4px 9px;border-radius:8px;">
+                                    ${d.name}${d.toTeams && d.toTeams.length ? ` → ${this.getShortTeamName(d.toTeams[0])}` : ''}
+                                </span>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
             `;
         }
 
@@ -3035,7 +3201,7 @@
                             <div>
                                 <div style="font-size: 0.65rem; color: #38bdf8; font-weight: 900; text-transform: uppercase; letter-spacing: 0.8px;">TU PERFIL EN EL EQUIPO</div>
                                 <div style="font-size: 1.15rem; font-weight: 950; color: #ffffff;">${rawName || 'Jugador SomosPadel'}</div>
-                                <div style="font-size: 0.75rem; color: #94a3b8;">${userRankText} • Plantilla Oficial 2026</div>
+                                <div style="font-size: 0.75rem; color: #94a3b8;">${userRankText} • Plantilla Oficial ${window.TeamSeasonService ? window.TeamSeasonService.getSelectedSeasonId() : '2026'}</div>
                             </div>
                         </div>
                         <div style="text-align: right; background: rgba(0,0,0,0.25); padding: 8px 14px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.08);">

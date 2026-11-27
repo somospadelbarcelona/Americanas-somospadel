@@ -391,6 +391,17 @@ window.loadAdminView = async function (rawViewName) {
                 throw new Error("Season Campaign Admin Module not loaded");
             }
         }
+        else if (viewName === 'team_seasons') {
+            const titleEl = document.getElementById('page-title');
+            if (titleEl) titleEl.textContent = 'TEMPORADAS & PLANTILLAS DE EQUIPOS';
+            if (window.AdminTeamSeasons && typeof window.AdminTeamSeasons.init === 'function') {
+                await window.AdminTeamSeasons.init();
+            } else if (window.AdminViews && window.AdminViews.team_seasons) {
+                await window.AdminViews.team_seasons();
+            } else {
+                throw new Error("Team Seasons Admin Module not loaded");
+            }
+        }
         else if (viewName === 'tienda_admin') {
             const titleEl = document.getElementById('page-title');
             if (titleEl) titleEl.textContent = 'TIENDA SOMOSPADEL (E-COMMERCE)';

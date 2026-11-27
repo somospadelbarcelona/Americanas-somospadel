@@ -105,14 +105,23 @@
 
         /**
          * Normaliza el identificador de la convocatoria.
-         * Formato estándar: `${teamId}_j${jornada}`
+         * Formato retrocompatible para Temporada 2026: `${teamId}_j${jornada}`
+         * Formato aislado para Temporada 2027+: `s${seasonId}_${teamId}_j${jornada}`
          * @param {string} teamId - ID del equipo (ej: "somos-padel-bcn-3ma")
          * @param {string|number} jornada - Número de jornada (ej: 9 o "9")
+         * @param {string} [seasonId] - ID de temporada opcional
          * @returns {string} ID normalizado
          */
-        normalizeId(teamId, jornada) {
+        normalizeId(teamId, jornada, seasonId) {
             const cleanTeam = String(teamId || '').trim().toLowerCase();
             const cleanJ = String(jornada || '').replace(/^[jJ]/, '').trim();
+            const activeSeason = String(
+                seasonId ||
+                (typeof window !== 'undefined' && window.TeamSeasonService ? window.TeamSeasonService.getSelectedSeasonId() : '2026')
+            ).trim();
+            if (activeSeason && activeSeason !== '2026') {
+                return `s${activeSeason}_${cleanTeam}_j${cleanJ}`;
+            }
             return `${cleanTeam}_j${cleanJ}`;
         }
 

@@ -180,6 +180,27 @@ service cloud.firestore {
     }
 
     // ==========================================
+    // TEMPORADAS DE EQUIPOS (HISTÓRICO Y ACTUAL)
+    // ==========================================
+    match /team_seasons/{seasonId} {
+      allow read: if true;
+      allow write: if isStaff();
+
+      match /teams/{teamId} {
+        allow read: if true;
+        allow write: if isStaff() || isCaptain();
+      }
+    }
+
+    // ==========================================
+    // CONVOCATORIAS DE EQUIPOS (RSVP POR TEMPORADA)
+    // ==========================================
+    match /teams_convocatorias/{convoId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // ==========================================
     // TORNEOS (GESTOR DE TORNEOS)
     // ==========================================
     match /tournaments/{tournamentId} {

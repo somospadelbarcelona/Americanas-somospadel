@@ -182,14 +182,20 @@
             this.currentConvoData = null;
             this.currentSelectedRsvpStatus = null;
             this.activeRsvpModalData = null;
+            this.currentSeasonId = '2026';
+            this.previousSeasonTeams = [];
+            this.seasonMovements = null;
         }
 
         async init() {
             console.log("👥 [TeamController] Initializing...");
 
             if (window.ClubTeamsData && window.ClubTeamsData.length > 0) {
+                if (!window._InitialClubTeamsData2026) {
+                    window._InitialClubTeamsData2026 = JSON.parse(JSON.stringify(window.ClubTeamsData));
+                }
                 console.log(`` + E.check + ` [TeamController] Instantly loading ${window.ClubTeamsData.length} teams from Local Data.`);
-                this.localBackup = JSON.parse(JSON.stringify(window.ClubTeamsData));
+                this.localBackup = JSON.parse(JSON.stringify(window._InitialClubTeamsData2026));
                 this.teams = window.ClubTeamsData;
                 this.render();
             }
@@ -209,6 +215,18 @@
                         }
                     }
                 });
+            }
+
+            // Cargar catálogo multi-temporada y suscribirse a la temporada seleccionada
+            if (window.TeamSeasonService) {
+                try {
+                    await window.TeamSeasonService.getSeasons(true);
+                    const targetSeasonId = window.TeamSeasonService.getSelectedSeasonId();
+                    await this.switchSeason(targetSeasonId, false);
+                    return;
+                } catch (err) {
+                    console.warn('⚠️ [TeamController] Fallback a modo clásico club_teams:', err);
+                }
             }
 
             if (window.db || (window.firebase && firebase.firestore)) {
@@ -266,6 +284,48 @@
             } else {
                 console.warn("⚠️ [TeamController] Firebase/Firestore not available for real-time updates.");
             }
+        }
+
+        async switchSeason(seasonId, emitEvent = true) {
+            const svc = window.TeamSeasonService;
+            if (!svc) return;
+
+            const sid = svc.setSelectedSeasonId(seasonId, emitEvent);
+            this.currentSeasonId = sid;
+
+            if (this.unsubscribe) {
+                try { this.unsubscribe(); } catch (e) {}
+                this.unsubscribe = null;
+            }
+
+            // Cargar equipos de temporada anterior para calcular renovados / fichajes / bajas
+            const prevId = svc.getPreviousSeasonId(sid);
+            this.previousSeasonTeams = prevId ? await svc.getSeasonTeams(prevId) : [];
+
+            this.unsubscribe = svc.subscribeSeasonTeams(sid, (seasonTeams) => {
+                const enriched = (seasonTeams || []).map(t => {
+                    const copy = { ...t };
+                    if ((!copy.captain || String(copy.captain).includes('Pendiente') || String(copy.captain).includes('definir')) && window.getTeamCaptain) {
+                        copy.captain = window.getTeamCaptain(copy);
+                    }
+                    if ((!copy.subcaptain || String(copy.subcaptain).includes('Pendiente') || String(copy.subcaptain).includes('definir')) && window.getTeamSubcaptain) {
+                        copy.subcaptain = window.getTeamSubcaptain(copy);
+                    }
+                    return copy;
+                });
+
+                this.teams = enriched;
+                window.ClubTeamsData = enriched;
+                this.seasonMovements = svc.computeSeasonMovements(enriched, this.previousSeasonTeams);
+
+                if (window.TeamView) {
+                    window.TeamView.currentSeasonId = sid;
+                    window.TeamView.seasonMovements = this.seasonMovements;
+                    window.TeamView.previousSeasonId = prevId;
+                }
+
+                this.render();
+            });
         }
 
         destroy() {
