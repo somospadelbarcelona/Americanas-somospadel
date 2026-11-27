@@ -24,7 +24,7 @@
         TEAMS_SUBCOLLECTION: 'teams',
         LEGACY_TEAMS_COLLECTION: 'club_teams',
         STORAGE_SELECTED_KEY: 'sp_selected_team_season',
-        STORAGE_SEASONS_CACHE: 'sp_team_seasons_cache_v2',
+        STORAGE_SEASONS_CACHE: 'sp_team_seasons_cache_v3',
         DEFAULT_LEGACY_SEASON_ID: '2026',
         DEFAULT_LEAGUE_NAME: 'Lliga GuinotPrunera'
     };
@@ -43,6 +43,135 @@
         previousSeasonId: null,
         archivedAt: '2026-11-27'
     };
+
+    const DEMO_2027_SEASON = {
+        id: '2027',
+        label: 'Temporada 2027',
+        shortLabel: '2027',
+        period: 'Ene 2027 – Nov 2027',
+        startDate: '2027-01-01',
+        endDate: '2027-11-30',
+        leagueName: 'Lliga GuinotPrunera',
+        status: 'draft', // Modo pruebas hasta cargar Excel definitivo 2027
+        isDefault: false,
+        order: 2027,
+        previousSeasonId: '2026',
+        isDemo: true
+    };
+
+    /**
+     * Directorio oficial de Capitanes y Subcapitanes — Temporada 2027 (SomosPádel BCN)
+     * Incluye alias frecuentes (diminutivos/variantes) para emparejar con el perfil logueado.
+     */
+    const OFFICIAL_CAPTAINS_2027 = {
+        '3m':  { captain: 'Carlos Canosa', subcaptain: 'David Coca', aliases: ['carlos canosa', 'david coca'] },
+        '3ma': { captain: 'Carlos Canosa', subcaptain: 'David Coca', aliases: ['carlos canosa', 'david coca'] },
+        '4m':  { captain: 'Miguel Muñoz', subcaptain: 'Alex Coscolin', aliases: ['miguel munoz', 'miquel munoz', 'alex coscolin', 'alejandro coscolin'] },
+        '4ma': { captain: 'Miguel Muñoz', subcaptain: 'Alex Coscolin', aliases: ['miguel munoz', 'miquel munoz', 'alex coscolin', 'alejandro coscolin'] },
+        '2f':  { captain: 'Silvia Serrano', subcaptain: '', aliases: ['silvia serrano'] },
+        '2fa': { captain: 'Silvia Serrano', subcaptain: '', aliases: ['silvia serrano'] },
+        '3f':  { captain: 'Gemma Saavedra', subcaptain: 'Cris Matamala', aliases: ['gemma saavedra', 'cris matamala', 'cristina matamala'] },
+        '3fa': { captain: 'Gemma Saavedra', subcaptain: 'Cris Matamala', aliases: ['gemma saavedra', 'cris matamala', 'cristina matamala'] },
+        '4f':  { captain: 'Gemma Saavedra', subcaptain: 'Nadia Costa', aliases: ['gemma saavedra', 'nadia costa'] },
+        '4fa': { captain: 'Gemma Saavedra', subcaptain: 'Nadia Costa', aliases: ['gemma saavedra', 'nadia costa'] },
+        '3x':  { captain: 'Toni Millan', subcaptain: 'Sonia Lopez', aliases: ['toni millan', 'antonio millan', 'sonia lopez'] },
+        '3xa': { captain: 'Toni Millan', subcaptain: 'Sonia Lopez', aliases: ['toni millan', 'antonio millan', 'sonia lopez'] },
+        '4xa': { captain: 'Miguel Muñoz', subcaptain: 'Sonia Rodriguez', aliases: ['miguel munoz', 'miquel munoz', 'sonia rodriguez'] },
+        '4xb': { captain: 'Javier Frauca', subcaptain: 'Natalia Guash', aliases: ['javier frauca', 'natalia guash', 'natalia guasch'] }
+    };
+
+    const DEMO_2027_TEAMS = [
+        {
+            id: 'somos-padel-bcn-4m',
+            name: 'SOMOS PÁDEL BCN 4M (PRUEBA)',
+            category: 'Masculina',
+            division: 'Cuarta',
+            group: 'PRUEBA TEMPORADA 2027',
+            captain: 'Miguel Muñoz',
+            subcaptain: 'Alex Coscolin',
+            logo: 'img/logo_somospadel.png',
+            ranking: 1,
+            points: 0,
+            seasonId: '2027',
+            stats: { pj: 0, pg: 0, pp: 0, sf: 0, sc: 0, df: 0 },
+            standings: [],
+            schedule: [
+                {
+                    j: 1,
+                    date: 'Sáb 16 Ene',
+                    time: '11:00h',
+                    opponent: 'CRAZYXPADEL 4M DEMO',
+                    location: 'Padel BCN - El Prat',
+                    isHome: true,
+                    status: 'pending'
+                }
+            ],
+            roster: [
+                { name: 'Alejandro Coscolin Peregrin', pts: 0, seasonStatus: 'renovado' },
+                { name: 'Oscar Coscolín Génova', pts: 0, seasonStatus: 'renovado' },
+                { name: 'David Díaz Cotes', pts: 0, seasonStatus: 'cambio_equipo' },
+                { name: 'Miquel Muñoz Gaudes', pts: 0, seasonStatus: 'cambio_equipo' },
+                { name: 'Carlos Lopez Mestre', pts: 0, seasonStatus: 'cambio_equipo' },
+                { name: 'Abraham Rosell Claveras', pts: 0, seasonStatus: 'cambio_equipo' },
+                { name: 'Toni Palau Zaragoza', pts: 0, seasonStatus: 'cambio_equipo' },
+                { name: 'Álvaro Fernández Serrano', pts: 0, seasonStatus: 'cambio_equipo' },
+                { name: 'Pablo Kellermann', pts: 0, seasonStatus: 'cambio_equipo' },
+                { name: 'Víctor Illana Rodríguez', pts: 0, seasonStatus: 'cambio_equipo' },
+                { name: 'Raul Garcia Alvarez', pts: 0, seasonStatus: 'cambio_equipo' },
+                { name: 'Arnau Santamaria Piñol', pts: 0, seasonStatus: 'cambio_equipo' },
+                { name: 'Carlos David Asmadt', pts: 0, seasonStatus: 'cambio_equipo' },
+                { name: 'Alex Espinosa Espinosa Touzon', pts: 0, seasonStatus: 'cambio_equipo' },
+                { name: 'Vicenç López Aguilar', pts: 0, seasonStatus: 'cambio_equipo' },
+                { name: 'Eloy Arrabal', pts: 0, seasonStatus: 'cambio_equipo' },
+                { name: 'Marcos Clemente Molinero', pts: 0, seasonStatus: 'cambio_equipo' },
+                { name: 'Adrian Muñoz Perez', pts: 0, seasonStatus: 'cambio_equipo' },
+                { name: 'Joel Sanchez Portillo', pts: 0, seasonStatus: 'cambio_equipo' },
+                { name: 'Sergio Martín Canales', pts: 0, seasonStatus: 'cambio_equipo' },
+                { name: 'Juanjo Ruiz', pts: 0, seasonStatus: 'cambio_equipo' },
+                { name: 'Jan Pastor', pts: 0, seasonStatus: 'cambio_equipo' },
+                { name: 'Alex Cuadra Cabezas', pts: 0, seasonStatus: 'renovado' },
+                { name: 'Alex Martínez Roda', pts: 0, seasonStatus: 'renovado' },
+                { name: 'Marc Soler Navarro', pts: 0, seasonStatus: 'fichaje' },
+                { name: 'Pol Ferrer Vidal', pts: 0, seasonStatus: 'fichaje' },
+                { name: 'Oriol Puig Costa', pts: 0, seasonStatus: 'fichaje' },
+                { name: 'Dani Moreno Ruiz', pts: 0, seasonStatus: 'fichaje' }
+            ]
+        },
+        {
+            id: 'somos-padel-bcn-4xa',
+            name: 'SOMOS PÁDEL BCN 4XA (PRUEBA)',
+            category: 'Mixta',
+            division: 'Cuarta',
+            group: 'PRUEBA TEMPORADA 2027',
+            captain: 'Miguel Muñoz',
+            subcaptain: 'Sonia Rodriguez',
+            logo: 'img/logo_somospadel.png',
+            ranking: 1,
+            points: 0,
+            seasonId: '2027',
+            stats: { pj: 0, pg: 0, pp: 0, sf: 0, sc: 0, df: 0 },
+            standings: [],
+            schedule: [
+                {
+                    j: 1,
+                    date: 'Dom 17 Ene',
+                    time: '17:30h',
+                    opponent: 'PADELAND MIXTO DEMO',
+                    location: 'Padeland El Papiol',
+                    isHome: false,
+                    status: 'pending'
+                }
+            ],
+            roster: [
+                { name: 'Alejandro Coscolin Peregrin', pts: 0, seasonStatus: 'renovado' },
+                { name: 'David Díaz Cotes', pts: 0, seasonStatus: 'renovado' },
+                { name: 'Jugadora Fichaje 2027 A', pts: 0, seasonStatus: 'fichaje' },
+                { name: 'Jugadora Fichaje 2027 B', pts: 0, seasonStatus: 'fichaje' },
+                { name: 'Jugador Fichaje 2027 C', pts: 0, seasonStatus: 'fichaje' },
+                { name: 'Jugadora Fichaje 2027 C', pts: 0, seasonStatus: 'fichaje' }
+            ]
+        }
+    ];
 
     function normalizeName(name) {
         return String(name || '')
@@ -201,7 +330,9 @@
             if (loaded.length === 0) {
                 const base2026 = cloneDeep(DEFAULT_2026_SEASON);
                 base2026.summary = this.computeSummary(this._ensureInitial2026Snapshot());
-                loaded = [base2026];
+                const demo2027 = cloneDeep(DEMO_2027_SEASON);
+                demo2027.summary = this.computeSummary(DEMO_2027_TEAMS);
+                loaded = [demo2027, base2026];
             } else {
                 // Asegurar que siempre exista al menos la referencia a 2026 si hay datos locales
                 const has2026 = loaded.some(s => String(s.id) === '2026');
@@ -212,20 +343,36 @@
                     base2026.summary = this.computeSummary(this._ensureInitial2026Snapshot());
                     loaded.push(base2026);
                 }
+                const has2027 = loaded.some(s => String(s.id) === '2027');
+                if (!has2027) {
+                    const demo2027 = cloneDeep(DEMO_2027_SEASON);
+                    demo2027.summary = this.computeSummary(DEMO_2027_TEAMS);
+                    loaded.push(demo2027);
+                }
             }
 
             // La Temporada 2026 (Ene 2026 - Nov 2026) está oficialmente finalizada y sellada
+            const full2026Summary = this.computeSummary(this._ensureInitial2026Snapshot());
             loaded = loaded.map(s => {
-                if (String(s.id) === '2026') {
+                const sid = String(s.id);
+                const base = {
+                    ...s,
+                    id: sid,
+                    label: s.label || `Temporada ${sid}`,
+                    shortLabel: s.shortLabel || sid
+                };
+                if (sid === '2026') {
+                    const existingCount = base.summary && Number(base.summary.teamsCount) || 0;
                     return {
-                        ...s,
+                        ...base,
                         status: 'archived',
-                        period: s.period || 'Ene 2026 – Nov 2026',
-                        startDate: s.startDate || '2026-01-01',
-                        endDate: s.endDate || '2026-11-30'
+                        period: base.period || 'Ene 2026 – Nov 2026',
+                        startDate: base.startDate || '2026-01-01',
+                        endDate: base.endDate || '2026-11-30',
+                        summary: existingCount >= full2026Summary.teamsCount ? base.summary : full2026Summary
                     };
                 }
-                return s;
+                return base;
             });
 
             // Orden descendente (2027, 2026, ...)
@@ -351,7 +498,8 @@
                     );
 
                     if (!snap.empty) {
-                        teams = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        const docTeams = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        teams = sid === '2026' ? this._mergeWithLocal2026(docTeams) : docTeams;
                     } else if (sid === '2026') {
                         // Retrocompatibilidad: leer de club_teams + fallback local 2026
                         const legacySnap = await this._withTimeout(
@@ -361,15 +509,21 @@
                         );
                         const legacyTeams = legacySnap.empty ? [] : legacySnap.docs.map(d => ({ id: d.id, ...d.data() }));
                         teams = this._mergeWithLocal2026(legacyTeams);
+                    } else if (sid === '2027') {
+                        teams = cloneDeep(DEMO_2027_TEAMS);
                     }
                 } catch (err) {
                     console.warn(`⚠️ [TeamSeasonService] Error cargando equipos de temporada ${sid}:`, err.message);
                     if (sid === '2026') {
                         teams = this._ensureInitial2026Snapshot();
+                    } else if (sid === '2027') {
+                        teams = cloneDeep(DEMO_2027_TEAMS);
                     }
                 }
             } else if (sid === '2026') {
                 teams = this._ensureInitial2026Snapshot();
+            } else if (sid === '2027') {
+                teams = cloneDeep(DEMO_2027_TEAMS);
             }
 
             this.teamsBySeasonCache[sid] = cloneDeep(teams);
@@ -406,7 +560,8 @@
                         try { legacyUnsub(); } catch (e) {}
                         legacyUnsub = null;
                     }
-                    const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                    const rawList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                    const list = sid === '2026' ? this._mergeWithLocal2026(rawList) : rawList;
                     this.teamsBySeasonCache[sid] = cloneDeep(list);
                     callback(list);
                 } else if (sid === '2026') {
@@ -421,6 +576,10 @@
                             console.error('❌ [TeamSeasonService] Error en listener legacy club_teams:', err);
                         });
                     }
+                } else if (sid === '2027') {
+                    const demo = cloneDeep(DEMO_2027_TEAMS);
+                    this.teamsBySeasonCache[sid] = demo;
+                    callback(demo);
                 } else {
                     this.teamsBySeasonCache[sid] = [];
                     callback([]);
@@ -1366,6 +1525,7 @@
     }
 
     const serviceInstance = new TeamSeasonService();
+    serviceInstance.officialCaptains2027 = OFFICIAL_CAPTAINS_2027;
     global.TeamSeasonService = serviceInstance;
     console.log('📅 [TeamSeasonService] Servicio Multi-Temporada inicializado.');
 })(typeof window !== 'undefined' ? window : globalThis);

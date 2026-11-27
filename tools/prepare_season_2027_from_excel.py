@@ -29,6 +29,23 @@ ROOT = Path(__file__).resolve().parent.parent
 ARCHIVE_2026_JS = ROOT / "js" / "modules" / "teams" / "teams_data_2026.js"
 OUTPUT_JSON = ROOT / "tools" / "season_2027_import_payload.json"
 
+OFFICIAL_CAPTAINS_2027 = {
+    "3m":  ("Carlos Canosa", "David Coca"),
+    "3ma": ("Carlos Canosa", "David Coca"),
+    "4m":  ("Miguel Muñoz", "Alex Coscolin"),
+    "4ma": ("Miguel Muñoz", "Alex Coscolin"),
+    "2f":  ("Silvia Serrano", ""),
+    "2fa": ("Silvia Serrano", ""),
+    "3f":  ("Gemma Saavedra", "Cris Matamala"),
+    "3fa": ("Gemma Saavedra", "Cris Matamala"),
+    "4f":  ("Gemma Saavedra", "Nadia Costa"),
+    "4fa": ("Gemma Saavedra", "Nadia Costa"),
+    "3x":  ("Toni Millan", "Sonia Lopez"),
+    "3xa": ("Toni Millan", "Sonia Lopez"),
+    "4xa": ("Miguel Muñoz", "Sonia Rodriguez"),
+    "4xb": ("Javier Frauca", "Natalia Guash"),
+}
+
 
 def norm_text(val: str) -> str:
     s = str(val or "").strip().lower()
@@ -161,14 +178,16 @@ def main():
         is_subcaptain = "subcapitan" in role_raw or "sub-capitan" in role_raw
 
         if team_id not in teams_map:
+            code_match = re.search(r"\b([234](?:ma|mb|fa|fb|xa|xb|m|f|x))\b", norm_text(team_display))
+            default_cap, default_sub = OFFICIAL_CAPTAINS_2027.get(code_match.group(1), ("Por definir", "Por definir")) if code_match else ("Por definir", "Por definir")
             teams_map[team_id] = {
                 "id": team_id,
                 "name": team_display,
                 "category": cat,
                 "division": div,
                 "group": "Temporada 2027",
-                "captain": "Por definir",
-                "subcaptain": "Por definir",
+                "captain": default_cap,
+                "subcaptain": default_sub or "Por definir",
                 "logo": "img/logo_somospadel.png",
                 "ranking": 0,
                 "points": 0,

@@ -559,16 +559,17 @@
                         ${this.seasons.map(s => {
                             const selected = String(s.id) === String(this.selectedSeasonId);
                             const badgeColor = s.status === 'active' ? '#10b981' : (s.status === 'archived' ? '#f59e0b' : '#38bdf8');
-                            const badgeText = s.status === 'active' ? 'EN CURSO' : (s.status === 'archived' ? 'ARCHIVADA' : 'BORRADOR');
+                            const badgeText = s.status === 'active' ? 'EN CURSO' : (s.status === 'archived' ? 'FINALIZADA' : 'BORRADOR');
                             const sum = s.summary || {};
                             return `
                                 <div onclick="window.AdminTeamSeasons.selectSeason('${esc(s.id)}')"
-                                     style="flex:1;min-width:220px;max-width:340px;cursor:pointer;background:${selected ? 'linear-gradient(135deg, rgba(204,255,0,0.14), rgba(15,23,42,0.95))' : '#0f172a'};border:${selected ? '2px solid #ccff00' : '1px solid rgba(255,255,255,0.1)'};border-radius:16px;padding:14px 16px;transition:all 0.18s;">
-                                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                                        <span style="font-size:1.05rem;font-weight:950;color:#fff;">${esc(s.label || ('Temporada ' + s.id))}</span>
-                                        <span style="font-size:0.65rem;font-weight:900;padding:3px 8px;border-radius:999px;background:${badgeColor}22;color:${badgeColor};border:1px solid ${badgeColor}66;">${badgeText}</span>
+                                     style="flex:1;min-width:240px;max-width:360px;cursor:pointer;background:${selected ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' : '#0f172a'};border:${selected ? '2px solid #ccff00' : '1px solid rgba(255,255,255,0.12)'};box-shadow:${selected ? '0 8px 24px rgba(15,23,42,0.22)' : 'none'};border-radius:16px;padding:14px 16px;transition:all 0.18s;">
+                                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                                        <span style="font-size:1.05rem;font-weight:950;color:#ffffff;">${esc(s.label || ('Temporada ' + s.id))}</span>
+                                        <span style="font-size:0.65rem;font-weight:900;padding:3px 8px;border-radius:999px;background:${badgeColor}26;color:${badgeColor};border:1px solid ${badgeColor}66;">${badgeText}</span>
                                     </div>
-                                    <div style="font-size:0.78rem;color:#94a3b8;display:flex;gap:12px;">
+                                    ${s.period ? `<div style="font-size:0.72rem;color:#cbd5e1;font-weight:700;margin-bottom:6px;">${esc(s.period)}</div>` : ''}
+                                    <div style="font-size:0.78rem;color:#cbd5e1;display:flex;gap:12px;">
                                         <span><i class="fas fa-shield-alt" style="color:#ccff00;"></i> ${sum.teamsCount ?? '-'} equipos</span>
                                         <span><i class="fas fa-users" style="color:#38bdf8;"></i> ${sum.playersCount ?? '-'} jugadores</span>
                                         <span><i class="fas fa-trophy" style="color:#f59e0b;"></i> ${sum.clubPoints ?? 0} pts</span>
@@ -582,7 +583,7 @@
                     <div style="background:#0f172a;border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:14px 18px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
                         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
                             <span style="font-size:1rem;font-weight:900;color:#fff;">
-                                Editando / Consultando: <span style="color:#ccff00;">${esc(currentSeason.label)}</span>
+                                Editando / Consultando: <span style="color:#ccff00;">${esc(currentSeason.label || ('Temporada ' + this.selectedSeasonId))}</span>
                             </span>
                             ${this.previousSeasonId ? `
                                 <span style="font-size:0.76rem;color:#94a3b8;background:rgba(255,255,255,0.05);padding:4px 10px;border-radius:8px;">

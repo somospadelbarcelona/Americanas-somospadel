@@ -1826,13 +1826,6 @@
                         <span id="sidebar-sos-badge" style="display: none; background: #EF4444; color: #fff; font-size: 0.58rem; font-weight: 950; padding: 2px 6px; border-radius: 6px; margin-left: auto;">0</span>
                     </button>
 
-                    <!-- Equipos Temporada 2027 -->
-                    <button class="nav-item-pro btn-season-campaign" data-view="season_campaign" onclick="loadAdminView('season_campaign')">
-                        <span class="icon-box"><i class="fas fa-users-rays"></i></span>
-                        <span class="nav-text">Equipos Temporada 2027</span>
-                        <span class="nav-badge badge-season">OCT-NOV</span>
-                    </button>
-
                     <!-- Histórico y Gestión de Temporadas -->
                     <button class="nav-item-pro btn-season-campaign" data-view="team_seasons" onclick="loadAdminView('team_seasons')">
                         <span class="icon-box" style="color:#059669;"><i class="fas fa-layer-group"></i></span>
@@ -3298,10 +3291,10 @@
             <!-- 🚀 Campaña Nueva Temporada Octubre-Noviembre -->
             <script src="js/modules/teams/teams_data_2026.js?v=1"></script>
             <script src="js/modules/teams/teams_data.js?v=14"></script>
-            <script src="js/modules/teams/TeamSeasonService.js?v=1.4"></script>
+            <script src="js/modules/teams/TeamSeasonService.js?v=1.7"></script>
             <script src="js/modules/teams/SeasonCampaignService.js?v=2.3"></script>
             <script src="js/modules/admin-season-campaign.js?v=2.1"></script>
-            <script src="js/modules/admin-team-seasons.js?v=1.3"></script>
+            <script src="js/modules/admin-team-seasons.js?v=1.5"></script>
 
             <!-- 🚨 Convocatorias, Suplentes SOS & Mensajería Masiva -->
             <script src="js/modules/common/SosSubstitutesService.js?v=2.2"></script>
@@ -4482,7 +4475,6 @@
             // 4. 👥 JUGADORES & CLUB
             { view: 'users', label: 'Jugadores', icon: 'fa-users', isPrimary: true },
             { view: 'sos_substitutes', label: 'SOS Suplentes', icon: 'fa-user-clock' },
-            { view: 'season_campaign', label: 'Equipos 2027', icon: 'fa-shield-halved' },
             { view: 'team_seasons', label: 'Temporadas & Plantillas', icon: 'fa-layer-group' },
 
             // 5. 📈 MARKETING, TIENDA & BLOG

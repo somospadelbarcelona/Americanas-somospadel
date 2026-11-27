@@ -384,14 +384,7 @@ window.loadAdminView = async function (rawViewName) {
         else if (viewName === 'users' && window.AdminViews.users) {
             await window.AdminViews.users();
         }
-        else if (viewName === 'season_campaign') {
-            if (window.AdminViews && window.AdminViews.season_campaign) {
-                await window.AdminViews.season_campaign();
-            } else {
-                throw new Error("Season Campaign Admin Module not loaded");
-            }
-        }
-        else if (viewName === 'team_seasons') {
+        else if (viewName === 'team_seasons' || viewName === 'season_campaign') {
             const titleEl = document.getElementById('page-title');
             if (titleEl) titleEl.textContent = 'TEMPORADAS & PLANTILLAS DE EQUIPOS';
             if (window.AdminTeamSeasons && typeof window.AdminTeamSeasons.init === 'function') {

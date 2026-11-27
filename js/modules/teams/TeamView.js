@@ -204,15 +204,10 @@
             };
         }
 
-        detectUserHeroTeam(teams) {
-            if (!teams || teams.length === 0) return null;
-            const favId = localStorage.getItem('favTeam_somospadel');
-            if (favId) {
-                const favTeam = teams.find(t => t.id === favId);
-                if (favTeam) return { team: favTeam, reason: 'fav' };
-            }
+        detectUserHeroTeams(teams) {
+            if (!teams || teams.length === 0) return [];
+            const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
 
-            // Intentar detectar por usuario logueado
             let authUser = null;
             try {
                 if (window.Store && typeof window.Store.getState === 'function') authUser = window.Store.getState('currentUser');
@@ -223,17 +218,76 @@
                 }
             } catch (e) {}
 
+            const results = [];
+            const seenIds = new Set();
+            const addMatch = (team, reason, isCaptain = false) => {
+                if (!team || seenIds.has(team.id)) return;
+                seenIds.add(team.id);
+                results.push({ team, reason, isCaptain });
+            };
+
             const rawName = String(authUser?.name || authUser?.displayName || '').trim();
-            if (rawName.length >= 3) {
-                const norm = rawName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-                const parts = norm.split(/\s+/).filter(Boolean);
-                const found = teams.find(t => (t.roster || []).some(p => {
-                    const pn = String(p.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-                    return pn === norm || (parts.length >= 2 && pn.includes(parts[0]) && pn.includes(parts[1]));
-                }));
-                if (found) return { team: found, reason: 'roster' };
+            const userNorm = norm(rawName);
+            const parts = userNorm.split(/\s+/).filter(Boolean);
+
+            const isCaptainOf = (t) => {
+                if (window.TeamConvocatoriaProUI && typeof window.TeamConvocatoriaProUI.isCaptainOf === 'function') {
+                    return window.TeamConvocatoriaProUI.isCaptainOf(t);
+                }
+                if (userNorm.length < 3) return false;
+                const capNorm = norm(t.captain || '');
+                const subNorm = norm(t.subcaptain || '');
+                const matchName = (target) => target && (target === userNorm || (parts.length >= 2 && target.includes(parts[0]) && target.includes(parts[1])));
+                return matchName(capNorm) || matchName(subNorm);
+            };
+
+            // 1. Detectar por todos los rosters de la temporada actual
+            if (userNorm.length >= 3) {
+                teams.forEach(t => {
+                    const inRoster = (t.roster || []).some(p => {
+                        const pn = norm(typeof p === 'string' ? p : p.name);
+                        return pn === userNorm || (parts.length >= 2 && pn.includes(parts[0]) && pn.includes(parts[1]));
+                    });
+                    if (inRoster || isCaptainOf(t)) {
+                        addMatch(t, 'roster', isCaptainOf(t));
+                    }
+                });
             }
-            return null;
+
+            // 2. Detectar por perfil del jugador (teams_somospadel / teamHistory de la temporada seleccionada)
+            const selectedSeasonId = window.TeamSeasonService ? window.TeamSeasonService.getSelectedSeasonId() : '2026';
+            const historyTeams = authUser?.teamHistory?.[selectedSeasonId]?.teams || [];
+            const profileTeams = [
+                ...(Array.isArray(historyTeams) ? historyTeams : []),
+                ...(Array.isArray(authUser?.teams_somospadel) ? authUser.teams_somospadel : []),
+                ...(authUser?.team_somospadel ? [authUser.team_somospadel] : [])
+            ].map(x => norm(x)).filter(Boolean);
+
+            if (profileTeams.length > 0) {
+                teams.forEach(t => {
+                    const tid = norm(t.id);
+                    const tname = norm(t.name);
+                    const tshort = norm(this.getShortTeamName(t.name));
+                    const matched = profileTeams.some(pt => pt === tid || pt === tname || pt === tshort || tname.endsWith(' ' + pt));
+                    if (matched) {
+                        addMatch(t, 'profile', isCaptainOf(t));
+                    }
+                });
+            }
+
+            // 3. Fallback a equipo favorito si no se detectó ninguno por roster/perfil
+            const favId = localStorage.getItem('favTeam_somospadel');
+            if (results.length === 0 && favId) {
+                const favTeam = teams.find(t => t.id === favId);
+                if (favTeam) addMatch(favTeam, 'fav', isCaptainOf(favTeam));
+            }
+
+            return results;
+        }
+
+        detectUserHeroTeam(teams) {
+            const all = this.detectUserHeroTeams(teams);
+            return all.length > 0 ? all[0] : null;
         }
 
         // ==================================================
@@ -407,7 +461,7 @@
                 { key: 'Mixta', label: `Mixta (${countMixt})` }
             ];
 
-            const heroInfo = this.detectUserHeroTeam(allTeams);
+            const heroTeams = this.detectUserHeroTeams(allTeams);
             const seasonSvc = window.TeamSeasonService;
             const seasonsList = seasonSvc ? seasonSvc.getSeasonsSync() : [{ id: '2026', label: 'Temporada 2026', shortLabel: '2026', period: 'Ene 2026 – Nov 2026', leagueName: 'Lliga GuinotPrunera', status: 'archived' }];
             const selectedSeasonId = this.currentSeasonId || (seasonSvc ? seasonSvc.getSelectedSeasonId() : '2026');
@@ -487,7 +541,7 @@
                         </div>
                     ` : ''}
 
-                    ${heroInfo ? this.renderHeroFavoriteBanner(heroInfo.team, heroInfo.reason, isArchivedSeason) : ''}
+                    ${heroTeams.length > 0 ? this.renderUserHeroTeamsSection(heroTeams, isArchivedSeason) : ''}
 
                     ${upcomingMatches.length > 0 ? `
                     <!-- 🔥 CARRUSEL HORIZONTAL PRÓXIMA JORNADA -->
@@ -588,22 +642,53 @@
                 this.filterDOM();
             }
 
+            if (window.TeamConvocatoriaProUI) {
+                if (!isArchivedSeason && heroTeams.length > 0) {
+                    window.TeamConvocatoriaProUI.mountForTeams(heroTeams);
+                } else {
+                    window.TeamConvocatoriaProUI.cleanup();
+                }
+            }
+
             if (window.Router && typeof window.Router.attachCommunitySubmenu === 'function') {
                 window.Router.attachCommunitySubmenu('teams');
             }
         }
 
-        renderHeroFavoriteBanner(team, reason, isArchivedSeason = false) {
+        renderUserHeroTeamsSection(heroTeams, isArchivedSeason = false) {
+            if (!Array.isArray(heroTeams) || heroTeams.length === 0) return '';
+            if (heroTeams.length === 1) {
+                const h = heroTeams[0];
+                return this.renderHeroFavoriteBanner(h.team, h.reason, isArchivedSeason, h.isCaptain, 1, 1);
+            }
+            return `
+                <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px;">
+                        <span style="font-size:0.72rem;font-weight:950;color:#047857;text-transform:uppercase;letter-spacing:0.6px;">
+                            <i class="fas fa-users"></i> Tus Equipos Detectados (${heroTeams.length})
+                        </span>
+                    </div>
+                    ${heroTeams.map((h, idx) => this.renderHeroFavoriteBanner(h.team, h.reason, isArchivedSeason, h.isCaptain, idx + 1, heroTeams.length)).join('')}
+                </div>
+            `;
+        }
+
+        renderHeroFavoriteBanner(team, reason, isArchivedSeason = false, isCaptain = false, index = 1, total = 1) {
             const m = this.computeTeamMetrics(team);
             const nextJ = m.pendingMatch ? m.pendingMatch.j : '1';
+            const catStyle = this.getCategoryStyle(team.category);
             return `
-                <div class="tp-myteam-banner">
+                <div class="tp-myteam-banner" style="${total > 1 ? 'margin-bottom:0;' : ''}">
                     <div class="tp-myteam-top">
                         <div style="min-width:0;">
-                            <span class="tp-myteam-badge">
-                                <i class="fas ${reason === 'fav' ? 'fa-star' : 'fa-user-check'}"></i>
-                                ${reason === 'fav' ? 'Tu Equipo Favorito' : 'Tu Equipo Detectado'}
-                            </span>
+                            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                                <span class="tp-myteam-badge">
+                                    <i class="fas ${reason === 'fav' ? 'fa-star' : 'fa-user-check'}"></i>
+                                    ${reason === 'fav' ? 'Tu Equipo Favorito' : (total > 1 ? `Equipo ${index} de ${total}` : 'Tu Equipo Detectado')}
+                                </span>
+                                <span style="background:${catStyle.bg};color:${catStyle.text};font-size:0.6rem;font-weight:900;padding:2px 7px;border-radius:6px;text-transform:uppercase;">${catStyle.label}</span>
+                                ${isCaptain ? `<span style="background:#0f172a;color:#ccff00;font-size:0.6rem;font-weight:950;padding:2px 7px;border-radius:6px;text-transform:uppercase;"><i class="fas fa-crown"></i> Capitán</span>` : ''}
+                            </div>
                             <div style="font-size:1.05rem;font-weight:950;color:#0f172a;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                                 ${team.name}
                             </div>
@@ -615,14 +700,10 @@
                             ${m.streak.map(r => `<span class="tp-dot ${r === 'W' ? 'w' : 'l'}">${r === 'W' ? 'V' : 'D'}</span>`).join('')}
                         </div>
                     </div>
+                    ${!isArchivedSeason ? `<div id="tp-convo-pro-${team.id}" class="tp-convo-pro-slot"></div>` : ''}
                     <div class="tp-myteam-actions">
-                        ${!isArchivedSeason ? `
-                            <button type="button" class="tp-btn-rsvp" onclick="window.TeamController.openPlayerRsvpModal('${team.id}', '${nextJ}')">
-                                <i class="fas fa-check-circle"></i> Confirmar J${nextJ}
-                            </button>
-                        ` : ''}
-                        <button type="button" class="tp-btn-outline" style="${isArchivedSeason ? 'flex:1;' : ''}" onclick="window.TeamView.openTeamSheet('${team.id}', 'resumen')">
-                            Ver Ficha →
+                        <button type="button" class="tp-btn-outline" style="flex:1;" onclick="window.TeamView.openTeamSheet('${team.id}', 'resumen')">
+                            Ver Ficha del Equipo →
                         </button>
                     </div>
                 </div>

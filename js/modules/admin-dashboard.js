@@ -420,19 +420,19 @@ window.AdminViews.dashboard_home = async function () {
                             </div>
                         </div>
 
-                        <!-- Equipos Temporada 2027 -->
-                        <div class="motor-action-card border-emerald" onclick="window.loadAdminView('season_campaign')">
+                        <!-- Temporadas & Plantillas de Equipos -->
+                        <div class="motor-action-card border-emerald" onclick="window.loadAdminView('team_seasons')">
                             <div class="motor-card-media">
-                                <img src="img/flyer_temporada_2027.jpg" alt="Equipos Temporada 2027" class="motor-card-img" loading="lazy" decoding="async">
+                                <img src="img/flyer_temporada_2027.jpg" alt="Temporadas y Plantillas" class="motor-card-img" loading="lazy" decoding="async">
                                 <div class="motor-card-media-overlay"></div>
-                                <span class="motor-card-floating-badge badge-emerald">TEMPORADA</span>
-                                <div class="motor-card-floating-icon bg-emerald"><i class="fas fa-users-rays"></i></div>
+                                <span class="motor-card-floating-badge badge-emerald">TEMPORADAS</span>
+                                <div class="motor-card-floating-icon bg-emerald"><i class="fas fa-layer-group"></i></div>
                             </div>
                             <div class="motor-card-body">
-                                <h3 class="motor-card-title">Equipos Temporada 2027</h3>
-                                <p class="motor-card-desc">Campaña de inscripción de equipos, capitanes, selección de sedes y listas de titulares.</p>
+                                <h3 class="motor-card-title">Temporadas & Plantillas</h3>
+                                <p class="motor-card-desc">Histórico oficial de Temporada 2026, gestión de Temporada 2027, altas, bajas y carga desde Excel.</p>
                                 <div class="motor-card-footer">
-                                    <span class="motor-card-link">Abrir Campaña <i class="fas fa-arrow-right"></i></span>
+                                    <span class="motor-card-link">Gestionar Temporadas <i class="fas fa-arrow-right"></i></span>
                                 </div>
                             </div>
                         </div>
